@@ -5,9 +5,12 @@ import numpy as np
 import neurokit2 as nk
 from neurokit2.stats import rescale
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 from NilsPodLib import Dataset
 
-from EcgProcessingLib.utils import utc, tz
+import EcgProcessingLib.utils as utils
 
 
 class EcgProcessor:
@@ -27,7 +30,7 @@ class EcgProcessor:
         else:
             self.df_full = df
 
-        self.df_full = pd.DataFrame(self.df_full.tz_localize(tz=utc).tz_convert(tz=tz))
+        self.df_full = pd.DataFrame(self.df_full.tz_localize(tz=utils.utc).tz_convert(tz=utils.tz))
         self.data_dict: Dict = {
             'Data': self.df_full
         }
@@ -66,9 +69,9 @@ class EcgProcessor:
             self.r_peak_loc_dict[k] = self.df_r_peak_loc.between_time(*v)
 
     def ecg_plot(self, ecg_signals: pd.DataFrame, name: Optional[str] = None,
-                 plot_individual_beats: Optional[bool] = False) -> 'plt.Figure':
+                 plot_individual_beats: Optional[bool] = False) -> plt.Figure:
         import matplotlib.gridspec
-        import matplotlib.pyplot as plt
+        sns.set_palette(utils.cmap_fau)
 
         peaks = np.where(ecg_signals["ECG_R_Peaks"] == 1)[0]
 
@@ -76,7 +79,6 @@ class EcgProcessor:
         x_axis = ecg_signals.index
 
         fig = plt.figure(figsize=(10, 5), constrained_layout=False)
-        axs: Dict[str, plt.Axes] = {}
 
         if plot_individual_beats:
             gs = matplotlib.gridspec.GridSpec(2, 2, width_ratios=[2 / 3, 1 / 3])
@@ -101,7 +103,7 @@ class EcgProcessor:
             fig.suptitle("Electrocardiogram (ECG)", fontweight="bold")
         plt.subplots_adjust(hspace=0.3, wspace=0.1)
 
-        # Plot cleaned, raw ECG, R-peaks and signal quality.
+        # Plot cleaned, raw ECG, R-peaks and signal quality
         axs['ecg'].set_title("Raw and Cleaned Signal")
 
         quality = rescale(ecg_signals["ECG_Quality"],
@@ -111,13 +113,14 @@ class EcgProcessor:
 
         # Plot quality area first
         axs['ecg'].fill_between(x_axis, minimum_line, quality, alpha=0.12, zorder=0,
-                                interpolate=True, facecolor="#4CAF50", label='Quality')
+                                interpolate=True, facecolor=utils.fau_color('med'), label='Quality')
 
         # Plot signals
-        axs['ecg'].plot(ecg_signals["ECG_Raw"], color='#B0BEC5', label='Raw', zorder=1)
-        axs['ecg'].plot(ecg_signals["ECG_Clean"], color='#E91E63', label="Cleaned", zorder=1, linewidth=1.5)
+        axs['ecg'].plot(ecg_signals["ECG_Raw"], color=utils.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
+        axs['ecg'].plot(ecg_signals["ECG_Clean"], color=utils.fau_color('fau'), label="Cleaned", zorder=1,
+                        linewidth=1.5)
         axs['ecg'].scatter(x_axis[peaks], ecg_signals["ECG_Clean"][peaks],
-                           color="#FFC107", label="R-peaks", zorder=2)
+                           color=utils.fau_color('phil'), label="R-peaks", zorder=2)
 
         # Optimize legend
         handles, labels = axs['ecg'].get_legend_handles_labels()
@@ -127,12 +130,12 @@ class EcgProcessor:
         # Plot heart rate
         axs['hr'].set_title("Heart Rate")
         axs['hr'].set_ylabel("Heart Rate (bpm)")
-        axs['hr'].plot(ecg_signals["ECG_Rate"], color="#FF5722", label="Heart Rate", linewidth=1.5)
+        axs['hr'].plot(ecg_signals["ECG_Rate"], color=utils.fau_color('wiso'), label="Heart Rate", linewidth=1.5)
         rate_mean = ecg_signals["ECG_Rate"].mean()
-        axs['hr'].axhline(y=rate_mean, label="Mean", linestyle="--", color="#FF9800")
+        axs['hr'].axhline(y=rate_mean, label="Mean", linestyle="--", color=utils.adjust_color('wiso'))
         axs['hr'].legend(loc="upper right")
 
-        # Plot individual heart beats.
+        # Plot individual heart beats
         if plot_individual_beats:
             axs['beats'].set_title("Individual Heart Beats")
 
@@ -142,9 +145,10 @@ class EcgProcessor:
             heartbeats_pivoted = heartbeats.pivot(index='Time', columns='Label', values='Signal')
 
             axs['beats'].plot(heartbeats_pivoted)
+            print(heartbeats["Label"].nunique())
 
-            cmap = iter(
-                plt.cm.YlOrRd(np.linspace(0, 1, num=int(heartbeats["Label"].nunique()))))  # Aesthetics of heart beats
+            # Aesthetics of heart beats
+            cmap = iter(plt.cm.YlOrRd(np.linspace(0, 1, num=int(heartbeats["Label"].nunique()))))
 
             lines = []
             for x, color in zip(heartbeats_pivoted, cmap):
