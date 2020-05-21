@@ -21,7 +21,7 @@ class EcgProcessor:
             raise ValueError("Either 'dataset' or 'df' must be specified as parameter!")
         self.df_full: pd.DataFrame = pd.DataFrame()
         self.df_result: pd.DataFrame = pd.DataFrame()
-        self.df_r_peak_loc: pd.DataFrame = pd.DataFrame()
+        # self.df_r_peak_loc: pd.DataFrame = pd.DataFrame()
         self.sampling_rate: int = int(sampling_rate)
 
         if dataset:
@@ -34,39 +34,34 @@ class EcgProcessor:
         self.data_dict: Dict = {
             'Data': self.df_full
         }
-        self.r_peak_loc_dict: Dict = {}
+        # self.r_peak_loc_dict: Dict = {}
 
     @property
     def ecg_result(self) -> Dict[str, pd.DataFrame]:
         return self.data_dict
 
-    @property
-    def r_peak_loc(self) -> Dict[str, pd.DataFrame]:
-        return self.r_peak_loc_dict
+    # @property
+    # def r_peak_loc(self) -> Dict[str, pd.DataFrame]:
+    #    return self.r_peak_loc_dict
 
     @property
     def ecg(self) -> Dict[str, pd.DataFrame]:
-        return {k: v['ECG_Clean'] for k, v in self.data_dict.items()}
+        return {k: pd.DataFrame(v['ECG_Clean']) for k, v in self.data_dict.items()}
 
     @property
     def heart_rate(self) -> Dict[str, pd.DataFrame]:
-        return {k: v['ECG_Rate'] for k, v in self.data_dict.items()}
+        return {k: df[df['ECG_R_Peaks'] == 1.0][['ECG_Rate']] for k, df in self.ecg_result.items()}
 
     def ecg_process(self, quality_thres: Optional[float] = 0.75):
         ecg_result, info = nk.ecg_process(self.df_full['ecg'].values, sampling_rate=self.sampling_rate)
         ecg_result.index = self.df_full.index
         self.df_result = ecg_result
         self.df_result['Quality_Mask'] = ecg_result['ECG_Quality'] < quality_thres
-        rpeaks = info['ECG_R_Peaks']
-        self.df_r_peak_loc = pd.DataFrame(rpeaks, index=self.df_full.index[rpeaks], columns=["R_Peaks"])
-        self.r_peak_loc_dict['ECG_R_Peaks'] = self.df_r_peak_loc
 
-    def split_data(self, phases: Dict[str, Sequence[str]]):
+    def split_data(self, time_info: pd.Series):
         self.data_dict.clear()
-        self.r_peak_loc_dict.clear()
-        for k, v in phases.items():
-            self.data_dict[k] = self.df_result.between_time(*v)
-            self.r_peak_loc_dict[k] = self.df_r_peak_loc.between_time(*v)
+        for name, start, end in zip(time_info.index, np.pad(time_info, (0, 1)), time_info[1:]):
+            self.data_dict[name] = self.df_result.between_time(start, end)
 
     def ecg_plot(self, ecg_signals: pd.DataFrame, name: Optional[str] = None,
                  plot_individual_beats: Optional[bool] = False) -> plt.Figure:
@@ -128,12 +123,7 @@ class EcgProcessor:
         axs['ecg'].legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc="upper right")
 
         # Plot heart rate
-        axs['hr'].set_title("Heart Rate")
-        axs['hr'].set_ylabel("Heart Rate (bpm)")
-        axs['hr'].plot(ecg_signals["ECG_Rate"], color=utils.fau_color('wiso'), label="Heart Rate", linewidth=1.5)
-        rate_mean = ecg_signals["ECG_Rate"].mean()
-        axs['hr'].axhline(y=rate_mean, label="Mean", linestyle="--", color=utils.adjust_color('wiso'))
-        axs['hr'].legend(loc="upper right")
+        axs['hr'] = self.hr_plot(ecg_signals, axs['hr'])
 
         # Plot individual heart beats
         if plot_individual_beats:
@@ -158,7 +148,28 @@ class EcgProcessor:
         fig.autofmt_xdate()
         return fig
 
-    def plot_ecg_artifacts(self, ecg_signals: pd.DataFrame):
+    @classmethod
+    def hr_plot(cls, ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None, show_mean: Optional[bool] = True,
+                name: Optional[str] = None) -> plt.Axes:
+        fig: Union[plt.Figure, None] = None
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        if name:
+            ax.set_title("Heart Rate {}".format(name))
+        ax.set_ylabel("Heart Rate [bpm]")
+        ax.plot(ecg_signals["ECG_Rate"], color=utils.fau_color('wiso'), label="Heart Rate", linewidth=1.5)
+        if show_mean:
+            rate_mean = ecg_signals["ECG_Rate"].mean()
+            ax.axhline(y=rate_mean, label="Mean", linestyle="--", color=utils.adjust_color('wiso'), linewidth=2)
+            ax.legend(loc="upper right")
+
+        if fig:
+            fig.tight_layout()
+            fig.autofmt_xdate()
+        return ax
+
+    def ecg_plot_artifacts(self, ecg_signals: pd.DataFrame):
         # Plot artifacts
         _, rpeaks = nk.ecg_peaks(ecg_signals["ECG_Clean"], sampling_rate=self.sampling_rate)
         print(rpeaks)
