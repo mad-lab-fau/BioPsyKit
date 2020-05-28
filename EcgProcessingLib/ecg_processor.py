@@ -63,6 +63,5 @@ class EcgProcessor:
         signals = pd.DataFrame({"ECG_Raw": ecg_signal, "ECG_Clean": ecg_cleaned, "ECG_Quality": quality,
                                 "ECG_Rate": heart_rate}, index=df.index)
         instant_peaks.index = df.index
-        nk.rsp_process()
 
         return pd.concat([signals, instant_peaks], axis=1)
