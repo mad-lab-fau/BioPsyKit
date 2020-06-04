@@ -33,35 +33,43 @@ class EcgProcessor:
             }
         self.ecg_result: Dict[str, pd.DataFrame] = {}
         self.heart_rate: Dict[str, pd.DataFrame] = {}
+        self.r_peak_loc: Dict[str, pd.DataFrame] = {}
 
     @property
     def ecg(self) -> Dict[str, pd.DataFrame]:
         return {k: pd.DataFrame(v['ECG_Clean']) for k, v in self.ecg_result.items()}
 
-    def ecg_process(self, quality_thres: Optional[float] = 0.2, title: Optional[str] = None) -> None:
+    def ecg_process(self, quality_thres: Optional[float] = 0.4, title: Optional[str] = None) -> None:
         for name, df in tqdm(self.data_dict.items(), desc=title):
             ecg_result = self._ecg_process(df)
-
             heart_rate: pd.DataFrame = ecg_result.loc[ecg_result['ECG_R_Peaks'] == 1.0, ['ECG_Rate', 'ECG_Quality']]
-            heart_rate.loc[heart_rate['ECG_Quality'] < quality_thres] = None
-            z_score = (heart_rate['ECG_Rate'] - heart_rate['ECG_Rate'].mean()) / heart_rate['ECG_Rate'].std()
-            # 2.576 std = 1% outlier
-            heart_rate.loc[np.abs(z_score) > 2.576] = None
-            heart_rate.drop('ECG_Quality', axis=1, inplace=True)
-            heart_rate.interpolate(method='linear', inplace=True)
+            ecg_result.drop('ECG_Rate', axis=1, inplace=True)
+            heart_rate = self.remove_outlier(heart_rate, quality_thres)
 
             self.ecg_result[name] = ecg_result
             self.heart_rate[name] = heart_rate
+            self.r_peak_loc[name] = pd.DataFrame(np.where(ecg_result['ECG_R_Peaks'] == 1)[0],
+                                                 index=heart_rate.index, columns=['R_Peaks'])
 
     def _ecg_process(self, df: pd.DataFrame) -> pd.DataFrame:
         ecg_signal = df['ecg'].values
-        ecg_cleaned = nk.ecg_clean(ecg_signal, sampling_rate=self.sampling_rate, method='hamilton')
-        instant_peaks, rpeaks = nk.ecg_peaks(ecg_cleaned, sampling_rate=self.sampling_rate, method='hamilton')
+        ecg_cleaned = nk.ecg_clean(ecg_signal, sampling_rate=self.sampling_rate)  # , method='hamilton')
+        instant_peaks, rpeaks = nk.ecg_peaks(ecg_cleaned, sampling_rate=self.sampling_rate)  # , method='hamilton')
         heart_rate = nk.ecg_rate(rpeaks, sampling_rate=self.sampling_rate, desired_length=len(ecg_cleaned))
         quality = nk.ecg_quality(ecg_cleaned, rpeaks=rpeaks['ECG_R_Peaks'], sampling_rate=self.sampling_rate)
 
         signals = pd.DataFrame({"ECG_Raw": ecg_signal, "ECG_Clean": ecg_cleaned, "ECG_Quality": quality,
                                 "ECG_Rate": heart_rate}, index=df.index)
         instant_peaks.index = df.index
-
         return pd.concat([signals, instant_peaks], axis=1)
+
+    @classmethod
+    def remove_outlier(cls, df: pd.DataFrame, quality_thres: Optional[float] = 0.4) -> pd.DataFrame:
+        df.loc[df['ECG_Quality'] < quality_thres] = None
+        z_score = (df['ECG_Rate'] - df['ECG_Rate'].mean()) / df['ECG_Rate'].std()
+        # 1.96 std = 5% outlier
+        df.loc[np.abs(z_score) > 1.96] = None
+        df.loc[(df['ECG_Rate'] < 45) & (df['ECG_Rate'] > 200)] = None
+        df.drop('ECG_Quality', axis=1, inplace=True)
+        df.interpolate(method='linear', inplace=True)
+        return df

@@ -71,5 +71,11 @@ def write_hr_to_excel(ep: 'EcgProcessor', folder: path_t, filename: path_t):
 
     writer = pd.ExcelWriter(folder.joinpath(filename), engine='xlsxwriter')
     for label, df_hr in ep.heart_rate.items():
-        df_hr.tz_localize(None).to_excel(writer, sheet_name=label, index=False)
+        df_hr.tz_localize(None).to_excel(writer, sheet_name=label)
     writer.save()
+
+
+def load_hr_excel(filename: path_t) -> Dict[str, pd.DataFrame]:
+    dict_hr = pd.read_excel(filename, index_col="date", sheet_name=None)
+    dict_hr = {k: v.tz_localize(tz) for k, v in dict_hr.items()}
+    return dict_hr
