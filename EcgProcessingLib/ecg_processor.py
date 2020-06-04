@@ -73,3 +73,18 @@ class EcgProcessor:
         df.drop('ECG_Quality', axis=1, inplace=True)
         df.interpolate(method='linear', inplace=True)
         return df
+
+    def hrv_process(self, df: pd.DataFrame, index: Optional[str] = None,
+                    index_name: Optional[str] = None) -> pd.DataFrame:
+        return self._hrv_process(df, self.sampling_rate, index, index_name)
+
+    @classmethod
+    def _hrv_process(cls, df: pd.DataFrame, sampling_rate: Optional[int] = 256,
+                     index: Optional[str] = None, index_name: Optional[str] = None) -> pd.DataFrame:
+        hrv_time = nk.hrv_time(df['R_Peaks'], sampling_rate=sampling_rate)
+        hrv_nonlinear = nk.hrv_nonlinear(df['R_Peaks'], sampling_rate=sampling_rate)
+        df = pd.concat([hrv_time, hrv_nonlinear], axis=1)
+        if index:
+            df.index = [index]
+            df.index.name = index_name
+        return df
