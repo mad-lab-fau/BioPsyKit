@@ -113,7 +113,7 @@ def hr_plot(ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None,
     ax.plot(ecg_signals["ECG_Rate"], color=utils.fau_color('wiso'), label="Heart Rate", linewidth=1.5)
     if show_mean:
         rate_mean = ecg_signals["ECG_Rate"].mean()
-        ax.axhline(y=rate_mean, label="Mean", linestyle="--", color=utils.adjust_color('wiso'), linewidth=2)
+        ax.axhline(y=rate_mean, label="Mean: {:.1f} bpm".format(rate_mean), linestyle="--", color=utils.adjust_color('wiso'), linewidth=2)
         ax.legend(loc="upper right")
 
     if fig:
