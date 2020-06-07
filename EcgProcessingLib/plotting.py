@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Sequence
 
 import matplotlib.pyplot as plt
 import neurokit2 as nk
@@ -26,8 +26,6 @@ plt.rcParams.update(mpl_rc_params)
 def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate: Optional[int] = 256,
              name: Optional[str] = None, plot_individual_beats: Optional[bool] = False) -> plt.Figure:
     import matplotlib.gridspec
-    import matplotlib.dates as mdates
-    import matplotlib.ticker as mtick
     sns.set_palette(utils.cmap_fau)
 
     peaks = np.where(ecg_signals["ECG_R_Peaks"] == 1)[0]
@@ -59,10 +57,9 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
     # Plot cleaned, raw ECG, R-peaks and signal quality
     # axs['ecg'].set_title("Raw and Cleaned Signal")
 
-    quality = ecg_signals["ECG_Quality"]
-    # quality = nk.rescale(ecg_signals["ECG_Quality"],
-    #                  to=[np.min(ecg_signals["ECG_Clean"]),
-    #                      np.max(ecg_signals["ECG_Clean"])])
+    quality = nk.rescale(ecg_signals["ECG_Quality"],
+                         to=[np.min(ecg_signals["ECG_Clean"]),
+                             np.max(ecg_signals["ECG_Clean"])])
     minimum_line = np.full(len(x_axis), quality.min())
 
     # Plot quality area first
@@ -86,29 +83,10 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
     axs['ecg'].legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc="upper right")
     # Plot heart rate
     axs['hr'] = hr_plot(heart_rate, axs['hr'])
-    axs['hr'].yaxis.set_major_locator(mtick.MultipleLocator(5))
-    axs['hr'].xaxis.set_major_locator(mdates.MinuteLocator())
-    axs['hr'].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    axs['hr'].xaxis.set_minor_locator(mtick.AutoMinorLocator(5))
-    axs['hr'].tick_params(axis='x', which='both', bottom=True)
-    axs['hr'].tick_params(axis='y', which='major', left=True)
 
     # Plot individual heart beats
     if plot_individual_beats:
-        heartbeats = nk.ecg_segment(ecg_signals["ECG_Clean"], peaks, sampling_rate)
-        heartbeats = nk.epochs_to_df(heartbeats)
-        heartbeats_pivoted = heartbeats.pivot(index='Time', columns='Label', values='Signal')
-
-        axs['beats'].set_title("Individual Heart Beats")
-        axs['beats'].plot(heartbeats_pivoted)
-
-        # Aesthetics of heart beats
-        cmap = iter(plt.cm.YlOrRd(np.linspace(0, 1, num=int(heartbeats["Label"].nunique()))))
-
-        lines = []
-        for x, color in zip(heartbeats_pivoted, cmap):
-            line, = axs['beats'].plot(heartbeats_pivoted[x], color=color)
-            lines.append(line)
+        axs['beats'] = individual_beats_plot(ecg_signals, peaks, sampling_rate, axs['beats'])
 
     fig.tight_layout()
     fig.autofmt_xdate(rotation=0, ha='center')
@@ -121,6 +99,11 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
 
 def hr_plot(ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None,
             show_mean: Optional[bool] = True, name: Optional[str] = None) -> plt.Axes:
+    import matplotlib.dates as mdates
+    import matplotlib.ticker as mtick
+
+    sns.set_palette(utils.cmap_fau)
+
     fig: Union[plt.Figure, None] = None
     if ax is None:
         fig, ax = plt.subplots()
@@ -136,10 +119,46 @@ def hr_plot(ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None,
         ax.set_xlim(ecg_signals["ECG_Rate"].index.min(), ecg_signals["ECG_Rate"].index.max())
         ax.legend(loc="upper right")
 
+    ax.yaxis.set_major_locator(mtick.MaxNLocator(5, steps=[5, 10]))
+    ax.xaxis.set_major_locator(mdates.MinuteLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax.xaxis.set_minor_locator(mtick.AutoMinorLocator(5))
+    ax.tick_params(axis='x', which='both', bottom=True)
+    ax.tick_params(axis='y', which='major', left=True)
+
     if fig:
         fig.tight_layout()
         fig.autofmt_xdate()
     return ax
+
+
+def individual_beats_plot(df_ecg: pd.DataFrame, peaks: Optional[Sequence[int]] = None,
+                          sampling_rate: Optional[int] = 256.0, ax: Optional[plt.Axes] = None):
+    fig: Union[plt.Figure, None] = None
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    if peaks is None:
+        peaks = np.where(df_ecg["ECG_R_Peaks"] == 1)[0]
+
+    heartbeats = nk.ecg_segment(df_ecg['ECG_Clean'], peaks, sampling_rate)
+    heartbeats = nk.epochs_to_df(heartbeats)
+    heartbeats_pivoted = heartbeats.pivot(index='Time', columns='Label', values='Signal')
+
+    ax.set_title("Individual Heart Beats")
+    ax.plot(heartbeats_pivoted)
+
+    # Aesthetics of heart beats
+    cmap = iter(plt.cm.YlOrRd(np.linspace(0, 1, num=int(heartbeats["Label"].nunique()))))
+
+    lines = []
+    for x, color in zip(heartbeats_pivoted, cmap):
+        line, = ax.plot(heartbeats_pivoted[x], color=color)
+        lines.append(line)
+
+    if fig:
+        fig.tight_layout()
+        return ax
 
 
 def ecg_plot_artifacts(ecg_signals: pd.DataFrame, sampling_rate: Optional[int] = 256):
