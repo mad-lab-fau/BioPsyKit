@@ -39,15 +39,19 @@ class EcgProcessor:
     def ecg(self) -> Dict[str, pd.DataFrame]:
         return {k: pd.DataFrame(v['ECG_Clean']) for k, v in self.ecg_result.items()}
 
+    @property
+    def hr_result(self) -> Dict[str, pd.DataFrame]:
+        return self.heart_rate
+
     def ecg_process(self, quality_thres: Optional[float] = 0.4, title: Optional[str] = None,
                     method: Optional[str] = "neurokit") -> None:
         for name, df in tqdm(self.data_dict.items(), desc=title):
             ecg_result, rpeak_idx = self._ecg_process(df, method=method)
-            df_rpeak: pd.DataFrame = ecg_result.loc[
-                ecg_result['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
+            ecg_result['ECG_R_Peaks_Outlier'] = 0.0
+            df_rpeak: pd.DataFrame = ecg_result.loc[ecg_result['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
             df_rpeak['R_Peak_Idx'] = rpeak_idx
             # ecg_result.drop('ECG_Rate', axis=1, inplace=True)
-            df_rpeak = self.remove_outlier(df_rpeak, quality_thres, sampling_rate=self.sampling_rate)
+            df_rpeak = self.correct_outlier(ecg_result, df_rpeak, self.sampling_rate, quality_thres)
             heart_rate = nk.ecg_rate(df_rpeak['R_Peak_Idx'], sampling_rate=self.sampling_rate,
                                      desired_length=len(ecg_result['ECG_Clean']))
             ecg_result['ECG_Rate'] = heart_rate
@@ -69,17 +73,51 @@ class EcgProcessor:
         return pd.concat([signals, instant_peaks], axis=1), rpeaks['ECG_R_Peaks']
 
     @classmethod
-    def remove_outlier(cls, df_rr: pd.DataFrame, quality_thres: Optional[float] = 0.4,
-                       sampling_rate: Optional[float] = 256.0,
-                       hr_thres: Optional[Tuple[int, int]] = (45, 200)) -> pd.DataFrame:
+    def correct_outlier(cls, df_ecg: pd.DataFrame, df_rr: pd.DataFrame, sampling_rate: Optional[int] = 256,
+                        quality_thres: Optional[float] = 0.4,
+                        corr_thres: Optional[float] = 0.3,
+                        hr_thres: Optional[Tuple[int, int]] = (45, 200)) -> pd.DataFrame:
+        # signal outlier: copy dataframe to mark removed beats later
+        df_cpy = df_rr.copy()
+
+        # segment individual heart beats
+        heartbeats = nk.ecg_segment(df_ecg['ECG_Clean'], df_rr['R_Peak_Idx'], sampling_rate)
+        heartbeats = nk.epochs_to_df(heartbeats)
+        heartbeats_pivoted = heartbeats.pivot(index='Time', columns='Label', values='Signal')
+        heartbeats = heartbeats.set_index('Index')
+        heartbeats = heartbeats.loc[heartbeats.index.intersection(df_rr['R_Peak_Idx'])].sort_values(by="Label")
+        heartbeats = heartbeats[~heartbeats.index.duplicated()]
+        heartbeats_pivoted.columns = heartbeats.index
+
+        # compute the average over all heart beats and compute the correlation coefficient between all beats and
+        # the average
+        mean_beat = heartbeats_pivoted.mean(axis=1)
+        heartbeats_pivoted['mean'] = mean_beat
+        corr_coeff = heartbeats_pivoted.corr()['mean'].abs().sort_values(ascending=True)
+        corr_coeff.drop('mean', inplace=True)
+
         # compute RR intervals (in seconds) from R Peak Locations
         df_rr['RR_Interval'] = np.ediff1d(df_rr['R_Peak_Idx'], to_begin=0) / sampling_rate
+
+        # signal outlier: drop all beats that are below a correlation coefficient threshold and below the signal
+        # quality threshold
+        df_rr[df_rr['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index)] = None
         df_rr.loc[df_rr['ECG_Quality'] < quality_thres] = None
+
+        # physiological outlier: remove the 1% highest and lowest beats
         z_score = (df_rr['RR_Interval'] - df_rr['RR_Interval'].mean()) / df_rr['RR_Interval'].std()
         # 1.96 std = 5% outlier
-        df_rr.loc[np.abs(z_score) > 1.96] = None
+        # 2.576 std = 1% outlier
+        df_rr.loc[np.abs(z_score) > 2.576] = None
+        # minimum/maximum heart rate threshold
         df_rr.loc[(df_rr['RR_Interval'] > (60 / hr_thres[0])) | (df_rr['RR_Interval'] < (60 / hr_thres[1]))] = None
+
+        # mark all removed beats as outlier in the ECG dataframe
+        removed_beats = df_cpy['R_Peak_Idx'][df_rr['R_Peak_Idx'].isna()]
+        df_ecg.loc[removed_beats.index, 'ECG_R_Peaks_Outlier'] = 1.0
+
         df_rr.drop('ECG_Quality', axis=1, inplace=True)
+        # interpolate the removed beats
         df_rr.interpolate(method='linear', limit_direction='both', inplace=True)
 
         # convert RR intervals back to R Peak Locations
