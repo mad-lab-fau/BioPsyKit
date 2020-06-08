@@ -28,7 +28,9 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
     import matplotlib.gridspec
     sns.set_palette(utils.cmap_fau)
 
+    outlier = np.where(ecg_signals["ECG_R_Peaks_Outlier"] == 1)[0]
     peaks = np.where(ecg_signals["ECG_R_Peaks"] == 1)[0]
+    peaks = np.setdiff1d(peaks, outlier)
     # Prepare figure and set axes.
     x_axis = ecg_signals.index
 
@@ -57,36 +59,42 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
     # Plot cleaned, raw ECG, R-peaks and signal quality
     # axs['ecg'].set_title("Raw and Cleaned Signal")
 
-    quality = nk.rescale(ecg_signals["ECG_Quality"],
-                         to=[np.min(ecg_signals["ECG_Clean"]),
-                             np.max(ecg_signals["ECG_Clean"])])
+    # quality = nk.rescale(ecg_signals["ECG_Quality"],
+    #                     to=[np.min(ecg_signals["ECG_Clean"]),
+    #                         np.max(ecg_signals["ECG_Clean"])])
+    quality = ecg_signals["ECG_Quality"]
     minimum_line = np.full(len(x_axis), quality.min())
 
     # Plot quality area first
     axs['ecg'].fill_between(x_axis, minimum_line, quality, alpha=0.2, zorder=2,
                             interpolate=True, facecolor=utils.fau_color('med'), label='Quality')
-    ax_q = axs['ecg'].twinx()
+    ax_q: plt.Axes = axs['ecg'].twinx()
     ax_q.fill_between(x_axis, minimum_line, quality, alpha=0.2, zorder=2,
                       interpolate=True, facecolor=utils.fau_color('med'), label='Quality')
-    ax_q.set_ylabel("ECG Quality")
+    #ax_q.set_ylabel("ECG Quality")
 
     # Plot signals
     # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=utils.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
     axs['ecg'].plot(ecg_signals["ECG_Clean"], color=utils.fau_color('fau'), label="Cleaned", zorder=1,
                     linewidth=1.5)
-    axs['ecg'].scatter(x_axis[peaks], ecg_signals["ECG_Clean"][peaks], color=utils.fau_color('phil'),
-                       label="R-peaks", zorder=2)
+    axs['ecg'].scatter(x_axis[peaks], ecg_signals["ECG_Clean"][peaks], color=utils.fau_color('nat'),
+                       label="R Peaks", zorder=2)
+    axs['ecg'].scatter(x_axis[outlier], ecg_signals["ECG_Clean"][outlier], color=utils.fau_color('phil'),
+                       label="Outlier", zorder=2)
+    axs['ecg'].set_yticks([])
+    print(ecg_signals["ECG_Clean"][outlier])
+
     # Optimize legend
     handles, labels = axs['ecg'].get_legend_handles_labels()
     # order = [2, 0, 1, 3]
-    order = [1, 0, 2]
+    order = [1, 0, 2, 3]
     axs['ecg'].legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc="upper right")
     # Plot heart rate
     axs['hr'] = hr_plot(heart_rate, axs['hr'])
 
     # Plot individual heart beats
     if plot_individual_beats:
-        axs['beats'] = individual_beats_plot(ecg_signals, peaks, sampling_rate, axs['beats'])
+        individual_beats_plot(ecg_signals, peaks, sampling_rate, axs['beats'])
 
     fig.tight_layout()
     fig.autofmt_xdate(rotation=0, ha='center')
@@ -146,15 +154,14 @@ def individual_beats_plot(df_ecg: pd.DataFrame, peaks: Optional[Sequence[int]] =
     heartbeats_pivoted = heartbeats.pivot(index='Time', columns='Label', values='Signal')
 
     ax.set_title("Individual Heart Beats")
-    ax.plot(heartbeats_pivoted)
 
     # Aesthetics of heart beats
     cmap = iter(plt.cm.YlOrRd(np.linspace(0, 1, num=int(heartbeats["Label"].nunique()))))
 
-    lines = []
     for x, color in zip(heartbeats_pivoted, cmap):
-        line, = ax.plot(heartbeats_pivoted[x], color=color)
-        lines.append(line)
+        ax.plot(heartbeats_pivoted[x], color=color)
+
+    ax.set_yticks([])
 
     if fig:
         fig.tight_layout()
