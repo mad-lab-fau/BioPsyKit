@@ -90,6 +90,8 @@ def mist_get_times(mist_dur: Union[Sequence[int], Dict[str, pd.DataFrame]], subp
 
 def mist_hr_ensemble_plot(ax: plt.Axes, data: Dict[str, pd.DataFrame], plot_params: Optional[Dict] = None,
                           ylims: Optional[Sequence[float]] = None, fontsize: Optional[int] = 14) -> plt.Axes:
+    import matplotlib.ticker as mticks
+
     if plot_params:
         hr_ensemble_params.update(plot_params)
 
@@ -116,6 +118,10 @@ def mist_hr_ensemble_plot(ax: plt.Axes, data: Dict[str, pd.DataFrame], plot_para
     ax.set_ylabel(r'$\Delta$HR [%]', fontsize=fontsize)
     ax.set_xlabel(r'Time [s]', fontsize=fontsize)
     ax.set_xticks([start for (start, end) in start_end])
+    ax.xaxis.set_minor_locator(mticks.MultipleLocator(60))
+    ax.tick_params(axis="x", which='both', bottom=True)
+    ax.tick_params(axis="y", which='major', left=True)
+
     for (start, end), subphase in zip(start_end, subphases):
         ax.text(x=start + 0.5 * (end - start), y=35, s=subphase, horizontalalignment='center', fontsize=fontsize)
 
@@ -184,10 +190,13 @@ def mist_hr_course_plot(ax: plt.Axes, data: Union[pd.DataFrame, Dict[str, pd.Dat
                 verticalalignment='top',
                 fontsize=fontsize)
 
-    ax.set_ylabel("$\Delta$HR [%]", fontsize=fontsize)
+    ax.tick_params(axis='x', bottom=True)
     ax.set_xticks(x)
     ax.set_xticklabels(subphase_labels)
     ax.set_xlim([span_lims[0][0], span_lims[-1][-1]])
+
+    ax.set_ylabel("$\Delta$HR [%]", fontsize=fontsize)
+    ax.tick_params(axis="y", which='major', left=True)
     ax.set_ylim(ylims)
 
     if groups:

@@ -24,9 +24,14 @@ plt.rcParams.update(mpl_rc_params)
 
 
 def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate: Optional[int] = 256,
-             name: Optional[str] = None, plot_individual_beats: Optional[bool] = False) -> plt.Figure:
+             name: Optional[str] = None, plot_histogram: Optional[bool] = False,
+             plot_individual_beats: Optional[bool] = False) -> plt.Figure:
     import matplotlib.gridspec
+    import matplotlib.dates as mdates
+    import matplotlib.ticker as mticks
+
     sns.set_palette(utils.cmap_fau)
+    plt.rcParams['timezone'] = ecg_signals.index.tz.zone
 
     outlier = np.where(ecg_signals["ECG_R_Peaks_Outlier"] == 1)[0]
     peaks = np.where(ecg_signals["ECG_R_Peaks"] == 1)[0]
@@ -36,13 +41,20 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
 
     fig = plt.figure(figsize=(15, 5), constrained_layout=False)
 
-    if plot_individual_beats:
+    if plot_individual_beats or plot_histogram:
         gs = matplotlib.gridspec.GridSpec(2, 2, width_ratios=[3 / 4, 1 / 4])
         axs = {
             'ecg': fig.add_subplot(gs[0, :-1]),
-            'hr': fig.add_subplot(gs[1, :-1]),
-            'beats': fig.add_subplot(gs[:, -1])
+            'hr': fig.add_subplot(gs[1, :-1])
         }
+        if plot_histogram and plot_individual_beats:
+            axs['hist'] = fig.add_subplot(gs[0, -1])
+            axs['beats'] = fig.add_subplot(gs[1, -1])
+        elif plot_individual_beats:
+            axs['beats'] = fig.add_subplot(gs[:, -1])
+        elif plot_histogram:
+            axs['hist'] = fig.add_subplot(gs[:, -1])
+
     else:
         axs = {
             'ecg': fig.add_subplot(2, 1, 1),
@@ -59,35 +71,29 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
     # Plot cleaned, raw ECG, R-peaks and signal quality
     # axs['ecg'].set_title("Raw and Cleaned Signal")
 
-    # quality = nk.rescale(ecg_signals["ECG_Quality"],
-    #                     to=[np.min(ecg_signals["ECG_Clean"]),
-    #                         np.max(ecg_signals["ECG_Clean"])])
+    ecg_clean = nk.rescale(ecg_signals["ECG_Clean"],
+                           to=[0, 1])
     quality = ecg_signals["ECG_Quality"]
     minimum_line = np.full(len(x_axis), quality.min())
 
     # Plot quality area first
     axs['ecg'].fill_between(x_axis, minimum_line, quality, alpha=0.2, zorder=2,
                             interpolate=True, facecolor=utils.fau_color('med'), label='Quality')
-    ax_q: plt.Axes = axs['ecg'].twinx()
-    ax_q.fill_between(x_axis, minimum_line, quality, alpha=0.2, zorder=2,
-                      interpolate=True, facecolor=utils.fau_color('med'), label='Quality')
-    #ax_q.set_ylabel("ECG Quality")
 
     # Plot signals
     # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=utils.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
-    axs['ecg'].plot(ecg_signals["ECG_Clean"], color=utils.fau_color('fau'), label="Cleaned", zorder=1,
+    axs['ecg'].plot(ecg_clean, color=utils.fau_color('fau'), label="Cleaned", zorder=1,
                     linewidth=1.5)
-    axs['ecg'].scatter(x_axis[peaks], ecg_signals["ECG_Clean"][peaks], color=utils.fau_color('nat'),
+    axs['ecg'].scatter(x_axis[peaks], ecg_clean[peaks], color=utils.fau_color('nat'),
                        label="R Peaks", zorder=2)
-    axs['ecg'].scatter(x_axis[outlier], ecg_signals["ECG_Clean"][outlier], color=utils.fau_color('phil'),
+    axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=utils.fau_color('phil'),
                        label="Outlier", zorder=2)
-    axs['ecg'].set_yticks([])
-    print(ecg_signals["ECG_Clean"][outlier])
+    axs['ecg'].set_ylabel("ECG Quality")
 
     # Optimize legend
     handles, labels = axs['ecg'].get_legend_handles_labels()
     # order = [2, 0, 1, 3]
-    order = [1, 0, 2, 3]
+    order = [0, 1, 2, 3]
     axs['ecg'].legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc="upper right")
     # Plot heart rate
     axs['hr'] = hr_plot(heart_rate, axs['hr'])
@@ -96,11 +102,24 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
     if plot_individual_beats:
         individual_beats_plot(ecg_signals, peaks, sampling_rate, axs['beats'])
 
+    if plot_histogram:
+        ecg_histogram_plot(heart_rate, axs['hist'])
+
     fig.tight_layout()
     fig.autofmt_xdate(rotation=0, ha='center')
 
+    axs['ecg'].tick_params(axis='x', which='both', bottom=True)
+    axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
+    axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(5))
+
+    axs['ecg'].tick_params(axis='y', which='major', left=True)
+
     if plot_individual_beats:
         axs['beats'].tick_params(axis='x', which='major', bottom=True, labelbottom=True)
+
+    if plot_histogram:
+        axs['hist'].tick_params(axis='x', which='major', bottom=True, labelbottom=True)
+        axs['hist'].set_xlabel("Heart Rate [bpm]")
 
     return fig
 
@@ -108,7 +127,7 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
 def hr_plot(ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None,
             show_mean: Optional[bool] = True, name: Optional[str] = None) -> plt.Axes:
     import matplotlib.dates as mdates
-    import matplotlib.ticker as mtick
+    import matplotlib.ticker as mticks
 
     sns.set_palette(utils.cmap_fau)
 
@@ -124,15 +143,16 @@ def hr_plot(ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None,
         rate_mean = ecg_signals["ECG_Rate"].mean()
         ax.axhline(y=rate_mean, label="Mean: {:.1f} bpm".format(rate_mean), linestyle="--",
                    color=utils.adjust_color('wiso'), linewidth=2)
-        ax.set_xlim(ecg_signals["ECG_Rate"].index.min(), ecg_signals["ECG_Rate"].index.max())
+        ax.margins(x=0)
         ax.legend(loc="upper right")
 
-    ax.yaxis.set_major_locator(mtick.MaxNLocator(5, steps=[5, 10]))
+    ax.tick_params(axis='x', which='both', bottom=True)
     ax.xaxis.set_major_locator(mdates.MinuteLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax.xaxis.set_minor_locator(mtick.AutoMinorLocator(5))
-    ax.tick_params(axis='x', which='both', bottom=True)
+    ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(5))
+
     ax.tick_params(axis='y', which='major', left=True)
+    ax.yaxis.set_major_locator(mticks.MaxNLocator(5, steps=[5, 10]))
 
     if fig:
         fig.tight_layout()
@@ -154,6 +174,7 @@ def individual_beats_plot(df_ecg: pd.DataFrame, peaks: Optional[Sequence[int]] =
     heartbeats_pivoted = heartbeats.pivot(index='Time', columns='Label', values='Signal')
 
     ax.set_title("Individual Heart Beats")
+    ax.margins(x=0)
 
     # Aesthetics of heart beats
     cmap = iter(plt.cm.YlOrRd(np.linspace(0, 1, num=int(heartbeats["Label"].nunique()))))
@@ -162,6 +183,24 @@ def individual_beats_plot(df_ecg: pd.DataFrame, peaks: Optional[Sequence[int]] =
         ax.plot(heartbeats_pivoted[x], color=color)
 
     ax.set_yticks([])
+
+    if fig:
+        fig.tight_layout()
+        return ax
+
+
+def ecg_histogram_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None):
+    fig: Union[plt.Figure, None] = None
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    sns.distplot(heart_rate, color=utils.fau_color('tech'), ax=ax)
+
+    ax.set_title("Histogram")
+    ax.set_xlabel("Heart Rate [bpm]")
+    ax.set_yticks([])
+    ax.set_xlim(heart_rate.min().min() - 1, heart_rate.max().max() + 1)
+    # ax.tick_params(axis='x', which='major', bottom=True)
 
     if fig:
         fig.tight_layout()
