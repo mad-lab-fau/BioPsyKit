@@ -74,8 +74,7 @@ class EcgProcessor:
 
     @classmethod
     def correct_outlier(cls, df_ecg: pd.DataFrame, df_rr: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                        quality_thres: Optional[float] = 0.4,
-                        corr_thres: Optional[float] = 0.3,
+                        quality_thres: Optional[float] = 0.4, corr_thres: Optional[float] = 0.3,
                         hr_thres: Optional[Tuple[int, int]] = (45, 200)) -> pd.DataFrame:
         # signal outlier: copy dataframe to mark removed beats later
         df_cpy = df_rr.copy()
