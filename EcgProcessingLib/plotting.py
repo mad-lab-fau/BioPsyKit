@@ -181,11 +181,14 @@ def hrv_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, plot_freq
     spec_within = gs.GridSpecFromSubplotSpec(4, 4, subplot_spec=spec[:, -1], wspace=0.025, hspace=0.05)
     axs['poin'] = fig.add_subplot(spec_within[1:4, 0:3])
     axs['poin_x'] = fig.add_subplot(spec_within[0, 0:3])
-    # axs['poin_x'].set_title("Poincaré Plot")
     axs['poin_y'] = fig.add_subplot(spec_within[1:4, 3])
+    axs['poin'].get_shared_x_axes().join(axs['poin'], axs['poin_x'])
+    axs['poin'].get_shared_y_axes().join(axs['poin'], axs['poin_y'])
 
     hrv_distribution_plot(rpeaks, sampling_rate, axs['dist'])
     hrv_poincare_plot(rpeaks, sampling_rate, [axs['poin'], axs['poin_x'], axs['poin_y']])
+    if plot_frequency:
+        hrv_frequency_plot(rpeaks, sampling_rate, axs['freq'])
 
     fig.tight_layout()
 
@@ -245,6 +248,10 @@ def ecg_plot_artifacts(ecg_signals: pd.DataFrame, sampling_rate: Optional[int] =
 
 def hrv_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
                           ax: Optional[plt.Axes] = None) -> plt.Axes:
+    fig: Union[plt.Figure, None] = None
+    if ax is None:
+        fig, ax = plt.subplots()
+
     rri = _get_rr_intervals(rpeaks, sampling_rate)
 
     sns.set_palette(utils.cmap_fau_blue('2'))
@@ -277,18 +284,29 @@ def hrv_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 2
 
     ax.set_xlim(0.95 * np.min(rri), 1.05 * np.max(rri))
 
-    return ax
+    if fig:
+        fig.tight_layout()
+        return ax
 
 
 def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                      axs: Optional[Sequence[plt.Axes]] = None) -> Union[plt.Axes, None]:
+                      axs: Optional[Sequence[plt.Axes]] = None) -> Union[None, Sequence[plt.Axes]]:
     import matplotlib.ticker as mticks
+    import matplotlib.gridspec as spec
+    fig: Union[plt.Figure, None] = None
     if axs is None:
-        return
+        fig = plt.figure(figsize=(8, 8))
+        axs: Sequence[plt.Axes] = []
+        # Prepare figure
+        gs = spec.GridSpec(4, 4)
+        axs.append(plt.subplot(gs[1:4, 0:3]))
+        axs.append(plt.subplot(gs[0, 0:3]))
+        axs.append(plt.subplot(gs[1:4, 3]))
+        gs.update(wspace=0.025, hspace=0.05)  # Reduce spaces
+
     rri = _get_rr_intervals(rpeaks, sampling_rate)
 
     mean_rri = float(np.mean(rri))
-
     sd = np.ediff1d(rri)
     sdsd = np.std(sd, ddof=1)
     sd1 = sdsd / np.sqrt(2)
@@ -338,11 +356,35 @@ def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
     axs[0].yaxis.set_major_locator(mticks.MultipleLocator(50))
     axs[0].yaxis.set_minor_locator(mticks.MultipleLocator(10))
     axs[0].tick_params(axis='both', which='both', left=True, bottom=True)
-
-    axs[1].set_xlim(*axs[0].get_xlim())
-    axs[2].set_ylim(*axs[0].get_ylim())
     axs[1].axis('off')
     axs[2].axis('off')
+
+    if fig:
+        fig.tight_layout()
+        return axs
+
+
+def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
+                       ax: Optional[plt.Axes] = None) -> plt.Axes:
+    from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
+    from neurokit2.hrv.hrv_utils import _hrv_get_rri
+    fig: Union[plt.Figure, None] = None
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    rri = _hrv_get_rri(rpeaks['R_Peak_Idx'], sampling_rate=sampling_rate, interpolate=True)[0]
+    hrv = nk.hrv_frequency(rpeaks, sampling_rate)
+    out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]
+    out_bands.columns = [col.replace('HRV_', '') for col in out_bands.columns]
+    _hrv_frequency_show(rri, out_bands, sampling_rate=256, ax=ax)
+
+    ax.tick_params(axis='both', left=True, bottom=True)
+    ax.margins(x=0)
+    ax.set_ylim(0)
+
+    if fig:
+        fig.tight_layout()
+        return ax
 
 
 def _get_rr_intervals(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256) -> np.array:
