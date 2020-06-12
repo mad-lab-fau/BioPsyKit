@@ -22,7 +22,7 @@ cmap_fau = sns.color_palette(["#003865", "#c99313", "#8d1429", "#00b1eb", "#009b
 _keys_fau = ['fau', 'phil', 'wiso', 'med', 'nat', 'tech']
 
 
-def cmap_fau_blue(cmap_type: str) -> Sequence[str]:
+def cmap_fau_blue(cmap_type: Union[str, None]) -> Sequence[str]:
     palette_fau = sns.color_palette(
         ["#001628", "#001F38", "#002747", "#003056", "#003865",
          "#26567C", "#4D7493", "#7392AA", "#99AFC1", "#BFCDD9",

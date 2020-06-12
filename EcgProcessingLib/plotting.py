@@ -1,5 +1,6 @@
 from typing import Optional, Union, Sequence
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import neurokit2 as nk
 import numpy as np
@@ -183,7 +184,8 @@ def hrv_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, plot_freq
     # axs['poin_x'].set_title("Poincaré Plot")
     axs['poin_y'] = fig.add_subplot(spec_within[1:4, 3])
 
-    axs['dist'] = hrv_distribution_plot(rpeaks, sampling_rate, axs['dist'])
+    hrv_distribution_plot(rpeaks, sampling_rate, axs['dist'])
+    hrv_poincare_plot(rpeaks, sampling_rate, [axs['poin'], axs['poin_x'], axs['poin_y']])
 
     fig.tight_layout()
 
@@ -243,19 +245,18 @@ def ecg_plot_artifacts(ecg_signals: pd.DataFrame, sampling_rate: Optional[int] =
 
 def hrv_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
                           ax: Optional[plt.Axes] = None) -> plt.Axes:
-    rri: np.ndarray = (np.ediff1d(rpeaks['R_Peak_Idx'], to_begin=0) / sampling_rate) * 1000
-    rri = rri[1:]
+    rri = _get_rr_intervals(rpeaks, sampling_rate)
 
-    rug_height = 0.05
-
-    sns.distplot(rri, color=utils.fau_color('med'), ax=ax, bins=10, kde=False, rug=True,
-                 rug_kws={'color': utils.fau_color('fau'), 'lw': 1.5, 'height': rug_height, 'zorder': 2},
-                 hist_kws={'alpha': 1, 'zorder': 1})
-    ax2: plt.Axes = ax.twinx()
-    sns.kdeplot(rri, color=utils.adjust_color('med', 0.75), ax=ax2, lw=2.0, zorder=1)
-    ax2.tick_params(axis='y', right=False, labelright=False)
+    sns.set_palette(utils.cmap_fau_blue('2'))
+    sns.distplot(rri, ax=ax, bins=10, kde=False, rug=True,
+                 rug_kws={'lw': 1.5, 'height': 0.05, 'zorder': 2},
+                 hist_kws={'alpha': 0.5, 'zorder': 1})
+    ax2 = ax.twinx()
+    sns.kdeplot(rri, ax=ax2, lw=2.0, zorder=1)
     ax2.set_ylim(0)
+    ax2.axis('off')
 
+    ax.tick_params(axis='both', left=True, bottom=True)
     ax.set_title("Distribution of RR Intervals")
     ax.set_xlabel("RR Intervals [ms]")
     ax.set_ylabel("Count")
@@ -267,13 +268,84 @@ def hrv_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 2
         widths=ax2.get_ylim()[-1] / 10,
         manage_ticks=False,
         patch_artist=True,
-        boxprops=dict(linewidth=2.0, color=utils.fau_color('fau'), facecolor=utils.adjust_color('fau', 2.0)),
-        medianprops=dict(linewidth=2.0, color=utils.fau_color('fau')),
-        whiskerprops=dict(linewidth=2.0, color=utils.fau_color('fau')),
-        capprops=dict(linewidth=2.0, color=utils.fau_color('fau')),
+        boxprops=dict(linewidth=2.0, color=utils.adjust_color('tech', 0.5), facecolor=utils.fau_color('tech')),
+        medianprops=dict(linewidth=2.0, color=utils.adjust_color('tech', 0.5)),
+        whiskerprops=dict(linewidth=2.0, color=utils.adjust_color('tech', 0.5)),
+        capprops=dict(linewidth=2.0, color=utils.adjust_color('tech', 0.5)),
         zorder=4
     )
 
     ax.set_xlim(0.95 * np.min(rri), 1.05 * np.max(rri))
 
     return ax
+
+
+def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
+                      axs: Optional[Sequence[plt.Axes]] = None) -> Union[plt.Axes, None]:
+    import matplotlib.ticker as mticks
+    if axs is None:
+        return
+    rri = _get_rr_intervals(rpeaks, sampling_rate)
+
+    mean_rri = float(np.mean(rri))
+
+    sd = np.ediff1d(rri)
+    sdsd = np.std(sd, ddof=1)
+    sd1 = sdsd / np.sqrt(2)
+    sd2 = np.sqrt(2 * np.std(rri, ddof=1) ** 2 - sd1 ** 2)
+
+    area = np.pi * sd1 * sd2
+
+    sns.set_palette(utils.cmap_fau_blue('2'))
+    sns.kdeplot(rri[:-1], rri[1:], ax=axs[0], n_levels=20, shade=True, shade_lowest=False, alpha=0.8)
+    sns.scatterplot(rri[:-1], rri[1:], ax=axs[0], alpha=0.5, edgecolor=utils.fau_color('fau'))
+    sns.distplot(rri[:-1], bins=int(len(rri) / 10), ax=axs[1], hist_kws=dict(edgecolor="none"))
+    sns.distplot(rri[1:], bins=int(len(rri) / 10), ax=axs[2], vertical=True, hist_kws=dict(edgecolor="none"))
+
+    ellipse = mpl.patches.Ellipse((mean_rri, mean_rri), width=2 * sd2, height=2 * sd1, angle=45,
+                                  ec=utils.fau_color('fau'),
+                                  fc=utils.adjust_color('fau', 1.5))
+    axs[0].add_artist(ellipse)
+
+    na = 4
+    arr_sd1 = axs[0].arrow(mean_rri, mean_rri, -(sd1 - na) * np.cos(np.deg2rad(45)),
+                           (sd1 - na) * np.cos(np.deg2rad(45)), head_width=na, head_length=na, linewidth=2.0,
+                           ec=utils.fau_color('phil'), fc=utils.fau_color('phil'), zorder=4)
+    arr_sd2 = axs[0].arrow(mean_rri, mean_rri, (sd2 - na) * np.cos(np.deg2rad(45)),
+                           (sd2 - na) * np.sin(np.deg2rad(45)), head_width=na, head_length=na, linewidth=2.0,
+                           ec=utils.fau_color('med'), fc=utils.fau_color('med'), zorder=4)
+    axs[0].add_line(
+        mpl.lines.Line2D((np.min(rri), np.max(rri)),
+                         (np.min(rri), np.max(rri)),
+                         c=utils.fau_color('med'), ls=':', lw=2.0, alpha=0.8))
+    axs[0].add_line(
+        mpl.lines.Line2D((mean_rri - sd1 * np.cos(np.deg2rad(45)) * na, mean_rri + sd1 * np.cos(np.deg2rad(45)) * na),
+                         (mean_rri + sd1 * np.sin(np.deg2rad(45)) * na, mean_rri - sd1 * np.sin(np.deg2rad(45)) * na),
+                         c=utils.fau_color('phil'), ls=':', lw=2.0, alpha=0.8))
+    # for Area and SD1/SD2 in Legend
+    a3 = mpl.patches.Patch(facecolor='white', alpha=0.0)
+    a4 = mpl.patches.Patch(facecolor='white', alpha=0.0)
+
+    axs[0].legend(
+        [arr_sd1, arr_sd2, a3, a4],
+        ['SD1: $%.3f ms$' % sd1, 'SD2: $%.3f ms$' % sd2, 'S: $%.3f ms^2$' % area, 'SD1/SD2: %.3f' % (sd1 / sd2)],
+        framealpha=1, fontsize=plt_fontsize - 4)
+
+    axs[0].set_xlabel(r"$RR_{i} [ms]$")
+    axs[0].set_ylabel(r"$RR_{i+1} [ms]$")
+    axs[0].xaxis.set_major_locator(mticks.MultipleLocator(50))
+    axs[0].xaxis.set_minor_locator(mticks.MultipleLocator(10))
+    axs[0].yaxis.set_major_locator(mticks.MultipleLocator(50))
+    axs[0].yaxis.set_minor_locator(mticks.MultipleLocator(10))
+    axs[0].tick_params(axis='both', which='both', left=True, bottom=True)
+
+    axs[1].set_xlim(*axs[0].get_xlim())
+    axs[2].set_ylim(*axs[0].get_ylim())
+    axs[1].axis('off')
+    axs[2].axis('off')
+
+
+def _get_rr_intervals(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256) -> np.array:
+    rri = (np.ediff1d(rpeaks['R_Peak_Idx'], to_begin=0) / sampling_rate) * 1000
+    rri = rri[1:]
+    return rri
