@@ -1,6 +1,7 @@
 from typing import Dict, Sequence, List, Tuple
 
 from EcgProcessingLib.plotting import *
+from EcgProcessingLib import EcgProcessor
 
 mist_params = {
     # MIST Phases
@@ -47,6 +48,49 @@ def mist_split_groups(condition_dict: Dict[str, Sequence[str]],
                       mist_dict: Dict[str, pd.DataFrame]) -> Dict[str, Dict[str, pd.DataFrame]]:
     return {condition: {key: df[condition_dict[condition]] for key, df in mist_dict.items()} for condition
             in condition_dict.keys()}
+
+
+def mist_hrv_subphases(ecg_processor: Optional[EcgProcessor] = None,
+                       dict_rpeak_loc: Optional[Dict[str, pd.DataFrame]] = None,
+                       sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
+                       subphases: Optional[Sequence[str]] = None,
+                       subphase_durations: Optional[Sequence[int]] = None) -> pd.DataFrame:
+    if ecg_processor is None and dict_rpeak_loc is None:
+        raise ValueError("Either 'ecg_processor' or dict_rpeak_loc' must be passed as arguments!")
+
+    if ecg_processor:
+        sampling_rate = ecg_processor.sampling_rate
+        dict_rpeak_loc = ecg_processor.rpeak_loc
+
+    if not subphases:
+        subphases = mist_params['subphases']
+    if not subphase_durations:
+        subphase_durations = mist_params['subphases.duration']
+
+    index_name = "Subphase"
+    list_df_subphases = []
+    for phase, df_rpeak_loc in dict_rpeak_loc.items():
+        df_rpeak_loc = df_rpeak_loc.copy()
+        list_subphases = []
+        if include_total:
+            # compute HRV over complete phase
+            list_subphases.append(EcgProcessor.hrv_process(df_rpeak_loc, index="Total", index_name=index_name,
+                                                           sampling_rate=sampling_rate))
+        if phase not in ["Part1", "Part2"]:
+            for subph, dur in zip(subphases, subphase_durations):
+                df_subph = df_rpeak_loc.first('{}S'.format(dur))
+                list_subphases.append(EcgProcessor.hrv_process(df_subph, index=subph, index_name=index_name))
+                df_rpeak_loc = df_rpeak_loc[~df_rpeak_loc.index.isin(df_subph.index)]
+
+            if len(subphase_durations) < len(subphases):
+                # add Feedback Interval (= remaining time) if present
+                list_subphases.append(EcgProcessor.hrv_process(df_rpeak_loc, index=subphases[-1], index_name=index_name))
+
+        df_hrv_subphases = pd.concat(list_subphases)
+        list_df_subphases.append(df_hrv_subphases)
+
+    df_hrv = pd.concat(list_df_subphases, keys=dict_rpeak_loc.keys(), names=["Phase"])
+    return df_hrv
 
 
 def mist_hr_course(data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
