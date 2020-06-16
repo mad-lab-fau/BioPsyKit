@@ -33,7 +33,7 @@ class EcgProcessor:
             }
         self.ecg_result: Dict[str, pd.DataFrame] = {}
         self.heart_rate: Dict[str, pd.DataFrame] = {}
-        self.r_peak_loc: Dict[str, pd.DataFrame] = {}
+        self.rpeak_loc: Dict[str, pd.DataFrame] = {}
 
     @property
     def ecg(self) -> Dict[str, pd.DataFrame]:
@@ -58,7 +58,7 @@ class EcgProcessor:
             self.ecg_result[name] = ecg_result
             self.heart_rate[name] = pd.DataFrame(nk.ecg_rate(df_rpeak['R_Peak_Idx'], sampling_rate=self.sampling_rate),
                                                  index=df_rpeak.index, columns=['ECG_Rate'])
-            self.r_peak_loc[name] = df_rpeak[['R_Peak_Idx']]
+            self.rpeak_loc[name] = df_rpeak[['R_Peak_Idx']]
 
     def _ecg_process(self, df: pd.DataFrame, method: Optional[str] = "neurokit") -> Tuple[pd.DataFrame, np.array]:
         ecg_signal = df['ecg'].values
