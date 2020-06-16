@@ -1,4 +1,4 @@
-from typing import Optional, Union, Sequence
+from typing import Optional, Union, Sequence, Tuple
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -27,7 +27,7 @@ plt.rcParams.update(mpl_rc_params)
 # TODO add kwargs
 def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate: Optional[int] = 256,
              name: Optional[str] = None, plot_distribution: Optional[bool] = False,
-             plot_individual_beats: Optional[bool] = False) -> plt.Figure:
+             plot_individual_beats: Optional[bool] = False) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
     import matplotlib.gridspec as gs
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
@@ -50,8 +50,8 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
             'hr': fig.add_subplot(spec[1, :-1])
         }
         if plot_distribution and plot_individual_beats:
-            axs['dist'] = fig.add_subplot(spec[0, -1])
-            axs['beats'] = fig.add_subplot(spec[1, -1])
+            axs['beats'] = fig.add_subplot(spec[0, -1])
+            axs['dist'] = fig.add_subplot(spec[1, -1])
         elif plot_individual_beats:
             axs['beats'] = fig.add_subplot(spec[:, -1])
         elif plot_distribution:
@@ -69,9 +69,6 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
     else:
         fig.suptitle("Electrocardiogram (ECG)", fontweight="bold")
     plt.subplots_adjust(hspace=0.3, wspace=0.1)
-
-    # Plot cleaned, raw ECG, R-peaks and signal quality
-    # axs['ecg'].set_title("Raw and Cleaned Signal")
 
     ecg_clean = nk.rescale(ecg_signals["ECG_Clean"],
                            to=[0, 1])
@@ -97,37 +94,31 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
     # order = [2, 0, 1, 3]
     order = [0, 1, 2, 3]
     axs['ecg'].legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc="upper right")
+
     # Plot heart rate
-    axs['hr'] = hr_plot(heart_rate, axs['hr'])
+    hr_plot(heart_rate, axs['hr'])
 
     # Plot individual heart beats
     if plot_individual_beats:
         individual_beats_plot(ecg_signals, peaks, sampling_rate, axs['beats'])
 
+    # Plot heart rate distribution
     if plot_distribution:
-        ecg_distribution_plot(heart_rate, axs['hist'])
+        ecg_distribution_plot(heart_rate, axs['dist'])
 
-    fig.tight_layout()
-    fig.autofmt_xdate(rotation=0, ha='center')
-
-    axs['ecg'].tick_params(axis='x', which='both', bottom=True)
-    axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
-    axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(5))
-
+    axs['ecg'].tick_params(axis='x', which='both', bottom=True, labelbottom=True)
     axs['ecg'].tick_params(axis='y', which='major', left=True)
 
-    if plot_individual_beats:
-        axs['beats'].tick_params(axis='x', which='major', bottom=True, labelbottom=True)
+    axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
+    axs['ecg'].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(5))
 
-    if plot_distribution:
-        axs['dist'].tick_params(axis='x', which='major', bottom=True, labelbottom=True)
-        axs['dist'].set_xlabel("Heart Rate [bpm]")
-
-    return fig
+    fig.tight_layout()
+    return fig, list(axs.values())
 
 
 def hr_plot(ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None,
-            show_mean: Optional[bool] = True, name: Optional[str] = None) -> plt.Axes:
+            show_mean: Optional[bool] = True, name: Optional[str] = None) -> Tuple[plt.Figure, plt.Axes]:
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
 
@@ -159,12 +150,13 @@ def hr_plot(ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None,
     if fig:
         fig.tight_layout()
         fig.autofmt_xdate()
-    return ax
+        return fig, ax
 
 
-def hrv_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, plot_frequency: Optional[bool] = True):
+def hrv_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, plot_frequency: Optional[bool] = True) -> Tuple[
+    plt.Figure, Sequence[plt.Axes]]:
     import matplotlib.gridspec as gs
-    fig = plt.figure(constrained_layout=False, figsize=(12, 7))
+    fig = plt.figure(constrained_layout=False, figsize=(14, 7))
 
     if plot_frequency:
         spec = gs.GridSpec(ncols=2, nrows=2, height_ratios=[1, 1], width_ratios=[1, 1])
@@ -191,10 +183,12 @@ def hrv_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, plot_freq
         hrv_frequency_plot(rpeaks, sampling_rate, axs['freq'])
 
     fig.tight_layout()
+    return fig, list(axs.values())
 
 
 def individual_beats_plot(ecg_signals: pd.DataFrame, peaks: Optional[Sequence[int]] = None,
-                          sampling_rate: Optional[int] = 256, ax: Optional[plt.Axes] = None):
+                          sampling_rate: Optional[int] = 256, ax: Optional[plt.Axes] = None) -> Tuple[
+    plt.Figure, plt.Axes]:
     fig: Union[plt.Figure, None] = None
     if ax is None:
         fig, ax = plt.subplots()
@@ -216,13 +210,14 @@ def individual_beats_plot(ecg_signals: pd.DataFrame, peaks: Optional[Sequence[in
         ax.plot(heartbeats_pivoted[x], color=color)
 
     ax.set_yticks([])
+    ax.tick_params(axis='x', which='major', bottom=True, labelbottom=True)
 
     if fig:
         fig.tight_layout()
-        return ax
+        return fig, ax
 
 
-def ecg_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None):
+def ecg_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None) -> Tuple[plt.Figure, plt.Axes]:
     fig: Union[plt.Figure, None] = None
     if ax is None:
         fig, ax = plt.subplots()
@@ -231,13 +226,13 @@ def ecg_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = Non
 
     ax.set_title("Heart Rate Distribution")
     ax.set_xlabel("Heart Rate [bpm]")
-    ax.set_yticks([])
     ax.set_xlim(heart_rate.min().min() - 1, heart_rate.max().max() + 1)
-    # ax.tick_params(axis='x', which='major', bottom=True)
+    ax.tick_params(axis='x', which='major', bottom=True, labelbottom=True)
+    ax.set_yticks([])
 
     if fig:
         fig.tight_layout()
-        return ax
+        return fig, ax
 
 
 def ecg_plot_artifacts(ecg_signals: pd.DataFrame, sampling_rate: Optional[int] = 256):
@@ -247,7 +242,7 @@ def ecg_plot_artifacts(ecg_signals: pd.DataFrame, sampling_rate: Optional[int] =
 
 
 def hrv_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                          ax: Optional[plt.Axes] = None) -> plt.Axes:
+                          ax: Optional[plt.Axes] = None) -> Tuple[plt.Figure, plt.Axes]:
     fig: Union[plt.Figure, None] = None
     if ax is None:
         fig, ax = plt.subplots()
@@ -286,11 +281,11 @@ def hrv_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 2
 
     if fig:
         fig.tight_layout()
-        return ax
+        return fig, ax
 
 
 def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                      axs: Optional[Sequence[plt.Axes]] = None) -> Union[None, Sequence[plt.Axes]]:
+                      axs: Optional[Sequence[plt.Axes]] = None) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
     import matplotlib.ticker as mticks
     import matplotlib.gridspec as spec
     fig: Union[plt.Figure, None] = None
@@ -361,11 +356,11 @@ def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
     if fig:
         fig.tight_layout()
-        return axs
+        return fig, axs
 
 
 def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                       ax: Optional[plt.Axes] = None) -> plt.Axes:
+                       ax: Optional[plt.Axes] = None) -> Tuple[plt.Figure, plt.Axes]:
     from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
     from neurokit2.hrv.hrv_utils import _hrv_get_rri
     fig: Union[plt.Figure, None] = None
@@ -384,7 +379,7 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
     if fig:
         fig.tight_layout()
-        return ax
+        return fig, ax
 
 
 def _get_rr_intervals(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256) -> np.array:
