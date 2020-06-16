@@ -26,8 +26,8 @@ plt.rcParams.update(mpl_rc_params)
 
 # TODO add kwargs
 def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate: Optional[int] = 256,
-             name: Optional[str] = None, plot_distribution: Optional[bool] = False,
-             plot_individual_beats: Optional[bool] = False) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
+             name: Optional[str] = None, plot_distribution: Optional[bool] = True,
+             plot_individual_beats: Optional[bool] = True) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
     import matplotlib.gridspec as gs
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
