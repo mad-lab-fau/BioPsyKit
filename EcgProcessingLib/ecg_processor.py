@@ -123,13 +123,9 @@ class EcgProcessor:
         df_rr['R_Peak_Idx'] = (df_rr['RR_Interval'].cumsum() * sampling_rate).astype(int)
         return df_rr
 
-    def hrv_process(self, df: pd.DataFrame, index: Optional[str] = None,
-                    index_name: Optional[str] = None) -> pd.DataFrame:
-        return self._hrv_process(df, self.sampling_rate, index, index_name)
-
     @classmethod
-    def _hrv_process(cls, df: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                     index: Optional[str] = None, index_name: Optional[str] = None) -> pd.DataFrame:
+    def hrv_process(cls, df: pd.DataFrame, index: Optional[str] = None, index_name: Optional[str] = None,
+                    sampling_rate: Optional[int] = 256) -> pd.DataFrame:
         hrv_time = nk.hrv_time(df['R_Peak_Idx'], sampling_rate=sampling_rate)
         hrv_nonlinear = nk.hrv_nonlinear(df['R_Peak_Idx'], sampling_rate=sampling_rate)
         df = pd.concat([hrv_time, hrv_nonlinear], axis=1)
