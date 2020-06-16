@@ -9,6 +9,7 @@ import pytz
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import seaborn as sns
 from NilsPodLib import Dataset
 
@@ -79,3 +80,21 @@ def load_hr_excel(filename: path_t) -> Dict[str, pd.DataFrame]:
     dict_hr = pd.read_excel(filename, index_col="date", sheet_name=None)
     dict_hr = {k: v.tz_localize(tz) for k, v in dict_hr.items()}
     return dict_hr
+
+
+def export_figure(fig: plt.Figure, filename: str, base_dir: path_t, use_subfolder: Optional[bool] = True,
+                  formats: Sequence[str] = None):
+    if formats is None:
+        formats = ['pdf']
+
+    # ensure pathlib
+    base_dir = Path(base_dir)
+    subfolder = [base_dir] * len(formats)
+
+    if use_subfolder:
+        subfolder = [base_dir.joinpath(f) for f in formats]
+        for folder in subfolder:
+            folder.mkdir(exist_ok=True, parents=True)
+
+    for f, subfold in zip(formats, subfolder):
+        fig.savefig(subfold.joinpath(filename + f), transparent=(f is 'pdf'), format=f)
