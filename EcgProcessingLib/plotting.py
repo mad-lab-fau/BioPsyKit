@@ -385,5 +385,5 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
 def _get_rr_intervals(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256) -> np.array:
     rri = (np.ediff1d(rpeaks['R_Peak_Idx_Corrected'], to_begin=0) / sampling_rate) * 1000
-    rri[0] = rri.mean()
+    rri = rri[1:]
     return rri

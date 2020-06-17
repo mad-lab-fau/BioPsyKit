@@ -128,16 +128,15 @@ class EcgProcessor:
         # fill missing RR intervals with interpolated R Peak Locations
         rpeaks_corrected = (df_rr['RR_Interval'].cumsum() * sampling_rate).astype(int)
         rpeaks_corrected = np.append(df_rr['R_Peak_Idx'].iloc[0], rpeaks_corrected[:-1] + df_rr['R_Peak_Idx'].iloc[0])
+        artifacts, rpeaks_corrected = nk.signal_fixpeaks(rpeaks_corrected, sampling_rate, iterative=True)
         df_rr.loc[:, 'R_Peak_Idx_Corrected'] = rpeaks_corrected
         return df_rr
 
     @classmethod
     def hrv_process(cls, df_rr: pd.DataFrame, index: Optional[str] = None, index_name: Optional[str] = None,
                     sampling_rate: Optional[int] = 256) -> pd.DataFrame:
-        artifacts, rpeaks_corrected = nk.signal_fixpeaks(df_rr['R_Peak_Idx_Corrected'].values, sampling_rate,
-                                                         iterative=True)
-        hrv_time = nk.hrv_time(rpeaks_corrected, sampling_rate=sampling_rate)
-        hrv_nonlinear = nk.hrv_nonlinear(rpeaks_corrected, sampling_rate=sampling_rate)
+        hrv_time = nk.hrv_time(df_rr['R_Peak_Idx_Corrected'], sampling_rate=sampling_rate)
+        hrv_nonlinear = nk.hrv_nonlinear(df_rr['R_Peak_Idx_Corrected'], sampling_rate=sampling_rate)
 
         df_rr = pd.concat([hrv_time, hrv_nonlinear], axis=1)
         if index:
