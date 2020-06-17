@@ -35,7 +35,7 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
     sns.set_palette(utils.cmap_fau)
     plt.rcParams['timezone'] = ecg_signals.index.tz.zone
 
-    outlier = np.where(ecg_signals["ECG_R_Peaks_Outlier"] == 1)[0]
+    outlier = np.where(ecg_signals["R_Peak_Outlier"] == 1)[0]
     peaks = np.where(ecg_signals["ECG_R_Peaks"] == 1)[0]
     peaks = np.setdiff1d(peaks, outlier)
     # Prepare figure and set axes.
@@ -367,8 +367,8 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
     if ax is None:
         fig, ax = plt.subplots()
 
-    rri = _hrv_get_rri(rpeaks['R_Peak_Idx'], sampling_rate=sampling_rate, interpolate=True)[0]
-    hrv = nk.hrv_frequency(rpeaks, sampling_rate)
+    rri = _hrv_get_rri(rpeaks['R_Peak_Idx_Corrected'], sampling_rate=sampling_rate, interpolate=True)[0]
+    hrv = nk.hrv_frequency(rpeaks['R_Peak_Idx_Corrected'], sampling_rate)
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]
     out_bands.columns = [col.replace('HRV_', '') for col in out_bands.columns]
     _hrv_frequency_show(rri, out_bands, sampling_rate=256, ax=ax)
@@ -383,6 +383,6 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
 
 def _get_rr_intervals(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256) -> np.array:
-    rri = (np.ediff1d(rpeaks['R_Peak_Idx'], to_begin=0) / sampling_rate) * 1000
-    rri = rri[1:]
+    rri = (np.ediff1d(rpeaks['R_Peak_Idx_Corrected'], to_begin=0) / sampling_rate) * 1000
+    rri[0] = rri.mean()
     return rri

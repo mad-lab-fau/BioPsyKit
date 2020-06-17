@@ -47,18 +47,19 @@ class EcgProcessor:
                     method: Optional[str] = "neurokit") -> None:
         for name, df in tqdm(self.data_dict.items(), desc=title):
             ecg_result, rpeak_idx = self._ecg_process(df, method=method)
-            ecg_result['ECG_R_Peaks_Outlier'] = 0.0
-            df_rpeak: pd.DataFrame = ecg_result.loc[ecg_result['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
+            ecg_result['R_Peak_Outlier'] = 0.0
+            df_rpeak = ecg_result.loc[ecg_result['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
             df_rpeak['R_Peak_Idx'] = rpeak_idx
             # ecg_result.drop('ECG_Rate', axis=1, inplace=True)
             df_rpeak = self.correct_outlier(ecg_result, df_rpeak, self.sampling_rate, quality_thres)
-            heart_rate = nk.ecg_rate(df_rpeak['R_Peak_Idx'], sampling_rate=self.sampling_rate,
-                                     desired_length=len(ecg_result['ECG_Clean']))
+            df_hr = pd.DataFrame({'ECG_Rate': 60 / df_rpeak['RR_Interval']})
+            # print(df_rpeak['R_Peak_Idx'])
+            heart_rate = nk.signal_interpolate(df_rpeak['R_Peak_Idx'], df_hr['ECG_Rate'],
+                                               desired_length=len(ecg_result['ECG_Clean']))
             ecg_result['ECG_Rate'] = heart_rate
             self.ecg_result[name] = ecg_result
-            self.heart_rate[name] = pd.DataFrame(nk.ecg_rate(df_rpeak['R_Peak_Idx'], sampling_rate=self.sampling_rate),
-                                                 index=df_rpeak.index, columns=['ECG_Rate'])
-            self.rpeak_loc[name] = df_rpeak[['R_Peak_Idx']]
+            self.heart_rate[name] = df_hr
+            self.rpeak_loc[name] = df_rpeak.drop('RR_Interval', axis=1)
 
     def _ecg_process(self, df: pd.DataFrame, method: Optional[str] = "neurokit") -> Tuple[pd.DataFrame, np.array]:
         ecg_signal = df['ecg'].values
@@ -78,7 +79,6 @@ class EcgProcessor:
                         hr_thres: Optional[Tuple[int, int]] = (45, 200)) -> pd.DataFrame:
         # signal outlier: copy dataframe to mark removed beats later
         df_cpy = df_rr.copy()
-
         # segment individual heart beats
         heartbeats = nk.ecg_segment(df_ecg['ECG_Clean'], df_rr['R_Peak_Idx'], sampling_rate)
         heartbeats = nk.epochs_to_df(heartbeats)
@@ -88,15 +88,17 @@ class EcgProcessor:
         heartbeats = heartbeats[~heartbeats.index.duplicated()]
         heartbeats_pivoted.columns = heartbeats.index
 
+        # get the last index because it will get lost when computing the RR interval
+        last_idx = df_rr.iloc[-1]
         # compute the average over all heart beats and compute the correlation coefficient between all beats and
         # the average
         mean_beat = heartbeats_pivoted.mean(axis=1)
         heartbeats_pivoted['mean'] = mean_beat
         corr_coeff = heartbeats_pivoted.corr()['mean'].abs().sort_values(ascending=True)
         corr_coeff.drop('mean', inplace=True)
-
         # compute RR intervals (in seconds) from R Peak Locations
-        df_rr['RR_Interval'] = np.ediff1d(df_rr['R_Peak_Idx'], to_begin=0) / sampling_rate
+        df_rr['RR_Interval'] = np.ediff1d(df_rr['R_Peak_Idx'], to_end=0) / sampling_rate
+        df_rr['R_Peak_Outlier'] = 0.0
 
         # signal outlier: drop all beats that are below a correlation coefficient threshold and below the signal
         # quality threshold
@@ -113,23 +115,33 @@ class EcgProcessor:
 
         # mark all removed beats as outlier in the ECG dataframe
         removed_beats = df_cpy['R_Peak_Idx'][df_rr['R_Peak_Idx'].isna()]
-        df_ecg.loc[removed_beats.index, 'ECG_R_Peaks_Outlier'] = 1.0
+        df_rr.fillna({'R_Peak_Outlier': 1.0}, inplace=True)
+        df_ecg.loc[removed_beats.index, 'R_Peak_Outlier'] = 1.0
 
         df_rr.drop('ECG_Quality', axis=1, inplace=True)
         # interpolate the removed beats
         df_rr.interpolate(method='linear', limit_direction='both', inplace=True)
+        df_rr['R_Peak_Idx'] = df_rr['R_Peak_Idx'].astype(int)
+        df_rr.loc[df_rr.index[-1]] = [last_idx['R_Peak_Idx'], df_rr['RR_Interval'].mean(), 0.0]
+        df_rr.drop_duplicates(subset='R_Peak_Idx', inplace=True)
+        print(df_rr)
 
-        # convert RR intervals back to R Peak Locations
-        df_rr['R_Peak_Idx'] = (df_rr['RR_Interval'].cumsum() * sampling_rate).astype(int)
+        # fill missing RR intervals with interpolated R Peak Locations
+        rpeaks_corrected = (df_rr['RR_Interval'].cumsum() * sampling_rate).astype(int)
+        rpeaks_corrected = np.append(df_rr['R_Peak_Idx'].iloc[0], rpeaks_corrected[:-1] + df_rr['R_Peak_Idx'].iloc[0])
+        df_rr.loc[:, 'R_Peak_Idx_Corrected'] = rpeaks_corrected
         return df_rr
 
     @classmethod
-    def hrv_process(cls, df: pd.DataFrame, index: Optional[str] = None, index_name: Optional[str] = None,
+    def hrv_process(cls, df_rr: pd.DataFrame, index: Optional[str] = None, index_name: Optional[str] = None,
                     sampling_rate: Optional[int] = 256) -> pd.DataFrame:
-        hrv_time = nk.hrv_time(df['R_Peak_Idx'], sampling_rate=sampling_rate)
-        hrv_nonlinear = nk.hrv_nonlinear(df['R_Peak_Idx'], sampling_rate=sampling_rate)
-        df = pd.concat([hrv_time, hrv_nonlinear], axis=1)
+        artifacts, rpeaks_corrected = nk.signal_fixpeaks(df_rr['R_Peak_Idx_Corrected'].values, sampling_rate,
+                                                         iterative=True)
+        hrv_time = nk.hrv_time(rpeaks_corrected, sampling_rate=sampling_rate)
+        hrv_nonlinear = nk.hrv_nonlinear(rpeaks_corrected, sampling_rate=sampling_rate)
+
+        df_rr = pd.concat([hrv_time, hrv_nonlinear], axis=1)
         if index:
-            df.index = [index]
-            df.index.name = index_name
-        return df
+            df_rr.index = [index]
+            df_rr.index.name = index_name
+        return df_rr
