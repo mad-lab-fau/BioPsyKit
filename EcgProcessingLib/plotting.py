@@ -111,7 +111,7 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
 
     axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
     axs['ecg'].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(5))
+    axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
     fig.tight_layout()
     return fig, list(axs.values())
@@ -142,7 +142,7 @@ def hr_plot(ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None,
     ax.tick_params(axis='x', which='both', bottom=True)
     ax.xaxis.set_major_locator(mdates.MinuteLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(5))
+    ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
     ax.tick_params(axis='y', which='major', left=True)
     ax.yaxis.set_major_locator(mticks.MaxNLocator(5, steps=[5, 10]))
@@ -346,11 +346,12 @@ def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
     axs[0].set_xlabel(r"$RR_{i} [ms]$")
     axs[0].set_ylabel(r"$RR_{i+1} [ms]$")
-    axs[0].xaxis.set_major_locator(mticks.MultipleLocator(50))
-    axs[0].xaxis.set_minor_locator(mticks.MultipleLocator(10))
-    axs[0].yaxis.set_major_locator(mticks.MultipleLocator(50))
-    axs[0].yaxis.set_minor_locator(mticks.MultipleLocator(10))
+    axs[0].xaxis.set_major_locator(mticks.MultipleLocator(100))
+    axs[0].xaxis.set_minor_locator(mticks.MultipleLocator(25))
+    axs[0].yaxis.set_major_locator(mticks.MultipleLocator(100))
+    axs[0].yaxis.set_minor_locator(mticks.MultipleLocator(25))
     axs[0].tick_params(axis='both', which='both', left=True, bottom=True)
+    axs[0].tick_params(axis='x', labelrotation=30)
     axs[1].axis('off')
     axs[2].axis('off')
 
