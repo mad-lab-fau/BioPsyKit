@@ -97,4 +97,4 @@ def export_figure(fig: plt.Figure, filename: str, base_dir: path_t, use_subfolde
             folder.mkdir(exist_ok=True, parents=True)
 
     for f, subfold in zip(formats, subfolder):
-        fig.savefig(subfold.joinpath(filename + f), transparent=(f is 'pdf'), format=f)
+        fig.savefig(subfold.joinpath(filename + '.' + f), transparent=(f is 'pdf'), format=f)

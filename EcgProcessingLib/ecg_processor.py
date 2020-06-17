@@ -1,6 +1,7 @@
 from typing import Optional, Dict, Tuple
 
 import EcgProcessingLib.utils as utils
+import EcgProcessingLib.signal as signal
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
@@ -50,11 +51,10 @@ class EcgProcessor:
             ecg_result['ECG_R_Peaks_Outlier'] = 0.0
             df_rpeak: pd.DataFrame = ecg_result.loc[ecg_result['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
             df_rpeak['R_Peak_Idx'] = rpeak_idx
-            # ecg_result.drop('ECG_Rate', axis=1, inplace=True)
             df_rpeak = self.correct_outlier(ecg_result, df_rpeak, self.sampling_rate, quality_thres)
-            heart_rate = nk.ecg_rate(df_rpeak['R_Peak_Idx'], sampling_rate=self.sampling_rate,
-                                     desired_length=len(ecg_result['ECG_Clean']))
-            ecg_result['ECG_Rate'] = heart_rate
+            # heart rate interpolated to total signal length
+            ecg_result['ECG_Rate'] = nk.ecg_rate(df_rpeak['R_Peak_Idx'], sampling_rate=self.sampling_rate,
+                                                 desired_length=len(ecg_result['ECG_Clean']))
             self.ecg_result[name] = ecg_result
             self.heart_rate[name] = pd.DataFrame(nk.ecg_rate(df_rpeak['R_Peak_Idx'], sampling_rate=self.sampling_rate),
                                                  index=df_rpeak.index, columns=['ECG_Rate'])
@@ -95,8 +95,9 @@ class EcgProcessor:
         corr_coeff = heartbeats_pivoted.corr()['mean'].abs().sort_values(ascending=True)
         corr_coeff.drop('mean', inplace=True)
 
+        idx_first = df_rr['R_Peak_Idx'].iloc[0]
         # compute RR intervals (in seconds) from R Peak Locations
-        df_rr['RR_Interval'] = np.ediff1d(df_rr['R_Peak_Idx'], to_begin=0) / sampling_rate
+        df_rr['RR_Interval'] = np.ediff1d(df_rr['R_Peak_Idx'], to_end=0) / sampling_rate
 
         # signal outlier: drop all beats that are below a correlation coefficient threshold and below the signal
         # quality threshold
@@ -113,23 +114,52 @@ class EcgProcessor:
 
         # mark all removed beats as outlier in the ECG dataframe
         removed_beats = df_cpy['R_Peak_Idx'][df_rr['R_Peak_Idx'].isna()]
-        df_ecg.loc[removed_beats.index, 'ECG_R_Peaks_Outlier'] = 1.0
 
         df_rr.drop('ECG_Quality', axis=1, inplace=True)
         # interpolate the removed beats
-        df_rr.interpolate(method='linear', limit_direction='both', inplace=True)
+        df_rr['R_Peak_Idx'] = df_rr['R_Peak_Idx'].interpolate(method='linear', limit_direction='both')
+        # df_rr['RR_Interval'] = df_rr['RR_Interval'].interpolate(method='linear', limit_direction='both')
+        df_rr.loc[df_rr.index[0], 'R_Peak_Idx'] = idx_first
+        # convert interpolated RR intervals back to R Peak Locations
+        # rpeak_idx_interpolated = (df_rr['RR_Interval'].cumsum() * sampling_rate) + idx_first
+        # print(rpeak_idx_interpolated.head(n=50))
+        # df_rr['R_Peak_Idx'].fillna(rpeak_idx_interpolated, inplace=True)
+        df_rr['R_Peak_Idx'] = df_rr['R_Peak_Idx'].astype(int)
 
-        # convert RR intervals back to R Peak Locations
-        df_rr['R_Peak_Idx'] = (df_rr['RR_Interval'].cumsum() * sampling_rate).astype(int)
+        rpeaks_corrected = df_rr['R_Peak_Idx'].values
+        #artifacts, rpeaks_corrected = nk.signal_fixpeaks(df_rr['R_Peak_Idx'].values, sampling_rate, iterative=True)
+        # correct location of R peaks
+        #rpeaks_corrected = signal.find_extrema_in_radius(df_ecg['ECG_Clean'], rpeaks_corrected, radius=10,
+        #                                                 extrema_type='max')
+        #removed_beats_corrected = signal.find_extrema_in_radius(df_ecg['ECG_Clean'], removed_beats,
+        #                                                        radius=10, extrema_type='max')
+
+        rri_corrected = np.ediff1d(rpeaks_corrected, to_end=0) / sampling_rate
+
+        df_rr = pd.DataFrame({'R_Peak_Idx': rpeaks_corrected, 'RR_Interval': rri_corrected},
+                             index=df_ecg['ECG_Raw'].index[rpeaks_corrected])
+
+        # drop duplicated indices: this happens when e.g. the following sequence of R Peak indices was at the
+        # end of the array before interpolation: NaN valid_index NaN NaN. Then the last values are
+        # padded with the last valid R Peak index and duplicate indices are
+        df_rr = df_rr.loc[~df_rr.index.duplicated(keep='first')]
+
+        print(rpeaks_corrected)
+        #print(removed_beats_corrected)
+
+        df_ecg.loc[:, 'ECG_R_Peaks'] = 0.0
+        df_ecg.loc[df_ecg.index[rpeaks_corrected], 'ECG_R_Peaks'] = 1.0
+        df_ecg.loc[df_ecg.index[removed_beats], 'ECG_R_Peaks_Outlier'] = 1.0
+
         return df_rr
 
     @classmethod
-    def hrv_process(cls, df: pd.DataFrame, index: Optional[str] = None, index_name: Optional[str] = None,
+    def hrv_process(cls, df_rr: pd.DataFrame, index: Optional[str] = None, index_name: Optional[str] = None,
                     sampling_rate: Optional[int] = 256) -> pd.DataFrame:
-        hrv_time = nk.hrv_time(df['R_Peak_Idx'], sampling_rate=sampling_rate)
-        hrv_nonlinear = nk.hrv_nonlinear(df['R_Peak_Idx'], sampling_rate=sampling_rate)
-        df = pd.concat([hrv_time, hrv_nonlinear], axis=1)
+        hrv_time = nk.hrv_time(df_rr['R_Peak_Idx'], sampling_rate=sampling_rate)
+        hrv_nonlinear = nk.hrv_nonlinear(df_rr['R_Peak_Idx'], sampling_rate=sampling_rate)
+        df_rr = pd.concat([hrv_time, hrv_nonlinear], axis=1)
         if index:
-            df.index = [index]
-            df.index.name = index_name
-        return df
+            df_rr.index = [index]
+            df_rr.index.name = index_name
+        return df_rr
