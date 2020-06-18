@@ -1,17 +1,32 @@
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional
 
 import pandas as pd
 import numpy as np
 from numba import njit
 
 
-def interpolate_sec(df: pd.DataFrame) -> pd.DataFrame:
+def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     from scipy import interpolate
-    x_old = np.array((df.index - df.index[0]).total_seconds())
+    if isinstance(data, pd.DataFrame):
+        column_name = data.columns
+    elif isinstance(data, pd.Series):
+        column_name = [data.name]
+    else:
+        raise ValueError("Only 'pd.DataFrame' or 'pd.Series' allowed as input!")
+    x_old = np.array((data.index - data.index[0]).total_seconds())
     x_new = np.arange(1, np.ceil(x_old[-1]) + 1)
-    interpol_f = interpolate.interp1d(x=x_old, y=df['ECG_Rate'], fill_value="extrapolate")
-    return pd.DataFrame(interpol_f(x_new), index=x_new, columns=df.columns)
+    data = _sanitize_input(data)
+    interpol_f = interpolate.interp1d(x=x_old, y=data, fill_value="extrapolate")
+    return pd.DataFrame(interpol_f(x_new), index=x_new, columns=column_name)
 
+
+def _sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
+    if isinstance(data, (pd.Series, pd.DataFrame)):
+        # only 1D pandas DataFrame allowed
+        if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
+            raise ValueError("Only 1D DataFrames allowed!")
+        data = np.squeeze(data.values)
+    return data.astype(float)
 
 # @njit(parallel=True)
 def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
