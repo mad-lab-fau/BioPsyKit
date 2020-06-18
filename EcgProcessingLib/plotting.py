@@ -317,7 +317,7 @@ def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
     ellipse = mpl.patches.Ellipse((mean_rri, mean_rri), width=2 * sd2, height=2 * sd1, angle=45,
                                   ec=utils.fau_color('fau'),
-                                  fc=utils.adjust_color('fau', 1.5))
+                                  fc=utils.adjust_color('fau', 1.5), alpha=0.8)
     axs[0].add_artist(ellipse)
 
     na = 4
