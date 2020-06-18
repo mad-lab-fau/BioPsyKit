@@ -105,12 +105,11 @@ class EcgProcessor:
         df_rr[df_rr['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index)] = None
         df_rr.loc[df_rr['ECG_Quality'] < quality_thres] = None
 
-        # physiological outlier: remove the 1% highest and lowest beats
+        # statistical outlier: remove the x% highest and lowest beats (1.96 std = 5% outlier, 2.576 std = 1% outlier)
         z_score = (df_rr['RR_Interval'] - df_rr['RR_Interval'].mean()) / df_rr['RR_Interval'].std()
-        # 1.96 std = 5% outlier
-        # 2.576 std = 1% outlier
         df_rr.loc[np.abs(z_score) > 2.576] = None
-        # minimum/maximum heart rate threshold
+
+        # physiological outlier: minimum/maximum heart rate threshold
         df_rr.loc[(df_rr['RR_Interval'] > (60 / hr_thres[0])) | (df_rr['RR_Interval'] < (60 / hr_thres[1]))] = None
 
         # mark all removed beats as outlier in the ECG dataframe
