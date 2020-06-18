@@ -28,7 +28,8 @@ def _sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndar
         data = np.squeeze(data.values)
     return data.astype(float)
 
-# @njit(parallel=True)
+
+@njit(parallel=True)
 def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
                            indices: Union[pd.DataFrame, pd.Series, np.ndarray], radius: Union[int, Tuple[int]],
                            extrema_type="min"):
@@ -39,13 +40,9 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
     extrema_func = extrema_funcs[extrema_type]
 
     # ensure numpy
-    if isinstance(data, (pd.Series, pd.DataFrame)):
-        data = np.squeeze(data.values)
-    if isinstance(indices, (pd.Series, pd.DataFrame)):
-        indices = np.squeeze(indices.values)
-    # Search region is twice the radius centered around each index
-    data = data.astype(float)
-    indices = indices.astype(int)
+    data = _sanitize_input(data)
+    indices = _sanitize_input(indices)
+    # possible start offset if beginning of array needs to be padded to ensure radius
     start_padding = 0
 
     # pad end/start of array if last_index+radius/first_index-radius is longer/shorter than array
@@ -57,6 +54,10 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
         lower_limit = radius[0]
     else:
         lower_limit = radius
+
+    # round up and make sure it's an integer
+    lower_limit = np.ceil(lower_limit).astype(int)
+    upper_limit = np.ceil(upper_limit).astype(int)
 
     if len(data) - np.max(indices) <= upper_limit:
         data = np.pad(data, (0, upper_limit), constant_values=np.nan)
