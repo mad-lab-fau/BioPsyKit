@@ -55,9 +55,9 @@ class EcgProcessor:
             # ecg_result.drop('ECG_Rate', axis=1, inplace=True)
             rpeaks = self.correct_outlier(ecg_result, rpeaks, self.sampling_rate, quality_thres)
             heart_rate = pd.DataFrame({'ECG_Rate': 60 / rpeaks['RR_Interval']})
-            heart_rate = nk.signal_interpolate(rpeaks['R_Peak_Idx'], heart_rate['ECG_Rate'],
-                                               desired_length=len(ecg_result['ECG_Clean']))
-            ecg_result['ECG_Rate'] = heart_rate
+            heart_rate_interpolated = nk.signal_interpolate(rpeaks['R_Peak_Idx'], heart_rate['ECG_Rate'],
+                                                            desired_length=len(ecg_result['ECG_Clean']))
+            ecg_result['ECG_Rate'] = heart_rate_interpolated
             self.ecg_result[name] = ecg_result
             self.heart_rate[name] = heart_rate
             self.rpeak_loc[name] = rpeaks.drop('RR_Interval', axis=1)
