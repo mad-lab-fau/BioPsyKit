@@ -1,9 +1,11 @@
 from typing import Optional, Dict, Tuple
 
 import EcgProcessingLib.utils as utils
+import EcgProcessingLib.signal as signal
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
+import scipy.signal as ss
 from NilsPodLib import Dataset
 from tqdm.notebook import tqdm
 
@@ -142,3 +144,86 @@ class EcgProcessor:
             df_rr.index = [index]
             df_rr.index.name = index_name
         return df_rr
+
+    @classmethod
+    def ecg_extract_edr(cls, df_ecg: pd.DataFrame, df_rpeaks: pd.DataFrame,
+                        sampling_rate: Optional[int] = 256,
+                        edr_type: Optional[str] = 'peak_trough_mean') -> pd.DataFrame:
+        """Extract ECG-derived respiration."""
+        edr_funcs = {
+            'peak_trough_mean': _edr_peak_trough_mean,
+            'peak_trough_diff': _edr_peak_trough_diff,
+            'peak_peak_interval': _edr_peak_peak_interval
+        }
+        if edr_type not in edr_funcs:
+            raise ValueError(
+                "`edr_type` must be one of {}, not {}".format(list(edr_funcs.keys()), edr_type))
+        edr_func = edr_funcs[edr_type]
+
+        peaks = np.squeeze(df_rpeaks['R_Peak_Idx'].values)
+        troughs = signal.find_extrema_in_radius(df_ecg['ECG_Clean'], peaks, radius=(int(0.1 * sampling_rate), 0))
+        outlier_mask = df_rpeaks['R_Peak_Outlier'] == 1
+
+        edr_signal_raw = edr_func(df_ecg['ECG_Clean'], peaks, troughs)
+        edr_signal = _remove_outlier_and_interpolate(edr_signal_raw, outlier_mask, peaks, len(df_ecg))
+        edr_signal = nk.signal_filter(edr_signal, sampling_rate=sampling_rate, lowcut=0.1, highcut=0.5, order=10)
+
+        return pd.DataFrame(edr_signal, index=df_ecg.index, columns=["ECG_Resp"])
+
+    @classmethod
+    def rsp_compute_rate(cls, resp_signal: pd.DataFrame, sampling_rate: Optional[int] = 256):
+        # find peaks: minimal distance between peaks: 1 seconds
+        resp_signal = signal.sanitize_input(resp_signal)
+        edr_maxima = ss.find_peaks(resp_signal, height=0, distance=sampling_rate)[0]
+        edr_minima = ss.find_peaks(-1 * resp_signal, height=0, distance=sampling_rate)[0]
+        # threshold: 0.2 * Q3 (= 75th percentile)
+        max_threshold = 0.2 * np.percentile(resp_signal[edr_maxima], 75)
+        edr_maxima = edr_maxima[resp_signal[edr_maxima] > max_threshold]
+
+        rsp_cycles_start_end = np.vstack([edr_maxima[:-1], edr_maxima[1:]]).T
+
+        valid_resp_phases_mask = np.apply_along_axis(_check_contains_trough, 1, rsp_cycles_start_end, edr_minima)
+        rsp_cycles_start_end = rsp_cycles_start_end[valid_resp_phases_mask]
+
+        edr_signal_split: list = np.split(resp_signal, rsp_cycles_start_end.flatten())[1::2]
+        rsp_cycles_start_end = rsp_cycles_start_end.T
+        rsp_peaks = rsp_cycles_start_end[0]
+        rsp_troughs = np.array(list(map(lambda arr: np.argmin(arr), edr_signal_split))) + rsp_cycles_start_end[0]
+
+        rsp_rate_peaks = _rsp_rate(rsp_peaks, sampling_rate, len(resp_signal))
+        rsp_rate_troughs = _rsp_rate(rsp_troughs, sampling_rate, len(resp_signal))
+        return np.concatenate([rsp_rate_peaks, rsp_rate_troughs]).mean()
+
+
+def _edr_peak_trough_mean(df_ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray):
+    peak_vals = np.array(df_ecg.iloc[peaks])
+    trough_vals = np.array(df_ecg.iloc[troughs])
+    return np.mean([peak_vals, trough_vals], axis=0)
+
+
+def _edr_peak_trough_diff(df_ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray):
+    peak_vals = np.array(df_ecg.iloc[peaks])
+    trough_vals = np.array(df_ecg.iloc[troughs])
+    return peak_vals - trough_vals
+
+
+def _edr_peak_peak_interval(df_ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray):
+    peak_interval = np.ediff1d(peaks, to_begin=0)
+    peak_interval[0] = peak_interval.mean()
+    return peak_interval
+
+
+def _remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x_old: np.ndarray, desired_length: int):
+    data[outlier_mask] = np.nan
+    data = pd.Series(data).interpolate(limit_direction='both').values
+    return nk.signal_interpolate(x_old, data, desired_length=desired_length, method='linear')
+
+
+def _check_contains_trough(start_end: np.ndarray, minima: np.ndarray):
+    start, end = start_end
+    return minima[(minima > start) & (minima < end)].shape[0] == 1
+
+
+def _rsp_rate(extrema: np.ndarray, sampling_rate: int, desired_length: int) -> np.ndarray:
+    rsp_rate_raw = sampling_rate * 60 / np.ediff1d(extrema)
+    return nk.signal_interpolate(extrema[:-1], rsp_rate_raw, desired_length, method='linear')
