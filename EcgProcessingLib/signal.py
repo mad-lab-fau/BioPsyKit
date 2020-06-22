@@ -14,12 +14,12 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
         raise ValueError("Only 'pd.DataFrame' or 'pd.Series' allowed as input!")
     x_old = np.array((data.index - data.index[0]).total_seconds())
     x_new = np.arange(1, np.ceil(x_old[-1]) + 1)
-    data = _sanitize_input(data)
+    data = sanitize_input(data)
     interpol_f = interpolate.interp1d(x=x_old, y=data, fill_value="extrapolate")
     return pd.DataFrame(interpol_f(x_new), index=x_new, columns=column_name)
 
 
-def _sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
+def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
     if isinstance(data, (pd.Series, pd.DataFrame)):
         # only 1D pandas DataFrame allowed
         if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
@@ -30,7 +30,7 @@ def _sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndar
 
 # @njit(parallel=True)
 def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
-                           indices: Union[pd.DataFrame, pd.Series, np.ndarray], radius: Union[int, Tuple[int]],
+                           indices: Union[pd.DataFrame, pd.Series, np.ndarray], radius: Union[int, Tuple[int, int]],
                            extrema_type="min"):
     extrema_funcs = {"min": np.nanargmin, "max": np.nanargmax}
 
@@ -39,8 +39,8 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
     extrema_func = extrema_funcs[extrema_type]
 
     # ensure numpy
-    data = _sanitize_input(data)
-    indices = _sanitize_input(indices)
+    data = sanitize_input(data)
+    indices = sanitize_input(indices)
     indices = indices.astype(int)
     # possible start offset if beginning of array needs to be padded to ensure radius
     start_padding = 0
