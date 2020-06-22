@@ -50,17 +50,35 @@ def mist_split_groups(condition_dict: Dict[str, Sequence[str]],
             in condition_dict.keys()}
 
 
-def mist_hrv_subphases(ecg_processor: Optional[EcgProcessor] = None,
-                       dict_rpeak_loc: Optional[Dict[str, pd.DataFrame]] = None,
-                       sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
-                       subphases: Optional[Sequence[str]] = None,
-                       subphase_durations: Optional[Sequence[int]] = None) -> pd.DataFrame:
-    if ecg_processor is None and dict_rpeak_loc is None:
-        raise ValueError("Either 'ecg_processor' or dict_rpeak_loc' must be passed as arguments!")
+def mist_param_subphases(ecg_processor: Optional[EcgProcessor] = None,
+                         dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
+                         dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
+                         param_types: Optional[Union[str, Sequence[str]]] = 'all',
+                         sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
+                         subphases: Optional[Sequence[str]] = None,
+                         subphase_durations: Optional[Sequence[int]] = None) -> pd.DataFrame:
+    if ecg_processor is None and dict_rpeaks is None:
+        raise ValueError("Either `ecg_processor` or `dict_rpeaks` must be passed as arguments!")
+
+    possible_param_types = ['hrv', 'rsp']
+    if param_types == 'all':
+        param_types = possible_param_types
+
+    if isinstance(param_types, str):
+        param_types = [param_types]
+    if not all([param in possible_param_types for param in param_types]):
+        raise ValueError("`param_types` must all be of {}, not {}".format(param_types, possible_param_types))
 
     if ecg_processor:
         sampling_rate = ecg_processor.sampling_rate
-        dict_rpeak_loc = ecg_processor.rpeak_loc
+        dict_rpeaks = ecg_processor.rpeak_loc
+        if 'rsp' in param_types:
+            dict_ecg = ecg_processor.ecg_result
+        else:
+            dict_ecg = {k: pd.DataFrame(index=v.index) for k, v in dict_rpeaks.items()}
+
+    if 'rsp' in param_types and dict_ecg is None:
+        raise ValueError("`dict_ecg` must be passed if param_type is {}!".format(param_types))
 
     if not subphases:
         subphases = mist_params['subphases']
@@ -68,29 +86,51 @@ def mist_hrv_subphases(ecg_processor: Optional[EcgProcessor] = None,
         subphase_durations = mist_params['subphases.duration']
 
     index_name = "Subphase"
-    list_df_subphases = []
-    for phase, df_rpeak_loc in dict_rpeak_loc.items():
-        df_rpeak_loc = df_rpeak_loc.copy()
-        list_subphases = []
+    dict_df_subphases = {param: list() for param in param_types}
+    for (phase, rpeaks), (ecg_phase, ecg) in zip(dict_rpeaks.items(), dict_ecg.items()):
+        rpeaks = rpeaks.copy()
+        ecg = ecg.copy()
+
+        dict_subphases = {param: list() for param in param_types}
         if include_total:
             # compute HRV over complete phase
-            list_subphases.append(EcgProcessor.hrv_process(df_rpeak_loc, index="Total", index_name=index_name,
-                                                           sampling_rate=sampling_rate))
+            if 'hrv' in param_types:
+                dict_subphases['hrv'].append(EcgProcessor.hrv_process(rpeaks, index="Total", index_name=index_name,
+                                                                      sampling_rate=sampling_rate))
+            if 'rsp' in param_types:
+                dict_subphases['rsp'].append(
+                    EcgProcessor.rsp_rsa_process(ecg, rpeaks, index="Total", index_name=index_name,
+                                                 sampling_rate=sampling_rate))
+
         if phase not in ["Part1", "Part2"]:
             for subph, dur in zip(subphases, subphase_durations):
-                df_subph = df_rpeak_loc.first('{}S'.format(dur))
-                list_subphases.append(EcgProcessor.hrv_process(df_subph, index=subph, index_name=index_name))
-                df_rpeak_loc = df_rpeak_loc[~df_rpeak_loc.index.isin(df_subph.index)]
+                df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
+                df_subph_ecg = ecg
+
+                if 'hrv' in param_types:
+                    dict_subphases['hrv'].append(
+                        EcgProcessor.hrv_process(df_subph_rpeaks, index=subph, index_name=index_name))
+                if 'rsp' in param_types:
+                    dict_subphases['rsp'].append(
+                        EcgProcessor.rsp_rsa_process(df_subph_ecg, df_subph_rpeaks, index=subph, index_name=index_name))
+
+                rpeaks = rpeaks[~rpeaks.index.isin(df_subph_rpeaks.index)]
 
             if len(subphase_durations) < len(subphases):
                 # add Feedback Interval (= remaining time) if present
-                list_subphases.append(EcgProcessor.hrv_process(df_rpeak_loc, index=subphases[-1], index_name=index_name))
+                if 'hrv' in param_types:
+                    dict_subphases['hrv'].append(
+                        EcgProcessor.hrv_process(rpeaks, index=subphases[-1], index_name=index_name))
+                if 'rsp' in param_types:
+                    dict_subphases['rsp'].append(
+                        EcgProcessor.rsp_rsa_process(ecg, rpeaks, index=subphases[-1], index_name=index_name))
 
-        df_hrv_subphases = pd.concat(list_subphases)
-        list_df_subphases.append(df_hrv_subphases)
+        for param in dict_subphases:
+            dict_df_subphases[param].append(pd.concat(dict_subphases[param]))
 
-    df_hrv = pd.concat(list_df_subphases, keys=dict_rpeak_loc.keys(), names=["Phase"])
-    return df_hrv
+    return pd.concat(
+        [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["Phase"]) for dict_df in dict_df_subphases.values()],
+        axis=1)
 
 
 def mist_hr_course(data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
