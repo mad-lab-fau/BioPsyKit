@@ -65,13 +65,13 @@ def split_data(time_info: Union[pd.Series, Dict[str, Sequence[str]]], dataset: O
     return data_dict
 
 
-def write_hr_to_excel(ep: 'EcgProcessor', folder: path_t, filename: path_t):
+def write_hr_to_excel(ecg_processor: 'EcgProcessor', folder: path_t, filename: path_t):
     # ensure pathlib
     folder = Path(folder)
     filename = Path(filename)
 
     writer = pd.ExcelWriter(folder.joinpath(filename), engine='xlsxwriter')
-    for label, df_hr in ep.heart_rate.items():
+    for label, df_hr in ecg_processor.heart_rate.items():
         df_hr.tz_localize(None).to_excel(writer, sheet_name=label)
     writer.save()
 
