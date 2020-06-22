@@ -82,6 +82,14 @@ def load_hr_excel(filename: path_t) -> Dict[str, pd.DataFrame]:
     return dict_hr
 
 
+def write_result_dict_to_csv(result_dict: Dict, filename: path_t):
+    df_hrv_concat = pd.concat(result_dict, names=["Subject_ID"])
+    if filename.exists():
+        df_hrv_old = pd.read_csv(filename, index_col=["Subject_ID", "Phase", "Subphase"])
+        df_hrv_concat = df_hrv_concat.combine_first(df_hrv_old).sort_index(level=0)
+    df_hrv_concat.reset_index().to_csv(filename, index=False)
+
+
 def export_figure(fig: plt.Figure, filename: str, base_dir: path_t, use_subfolder: Optional[bool] = True,
                   formats: Sequence[str] = None):
     if formats is None:
