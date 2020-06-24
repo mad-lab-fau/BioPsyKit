@@ -65,6 +65,17 @@ def split_data(time_info: Union[pd.Series, Dict[str, Sequence[str]]], dataset: O
     return data_dict
 
 
+def check_input(ecg_processor: 'EcgProcessor', key: str, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame) -> bool:
+    if all([x is None for x in [ecg_processor, key, ecg_signal, rpeaks]]):
+        raise ValueError(
+            "Either `ecg_processor` and `key` or `rpeaks` and `ecg_signal` must be passed as arguments!")
+    if ecg_processor:
+        if key is None:
+            raise ValueError("`key` must be passed as argument when `ecg_processor` is passed!")
+
+    return True
+
+
 def write_hr_to_excel(ecg_processor: 'EcgProcessor', folder: path_t, filename: path_t):
     # ensure pathlib
     folder = Path(folder)
