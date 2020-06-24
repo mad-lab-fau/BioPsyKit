@@ -8,6 +8,8 @@ import pandas as pd
 import seaborn as sns
 
 import EcgProcessingLib.utils as utils
+import EcgProcessingLib.signal as signal
+from EcgProcessingLib import EcgProcessor
 
 sns.set(context="paper", style="white")
 
@@ -25,21 +27,29 @@ plt.rcParams.update(mpl_rc_params)
 
 
 # TODO add kwargs
-def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate: Optional[int] = 256,
+def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
+             ecg_signal: Optional[pd.DataFrame] = None, heart_rate: Optional[pd.DataFrame] = None,
+             sampling_rate: Optional[int] = 256,
              name: Optional[str] = None, plot_distribution: Optional[bool] = True,
              plot_individual_beats: Optional[bool] = True) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
     import matplotlib.gridspec as gs
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
 
-    sns.set_palette(utils.cmap_fau)
-    plt.rcParams['timezone'] = ecg_signals.index.tz.zone
+    utils.check_input(ecg_processor, key, ecg_signal, heart_rate)
+    if ecg_processor:
+        ecg_signal = ecg_processor.ecg_result[key]
+        heart_rate = ecg_processor.heart_rate[key]
+        sampling_rate = ecg_processor.sampling_rate
 
-    outlier = np.where(ecg_signals["R_Peak_Outlier"] == 1)[0]
-    peaks = np.where(ecg_signals["ECG_R_Peaks"] == 1)[0]
+    sns.set_palette(utils.cmap_fau)
+    plt.rcParams['timezone'] = ecg_signal.index.tz.zone
+
+    outlier = np.where(ecg_signal["R_Peak_Outlier"] == 1)[0]
+    peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
     peaks = np.setdiff1d(peaks, outlier)
     # Prepare figure and set axes.
-    x_axis = ecg_signals.index
+    x_axis = ecg_signal.index
 
     fig = plt.figure(figsize=(15, 5), constrained_layout=False)
 
@@ -70,9 +80,9 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
         fig.suptitle("Electrocardiogram (ECG)", fontweight="bold")
     plt.subplots_adjust(hspace=0.3, wspace=0.1)
 
-    ecg_clean = nk.rescale(ecg_signals["ECG_Clean"],
+    ecg_clean = nk.rescale(ecg_signal["ECG_Clean"],
                            to=[0, 1])
-    quality = ecg_signals["ECG_Quality"]
+    quality = ecg_signal["ECG_Quality"]
     minimum_line = np.full(len(x_axis), quality.min())
 
     # Plot quality area first
@@ -100,7 +110,7 @@ def ecg_plot(ecg_signals: pd.DataFrame, heart_rate: pd.DataFrame, sampling_rate:
 
     # Plot individual heart beats
     if plot_individual_beats:
-        individual_beats_plot(ecg_signals, peaks, sampling_rate, axs['beats'])
+        individual_beats_plot(ecg_signal, peaks, sampling_rate, axs['beats'])
 
     # Plot heart rate distribution
     if plot_distribution:
@@ -153,9 +163,20 @@ def hr_plot(ecg_signals: pd.DataFrame, ax: Optional[plt.Axes] = None,
         return fig, ax
 
 
-def hrv_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, plot_frequency: Optional[bool] = True) -> Tuple[
+def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
+             ecg_signal: Optional[pd.DataFrame] = None, rpeaks: Optional[pd.DataFrame] = None,
+             sampling_rate: Optional[int] = 256, plot_frequency: Optional[bool] = True) -> Tuple[
     plt.Figure, Sequence[plt.Axes]]:
     import matplotlib.gridspec as gs
+
+    utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+    if ecg_processor:
+        ecg_signal = ecg_processor.ecg_result[key]
+        rpeaks = ecg_processor.rpeaks[key]
+        sampling_rate = ecg_processor.sampling_rate
+
+    rpeaks = EcgProcessor.correct_rpeaks(ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate)
+
     fig = plt.figure(constrained_layout=False, figsize=(14, 7))
 
     if plot_frequency:
@@ -186,7 +207,7 @@ def hrv_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, plot_freq
     return fig, list(axs.values())
 
 
-def individual_beats_plot(ecg_signals: pd.DataFrame, peaks: Optional[Sequence[int]] = None,
+def individual_beats_plot(ecg_signal: pd.DataFrame, peaks: Optional[Sequence[int]] = None,
                           sampling_rate: Optional[int] = 256, ax: Optional[plt.Axes] = None) -> Tuple[
     plt.Figure, plt.Axes]:
     fig: Union[plt.Figure, None] = None
@@ -194,9 +215,9 @@ def individual_beats_plot(ecg_signals: pd.DataFrame, peaks: Optional[Sequence[in
         fig, ax = plt.subplots()
 
     if peaks is None:
-        peaks = np.where(ecg_signals["ECG_R_Peaks"] == 1)[0]
+        peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
 
-    heartbeats = nk.ecg_segment(ecg_signals['ECG_Clean'], peaks, sampling_rate)
+    heartbeats = nk.ecg_segment(ecg_signal['ECG_Clean'], peaks, sampling_rate)
     heartbeats = nk.epochs_to_df(heartbeats)
     heartbeats_pivoted = heartbeats.pivot(index='Time', columns='Label', values='Signal')
 
@@ -368,8 +389,9 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
     if ax is None:
         fig, ax = plt.subplots()
 
-    rri = _hrv_get_rri(rpeaks['R_Peak_Idx_Corrected'], sampling_rate=sampling_rate, interpolate=True)[0]
-    hrv = nk.hrv_frequency(rpeaks['R_Peak_Idx_Corrected'], sampling_rate)
+    rpeaks = signal.sanitize_input(rpeaks['R_Peak_Idx'])
+    rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate, interpolate=True)[0]
+    hrv = nk.hrv_frequency(rpeaks, sampling_rate)
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]
     out_bands.columns = [col.replace('HRV_', '') for col in out_bands.columns]
     _hrv_frequency_show(rri, out_bands, sampling_rate=256, ax=ax)
@@ -384,6 +406,6 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
 
 def _get_rr_intervals(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256) -> np.array:
-    rri = (np.ediff1d(rpeaks['R_Peak_Idx_Corrected'], to_begin=0) / sampling_rate) * 1000
+    rri = (np.ediff1d(rpeaks['R_Peak_Idx'], to_begin=0) / sampling_rate) * 1000
     rri = rri[1:]
     return rri
