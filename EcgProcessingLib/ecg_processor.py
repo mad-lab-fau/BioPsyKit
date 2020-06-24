@@ -35,7 +35,7 @@ class EcgProcessor:
             }
         self.ecg_result: Dict[str, pd.DataFrame] = {}
         self.heart_rate: Dict[str, pd.DataFrame] = {}
-        self.rpeak_loc: Dict[str, pd.DataFrame] = {}
+        self.rpeaks: Dict[str, pd.DataFrame] = {}
 
     @property
     def ecg(self) -> Dict[str, pd.DataFrame]:
@@ -57,10 +57,11 @@ class EcgProcessor:
             heart_rate = pd.DataFrame({'ECG_Rate': 60 / rpeaks['RR_Interval']})
             heart_rate_interpolated = nk.signal_interpolate(rpeaks['R_Peak_Idx'], heart_rate['ECG_Rate'],
                                                             desired_length=len(ecg_result['ECG_Clean']))
+            # rpeaks.drop('RR_Interval', axis=1, inplace=True)
             ecg_result['ECG_Rate'] = heart_rate_interpolated
             self.ecg_result[name] = ecg_result
             self.heart_rate[name] = heart_rate
-            self.rpeak_loc[name] = rpeaks.drop('RR_Interval', axis=1)
+            self.rpeaks[name] = rpeaks
 
     def _ecg_process(self, data: pd.DataFrame, method: Optional[str] = "neurokit") -> Tuple[pd.DataFrame, np.array]:
         ecg_signal = data['ecg'].values
@@ -123,19 +124,42 @@ class EcgProcessor:
         rpeaks['R_Peak_Idx'] = rpeaks['R_Peak_Idx'].astype(int)
         rpeaks.loc[rpeaks.index[-1]] = [last_idx['R_Peak_Idx'], rpeaks['RR_Interval'].mean(), 0.0]
         rpeaks.drop_duplicates(subset='R_Peak_Idx', inplace=True)
+        return rpeaks
+
+    @classmethod
+    def correct_rpeaks(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
+                       ecg_signal: Optional[pd.DataFrame] = None,
+                       rpeaks: Optional[pd.DataFrame] = None,
+                       sampling_rate: Optional[int] = 256) -> pd.DataFrame:
+
+        utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+        if ecg_processor:
+            rpeaks = ecg_processor.rpeaks[key]
+            ecg_signal = ecg_processor.ecg_result[key]
+            sampling_rate = ecg_processor.sampling_rate
 
         # fill missing RR intervals with interpolated R Peak Locations
         rpeaks_corrected = (rpeaks['RR_Interval'].cumsum() * sampling_rate).astype(int)
         rpeaks_corrected = np.append(rpeaks['R_Peak_Idx'].iloc[0], rpeaks_corrected[:-1] + rpeaks['R_Peak_Idx'].iloc[0])
         artifacts, rpeaks_corrected = nk.signal_fixpeaks(rpeaks_corrected, sampling_rate, iterative=True)
-        rpeaks.loc[:, 'R_Peak_Idx_Corrected'] = rpeaks_corrected
-        return rpeaks
+        rpeaks_corrected = rpeaks_corrected.astype(int)
+        return pd.DataFrame(rpeaks_corrected, columns=['R_Peak_Idx'])
 
     @classmethod
-    def hrv_process(cls, rpeaks: pd.DataFrame, index: Optional[str] = None, index_name: Optional[str] = None,
+    def hrv_process(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
+                    ecg_signal: Optional[pd.DataFrame] = None, rpeaks: Optional[pd.DataFrame] = None,
+                    index: Optional[str] = None, index_name: Optional[str] = None,
                     sampling_rate: Optional[int] = 256) -> pd.DataFrame:
-        hrv_time = nk.hrv_time(rpeaks['R_Peak_Idx_Corrected'], sampling_rate=sampling_rate)
-        hrv_nonlinear = nk.hrv_nonlinear(rpeaks['R_Peak_Idx_Corrected'], sampling_rate=sampling_rate)
+
+        utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+        if ecg_processor:
+            ecg_signal = ecg_processor.ecg_result[key]
+            rpeaks = ecg_processor.rpeaks[key]
+            sampling_rate = ecg_processor.sampling_rate
+
+        rpeaks = cls.correct_rpeaks(ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate)
+        hrv_time = nk.hrv_time(rpeaks['R_Peak_Idx'], sampling_rate=sampling_rate)
+        hrv_nonlinear = nk.hrv_nonlinear(rpeaks['R_Peak_Idx'], sampling_rate=sampling_rate)
 
         rpeaks = pd.concat([hrv_time, hrv_nonlinear], axis=1)
         if index:
@@ -144,10 +168,17 @@ class EcgProcessor:
         return rpeaks
 
     @classmethod
-    def ecg_extract_edr(cls, ecg_signals: pd.DataFrame, rpeaks: pd.DataFrame,
+    def ecg_extract_edr(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
+                        ecg_signal: Optional[pd.DataFrame] = None, rpeaks: Optional[pd.DataFrame] = None,
                         sampling_rate: Optional[int] = 256,
                         edr_type: Optional[str] = 'peak_trough_mean') -> pd.DataFrame:
         """Extract ECG-derived respiration."""
+
+        utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+        if ecg_processor:
+            ecg_signal = ecg_processor.ecg_result
+            rpeaks = ecg_processor.rpeaks
+            sampling_rate = ecg_processor.sampling_rate
 
         if edr_type not in _edr_methods:
             raise ValueError(
@@ -156,14 +187,14 @@ class EcgProcessor:
 
         peaks = np.squeeze(rpeaks['R_Peak_Idx'].values)
 
-        troughs = signal.find_extrema_in_radius(ecg_signals['ECG_Clean'], peaks, radius=(int(0.1 * sampling_rate), 0))
+        troughs = signal.find_extrema_in_radius(ecg_signal['ECG_Clean'], peaks, radius=(int(0.1 * sampling_rate), 0))
         outlier_mask = rpeaks['R_Peak_Outlier'] == 1
 
-        edr_signal_raw = edr_func(ecg_signals['ECG_Clean'], peaks, troughs)
-        edr_signal = _remove_outlier_and_interpolate(edr_signal_raw, outlier_mask, peaks, len(ecg_signals))
+        edr_signal_raw = edr_func(ecg_signal['ECG_Clean'], peaks, troughs)
+        edr_signal = _remove_outlier_and_interpolate(edr_signal_raw, outlier_mask, peaks, len(ecg_signal))
         edr_signal = nk.signal_filter(edr_signal, sampling_rate=sampling_rate, lowcut=0.1, highcut=0.5, order=10)
 
-        return pd.DataFrame(edr_signal, index=ecg_signals.index, columns=["ECG_Resp"])
+        return pd.DataFrame(edr_signal, index=ecg_signal.index, columns=["ECG_Resp"])
 
     @classmethod
     def rsp_compute_rate(cls, rsp_signal: pd.DataFrame, sampling_rate: Optional[int] = 256):
@@ -197,14 +228,16 @@ class EcgProcessor:
         rsp_output.index = ecg_signal.index
         return nk.ecg_rsa(ecg_signal, rsp_output, sampling_rate=sampling_rate)
 
+    # TODO add tqdr
     @classmethod
-    def rsp_rsa_process(cls, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
+    def rsp_rsa_process(cls, rpeaks: pd.DataFrame, ecg_signal: pd.DataFrame,
                         index: Optional[str] = None, index_name: Optional[str] = None,
                         sampling_rate: Optional[int] = 256, return_mean: Optional[bool] = True):
         rsp_rate = dict.fromkeys(_edr_methods.keys())
         rsa = dict.fromkeys(_edr_methods.keys())
         for method in _edr_methods.keys():
-            rsp_signal = cls.ecg_extract_edr(ecg_signal, rpeaks, sampling_rate, edr_type=method)
+            rsp_signal = cls.ecg_extract_edr(ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate,
+                                             edr_type=method)
             rsp_rate[method] = cls.rsp_compute_rate(rsp_signal, sampling_rate)
             rsa[method] = cls.rsa_process(ecg_signal, rsp_signal, sampling_rate)
 
