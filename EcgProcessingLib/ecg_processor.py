@@ -228,7 +228,6 @@ class EcgProcessor:
         rsp_output.index = ecg_signal.index
         return nk.ecg_rsa(ecg_signal, rsp_output, sampling_rate=sampling_rate)
 
-    # TODO add tqdr
     @classmethod
     def rsp_rsa_process(cls, rpeaks: pd.DataFrame, ecg_signal: pd.DataFrame,
                         index: Optional[str] = None, index_name: Optional[str] = None,

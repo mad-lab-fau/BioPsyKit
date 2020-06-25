@@ -1,4 +1,6 @@
-from typing import Dict, Sequence, List, Tuple
+from typing import Dict
+
+from tqdm.notebook import tqdm
 
 from EcgProcessingLib.plotting import *
 from EcgProcessingLib import EcgProcessor
@@ -89,7 +91,7 @@ def mist_param_subphases(ecg_processor: Optional[EcgProcessor] = None,
 
     index_name = "Subphase"
     dict_df_subphases = {param: list() for param in param_types}
-    for (phase, rpeaks), (ecg_phase, ecg) in zip(dict_rpeaks.items(), dict_ecg.items()):
+    for (phase, rpeaks), (ecg_phase, ecg) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc="HRV/RSP"):
         rpeaks = rpeaks.copy()
         ecg = ecg.copy()
 
