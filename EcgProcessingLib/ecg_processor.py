@@ -82,9 +82,11 @@ class EcgProcessor:
         return signals, rpeaks
 
     @classmethod
-    def correct_outlier(cls, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                        quality_thres: Optional[float] = 0.4, corr_thres: Optional[float] = 0.3,
-                        hr_thres: Optional[Tuple[int, int]] = (45, 200)) -> pd.DataFrame:
+    def correct_outlier(cls, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
+                        sampling_rate: Optional[int] = 256, quality_thres: Optional[float] = 0.4,
+                        corr_thres: Optional[float] = 0.3,
+                        hr_thres: Optional[Tuple[int, int]] = (45, 200), step=0) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        from scipy.stats import iqr
         # signal outlier: copy dataframe to mark removed beats later
         rpeaks_copy = rpeaks.copy()
         # segment individual heart beats
@@ -108,30 +110,55 @@ class EcgProcessor:
         rpeaks['RR_Interval'] = np.ediff1d(rpeaks['R_Peak_Idx'], to_end=0) / sampling_rate
         rpeaks['R_Peak_Outlier'] = 0.0
 
+        bool_mask = np.full(rpeaks.shape[0], False)
+
         # signal outlier: drop all beats that are below a correlation coefficient threshold and below the signal
         # quality threshold
-        rpeaks[rpeaks['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index)] = None
-        rpeaks.loc[rpeaks['ECG_Quality'] < quality_thres] = None
+        bool_mask = np.logical_or(bool_mask, rpeaks['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index))
+        # rpeaks[rpeaks['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index)] = None
+        bool_mask = np.logical_or(bool_mask, rpeaks['R_Peak_Quality'] < quality_thres)
+        # rpeaks.loc[rpeaks['R_Peak_Quality'] < quality_thres] = None
 
-        # statistical outlier: remove the x% highest and lowest beats (1.96 std = 5% outlier, 2.576 std = 1% outlier)
-        z_score = (rpeaks['RR_Interval'] - rpeaks['RR_Interval'].mean()) / rpeaks['RR_Interval'].std()
-        rpeaks.loc[np.abs(z_score) > 2.576] = None
+        # statistical outlier: remove the x% highest and lowest successive differences (1.96 std = 5% outlier, 2.576 std = 1% outlier)
+        # z_score = (rpeaks['RR_Interval'] - rpeaks['RR_Interval'].mean()) / rpeaks['RR_Interval'].std()
+        diff_rri = np.ediff1d(rpeaks['RR_Interval'], to_end=0)
+        z_score = (diff_rri - np.nanmean(diff_rri)) / np.nanstd(diff_rri, ddof=1)
+
+        bool_mask = np.logical_or(bool_mask, np.abs(z_score) > 2.576)
+        # rpeaks.loc[np.abs(z_score) > 2.576] = None
+
+        # compute artifact-detection criterion based on Berntson et al. 1990, Psychophysiology
+        # QD = Quartile Deviation = IQR / 2
+        qd = iqr(rpeaks['RR_Interval'], nan_policy='omit') / 2.0
+        # MAD = Minimal Artifact Difference
+        mad = (rpeaks['RR_Interval'].median() - 2.9 * qd) / 3.0
+        # MED = Maximum Expected Difference
+        med = 3.32 * qd
+        criterion = np.mean([mad, med])
+        bool_mask = np.logical_or(bool_mask, np.abs(rpeaks['RR_Interval'] - rpeaks['RR_Interval'].median()) > criterion)
+        # rpeaks.loc[np.abs(rpeaks['RR_Interval'] - rpeaks['RR_Interval'].median()) > criterion] = None
 
         # physiological outlier: minimum/maximum heart rate threshold
-        rpeaks.loc[(rpeaks['RR_Interval'] > (60 / hr_thres[0])) | (rpeaks['RR_Interval'] < (60 / hr_thres[1]))] = None
+        bool_mask = np.logical_or(bool_mask, (rpeaks['RR_Interval'] > (60 / hr_thres[0])) | (
+                rpeaks['RR_Interval'] < (60 / hr_thres[1])))
+        # rpeaks.loc[
+        #    (rpeaks['RR_Interval'] > (60 / hr_thres[0])) | (rpeaks['RR_Interval'] < (60 / hr_thres[1]))] = None
 
         # mark all removed beats as outlier in the ECG dataframe
+        rpeaks[bool_mask] = None
         removed_beats = rpeaks_copy['R_Peak_Idx'][rpeaks['R_Peak_Idx'].isna()]
         rpeaks.fillna({'R_Peak_Outlier': 1.0}, inplace=True)
         ecg_signal.loc[removed_beats.index, 'R_Peak_Outlier'] = 1.0
 
-        rpeaks.drop('ECG_Quality', axis=1, inplace=True)
+        # rpeaks.drop('R_Peak_Quality', axis=1, inplace=True)
         # interpolate the removed beats
+        rpeaks.loc[rpeaks.index[-1]] = [rpeaks['R_Peak_Quality'].mean(), last_idx['R_Peak_Idx'],
+                                        rpeaks['RR_Interval'].mean(), 0.0]
         rpeaks.interpolate(method='linear', limit_direction='both', inplace=True)
         rpeaks['R_Peak_Idx'] = rpeaks['R_Peak_Idx'].astype(int)
-        rpeaks.loc[rpeaks.index[-1]] = [last_idx['R_Peak_Idx'], rpeaks['RR_Interval'].mean(), 0.0]
+
         rpeaks.drop_duplicates(subset='R_Peak_Idx', inplace=True)
-        return rpeaks
+        return ecg_signal, rpeaks
 
     @classmethod
     def correct_rpeaks(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
