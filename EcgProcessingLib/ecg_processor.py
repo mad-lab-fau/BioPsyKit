@@ -48,12 +48,9 @@ class EcgProcessor:
     def ecg_process(self, quality_thres: Optional[float] = 0.4, title: Optional[str] = None,
                     method: Optional[str] = "neurokit") -> None:
         for name, df in tqdm(self.data_dict.items(), desc=title):
-            ecg_result, rpeak_idx = self._ecg_process(df, method=method)
-            ecg_result['R_Peak_Outlier'] = 0.0
-            rpeaks = ecg_result.loc[ecg_result['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
-            rpeaks['R_Peak_Idx'] = rpeak_idx
+            ecg_result, rpeaks = self._ecg_process(df, method=method)
             # ecg_result.drop('ECG_Rate', axis=1, inplace=True)
-            rpeaks = self.correct_outlier(ecg_result, rpeaks, self.sampling_rate, quality_thres)
+            ecg_result, rpeaks = self.correct_outlier(ecg_result, rpeaks, self.sampling_rate, quality_thres)
             heart_rate = pd.DataFrame({'ECG_Rate': 60 / rpeaks['RR_Interval']})
             heart_rate_interpolated = nk.signal_interpolate(rpeaks['R_Peak_Idx'], heart_rate['ECG_Rate'],
                                                             desired_length=len(ecg_result['ECG_Clean']))
@@ -63,16 +60,26 @@ class EcgProcessor:
             self.heart_rate[name] = heart_rate
             self.rpeaks[name] = rpeaks
 
-    def _ecg_process(self, data: pd.DataFrame, method: Optional[str] = "neurokit") -> Tuple[pd.DataFrame, np.array]:
+    def _ecg_process(self, data: pd.DataFrame, method: Optional[str] = "neurokit") -> Tuple[pd.DataFrame, pd.DataFrame]:
         ecg_signal = data['ecg'].values
         ecg_cleaned = nk.ecg_clean(ecg_signal, sampling_rate=self.sampling_rate, method=method)
-        instant_peaks, rpeaks = nk.ecg_peaks(ecg_cleaned, sampling_rate=self.sampling_rate, method=method)
-        quality = nk.ecg_quality(ecg_cleaned, rpeaks=rpeaks['ECG_R_Peaks'], sampling_rate=self.sampling_rate)
+        instant_peaks, rpeak_idx = nk.ecg_peaks(ecg_cleaned, sampling_rate=self.sampling_rate, method=method)
+        rpeak_idx = rpeak_idx['ECG_R_Peaks']
+        instant_peaks = np.squeeze(instant_peaks.values)
+        quality = nk.ecg_quality(ecg_cleaned, rpeaks=rpeak_idx, sampling_rate=self.sampling_rate)
 
-        signals = pd.DataFrame({"ECG_Raw": ecg_signal, "ECG_Clean": ecg_cleaned, "ECG_Quality": quality},
-                               index=data.index)
-        instant_peaks.index = data.index
-        return pd.concat([signals, instant_peaks], axis=1), rpeaks['ECG_R_Peaks']
+        signals = pd.DataFrame(
+            {"ECG_Raw": ecg_signal, "ECG_Clean": ecg_cleaned, "ECG_Quality": quality, "ECG_R_Peaks": instant_peaks},
+            index=data.index)
+        signals['R_Peak_Outlier'] = 0.0
+
+        rpeaks = signals.loc[signals['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
+        rpeaks.rename(columns={'ECG_Quality': 'R_Peak_Quality'}, inplace=True)
+        rpeaks.loc[:, 'R_Peak_Idx'] = rpeak_idx
+        rpeaks['RR_Interval'] = np.ediff1d(rpeaks['R_Peak_Idx'], to_end=0) / self.sampling_rate
+        rpeaks.loc[rpeaks.index[-1], 'RR_Interval'] = rpeaks['RR_Interval'].mean()
+
+        return signals, rpeaks
 
     @classmethod
     def correct_outlier(cls, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
