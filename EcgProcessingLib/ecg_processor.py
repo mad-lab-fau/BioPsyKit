@@ -117,13 +117,14 @@ class EcgProcessor:
         bool_mask = np.logical_or(bool_mask, rpeaks['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index))
         bool_mask = np.logical_or(bool_mask, rpeaks['R_Peak_Quality'] < quality_thres)
 
-        # statistical outlier: remove the x% highest and lowest successive differences (1.96 std = 5% outlier, 2.576 std = 1% outlier)
+        # statistical outlier: remove the x% highest and lowest successive differences
+        # (1.96 std = 5% outlier, 2.576 std = 1% outlier)
         diff_rri = np.ediff1d(rpeaks['RR_Interval'], to_end=0)
         z_score = (diff_rri - np.nanmean(diff_rri)) / np.nanstd(diff_rri, ddof=1)
 
         bool_mask = np.logical_or(bool_mask, np.abs(z_score) > 2.576)
 
-        # compute artifact-detection criterion based on Berntson et al. 1990, Psychophysiology
+        # compute artifact-detection criterion based on Berntson et al. (1990), Psychophysiology
         # QD = Quartile Deviation = IQR / 2
         qd = iqr(rpeaks['RR_Interval'], nan_policy='omit') / 2.0
         # MAD = Minimal Artifact Difference
