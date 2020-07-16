@@ -122,7 +122,7 @@ class EcgProcessor:
         diff_rri = np.ediff1d(rpeaks['RR_Interval'], to_end=0)
         z_score = (diff_rri - np.nanmean(diff_rri)) / np.nanstd(diff_rri, ddof=1)
 
-        bool_mask = np.logical_or(bool_mask, np.abs(z_score) > 2.576)
+        bool_mask = np.logical_or(bool_mask, np.abs(z_score) > 1.96)
 
         # compute artifact-detection criterion based on Berntson et al. (1990), Psychophysiology
         # QD = Quartile Deviation = IQR / 2
