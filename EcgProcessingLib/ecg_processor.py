@@ -115,17 +115,13 @@ class EcgProcessor:
         # signal outlier: drop all beats that are below a correlation coefficient threshold and below the signal
         # quality threshold
         bool_mask = np.logical_or(bool_mask, rpeaks['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index))
-        # rpeaks[rpeaks['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index)] = None
         bool_mask = np.logical_or(bool_mask, rpeaks['R_Peak_Quality'] < quality_thres)
-        # rpeaks.loc[rpeaks['R_Peak_Quality'] < quality_thres] = None
 
         # statistical outlier: remove the x% highest and lowest successive differences (1.96 std = 5% outlier, 2.576 std = 1% outlier)
-        # z_score = (rpeaks['RR_Interval'] - rpeaks['RR_Interval'].mean()) / rpeaks['RR_Interval'].std()
         diff_rri = np.ediff1d(rpeaks['RR_Interval'], to_end=0)
         z_score = (diff_rri - np.nanmean(diff_rri)) / np.nanstd(diff_rri, ddof=1)
 
         bool_mask = np.logical_or(bool_mask, np.abs(z_score) > 2.576)
-        # rpeaks.loc[np.abs(z_score) > 2.576] = None
 
         # compute artifact-detection criterion based on Berntson et al. 1990, Psychophysiology
         # QD = Quartile Deviation = IQR / 2
@@ -136,13 +132,10 @@ class EcgProcessor:
         med = 3.32 * qd
         criterion = np.mean([mad, med])
         bool_mask = np.logical_or(bool_mask, np.abs(rpeaks['RR_Interval'] - rpeaks['RR_Interval'].median()) > criterion)
-        # rpeaks.loc[np.abs(rpeaks['RR_Interval'] - rpeaks['RR_Interval'].median()) > criterion] = None
 
         # physiological outlier: minimum/maximum heart rate threshold
         bool_mask = np.logical_or(bool_mask, (rpeaks['RR_Interval'] > (60 / hr_thres[0])) | (
                 rpeaks['RR_Interval'] < (60 / hr_thres[1])))
-        # rpeaks.loc[
-        #    (rpeaks['RR_Interval'] > (60 / hr_thres[0])) | (rpeaks['RR_Interval'] < (60 / hr_thres[1]))] = None
 
         # mark all removed beats as outlier in the ECG dataframe
         rpeaks[bool_mask] = None
