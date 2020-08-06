@@ -149,7 +149,7 @@ class EcgProcessor:
         rpeaks.loc[rpeaks.index[-1]] = [rpeaks['R_Peak_Quality'].mean(), last_idx['R_Peak_Idx'],
                                         rpeaks['RR_Interval'].mean(), 0.0]
         rpeaks.interpolate(method='linear', limit_direction='both', inplace=True)
-        rpeaks['R_Peak_Idx'] = rpeaks['R_Peak_Idx'].astype(int)
+        # rpeaks['R_Peak_Idx'] = rpeaks['R_Peak_Idx'].astype(int)
 
         rpeaks.drop_duplicates(subset='R_Peak_Idx', inplace=True)
         return ecg_signal, rpeaks
