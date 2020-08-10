@@ -103,6 +103,35 @@ class EcgProcessor:
         """
         return self.heart_rate
 
+    @classmethod
+    def outlier_corrections(cls) -> Sequence[str]:
+        """
+        Returns the keys of all possible outlier correction methods.
+
+        Currently available outlier correction methods are:
+
+        * `correlation`: Computes the cross-correlation coefficient between every single beat and the average of all detected beats. Marks beats as outlier if cross-correlation coefficient is below a certain threshold
+        * `quality`: Uses the 'ECG_Quality' indicator from neurokit to assess signal quality. Marks beats as outlier if quality indicator of beat is below a certain threshold
+        * `artifact`: Artifact detection based on work from `Berntson et al. (1990), Psychophysiology`
+        * `physiological`: Physiological outlier removal. Marks beats as outlier if their heart rate is above or below a threshold that can not be achieved physiologically
+        * `statistical`: Statistical outlier removal. Marks beats as outlier if they are within the xx% highest or lowest heart rates. Values are removed based on the z-score (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values)
+
+        :return: List containing the keys of all possible outlier correction methods
+        """
+        return list(_outlier_correction_methods.keys())
+
+    @classmethod
+    def outlier_params_default(cls) -> Dict[str, Union[float, Sequence[float]]]:
+        """
+        Returns all default parameters for outlier correction methods.
+
+        **NOTE:** outlier correction method `artifact` has no threshold, but '0.0' is default parameter to provide
+        a homogenous interface
+
+        :return: Dictionary containing the default parameters for the different outlier correction methods
+        """
+        return _outlier_correction_params_default
+
     def ecg_process(self, outlier_correction: Optional[Union[str, None, Sequence[str]]] = 'all',
                     outlier_params: Optional[Union[str, Dict[str, Union[float, Sequence[float]]]]] = 'default',
                     title: Optional[str] = None, method: Optional[str] = "neurokit") -> None:
@@ -112,8 +141,8 @@ class EcgProcessor:
         :param outlier_correction: List containing the outlier correction methods to be applied.
         Pass 'None' to not apply any outlier correction, 'all' to apply all available outlier correction methods.
         See `EcgProcessor.outlier_corrections` to get a list of possible outlier correction. Default: 'all'
-        :param outlier_params Dictionary of parameters to be passed to the outlier correction methods.
-        `EcgProcessor.outlier_params_default` to see the default parameters. Default: 'default'
+        :param outlier_params: Dictionary of parameters to be passed to the outlier correction methods.
+        See `EcgProcessor.outlier_params_default` for the default parameters. Default: 'default'
         :param title: optional title of the bar showing processing progress in Jupyter Notebooks
         :param method: method for cleaning the ECG signal and R peak detection as defined by 'neurokit'.
         Default: 'neurokit'
@@ -132,6 +161,14 @@ class EcgProcessor:
             self.rpeaks[name] = rpeaks
 
     def _ecg_process(self, data: pd.DataFrame, method: Optional[str] = "neurokit") -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Private method to perform the actual ECG processing.
+
+        :param data: ECG data as pandas dataframe. Needs to have one column named 'ecg'
+        :param method: method for cleaning the ECG signal and R peak detection as defined by 'neurokit'.
+        Default: 'neurokit'
+        :return: A tuple of two dataframes: one containing the processed ECG signal, one containing the detected R peaks
+        """
         # get numpy
         ecg_signal = data['ecg'].values
         # clean (i.e. filter) the ECG signal using the specified method
@@ -148,13 +185,13 @@ class EcgProcessor:
         quality = nk.ecg_quality(ecg_cleaned, rpeaks=rpeak_idx, sampling_rate=self.sampling_rate)
 
         # construct new dataframe
-        signals = pd.DataFrame(
+        ecg_signal_output = pd.DataFrame(
             {"ECG_Raw": ecg_signal, "ECG_Clean": ecg_cleaned, "ECG_Quality": quality, "ECG_R_Peaks": instant_peaks,
              'R_Peak_Outlier': np.zeros(len(data))},
             index=data.index)
 
         # copy new dataframe consisting of R peaks indices (and their respective quality indicator)
-        rpeaks = signals.loc[signals['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
+        rpeaks = ecg_signal_output.loc[ecg_signal_output['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
         rpeaks.rename(columns={'ECG_Quality': 'R_Peak_Quality'}, inplace=True)
         rpeaks.loc[:, 'R_Peak_Idx'] = rpeak_idx
         # compute RR interval
@@ -162,7 +199,7 @@ class EcgProcessor:
         # ensure equal length by filling the last value with the average RR interval
         rpeaks.loc[rpeaks.index[-1], 'RR_Interval'] = rpeaks['RR_Interval'].mean()
 
-        return signals, rpeaks
+        return ecg_signal_output, rpeaks
 
     @classmethod
     def correct_outlier(cls, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
@@ -170,6 +207,26 @@ class EcgProcessor:
                         outlier_correction: Optional[Union[str, None, Sequence[str]]] = 'all',
                         outlier_params: Optional[Union[str, Dict[str, Union[float, Sequence[float]]]]] = 'default'
                         ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Performs outlier correction of the detected R peaks.
+
+        Different methods for outlier detection are available (see `EcgProcessor.outlier_corrections()` to get a list
+        of possible outlier correction methods). All outlier methods work independently on the detected R peaks,
+        the results will be combined by a logical 'or'. RR intervals classified as outlier will be removed and imputed
+        using linear interpolation.
+
+        :param ecg_signal: dataframe with processed ECG signal. Output from `EcgProcessor.ecg_process()`
+        :param rpeaks: dataframe with detected R peaks. Output from `EcgProcessor.ecg_process()`
+        :param sampling_rate: Sampling rate of recorded data
+        :param outlier_correction: List containing the outlier correction methods to be applied.
+        Pass 'None' to not apply any outlier correction, 'all' to apply all available outlier correction methods.
+        See `EcgProcessor.outlier_corrections` to get a list of possible outlier correction methods. Default: 'all'
+        :param outlier_params: Dictionary of parameters to be passed to the outlier correction methods.
+        `EcgProcessor.outlier_params_default` to see the default parameters. Default: 'default'
+
+        :return: A tuple of two dataframes: one containing the processed ECG signal, one containing the detected R peaks
+
+        """
 
         if outlier_correction == 'all':
             outlier_correction = list(_outlier_correction_methods.keys())
@@ -193,11 +250,10 @@ class EcgProcessor:
 
         # copy dataframe to mark removed beats later
         rpeaks_copy = rpeaks.copy()
-
         # get the last index because it will get lost when computing the RR interval
         last_idx = rpeaks.iloc[-1]
 
-        # initialize bool mask to mask outlier and add Outlier column to rpeaks dataframe
+        # initialize bool mask to mask outlier and add outlier column to rpeaks dataframe
         bool_mask = np.full(rpeaks.shape[0], False)
         rpeaks['R_Peak_Outlier'] = 0.0
 
@@ -207,14 +263,18 @@ class EcgProcessor:
         # mark all removed beats as outlier in the ECG dataframe
         rpeaks[bool_mask] = None
         removed_beats = rpeaks_copy['R_Peak_Idx'][rpeaks['R_Peak_Idx'].isna()]
+        # mark all outlier with 1.0 in the column R_Peak_Outlier column
         rpeaks.fillna({'R_Peak_Outlier': 1.0}, inplace=True)
+        # also mark outlier in the ECG signal dataframe
         ecg_signal.loc[removed_beats.index, 'R_Peak_Outlier'] = 1.0
 
         # interpolate the removed beats
         rpeaks.loc[rpeaks.index[-1]] = [rpeaks['R_Peak_Quality'].mean(), last_idx['R_Peak_Idx'],
                                         rpeaks['RR_Interval'].mean(), 0.0]
         rpeaks.interpolate(method='linear', limit_direction='both', inplace=True)
+        # drop duplicate R peaks (can happen during outlier correction at edge cases)
         rpeaks.drop_duplicates(subset='R_Peak_Idx', inplace=True)
+
         return ecg_signal, rpeaks
 
     @classmethod
@@ -222,6 +282,31 @@ class EcgProcessor:
                        ecg_signal: Optional[pd.DataFrame] = None,
                        rpeaks: Optional[pd.DataFrame] = None,
                        sampling_rate: Optional[int] = 256) -> pd.DataFrame:
+        """
+        Performs an R peak correction algorithms to get less noisy HRV parameters. R peak detection comes from Neurokit
+        and is based on an algorithm by `Lipponen et al. (2019), Journal of medical engineering & technology`.
+
+        To use this function, either simply pass an `EcgProcessor` object together with a key indicating which subphase
+
+
+        **NOTE** This algorithm might add additional R peaks or remove certain R peaks, so results of this function
+        might not match with the R peaks of `EcgProcessor.rpeaks` or might not be used in combination with
+        `EcgProcessor.ecg` since indices won't match.
+
+
+        In this library it is **not** generally applied to the detected R peaks but only used right before passing
+        R peaks to `EcgProcessor.hrv_process()`.
+
+        :param ecg_processor: `EcgProcessor` object. If this argument is passed, the `key` argument needs to be
+        supplied as well
+        :param key: Dictionary key of the subphase to process. Needed when `ecg_processor` is passed as argument
+        :param ecg_signal: dataframe with ECG signal. Output of `EcgProcessor.ecg_process()`
+        :param rpeaks: dataframe with R peaks. Outout of `EcgProcessor.ecg_process()`
+        :param sampling_rate: Sampling rate of the recording
+
+
+        :return: dataframe containing corrected R peak indices
+        """
 
         utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
