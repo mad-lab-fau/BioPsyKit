@@ -97,7 +97,7 @@ def mist_param_subphases(ecg_processor: Optional[EcgProcessor] = None,
 
         dict_subphases = {param: list() for param in param_types}
         if include_total:
-            # compute HRV over complete phase
+            # compute HRV, RSP over complete phase
             for param_type, func in param_types.items():
                 dict_subphases[param_type].append(
                     func(ecg_signal=ecg, rpeaks=rpeaks, index="Total", index_name=index_name,

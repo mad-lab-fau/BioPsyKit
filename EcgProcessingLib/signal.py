@@ -2,6 +2,7 @@ from typing import Union, Tuple, Optional
 
 import pandas as pd
 import numpy as np
+import neurokit2 as nk
 
 
 def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
@@ -70,3 +71,50 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
         windows[i] = data[index - lower_limit + start_padding:index + upper_limit + start_padding + 1]
 
     return extrema_func(windows, axis=1) + indices - lower_limit
+
+
+def remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x_old: Optional[np.ndarray] = None,
+                                   desired_length: Optional[int] = None) -> np.array:
+    """
+    Sets all detected outlier to nan, imputes them by linearly interpolation their neighbors and interpolates
+    the resulting values to a desired length.
+
+    Parameters
+    ----------
+    data : array_like
+        input data
+    outlier_mask: array_like
+        outlier mask. has to be the same length like `data`. ``True`` entries indicate outliers
+    x_old : array_like, optional
+        x values of the input data to interpolate or ``None`` if no interpolation should be performed. Default: ``None``
+    desired_length : int, optional
+        desired length of the output signal or ``None`` to keep input length. Default: ``None``
+
+    Returns
+    -------
+    np.array
+        Outlier-removed and interpolated data
+
+    Raises
+    ------
+    ValueError
+        if `data` and `outlier_mask` don't have the same length or if `x_old` is ``None`` when `desired_length`
+        is passed as parameter
+
+    """
+    # ensure numpy
+    data = np.array(data)
+    outlier_mask = np.array(outlier_mask)
+
+    if len(data) != len(outlier_mask):
+        raise ValueError("`data` and `outlier_mask` need to have same length!")
+    if x_old is None and desired_length:
+        raise ValueError("`x_old` must also be passed when `desired_length` is passed!")
+    x_old = np.array(x_old)
+
+    # remove outlier
+    data[outlier_mask] = np.nan
+    # fill outlier by linear interpolation of neighbors
+    data = pd.Series(data).interpolate(limit_direction='both').values
+    # interpolate signal
+    return nk.signal_interpolate(x_old, data, desired_length=desired_length, method='linear')
