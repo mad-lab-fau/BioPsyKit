@@ -903,8 +903,7 @@ def _correct_outlier_correlation(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
     rpeaks['RR_Interval'] = np.ediff1d(rpeaks['R_Peak_Idx'], to_end=0) / sampling_rate
 
     # signal outlier: drop all beats that are below a correlation coefficient threshold
-    bool_mask = np.logical_or(bool_mask, rpeaks['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index))
-    return bool_mask
+    return np.logical_or(bool_mask, rpeaks['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index))
 
 
 def _correct_outlier_quality(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
@@ -936,8 +935,7 @@ def _correct_outlier_quality(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sam
         this algorithm
     """
     # signal outlier: drop all beats that are below a signal quality threshold
-    bool_mask = np.logical_or(bool_mask, rpeaks['R_Peak_Quality'] < quality_thres)
-    return bool_mask
+    return np.logical_or(bool_mask, rpeaks['R_Peak_Quality'] < quality_thres)
 
 
 def _correct_outlier_statistical(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
@@ -974,8 +972,7 @@ def _correct_outlier_statistical(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
     diff_rri = np.ediff1d(rpeaks['RR_Interval'], to_end=0)
     z_score = (diff_rri - np.nanmean(diff_rri)) / np.nanstd(diff_rri, ddof=1)
 
-    bool_mask = np.logical_or(bool_mask, np.abs(z_score) > stat_thres)
-    return bool_mask
+    return np.logical_or(bool_mask, np.abs(z_score) > stat_thres)
 
 
 def _correct_outlier_artifact(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
@@ -1017,8 +1014,8 @@ def _correct_outlier_artifact(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sa
     # MED = Maximum Expected Difference
     med = 3.32 * qd
     criterion = np.mean([mad, med])
-    bool_mask = np.logical_or(bool_mask, np.abs(rpeaks['RR_Interval'] - rpeaks['RR_Interval'].median()) > criterion)
-    return bool_mask
+
+    return np.logical_or(bool_mask, np.abs(rpeaks['RR_Interval'] - rpeaks['RR_Interval'].median()) > criterion)
 
 
 def _correct_outlier_physiological(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
