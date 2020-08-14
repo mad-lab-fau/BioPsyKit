@@ -6,6 +6,29 @@ import neurokit2 as nk
 
 
 def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+    """
+    Interpolates input data to a frequency of 1 Hz.
+
+    *Note*: This function requires the index of the dataframe or series to be a datetime index.
+
+    Parameters
+    ----------
+    data : pd.DataFrame or pd.Series
+        data to interpolate. Index of data needs to be 'pd.DateTimeIndex'
+
+    Returns
+    -------
+    pd.DataFrame
+        dataframe with data interpolated to seconds
+
+
+    Raises
+    ------
+    ValueError
+        if no dataframe or series is passed, of if the dataframe/series has no datetime index
+
+    """
+
     from scipy import interpolate
     if isinstance(data, pd.DataFrame):
         column_name = data.columns
@@ -13,6 +36,10 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
         column_name = [data.name]
     else:
         raise ValueError("Only 'pd.DataFrame' or 'pd.Series' allowed as input!")
+
+    if not isinstance(data.index, pd.DatetimeIndex):
+        raise ValueError("Index of data needs to be 'pd.DateTimeIndex'!")
+
     x_old = np.array((data.index - data.index[0]).total_seconds())
     x_new = np.arange(1, np.ceil(x_old[-1]) + 1)
     data = sanitize_input(data)
@@ -21,18 +48,54 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
 
 def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
+    """
+    Converts 1D array-like data (numpy array, pandas dataframe/series) to a numpy array.
+
+    Parameters
+    ----------
+    data : array_like
+        input data. Needs to be 1D
+
+    Returns
+    -------
+    array_like
+        data as numpy array
+
+    """
     if isinstance(data, (pd.Series, pd.DataFrame)):
         # only 1D pandas DataFrame allowed
         if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
             raise ValueError("Only 1D DataFrames allowed!")
         data = np.squeeze(data.values)
+
     return data
 
 
-# @njit(parallel=True)
 def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
                            indices: Union[pd.DataFrame, pd.Series, np.ndarray], radius: Union[int, Tuple[int, int]],
-                           extrema_type="min"):
+                           extrema_type: Optional[str] = "min") -> np.ndarray:
+    """
+    Finds extrema values (min or max) within a given radius.
+
+    Parameters
+    ----------
+    data : array_like
+        input data
+    indices : array_like
+        array with indices for which to search for extrema values around
+    radius: int or tuple of int
+        radius around `indices` to search for extrema. If `radius` is an ``int`` then search for extrema equally
+        in both directions in the interval [index - radius, index + radius].
+        If `radius` is a ``tuple`` then search for extrema in the interval [ index - radius[0], index + radius[1] ]
+    extrema_type : {'min', 'max'}, optional
+        extrema type to be searched for. Default: 'min'
+
+    Returns
+    -------
+    array_like
+        array containing the indices of the found extrema values in the given radius around `indices`.
+        Has the same length as `indices`.
+    """
     extrema_funcs = {"min": np.nanargmin, "max": np.nanargmax}
 
     if extrema_type not in extrema_funcs:
@@ -46,14 +109,15 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
     # possible start offset if beginning of array needs to be padded to ensure radius
     start_padding = 0
 
-    if isinstance(radius, tuple):
-        upper_limit = radius[-1]
-    else:
-        upper_limit = radius
+    # determine upper and lower limit
     if isinstance(radius, tuple):
         lower_limit = radius[0]
     else:
         lower_limit = radius
+    if isinstance(radius, tuple):
+        upper_limit = radius[-1]
+    else:
+        upper_limit = radius
 
     # round up and make sure it's an integer
     lower_limit = np.ceil(lower_limit).astype(int)
@@ -66,8 +130,10 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
         start_padding = lower_limit
         data = np.pad(data, (lower_limit, 0), constant_values=np.nan)
 
+    # initialize window array
     windows = np.zeros(shape=(len(indices), lower_limit + upper_limit + 1))
     for i, index in enumerate(indices):
+        # get windows around index
         windows[i] = data[index - lower_limit + start_padding:index + upper_limit + start_padding + 1]
 
     return extrema_func(windows, axis=1) + indices - lower_limit
