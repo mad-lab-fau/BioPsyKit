@@ -419,8 +419,8 @@ def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 25
 
     Returns
     -------
-    tuple
-        Tuple of Figure and list of subplot Axes or None if Axes object was passed
+    tuple or none
+        Tuple of Figure and Axes or None if Axes object was passed
     """
 
     fig: Union[plt.Figure, None] = None
@@ -574,12 +574,13 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
     Returns
     -------
-    tuple
-        Tuple of Figure and list of subplot Axes or None if Axes object was passed
+    tuple or None
+        Tuple of Figure and Axes or None if Axes object was passed
     """
 
     from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
     from neurokit2.hrv.hrv_utils import _hrv_get_rri
+
     fig: Union[plt.Figure, None] = None
     if ax is None:
         fig, ax = plt.subplots()
