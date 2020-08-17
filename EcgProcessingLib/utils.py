@@ -61,9 +61,9 @@ def split_data(time_intervals: Union[pd.Series, Dict[str, Sequence[str]]],
     time_intervals : dict or pd.Series
         time intervals indicating where the data should be split.
         Can either be a pandas Series with the `start` times of the single phases
-        (the names of the phases are then derived from the index) or a dictionary of lists of tuples indicating
+        (the names of the phases are then derived from the index) or a dictionary with tuples indicating
         start and end times of the phases (the names of the phases are then derived from the dict keys)
-    dataset : Dataset
+    dataset : Dataset, optional
         NilsPodLib dataset object to be split
     df : pd.DataFrame, optional
         data to be split
