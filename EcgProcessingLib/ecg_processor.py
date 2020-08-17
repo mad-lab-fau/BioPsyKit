@@ -288,7 +288,7 @@ class EcgProcessor:
         the results will be combined by a logical 'or'. RR intervals classified as outlier will be removed and imputed
         using linear interpolation.
 
-        To use this function, either simply pass an `EcgProcessor` object together with a key indicating
+        To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
         which sub-phase should be processed or the two dataframes `ecg_signal` and `rpeaks` resulting from
         `EcgProcessor.ecg_process()`.
 
@@ -388,7 +388,7 @@ class EcgProcessor:
         Performs an R peak correction algorithms to get less noisy HRV parameters. R peak correction comes from Neurokit
         and is based on an algorithm by `Lipponen et al. (2019), Journal of medical engineering & technology`.
 
-        To use this function, either simply pass an `EcgProcessor` object together with a key indicating
+        To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
         which sub-phase should be processed or the two dataframes `ecg_signal` and `rpeaks` resulting from
         `EcgProcessor.ecg_process()`.
 
@@ -446,7 +446,7 @@ class EcgProcessor:
         Computes HRV features on the given data. By default it applies R peak correction
         (see `EcgProcessor.correct_rpeaks()`) before computing HRV features.
 
-        To use this function, either simply pass an `EcgProcessor` object together with a key indicating
+        To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
         which sub-phase should be processed or the two dataframes `ecg_signal` and `rpeaks` resulting from
         `EcgProcessor.ecg_process()`.
 
@@ -521,7 +521,7 @@ class EcgProcessor:
         """
         Estimate respiration signal from ECG signal (ECG-derived respiration, EDR).
 
-        To use this function, either simply pass an `EcgProcessor` object together with a key indicating
+        To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
         which sub-phase should be processed or the two dataframes `ecg_signal` and `rpeaks` resulting from
         `EcgProcessor.ecg_process()`.
 
@@ -669,7 +669,7 @@ class EcgProcessor:
         respiration signal using all three available EDR methods and averages the results. Optionally, estimation
         results from the individual methods can be returned.s
 
-        To use this function, either simply pass an `EcgProcessor` object together with a key indicating
+        To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
         which sub-phase should be processed or the two dataframes `ecg_signal` and `rpeaks` resulting from
         `EcgProcessor.ecg_process()`.
 

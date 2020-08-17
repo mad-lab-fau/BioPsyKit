@@ -43,9 +43,9 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     * bottom right: heart rate distribution (histogram)
 
 
-    To use this function, either simply pass an `EcgProcessor` object together with a key indicating
+    To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
     which sub-phase should be processed or the two dataframes `ecg_signal` and `heart_rate` resulting from
-    `EcgProcessor.ecg_process()`.
+    `EcgProcessor.ecg_process()`.`
 
     Parameters
     ----------
@@ -235,7 +235,7 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     * bottom left: Power Spectral Density (PSD) plot of RR intervals
     * right: Poincaré plot of RR intervals
 
-    To use this function, either simply pass an `EcgProcessor` object together with a key indicating
+    To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
     which sub-phase should be processed or the two dataframes `ecg_signal` and `rpeaks` resulting from
     `EcgProcessor.ecg_process()`.
 
