@@ -75,6 +75,24 @@ def split_data(time_intervals: Union[pd.Series, Dict[str, Sequence[str]]],
     dict
         Dictionary containing split data
 
+    Examples
+    --------
+    >>> import EcgProcessingLib.utils as utils
+    >>>
+    >>> # Example 1: define time intervals (start and end) of the different recording phases as dictionary
+    >>> time_intervals = {"Part1": ("09:00", "09:30"), "Part2": ("09:30", "09:45"), "Part3": ("09:45", "10:00")}
+    >>> # Example 2: define time intervals as pandas Series. Here, only start times of the are required, it is assumed
+    >>> # that the phases are back to back
+    >>> time_intervals = pd.Series(data=["09:00", "09:30", "09:45", "10:00"], index=["Part1", "Part2", "Part3", "End"])
+    >>>
+    >>> # read pandas dataframe from csv file and split data based on time interval dictionary
+    >>> df = pd.read_csv(path_to_file)
+    >>> data_dict = utils.split_data(time_intervals, df=df)
+    >>>
+    >>> # Example: Get Part 2 of data_dict
+    >>> print(data_dict['Part2'])
+
+    # TODO create utils method to load and parse time log data
     """
     data_dict: Dict[str, pd.DataFrame] = {}
     if dataset is None and df is None:
@@ -130,8 +148,12 @@ def check_input(ecg_processor: 'EcgProcessor', key: str, ecg_signal: pd.DataFram
 
 def write_hr_to_excel(ecg_processor: 'EcgProcessor', file_path: path_t) -> None:
     """
-    Writes heart rate dictionary of EcgProcessor instance to an Excel file.
+    Writes heart rate dictionary of one subject to an Excel file.
     Each of the phases in the dictionary will be a separate sheet in the file.
+
+    The Excel file will have the following columns:
+        * date: timestamps of the heart rate samples (string, will be converted to DateTimeIndex)
+        * ECG_Rate: heart rate samples (float)
 
 
     Parameters
@@ -154,7 +176,13 @@ def write_hr_to_excel(ecg_processor: 'EcgProcessor', file_path: path_t) -> None:
 
 def load_hr_excel(file_path: path_t) -> Dict[str, pd.DataFrame]:
     """
-    Loads excel file containing heart rate data (as exported by `write_hr_to_excel`).
+    Loads excel file containing heart rate data of one subject (as exported by `write_hr_to_excel`).
+
+    The dictionary will have the following format: { "<Sheet_Name>" : hr_dataframe }
+
+    Each hr_dataframe has the following format:
+        * 'date' Index: DateTimeIndex with timestamps of the heart rate samples
+        * 'ECG_Rate' Column: heart rate samples
 
     Parameters
     ----------
@@ -208,6 +236,22 @@ def write_result_dict_to_csv(result_dict: Dict[str, pd.DataFrame], file_path: pa
         Default: ["Phase", "Subphase"]
     overwrite_file : bool, optional
         ``True`` to overwrite the file if it already exists, ``False`` otherwise. Default: ``True``
+
+    Examples
+    --------
+    >>>
+    >>> import EcgProcessingLib as ep
+    >>>
+    >>> file_path = "./param_results.csv"
+    >>>
+    >>> dict_param_output = {
+    >>> 'S01' : pd.DataFrame(), # dataframe from mist_param_subphases,
+    >>> 'S02' : pd.DataFrame(),
+    >>> # ...
+    >>> }
+    >>>
+    >>> ep.write_result_dict_to_csv(dict_param_output, file_path=file_path,
+    >>>                             identifier_col="Subject_ID", index_cols=["Phase", "Subphade"])
     """
 
     # TODO check if index_cols is really needed?
@@ -241,6 +285,30 @@ def export_figure(fig: plt.Figure, filename: path_t, base_dir: path_t, formats: 
         list of file formats to export or ``None`` to export as pdf. Default: ``None``
     use_subfolder : bool, optional
         whether to create an own subfolder per file format and export figures into these subfolders. Default: True
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import EcgProcessingLib.utils as utils
+    >>> fig = plt.Figure()
+    >>>
+    >>> base_dir = "./img"
+    >>> filename = "plot"
+    >>> formats = ["pdf", "png"]
+
+    >>> # Export into subfolders (default)
+    >>> utils.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats)
+    >>> # | img/
+    >>> # | - pdf/
+    >>> # | - - plot.pdf
+    >>> # | - png/
+    >>> # | - - plot.png
+
+    >>> # Export into one folder
+    >>> utils.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats, use_subfolder=False)
+    >>> # | img/
+    >>> # | - plot.pdf
+    >>> # | - plot.png
     """
     if formats is None:
         formats = ['pdf']

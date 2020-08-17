@@ -95,9 +95,15 @@ class EcgProcessor:
         >>> import pandas as pd
         >>> from NilsPodLib import Dataset
         >>>
+        >>> # path to file
         >>> file_path = "./NilsPod_TestData.bin"
+        >>> # time zone of the recording (optional)
         >>> timezone = "Europe/Berlin"
+        >>>
+        >>> # define time intervals of the different recording phases
         >>> time_intervals = {"Part1": ("09:00", "09:30"), "Part2": ("09:30", "09:45"), "Part3": ("09:45", "10:00")}
+        >>>
+        >>> # load data from binary file
         >>> dataset = Dataset.from_bin_file(file_path)
         >>> ecg_processor = ep.EcgProcessor(dataset=dataset, time_intervals=time_intervals, timezone=timezone)
         """
