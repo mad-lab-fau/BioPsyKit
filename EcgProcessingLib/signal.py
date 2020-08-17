@@ -95,6 +95,20 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
     array_like
         array containing the indices of the found extrema values in the given radius around `indices`.
         Has the same length as `indices`.
+
+    Examples
+    --------
+    >>> import EcgProcessingLib.signal as signal
+    >>> data = pd.read_csv("data.csv")
+    >>> indices = np.array([16, 25, 40, 57, 86, 100])
+    >>>
+    >>> radius = 4
+    >>> # search minima in 'data' in a 4 sample 'radius' around each entry of 'indices'
+    >>> signal.find_extrema_in_radius(data, indices, radius)
+    >>>
+    >>> radius = (5, 0)
+    >>> # search maxima in 'data' in a 5 samples before each entry of 'indices'
+    >>> signal.find_extrema_in_radius(data, indices, radius, extrema_type='max')
     """
     extrema_funcs = {"min": np.nanargmin, "max": np.nanargmax}
 
@@ -140,7 +154,7 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
 
 
 def remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x_old: Optional[np.ndarray] = None,
-                                   desired_length: Optional[int] = None) -> np.array:
+                                   desired_length: Optional[int] = None) -> np.ndarray:
     """
     Sets all detected outlier to nan, imputes them by linearly interpolation their neighbors and interpolates
     the resulting values to a desired length.
