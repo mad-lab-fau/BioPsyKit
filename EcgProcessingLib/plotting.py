@@ -36,11 +36,10 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     ECG processing result plot.
 
     By default, it consists of 4 plots:
-
-    * top left: course of ECG signal plot with signal quality indicator, detected R peaks and R peaks marked as outlier
-    * bottom left: course of heart rate (tachogram)
-    * top right: individual heart beats overlaid on top of each other
-    * bottom right: heart rate distribution (histogram)
+        * top left: course of ECG signal plot with signal quality indicator, detected R peaks and R peaks marked as outlier
+        * bottom left: course of heart rate (tachogram)
+        * top right: individual heart beats overlaid on top of each other
+        * bottom right: heart rate distribution (histogram)
 
 
     To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
@@ -230,10 +229,9 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     Heart Rate Variability result plot.
 
     By default, it consists of 3 plots:
-
-    * top left: RR interval distribution (histogram) including boxplot
-    * bottom left: Power Spectral Density (PSD) plot of RR intervals
-    * right: Poincaré plot of RR intervals
+        * top left: RR interval distribution (histogram) including boxplot
+        * bottom left: Power Spectral Density (PSD) plot of RR intervals
+        * right: Poincaré plot of RR intervals
 
     To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
     which sub-phase should be processed or the two dataframes `ecg_signal` and `rpeaks` resulting from

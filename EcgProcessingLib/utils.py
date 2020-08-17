@@ -187,13 +187,12 @@ def write_result_dict_to_csv(result_dict: Dict[str, pd.DataFrame], file_path: pa
     The dictionary will be concatenated to one large dataframe which will then be saved as csv file.
 
     *Notes*:
-
-    * If a file with same name exists at the specified location, it is assumed that this is a result file from a
-      previous run and the current results should be appended to this file.
-      (To disable this behavior, set `overwrite_file` to ``False``).
-    * Per default, it is assumed that the 'values' dataframes has a multi-index with columns ["Phase", "Subphase"].
-      The resulting dataframe would, thus, per default have the columns ["Subject_ID", "Phase", "Subphase"].
-      This can be changed by the parameter `index_cols`.
+        * If a file with same name exists at the specified location, it is assumed that this is a result file from a
+          previous run and the current results should be appended to this file.
+          (To disable this behavior, set `overwrite_file` to ``False``).
+        * Per default, it is assumed that the 'values' dataframes has a multi-index with columns ["Phase", "Subphase"].
+          The resulting dataframe would, thus, per default have the columns ["Subject_ID", "Phase", "Subphase"].
+          This can be changed by the parameter `index_cols`.
 
     Parameters
     ----------

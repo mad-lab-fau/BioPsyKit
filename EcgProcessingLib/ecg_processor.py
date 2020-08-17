@@ -26,30 +26,27 @@ class EcgProcessor:
         Dictionary with ECG processing results
 
         **Columns**:
-
-        * ECG_Raw: Raw ECG signal
-        * ECG_Clean: Cleaned (filtered) ECG signal
-        * ECG_Quality: Quality indicator in the range of [0,1] for ECG signal quality
-        * ECG_R_Peaks: 1.0 where R peak was detected in the ECG signal, 0.0 else
-        * R_Peak_Outlier: 1.0 when a detected R peak was classified as outlier, 0.0 else
-        * ECG_Rate: Computed Heart rate interpolated to signal length
+            * ECG_Raw: Raw ECG signal
+            * ECG_Clean: Cleaned (filtered) ECG signal
+            * ECG_Quality: Quality indicator in the range of [0,1] for ECG signal quality
+            * ECG_R_Peaks: 1.0 where R peak was detected in the ECG signal, 0.0 else
+            * R_Peak_Outlier: 1.0 when a detected R peak was classified as outlier, 0.0 else
+            * ECG_Rate: Computed Heart rate interpolated to signal length
 
     self.heart_rate : dict
         Dictionary with heart rate data derived from the ECG signal
 
         **Columns**:
-
-        * ECG_Rate: Computed heart rate for each detected R peak
+            * ECG_Rate: Computed heart rate for each detected R peak
 
     self.rpeaks : dict
         Dictionary with R peak location indices derived from the ECG signal
 
         **Columns**:
-
-        * R_Peak_Quality: Quality indicator in the range of [0,1] for signal quality
-        * R_Peak_Idx: Index of detected R peak in the raw ECG signal
-        * RR_Interval: Interval between the current and the successive R peak in seconds
-        * R_Peak_Outlier: 1.0 when a detected R peak was classified as outlier, 0.0 else
+            * R_Peak_Quality: Quality indicator in the range of [0,1] for signal quality
+            * R_Peak_Idx: Index of detected R peak in the raw ECG signal
+            * RR_Interval: Interval between the current and the successive R peak in seconds
+            * R_Peak_Outlier: 1.0 when a detected R peak was classified as outlier, 0.0 else
 
     """
 
@@ -140,17 +137,16 @@ class EcgProcessor:
         Returns the keys of all possible outlier correction methods.
 
         Currently available outlier correction methods are:
-
-        * `correlation`: Computes the cross-correlation coefficient between every single beat and the average of all
-          detected beats. Marks beats as outlier if cross-correlation coefficient is below a certain threshold
-        * `quality`: Uses the 'ECG_Quality' indicator from neurokit to assess signal quality. Marks beats as outlier if
-          quality indicator of beat is below a certain threshold
-        * `artifact`: Artifact detection based on work from `Berntson et al. (1990), Psychophysiology`
-        * `physiological`: Physiological outlier removal. Marks beats as outlier if their heart rate is above or below a
-          threshold that can not be achieved physiologically
-        * `statistical`: Statistical outlier removal. Marks beats as outlier if they are within the xx% highest or
-          lowest heart rates. Values are removed based on the z-score
-          (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values)
+            * `correlation`: Computes the cross-correlation coefficient between every single beat and the average of all
+              detected beats. Marks beats as outlier if cross-correlation coefficient is below a certain threshold
+            * `quality`: Uses the 'ECG_Quality' indicator from neurokit to assess signal quality. Marks beats as outlier if
+              quality indicator of beat is below a certain threshold
+            * `artifact`: Artifact detection based on work from `Berntson et al. (1990), Psychophysiology`
+            * `physiological`: Physiological outlier removal. Marks beats as outlier if their heart rate is above or below a
+              threshold that can not be achieved physiologically
+            * `statistical`: Statistical outlier removal. Marks beats as outlier if they are within the xx% highest or
+              lowest heart rates. Values are removed based on the z-score
+              (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values)
 
 
         See Also
@@ -943,9 +939,8 @@ def _correct_outlier_statistical(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
     """
     Outlier correction method 'statistical'.
 
-    Marks beats as outlier if they are within the xx % highest or lowest heart rates.
-    Marks beats as outlier if their z-score is above a threshold (e.g. 1.96 = > 5 %, 2.5 % highest,
-    2.5 % lowest values).
+    Marks beats as outlier if they are within the xx % highest or lowest heart rates, i.e. if their z-score is above
+    a threshold (e.g. 1.96 = > 5 %, 2.5 % highest, 2.5 % lowest values).
 
     Parameters
     ----------
