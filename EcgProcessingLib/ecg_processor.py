@@ -52,12 +52,14 @@ class EcgProcessor:
 
     def __init__(self, data_dict: Optional[Dict[str, pd.DataFrame]] = None, dataset: Optional['Dataset'] = None,
                  df: Optional[pd.DataFrame] = None,
+                 time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
                  sampling_rate: Optional[float] = 256.0, timezone: Optional[Union[pytz.timezone, str]] = utils.tz):
         """
         Initializes an `EcgProcessor` instance that can be used for ECG processing.
 
         You can either pass a data dictionary 'data_dict' containing ECG data, a Dataset object directly from
-        NilsPodLib or a dataframe containing ECG data.
+        NilsPodLib or a dataframe containing ECG data. For the latter both, you can additionally supply time
+        information via `time_intervals` parameter to automatically split the data into subphases.
 
         Parameters
         ----------
@@ -67,17 +69,37 @@ class EcgProcessor:
             Dataset from NilsPodLib
         df : pd.DataFrame, optional
             pandas dataframe with NilsPod data
+        time_intervals : dict or pd.Series, optional
+            time intervals indicating where the data should be split.
+            Can either be a pandas Series with the `start` times of the single phases
+            (the names of the phases are then derived from the index) or a dictionary with tuples indicating
+            start and end times of the phases (the names of the phases are then derived from the dict keys)
+            Default: ``None``
         sampling_rate : float, optional
             sampling rate of recorded data (not necessary if ``dataset`` is passed, then it is inferred from the dataset
             header)
         timezone : str or pytz.timezone, optional
             timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
-
         Raises
         ------
         ValueError
             If None of 'dataset', 'df', or 'data_dict' are supplied
+
+
+        Examples
+        --------
+        >>> # Example using NilsPod Dataset
+        >>>
+        >>> import EcgProcessingLib as ep
+        >>> import pandas as pd
+        >>> from NilsPodLib import Dataset
+        >>>
+        >>> file_path = "./NilsPod_TestData.bin"
+        >>> timezone = "Europe/Berlin"
+        >>> time_intervals = {"Part1": ("09:00", "09:30"), "Part2": ("09:30", "09:45"), "Part3": ("09:45", "10:00")}
+        >>> dataset = Dataset.from_bin_file(file_path)
+        >>> ecg_processor = ep.EcgProcessor(dataset=dataset, time_intervals=time_intervals, timezone=timezone)
         """
 
         if all([i is None for i in [dataset, df, data_dict]]):
@@ -94,18 +116,49 @@ class EcgProcessor:
             # convert dataset to dataframe and localize timestamp
             df = dataset.data_as_df("ecg", index="utc_datetime").tz_localize(tz=utils.utc).tz_convert(tz=timezone)
             self.sampling_rate = int(dataset.info.sampling_rate_hz)
-            self.data_dict: Dict = {
-                'Data': df
-            }
         else:
             # localize dataframe
             df = df.tz_localize(tz=utils.utc).tz_convert(tz=timezone)
-            self.data_dict: Dict = {
+
+        if time_intervals:
+            # split data into subphases if time_intervals are passed
+            data_dict = utils.split_data(time_intervals, df=df, timezone=timezone)
+        else:
+            data_dict = {
                 'Data': df
             }
+
+        self.data_dict: Dict[str, pd.DataFrame] = data_dict
         self.ecg_result: Dict[str, pd.DataFrame] = {}
+        """
+        Dictionary with ECG processing results
+
+        **Columns**:
+            * ECG_Raw: Raw ECG signal
+            * ECG_Clean: Cleaned (filtered) ECG signal
+            * ECG_Quality: Quality indicator in the range of [0,1] for ECG signal quality
+            * ECG_R_Peaks: 1.0 where R peak was detected in the ECG signal, 0.0 else
+            * R_Peak_Outlier: 1.0 when a detected R peak was classified as outlier, 0.0 else
+            * ECG_Rate: Computed Heart rate interpolated to signal length
+        """
         self.heart_rate: Dict[str, pd.DataFrame] = {}
+        """
+        self.heart_rate : dict
+        Dictionary with heart rate data derived from the ECG signal
+
+        **Columns**:
+            * ECG_Rate: Computed heart rate for each detected R peak
+        """
         self.rpeaks: Dict[str, pd.DataFrame] = {}
+        """
+        Dictionary with R peak location indices derived from the ECG signal
+
+        **Columns**:
+            * R_Peak_Quality: Quality indicator in the range of [0,1] for signal quality
+            * R_Peak_Idx: Index of detected R peak in the raw ECG signal
+            * RR_Interval: Interval between the current and the successive R peak in seconds
+            * R_Peak_Outlier: 1.0 when a detected R peak was classified as outlier, 0.0 else
+        """
 
     @property
     def ecg(self) -> Dict[str, pd.DataFrame]:
@@ -206,6 +259,32 @@ class EcgProcessor:
         See Also
         --------
         EcgProcessor.correct_outlier, EcgProcessor.outlier_corrections, EcgProcessor.outlier_params_default
+
+
+        Examples
+        --------
+        >>> import EcgProcessingLib as ep
+        >>> # initialize EcgProcessor instance
+        >>> ecg_processor = ep.EcgProcessor(...)
+
+        >>> # use default outlier correction pipeline
+        >>> ecg_processor.ecg_process()
+
+        >>> # don't apply any outlier correction
+        >>> ecg_processor.ecg_process(outlier_correction=None)
+
+        >>> # use custom outlier correction pipeline: only physiological and statistical outlier with custom thresholds
+        >>> methods = ["physiological", "statistical"]
+        >>> params = {
+        >>>    'physiological': (50, 150),
+        >>>    'statistical': 2.576
+        >>>}
+        >>> ecg_processor.ecg_process(outlier_correction=methods, outlier_params=params)
+
+        >>> # Print available results from ECG processing
+        >>> print(ecg_processor.ecg_result)
+        >>> print(ecg_processor.rpeaks)
+        >>> print(ecg_processor.heart_rate)
         """
 
         for name, df in tqdm(self.data_dict.items(), desc=title):
@@ -317,7 +396,28 @@ class EcgProcessor:
 
         See Also
         --------
-        EcgProcessor.outlier_corrections, EcgProcessor.outlier_params_default
+        EcgProcessor.ecg_process, EcgProcessor.outlier_corrections, EcgProcessor.outlier_params_default
+
+        Examples
+        --------
+        >>> import EcgProcessingLib as ep
+        >>> # initialize EcgProcessor instance
+        >>> ecg_processor = ep.EcgProcessor(...)
+
+        >>> # use default outlier correction pipeline
+        >>> ecg_signal, rpeaks = ecg_processor.correct_outlier(ecg_processor, key="Data")
+
+        >>> # use custom outlier correction pipeline: only physiological and statistical outlier with custom thresholds
+        >>> methods = ["physiological", "statistical"]
+        >>> params = {
+        >>>    'physiological': (50, 150),
+        >>>    'statistical': 2.576
+        >>>}
+        >>> ecg_signal, rpeaks = ecg_processor.correct_outlier(
+        >>>                             ecg_processor, key="Data",
+        >>>                             outlier_correction=methods,
+        >>>                             outlier_params=params
+        >>>                         )
         """
 
         utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
@@ -416,6 +516,15 @@ class EcgProcessor:
             dataframe containing corrected R peak indices
 
         # TODO reference
+
+        Examples
+        --------
+        >>> import EcgProcessingLib as ep
+        >>> # initialize EcgProcessor instance
+        >>> ecg_processor = ep.EcgProcessor(...)
+
+        >>> # correct R peak locations
+        >>> rpeaks_corrected = ecg_processor.correct_rpeaks(ecg_processor, key="Data")
         """
 
         utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
@@ -476,6 +585,18 @@ class EcgProcessor:
         dataframe
             dataframe with computed HRV features
 
+
+        Examples
+        --------
+        >>> import EcgProcessingLib as ep
+        >>> # initialize EcgProcessor instance
+        >>> ecg_processor = ep.EcgProcessor(...)
+
+        >>> # HRV processing using default parameters (time and nonlinear), including R peak correction
+        >>> hrv_output = ecg_processor.hrv_process(ecg_processor, key="Data")
+
+        >>> # HRV processing using using all types, and without R peak correction
+        >>> hrv_output = ecg_processor.hrv_process(ecg_processor, key="Data", hrv_types='all', correct_rpeaks=False)
         """
 
         utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
@@ -542,6 +663,15 @@ class EcgProcessor:
         -------
         dataframe
             dataframe containing the estimated respiration signal
+
+        Examples
+        --------
+        >>> import EcgProcessingLib as ep
+        >>> # initialize EcgProcessor instance
+        >>> ecg_processor = ep.EcgProcessor(...)
+
+        >>> # Extract respiration signal estimated from ECG using the 'peak_trough_diff' method
+        >>> rsp_signal = ecg_processor.ecg_extract_edr(ecg_processor, key="Data", edr_type='peak_trough_diff')
         """
 
         utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
@@ -591,6 +721,17 @@ class EcgProcessor:
             Respiration rate during the given interval in bpm (breaths per minute)
 
         # TODO reference
+
+        Examples
+        --------
+        >>> import EcgProcessingLib as ep
+        >>> # initialize EcgProcessor instance
+        >>> ecg_processor = ep.EcgProcessor(...)
+
+        >>> # Extract respiration signal estimated from ECG using the 'peak_trough_diff' method
+        >>> rsp_signal = ecg_processor.ecg_extract_edr(ecg_processor, key="Data", edr_type='peak_trough_diff')
+        >>> # Compute respiration rate from respiration signal
+        >>> rsp_rate = ecg_processor.rsp_compute_rate(rsp_signal)
         """
 
         # find peaks: minimal distance between peaks: 1 seconds
@@ -645,6 +786,18 @@ class EcgProcessor:
         See Also
         --------
         nk.ecg_rsa
+
+        Examples
+        --------
+        >>> import EcgProcessingLib as ep
+        >>> # initialize EcgProcessor instance
+        >>> ecg_processor = ep.EcgProcessor(...)
+
+        >>> ecg_signal = ecg_processor.ecg_result['Data']
+        >>> # Extract respiration signal estimated from ECG using the 'peak_trough_diff' method
+        >>> rsp_signal = ecg_processor.ecg_extract_edr(ecg_processor, key="Data", edr_type='peak_trough_diff')
+        >>> # Compute RSA from ECG and Respiration data
+        >>> rsa_output = ecg_processor.rsa_process(ecg_signal, rsp_signal)
         """
 
         # ensure numpy
@@ -696,6 +849,20 @@ class EcgProcessor:
         -------
         pd.DataFrame
             dataframe of respiration rate and RSA estimation results
+
+        Examples
+        --------
+        >>> import EcgProcessingLib as ep
+        >>> # initialize EcgProcessor instance
+        >>> ecg_processor = ep.EcgProcessor(...)
+
+        >>> # Compute respiration rate and RSA. Extract respiration signal using all available
+        >>> # methods and average the results ('return_mean' is True by default)
+        >>> rsp_signal = ecg_processor.rsp_rsa_process(ecg_processor, key="Data")
+
+        >>> # Compute respiration rate and RSA. Extract respiration signal using all available
+        >>> # methods and return the single results
+        >>> rsp_signal = ecg_processor.rsp_rsa_process(ecg_processor, key="Data", return_mean=False)
         """
 
         utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
