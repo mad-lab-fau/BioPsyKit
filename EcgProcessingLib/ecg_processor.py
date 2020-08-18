@@ -126,7 +126,7 @@ class EcgProcessor:
             # localize dataframe
             df = df.tz_localize(tz=utils.utc).tz_convert(tz=timezone)
 
-        if time_intervals:
+        if time_intervals is not None:
             # split data into subphases if time_intervals are passed
             data_dict = utils.split_data(time_intervals, df=df, timezone=timezone)
         else:

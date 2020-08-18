@@ -251,7 +251,7 @@ def write_result_dict_to_csv(result_dict: Dict[str, pd.DataFrame], file_path: pa
     >>> }
     >>>
     >>> ep.write_result_dict_to_csv(dict_param_output, file_path=file_path,
-    >>>                             identifier_col="Subject_ID", index_cols=["Phase", "Subphade"])
+    >>>                             identifier_col="Subject_ID", index_cols=["Phase", "Subphase"])
     """
 
     # TODO check if index_cols is really needed?
