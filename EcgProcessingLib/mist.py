@@ -117,7 +117,7 @@ def mist_param_subphases(ecg_processor: Optional[EcgProcessor] = None,
                          param_types: Optional[Union[str, Sequence[str]]] = 'all',
                          sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
                          subphases: Optional[Sequence[str]] = None,
-                         subphase_durations: Optional[Sequence[int]] = None) -> pd.DataFrame:
+                         subphase_durations: Optional[Sequence[int]] = None, title: Optional[str] = None) -> pd.DataFrame:
     """
     Computes specified parameters (HRV / RSA / ...) over all MIST phases and subphases.
 
@@ -185,7 +185,7 @@ def mist_param_subphases(ecg_processor: Optional[EcgProcessor] = None,
     # that will later be concated to one large dataframes
     dict_df_subphases = {param: list() for param in param_types}
     # iterate through all phases in the data
-    for (phase, rpeaks), (ecg_phase, ecg) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc="HRV/RSP"):
+    for (phase, rpeaks), (ecg_phase, ecg) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc=title):
         rpeaks = rpeaks.copy()
         ecg = ecg.copy()
 
