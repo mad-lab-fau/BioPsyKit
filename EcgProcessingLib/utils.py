@@ -207,7 +207,6 @@ def write_hr_to_excel(ecg_processor: 'EcgProcessor', file_path: path_t) -> None:
         EcgProcessor instance
     file_path : path or str
         path to file
-
     """
 
     write_dict_to_excel(ecg_processor.heart_rate, file_path)

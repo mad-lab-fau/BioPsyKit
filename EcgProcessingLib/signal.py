@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, Dict
 
 import pandas as pd
 import numpy as np
@@ -46,6 +46,28 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     interpol_f = interpolate.interp1d(x=x_old, y=data, fill_value="extrapolate")
     x_new = pd.Index(x_new, name="Time")
     return pd.DataFrame(interpol_f(x_new), index=x_new, columns=column_name)
+
+
+def interpolate_dict_sec(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+    """
+    Interpolates all data in the dictionary to 1Hz data (see `interpolate_sec` for further information).
+
+    Parameters
+    ----------
+    data_dict : dict
+        nested data dict with heart rate data
+
+    Returns
+    -------
+    dict
+        nested data dict with heart rate data interpolated to seconds
+    """
+
+    return {
+        subject_id: {
+            phase: interpolate_sec(df_hr) for phase, df_hr in dict_hr.items()
+        } for subject_id, dict_hr in data_dict.items()
+    }
 
 
 def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
