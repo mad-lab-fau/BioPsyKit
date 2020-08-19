@@ -104,29 +104,29 @@ def mist_split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str
                          is_group_dict: Optional[bool] = False) \
         -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
     """
-    Splits a `total data dict` (or a dict of such, in case of multiple groups)
-    into a `subphase data dict` (see below for further explanation).
+    Splits a `MIST dict` (or a dict of such, in case of multiple groups, see `mist.mist_concat_dicts`)
+    into a `MIST subphase dict` (see below for further explanation).
 
-    The **input** is a `total data dict`, i.e. a dictionary with heart rate data per MIST phase in the following format:
+    The **input** is a `MIST dict`, i.e. a dictionary with heart rate data per MIST phase in the following format:
 
     { <"MIST_Phase"> : HR_dataframe, 1 subject per column }
 
-    If multiple groups are present, then the expected input is nested, i.e. a dict of 'total data dicts',
+    If multiple groups are present, then the expected input is nested, i.e. a dict of 'MIST dicts',
     with one entry per group.
 
-    The **output** is a `subphase data dict`, i.e. a nested dictionary with heart rate data per MIST subphase in the
+    The **output** is a `MIST subphase dict`, i.e. a nested dictionary with heart rate data per MIST subphase in the
     following format:
 
     { <"MIST_Phase"> : { <"MIST_Subphase"> : HR_dataframe, 1 subject per column } }
 
-    If multiple groups are present, then the output is nested, i.e. a dict of 'subphase data dicts',
+    If multiple groups are present, then the output is nested, i.e. a dict of 'MIST subphase dicts',
     with one entry per group.
 
 
     Parameters
     ----------
     data : dict
-        'total data dict' or nested dict of 'total data dict' if `is_group_dict` is ``True``
+        'MIST dict' or nested dict of 'MIST dict' if `is_group_dict` is ``True``
     mist_times : list, optional
         List with start and end times of each MIST subphase, or ``None`` to infer start and end times from data
         (with default MIST subphase durations)
@@ -136,8 +136,8 @@ def mist_split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str
     Returns
     -------
     dict
-        'subphase data dict' with course of HR data per MIST phase, subphase and subject, respectively or
-        nested dict of 'subphase data dicts' if `is_group_dict` is ``True``
+        'MIST subphase dict' with course of HR data per MIST phase, subphase and subject, respectively or
+        nested dict of 'MIST subphase dicts' if `is_group_dict` is ``True``
 
     """
     if is_group_dict:
@@ -157,7 +157,7 @@ def mist_split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str
 def mist_split_groups(condition_dict: Dict[str, Sequence[str]],
                       mist_dict: Dict[str, pd.DataFrame]) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
-    Splits 'total data dict' into group dict, i.e. one 'total data dict' per group.
+    Splits 'MIST dict' into group dict, i.e. one 'MIST dict' per group.
 
     Parameters
     ----------
@@ -165,12 +165,12 @@ def mist_split_groups(condition_dict: Dict[str, Sequence[str]],
         dictionary of group membership. Keys are the different groups, values are lists of subject IDs that belong
         to the respective group
     mist_dict : dict
-        'total data dict' to be split in groups. See `mist.mist_split_subphases` for further information
+        'MIST dict' to be split in groups. See `mist.mist_split_subphases` for further information
 
     Returns
     -------
     dict
-        nested group dict with one 'total data dict' per group
+        nested group dict with one 'MIST dict' per group
 
     """
     return {
@@ -185,7 +185,8 @@ def mist_param_subphases(ecg_processor: Optional[EcgProcessor] = None,
                          param_types: Optional[Union[str, Sequence[str]]] = 'all',
                          sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
                          subphases: Optional[Sequence[str]] = None,
-                         subphase_durations: Optional[Sequence[int]] = None, title: Optional[str] = None) -> pd.DataFrame:
+                         subphase_durations: Optional[Sequence[int]] = None,
+                         title: Optional[str] = None) -> pd.DataFrame:
     """
     Computes specified parameters (HRV / RSA / ...) over all MIST phases and subphases.
 
@@ -309,7 +310,7 @@ def mist_hr_course(data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dic
     """
     Computes the heart rate mean and standard error per MIST subphase over all subjects.
 
-    As input either 1. a 'subphase data dict' (for only one group) or 2. a dict of 'subphase data dict', one dict per
+    As input either 1. a 'MIST subphase dict' (for only one group) or 2. a dict of 'MIST subphase dict', one dict per
     group (for multiple groups, if `is_group_dict` is ``True``) can be passed
     (see `mist.mist_split_subphases` for more explanation). Both dictionaries are outputs from
     `mist.mist_split_subphases`.
@@ -357,14 +358,14 @@ def mist_get_times(mist_dur: Union[Sequence[int], Dict[str, pd.DataFrame]],
     the maximum length of all MIST phases.
 
     To compute the MIST subphase durations either pass a list with total MIST durations per phase or a
-    'total data dict' (see `mist.mist_split_subphases` for further explanation).
+    'MIST dict' (see `mist.mist_concat_dicts` for further explanation).
     The length of the dataframe then corresponds to the total MIST duration per phase.
 
     Parameters
     ----------
     mist_dur : list or dict
-        list is passed then each entry of the list is the total duration of one MIST phase. If a dict is passed
-        then if is assumed that it is a 'total data dict'. The length of the dataframe then corresponds to the total
+        if a list is passed then each entry of the list is the total duration of one MIST phase. If a dict is passed
+        then if is assumed that it is a 'MIST dict'. The length of the dataframe then corresponds to the total
         duration of the MIST phase
     subph_dur : list, optional
         durations of MIST subphases, i.e., Baseline, Arithmetic Tasks, etc. or ``None`` to use default durations.
@@ -386,10 +387,10 @@ def mist_get_times(mist_dur: Union[Sequence[int], Dict[str, pd.DataFrame]],
     else:
         mist_dur = np.array(mist_dur)
 
-    # compute the duration to the end of AT subphase
-    dur_to_at = sum(subph_dur)
+    # compute the duration to the beginning of Feedback subphase
+    dur_to_fb = sum(subph_dur)
     # (variable) duration of the feedback intervals: total MIST duration - duration to end of AT
-    dur_fb = mist_dur - dur_to_at
+    dur_fb = mist_dur - dur_to_fb
 
     # add maximum FB duration to subphase duration list
     subph_dur = np.append(subph_dur, max(dur_fb))
@@ -405,8 +406,8 @@ def mist_hr_ensemble_plot(data: Dict[str, pd.DataFrame], plot_params: Optional[D
                           ax: Optional[plt.Axes] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     """
     Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
-    Simply pass a 'total data dict' dictionary with one pandas heart rate dataframe per MIST phase
-    (see `mist.mist_split_subphases` for further explanation), i.e. heart rate data with one column per subject.
+    Simply pass a 'MIST dict' dictionary with one pandas heart rate dataframe per MIST phase
+    (see `mist.mist_concat_dicts` for further explanation), i.e. heart rate data with one column per subject.
 
     Parameters
     ----------
