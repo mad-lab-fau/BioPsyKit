@@ -31,6 +31,74 @@ hr_course_params = {
 }
 
 
+def mist_cut_feedback_interval(
+        dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+    """
+    Cuts heart rate data of each subject to equal length, i.e. to the minimal duration of each MIST phase
+    (due to variable length of the Feedback interval).
+
+    Parameters
+    ----------
+    dict_hr_subject : dict
+        nested dict containing heart rate data per subject and MIST phase
+        ('HR subject dict', see `utils.load_hr_excel_all_subjects`)
+
+    Returns
+    -------
+    dict
+        'HR subject dict' containing only relevant MIST phases (i.e., excluding Part1 and Part2)
+        where each MIST phase is cut to the minimum duration of all subjects
+
+    """
+    # skip Part1 and Part2, extract only MIST Phases
+    mist_phases = mist_params['phases']
+
+    durations = np.array([[len(df) for phase, df in dict_hr.items() if phase not in ['Part1', 'Part2']] for dict_hr in
+                          dict_hr_subject.values()])
+
+    # minimal duration of each MIST Phase
+    min_dur = {phase: dur for phase, dur in zip(mist_phases, np.min(durations, axis=0))}
+
+    for subject_id, dict_hr in dict_hr_subject.items():
+        dict_hr_cut = {}
+        for phase in mist_phases:
+            dict_hr_cut[phase] = dict_hr[phase][0:min_dur[phase]]
+        dict_hr_subject[subject_id] = dict_hr_cut
+
+    return dict_hr_subject
+
+
+def mist_concat_dicts(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, pd.DataFrame]:
+    """
+    Rearranges the 'HR subject dict' (see `utils.load_hr_excel_all_subjects`) into 'MIST dict', i.e. a dictionary with
+    one dataframe per MIST phase where each dataframe contains column-wise HR data for all subjects.
+
+    The **output** format will be the following:
+
+    { <"MIST_Phase"> : hr_dataframe, 1 subject per column }
+
+    Parameters
+    ----------
+    dict_hr_subject : dict
+        'HR subject dict', i.e. a nested dict with heart rate data per MIST phase and subject
+
+    Returns
+    -------
+    dict
+        'MIST dict', i.e. a dict with heart rate data of all subjects per MIST phase
+
+    """
+    mist_phases = mist_params['phases']
+
+    dict_mist = {key: pd.DataFrame(columns=list(dict_hr_subject.keys())) for key in mist_phases}
+    for subj in dict_hr_subject:
+        dict_bl = dict_hr_subject[subj]
+        for phase in mist_phases:
+            dict_mist[phase][subj] = dict_bl[phase]['ECG_Rate']
+
+    return dict_mist
+
+
 def mist_split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
                          mist_times: Optional[Sequence[Tuple[int, int]]] = None,
                          is_group_dict: Optional[bool] = False) \
