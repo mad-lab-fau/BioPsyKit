@@ -44,6 +44,7 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     x_new = np.arange(1, np.ceil(x_old[-1]) + 1)
     data = sanitize_input(data)
     interpol_f = interpolate.interp1d(x=x_old, y=data, fill_value="extrapolate")
+    x_new = pd.Index(x_new, name="Time")
     return pd.DataFrame(interpol_f(x_new), index=x_new, columns=column_name)
 
 
