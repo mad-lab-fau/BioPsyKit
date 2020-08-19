@@ -154,18 +154,18 @@ def mist_split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str
         return mist_dict
 
 
-def mist_split_groups(condition_dict: Dict[str, Sequence[str]],
-                      mist_dict: Dict[str, pd.DataFrame]) -> Dict[str, Dict[str, pd.DataFrame]]:
+def mist_split_groups(mist_dict: Dict[str, pd.DataFrame],
+                      condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     Splits 'MIST dict' into group dict, i.e. one 'MIST dict' per group.
 
     Parameters
     ----------
+    mist_dict : dict
+        'MIST dict' to be split in groups. See `mist.mist_split_subphases` for further information
     condition_dict : dict
         dictionary of group membership. Keys are the different groups, values are lists of subject IDs that belong
         to the respective group
-    mist_dict : dict
-        'MIST dict' to be split in groups. See `mist.mist_split_subphases` for further information
 
     Returns
     -------
@@ -213,6 +213,8 @@ def mist_param_subphases(ecg_processor: Optional[EcgProcessor] = None,
         list with subphase names or ``None`` to use default subphases. Default: ``None``
     subphase_durations : list, optional
         list with subphase durations or ``None`` to use default subphase durations. Default: ``None``
+    title : str, optional
+        Optional title of the processing progress bar. Default: ``None``
 
     Returns
     -------
