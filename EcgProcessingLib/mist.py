@@ -605,7 +605,7 @@ def mist_hr_course_plot(data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
         # remove the errorbars
         handles = [h[0] for h in handles]
         # use them in the legend
-        ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.01, 0.9), numpoints=1, prop={"size": fontsize})
+        ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.01, 0.85), numpoints=1, prop={"size": fontsize})
 
     if fig:
         fig.tight_layout()
