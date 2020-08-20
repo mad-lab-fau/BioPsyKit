@@ -26,7 +26,12 @@ setup(
 
     install_requires=[
         'numpy',
+        'scipy',
         'pandas',
         'matplotlib',
+        'pytz',
+        'seaborn',
+        'neurokit2',
+        'tqdm'
     ],
 )
