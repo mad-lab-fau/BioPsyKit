@@ -6,6 +6,7 @@
 from pathlib import Path
 from typing import TypeVar, Sequence, Optional, Dict, Union, List
 import pytz
+import datetime
 
 import pandas as pd
 import numpy as np
@@ -52,7 +53,8 @@ def adjust_color(key: str, amount: Optional[float] = 1.5) -> str:
 
 def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
                dataset: Optional[Dataset] = None, df: Optional[pd.DataFrame] = None,
-               timezone: Optional[Union[str, pytz.timezone]] = tz) -> Dict[str, pd.DataFrame]:
+               timezone: Optional[Union[str, pytz.timezone]] = tz, include_start: Optional[bool] = False) -> Dict[
+    str, pd.DataFrame]:
     """
     Splits the data into parts based on time intervals.
 
@@ -70,6 +72,9 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
         data to be split
     timezone : str or pytz.timezone, optional
         timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
+    include_start: bool, optional
+        ``True`` to include the data from the beginning of the recording to the first time interval as the
+        first interval, ``False`` otherwise. Default: ``False``
 
     Returns
     -------
@@ -92,8 +97,6 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
     >>>
     >>> # Example: Get Part 2 of data_dict
     >>> print(data_dict['Part2'])
-
-    # TODO create utils method to load and parse time log data
     """
     data_dict: Dict[str, pd.DataFrame] = {}
     if dataset is None and df is None:
@@ -107,10 +110,16 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
         if len(time_intervals) > 1:
             raise ValueError("Only dataframes with 1 row allowed!")
         time_intervals = time_intervals.iloc[0]
+
     if isinstance(time_intervals, pd.Series):
+        if include_start:
+            time_intervals["Start"] = df.index[0].to_pydatetime().time()
+        time_intervals.sort_values(inplace=True)
         for name, start, end in zip(time_intervals.index, np.pad(time_intervals, (0, 1)), time_intervals[1:]):
             data_dict[name] = df.between_time(start, end)
     else:
+        if include_start:
+            time_intervals["Start"] = (df.index[0].to_pydatetime().time(), list(time_intervals.values())[0][0])
         data_dict = {name: df.between_time(*start_end) for name, start_end in time_intervals.items()}
     return data_dict
 
@@ -189,6 +198,21 @@ def read_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
     if phase_cols:
         df_time_log = df_time_log.loc[:, phase_cols]
     return df_time_log
+
+
+def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset'] = None,
+                              date: Optional[Union[str, 'datetime']] = None,
+                              timezone: Optional[str] = "Europe/Berlin") -> pd.DataFrame:
+    if dataset is None and date is None:
+        raise ValueError("Either `dataset` or `date` must be supplied as argument!")
+
+    if dataset is not None:
+        date = dataset.info.utc_datetime_start.date()
+    if isinstance(date, str):
+        # ensure datetime
+        date = datetime.datetime(date)
+    time_log = time_log.applymap(lambda x: pytz.timezone(timezone).localize(datetime.datetime.combine(date, x)))
+    return time_log
 
 
 def write_hr_to_excel(ecg_processor: 'EcgProcessor', file_path: path_t) -> None:

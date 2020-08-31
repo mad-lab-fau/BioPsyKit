@@ -53,6 +53,7 @@ class EcgProcessor:
     def __init__(self, data_dict: Optional[Dict[str, pd.DataFrame]] = None, dataset: Optional['Dataset'] = None,
                  df: Optional[pd.DataFrame] = None,
                  time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
+                 include_start: Optional[bool] = False,
                  sampling_rate: Optional[float] = 256.0, timezone: Optional[Union[pytz.timezone, str]] = utils.tz):
         """
         Initializes an `EcgProcessor` instance that can be used for ECG processing.
@@ -75,6 +76,9 @@ class EcgProcessor:
             (the names of the phases are then derived from the index) or a dictionary with tuples indicating
             start and end times of the phases (the names of the phases are then derived from the dict keys)
             Default: ``None``
+        include_start: bool, optional
+            ``True`` to include the data from the beginning of the recording to the first time interval as the
+            first interval, ``False`` otherwise. Default: ``False``
         sampling_rate : float, optional
             sampling rate of recorded data (not necessary if ``dataset`` is passed, then it is inferred from the dataset
             header)
@@ -128,7 +132,7 @@ class EcgProcessor:
 
         if time_intervals is not None:
             # split data into subphases if time_intervals are passed
-            data_dict = utils.split_data(time_intervals, df=df, timezone=timezone)
+            data_dict = utils.split_data(time_intervals, df=df, timezone=timezone, include_start=include_start)
         else:
             data_dict = {
                 'Data': df
@@ -147,6 +151,7 @@ class EcgProcessor:
             * R_Peak_Outlier: 1.0 when a detected R peak was classified as outlier, 0.0 else
             * ECG_Rate: Computed Heart rate interpolated to signal length
         """
+
         self.heart_rate: Dict[str, pd.DataFrame] = {}
         """
         self.heart_rate : dict
@@ -155,6 +160,7 @@ class EcgProcessor:
         **Columns**:
             * ECG_Rate: Computed heart rate for each detected R peak
         """
+
         self.rpeaks: Dict[str, pd.DataFrame] = {}
         """
         Dictionary with R peak location indices derived from the ECG signal
@@ -299,8 +305,9 @@ class EcgProcessor:
                                                       outlier_correction=outlier_correction,
                                                       outlier_params=outlier_params, sampling_rate=self.sampling_rate)
             heart_rate = pd.DataFrame({'ECG_Rate': 60 / rpeaks['RR_Interval']})
-            heart_rate_interpolated = nk.signal_interpolate(rpeaks['R_Peak_Idx'], heart_rate['ECG_Rate'],
-                                                            desired_length=len(ecg_result['ECG_Clean']))
+            heart_rate_interpolated = nk.signal_interpolate(x_values=rpeaks['R_Peak_Idx'],
+                                                            y_values=heart_rate['ECG_Rate'],
+                                                            x_new=np.arange(0, len(ecg_result['ECG_Clean'])))
             ecg_result['ECG_Rate'] = heart_rate_interpolated
             self.ecg_result[name] = ecg_result
             self.heart_rate[name] = heart_rate
