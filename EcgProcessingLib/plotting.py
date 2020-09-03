@@ -1,4 +1,4 @@
-from typing import Optional, Union, Sequence, Tuple
+from typing import Optional, Union, Sequence, Tuple, Dict
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -26,12 +26,15 @@ mpl_rc_params = {
 plt.rcParams.update(mpl_rc_params)
 
 
+# TODO add signal plot method for all phases
+
 # TODO add kwargs
 def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
              ecg_signal: Optional[pd.DataFrame] = None, heart_rate: Optional[pd.DataFrame] = None,
              sampling_rate: Optional[int] = 256, title: Optional[str] = None,
              plot_distribution: Optional[bool] = True,
-             plot_individual_beats: Optional[bool] = True) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
+             plot_individual_beats: Optional[bool] = True,
+             figsize: Optional[Tuple[float, float]] = None) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
     """
     ECG processing result plot.
 
@@ -64,6 +67,8 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
         ``True`` to include heart rate distribution plot, ``False`` otherwise. Default: ``True``
     plot_individual_beats : bool, optional
         ``True`` to include individual heart beat plot, ``False`` otherwise. Default: ``True``
+    figsize : tuple, optional
+        Figure size
 
     Returns
     -------
@@ -83,13 +88,16 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     sns.set_palette(utils.cmap_fau)
     plt.rcParams['timezone'] = ecg_signal.index.tz.zone
 
+    if figsize is None:
+        figsize = (15, 5)
+
     outlier = np.where(ecg_signal["R_Peak_Outlier"] == 1)[0]
     peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
     peaks = np.setdiff1d(peaks, outlier)
     # Prepare figure and set axes.
     x_axis = ecg_signal.index
 
-    fig = plt.figure(figsize=(15, 5), constrained_layout=False)
+    fig = plt.figure(figsize=figsize, constrained_layout=False)
 
     if plot_individual_beats or plot_distribution:
         spec = gs.GridSpec(2, 2, width_ratios=[3, 1])
@@ -166,7 +174,8 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
 
 
 def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
-            plot_mean: Optional[bool] = True, title: Optional[str] = None) -> Tuple[plt.Figure, plt.Axes]:
+            plot_mean: Optional[bool] = True, title: Optional[str] = None,
+            figsize: Optional[Tuple[float, float]] = None) -> Tuple[plt.Figure, plt.Axes]:
     """
     Plot displaying the course of heart rate (tachogram). This plot is also used as subplot in `ecg_plot`.
 
@@ -180,6 +189,8 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
         ``True`` to plot the mean heart rate as horizontal line. Default: ``True``
     title : str, optional
         optional plot title. Default: None
+    figsize: tuple, optional
+        Figure size
 
     Returns
     -------
@@ -193,7 +204,9 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
-        fig, ax = plt.subplots()
+        if figsize is None:
+            figsize = plt.rcParams['figure.figsize']
+        fig, ax = plt.subplots(figsize=figsize)
 
     if title:
         ax.set_title("Heart Rate – {}".format(title))
@@ -224,7 +237,8 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
 def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
              ecg_signal: Optional[pd.DataFrame] = None, rpeaks: Optional[pd.DataFrame] = None,
              sampling_rate: Optional[int] = 256, title: Optional[str] = None,
-             plot_psd: Optional[bool] = True) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
+             plot_psd: Optional[bool] = True,
+             figsize: Optional[Tuple[float, float]] = None) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
     """
     Heart Rate Variability result plot.
 
@@ -254,6 +268,8 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     plot_psd : bool, optional
         ``True`` to include Power Spectral Density (PSD) plot (from heart rate frequency analysis),
         ``False`` otherwise. Default: ``True``
+    figsize : tuple, optional
+        Figure size
 
     Returns
     -------
@@ -261,6 +277,9 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
         Tuple of Figure and list of subplot Axes
     """
     import matplotlib.gridspec as gs
+
+    if figsize is None:
+        figsize = (14, 7)
 
     utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
     if ecg_processor:
@@ -273,7 +292,7 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     # keep this line to prevent PyCharm linter from complaining...
     rpeaks = pd.DataFrame(rpeaks)
 
-    fig = plt.figure(constrained_layout=False, figsize=(14, 7))
+    fig = plt.figure(constrained_layout=False, figsize=figsize)
 
     if plot_psd:
         spec = gs.GridSpec(ncols=2, nrows=2, height_ratios=[1, 1], width_ratios=[1, 1])
@@ -308,7 +327,8 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     return fig, list(axs.values())
 
 
-def hr_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None) -> Tuple[plt.Figure, plt.Axes]:
+def hr_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
+                         figsize: Optional[Tuple[float, float]] = None) -> Tuple[plt.Figure, plt.Axes]:
     """
     Plot displaying heart rate distribution (histogram). This plot is also used as subplot in `ecg_plot`.
 
@@ -318,6 +338,8 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None
         dataframe with heart rate output. Output from `EcgProcessor.ecg_process()`
     ax : plt.Axes, optional
         Axes to plot on, otherwise create a new one. Default: ``None``
+    figsize : tuple, optional
+        Figure size
 
     Returns
     -------
@@ -327,7 +349,9 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
-        fig, ax = plt.subplots()
+        if figsize is None:
+            figsize = plt.rcParams['figure.figsize']
+        fig, ax = plt.subplots(figsize=figsize)
 
     ax = sns.distplot(heart_rate, color=utils.fau_color('tech'), ax=ax)
 
@@ -344,7 +368,8 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None
 
 def individual_beats_plot(ecg_signal: pd.DataFrame, rpeaks: Optional[Sequence[int]] = None,
                           sampling_rate: Optional[int] = 256,
-                          ax: Optional[plt.Axes] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+                          ax: Optional[plt.Axes] = None, figsize: Optional[Tuple[float, float]] = None) -> Union[
+    Tuple[plt.Figure, plt.Axes], None]:
     """
     Plot displaying all segmented heart beats overlaid on top of each other. This plot is also used as subplot in
     `ecg_plot`.
@@ -359,6 +384,8 @@ def individual_beats_plot(ecg_signal: pd.DataFrame, rpeaks: Optional[Sequence[in
         Axes to plot on, otherwise create a new one. Default: ``None``
     sampling_rate : float, optional
         Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
+    figsize : tuple, optional
+        Figure size
 
     Returns
     -------
@@ -368,7 +395,9 @@ def individual_beats_plot(ecg_signal: pd.DataFrame, rpeaks: Optional[Sequence[in
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
-        fig, ax = plt.subplots()
+        if figsize is None:
+            figsize = plt.rcParams['figure.figsize']
+        fig, ax = plt.subplots(figsize=figsize)
 
     if rpeaks is None:
         rpeaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
@@ -401,8 +430,8 @@ def ecg_plot_artifacts(ecg_signals: pd.DataFrame, sampling_rate: Optional[int] =
     _, _ = nk.ecg_fixpeaks(rpeaks, sampling_rate=sampling_rate, iterative=True, show=True)
 
 
-def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                         ax: Optional[plt.Axes] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, ax: Optional[plt.Axes] = None,
+                         figsize: Optional[Tuple[float, float]] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     """
     Plot displaying distribution of RR intervals (histogram). This plot is also used as subplot in `hrv_plot`.
 
@@ -414,6 +443,8 @@ def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 25
         Axes to plot on, otherwise create a new one. Default: ``None``
     sampling_rate : float, optional
         Sampling rate of recorded data. Default: 256 Hz
+    figsize : tuple, optional
+        Figure size
 
     Returns
     -------
@@ -423,7 +454,9 @@ def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 25
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
-        fig, ax = plt.subplots()
+        if figsize is None:
+            figsize = plt.rcParams['figure.figsize']
+        fig, ax = plt.subplots(figsize=figsize)
 
     rri = _get_rr_intervals(rpeaks, sampling_rate)
 
@@ -463,7 +496,9 @@ def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 25
 
 
 def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                      axs: Optional[Sequence[plt.Axes]] = None) -> Union[Tuple[plt.Figure, Sequence[plt.Axes]], None]:
+                      axs: Optional[Sequence[plt.Axes]] = None,
+                      figsize: Optional[Tuple[float, float]] = None) -> Union[
+    Tuple[plt.Figure, Sequence[plt.Axes]], None]:
     """
     Poincaré Plot. This plot is also used as subplot in `hrv_plot`.
 
@@ -475,6 +510,8 @@ def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
         Axes to plot on, otherwise create a new one. Default: ``None``
     sampling_rate : float, optional
         Sampling rate of recorded data. Default: 256 Hz
+    figsize: tuple, optional
+        Figure size
 
     Returns
     -------
@@ -485,8 +522,11 @@ def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
     import matplotlib.ticker as mticks
     import matplotlib.gridspec as spec
     fig: Union[plt.Figure, None] = None
+
     if axs is None:
-        fig = plt.figure(figsize=(8, 8))
+        if figsize is None:
+            figsize = (8, 8)
+        fig = plt.figure(figsize=figsize)
         axs: Sequence[plt.Axes] = list()
         # Prepare figure
         gs = spec.GridSpec(4, 4)
@@ -556,8 +596,8 @@ def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
         return fig, axs
 
 
-def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
-                       ax: Optional[plt.Axes] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, ax: Optional[plt.Axes] = None,
+                       figsize: Optional[Tuple[float, float]] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     """
     Plot displaying distribution of RR intervals (histogram). This plot is also used as subplot in `hrv_plot`.
 
@@ -569,6 +609,8 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
         Axes to plot on, otherwise create a new one. Default: ``None``
     sampling_rate : float, optional
         Sampling rate of recorded data. Default: 256 Hz
+    figsize : tuple, optional
+        Figure size
 
     Returns
     -------
@@ -581,7 +623,9 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
-        fig, ax = plt.subplots()
+        if figsize is None:
+            figsize = plt.rcParams['figure.figsize']
+        fig, ax = plt.subplots(figsize=figsize)
 
     rpeaks = signal.sanitize_input(rpeaks['R_Peak_Idx'])
     rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate, interpolate=True)[0]
