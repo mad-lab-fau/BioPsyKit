@@ -405,7 +405,8 @@ def mist_get_times(mist_dur: Union[Sequence[int], Dict[str, pd.DataFrame]],
 # TODO add kw_args
 def mist_hr_ensemble_plot(data: Dict[str, pd.DataFrame], plot_params: Optional[Dict] = None,
                           ylims: Optional[Sequence[float]] = None, fontsize: Optional[int] = 14,
-                          ax: Optional[plt.Axes] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+                          ax: Optional[plt.Axes] = None,
+                          figsize: Optional[Tuple[float, float]] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     """
     Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
     Simply pass a 'MIST dict' dictionary with one pandas heart rate dataframe per MIST phase
@@ -434,6 +435,8 @@ def mist_hr_ensemble_plot(data: Dict[str, pd.DataFrame], plot_params: Optional[D
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
+        if figsize is None:
+            figsize = plt.rcParams['figure.figsize']
         fig, ax = plt.subplots()
 
     if plot_params:
@@ -488,8 +491,8 @@ def mist_hr_ensemble_plot(data: Dict[str, pd.DataFrame], plot_params: Optional[D
 def mist_hr_course_plot(data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
                         groups: Optional[Sequence[str]] = None, group_col: Optional[str] = None,
                         plot_params: Optional[Dict] = None, ylims: Optional[Sequence[float]] = None,
-                        fontsize: Optional[int] = 14,
-                        ax: Optional[plt.Axes] = None) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
+                        fontsize: Optional[int] = 14, ax: Optional[plt.Axes] = None,
+                        figsize: Optional[Tuple[float, float]] = None) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     """
     Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
 
@@ -530,7 +533,9 @@ def mist_hr_course_plot(data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
-        fig, ax = plt.subplots()
+        if figsize is None:
+            figsize = plt.rcParams['figure.figsize']
+        fig, ax = plt.subplots(figsize=figsize)
 
     # update default parameter if plot parameter were passe
     if plot_params:
