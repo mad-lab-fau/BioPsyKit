@@ -3,6 +3,7 @@
 
 @author: Robert Richer, Arne Küderle
 """
+import warnings
 from pathlib import Path
 from typing import TypeVar, Sequence, Optional, Dict, Union, List
 import pytz
@@ -12,7 +13,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from NilsPodLib import Dataset
+from nilspodlib import Dataset
 
 path_t = TypeVar('path_t', str, Path)
 T = TypeVar('T')
@@ -30,11 +31,11 @@ def cmap_fau_blue(cmap_type: Union[str, None]) -> Sequence[str]:
          "#26567C", "#4D7493", "#7392AA", "#99AFC1", "#BFCDD9",
          "#E6EBF0"]
     )
-    if cmap_type is '3':
+    if cmap_type == '3':
         return palette_fau[1::3]
-    elif cmap_type is '2':
+    elif cmap_type == '2':
         return palette_fau[5::4]
-    elif cmap_type is '2_lp':
+    elif cmap_type == '2_lp':
         return palette_fau[2::5]
     else:
         return palette_fau
@@ -83,7 +84,7 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
 
     Examples
     --------
-    >>> import EcgProcessingLib.utils as utils
+    >>> import biopsykit.utils as utils
     >>>
     >>> # Example 1: define time intervals (start and end) of the different recording phases as dictionary
     >>> time_intervals = {"Part1": ("09:00", "09:30"), "Part2": ("09:30", "09:45"), "Part3": ("09:45", "10:00")}
@@ -313,7 +314,7 @@ def load_hr_excel_all_subjects(base_path: path_t, subject_folder_pattern: str,
 
     Examples
     --------
-    >>> import EcgProcessingLib as ep
+    >>> import biopsykit as ep
     >>> base_path = "./"
     >>> dict_hr_subjects = ep.load_hr_excel_all_subjects(
     >>>                         base_path, subject_folder_pattern="Vp_*",
@@ -407,7 +408,7 @@ def write_result_dict_to_csv(result_dict: Dict[str, pd.DataFrame], file_path: pa
     Examples
     --------
     >>>
-    >>> import EcgProcessingLib as ep
+    >>> import biopsykit as ep
     >>>
     >>> file_path = "./param_results.csv"
     >>>
@@ -456,7 +457,7 @@ def export_figure(fig: plt.Figure, filename: path_t, base_dir: path_t, formats: 
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> import EcgProcessingLib.utils as utils
+    >>> import biopsykit.utils as utils
     >>> fig = plt.Figure()
     >>>
     >>> base_dir = "./img"
@@ -491,4 +492,28 @@ def export_figure(fig: plt.Figure, filename: path_t, base_dir: path_t, formats: 
             folder.mkdir(exist_ok=True, parents=True)
 
     for f, subfolder in zip(formats, subfolders):
-        fig.savefig(subfolder.joinpath(filename.name + '.' + f), transparent=(f is 'pdf'), format=f)
+        fig.savefig(subfolder.joinpath(filename.name + '.' + f), transparent=(f == 'pdf'), format=f)
+
+
+def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
+    """
+    Converts 1D array-like data (numpy array, pandas dataframe/series) to a numpy array.
+
+    Parameters
+    ----------
+    data : array_like
+        input data. Needs to be 1D
+
+    Returns
+    -------
+    array_like
+        data as numpy array
+
+    """
+    if isinstance(data, (pd.Series, pd.DataFrame)):
+        # only 1D pandas DataFrame allowed
+        if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
+            raise ValueError("Only 1D DataFrames allowed!")
+        data = np.squeeze(data.values)
+
+    return data

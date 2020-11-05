@@ -3,6 +3,7 @@ from typing import Union, Tuple, Optional, Dict
 import pandas as pd
 import numpy as np
 import neurokit2 as nk
+from biopsykit.utils import sanitize_input
 
 
 def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
@@ -70,30 +71,6 @@ def interpolate_dict_sec(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[
     }
 
 
-def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
-    """
-    Converts 1D array-like data (numpy array, pandas dataframe/series) to a numpy array.
-
-    Parameters
-    ----------
-    data : array_like
-        input data. Needs to be 1D
-
-    Returns
-    -------
-    array_like
-        data as numpy array
-
-    """
-    if isinstance(data, (pd.Series, pd.DataFrame)):
-        # only 1D pandas DataFrame allowed
-        if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
-            raise ValueError("Only 1D DataFrames allowed!")
-        data = np.squeeze(data.values)
-
-    return data
-
-
 def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
                            indices: Union[pd.DataFrame, pd.Series, np.ndarray], radius: Union[int, Tuple[int, int]],
                            extrema_type: Optional[str] = "min") -> np.ndarray:
@@ -121,7 +98,7 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
 
     Examples
     --------
-    >>> import EcgProcessingLib.signal as signal
+    >>> import biopsykit.signal as signal
     >>> data = pd.read_csv("data.csv")
     >>> indices = np.array([16, 25, 40, 57, 86, 100])
     >>>

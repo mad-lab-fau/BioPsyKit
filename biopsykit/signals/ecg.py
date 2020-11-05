@@ -1,12 +1,12 @@
 from typing import Optional, Dict, Tuple, Union, Sequence, Callable, List
 
-import EcgProcessingLib.utils as utils
-import EcgProcessingLib.signal as signal
+import biopsykit.utils as utils
+import biopsykit.signals.utils as signal
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import scipy.signal as ss
-from NilsPodLib import Dataset
+from nilspodlib import Dataset
 from tqdm.notebook import tqdm
 import pytz
 
@@ -95,9 +95,9 @@ class EcgProcessor:
         --------
         >>> # Example using NilsPod Dataset
         >>>
-        >>> import EcgProcessingLib as ep
+        >>> import biopsykit as ep
         >>> import pandas as pd
-        >>> from NilsPodLib import Dataset
+        >>> from nilspodlib import Dataset
         >>>
         >>> # path to file
         >>> file_path = "./NilsPod_TestData.bin"
@@ -275,7 +275,7 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import EcgProcessingLib as ep
+        >>> import biopsykit as ep
         >>> # initialize EcgProcessor instance
         >>> ecg_processor = ep.EcgProcessor(...)
 
@@ -413,7 +413,7 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import EcgProcessingLib as ep
+        >>> import biopsykit as ep
         >>> # initialize EcgProcessor instance
         >>> ecg_processor = ep.EcgProcessor(...)
 
@@ -532,7 +532,7 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import EcgProcessingLib as ep
+        >>> import biopsykit as ep
         >>> # initialize EcgProcessor instance
         >>> ecg_processor = ep.EcgProcessor(...)
 
@@ -601,7 +601,7 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import EcgProcessingLib as ep
+        >>> import biopsykit as ep
         >>> # initialize EcgProcessor instance
         >>> ecg_processor = ep.EcgProcessor(...)
 
@@ -679,7 +679,7 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import EcgProcessingLib as ep
+        >>> import biopsykit as ep
         >>> # initialize EcgProcessor instance
         >>> ecg_processor = ep.EcgProcessor(...)
 
@@ -737,7 +737,7 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import EcgProcessingLib as ep
+        >>> import biopsykit as ep
         >>> # initialize EcgProcessor instance
         >>> ecg_processor = ep.EcgProcessor(...)
 
@@ -748,7 +748,7 @@ class EcgProcessor:
         """
 
         # find peaks: minimal distance between peaks: 1 seconds
-        rsp_signal = signal.sanitize_input(rsp_signal)
+        rsp_signal = utils.sanitize_input(rsp_signal)
         edr_maxima = ss.find_peaks(rsp_signal, height=0, distance=sampling_rate)[0]
         edr_minima = ss.find_peaks(-1 * rsp_signal, height=0, distance=sampling_rate)[0]
         # threshold: 0.2 * Q3 (= 75th percentile)
@@ -802,7 +802,7 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import EcgProcessingLib as ep
+        >>> import biopsykit as ep
         >>> # initialize EcgProcessor instance
         >>> ecg_processor = ep.EcgProcessor(...)
 
@@ -814,7 +814,7 @@ class EcgProcessor:
         """
 
         # ensure numpy
-        rsp_signal = signal.sanitize_input(rsp_signal)
+        rsp_signal = utils.sanitize_input(rsp_signal)
         # Process raw respiration input
         rsp_output = nk.rsp_process(rsp_signal, sampling_rate)[0]
         rsp_output.index = ecg_signal.index
@@ -865,7 +865,7 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import EcgProcessingLib as ep
+        >>> import biopsykit as ep
         >>> # initialize EcgProcessor instance
         >>> ecg_processor = ep.EcgProcessor(...)
 

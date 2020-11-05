@@ -2,8 +2,10 @@ from typing import Dict
 
 from tqdm.notebook import tqdm
 
-from EcgProcessingLib.plotting import *
-from EcgProcessingLib import EcgProcessor
+from biopsykit.plotting import *
+from biopsykit.signals.ecg import EcgProcessor
+
+from biopsykit.utils import *
 
 mist_params = {
     # MIST Phases
@@ -15,14 +17,14 @@ mist_params = {
 }
 
 hr_ensemble_params = {
-    'colormap': utils.cmap_fau_blue('3'),
+    'colormap': cmap_fau_blue('3'),
     'line_styles': ['-', '--', ':'],
     'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
     'background.alpha': [0.6, 0.7, 0.7],
 }
 
 hr_course_params = {
-    'colormap': utils.cmap_fau_blue('2_lp'),
+    'colormap': cmap_fau_blue('2_lp'),
     'line_styles': ['-', '--'],
     'markers': ['o', 'P'],
     'background.color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],

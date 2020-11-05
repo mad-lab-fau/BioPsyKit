@@ -1,5 +1,6 @@
 from typing import Optional, Union, Sequence, Tuple, Dict
 
+import biopsykit.utils as utils
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import neurokit2 as nk
@@ -7,9 +8,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import EcgProcessingLib.utils as utils
-import EcgProcessingLib.signal as signal
-from EcgProcessingLib import EcgProcessor
+from biopsykit.signals.ecg import EcgProcessor
 
 sns.set(context="paper", style="white")
 
@@ -627,7 +626,7 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
             figsize = plt.rcParams['figure.figsize']
         fig, ax = plt.subplots(figsize=figsize)
 
-    rpeaks = signal.sanitize_input(rpeaks['R_Peak_Idx'])
+    rpeaks = EcgProcessingLib.utils.sanitize_input(rpeaks['R_Peak_Idx'])
     rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate, interpolate=True)[0]
     hrv = nk.hrv_frequency(rpeaks, sampling_rate)
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]

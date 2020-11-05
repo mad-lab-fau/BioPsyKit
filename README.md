@@ -1,9 +1,9 @@
-# EcgProcessingLib
+# biospykit
 
-A Python package for ECG data analysis, with special modules for medical and psychological applications.
+A Python package for biopsychological data analysis.
 
-With this package you have everything you need for a whole ECG data analysis pipeline, consisting of:
-* Load ECG data from NilsPod binary (`.bin`) files (requires NilsPodPythonLib: https://mad-srv.informatik.uni-erlangen.de/MadLab/portabilestools/nilspodpythonlib)
+With this package you have everything you need for a whole ECG data analysis pipeline (and more), consisting of:
+* Load ECG data from NilsPod binary (`.bin`) files (requires NilsPodLib: https://github.com/mad-lab-fau/NilsPodLib)
 * Split data into chunks that will be analyzed separately based on time intervals
 * Perform ECG processing, including:
     * R peak detection (using Neurokit: https://github.com/neuropsychology/NeuroKit)
@@ -20,20 +20,20 @@ Additionally, there are modules to analyze and visualize data acquired from spec
 Install it via pip:
 
 ```
-pip install git+https://mad-srv.informatik.uni-erlangen.de/aj78ebud/EcgProcessingLib.git --upgrade
+pip install git+https://mad-srv.informatik.uni-erlangen.de/aj78ebud/biopsykit.git --upgrade
 ```
 
 With ssh access:
 
 ```
-pip install git+ssh://git@mad-srv.informatik.uni-erlangen.de:aj78ebud/EcgProcessingLib.git --upgrade
+pip install git+ssh://git@mad-srv.informatik.uni-erlangen.de:aj78ebud/biopsykit.git --upgrade
 ```
 
 For development:
 
 ```
-git clone https://mad-srv.informatik.uni-erlangen.de/aj78ebud/EcgProcessingLib.git
-cd EcgProcessingLib
+git clone https://mad-srv.informatik.uni-erlangen.de/aj78ebud/biopsykit.git
+cd biopsykit
 pip install -e . --upgrade
 ```
 
