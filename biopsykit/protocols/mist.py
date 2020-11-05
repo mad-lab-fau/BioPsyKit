@@ -1,11 +1,15 @@
-from typing import Dict
+from typing import Dict, Tuple, Union, Optional, Sequence
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 from tqdm.notebook import tqdm
 
-from biopsykit.plotting import *
+import biopsykit.signals.ecg as ecg
 from biopsykit.signals.ecg import EcgProcessor
-
-from biopsykit.utils import *
+import biopsykit.utils as utils
 
 mist_params = {
     # MIST Phases
@@ -17,14 +21,14 @@ mist_params = {
 }
 
 hr_ensemble_params = {
-    'colormap': cmap_fau_blue('3'),
+    'colormap': utils.cmap_fau_blue('3'),
     'line_styles': ['-', '--', ':'],
     'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
     'background.alpha': [0.6, 0.7, 0.7],
 }
 
 hr_course_params = {
-    'colormap': cmap_fau_blue('2_lp'),
+    'colormap': utils.cmap_fau_blue('2_lp'),
     'line_styles': ['-', '--'],
     'markers': ['o', 'P'],
     'background.color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
@@ -33,7 +37,7 @@ hr_course_params = {
 }
 
 
-def mist_cut_feedback_interval(
+def cut_feedback_interval(
         dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     Cuts heart rate data of each subject to equal length, i.e. to the minimal duration of each MIST phase
@@ -70,7 +74,7 @@ def mist_cut_feedback_interval(
     return dict_hr_subject
 
 
-def mist_concat_dicts(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, pd.DataFrame]:
+def concat_dicts(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, pd.DataFrame]:
     """
     Rearranges the 'HR subject dict' (see `utils.load_hr_excel_all_subjects`) into 'MIST dict', i.e. a dictionary with
     one dataframe per MIST phase where each dataframe contains column-wise HR data for all subjects.
@@ -101,9 +105,9 @@ def mist_concat_dicts(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Di
     return dict_mist
 
 
-def mist_split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-                         mist_times: Optional[Sequence[Tuple[int, int]]] = None,
-                         is_group_dict: Optional[bool] = False) \
+def split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
+                    mist_times: Optional[Sequence[Tuple[int, int]]] = None,
+                    is_group_dict: Optional[bool] = False) \
         -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
     """
     Splits a `MIST dict` (or a dict of such, in case of multiple groups, see `mist.mist_concat_dicts`)
@@ -144,10 +148,10 @@ def mist_split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str
     """
     if is_group_dict:
         # recursively call this function for each group
-        return {group: mist_split_subphases(dict_group) for group, dict_group in data.items()}
+        return {group: split_subphases(dict_group) for group, dict_group in data.items()}
     else:
         if not mist_times:
-            mist_times = mist_get_times(data)
+            mist_times = get_mist_times(data)
         mist_dict = {}
         mist_subph = mist_params['subphases']
         # split data into subphases for each MIST phase
@@ -156,8 +160,8 @@ def mist_split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str
         return mist_dict
 
 
-def mist_split_groups(mist_dict: Dict[str, pd.DataFrame],
-                      condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+def split_groups(mist_dict: Dict[str, pd.DataFrame],
+                 condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     Splits 'MIST dict' into group dict, i.e. one 'MIST dict' per group.
 
@@ -181,14 +185,14 @@ def mist_split_groups(mist_dict: Dict[str, pd.DataFrame],
     }
 
 
-def mist_param_subphases(ecg_processor: Optional[EcgProcessor] = None,
-                         dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
-                         dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
-                         param_types: Optional[Union[str, Sequence[str]]] = 'all',
-                         sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
-                         subphases: Optional[Sequence[str]] = None,
-                         subphase_durations: Optional[Sequence[int]] = None,
-                         title: Optional[str] = None) -> pd.DataFrame:
+def param_subphases(ecg_processor: Optional[ecg.EcgProcessor] = None,
+                    dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
+                    dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
+                    param_types: Optional[Union[str, Sequence[str]]] = 'all',
+                    sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
+                    subphases: Optional[Sequence[str]] = None,
+                    subphase_durations: Optional[Sequence[int]] = None,
+                    title: Optional[str] = None) -> pd.DataFrame:
     """
     Computes specified parameters (HRV / RSA / ...) over all MIST phases and subphases.
 
@@ -308,9 +312,9 @@ def mist_param_subphases(ecg_processor: Optional[EcgProcessor] = None,
         axis=1)
 
 
-def mist_hr_course(data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
-                   subphases: Optional[Sequence[str]] = None,
-                   is_group_dict: Optional[bool] = False) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+def hr_course(data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
+              subphases: Optional[Sequence[str]] = None,
+              is_group_dict: Optional[bool] = False) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """
     Computes the heart rate mean and standard error per MIST subphase over all subjects.
 
@@ -347,14 +351,14 @@ def mist_hr_course(data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dic
         subphases = mist_params['subphases']
 
     if is_group_dict:
-        return {group: mist_hr_course(dict_group, subphases) for group, dict_group in data.items()}
+        return {group: hr_course(dict_group, subphases) for group, dict_group in data.items()}
     else:
         mean_hr = {phase: pd.DataFrame({subph: df[subph].mean() for subph in subphases}) for phase, df in data.items()}
         df_mist = pd.concat(mean_hr.values(), axis=1, keys=mean_hr.keys())
         return pd.concat([df_mist.mean(), df_mist.std() / np.sqrt(df_mist.shape[0])], axis=1, keys=["mean", "se"])
 
 
-def mist_get_times(mist_dur: Union[Sequence[int], Dict[str, pd.DataFrame]],
+def get_mist_times(mist_dur: Union[Sequence[int], Dict[str, pd.DataFrame]],
                    subph_dur: Optional[Sequence[int]] = None) -> Sequence[Tuple[int, int]]:
     """
     Computes the start and end times of each MIST subphase. It is assumed that all MIST subphases,
@@ -405,10 +409,10 @@ def mist_get_times(mist_dur: Union[Sequence[int], Dict[str, pd.DataFrame]],
 
 
 # TODO add kw_args
-def mist_hr_ensemble_plot(data: Dict[str, pd.DataFrame], plot_params: Optional[Dict] = None,
-                          ylims: Optional[Sequence[float]] = None, fontsize: Optional[int] = 14,
-                          ax: Optional[plt.Axes] = None,
-                          figsize: Optional[Tuple[float, float]] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+def hr_ensemble_plot(data: Dict[str, pd.DataFrame], plot_params: Optional[Dict] = None,
+                     ylims: Optional[Sequence[float]] = None, fontsize: Optional[int] = 14,
+                     ax: Optional[plt.Axes] = None,
+                     figsize: Optional[Tuple[float, float]] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     """
     Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
     Simply pass a 'MIST dict' dictionary with one pandas heart rate dataframe per MIST phase
@@ -451,7 +455,7 @@ def mist_hr_ensemble_plot(data: Dict[str, pd.DataFrame], plot_params: Optional[D
     subphases = np.array(mist_params['subphases'])
 
     mist_dur = [len(v) for v in data.values()]
-    start_end = mist_get_times(mist_dur)
+    start_end = get_mist_times(mist_dur)
 
     for i, key in enumerate(data):
         hr_mist = data[key]
@@ -490,11 +494,11 @@ def mist_hr_ensemble_plot(data: Dict[str, pd.DataFrame], plot_params: Optional[D
 
 # TODO add support for groups in one dataframe (indicated by group column)
 # TODO add kw_args
-def mist_hr_course_plot(data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-                        groups: Optional[Sequence[str]] = None, group_col: Optional[str] = None,
-                        plot_params: Optional[Dict] = None, ylims: Optional[Sequence[float]] = None,
-                        fontsize: Optional[int] = 14, ax: Optional[plt.Axes] = None,
-                        figsize: Optional[Tuple[float, float]] = None) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
+def hr_course_plot(data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+                   groups: Optional[Sequence[str]] = None, group_col: Optional[str] = None,
+                   plot_params: Optional[Dict] = None, ylims: Optional[Sequence[float]] = None,
+                   fontsize: Optional[int] = 14, ax: Optional[plt.Axes] = None,
+                   figsize: Optional[Tuple[float, float]] = None) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     """
     Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
 

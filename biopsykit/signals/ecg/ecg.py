@@ -532,9 +532,9 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import biopsykit as ep
+        >>> from biopsykit.signals.ecg import EcgProcessor
         >>> # initialize EcgProcessor instance
-        >>> ecg_processor = ep.EcgProcessor(...)
+        >>> ecg_processor = EcgProcessor(...)
 
         >>> # correct R peak locations
         >>> rpeaks_corrected = ecg_processor.correct_rpeaks(ecg_processor, key="Data")
@@ -777,7 +777,7 @@ class EcgProcessor:
             Dict[str, float]:
         """
         Computes respiratory sinus arrhythmia (RSA) based on ECG and respiration signal. RSA is computed both
-        using the Peak-to-Trough (P2T) method and the Porges-Bohrer method. See neurokit ('nk.ecg_rsa')
+        using the Peak-to-Trough (P2T) method and the Porges-Bohrer method. See neurokit ('nk.hrv_rsa')
         for further information.
 
 
@@ -798,7 +798,7 @@ class EcgProcessor:
 
         See Also
         --------
-        nk.ecg_rsa
+        nk.hrv_rsa
 
         Examples
         --------
@@ -819,7 +819,7 @@ class EcgProcessor:
         rsp_output = nk.rsp_process(rsp_signal, sampling_rate)[0]
         rsp_output.index = ecg_signal.index
         # Compute RSA
-        return nk.ecg_rsa(ecg_signal, rsp_output, sampling_rate=sampling_rate)
+        return nk.hrv_rsa(ecg_signal, rsp_output, sampling_rate=sampling_rate)
 
     @classmethod
     def rsp_rsa_process(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
@@ -916,6 +916,35 @@ class EcgProcessor:
             if index:
                 return pd.concat([df_rsa], keys=[index], names=[index_name])
             return df_rsa
+
+
+def normalize_heart_rate(dict_hr_subjects: Dict[str, Dict[str, pd.DataFrame]],
+                         normalize_to: str) -> Dict[str, Dict[str, pd.DataFrame]]:
+    """
+    Normalizes heart rate per subject to the phase specified by `normalize_to`.
+
+    The result is the relative change of heart rate compared to the mean heart rate in the `normalize_to` phase.
+
+    Parameters
+    ----------
+    dict_hr_subjects : dict
+        dictionary with heart rate data of all subjects as returned by `load_hr_excel_all_subjects`
+    normalize_to : str
+        phase (i.e., dict key) of data to normalize all other data to
+
+    Returns
+    -------
+    dict
+        dictionary with normalized heart rate data per subject
+    """
+
+    dict_hr_subjects_norm = {}
+    for subject_id, dict_hr in dict_hr_subjects.items():
+        bl_mean = dict_hr[normalize_to].mean()
+        dict_hr_norm = {phase: (df_hr - bl_mean) / bl_mean * 100 for phase, df_hr in dict_hr.items()}
+        dict_hr_subjects_norm[subject_id] = dict_hr_norm
+
+    return dict_hr_subjects_norm
 
 
 def _edr_peak_trough_mean(ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray) -> np.array:
@@ -1029,7 +1058,10 @@ def _rsp_rate(extrema: np.ndarray, sampling_rate: int, desired_length: int) -> n
         respiration rate array interpolated to desired length
     """
     rsp_rate_raw = (sampling_rate * 60) / np.ediff1d(extrema)
-    return nk.signal_interpolate(extrema[:-1], rsp_rate_raw, desired_length, method='linear')
+    # remove last sample
+    x_old = extrema[:-1]
+    x_new = np.linspace(x_old[0], x_old[-1], desired_length)
+    return nk.signal_interpolate(x_old, rsp_rate_raw, x_new, method='linear')
 
 
 def _correct_outlier_correlation(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,

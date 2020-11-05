@@ -1,1 +1,1 @@
-from .mist import *
+import biopsykit.protocols.mist

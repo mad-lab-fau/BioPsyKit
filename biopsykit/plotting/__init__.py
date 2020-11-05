@@ -1,1 +1,1 @@
-from .plotting import *
+from biopsykit.plotting.plotting import *

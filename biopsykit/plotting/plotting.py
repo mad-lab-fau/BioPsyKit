@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional, Union, Sequence, Tuple, Dict
 
 import biopsykit.utils as utils
@@ -9,6 +10,7 @@ import pandas as pd
 import seaborn as sns
 
 from biopsykit.signals.ecg import EcgProcessor
+from biopsykit.utils import path_t
 
 sns.set(context="paper", style="white")
 
@@ -23,6 +25,65 @@ mpl_rc_params = {
     'mathtext.default': 'regular'
 }
 plt.rcParams.update(mpl_rc_params)
+
+
+def export_figure(fig: plt.Figure, filename: path_t, base_dir: path_t, formats: Optional[Sequence[str]] = None,
+                  use_subfolder: Optional[bool] = True) -> None:
+    """
+    Exports a figure to a file.
+
+    Parameters
+    ----------
+    fig : Figure
+        matplotlib figure object
+    filename : path or str
+        name of the output file
+    base_dir : path or str
+        base directory to save file
+    formats: list of str, optional
+        list of file formats to export or ``None`` to export as pdf. Default: ``None``
+    use_subfolder : bool, optional
+        whether to create an own subfolder per file format and export figures into these subfolders. Default: True
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import biopsykit as bp
+    >>> fig = plt.Figure()
+    >>>
+    >>> base_dir = "./img"
+    >>> filename = "plot"
+    >>> formats = ["pdf", "png"]
+
+    >>> # Export into subfolders (default)
+    >>> bp.plotting.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats)
+    >>> # | img/
+    >>> # | - pdf/
+    >>> # | - - plot.pdf
+    >>> # | - png/
+    >>> # | - - plot.png
+
+    >>> # Export into one folder
+    >>> bp.plotting.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats, use_subfolder=False)
+    >>> # | img/
+    >>> # | - plot.pdf
+    >>> # | - plot.png
+    """
+    if formats is None:
+        formats = ['pdf']
+
+    # ensure pathlib
+    base_dir = Path(base_dir)
+    filename = Path(filename)
+    subfolders = [base_dir] * len(formats)
+
+    if use_subfolder:
+        subfolders = [base_dir.joinpath(f) for f in formats]
+        for folder in subfolders:
+            folder.mkdir(exist_ok=True, parents=True)
+
+    for f, subfolder in zip(formats, subfolders):
+        fig.savefig(subfolder.joinpath(filename.name + '.' + f), transparent=(f == 'pdf'), format=f)
 
 
 # TODO add signal plot method for all phases
@@ -426,7 +487,7 @@ def ecg_plot_artifacts(ecg_signals: pd.DataFrame, sampling_rate: Optional[int] =
     # TODO not implemented yet
     # Plot artifacts
     _, rpeaks = nk.ecg_peaks(ecg_signals["ECG_Clean"], sampling_rate=sampling_rate)
-    _, _ = nk.ecg_fixpeaks(rpeaks, sampling_rate=sampling_rate, iterative=True, show=True)
+    _, _ = nk.signal_fixpeaks(rpeaks, sampling_rate=sampling_rate, iterative=True, show=True)
 
 
 def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, ax: Optional[plt.Axes] = None,
@@ -626,7 +687,7 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
             figsize = plt.rcParams['figure.figsize']
         fig, ax = plt.subplots(figsize=figsize)
 
-    rpeaks = EcgProcessingLib.utils.sanitize_input(rpeaks['R_Peak_Idx'])
+    rpeaks = utils.sanitize_input(rpeaks['R_Peak_Idx'])
     rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate, interpolate=True)[0]
     hrv = nk.hrv_frequency(rpeaks, sampling_rate)
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]

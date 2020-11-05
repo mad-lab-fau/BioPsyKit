@@ -2,13 +2,16 @@
 Top level package for biopsykit.
 """
 
-from .signals import *
-from .saliva import *
-from .utils import *
-from .protocols import *
-from .plotting import *
+import biopsykit.signals
+import biopsykit.saliva
+import biopsykit.protocols
+import biopsykit.plotting
 import biopsykit.questionnaires
 import biopsykit.metadata
+import biopsykit.utils
+import biopsykit.io
+
+# from .utils import *
 
 # Info
 __version__ = "0.0.1"

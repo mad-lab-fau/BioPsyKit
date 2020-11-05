@@ -197,4 +197,5 @@ def remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x
     # fill outlier by linear interpolation of neighbors
     data = pd.Series(data).interpolate(limit_direction='both').values
     # interpolate signal
-    return nk.signal_interpolate(x_old, data, desired_length=desired_length, method='linear')
+    x_new = np.linspace(x_old[0], x_old[-1], desired_length)
+    return nk.signal_interpolate(x_old, data, x_new, method='linear')

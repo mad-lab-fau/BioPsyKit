@@ -1,2 +1,2 @@
-from .ecg import *
-from .utils import *
+import biopsykit.signals.ecg
+import biopsykit.signals.utils
