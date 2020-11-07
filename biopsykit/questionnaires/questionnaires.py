@@ -77,7 +77,37 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Maastricht Vital Exhaustion Scale"""
+    """
+    **Maastricht Vital Exhaustion Scale (MVES)**
+
+    The MVES uses 23 items to assess the concept of Vital Exhaustion (VE), which is characterized by feelings of
+    excessive fatigue, lack of energy, irritability, and feelings of demoralization.
+
+    NOTE: This implementation assumes a score range of [0, 2]. Use ``questionnaires.utils.convert_scale()`` to
+    convert the items into the correct range.
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if `columns` parameter is supplied
+    columns : list of string, optional
+        list with column names to use for computing this score if a complete dataframe is supplied.
+        See `questionnaires.utils.convert_scale()`
+
+    Returns
+    -------
+    pd.DataFrame
+        MVES score
+
+
+    References
+    ------------
+    Appels, A., Höppener, P., & Mulder, P. (1987). A questionnaire to assess premonitory symptoms of myocardial
+    infarction. *International Journal of Cardiology*, 17(1), 15–24. https://doi.org/10.1016/0167-5273(87)90029-5
+
+    """
 
     score_name = "MVES"
     score_range = [0, 2]
@@ -94,7 +124,48 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Trier Inventory for Chronic Stress (Short Version)"""
+    """
+    **Trier Inventory for Chronic Stress (Short Version) (TICS-S)**
+
+    The TICS assesses frequency of various types of stressful experiences in the past 3 months.
+
+    It consists of several subscales:
+
+    * Work Overload (`WorkOverload`)
+    * Social Overload (`SocialOverload`)
+    * Excessive Demands at Work (`DemandsWork`)
+    * Lack of Social Recognition (`LackSocialRec`)
+    * Work Discontent (`WorkDiscontent`)
+    * Social Tension (`SocialTension`)
+    * Performance Pressure at Work (`PressureToPerform`)
+    * Performance Pressure in Social Interactions (`PressureSocial`)
+    * Social Isolation (`SocialIsolation`)
+    * Worry Propensity (`ChronicWorry`)
+
+
+    NOTE: This implementation assumes a score range of [0, 4]. Use ``questionnaires.utils.convert_scale()`` to
+    convert the items into the correct range.
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if `columns` parameter is supplied
+    columns : list of string, optional
+        list with column names to use for computing this score if a complete dataframe is supplied.
+        See `questionnaires.utils.convert_scale()`
+
+    Returns
+    -------
+    pd.DataFrame
+        TICS score
+
+
+    References
+    ------------
+    Schulz, P., Schlotz, W., & Becker, P. (2004). Trierer Inventar zum chronischen Stress: TICS. *Hogrefe*.
+    """
 
     score_name = "TICS_S"
     score_range = [0, 4]
@@ -128,7 +199,48 @@ def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
 
 
 def tics_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Trier Inventory for Chronic Stress (Long Version)"""
+    """
+    **Trier Inventory for Chronic Stress (Long Version) (TICS-L)**
+
+    The TICS assesses frequency of various types of stressful experiences in the past 3 months.
+
+    It consists of several subscales:
+
+    * Work Overload (`WorkOverload`)
+    * Social Overload (`SocialOverload`)
+    * Excessive Demands at Work (`DemandsWork`)
+    * Lack of Social Recognition (`LackSocialRec`)
+    * Work Discontent (`WorkDiscontent`)
+    * Social Tension (`SocialTension`)
+    * Performance Pressure at Work (`PressureToPerform`)
+    * Performance Pressure in Social Interactions (`PressureSocial`)
+    * Social Isolation (`SocialIsolation`)
+    * Worry Propensity (`ChronicWorry`)
+
+
+    NOTE: This implementation assumes a score range of [0, 4]. Use ``questionnaires.utils.convert_scale()`` to
+    convert the items into the correct range.
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if `columns` parameter is supplied
+    columns : list of string, optional
+        list with column names to use for computing this score if a complete dataframe is supplied.
+        See `questionnaires.utils.convert_scale()`
+
+    Returns
+    -------
+    pd.DataFrame
+        TICS score
+
+
+    References
+    ------------
+    Schulz, P., Schlotz, W., & Becker, P. (2004). Trierer Inventar zum chronischen Stress: TICS. *Hogrefe*.
+    """
 
     score_name = "TICS_L"
     score_range = [0, 4]
@@ -159,7 +271,37 @@ def tics_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
 
 
 def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Perceived Stress Scale"""
+    """
+    **Perceived Stress Scale (PSS)**
+
+    The PSS is a widely used self-report questionnaire with adequate reliability and validity asking
+    about how stressful a person has found his/her life during the previous month.
+
+
+    NOTE: This implementation assumes a score range of [0, 4]. Use ``questionnaires.utils.convert_scale()`` to
+    convert the items into the correct range.
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if `columns` parameter is supplied
+    columns : list of string, optional
+        list with column names to use for computing this score if a complete dataframe is supplied.
+        See `questionnaires.utils.convert_scale()`
+
+    Returns
+    -------
+    pd.DataFrame
+        PSS score
+
+
+    References
+    ------------
+    Cohen, S., Kamarck, T., & Mermelstein, R. (1983). A Global Measure of Perceived Stress.
+    *Journal of Health and Social Behavior*, 24(4), 385. https://doi.org/10.2307/2136404
+    """
 
     score_name = "PSS"
     score_range = [0, 4]
@@ -177,7 +319,36 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
 
 def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Center for Epidemiological Studies Depression Scale"""
+    """
+    **Center for Epidemiological Studies Depression Scale (CES-D)**
+
+    The CES-D asks about depressive symptoms experienced over the past week.
+
+
+    NOTE: This implementation assumes a score range of [0, 3]. Use ``questionnaires.utils.convert_scale()`` to
+    convert the items into the correct range.
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if `columns` parameter is supplied
+    columns : list of string, optional
+        list with column names to use for computing this score if a complete dataframe is supplied.
+        See `questionnaires.utils.convert_scale()`
+
+    Returns
+    -------
+    pd.DataFrame
+        CES-D score
+
+
+    References
+    ------------
+    Radloff, L. S. (1977). The CES-D Scale: A Self-Report Depression Scale for Research in the General Population.
+    Applied Psychological Measurement, 1(3), 385–401. https://doi.org/10.1177/014662167700100306
+    """
 
     score_name = "CESD"
     score_range = [0, 3]
@@ -194,8 +365,36 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """General Health Questionnaire"""
+    """
+    **General Health Questionnaire (GHQ)**
 
+    The GHQ-12 is a widely used tool for detecting psychological and mental health and as a screening tool for
+    excluding psychological and psychiatric morbidity.
+
+
+    NOTE: This implementation assumes a score range of [0, 3]. Use ``questionnaires.utils.convert_scale()`` to
+    convert the items into the correct range.
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if `columns` parameter is supplied
+    columns : list of string, optional
+        list with column names to use for computing this score if a complete dataframe is supplied.
+        See `questionnaires.utils.convert_scale()`
+
+    Returns
+    -------
+    pd.DataFrame
+        CES-D score
+
+
+    References
+    ------------
+    Goldberg, D. P. (1972). The detection of psychiatric illness by questionnaire. *Maudsley monograph*, 21.
+    """
     score_name = "GHQ"
     score_range = [0, 3]
 
@@ -607,7 +806,6 @@ def pasa(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 def ssgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
     """State Shame and Guilt Scale"""
-
 
     score_name = "SSGS"
     score_range = [1, 5]
