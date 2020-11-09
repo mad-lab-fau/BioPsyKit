@@ -1493,3 +1493,49 @@ def pfb(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     pfb_data[score_name] = data.iloc[:, 0:30].sum(axis=1)
     return pd.DataFrame(pfb_data, index=data.index)
+
+
+def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+    """
+    **Anticipatory Stress Questionnaire (ASQ)**
+
+    The ASQ measures anticipation of stress on the upcoming day.
+
+    NOTE: This implementation assumes a score range of [1,11]. Use ``questionnaires.utils.convert_scale()`` to
+    convert the items into the correct range.
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if `columns` parameter is supplied
+    columns : list of string, optional
+        list with column names to use for computing this score if a complete dataframe is supplied.
+        See `questionnaires.utils.convert_scale()`
+
+    Returns
+    -------
+    pd.DataFrame
+        ASQ score
+
+
+    References
+    ------------
+    Powell, D. J., & Schlotz, W. (2012). Daily Life Stress and the Cortisol Awakening Response:
+    Testing the Anticipation Hypothesis. *PLoS ONE*, 7(12), e52067. https://doi.org/10.1371/journal.pone.0052067
+    """
+
+    score_name = "ASQ"
+    score_range = [1, 11]
+
+    if columns:
+        # if columns parameter is supplied: slice columns from dataframe
+        data = data[columns]
+
+    _check_score_range_exception(data, score_range)
+
+    # invert items 2,3
+    invert(data, cols=to_idx([2, 3]), score_range=score_range)
+
+    pd.DataFrame(data.mean(axis=1), columns=[score_name])
