@@ -1501,7 +1501,7 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     The ASQ measures anticipation of stress on the upcoming day.
 
-    NOTE: This implementation assumes a score range of [1,11]. Use ``questionnaires.utils.convert_scale()`` to
+    NOTE: This implementation assumes a score range of [1, 11]. Use ``questionnaires.utils.convert_scale()`` to
     convert the items into the correct range.
 
 
@@ -1538,4 +1538,69 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     # invert items 2,3
     invert(data, cols=to_idx([2, 3]), score_range=score_range)
 
-    pd.DataFrame(data.mean(axis=1), columns=[score_name])
+    return pd.DataFrame(data.mean(axis=1), columns=[score_name])
+
+
+def mdbf(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+    """
+    **Multidimensionaler Befindlichkeitsfragebogen (MDBF)**
+
+    The MDBF measures different bipolar dimensions of current mood and psychological
+    wellbeing.
+
+    It consists of three subscales:
+
+    * Good-Bad mood (`GoodBad`)
+    * Awake-Tired (`AwakeTired`)
+    * Calm-Nervous (`CalmNervous`)
+
+    NOTE: This implementation assumes a score range of [1, 5]. Use ``questionnaires.utils.convert_scale()`` to
+    convert the items into the correct range.
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if `columns` parameter is supplied
+    columns : list of string, optional
+        list with column names to use for computing this score if a complete dataframe is supplied.
+        See `questionnaires.utils.convert_scale()`
+
+    Returns
+    -------
+    pd.DataFrame
+        MDBF score
+
+    References
+    ------------
+    Steyer, R., Schwenkmezger, P., Notz, P., & Eid, M. (1997). Der Mehrdimensionale Befindlichkeitsfragebogen MDBF
+    [Multidimensional mood questionnaire]. *Göttingen, Germany: Hogrefe*.
+
+    """
+
+    score_name = "MDBF"
+    score_range = [1, 5]
+
+    if columns:
+        # if columns parameter is supplied: slice columns from dataframe
+        data = data[columns]
+
+    _check_score_range_exception(data, score_range)
+
+    # invert items 3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23
+    invert(data, cols=to_idx([3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23]), score_range=score_range)
+
+    idxs = {
+        'GoodBad': [1, 4, 8, 11, 14, 16, 18, 21],
+        'AwakeTired': [2, 5, 7, 10, 13, 17, 20, 23],
+        'CalmNervous': [3, 6, 9, 12, 15, 19, 22, 24]
+    }
+
+    mdbf_data = {
+        '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
+    }
+
+    mdbf_data[score_name] = data.sum(axis=1)
+
+    return pd.DataFrame(mdbf_data, index=data.index)
