@@ -6,7 +6,6 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import scipy.signal as ss
-from nilspodlib import Dataset
 from tqdm.notebook import tqdm
 import pytz
 
@@ -50,8 +49,7 @@ class EcgProcessor:
 
     """
 
-    def __init__(self, data_dict: Optional[Dict[str, pd.DataFrame]] = None, dataset: Optional['Dataset'] = None,
-                 df: Optional[pd.DataFrame] = None,
+    def __init__(self, data_dict: Optional[Dict[str, pd.DataFrame]] = None, df: Optional[pd.DataFrame] = None,
                  time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
                  include_start: Optional[bool] = False,
                  sampling_rate: Optional[float] = 256.0, timezone: Optional[Union[pytz.timezone, str]] = utils.tz):
@@ -65,11 +63,9 @@ class EcgProcessor:
         Parameters
         ----------
         data_dict : dict, optional
-            Dictionary with pandas dataframes containing NilsPod data
-        dataset : dict, optional
-            Dataset from NilsPodLib
+            Dictionary with pandas dataframes containing ECG data
         df : pd.DataFrame, optional
-            pandas dataframe with NilsPod data
+            pandas dataframe with ECG data
         time_intervals : dict or pd.Series, optional
             time intervals indicating where the data should be split.
             Can either be a pandas Series with the `start` times of the single phases
@@ -95,7 +91,7 @@ class EcgProcessor:
         --------
         >>> # Example using NilsPod Dataset
         >>>
-        >>> import biopsykit as ep
+        >>> import biopsykit as bp
         >>> import pandas as pd
         >>> from nilspodlib import Dataset
         >>>
@@ -109,23 +105,17 @@ class EcgProcessor:
         >>>
         >>> # load data from binary file
         >>> dataset = Dataset.from_bin_file(file_path)
-        >>> ecg_processor = ep.EcgProcessor(dataset=dataset, time_intervals=time_intervals, timezone=timezone)
+        >>> df, sampling_rate = bp.io.load_dataset_nilspod(dataset=dataset, datastreams=['ecg'], timezone=timezone)
+        >>> ecg_processor = bp.signals.ecg.EcgProcessor(df=df, sampling_rate=sampling_rate, time_intervals=time_intervals)
         """
 
-        if all([i is None for i in [dataset, df, data_dict]]):
-            raise ValueError("Either 'dataset', 'df', or 'data_dict' must be specified as parameter!")
+        if all([i is None for i in [df, data_dict]]):
+            raise ValueError("Either 'df' or 'data_dict' must be specified as parameter!")
 
         self.sampling_rate: int = int(sampling_rate)
-        if isinstance(timezone, str):
-            # convert to pytz object
-            timezone = pytz.timezone(timezone)
 
         if data_dict:
             self.data_dict = data_dict
-        elif dataset:
-            # convert dataset to dataframe and localize timestamp
-            df = dataset.data_as_df("ecg", index="utc_datetime").tz_localize(tz=utils.utc).tz_convert(tz=timezone)
-            self.sampling_rate = int(dataset.info.sampling_rate_hz)
         else:
             # localize dataframe
             df = df.tz_localize(tz=utils.utc).tz_convert(tz=timezone)
