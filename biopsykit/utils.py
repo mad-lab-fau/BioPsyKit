@@ -183,3 +183,7 @@ def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarr
         data = np.squeeze(data.values)
 
     return data
+
+
+def check_tz_aware(data: pd.DataFrame) -> bool:
+    return data.index.tzinfo is not None
