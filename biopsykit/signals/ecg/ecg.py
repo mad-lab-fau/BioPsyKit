@@ -363,18 +363,20 @@ class EcgProcessor:
                         rpeaks: Optional[pd.DataFrame] = None,
                         outlier_correction: Optional[Union[str, None, Sequence[str]]] = 'all',
                         outlier_params: Optional[Union[str, Dict[str, Union[float, Sequence[float]]]]] = 'default',
+                        imputation_type: Optional[str] = 'moving_average',
                         sampling_rate: Optional[int] = 256) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Performs outlier correction of the detected R peaks.
 
-        Different methods for outlier detection are available (see `EcgProcessor.outlier_corrections()` to get a list
+        Different methods for outlier detection are available (see ``EcgProcessor.outlier_corrections()`` to get a list
         of possible outlier correction methods). All outlier methods work independently on the detected R peaks,
         the results will be combined by a logical 'or'. RR intervals classified as outlier will be removed and imputed
-        using linear interpolation.
+        either using linear interpolation (``imputation_type`` 'linear') or by replacing it with the average value
+        of the 10 preceding and 10 succeding RR intervals (``imputation_type`` 'moving_average').
 
-        To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
-        which sub-phase should be processed or the two dataframes `ecg_signal` and `rpeaks` resulting from
-        `EcgProcessor.ecg_process()`.
+        To use this function, either simply pass an ``EcgProcessor`` object together with a ``key`` indicating
+        which sub-phase should be processed or the two dataframes ``ecg_signal`` and ``rpeaks`` resulting from
+        ``EcgProcessor.ecg_process()``.
 
         Parameters
         ----------
@@ -388,13 +390,17 @@ class EcgProcessor:
             dataframe with detected R peaks. Output from `EcgProcessor.ecg_process()`
         outlier_correction : list, optional
             List containing the outlier correction methods to be applied.
-            Pass ``None`` to not apply any outlier correction, ``all`` to apply all available outlier correction methods.
-            See `EcgProcessor.outlier_corrections` to get a list of possible outlier correction methods.
+            Pass ``None`` to not apply any outlier correction, ``all`` to apply all available outlier correction
+            methods. See `EcgProcessor.outlier_corrections` to get a list of possible outlier correction methods.
             Default: ``all``
         outlier_params: dict, optional
             Dictionary of parameters to be passed to the outlier correction methods or ``default``
             for default parameters (see `EcgProcessor.outlier_params_default` for more information).
             Default: ``default``
+        imputation_type: str, optional
+            Method to impute outlier: `linear` for linear interpolation between the RR intervals before and
+            after R peak outlier, `moving_average` for average value of the 10 preceding and 10 succeding RR intervals.
+            Default: ``moving_average``
         sampling_rate : float, optional
             Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
 
@@ -441,6 +447,10 @@ class EcgProcessor:
         elif outlier_correction in ['None', None]:
             outlier_correction = list()
 
+        imputation_types = ['linear', 'moving_average']
+        if imputation_type not in imputation_types:
+            raise ValueError("`imputation_type` must be one of {}, not {}!".format(imputation_types, imputation_type))
+
         try:
             outlier_funcs: Dict[str, Callable] = {key: _outlier_correction_methods[key] for key in outlier_correction}
         except KeyError:
@@ -465,6 +475,7 @@ class EcgProcessor:
         bool_mask = np.full(rpeaks.shape[0], False)
         rpeaks['R_Peak_Outlier'] = 0.0
 
+        # TODO add source of different outlier methods for plotting?
         for key in outlier_funcs:
             bool_mask = outlier_funcs[key](ecg_signal, rpeaks, sampling_rate, bool_mask, outlier_params[key])
 
@@ -479,6 +490,11 @@ class EcgProcessor:
         # interpolate the removed beats
         rpeaks.loc[rpeaks.index[-1]] = [rpeaks['R_Peak_Quality'].mean(), last_idx['R_Peak_Idx'],
                                         rpeaks['RR_Interval'].mean(), 0.0]
+
+        if imputation_type == 'moving_average':
+            rpeaks['RR_Interval'] = rpeaks['RR_Interval'].fillna(
+                rpeaks['RR_Interval'].rolling(21, center=True, min_periods=0).mean())
+
         rpeaks.interpolate(method='linear', limit_direction='both', inplace=True)
         # drop duplicate R peaks (can happen during outlier correction at edge cases)
         rpeaks.drop_duplicates(subset='R_Peak_Idx', inplace=True)
