@@ -201,10 +201,14 @@ class EcgProcessor:
             * `artifact`: Artifact detection based on work from `Berntson et al. (1990), Psychophysiology`
             * `physiological`: Physiological outlier removal. Marks beats as outlier if their heart rate is above or below a
               threshold that can not be achieved physiologically
-            * `statistical`: Statistical outlier removal. Marks beats as outlier if they are within the xx% highest or
+            * `statistical_rr`: Statistical outlier removal based on RR intervals.
+              Marks beats as outlier if the RR intervals are within the xx% highest or lowest values.
+              Values are removed based on the z-score (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values;
+              2.576 => 1 %, 0.5 % highest, 0.5 % lowest values)
+            * `statistical_rr_diff`: Statistical outlier removal based on successive differences of RR intervals.
+            Marks beats as outlier if the difference of successive RR intervals are within the xx% highest or
               lowest heart rates. Values are removed based on the z-score
               (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values; 2.576 => 1 %, 0.5 % highest, 0.5 % lowest values)
-
 
         See Also
         --------
@@ -412,11 +416,12 @@ class EcgProcessor:
         >>> # use default outlier correction pipeline
         >>> ecg_signal, rpeaks = ecg_processor.correct_outlier(ecg_processor, key="Data")
 
-        >>> # use custom outlier correction pipeline: only physiological and statistical outlier with custom thresholds
-        >>> methods = ["physiological", "statistical"]
+        >>> # use custom outlier correction pipeline: only physiological and statistical RR interval outlier with
+        >>> # custom thresholds
+        >>> methods = ["physiological", "statistical_rr"]
         >>> params = {
         >>>    'physiological': (50, 150),
-        >>>    'statistical': 2.576
+        >>>    'statistical_rr': 2.576
         >>>}
         >>> ecg_signal, rpeaks = ecg_processor.correct_outlier(
         >>>                             ecg_processor, key="Data",
@@ -1138,13 +1143,13 @@ def _correct_outlier_quality(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sam
     return np.logical_or(bool_mask, rpeaks['R_Peak_Quality'] < quality_thres)
 
 
-def _correct_outlier_statistical(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
-                                 bool_mask: np.array, stat_thres: float) -> np.array:
+def _correct_outlier_statistical_rr(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
+                                    bool_mask: np.array, stat_thres: float) -> np.array:
     """
-    Outlier correction method 'statistical'.
+    Outlier correction method 'statistical_rr'.
 
-    Marks beats as outlier if they are within the xx % highest or lowest heart rates, i.e. if their z-score is above
-    a threshold (e.g. 1.96 => 5 %, 2.5 % highest, 2.5 % lowest values;
+    Marks beats as outlier if they are within the xx % highest or lowest RR intervals, i.e. if their z-score is
+    above a threshold (e.g. 1.96 => 5 %, 2.5 % highest, 2.5 % lowest values;
     2.576 => 1 %, 0.5 % highest, 0.5 % lowest values).
 
     Parameters
@@ -1167,7 +1172,44 @@ def _correct_outlier_statistical(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
         boolean array with beats marked as outlier. Logical 'or' combination of `bool_mask` and results from
         this algorithm
     """
-    # statistical outlier: remove the x% highest and lowest successive differences
+    # statistical outlier: remove the x% highest and lowest RR intervals
+    # (1.96 std = 5% outlier, 2.576 std = 1% outlier)
+    rri = rpeaks['RR_Interval']
+    z_score = (rri - np.nanmean(rri)) / np.nanstd(rri, ddof=1)
+
+    return np.logical_or(bool_mask, np.abs(z_score) > stat_thres)
+
+
+def _correct_outlier_statistical_rr_diff(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
+                                         bool_mask: np.array, stat_thres: float) -> np.array:
+    """
+    Outlier correction method 'statistical_rr_diff'.
+
+    Marks beats as outlier if their successive differences of RR intervals are within the xx % highest or
+    lowest values, i.e. if their z-score is above a threshold (e.g. 1.96 => 5 %, 2.5 % highest, 2.5 % lowest values;
+    2.576 => 1 %, 0.5 % highest, 0.5 % lowest values).
+
+    Parameters
+    ----------
+    ecg_signal : pd.DataFrame, optional
+            dataframe with processed ECG signal. Output from `EcgProcessor.ecg_process()`
+    rpeaks : pd.DataFrame, optional
+            dataframe with detected R peaks. Output from `EcgProcessor.ecg_process()`
+    sampling_rate : float
+        Sampling rate of recorded data
+    bool_mask : array_like
+        boolean array with beats marked as outlier.
+        Results of this outlier correction method will be combined with the array using a logical 'or'
+    stat_thres : float
+        Threshold for z-score. Beats above that threshold will be marked as outlier
+
+    Returns
+    -------
+    array_like
+        boolean array with beats marked as outlier. Logical 'or' combination of `bool_mask` and results from
+        this algorithm
+    """
+    # statistical outlier: remove the x% highest and lowest successive differences of RR intervals
     # (1.96 std = 5% outlier, 2.576 std = 1% outlier)
     diff_rri = np.ediff1d(rpeaks['RR_Interval'], to_end=0)
     z_score = (diff_rri - np.nanmean(diff_rri)) / np.nanstd(diff_rri, ddof=1)
@@ -1269,7 +1311,8 @@ _outlier_correction_methods: Dict[str, Callable] = {
     'quality': _correct_outlier_quality,
     'artifact': _correct_outlier_artifact,
     'physiological': _correct_outlier_physiological,
-    'statistical': _correct_outlier_statistical
+    'statistical_rr': _correct_outlier_statistical_rr,
+    'statistical_rr_diff': _correct_outlier_statistical_rr_diff
 }
 
 _outlier_correction_params_default: Dict[str, Union[float, Sequence[float]]] = {
@@ -1277,5 +1320,6 @@ _outlier_correction_params_default: Dict[str, Union[float, Sequence[float]]] = {
     'quality': 0.4,
     'artifact': 0.0,
     'physiological': (45, 200),
-    'statistical': 1.96
+    'statistical_rr': 2.576,
+    'statistical_rr_diff': 1.96
 }
