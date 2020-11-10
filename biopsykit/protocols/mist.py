@@ -517,8 +517,9 @@ def hr_course_plot(data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
         Heart rate data to plot. Can either be one dataframe (in case of only one group or in case of multiple groups,
         together with `group_col`) or a dictionary of dataframes, where one dataframe belongs to one group
     groups : list, optional:
-         list of group names. If ``None`` is passed, it is inferred from the dictionary keys or from the unique
-         values in `group_col`. Default: ``None``
+         List of group names. If ``None`` is passed, the groups and their order are inferred from the dictionary keys
+         or from the unique values in `group_col`. If list is supplied the groups are plotted in that order.
+         Default: ``None``
     group_col : str, optional
         Name of group column in the dataframe in case of multiple groups and one dataframe
     plot_params : dict, optional
@@ -585,8 +586,9 @@ def hr_course_plot(data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
 
     # plot data as errorbar with mean and se
     if groups:
-        for df, group, x_off, marker, ls in zip(data.values(), groups, x_offsets, markers, line_styles):
-            ax.errorbar(x=x + x_off, y=df['mean'], label=group, yerr=df['se'], capsize=3, marker=marker, linestyle=ls)
+        for group, x_off, marker, ls in zip(groups, x_offsets, markers, line_styles):
+            ax.errorbar(x=x + x_off, y=data[group]['mean'], label=group, yerr=data[group]['se'], capsize=3,
+                        marker=marker, linestyle=ls)
     else:
         ax.errorbar(x=x, y=data['mean'], yerr=data['se'], capsize=3, marker=markers[0], linestyle=line_styles[0])
 
