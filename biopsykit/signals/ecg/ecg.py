@@ -546,7 +546,7 @@ class EcgProcessor:
         # fill missing RR intervals with interpolated R Peak Locations
         rpeaks_corrected = (rpeaks['RR_Interval'].cumsum() * sampling_rate).astype(int)
         rpeaks_corrected = np.append(rpeaks['R_Peak_Idx'].iloc[0], rpeaks_corrected[:-1] + rpeaks['R_Peak_Idx'].iloc[0])
-        artifacts, rpeaks_corrected = nk.signal_fixpeaks(rpeaks_corrected, sampling_rate, iterative=True)
+        artifacts, rpeaks_corrected = nk.signal_fixpeaks(rpeaks_corrected, sampling_rate, iterative=False)
         rpeaks_corrected = rpeaks_corrected.astype(int)
         return pd.DataFrame(rpeaks_corrected, columns=['R_Peak_Idx'])
 
@@ -608,7 +608,6 @@ class EcgProcessor:
         >>> # HRV processing using using all types, and without R peak correction
         >>> hrv_output = ecg_processor.hrv_process(ecg_processor, key="Data", hrv_types='all', correct_rpeaks=False)
         """
-
         utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
