@@ -48,6 +48,52 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
     return df, int(dataset.info.sampling_rate_hz)
 
 
+def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[Sequence[str]] = None,
+                     timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
+    """
+    TODO: add documentation
+    Parameters
+    ----------
+    file_path
+    datastreams
+    timezone
+
+    Returns
+    -------
+
+    """
+    import re
+
+    df = pd.read_csv(file_path, header=1, index_col="timestamp")
+    header = pd.read_csv(file_path, header=None, nrows=1)
+
+    # infer start time from filename
+    start_time = re.findall(r"NilsPodX-[^\s]{4}_(.*?).csv", str(file_path.name))[0]
+    start_time = pd.to_datetime(start_time, format="%Y%m%d_%H%M%S").to_datetime64().astype(int)
+    # sampling rate is in second column of header
+    sampling_rate = int(header.iloc[0, 1])
+    # convert index to nanoseconds
+    df.index = ((df.index / sampling_rate) * 1e9).astype(int)
+    # add start time as offset and convert into datetime index
+    df.index = pd.to_datetime(df.index + start_time)
+    df.index.name = "date"
+
+    df_filt = pd.DataFrame(index=df.index)
+    if datastreams is None:
+        df_filt = df
+    else:
+        # filter only desired datastreams
+        for ds in datastreams:
+            df_filt = df_filt.join(df.filter(like=ds))
+
+    if isinstance(timezone, str):
+        # convert to pytz object
+        timezone = pytz.timezone(timezone)
+    # localize timezone (is already in correct timezone since start time is inferred from file name)
+    df_filt = df_filt.tz_localize(tz=timezone)
+    return df_filt, sampling_rate
+
+
 def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]] = None,
                         datastreams: Optional[Sequence[str]] = None,
                         timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[Dict[str, pd.DataFrame], int]:
