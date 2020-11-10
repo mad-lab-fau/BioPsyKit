@@ -191,6 +191,8 @@ def write_result_dict_to_csv(result_dict: Dict[str, pd.DataFrame], file_path: pa
 
     df_result_concat = pd.concat(result_dict, names=identifier_col)
     if file_path.exists() and not overwrite_file:
-        df_result_old = pd.read_csv(file_path, index_col=identifier_col + index_cols)
+        # ensure that all identifier columns are read as str
+        df_result_old = pd.read_csv(file_path, dtype={col: str for col in identifier_col})
+        df_result_old.set_index(identifier_col + index_cols, inplace=True)
         df_result_concat = df_result_concat.combine_first(df_result_old).sort_index(level=0)
     df_result_concat.reset_index().to_csv(file_path, index=False)
