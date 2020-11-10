@@ -203,7 +203,7 @@ class EcgProcessor:
               threshold that can not be achieved physiologically
             * `statistical`: Statistical outlier removal. Marks beats as outlier if they are within the xx% highest or
               lowest heart rates. Values are removed based on the z-score
-              (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values)
+              (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values; 2.576 => 1 %, 0.5 % highest, 0.5 % lowest values)
 
 
         See Also
@@ -1144,7 +1144,8 @@ def _correct_outlier_statistical(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
     Outlier correction method 'statistical'.
 
     Marks beats as outlier if they are within the xx % highest or lowest heart rates, i.e. if their z-score is above
-    a threshold (e.g. 1.96 = > 5 %, 2.5 % highest, 2.5 % lowest values).
+    a threshold (e.g. 1.96 => 5 %, 2.5 % highest, 2.5 % lowest values;
+    2.576 => 1 %, 0.5 % highest, 0.5 % lowest values).
 
     Parameters
     ----------
