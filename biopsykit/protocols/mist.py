@@ -135,7 +135,7 @@ class MIST:
     ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
         """
         Splits a `MIST Phase dict` (or a dict of such, in case of multiple groups,
-        see ``bp.protocols.utils.concat_dicts``)
+        see ``bp.protocols.utils.concat_dict``)
         into a `MIST Subphase dict`. See ``bp.protocols.utils.split_subphases`` for further information.
 
         Parameters
@@ -170,7 +170,7 @@ class MIST:
         the maximum length of all MIST phases.
 
         To compute the MIST subphase durations either pass a list with total MIST durations per phase or a
-        'MIST dict' (see `mist.mist_concat_dicts` for further explanation).
+        'MIST dict' (see ``MIST.concat_mist_dict`` for further explanation).
         The length of the dataframe then corresponds to the total MIST duration per phase.
 
         Parameters
@@ -241,7 +241,7 @@ class MIST:
         """
         Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
         Simply pass a 'MIST dict' dictionary with one pandas heart rate dataframe per MIST phase
-        (see `mist.mist_concat_dicts` for further explanation), i.e. heart rate data with one column per subject.
+        (see ``MIST.concat_mist_dicts`` for further explanation), i.e. heart rate data with one column per subject.
 
         Parameters
         ----------
@@ -337,10 +337,10 @@ class MIST:
         In case of only one group a pandas dataframe can be passed.
 
         In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
-        to one group, or one dataframe with a column indicating group membership (parameter `group_col`).
+        to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
 
         Regardless of the kind of input the dataframes need to be in the format of a 'mse dataframe', as returned
-        by `mist.mist_hr_course` (see `mist.mist_hr_course` for further information).
+        by ``MIST.hr_course_mist`` (see ``MIST.hr_course_mist`` for further information).
 
 
         Parameters
@@ -471,8 +471,8 @@ class MIST:
         """
         Computes specified parameters (HRV / RSA / ...) over all MIST phases and subphases.
 
-        To use this function, either simply pass an `EcgProcessor` object or two dictionaries
-        `dict_ecg` and `dict_rpeaks` resulting from `EcgProcessor.ecg_process()`.`
+        To use this function, either simply pass an ``EcgProcessor`` object or two dictionaries
+        ``dict_ecg`` and ``dict_rpeaks`` resulting from ``EcgProcessor.ecg_process()``.
 
         Parameters
         ----------
