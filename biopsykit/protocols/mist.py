@@ -10,7 +10,7 @@ from tqdm.notebook import tqdm
 import biopsykit.signals.ecg as ecg
 from biopsykit.signals.ecg import EcgProcessor
 import biopsykit.utils as utils
-from biopsykit.protocols.utils import split_subphases, concat_phase_dict, hr_course
+from biopsykit.protocols.utils import split_subphases, split_groups, concat_phase_dict, hr_course
 
 
 class MIST:
@@ -130,7 +130,6 @@ class MIST:
     def split_mist_subphases(
             self,
             phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-            mist_subphase_times: Optional[Sequence[Tuple[int, int]]] = None,
             is_group_dict: Optional[bool] = False
     ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
         """
@@ -142,9 +141,6 @@ class MIST:
         ----------
         phase_dict : dict
             'Phase dict' or nested dict of 'Phase dicts' if `is_group_dict` is ``True``
-        mist_subphase_times : list, optional
-            List with start and end times of each Subphase, or ``None`` to infer start and end times from data
-            (with default MIST subphase durations)
         is_group_dict : bool, optional
             ``True`` if group dict was passed, ``False`` otherwise. Default: ``False``
 
@@ -155,14 +151,38 @@ class MIST:
             nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
 
         """
-        if not mist_subphase_times:
-            mist_subphase_times = self.get_mist_times(phase_dict)
+        mist_subphase_times = self.get_mist_times(phase_dict=phase_dict, is_group_dict=is_group_dict)
+        return split_subphases(data=phase_dict, subphase_names=self.subphases, subphase_times=mist_subphase_times,
+                               is_group_dict=is_group_dict)
 
-        return split_subphases(phase_dict, self.subphases, mist_subphase_times, is_group_dict)
+    @classmethod
+    def split_mist_groups(cls, phase_dict: Dict[str, pd.DataFrame],
+                          condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+        """
+        Splits 'MIST Phase dict' into group dict, i.e. one 'MIST Phase dict' per group.
+
+        Parameters
+        ----------
+        phase_dict : dict
+            'MIST Phase dict' to be split in groups. See ``bp.protocols.utils.concat_phase_dict``
+            for further information
+        condition_dict : dict
+            dictionary of group membership. Keys are the different groups, values are lists of subject IDs that
+            belong to the respective group
+
+        Returns
+        -------
+        dict
+            nested group dict with one 'MIST Phase dict' per group
+
+        """
+        return split_groups(phase_dict, condition_dict)
 
     def get_mist_times(
             self,
-            mist_dur: Union[Sequence[int], Dict[str, pd.DataFrame]]
+            mist_dur: Optional[Sequence[int]] = None,
+            phase_dict: Optional[Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]]] = None,
+            is_group_dict: Optional[bool] = False
     ) -> Sequence[Tuple[int, int]]:
         """
         Computes the start and end times of each MIST subphase. It is assumed that all MIST subphases,
@@ -170,26 +190,48 @@ class MIST:
         the maximum length of all MIST phases.
 
         To compute the MIST subphase durations either pass a list with total MIST durations per phase or a
-        'MIST dict' (see ``MIST.concat_mist_dict`` for further explanation).
+        'MIST Phase dict' (see ``MIST.concat_mist_dict`` for further information) or 'grouped MIST dict'
+        (if ``is_grouped_dict`` is set to ``True``, see ``MIST.split_mist_groups`` for further information).
         The length of the dataframe then corresponds to the total MIST duration per phase.
 
         Parameters
         ----------
-        mist_dur : list or dict
-            if a list is passed then each entry of the list is the total duration of one MIST phase. If a dict is
-            passed it is assumed to be a 'Phase dict' with MIST data.
-            The length of the dataframes then correspond to the total duration of the MIST phase
+        mist_dur : list, optional
+            a list where each entry of the list is the total duration of one MIST phase.
+        phase_dict : dict, optional
+            'MIST Phase dict' or grouped 'MIST Phase dict' (if ``is_group_dict`` is set to ``True``).
+            The length of the dataframes (= dict entries) correspond to the total duration of the MIST phases
+        is_group_dict : bool, optional
+            ``True`` if group dict was passed, ``False`` otherwise. Default: ``False``
 
         Returns
         -------
         list
             a list with tuples of MIST subphase start and end times (in seconds)
+
+        Raises
+        ------
+        ValueError
+            if neither ``mist_dur`` nor ``phase_dict`` are passed as arguments
         """
 
-        if isinstance(mist_dur, dict):
-            mist_dur = np.array([len(v) for v in mist_dur.values()])
-        else:
+        if mist_dur is None and phase_dict is None:
+            raise ValueError("Either `mist_dur` or `phase_dict` must be supplied as parameter!")
+
+        if mist_dur:
+            # ensure numpy
             mist_dur = np.array(mist_dur)
+        else:
+            if is_group_dict:
+                # Grouped MIST Phase dict
+                mist_dur = np.array([[len(v) for v in d.values()] for d in phase_dict.values()])
+                if not (mist_dur == mist_dur[0]).all():
+                    # ensure that durations of all groups are equal
+                    raise ValueError("All groups are expected to have the same durations for the single phases!")
+                mist_dur = mist_dur[0]
+            else:
+                # MIST Phase dict
+                mist_dur = np.array([len(v) for v in phase_dict.values()])
 
         # compute the duration to the beginning of Feedback subphase
         dur_to_fb = sum(self.subphase_durations)
@@ -270,7 +312,7 @@ class MIST:
         if ax is None:
             if figsize is None:
                 figsize = plt.rcParams['figure.figsize']
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=figsize)
 
         if plot_params:
             self.hr_ensemble_params.update(plot_params)

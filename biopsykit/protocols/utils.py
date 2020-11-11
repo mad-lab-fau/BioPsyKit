@@ -83,7 +83,8 @@ def split_subphases(data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.
     """
     if is_group_dict:
         # recursively call this function for each group
-        return {group: split_subphases(dict_group) for group, dict_group in data.items()}
+        return {group: split_subphases(data=dict_group, subphase_names=subphase_names, subphase_times=subphase_times)
+                for group, dict_group in data.items()}
     else:
         phase_dict = {}
         # split data into subphases for each MIST phase
