@@ -20,10 +20,16 @@ class MIST:
 
     def __init__(
             self,
+            name: Optional[str] = None,
             phases: Optional[Sequence[str]] = None,
             subphases: Optional[Sequence[str]] = None,
             subphase_durations: Optional[Sequence[int]] = None
     ):
+        self.name: str = name or "MIST"
+        """
+        Study name
+        """
+
         self.phases: Sequence[str] = ["MIST1", "MIST2", "MIST3"]
         """
         MIST Phases
@@ -38,7 +44,7 @@ class MIST:
         Names of MIST subphases
         """
 
-        self.subphase_durations: Sequence[int] = [60, 240]
+        self.subphase_durations: Sequence[int] = [60, 240, 0]
         """
         MIST Subphase Durations
         
@@ -62,6 +68,16 @@ class MIST:
         }
 
         self._update_mist_params(phases, subphases, subphase_durations)
+
+    def __str__(self) -> str:
+        return """{}
+        Phases: {}
+        Subphases: {}
+        Subphase Durations: {}
+        """.format(self.name, self.phases, self.subphases, self.subphase_durations)
+
+    def __repr__(self):
+        return self.__str__()
 
     def _update_mist_params(self, phases: Sequence[str], subphases: Sequence[str], subphase_durations: Sequence[int]):
         if phases:
@@ -238,8 +254,9 @@ class MIST:
         # (variable) duration of the feedback intervals: total MIST duration - duration to end of AT
         dur_fb = mist_dur - dur_to_fb
 
-        # add maximum FB duration to subphase duration list
-        subph_dur = np.append(self.subphase_durations, max(dur_fb))
+        # set FB duration
+        subph_dur = np.array(self.subphase_durations)
+        subph_dur[-1] = max(dur_fb)
         # cumulative times
         times_cum = np.cumsum(np.array(subph_dur))
         # compute start/end times per subphase
