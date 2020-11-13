@@ -302,8 +302,9 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
     ax.yaxis.set_major_locator(mticks.MaxNLocator(5, steps=[5, 10]))
 
     if fig:
+        ax.set_xlabel("Time")
         fig.tight_layout()
-        fig.autofmt_xdate()
+        fig.autofmt_xdate(rotation=0, ha='center')
         return fig, ax
 
 
