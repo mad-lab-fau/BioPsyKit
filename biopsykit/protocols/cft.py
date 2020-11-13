@@ -424,7 +424,7 @@ class CFT:
         # Baseline HR
         ax.hlines(
             y=cft_params['baseline_hr'],
-            xmin=cft_times['cft_start'],
+            xmin=cft_times['plot_start'],
             xmax=cft_times['cft_end'],
             ls="--",
             lw=2,
