@@ -209,7 +209,13 @@ class CFT:
             data: pd.DataFrame,
             time_before: Optional[int] = None,
             time_after: Optional[int] = None,
-            ax: Optional[plt.Axes] = None) -> Union[Tuple[plt.Figure, plt.Axes], plt.Axes]:
+            ax: Optional[plt.Axes] = None,
+            plot_baseline: Optional[bool] = True,
+            plot_mean: Optional[bool] = True,
+            plot_onset: Optional[bool] = True,
+            plot_peak_brady: Optional[bool] = True,
+            plot_poly_fit: Optional[bool] = True,
+    ) -> Union[Tuple[plt.Figure, plt.Axes], plt.Axes]:
         """
 
         Parameters
@@ -218,6 +224,11 @@ class CFT:
         time_before
         time_after
         ax
+        plot_poly_fit
+        plot_peak_brady
+        plot_onset
+        plot_mean
+        plot_baseline
 
         Returns
         -------
@@ -273,34 +284,20 @@ class CFT:
                     fontsize=14)
         ax.axhspan(ymin=0.93 * ylims[-1], ymax=ylims[-1], color='white', alpha=0.4, zorder=3, lw=0)
 
-        # Baseline HR
-        ax.hlines(
-            y=hr_bl,
-            xmin=plot_start,
-            xmax=cft_end,
-            ls="--",
-            lw=2,
-            color=utils.fau_color('tech'),
-            alpha=0.6
-        )
+        if plot_baseline:
+            self._add_baseline_plot(data, cft_params, times_dict, ax, bbox)
 
-        self._add_onset_plot(data, cft_params, times_dict, ax, bbox)
-        self._add_mean_bradycardia_plot(data, cft_params, times_dict, ax, bbox)
-        self._add_peak_bradycardia_plot(data, cft_params, times_dict, ax, bbox)
+        if plot_mean:
+            self._add_mean_bradycardia_plot(data, cft_params, times_dict, ax, bbox)
 
-        x_poly = df_cft.index.astype(int) / 1e9
-        x_poly = x_poly - x_poly[0]
-        y_poly = cft_params['poly_fit_a0'] * x_poly ** 2 + cft_params['poly_fit_a1'] * x_poly + cft_params[
-            'poly_fit_a2']
+        if plot_onset:
+            self._add_onset_plot(data, cft_params, times_dict, ax, bbox)
 
-        ax.plot(
-            df_cft.index,
-            y_poly,
-            lw=2,
-            color=utils.fau_color('phil'),
-            alpha=0.6,
-            zorder=2
-        )
+        if plot_peak_brady:
+            self._add_peak_bradycardia_plot(data, cft_params, times_dict, ax, bbox)
+
+        if plot_poly_fit:
+            self._add_poly_fit_plot(data, cft_params, times_dict, ax, bbox)
 
         ax._xmargin = 0
 
@@ -418,6 +415,23 @@ class CFT:
             size=14, bbox=bbox, ha='right', va='bottom'
         )
 
+    def _add_baseline_plot(self,
+                           data: pd.DataFrame,
+                           cft_params: Dict,
+                           cft_times: Dict,
+                           ax: plt.Axes,
+                           bbox: Dict) -> None:
+        # Baseline HR
+        ax.hlines(
+            y=cft_params['baseline_hr'],
+            xmin=cft_times['cft_start'],
+            xmax=cft_times['cft_end'],
+            ls="--",
+            lw=2,
+            color=utils.fau_color('tech'),
+            alpha=0.6
+        )
+
     def _add_mean_bradycardia_plot(self,
                                    data: pd.DataFrame,
                                    cft_params: Dict,
@@ -510,4 +524,25 @@ class CFT:
             xytext=(-7.5, -10),
             textcoords="offset points",
             size=14, bbox=bbox, ha='right', va='top'
+        )
+
+    def _add_poly_fit_plot(self,
+                           data: pd.DataFrame,
+                           cft_params: Dict,
+                           cft_times: Dict,
+                           ax: plt.Axes,
+                           bbox: Dict) -> None:
+        df_cft = self.extract_cft_interval(data)
+        x_poly = df_cft.index.astype(int) / 1e9
+        x_poly = x_poly - x_poly[0]
+        y_poly = cft_params['poly_fit_a0'] * x_poly ** 2 + cft_params['poly_fit_a1'] * x_poly + cft_params[
+            'poly_fit_a2']
+
+        ax.plot(
+            df_cft.index,
+            y_poly,
+            lw=2,
+            color=utils.fau_color('phil'),
+            alpha=0.6,
+            zorder=2
         )
