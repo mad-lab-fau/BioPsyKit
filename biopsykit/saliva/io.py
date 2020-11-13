@@ -44,6 +44,7 @@ def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biom
                                         append=True).reorder_levels(["condition", "subject", "sample"])
     num_subjects = len(df_saliva.index.get_level_values("subject").unique())
     if saliva_times:
+        _check_saliva_times(len(df_saliva), num_subjects, saliva_times)
         df_saliva["time"] = np.array(saliva_times * num_subjects)
     return df_saliva
 
@@ -73,3 +74,12 @@ def load_saliva_biopsykit(
         data['time'] = np.array(saliva_times * num_subjects)
 
     return data
+
+
+def _check_saliva_times(num_samples: int, num_subjects: int, saliva_times: Sequence[int]):
+    if not np.all(np.diff(saliva_times) > 0):
+        raise ValueError("`saliva_times` must be increasing!")
+    if (len(saliva_times) * num_subjects) != num_samples:
+        raise ValueError(
+            "Length of `saliva_times` does not match the number of saliva samples! Expected: {}, got: {}".format(
+                int(num_samples / num_subjects), len(saliva_times)))
