@@ -8,9 +8,10 @@ import numpy as np
 from biopsykit.utils import path_t
 
 
-def load_saliva_plate(file_path: path_t, sample_col: str, data_col: str, feature_name: str,
+def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biomarker_type: str,
                       saliva_times: Optional[Sequence[int]] = None,
                       condition_list: Optional[pd.Index] = None,
+                      sheet_name: Optional[str] = None,
                       excluded_subjects: Optional[Sequence[str]] = None) -> pd.DataFrame:
     """Reads saliva from an Excel sheet in 'plate' format."""
     # TODO documentation
@@ -19,14 +20,18 @@ def load_saliva_plate(file_path: path_t, sample_col: str, data_col: str, feature
     # ensure pathlib
     file_path = Path(file_path)
 
-    df_saliva = pd.read_excel(file_path, sheet_name="Sheet1", skiprows=2, usecols=[sample_col, data_col])
+    if sheet_name is None:
+        df_saliva = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col])
+    else:
+        df_saliva = pd.read_excel(file_path, skiprows=2, sheet_name=sheet_name, usecols=[sample_id_col, data_col])
 
-    df_saliva[["subject", "sample"]] = df_saliva['sample ID'].str.extract("Vp(\d+) S(\d)").astype(int)
+    df_saliva[["subject", "sample"]] = df_saliva[sample_id_col].str.extract("Vp(\d+) S(\d)").astype(int)
 
-    df_saliva.drop(columns=[sample_col], inplace=True, errors='ignore')
-    df_saliva.rename(columns={data_col: feature_name}, inplace=True)
+    df_saliva.drop(columns=[sample_id_col], inplace=True, errors='ignore')
+    df_saliva.rename(columns={data_col: biomarker_type}, inplace=True)
     df_saliva.set_index(["subject", "sample"], inplace=True)
     # Subject Exclusion
+    # TODO move subject exclusion to extra function
     if excluded_subjects:
         try:
             df_saliva.drop(index=excluded_subjects, inplace=True)
@@ -41,3 +46,17 @@ def load_saliva_plate(file_path: path_t, sample_col: str, data_col: str, feature
     if saliva_times:
         df_saliva["time"] = np.array(saliva_times * num_subjects)
     return df_saliva
+
+
+def save_saliva_biopsykit(file_path: path_t, data: pd.DataFrame) -> None:
+    data = data.unstack()
+    data.columns = data.columns.droplevel(level=0)
+    data.to_csv(file_path)
+
+
+def load_saliva_biopsykit(file_path: path_t, biomarker_type: str,
+                          subject_col: Optional[str] = "subject") -> pd.DataFrame:
+    data = pd.read_csv(file_path, index_col=subject_col)
+    data.columns = pd.MultiIndex.from_product([[biomarker_type], data.columns])
+    data = data.stack()
+    return data
