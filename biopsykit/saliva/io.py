@@ -49,14 +49,27 @@ def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biom
 
 
 def save_saliva_biopsykit(file_path: path_t, data: pd.DataFrame) -> None:
+    if 'time' in data:
+        # drop saliva times for export
+        data.drop('time', axis=1, inplace=True)
     data = data.unstack()
     data.columns = data.columns.droplevel(level=0)
     data.to_csv(file_path)
 
 
-def load_saliva_biopsykit(file_path: path_t, biomarker_type: str,
-                          subject_col: Optional[str] = "subject") -> pd.DataFrame:
+def load_saliva_biopsykit(
+        file_path: path_t,
+        biomarker_type: str,
+        subject_col: Optional[str] = "subject",
+        saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     data = pd.read_csv(file_path, index_col=subject_col)
+
+    num_subjects = len(data)
     data.columns = pd.MultiIndex.from_product([[biomarker_type], data.columns])
     data = data.stack()
+
+    if saliva_times:
+        _check_saliva_times(len(data), num_subjects, saliva_times)
+        data['time'] = np.array(saliva_times * num_subjects)
+
     return data
