@@ -66,7 +66,9 @@ def load_saliva_biopsykit(
     data = pd.read_csv(file_path, index_col=subject_col)
 
     num_subjects = len(data)
-    data.columns = pd.MultiIndex.from_product([[biomarker_type], data.columns])
+    data.columns = data.columns.astype(int)
+    data.columns = pd.MultiIndex.from_product([[biomarker_type], data.columns], names=["", "sample"])
+
     data = data.stack()
 
     if saliva_times:
