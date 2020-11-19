@@ -193,20 +193,30 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     axs['ecg'].fill_between(x_axis, minimum_line, quality, alpha=0.2, zorder=2,
                             interpolate=True, facecolor=utils.fau_color('med'), label='Quality')
 
+    peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
+    outlier = np.array([])
+    if "R_Peak_Outlier" in ecg_signal:
+        outlier = np.where(ecg_signal["R_Peak_Outlier"] == 1)[0]
+
+    peaks = np.setdiff1d(peaks, outlier)
     # Plot signals
     # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=utils.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
     axs['ecg'].plot(ecg_clean, color=utils.fau_color('fau'), label="Cleaned", zorder=1,
                     linewidth=1.5)
     axs['ecg'].scatter(x_axis[peaks], ecg_clean.iloc[peaks], color=utils.fau_color('nat'),
                        label="R Peaks", zorder=2)
-    axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=utils.fau_color('phil'),
-                       label="Outlier", zorder=2)
+    if "R_Peak_Outlier" in ecg_signal:
+        axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=utils.fau_color('phil'),
+                           label="Outlier", zorder=2)
     axs['ecg'].set_ylabel("ECG Quality")
 
     # Optimize legend
     handles, labels = axs['ecg'].get_legend_handles_labels()
     # order = [2, 0, 1, 3]
-    order = [0, 1, 2, 3]
+    if "R_Peak_Outlier" in ecg_signal:
+        order = [0, 1, 2, 3]
+    else:
+        order = [0, 1, 2]
     axs['ecg'].legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc="upper right")
 
     # Plot heart rate
