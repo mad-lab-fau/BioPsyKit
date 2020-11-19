@@ -186,4 +186,4 @@ def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarr
 
 
 def check_tz_aware(data: pd.DataFrame) -> bool:
-    return data.index.tzinfo is not None
+    return isinstance(data.index, pd.DatetimeIndex) and (data.index.tzinfo is not None)
