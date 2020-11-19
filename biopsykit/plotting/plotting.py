@@ -146,14 +146,12 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
         sampling_rate = ecg_processor.sampling_rate
 
     sns.set_palette(utils.cmap_fau)
-    plt.rcParams['timezone'] = ecg_signal.index.tz.zone
+    if isinstance(ecg_signal.index, pd.DatetimeIndex):
+        plt.rcParams['timezone'] = ecg_signal.index.tz.zone
 
     if figsize is None:
         figsize = (15, 5)
 
-    outlier = np.where(ecg_signal["R_Peak_Outlier"] == 1)[0]
-    peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
-    peaks = np.setdiff1d(peaks, outlier)
     # Prepare figure and set axes.
     x_axis = ecg_signal.index
 
@@ -199,7 +197,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=utils.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
     axs['ecg'].plot(ecg_clean, color=utils.fau_color('fau'), label="Cleaned", zorder=1,
                     linewidth=1.5)
-    axs['ecg'].scatter(x_axis[peaks], ecg_clean[peaks], color=utils.fau_color('nat'),
+    axs['ecg'].scatter(x_axis[peaks], ecg_clean.iloc[peaks], color=utils.fau_color('nat'),
                        label="R Peaks", zorder=2)
     axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=utils.fau_color('phil'),
                        label="Outlier", zorder=2)
@@ -225,9 +223,11 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     axs['ecg'].tick_params(axis='x', which='both', bottom=True, labelbottom=True)
     axs['ecg'].tick_params(axis='y', which='major', left=True)
 
-    axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
-    axs['ecg'].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
+    if isinstance(heart_rate.index, pd.DatetimeIndex):
+        # TODO add axis style for non-Datetime axes
+        axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
+        axs['ecg'].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
     fig.tight_layout()
     return fig, list(axs.values())
@@ -281,9 +281,12 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
         ax.legend(loc="upper right")
 
     ax.tick_params(axis='x', which='both', bottom=True)
-    ax.xaxis.set_major_locator(mdates.MinuteLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
+
+    if isinstance(heart_rate.index, pd.DatetimeIndex):
+        # TODO add axis style for non-Datetime axes
+        ax.xaxis.set_major_locator(mdates.MinuteLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
     ax.tick_params(axis='y', which='major', left=True)
     ax.yaxis.set_major_locator(mticks.MaxNLocator(5, steps=[5, 10]))
