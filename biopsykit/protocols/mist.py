@@ -586,6 +586,7 @@ class MIST:
         # dict to store results. one entry per parameter and a list of dataframes per MIST phase
         # that will later be concated to one large dataframes
         dict_df_subphases = {param: list() for param in param_types}
+
         # iterate through all phases in the data
         for (phase, rpeaks), (ecg_phase, ecg_data) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc=title):
             rpeaks = rpeaks.copy()
@@ -606,10 +607,16 @@ class MIST:
                 for subph, dur in zip(self.subphases, self.subphase_durations):
                     # get the first xx seconds of data (i.e., get only the current subphase)
                     # TODO change to mist.mist_get_times?
-                    df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
+                    if dur > 0:
+                        df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
+                    else:
+                        # duration of 0 seconds = Feedback Interval, don't cut slice the beginning,
+                        # use all remaining data
+                        df_subph_rpeaks = rpeaks
                     # ECG does not need to be sliced because rpeaks are already sliced and
                     # will select only the relevant ECG signal parts anyways
-                    df_subph_ecg = ecg
+                    df_subph_ecg = ecg_data
+
                     for param_type, param_func in param_types.items():
                         # compute HRV, RSP over subphases
                         dict_subphases[param_type].append(
@@ -621,12 +628,12 @@ class MIST:
                     # (so that the next subphase is first in the next iteration)
                     rpeaks = rpeaks[~rpeaks.index.isin(df_subph_rpeaks.index)]
 
-                if len(self.subphase_durations) < len(self.subphases):
-                    # add Feedback Interval (= remaining time) if present
-                    for param_type, param_func in param_types.items():
-                        dict_subphases[param_type].append(
-                            param_func(ecg_signal=ecg, rpeaks=rpeaks, index=self.subphases[-1], index_name=index_name,
-                                       sampling_rate=sampling_rate))
+                # if len(self.subphase_durations) < len(self.subphases):
+                #     # add Feedback Interval (= remaining time) if present
+                #     for param_type, param_func in param_types.items():
+                #         dict_subphases[param_type].append(
+                #             param_func(ecg_signal=ecg, rpeaks=rpeaks, index=self.subphases[-1], index_name=index_name,
+                #                        sampling_rate=sampling_rate))
 
             for param in dict_subphases:
                 # concat dataframe of all subphases to one dataframe per MIST phase and add to parameter dict
