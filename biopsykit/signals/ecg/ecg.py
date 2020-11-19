@@ -118,7 +118,7 @@ class EcgProcessor:
             self.data_dict = data_dict
         else:
             # check if localized
-            if not utils.check_tz_aware(df):
+            if isinstance(df.index, pd.DatetimeIndex) and not utils.check_tz_aware(df):
                 # localize dataframe
                 df = df.tz_localize(tz=utils.utc).tz_convert(tz=timezone)
 
@@ -301,8 +301,8 @@ class EcgProcessor:
                                                       outlier_correction=outlier_correction,
                                                       outlier_params=outlier_params, sampling_rate=self.sampling_rate)
             heart_rate = pd.DataFrame({'ECG_Rate': 60 / rpeaks['RR_Interval']})
-            heart_rate_interpolated = nk.signal_interpolate(x_values=rpeaks['R_Peak_Idx'],
-                                                            y_values=heart_rate['ECG_Rate'],
+            heart_rate_interpolated = nk.signal_interpolate(x_values=np.squeeze(rpeaks['R_Peak_Idx'].values),
+                                                            y_values=np.squeeze(heart_rate['ECG_Rate'].values),
                                                             x_new=np.arange(0, len(ecg_result['ECG_Clean'])))
             ecg_result['ECG_Rate'] = heart_rate_interpolated
             self.ecg_result[name] = ecg_result
@@ -561,7 +561,8 @@ class EcgProcessor:
 
         # fill missing RR intervals with interpolated R Peak Locations
         rpeaks_corrected = (rpeaks['RR_Interval'].cumsum() * sampling_rate).astype(int)
-        rpeaks_corrected = np.append(rpeaks['R_Peak_Idx'].iloc[0], rpeaks_corrected[:-1] + rpeaks['R_Peak_Idx'].iloc[0])
+        rpeaks_corrected = np.append(rpeaks['R_Peak_Idx'].iloc[0],
+                                     rpeaks_corrected.iloc[:-1] + rpeaks['R_Peak_Idx'].iloc[0])
         artifacts, rpeaks_corrected = nk.signal_fixpeaks(rpeaks_corrected, sampling_rate, iterative=False)
         rpeaks_corrected = rpeaks_corrected.astype(int)
         return pd.DataFrame(rpeaks_corrected, columns=['R_Peak_Idx'])
