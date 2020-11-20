@@ -68,9 +68,12 @@ def standard_features(data: pd.DataFrame, feature_name: Optional[str] = "cortiso
 
     _check_data_format(data)
 
-    # also group by days if we have multiple days present in the index
+    # also group by days and/or condition if we have multiple days present in the index
     if 'day' in data.index.names:
         group_cols.append('day')
+
+    if 'condition' in data.index.names:
+        group_cols.append('condition')
 
     if feature_name not in data:
         raise ValueError("No `{}` columns in data!".format(feature_name))
