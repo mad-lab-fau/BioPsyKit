@@ -210,6 +210,7 @@ class CFT:
             time_before: Optional[int] = None,
             time_after: Optional[int] = None,
             ax: Optional[plt.Axes] = None,
+            figsize: Optional[Tuple[int, int]] = None,
             plot_baseline: Optional[bool] = True,
             plot_mean: Optional[bool] = True,
             plot_onset: Optional[bool] = True,
@@ -239,7 +240,9 @@ class CFT:
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
-            fig, ax = plt.subplots()
+            if figsize is None:
+                figsize = plt.rcParams['figure.figsize']
+            fig, ax = plt.subplots(figsize=figsize)
 
         if time_before is None:
             time_before = self.cft_start
@@ -302,8 +305,9 @@ class CFT:
         ax._xmargin = 0
 
         if fig:
+            ax.set_xlabel("Time")
             fig.tight_layout()
-            fig.autofmt_xdate()
+            fig.autofmt_xdate(rotation=0, ha='center')
             return fig, ax
 
     def _sanitize_cft_input(self, data: pd.DataFrame,
@@ -424,7 +428,7 @@ class CFT:
         # Baseline HR
         ax.hlines(
             y=cft_params['baseline_hr'],
-            xmin=cft_times['cft_start'],
+            xmin=cft_times['plot_start'],
             xmax=cft_times['cft_end'],
             ls="--",
             lw=2,
