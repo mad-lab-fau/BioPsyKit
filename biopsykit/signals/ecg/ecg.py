@@ -117,16 +117,18 @@ class EcgProcessor:
         if data_dict:
             self.data_dict = data_dict
         else:
-            # localize dataframe
-            df = df.tz_localize(tz=utils.utc).tz_convert(tz=timezone)
+            # check if localized
+            if isinstance(df.index, pd.DatetimeIndex) and not utils.check_tz_aware(df):
+                # localize dataframe
+                df = df.tz_localize(tz=utils.utc).tz_convert(tz=timezone)
 
-        if time_intervals is not None:
-            # split data into subphases if time_intervals are passed
-            data_dict = utils.split_data(time_intervals, df=df, timezone=timezone, include_start=include_start)
-        else:
-            data_dict = {
-                'Data': df
-            }
+            if time_intervals is not None:
+                # split data into subphases if time_intervals are passed
+                data_dict = utils.split_data(time_intervals, df=df, timezone=timezone, include_start=include_start)
+            else:
+                data_dict = {
+                    'Data': df
+                }
 
         self.data_dict: Dict[str, pd.DataFrame] = data_dict
         self.ecg_result: Dict[str, pd.DataFrame] = {}
@@ -199,10 +201,14 @@ class EcgProcessor:
             * `artifact`: Artifact detection based on work from `Berntson et al. (1990), Psychophysiology`
             * `physiological`: Physiological outlier removal. Marks beats as outlier if their heart rate is above or below a
               threshold that can not be achieved physiologically
-            * `statistical`: Statistical outlier removal. Marks beats as outlier if they are within the xx% highest or
+            * `statistical_rr`: Statistical outlier removal based on RR intervals.
+              Marks beats as outlier if the RR intervals are within the xx% highest or lowest values.
+              Values are removed based on the z-score (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values;
+              2.576 => 1 %, 0.5 % highest, 0.5 % lowest values)
+            * `statistical_rr_diff`: Statistical outlier removal based on successive differences of RR intervals.
+            Marks beats as outlier if the difference of successive RR intervals are within the xx% highest or
               lowest heart rates. Values are removed based on the z-score
-              (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values)
-
+              (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values; 2.576 => 1 %, 0.5 % highest, 0.5 % lowest values)
 
         See Also
         --------
@@ -295,8 +301,8 @@ class EcgProcessor:
                                                       outlier_correction=outlier_correction,
                                                       outlier_params=outlier_params, sampling_rate=self.sampling_rate)
             heart_rate = pd.DataFrame({'ECG_Rate': 60 / rpeaks['RR_Interval']})
-            heart_rate_interpolated = nk.signal_interpolate(x_values=rpeaks['R_Peak_Idx'],
-                                                            y_values=heart_rate['ECG_Rate'],
+            heart_rate_interpolated = nk.signal_interpolate(x_values=np.squeeze(rpeaks['R_Peak_Idx'].values),
+                                                            y_values=np.squeeze(heart_rate['ECG_Rate'].values),
                                                             x_new=np.arange(0, len(ecg_result['ECG_Clean'])))
             ecg_result['ECG_Rate'] = heart_rate_interpolated
             self.ecg_result[name] = ecg_result
@@ -357,18 +363,20 @@ class EcgProcessor:
                         rpeaks: Optional[pd.DataFrame] = None,
                         outlier_correction: Optional[Union[str, None, Sequence[str]]] = 'all',
                         outlier_params: Optional[Union[str, Dict[str, Union[float, Sequence[float]]]]] = 'default',
+                        imputation_type: Optional[str] = 'moving_average',
                         sampling_rate: Optional[int] = 256) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Performs outlier correction of the detected R peaks.
 
-        Different methods for outlier detection are available (see `EcgProcessor.outlier_corrections()` to get a list
+        Different methods for outlier detection are available (see ``EcgProcessor.outlier_corrections()`` to get a list
         of possible outlier correction methods). All outlier methods work independently on the detected R peaks,
         the results will be combined by a logical 'or'. RR intervals classified as outlier will be removed and imputed
-        using linear interpolation.
+        either using linear interpolation (``imputation_type`` 'linear') or by replacing it with the average value
+        of the 10 preceding and 10 succeding RR intervals (``imputation_type`` 'moving_average').
 
-        To use this function, either simply pass an `EcgProcessor` object together with a `key` indicating
-        which sub-phase should be processed or the two dataframes `ecg_signal` and `rpeaks` resulting from
-        `EcgProcessor.ecg_process()`.
+        To use this function, either simply pass an ``EcgProcessor`` object together with a ``key`` indicating
+        which sub-phase should be processed or the two dataframes ``ecg_signal`` and ``rpeaks`` resulting from
+        ``EcgProcessor.ecg_process()``.
 
         Parameters
         ----------
@@ -382,13 +390,17 @@ class EcgProcessor:
             dataframe with detected R peaks. Output from `EcgProcessor.ecg_process()`
         outlier_correction : list, optional
             List containing the outlier correction methods to be applied.
-            Pass ``None`` to not apply any outlier correction, ``all`` to apply all available outlier correction methods.
-            See `EcgProcessor.outlier_corrections` to get a list of possible outlier correction methods.
+            Pass ``None`` to not apply any outlier correction, ``all`` to apply all available outlier correction
+            methods. See `EcgProcessor.outlier_corrections` to get a list of possible outlier correction methods.
             Default: ``all``
         outlier_params: dict, optional
             Dictionary of parameters to be passed to the outlier correction methods or ``default``
             for default parameters (see `EcgProcessor.outlier_params_default` for more information).
             Default: ``default``
+        imputation_type: str, optional
+            Method to impute outlier: `linear` for linear interpolation between the RR intervals before and
+            after R peak outlier, `moving_average` for average value of the 10 preceding and 10 succeding RR intervals.
+            Default: ``moving_average``
         sampling_rate : float, optional
             Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
 
@@ -410,11 +422,12 @@ class EcgProcessor:
         >>> # use default outlier correction pipeline
         >>> ecg_signal, rpeaks = ecg_processor.correct_outlier(ecg_processor, key="Data")
 
-        >>> # use custom outlier correction pipeline: only physiological and statistical outlier with custom thresholds
-        >>> methods = ["physiological", "statistical"]
+        >>> # use custom outlier correction pipeline: only physiological and statistical RR interval outlier with
+        >>> # custom thresholds
+        >>> methods = ["physiological", "statistical_rr"]
         >>> params = {
         >>>    'physiological': (50, 150),
-        >>>    'statistical': 2.576
+        >>>    'statistical_rr': 2.576
         >>>}
         >>> ecg_signal, rpeaks = ecg_processor.correct_outlier(
         >>>                             ecg_processor, key="Data",
@@ -433,6 +446,10 @@ class EcgProcessor:
             outlier_correction = list(_outlier_correction_methods.keys())
         elif outlier_correction in ['None', None]:
             outlier_correction = list()
+
+        imputation_types = ['linear', 'moving_average']
+        if imputation_type not in imputation_types:
+            raise ValueError("`imputation_type` must be one of {}, not {}!".format(imputation_types, imputation_type))
 
         try:
             outlier_funcs: Dict[str, Callable] = {key: _outlier_correction_methods[key] for key in outlier_correction}
@@ -458,6 +475,7 @@ class EcgProcessor:
         bool_mask = np.full(rpeaks.shape[0], False)
         rpeaks['R_Peak_Outlier'] = 0.0
 
+        # TODO add source of different outlier methods for plotting?
         for key in outlier_funcs:
             bool_mask = outlier_funcs[key](ecg_signal, rpeaks, sampling_rate, bool_mask, outlier_params[key])
 
@@ -472,6 +490,11 @@ class EcgProcessor:
         # interpolate the removed beats
         rpeaks.loc[rpeaks.index[-1]] = [rpeaks['R_Peak_Quality'].mean(), last_idx['R_Peak_Idx'],
                                         rpeaks['RR_Interval'].mean(), 0.0]
+
+        if imputation_type == 'moving_average':
+            rpeaks['RR_Interval'] = rpeaks['RR_Interval'].fillna(
+                rpeaks['RR_Interval'].rolling(21, center=True, min_periods=0).mean())
+
         rpeaks.interpolate(method='linear', limit_direction='both', inplace=True)
         # drop duplicate R peaks (can happen during outlier correction at edge cases)
         rpeaks.drop_duplicates(subset='R_Peak_Idx', inplace=True)
@@ -538,8 +561,9 @@ class EcgProcessor:
 
         # fill missing RR intervals with interpolated R Peak Locations
         rpeaks_corrected = (rpeaks['RR_Interval'].cumsum() * sampling_rate).astype(int)
-        rpeaks_corrected = np.append(rpeaks['R_Peak_Idx'].iloc[0], rpeaks_corrected[:-1] + rpeaks['R_Peak_Idx'].iloc[0])
-        artifacts, rpeaks_corrected = nk.signal_fixpeaks(rpeaks_corrected, sampling_rate, iterative=True)
+        rpeaks_corrected = np.append(rpeaks['R_Peak_Idx'].iloc[0],
+                                     rpeaks_corrected.iloc[:-1] + rpeaks['R_Peak_Idx'].iloc[0])
+        artifacts, rpeaks_corrected = nk.signal_fixpeaks(rpeaks_corrected, sampling_rate, iterative=False)
         rpeaks_corrected = rpeaks_corrected.astype(int)
         return pd.DataFrame(rpeaks_corrected, columns=['R_Peak_Idx'])
 
@@ -601,7 +625,6 @@ class EcgProcessor:
         >>> # HRV processing using using all types, and without R peak correction
         >>> hrv_output = ecg_processor.hrv_process(ecg_processor, key="Data", hrv_types='all', correct_rpeaks=False)
         """
-
         utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
@@ -1136,13 +1159,14 @@ def _correct_outlier_quality(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sam
     return np.logical_or(bool_mask, rpeaks['R_Peak_Quality'] < quality_thres)
 
 
-def _correct_outlier_statistical(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
-                                 bool_mask: np.array, stat_thres: float) -> np.array:
+def _correct_outlier_statistical_rr(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
+                                    bool_mask: np.array, stat_thres: float) -> np.array:
     """
-    Outlier correction method 'statistical'.
+    Outlier correction method 'statistical_rr'.
 
-    Marks beats as outlier if they are within the xx % highest or lowest heart rates, i.e. if their z-score is above
-    a threshold (e.g. 1.96 = > 5 %, 2.5 % highest, 2.5 % lowest values).
+    Marks beats as outlier if they are within the xx % highest or lowest RR intervals, i.e. if their z-score is
+    above a threshold (e.g. 1.96 => 5 %, 2.5 % highest, 2.5 % lowest values;
+    2.576 => 1 %, 0.5 % highest, 0.5 % lowest values).
 
     Parameters
     ----------
@@ -1164,7 +1188,44 @@ def _correct_outlier_statistical(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
         boolean array with beats marked as outlier. Logical 'or' combination of `bool_mask` and results from
         this algorithm
     """
-    # statistical outlier: remove the x% highest and lowest successive differences
+    # statistical outlier: remove the x% highest and lowest RR intervals
+    # (1.96 std = 5% outlier, 2.576 std = 1% outlier)
+    rri = rpeaks['RR_Interval']
+    z_score = (rri - np.nanmean(rri)) / np.nanstd(rri, ddof=1)
+
+    return np.logical_or(bool_mask, np.abs(z_score) > stat_thres)
+
+
+def _correct_outlier_statistical_rr_diff(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
+                                         bool_mask: np.array, stat_thres: float) -> np.array:
+    """
+    Outlier correction method 'statistical_rr_diff'.
+
+    Marks beats as outlier if their successive differences of RR intervals are within the xx % highest or
+    lowest values, i.e. if their z-score is above a threshold (e.g. 1.96 => 5 %, 2.5 % highest, 2.5 % lowest values;
+    2.576 => 1 %, 0.5 % highest, 0.5 % lowest values).
+
+    Parameters
+    ----------
+    ecg_signal : pd.DataFrame, optional
+            dataframe with processed ECG signal. Output from `EcgProcessor.ecg_process()`
+    rpeaks : pd.DataFrame, optional
+            dataframe with detected R peaks. Output from `EcgProcessor.ecg_process()`
+    sampling_rate : float
+        Sampling rate of recorded data
+    bool_mask : array_like
+        boolean array with beats marked as outlier.
+        Results of this outlier correction method will be combined with the array using a logical 'or'
+    stat_thres : float
+        Threshold for z-score. Beats above that threshold will be marked as outlier
+
+    Returns
+    -------
+    array_like
+        boolean array with beats marked as outlier. Logical 'or' combination of `bool_mask` and results from
+        this algorithm
+    """
+    # statistical outlier: remove the x% highest and lowest successive differences of RR intervals
     # (1.96 std = 5% outlier, 2.576 std = 1% outlier)
     diff_rri = np.ediff1d(rpeaks['RR_Interval'], to_end=0)
     z_score = (diff_rri - np.nanmean(diff_rri)) / np.nanstd(diff_rri, ddof=1)
@@ -1266,7 +1327,8 @@ _outlier_correction_methods: Dict[str, Callable] = {
     'quality': _correct_outlier_quality,
     'artifact': _correct_outlier_artifact,
     'physiological': _correct_outlier_physiological,
-    'statistical': _correct_outlier_statistical
+    'statistical_rr': _correct_outlier_statistical_rr,
+    'statistical_rr_diff': _correct_outlier_statistical_rr_diff
 }
 
 _outlier_correction_params_default: Dict[str, Union[float, Sequence[float]]] = {
@@ -1274,5 +1336,6 @@ _outlier_correction_params_default: Dict[str, Union[float, Sequence[float]]] = {
     'quality': 0.4,
     'artifact': 0.0,
     'physiological': (45, 200),
-    'statistical': 1.96
+    'statistical_rr': 2.576,
+    'statistical_rr_diff': 1.96
 }

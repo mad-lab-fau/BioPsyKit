@@ -1591,14 +1591,14 @@ def mdbf(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     # invert items 3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23
     invert(data, cols=to_idx([3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23]), score_range=score_range)
 
-    idxs = {
+    mdbf_idx = {
         'GoodBad': [1, 4, 8, 11, 14, 16, 18, 21],
         'AwakeTired': [2, 5, 7, 10, 13, 17, 20, 23],
         'CalmNervous': [3, 6, 9, 12, 15, 19, 22, 24]
     }
 
     mdbf_data = {
-        '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
+        '{}_{}'.format(score_name, key): data.iloc[:, to_idx(mdbf_idx[key])].sum(axis=1) for key in mdbf_idx
     }
 
     mdbf_data[score_name] = data.sum(axis=1)

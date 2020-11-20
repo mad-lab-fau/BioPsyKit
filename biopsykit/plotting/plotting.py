@@ -146,14 +146,12 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
         sampling_rate = ecg_processor.sampling_rate
 
     sns.set_palette(utils.cmap_fau)
-    plt.rcParams['timezone'] = ecg_signal.index.tz.zone
+    if isinstance(ecg_signal.index, pd.DatetimeIndex):
+        plt.rcParams['timezone'] = ecg_signal.index.tz.zone
 
     if figsize is None:
         figsize = (15, 5)
 
-    outlier = np.where(ecg_signal["R_Peak_Outlier"] == 1)[0]
-    peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
-    peaks = np.setdiff1d(peaks, outlier)
     # Prepare figure and set axes.
     x_axis = ecg_signal.index
 
@@ -195,20 +193,30 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     axs['ecg'].fill_between(x_axis, minimum_line, quality, alpha=0.2, zorder=2,
                             interpolate=True, facecolor=utils.fau_color('med'), label='Quality')
 
+    peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
+    outlier = np.array([])
+    if "R_Peak_Outlier" in ecg_signal:
+        outlier = np.where(ecg_signal["R_Peak_Outlier"] == 1)[0]
+
+    peaks = np.setdiff1d(peaks, outlier)
     # Plot signals
     # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=utils.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
     axs['ecg'].plot(ecg_clean, color=utils.fau_color('fau'), label="Cleaned", zorder=1,
                     linewidth=1.5)
-    axs['ecg'].scatter(x_axis[peaks], ecg_clean[peaks], color=utils.fau_color('nat'),
+    axs['ecg'].scatter(x_axis[peaks], ecg_clean.iloc[peaks], color=utils.fau_color('nat'),
                        label="R Peaks", zorder=2)
-    axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=utils.fau_color('phil'),
-                       label="Outlier", zorder=2)
+    if "R_Peak_Outlier" in ecg_signal:
+        axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=utils.fau_color('phil'),
+                           label="Outlier", zorder=2)
     axs['ecg'].set_ylabel("ECG Quality")
 
     # Optimize legend
     handles, labels = axs['ecg'].get_legend_handles_labels()
     # order = [2, 0, 1, 3]
-    order = [0, 1, 2, 3]
+    if "R_Peak_Outlier" in ecg_signal:
+        order = [0, 1, 2, 3]
+    else:
+        order = [0, 1, 2]
     axs['ecg'].legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc="upper right")
 
     # Plot heart rate
@@ -225,9 +233,11 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     axs['ecg'].tick_params(axis='x', which='both', bottom=True, labelbottom=True)
     axs['ecg'].tick_params(axis='y', which='major', left=True)
 
-    axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
-    axs['ecg'].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
+    if isinstance(heart_rate.index, pd.DatetimeIndex):
+        # TODO add axis style for non-Datetime axes
+        axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
+        axs['ecg'].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
     fig.tight_layout()
     return fig, list(axs.values())
@@ -281,16 +291,20 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
         ax.legend(loc="upper right")
 
     ax.tick_params(axis='x', which='both', bottom=True)
-    ax.xaxis.set_major_locator(mdates.MinuteLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
+
+    if isinstance(heart_rate.index, pd.DatetimeIndex):
+        # TODO add axis style for non-Datetime axes
+        ax.xaxis.set_major_locator(mdates.MinuteLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
     ax.tick_params(axis='y', which='major', left=True)
     ax.yaxis.set_major_locator(mticks.MaxNLocator(5, steps=[5, 10]))
 
     if fig:
+        ax.set_xlabel("Time")
         fig.tight_layout()
-        fig.autofmt_xdate()
+        fig.autofmt_xdate(rotation=0, ha='center')
         return fig, ax
 
 
