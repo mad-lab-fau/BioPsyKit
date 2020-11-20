@@ -11,6 +11,8 @@ import biopsykit.metadata
 import biopsykit.utils
 import biopsykit.io
 
+import biopsykit.example_data
+
 # from .utils import *
 
 # Info
