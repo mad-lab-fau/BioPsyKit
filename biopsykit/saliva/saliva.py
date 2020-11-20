@@ -5,6 +5,16 @@ import pandas as pd
 import numpy as np
 
 
+def wide_to_long(data: pd.DataFrame, feature_name: Optional[str] = 'cortisol') -> pd.DataFrame:
+    idx_col = ['subject']
+    if 'condition' in data.index.names:
+        idx_col.append('condition')
+    if 'day' in data.index.names:
+        idx_col.append('day')
+    return pd.wide_to_long(data.reset_index(), stubnames=feature_name, sep='_',
+                           i=idx_col, j='feature', suffix=r"\w+")
+
+
 def max_increase(data: pd.DataFrame, feature_name: Optional[str] = "cortisol",
                  remove_s0: Optional[bool] = True, percent: Optional[bool] = False) -> pd.DataFrame:
     # computes (absolute or relative) maximum increase between first sample and all others.
@@ -22,9 +32,11 @@ def max_increase(data: pd.DataFrame, feature_name: Optional[str] = "cortisol",
     if percent:
         max_inc = 100.0 * max_inc / np.abs(data.iloc[:, 0])
 
-    return pd.DataFrame(max_inc, columns=[
+    out = pd.DataFrame(max_inc, columns=[
         "{}_max_inc_percent".format(feature_name) if percent else "{}_max_inc".format(feature_name)],
-                        index=max_inc.index)
+                       index=max_inc.index)
+    out.columns.name = "feature"
+    return out
 
 
 def auc(data: pd.DataFrame, feature_name: Optional[str] = "cortisol",
@@ -60,7 +72,9 @@ def auc(data: pd.DataFrame, feature_name: Optional[str] = "cortisol",
         data_post = data.iloc[:, idxs_post]
         auc_data['auc_i_post'] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), saliva_times[idxs_post])
 
-    return pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(feature_name))
+    out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(feature_name))
+    out.columns.name = "feature"
+    return out
 
 
 def standard_features(data: pd.DataFrame, feature_name: Optional[str] = "cortisol") -> pd.DataFrame:
@@ -68,22 +82,22 @@ def standard_features(data: pd.DataFrame, feature_name: Optional[str] = "cortiso
 
     _check_data_format(data)
 
+    if 'condition' in data.index.names:
+        group_cols.append('condition')
     # also group by days and/or condition if we have multiple days present in the index
     if 'day' in data.index.names:
         group_cols.append('day')
 
-    if 'condition' in data.index.names:
-        group_cols.append('condition')
-
     if feature_name not in data:
         raise ValueError("No `{}` columns in data!".format(feature_name))
 
-    data = data[[feature_name]].groupby(group_cols).agg(
+    out = data[[feature_name]].groupby(group_cols).agg(
         [np.argmax, pd.DataFrame.mean, pd.DataFrame.std, pd.DataFrame.skew, pd.DataFrame.kurt])
     # drop 'feature_name' multiindex column and add as prefix to columns
-    data.columns = data.columns.droplevel(0)
-    data = data.add_prefix("{}_".format(feature_name))
-    return data
+    out.columns = out.columns.droplevel(0)
+    out = out.add_prefix("{}_".format(feature_name))
+    out.columns.name = "feature"
+    return out
 
 
 def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
@@ -117,8 +131,10 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
     if sample_idx[1] > (len(data.columns) - 1):
         raise ValueError("`sample_idx[1]` is out of bounds!")
 
-    return pd.DataFrame(np.diff(data.iloc[:, sample_idx]) / np.diff(saliva_times[sample_idx]), index=data.index,
-                        columns=['{}_slope{}{}'.format(feature_name, *sample_idx)])
+    out = pd.DataFrame(np.diff(data.iloc[:, sample_idx]) / np.diff(saliva_times[sample_idx]), index=data.index,
+                       columns=['{}_slope{}{}'.format(feature_name, *sample_idx)])
+    out.columns.name = "feature"
+    return out
 
 
 def _check_data_format(data: pd.DataFrame):
