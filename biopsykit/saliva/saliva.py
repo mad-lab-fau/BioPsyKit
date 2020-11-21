@@ -15,10 +15,41 @@ def wide_to_long(data: pd.DataFrame, feature_name: Optional[str] = 'cortisol') -
                            i=idx_col, j='feature', suffix=r"\w+")
 
 
-def max_increase(data: pd.DataFrame, feature_name: Optional[str] = "cortisol",
+def saliva_mean_se(data: pd.DataFrame, feature_name: Optional[Union[str, Sequence[str]]] = 'cortisol',
+                   remove_s0: Optional[bool] = True) -> pd.DataFrame:
+    """Computes mean and standard error per saliva sample"""
+
+    if isinstance(feature_name, list):
+        dict_result = {}
+        for feature in feature_name:
+            dict_result[feature] = saliva_mean_se(data[[feature]], feature_name=feature, remove_s0=remove_s0)
+        return dict_result
+
+    if remove_s0:
+        data = data.drop(0, level="sample")
+
+    if 'time' in data:
+        data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
+            {'mean': df_sample[feature_name].mean(), 'se': df_sample[feature_name].std() / np.sqrt(len(df_sample)),
+             'time': int(df_sample['time'].unique())}))
+        data_grp = data_grp.set_index('time', append=True)
+    else:
+        data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
+            {'mean': df_sample[feature_name].mean(), 'se': df_sample[feature_name].std() / np.sqrt(len(df_sample))}))
+    return data_grp
+
+
+def max_increase(data: pd.DataFrame, feature_name: Optional[Union[str, Sequence[str]]] = "cortisol",
                  remove_s0: Optional[bool] = True, percent: Optional[bool] = False) -> pd.DataFrame:
     # computes (absolute or relative) maximum increase between first sample and all others.
     _check_data_format(data)
+
+    if isinstance(feature_name, list):
+        dict_result = {}
+        for feature in feature_name:
+            dict_result[feature] = max_increase(data[[feature]], feature_name=feature, remove_s0=remove_s0,
+                                                percent=percent)
+        return dict_result
 
     if remove_s0:
         # We have a S0 sample => drop it
@@ -39,7 +70,7 @@ def max_increase(data: pd.DataFrame, feature_name: Optional[str] = "cortisol",
     return out
 
 
-def auc(data: pd.DataFrame, feature_name: Optional[str] = "cortisol",
+def auc(data: pd.DataFrame, feature_name: Optional[Union[str, Sequence[str]]] = "cortisol",
         remove_s0: Optional[bool] = True, saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     # TODO IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
     # => auc_post means all saliva times after beginning of stress (>= 0)
@@ -47,6 +78,13 @@ def auc(data: pd.DataFrame, feature_name: Optional[str] = "cortisol",
     _check_data_format(data)
     saliva_times = _get_saliva_times(data, saliva_times, remove_s0)
     _check_saliva_times(saliva_times)
+
+    if isinstance(feature_name, list):
+        dict_result = {}
+        for feature in feature_name:
+            dict_result[feature] = auc(data[[feature]], feature_name=feature, remove_s0=remove_s0,
+                                       saliva_times=saliva_times)
+        return dict_result
 
     if remove_s0:
         # We have a S0 sample => drop it
@@ -77,10 +115,17 @@ def auc(data: pd.DataFrame, feature_name: Optional[str] = "cortisol",
     return out
 
 
-def standard_features(data: pd.DataFrame, feature_name: Optional[str] = "cortisol") -> pd.DataFrame:
+def standard_features(data: pd.DataFrame,
+                      feature_name: Optional[Union[str, Sequence[str]]] = "cortisol") -> pd.DataFrame:
     group_cols = ['subject']
 
     _check_data_format(data)
+
+    if isinstance(feature_name, list):
+        dict_result = {}
+        for feature in feature_name:
+            dict_result[feature] = standard_features(data[[feature]], feature_name=feature)
+        return dict_result
 
     if 'condition' in data.index.names:
         group_cols.append('condition')
@@ -101,7 +146,8 @@ def standard_features(data: pd.DataFrame, feature_name: Optional[str] = "cortiso
 
 
 def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
-          feature_name: Optional[str] = "cortisol", saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
+          feature_name: Optional[Union[str, Sequence[str]]] = "cortisol",
+          saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     _check_data_format(data)
     saliva_times = _get_saliva_times(data, saliva_times, remove_s0=False)
     _check_saliva_times(saliva_times)
@@ -114,6 +160,12 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
 
     if len(sample_idx) != 2:
         raise ValueError("Exactly 2 indices needed for computing slope. Got {} indices.".format(len(sample_idx)))
+
+    if isinstance(feature_name, list):
+        dict_result = {}
+        for feature in feature_name:
+            dict_result[feature] = slope(data[[feature]], sample_idx=sample_idx, feature_name=feature_name,
+                                         saliva_times=saliva_times)
 
     data = data[[feature_name]].unstack()
 
