@@ -52,6 +52,10 @@ class MIST(base.BaseProtocol):
             'line_styles': ['-', '--', ':'],
             'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
             'background.alpha': [0.5, 0.5, 0.5],
+            'xaxis.label': r"MIST Subphases",
+            'yaxis.label': r"$\Delta$HR [%]",
+            'mist.phase_text': "MIST Phase {}",
+            'mist.end_phase_text': "End Phase {}",
         }
 
         self.hr_mean_plot_params = {
@@ -64,6 +68,17 @@ class MIST(base.BaseProtocol):
             'xaxis.label': "MIST Subphases",
             'yaxis.label': r"$\Delta$HR [%]",
             'mist.phase_text': "MIST Phase {}"
+        }
+
+        self.saliva_params = {
+            'colormap': utils.cmap_fau_blue('2_lp'),
+            'line_styles': ['-', '--'],
+            'markers': ['o', 'P'],
+            'background.color': "#e0e0e0",
+            'background.alpha': 0.5,
+            'mist.color': "#9e9e9e",
+            'mist.alpha': 0.5,
+            'x_offsets': [0, 0.05]
         }
 
         self._update_mist_params(phases, subphases, subphase_durations)
@@ -404,7 +419,21 @@ class MIST(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return hr_course(data, self.subphases, is_group_dict)
+        return super()._hr_mean_subphases(data, self.subphases, is_group_dict)
+
+    def saliva_course_mist(self, data: pd.DataFrame, remove_s0: Optional[bool] = True) -> pd.DataFrame:
+        if remove_s0:
+            data = data.drop(0, level="sample")
+
+        if 'time' in data:
+            data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
+                {'mean': df_sample['cortisol'].mean(), 'se': df_sample['cortisol'].std() / np.sqrt(len(df_sample)),
+                 'time': int(df_sample['time'].unique())}))
+            data_grp = data_grp.set_index('time', append=True)
+        else:
+            data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
+                {'mean': df_sample['cortisol'].mean(), 'se': df_sample['cortisol'].std() / np.sqrt(len(df_sample))}))
+        return data_grp
 
     # TODO add kw_args
     def hr_ensemble_plot(
@@ -455,10 +484,15 @@ class MIST(base.BaseProtocol):
 
         # sns.despine()
         sns.set_palette(self.hr_ensemble_plot_params['colormap'])
-
         line_styles = self.hr_ensemble_plot_params['line_styles']
-        subphases = np.array(self.subphases)
+        xaxis_label = self.hr_ensemble_plot_params['xaxis.label']
+        yaxis_label = self.hr_ensemble_plot_params['yaxis.label']
+        phase_text = self.hr_ensemble_plot_params['mist.phase_text']
+        end_phase_text = self.hr_ensemble_plot_params['mist.end_phase_text']
+        bg_color = self.hr_ensemble_plot_params['background.color']
+        bg_alpha = self.hr_ensemble_plot_params['background.alpha']
 
+        subphases = np.array(self.subphases)
         mist_dur = [len(v) for v in data.values()]
         start_end = self.get_mist_times(mist_dur)
 
@@ -467,21 +501,24 @@ class MIST(base.BaseProtocol):
             x = hr_mist.index
             hr_mean = hr_mist.mean(axis=1)
             hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
-            ax.plot(x, hr_mean, zorder=2, label="MIST Phase {}".format(i + 1), linestyle=line_styles[i])
+            ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1), linestyle=line_styles[i])
             ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=0.4)
+            # TODO check hardcoded plot params
             ax.vlines(x=mist_dur[i], ymin=-20, ymax=40, linestyles='dashed', colors="#bdbdbd", zorder=3)
-            ax.text(x=mist_dur[i] - 5, y=10 + 5 * i, s="End Phase {}".format(i + 1), fontsize=fontsize - 4,
+            ax.text(x=mist_dur[i] - 5, y=10 + 5 * i, s=end_phase_text.format(i + 1), fontsize=fontsize - 4,
                     horizontalalignment='right', bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
                     zorder=3)
 
-        ax.set_ylabel(r'$\Delta$HR [%]', fontsize=fontsize)
-        ax.set_xlabel(r'Time [s]', fontsize=fontsize)
+        ax.set_xlabel(xaxis_label, fontsize=fontsize)
         ax.set_xticks([start for (start, end) in start_end])
         ax.xaxis.set_minor_locator(mticks.MultipleLocator(60))
         ax.tick_params(axis="x", which='both', bottom=True)
+
+        ax.set_ylabel(yaxis_label, fontsize=fontsize)
         ax.tick_params(axis="y", which='major', left=True)
 
         for (start, end), subphase in zip(start_end, subphases):
+            # TODO check hardcoded plot params
             ax.text(x=start + 0.5 * (end - start), y=35, s=subphase, horizontalalignment='center',
                     fontsize=fontsize)
 
@@ -490,8 +527,8 @@ class MIST(base.BaseProtocol):
             ax.set_ylim(ylims)
         ax._xmargin = 0
 
-        for (start, end), color, alpha in zip(start_end, self.hr_ensemble_plot_params['background.color'],
-                                              self.hr_ensemble_plot_params['background.alpha']):
+        for (start, end), color, alpha in zip(start_end, bg_color,
+                                              bg_alpha):
             ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
 
         if fig:
