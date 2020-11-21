@@ -5,14 +5,14 @@ import pandas as pd
 from biopsykit.utils import path_t, tz
 
 
-def load_hr_excel(file_path: path_t) -> Dict[str, pd.DataFrame]:
+def load_hr_subject_dict(file_path: path_t) -> Dict[str, pd.DataFrame]:
     """
-    Loads excel file containing heart rate data of one subject (as exported by `write_hr_to_excel`).
+    Loads excel file containing heart rate data of one subject (as exported by `write_hr_subject`).
 
     The dictionary will have the following format: { "<Phase>" : hr_dataframe }
 
     Each hr_dataframe has the following format:
-        * 'date' Index: DateTimeIndex with timestamps of the heart rate samples
+        * 'time' Index: DateTimeIndex with timestamps of the heart rate samples
         * 'ECG_Rate' Column: heart rate samples
 
     Parameters
@@ -24,23 +24,22 @@ def load_hr_excel(file_path: path_t) -> Dict[str, pd.DataFrame]:
     -------
     dict
         Excel sheet dictionary
-
     """
-    dict_hr = pd.read_excel(file_path, index_col="date", sheet_name=None)
+    dict_hr = pd.read_excel(file_path, index_col="time", sheet_name=None)
     # (re-)localize each sheet since Excel does not support timezone-aware dates
     dict_hr = {k: v.tz_localize(tz) for k, v in dict_hr.items()}
     return dict_hr
 
 
-def load_hr_excel_all_subjects(base_path: path_t, subject_folder_pattern: str,
-                               filename_pattern: str) -> Dict[str, Dict[str, pd.DataFrame]]:
+def load_combine_hr_all_subjects(base_path: path_t, subject_folder_pattern: str,
+                                 filename_pattern: str) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
-    Loads HR processing results (as exported by `write_hr_to_excel`) from all subjects and combines them into one
+    Loads HR processing results (as exported by `write_hr_subject`) from all subjects and combines them into one
     dictionary ('HR subject dict').
 
     The dictionary will have the following format:
 
-    { "<Subject_ID>" : {"<Phase>" : hr_dataframe } }@
+    { "<Subject_ID>" : {"<Phase>" : hr_dataframe } }
 
 
     Parameters
@@ -59,7 +58,7 @@ def load_hr_excel_all_subjects(base_path: path_t, subject_folder_pattern: str,
     --------
     >>> import biopsykit as ep
     >>> base_path = "./"
-    >>> dict_hr_subjects = ep.load_hr_excel_all_subjects(
+    >>> dict_hr_subjects = ep.load_combine_hr_all_subjects(
     >>>                         base_path, subject_folder_pattern="Vp_*",
     >>>                         filename_pattern="ecg_result*.xlsx")
     >>>
@@ -77,13 +76,13 @@ def load_hr_excel_all_subjects(base_path: path_t, subject_folder_pattern: str,
         # check whether old processing results already exist
         hr_files = sorted(subject_dir.glob(filename_pattern))
         if len(hr_files) == 1:
-            dict_hr_subjects[subject_id] = load_hr_excel(hr_files[0])
+            dict_hr_subjects[subject_id] = load_hr_subject_dict(hr_files[0])
         else:
             print("No HR data for subject {}".format(subject_id))
     return dict_hr_subjects
 
 
-def write_hr_to_excel(ecg_processor: 'EcgProcessor', file_path: path_t) -> None:
+def write_hr_subject_dict(ecg_processor: 'EcgProcessor', file_path: path_t) -> None:
     """
     Writes heart rate dictionary of one subject to an Excel file.
     Each of the phases in the dictionary will be a separate sheet in the file.
@@ -101,11 +100,11 @@ def write_hr_to_excel(ecg_processor: 'EcgProcessor', file_path: path_t) -> None:
         path to file
     """
 
-    write_dict_to_excel(ecg_processor.heart_rate, file_path)
+    write_pandas_dict_excel(ecg_processor.heart_rate, file_path)
 
 
-def write_dict_to_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_t,
-                        index_col: Optional[bool] = True) -> None:
+def write_pandas_dict_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_t,
+                            index_col: Optional[bool] = True) -> None:
     """
     Writes a dictionary containing pandas dataframes to an Excel file.
 
@@ -129,10 +128,10 @@ def write_dict_to_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_t,
     writer.save()
 
 
-def write_result_dict_to_csv(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
-                             identifier_col: Optional[str] = "Subject_ID",
-                             index_cols: Optional[List[str]] = ["Phase", "Subphase"],
-                             overwrite_file: Optional[bool] = False) -> None:
+def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
+                      identifier_col: Optional[str] = "Subject_ID",
+                      index_cols: Optional[List[str]] = ["Phase", "Subphase"],
+                      overwrite_file: Optional[bool] = False) -> None:
     """
     Saves dictionary with processing results (e.g. HR, HRV, RSA) of all subjects as csv file.
 
@@ -178,7 +177,7 @@ def write_result_dict_to_csv(result_dict: Dict[str, pd.DataFrame], file_path: pa
     >>> # ...
     >>> }
     >>>
-    >>> ep.write_result_dict_to_csv(dict_param_output, file_path=file_path,
+    >>> ep.write_result_dict(dict_param_output, file_path=file_path,
     >>>                             identifier_col="Subject_ID", index_cols=["Phase", "Subphase"])
     """
 
