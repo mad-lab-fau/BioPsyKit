@@ -10,25 +10,21 @@ from tqdm.notebook import tqdm
 import biopsykit.signals.ecg as ecg
 from biopsykit.signals.ecg import EcgProcessor
 import biopsykit.utils as utils
-from biopsykit.protocols.utils import split_subphases, split_groups, concat_phase_dict, hr_course
+import biopsykit.protocols.base as base
 
 
-class MIST:
+class MIST(base.BaseProtocol):
     """
     Class representing the Montreal Imaging Stress Task (MIST).
     """
 
-    def __init__(
-            self,
-            name: Optional[str] = None,
-            phases: Optional[Sequence[str]] = None,
-            subphases: Optional[Sequence[str]] = None,
-            subphase_durations: Optional[Sequence[int]] = None
-    ):
-        self.name: str = name or "MIST"
-        """
-        Study name
-        """
+    def __init__(self, name: Optional[str] = None, phases: Optional[Sequence[str]] = None,
+                 subphases: Optional[Sequence[str]] = None, subphase_durations: Optional[Sequence[int]] = None):
+        if name is None:
+            name = "MIST"
+        super().__init__(name)
+
+        self.mist_times: Sequence[int] = [0, 30]
 
         self.phases: Sequence[str] = ["MIST1", "MIST2", "MIST3"]
         """
@@ -51,20 +47,23 @@ class MIST:
         Total duration of subphases in seconds
         """
 
-        self.hr_ensemble_params = {
+        self.hr_ensemble_plot_params = {
             'colormap': utils.cmap_fau_blue('3'),
             'line_styles': ['-', '--', ':'],
             'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
-            'background.alpha': [0.6, 0.7, 0.7],
+            'background.alpha': [0.5, 0.5, 0.5],
         }
 
-        self.hr_course_params = {
+        self.hr_mean_plot_params = {
             'colormap': utils.cmap_fau_blue('2_lp'),
             'line_styles': ['-', '--'],
             'markers': ['o', 'P'],
             'background.color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
-            'background.alpha': [0.6, 0.7, 0.7],
-            'x_offsets': [0, 0.05]
+            'background.alpha': [0.5, 0.5, 0.5],
+            'x_offsets': [0, 0.05],
+            'xaxis.label': "MIST Subphases",
+            'yaxis.label': r"$\Delta$HR [%]",
+            'mist.phase_text': "MIST Phase {}"
         }
 
         self._update_mist_params(phases, subphases, subphase_durations)
@@ -125,7 +124,7 @@ class MIST:
 
         return dict_hr_subject
 
-    def concat_mist_dict(self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, pd.DataFrame]:
+    def concat_phase_dict(self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, pd.DataFrame]:
         """
         Rearranges the 'HR subject dict' (see `utils.load_hr_excel_all_subjects`) into 'MIST Phase dict'.
         See ``bp.protocols.utils.concat_phase_dict`` for further information.
@@ -141,9 +140,9 @@ class MIST:
             'MIST dict', i.e. a dict with heart rate data of all subjects per MIST phase
 
         """
-        return concat_phase_dict(dict_hr_subject, self.phases)
+        return super()._concat_phase_dict(dict_hr_subject, self.phases)
 
-    def split_mist_subphases(
+    def split_subphases(
             self,
             phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
             is_group_dict: Optional[bool] = False
@@ -167,13 +166,14 @@ class MIST:
             nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
 
         """
-        mist_subphase_times = self.get_mist_times(phase_dict=phase_dict, is_group_dict=is_group_dict)
-        return split_subphases(data=phase_dict, subphase_names=self.subphases, subphase_times=mist_subphase_times,
-                               is_group_dict=is_group_dict)
+        subphase_times = self.get_mist_times(phase_dict=phase_dict, is_group_dict=is_group_dict)
+        return super()._split_subphases(data=phase_dict, subphase_names=self.subphases,
+                                        subphase_times=subphase_times,
+                                        is_group_dict=is_group_dict)
 
     @classmethod
-    def split_mist_groups(cls, phase_dict: Dict[str, pd.DataFrame],
-                          condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+    def split_groups(cls, phase_dict: Dict[str, pd.DataFrame],
+                     condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Splits 'MIST Phase dict' into group dict, i.e. one 'MIST Phase dict' per group.
 
@@ -192,7 +192,7 @@ class MIST:
             nested group dict with one 'MIST Phase dict' per group
 
         """
-        return split_groups(phase_dict, condition_dict)
+        return super()._split_groups(phase_dict, condition_dict)
 
     def get_mist_times(
             self,
@@ -262,7 +262,126 @@ class MIST:
         # compute start/end times per subphase
         return [(start, end) for start, end in zip(np.append([0], times_cum[:-1]), times_cum)]
 
-    def hr_course_mist(
+    def param_subphases(
+            self,
+            ecg_processor: Optional[ecg.EcgProcessor] = None,
+            dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
+            dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
+            param_types: Optional[Union[str, Sequence[str]]] = 'all',
+            sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
+            title: Optional[str] = None
+    ) -> pd.DataFrame:
+        """
+        Computes specified parameters (HRV / RSA / ...) over all MIST phases and subphases.
+
+        To use this function, either simply pass an ``EcgProcessor`` object or two dictionaries
+        ``dict_ecg`` and ``dict_rpeaks`` resulting from ``EcgProcessor.ecg_process()``.
+
+        Parameters
+        ----------
+        ecg_processor : EcgProcessor, optional
+            `EcgProcessor` object
+        dict_ecg : dict, optional
+            dict with dataframes of processed ECG signals. Output from `EcgProcessor.ecg_process()`.
+        dict_rpeaks : dict, optional
+            dict with dataframes of processed R peaks. Output from `EcgProcessor.ecg_process()`.
+        param_types : list or str, optional
+            list with parameter types to compute or 'all' to compute all available parameters. Choose from a subset of
+            ['hrv', 'rsa'] to compute HRV and RSA parameters, respectively.
+        sampling_rate : float, optional
+            Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
+        include_total : bool, optional
+            ``True`` to also compute parameters over the complete MIST phases (in addition to only over subphases),
+            ``False`` to only compute parameters over the single MIST subphases. Default: ``True``
+        title : str, optional
+            Optional title of the processing progress bar. Default: ``None``
+
+        Returns
+        -------
+        pd.DataFrame
+            dataframe with computed parameters over the single MIST subphases
+        """
+
+        if ecg_processor is None and dict_rpeaks is None and dict_ecg is None:
+            raise ValueError("Either `ecg_processor` or `dict_rpeaks` and `dict_ecg` must be passed as arguments!")
+
+        # get all desired parameter types
+        possible_param_types = {'hrv': EcgProcessor.hrv_process, 'rsp': EcgProcessor.rsp_rsa_process}
+        if param_types == 'all':
+            param_types = possible_param_types
+
+        if isinstance(param_types, str):
+            param_types = {param_types: possible_param_types[param_types]}
+        if not all([param in possible_param_types for param in param_types]):
+            raise ValueError(
+                "`param_types` must all be of {}, not {}".format(possible_param_types.keys(), param_types.keys()))
+
+        param_types = {param: possible_param_types[param] for param in param_types}
+
+        if ecg_processor:
+            sampling_rate = ecg_processor.sampling_rate
+            dict_rpeaks = ecg_processor.rpeaks
+            dict_ecg = ecg_processor.ecg_result
+
+        if 'rsp' in param_types and dict_ecg is None:
+            raise ValueError("`dict_ecg` must be passed if param_type is {}!".format(param_types))
+
+        index_name = "Subphase"
+        # dict to store results. one entry per parameter and a list of dataframes per MIST phase
+        # that will later be concated to one large dataframes
+        dict_df_subphases = {param: list() for param in param_types}
+
+        # iterate through all phases in the data
+        for (phase, rpeaks), (ecg_phase, ecg_data) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc=title):
+            rpeaks = rpeaks.copy()
+            ecg_data = ecg_data.copy()
+
+            # dict to store intermediate results of subphases. one entry per parameter with a
+            # list of dataframes per subphase that will later be concated to one dataframe per MIST phase
+            dict_subphases = {param: list() for param in param_types}
+            if include_total:
+                # compute HRV, RSP over complete phase
+                for param_type, param_func in param_types.items():
+                    dict_subphases[param_type].append(
+                        param_func(ecg_signal=ecg_data, rpeaks=rpeaks, index="Total", index_name=index_name,
+                                   sampling_rate=sampling_rate))
+
+            if phase not in ["Part1", "Part2"]:
+                # skip Part1, Part2 for subphase parameter analysis (parameters in total are computed above)
+                for subph, dur in zip(self.subphases, self.subphase_durations):
+                    # get the first xx seconds of data (i.e., get only the current subphase)
+                    # TODO change to mist.mist_get_times?
+                    if dur > 0:
+                        df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
+                    else:
+                        # duration of 0 seconds = Feedback Interval, don't cut slice the beginning,
+                        # use all remaining data
+                        df_subph_rpeaks = rpeaks
+                    # ECG does not need to be sliced because rpeaks are already sliced and
+                    # will select only the relevant ECG signal parts anyways
+                    df_subph_ecg = ecg_data
+
+                    for param_type, param_func in param_types.items():
+                        # compute HRV, RSP over subphases
+                        dict_subphases[param_type].append(
+                            param_func(ecg_signal=df_subph_ecg, rpeaks=df_subph_rpeaks, index=subph,
+                                       index_name=index_name,
+                                       sampling_rate=sampling_rate))
+
+                    # remove the currently analyzed subphase of data
+                    # (so that the next subphase is first in the next iteration)
+                    rpeaks = rpeaks[~rpeaks.index.isin(df_subph_rpeaks.index)]
+
+            for param in dict_subphases:
+                # concat dataframe of all subphases to one dataframe per MIST phase and add to parameter dict
+                dict_df_subphases[param].append(pd.concat(dict_subphases[param]))
+
+        # concat all dataframes together to one big result dataframes
+        return pd.concat(
+            [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["Phase"]) for dict_df in dict_df_subphases.values()],
+            axis=1)
+
+    def hr_mean_subphases(
             self,
             data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
             is_group_dict: Optional[bool] = False
@@ -332,12 +451,12 @@ class MIST:
             fig, ax = plt.subplots(figsize=figsize)
 
         if plot_params:
-            self.hr_ensemble_params.update(plot_params)
+            self.hr_ensemble_plot_params.update(plot_params)
 
         # sns.despine()
-        sns.set_palette(self.hr_ensemble_params['colormap'])
+        sns.set_palette(self.hr_ensemble_plot_params['colormap'])
 
-        line_styles = self.hr_ensemble_params['line_styles']
+        line_styles = self.hr_ensemble_plot_params['line_styles']
         subphases = np.array(self.subphases)
 
         mist_dur = [len(v) for v in data.values()]
@@ -352,7 +471,8 @@ class MIST:
             ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=0.4)
             ax.vlines(x=mist_dur[i], ymin=-20, ymax=40, linestyles='dashed', colors="#bdbdbd", zorder=3)
             ax.text(x=mist_dur[i] - 5, y=10 + 5 * i, s="End Phase {}".format(i + 1), fontsize=fontsize - 4,
-                    horizontalalignment='right', bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'), zorder=3)
+                    horizontalalignment='right', bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
+                    zorder=3)
 
         ax.set_ylabel(r'$\Delta$HR [%]', fontsize=fontsize)
         ax.set_xlabel(r'Time [s]', fontsize=fontsize)
@@ -362,15 +482,16 @@ class MIST:
         ax.tick_params(axis="y", which='major', left=True)
 
         for (start, end), subphase in zip(start_end, subphases):
-            ax.text(x=start + 0.5 * (end - start), y=35, s=subphase, horizontalalignment='center', fontsize=fontsize)
+            ax.text(x=start + 0.5 * (end - start), y=35, s=subphase, horizontalalignment='center',
+                    fontsize=fontsize)
 
         ax.legend(loc='upper left', bbox_to_anchor=(0.01, 0.85), prop={'size': fontsize})
         if ylims:
             ax.set_ylim(ylims)
         ax._xmargin = 0
 
-        for (start, end), color, alpha in zip(start_end, self.hr_ensemble_params['background.color'],
-                                              self.hr_ensemble_params['background.alpha']):
+        for (start, end), color, alpha in zip(start_end, self.hr_ensemble_plot_params['background.color'],
+                                              self.hr_ensemble_plot_params['background.alpha']):
             ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
 
         if fig:
@@ -379,7 +500,7 @@ class MIST:
 
     # TODO add support for groups in one dataframe (indicated by group column)
     # TODO add kw_args
-    def hr_course_plot(
+    def hr_mean_plot(
             self,
             data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
             groups: Optional[Sequence[str]] = None,
@@ -442,15 +563,18 @@ class MIST:
 
         # update default parameter if plot parameter were passe
         if plot_params:
-            self.hr_course_params.update(plot_params)
+            self.hr_mean_plot_params.update(plot_params)
 
         # get all plot parameter
-        sns.set_palette(self.hr_course_params['colormap'])
-        line_styles = self.hr_course_params['line_styles']
-        markers = self.hr_course_params['markers']
-        bg_colors = self.hr_course_params['background.color']
-        bg_alphas = self.hr_course_params['background.alpha']
-        x_offsets = self.hr_course_params['x_offsets']
+        sns.set_palette(self.hr_mean_plot_params['colormap'])
+        line_styles = self.hr_mean_plot_params['line_styles']
+        markers = self.hr_mean_plot_params['markers']
+        bg_colors = self.hr_mean_plot_params['background.color']
+        bg_alphas = self.hr_mean_plot_params['background.alpha']
+        x_offsets = self.hr_mean_plot_params['x_offsets']
+        xaxis_label = self.hr_mean_plot_params['xaxis.label']
+        yaxis_label = self.hr_mean_plot_params['yaxis.label']
+        phase_text = self.hr_mean_plot_params['mist.phase_text']
 
         if isinstance(data, pd.DataFrame):
             # get subphase labels from data
@@ -483,12 +607,13 @@ class MIST:
                 ax.errorbar(x=x + x_off, y=data[group]['mean'], label=group, yerr=data[group]['se'], capsize=3,
                             marker=marker, linestyle=ls)
         else:
-            ax.errorbar(x=x, y=data['mean'], yerr=data['se'], capsize=3, marker=markers[0], linestyle=line_styles[0])
+            ax.errorbar(x=x, y=data['mean'], yerr=data['se'], capsize=3, marker=markers[0],
+                        linestyle=line_styles[0])
 
         # add decorators: spans and MIST Phase labels
         for (i, name), (x_l, x_u), color, alpha in zip(enumerate(self.phases), span_lims, bg_colors, bg_alphas):
             ax.axvspan(x_l, x_u, color=color, alpha=alpha, zorder=0, lw=0)
-            ax.text(x=x_l + 0.5 * (x_u - x_l), y=0.9 * ylims[-1], s='MIST Phase {}'.format(i + 1),
+            ax.text(x=x_l + 0.5 * (x_u - x_l), y=0.9 * ylims[-1], s=phase_text.format(i + 1),
                     horizontalalignment='center',
                     verticalalignment='top',
                     fontsize=fontsize)
@@ -498,11 +623,15 @@ class MIST:
         ax.set_xticks(x)
         ax.set_xticklabels(subphase_labels)
         ax.set_xlim([span_lims[0][0], span_lims[-1][-1]])
+        ax.set_xlabel(xaxis_label, fontsize=fontsize)
 
         # customize y axis
-        ax.set_ylabel("$\Delta$HR [%]", fontsize=fontsize)
         ax.tick_params(axis="y", which='major', left=True)
         ax.set_ylim(ylims)
+        ax.set_ylabel(yaxis_label, fontsize=fontsize)
+
+        # axis tick label fontsize
+        ax.tick_params(labelsize=fontsize)
 
         # customize legend
         if groups:
