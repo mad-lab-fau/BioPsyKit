@@ -80,7 +80,19 @@ class MIST(base.BaseProtocol):
             'background.alpha': 0.5,
             'mist.color': "#9e9e9e",
             'mist.alpha': 0.5,
-            'x_offsets': [0, 0.05]
+            'x_offsets': [0, 0.5],
+            'fontsize': 14,
+            'multi.x_offset': 1,
+            'multi.fontsize': 10,
+            'multi.legend_offset': 0.3,
+            'multi.colormap': colors.cmap_fau_phil('2_lp'),
+            'xaxis.label': "Time relative to MIST start [min]",
+            'xaxis.tick_locator': plt.MultipleLocator(20),
+            'yaxis.label': {
+                'cortisol': "Cortisol [nmol/l]",
+                'amylase': "Amylase [U/l]",
+                'il6': "IL-6 [pg/ml]",
+            },
         }
 
         self._update_mist_params(phases, subphases, subphase_durations)
@@ -143,7 +155,7 @@ class MIST(base.BaseProtocol):
 
     def concat_phase_dict(self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, pd.DataFrame]:
         """
-        Rearranges the 'HR subject dict' (see `utils.load_hr_excel_all_subjects`) into 'MIST Phase dict'.
+        Rearranges the 'HR subject dict' (see `util s.load_hr_excel_all_subjects`) into 'MIST Phase dict'.
         See ``bp.protocols.utils.concat_phase_dict`` for further information.
 
         Parameters
@@ -423,20 +435,6 @@ class MIST(base.BaseProtocol):
 
         return super()._hr_mean_subphases(data, self.subphases, is_group_dict)
 
-    def saliva_course_mist(self, data: pd.DataFrame, remove_s0: Optional[bool] = True) -> pd.DataFrame:
-        if remove_s0:
-            data = data.drop(0, level="sample")
-
-        if 'time' in data:
-            data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
-                {'mean': df_sample['cortisol'].mean(), 'se': df_sample['cortisol'].std() / np.sqrt(len(df_sample)),
-                 'time': int(df_sample['time'].unique())}))
-            data_grp = data_grp.set_index('time', append=True)
-        else:
-            data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
-                {'mean': df_sample['cortisol'].mean(), 'se': df_sample['cortisol'].std() / np.sqrt(len(df_sample))}))
-        return data_grp
-
     # TODO add kw_args
     def hr_ensemble_plot(
             self,
@@ -682,128 +680,179 @@ class MIST(base.BaseProtocol):
             fig.tight_layout()
             return fig, ax
 
-    def param_subphases(
+    def saliva_plot(
             self,
-            ecg_processor: Optional[ecg.EcgProcessor] = None,
-            dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
-            dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
-            param_types: Optional[Union[str, Sequence[str]]] = 'all',
-            sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
-            title: Optional[str] = None
-    ) -> pd.DataFrame:
-        """
-        Computes specified parameters (HRV / RSA / ...) over all MIST phases and subphases.
+            data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+            feature_name: Optional[str] = 'cortisol',
+            saliva_times: Optional[Sequence[int]] = None,
+            groups: Optional[Sequence[str]] = None,
+            group_col: Optional[str] = None,
+            plot_params: Optional[Dict] = None,
+            ylims: Optional[Sequence[float]] = None,
+            ax: Optional[plt.Axes] = None,
+            figsize: Optional[Tuple[float, float]] = None
+    ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
 
-        To use this function, either simply pass an ``EcgProcessor`` object or two dictionaries
-        ``dict_ecg`` and ``dict_rpeaks`` resulting from ``EcgProcessor.ecg_process()``.
+        fig: Union[plt.Figure, None] = None
+        if ax is None:
+            if figsize is None:
+                figsize = plt.rcParams['figure.figsize']
+            fig, ax = plt.subplots(figsize=figsize)
 
-        Parameters
-        ----------
-        ecg_processor : EcgProcessor, optional
-            `EcgProcessor` object
-        dict_ecg : dict, optional
-            dict with dataframes of processed ECG signals. Output from `EcgProcessor.ecg_process()`.
-        dict_rpeaks : dict, optional
-            dict with dataframes of processed R peaks. Output from `EcgProcessor.ecg_process()`.
-        param_types : list or str, optional
-            list with parameter types to compute or 'all' to compute all available parameters. Choose from a subset of
-            ['hrv', 'rsa'] to compute HRV and RSA parameters, respectively.
-        sampling_rate : float, optional
-            Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
-        include_total : bool, optional
-            ``True`` to also compute parameters over the complete MIST phases (in addition to only over subphases),
-            ``False`` to only compute parameters over the single MIST subphases. Default: ``True``
-        title : str, optional
-            Optional title of the processing progress bar. Default: ``None``
+        # update default parameter if plot parameter were passe
+        if plot_params:
+            self.saliva_params.update(plot_params)
 
-        Returns
-        -------
-        pd.DataFrame
-            dataframe with computed parameters over the single MIST subphases
-        """
+        bg_color = self.saliva_params['background.color']
+        bg_alpha = self.saliva_params['background.alpha']
+        mist_color = self.saliva_params['mist.color']
+        mist_alpha = self.saliva_params['mist.alpha']
+        fontsize = self.saliva_params['fontsize']
+        xaxis_label = self.saliva_params['xaxis.label']
+        xaxis_tick_locator = self.saliva_params['xaxis.tick_locator']
 
-        if ecg_processor is None and dict_rpeaks is None and dict_ecg is None:
-            raise ValueError("Either `ecg_processor` or `dict_rpeaks` and `dict_ecg` must be passed as arguments!")
+        ylim_padding = [0.9, 1.2]
 
-        # get all desired parameter types
-        possible_param_types = {'hrv': EcgProcessor.hrv_process, 'rsp': EcgProcessor.rsp_rsa_process}
-        if param_types == 'all':
-            param_types = possible_param_types
-
-        if isinstance(param_types, str):
-            param_types = {param_types: possible_param_types[param_types]}
-        if not all([param in possible_param_types for param in param_types]):
-            raise ValueError(
-                "`param_types` must all be of {}, not {}".format(possible_param_types.keys(), param_types.keys()))
-
-        param_types = {param: possible_param_types[param] for param in param_types}
-
-        if ecg_processor:
-            sampling_rate = ecg_processor.sampling_rate
-            dict_rpeaks = ecg_processor.rpeaks
-            dict_ecg = ecg_processor.ecg_result
-
-        if 'rsp' in param_types and dict_ecg is None:
-            raise ValueError("`dict_ecg` must be passed if param_type is {}!".format(param_types))
-
-        index_name = "Subphase"
-        # dict to store results. one entry per parameter and a list of dataframes per MIST phase
-        # that will later be concated to one large dataframes
-        dict_df_subphases = {param: list() for param in param_types}
-
-        # iterate through all phases in the data
-        for (phase, rpeaks), (ecg_phase, ecg_data) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc=title):
-            rpeaks = rpeaks.copy()
-            ecg_data = ecg_data.copy()
-
-            # dict to store intermediate results of subphases. one entry per parameter with a
-            # list of dataframes per subphase that will later be concated to one dataframe per MIST phase
-            dict_subphases = {param: list() for param in param_types}
-            if include_total:
-                # compute HRV, RSP over complete phase
-                for param_type, param_func in param_types.items():
-                    dict_subphases[param_type].append(
-                        param_func(ecg_signal=ecg_data, rpeaks=rpeaks, index="Total", index_name=index_name,
-                                   sampling_rate=sampling_rate))
-
-            if phase not in ["Part1", "Part2"]:
-                # skip Part1, Part2 for subphase parameter analysis (parameters in total are computed above)
-                for subph, dur in zip(self.subphases, self.subphase_durations):
-                    # get the first xx seconds of data (i.e., get only the current subphase)
-                    # TODO change to mist.mist_get_times?
-                    if dur > 0:
-                        df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
+        if saliva_times is None:
+            if isinstance(data, pd.DataFrame):
+                # DataFrame was passed
+                if 'time' in data.index.names:
+                    saliva_times = np.array(data.index.get_level_values('time').unique())
+            else:
+                # Dict was passed => multiple groups (where each entry is a dataframe per group) or multiple biomarker
+                # (where each entry is one biomarker)
+                if all(['time' in d.index.names for d in data.values()]):
+                    saliva_times = np.array([d.index.get_level_values('time').unique() for d in data.values()])
+                    if (saliva_times == saliva_times[0]).all():
+                        saliva_times = saliva_times[0]
                     else:
-                        # duration of 0 seconds = Feedback Interval, don't cut slice the beginning,
-                        # use all remaining data
-                        df_subph_rpeaks = rpeaks
-                    # ECG does not need to be sliced because rpeaks are already sliced and
-                    # will select only the relevant ECG signal parts anyways
-                    df_subph_ecg = ecg_data
+                        raise ValueError("Saliva times inconsistent for the different groups!")
+                else:
+                    raise ValueError("Not all dataframes contain a 'time' column for saliva times!")
 
-                    for param_type, param_func in param_types.items():
-                        # compute HRV, RSP over subphases
-                        dict_subphases[param_type].append(
-                            param_func(ecg_signal=df_subph_ecg, rpeaks=df_subph_rpeaks, index=subph,
-                                       index_name=index_name,
-                                       sampling_rate=sampling_rate))
+        if isinstance(data, dict) and feature_name in data.keys():
+            # multiple biomarkers were passed => get the selected biomarker and try to get the groups from the index
+            data = data[feature_name]
 
-                    # remove the currently analyzed subphase of data
-                    # (so that the next subphase is first in the next iteration)
-                    rpeaks = rpeaks[~rpeaks.index.isin(df_subph_rpeaks.index)]
+        if not groups:
+            # extract groups from data if they were not supplied
+            if isinstance(data, pd.DataFrame):
+                # get group names from index
+                if "condition" in data.index.names:
+                    groups = list(data.index.get_level_values("condition").unique())
+                elif group_col:
+                    if group_col in data:
+                        groups = list(data[group_col].unique())
+                    else:
+                        raise ValueError(
+                            "`{}`, specified as `group_col` not in columns of the dataframe!".format(group_col))
+                else:
+                    groups = ["Data"]
+            else:
+                # get group names from dict
+                groups = list(data.keys())
 
-                # if len(self.subphase_durations) < len(self.subphases):
-                #     # add Feedback Interval (= remaining time) if present
-                #     for param_type, param_func in param_types.items():
-                #         dict_subphases[param_type].append(
-                #             param_func(ecg_signal=ecg, rpeaks=rpeaks, index=self.subphases[-1], index_name=index_name,
-                #                        sampling_rate=sampling_rate))
+        if not ylims:
+            if isinstance(data, pd.DataFrame):
+                ylims = [ylim_padding[0] * (data['mean'] - data['se']).min(),
+                         ylim_padding[1] * (data['mean'] + data['se']).max()]
+            else:
+                ylims = [ylim_padding[0] * min([(d['mean'] - d['se']).min() for d in data.values()])]
 
-            for param in dict_subphases:
-                # concat dataframe of all subphases to one dataframe per MIST phase and add to parameter dict
-                dict_df_subphases[param].append(pd.concat(dict_subphases[param]))
+        if saliva_times is None:
+            raise ValueError("Must specify saliva times!")
 
-        # concat all dataframes together to one big result dataframes
-        return pd.concat(
-            [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["Phase"]) for dict_df in dict_df_subphases.values()],
-            axis=1)
+        total_length = saliva_times[-1] - saliva_times[0]
+        x_padding = 0.1 * total_length
+
+        if len(ax.lines) == 0:
+            colors = self.saliva_params['colormap']
+            self._saliva_plot_helper(data, feature_name, groups, saliva_times, ylims, fontsize, ax,
+                                     colors=colors)
+
+            ax.text(x=self.mist_times[0] + 0.5 * (self.mist_times[1] - self.mist_times[0]), y=0.95 * ylims[1], s='MIST',
+                    horizontalalignment='center', verticalalignment='top', fontsize=fontsize)
+            ax.axvspan(*self.mist_times, color=mist_color, alpha=mist_alpha, zorder=1, lw=0)
+            ax.axvspan(saliva_times[0] - x_padding, self.mist_times[0], color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
+            ax.axvspan(self.mist_times[1], saliva_times[-1] + x_padding, color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
+
+            ax.xaxis.set_major_locator(xaxis_tick_locator)
+            ax.set_xlabel(xaxis_label, fontsize=fontsize)
+            ax.set_xlim(saliva_times[0] - x_padding, saliva_times[-1] + x_padding)
+        else:
+            # the was already something drawn into the axis => we are using the same axis to add another feature
+            ax_twin = ax.twinx()
+            colors = self.saliva_params['multi.colormap']
+            self._saliva_plot_helper(data, feature_name, groups, saliva_times, ylims, fontsize, ax_twin,
+                                     x_offset_basis=self.saliva_params['multi.x_offset'],
+                                     colors=colors)
+
+        if len(groups) > 1:
+            # get handles
+            handles, labels = ax.get_legend_handles_labels()
+            # remove the errorbars
+            handles = [h[0] for h in handles]
+            # use them in the legend
+            ax.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.99, 0.99), numpoints=1,
+                      prop={"size": fontsize})
+
+        if fig:
+            fig.tight_layout()
+            return fig, ax
+
+    # TODO add methods to remove phases and subphases from MIST dict
+
+    def _saliva_plot_helper(self, data: pd.DataFrame, feature_name: str,
+                            groups: Sequence[str], saliva_times: Sequence[int],
+                            ylims: Sequence[float], fontsize: int,
+                            ax: plt.Axes, x_offset_basis: Optional[float] = 0,
+                            colors: Optional[Sequence[Tuple]] = None) -> plt.Axes:
+        # get all plot parameter
+        line_styles = self.saliva_params['line_styles']
+        markers = self.saliva_params['markers']
+        x_offsets = list(np.array(self.saliva_params['x_offsets']) + x_offset_basis)
+        yaxis_label = self.saliva_params['yaxis.label'][feature_name]
+        if colors is None:
+            colors = sns.color_palette(self.saliva_params['colormap'])
+
+        for group, x_off, color, marker, ls in zip(groups, x_offsets, colors, markers, line_styles):
+            df_cort_grp = data.xs(group, level="condition")
+            print(color)
+            ax.errorbar(x=saliva_times + x_off, y=df_cort_grp["mean"], label=group,
+                        yerr=df_cort_grp["se"], capsize=3, marker=marker, color=color, ls=ls)
+
+        ax.set_ylabel(yaxis_label, fontsize=fontsize)
+        ax.set_ylim(ylims)
+        ax.tick_params(axis='both', which='major', labelsize=fontsize)
+        return ax
+
+    def saliva_plot_combine_legend(self, figure: plt.Figure, ax: plt.Axes, biomarkers: Sequence[str],
+                                   separate_legends: Optional[bool] = False):
+        from matplotlib.legend_handler import HandlerTuple
+
+        fontsize = self.saliva_params['multi.fontsize']
+        legend_offset = self.saliva_params['multi.legend_offset']
+
+        labels = [ax.get_legend_handles_labels()[1] for ax in figure.get_axes()]
+        if all([len(l) == 1 for l in labels]):
+            # only one group
+            handles = [ax.get_legend_handles_labels()[0] for ax in figure.get_axes()]
+            print(handles)
+            handles = [h[0] for handle in handles for h in handle]
+            labels = biomarkers
+            ax.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.99, 0.99), prop={"size": fontsize})
+        else:
+            if separate_legends:
+                for (i, a), biomarker in zip(enumerate(reversed(figure.get_axes())), reversed(biomarkers)):
+                    handles, labels = a.get_legend_handles_labels()
+                    l = ax.legend(handles, labels, title=biomarker, loc='upper right',
+                                  bbox_to_anchor=(0.99 - legend_offset * i, 0.99), prop={"size": fontsize})
+                    ax.add_artist(l)
+            else:
+                handles = [ax.get_legend_handles_labels()[0] for ax in figure.get_axes()]
+                handles = [h[0] for handle in handles for h in handle]
+                labels = [ax.get_legend_handles_labels()[1] for ax in figure.get_axes()]
+                labels = ["{}:\n{}".format(b, " - ".join(l)) for b, l in zip(biomarkers, labels)]
+                ax.legend(list(zip(handles[::2], handles[1::2])), labels, loc='upper right',
+                          bbox_to_anchor=(0.99, 0.99), numpoints=1,
+                          handler_map={tuple: HandlerTuple(ndivide=None)}, prop={"size": fontsize})
