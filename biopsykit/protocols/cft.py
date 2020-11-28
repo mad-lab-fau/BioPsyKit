@@ -237,7 +237,7 @@ class CFT:
 
         """
 
-        from biopsykit.plotting import hr_plot
+        from biopsykit.signals.ecg.plotting import hr_plot
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
