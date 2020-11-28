@@ -9,7 +9,7 @@ from tqdm.notebook import tqdm
 
 import biopsykit.signals.ecg as ecg
 from biopsykit.signals.ecg import EcgProcessor
-import biopsykit.utils as utils
+import biopsykit.colors as colors
 import biopsykit.protocols.base as base
 
 
@@ -48,10 +48,11 @@ class MIST(base.BaseProtocol):
         """
 
         self.hr_ensemble_plot_params = {
-            'colormap': utils.cmap_fau_blue('3'),
+            'colormap': colors.cmap_fau_blue('3'),
             'line_styles': ['-', '--', ':'],
             'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
             'background.alpha': [0.5, 0.5, 0.5],
+            'fontsize': 14,
             'xaxis.label': r"MIST Subphases",
             'yaxis.label': r"$\Delta$HR [%]",
             'mist.phase_text': "MIST Phase {}",
@@ -59,19 +60,20 @@ class MIST(base.BaseProtocol):
         }
 
         self.hr_mean_plot_params = {
-            'colormap': utils.cmap_fau_blue('2_lp'),
+            'colormap': colors.cmap_fau_blue('2_lp'),
             'line_styles': ['-', '--'],
             'markers': ['o', 'P'],
             'background.color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
             'background.alpha': [0.5, 0.5, 0.5],
             'x_offsets': [0, 0.05],
+            'fontsize': 14,
             'xaxis.label': "MIST Subphases",
             'yaxis.label': r"$\Delta$HR [%]",
             'mist.phase_text': "MIST Phase {}"
         }
 
         self.saliva_params = {
-            'colormap': utils.cmap_fau_blue('2_lp'),
+            'colormap': colors.cmap_fau_blue('2_lp'),
             'line_styles': ['-', '--'],
             'markers': ['o', 'P'],
             'background.color': "#e0e0e0",
@@ -441,7 +443,6 @@ class MIST(base.BaseProtocol):
             data: Dict[str, pd.DataFrame],
             plot_params: Optional[Dict] = None,
             ylims: Optional[Sequence[float]] = None,
-            fontsize: Optional[int] = 14,
             ax: Optional[plt.Axes] = None,
             figsize: Optional[Tuple[float, float]] = None
     ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
@@ -459,8 +460,6 @@ class MIST(base.BaseProtocol):
             For an overview of parameters and their default values, see `mist.hr_ensemble_params`
         ylims : list, optional
             y axis limits or ``None`` to infer y axis limits from data. Default: ``None``
-        fontsize : int, optional. Default: ``None``
-            font size. Default: 14
         ax : plt.Axes, optional
             Axes to plot on, otherwise create a new one. Default: ``None``
         figsize : tuple, optional
@@ -485,6 +484,7 @@ class MIST(base.BaseProtocol):
         # sns.despine()
         sns.set_palette(self.hr_ensemble_plot_params['colormap'])
         line_styles = self.hr_ensemble_plot_params['line_styles']
+        fontsize = self.hr_ensemble_plot_params['fontsize']
         xaxis_label = self.hr_ensemble_plot_params['xaxis.label']
         yaxis_label = self.hr_ensemble_plot_params['yaxis.label']
         phase_text = self.hr_ensemble_plot_params['mist.phase_text']
@@ -544,7 +544,6 @@ class MIST(base.BaseProtocol):
             group_col: Optional[str] = None,
             plot_params: Optional[Dict] = None,
             ylims: Optional[Sequence[float]] = None,
-            fontsize: Optional[int] = 14,
             ax: Optional[plt.Axes] = None,
             figsize: Optional[Tuple[float, float]] = None
     ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
@@ -578,8 +577,6 @@ class MIST(base.BaseProtocol):
             For an overview of parameters and their default values, see `mist.hr_course_params`
         ylims : list, optional
             y axis limits or ``None`` to infer y axis limits from data. Default: ``None``
-        fontsize : int, optional. Default: ``None``
-            font size. Default: 14
         ax : plt.Axes, optional
             Axes to plot on, otherwise create a new one. Default: ``None``
         figsize : tuple, optional
@@ -609,6 +606,7 @@ class MIST(base.BaseProtocol):
         bg_colors = self.hr_mean_plot_params['background.color']
         bg_alphas = self.hr_mean_plot_params['background.alpha']
         x_offsets = self.hr_mean_plot_params['x_offsets']
+        fontsize = self.hr_mean_plot_params['fontsize']
         xaxis_label = self.hr_mean_plot_params['xaxis.label']
         yaxis_label = self.hr_mean_plot_params['yaxis.label']
         phase_text = self.hr_mean_plot_params['mist.phase_text']
