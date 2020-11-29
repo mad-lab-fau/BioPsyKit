@@ -346,7 +346,6 @@ class BaseProtocol:
         if line_colors is None:
             line_colors = self.saliva_params['colormap']
 
-        print(line_colors)
         for group, x_off, line_color, marker, ls in zip(groups, x_offsets, line_colors, markers, line_styles):
             df_cort_grp = data.xs(group, level="condition")
             ax.errorbar(x=saliva_times + x_off, y=df_cort_grp["mean"], label=group,
@@ -368,7 +367,6 @@ class BaseProtocol:
         if all([len(l) == 1 for l in labels]):
             # only one group
             handles = [ax.get_legend_handles_labels()[0] for ax in figure.get_axes()]
-            print(handles)
             handles = [h[0] for handle in handles for h in handle]
             labels = biomarkers
             ax.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.99, 0.99), prop={"size": fontsize})
