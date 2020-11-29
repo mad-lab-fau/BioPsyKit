@@ -73,26 +73,8 @@ class MIST(base.BaseProtocol):
         }
 
         self.saliva_params = {
-            'colormap': colors.cmap_fau_blue('2_lp'),
-            'line_styles': ['-', '--'],
-            'markers': ['o', 'P'],
-            'background.color': "#e0e0e0",
-            'background.alpha': 0.5,
-            'mist.color': "#9e9e9e",
-            'mist.alpha': 0.5,
-            'x_offsets': [0, 0.5],
-            'fontsize': 14,
-            'multi.x_offset': 1,
-            'multi.fontsize': 10,
-            'multi.legend_offset': 0.3,
-            'multi.colormap': colors.cmap_fau_phil('2_lp'),
-            'xaxis.label': "Time relative to MIST start [min]",
-            'xaxis.tick_locator': plt.MultipleLocator(20),
-            'yaxis.label': {
-                'cortisol': "Cortisol [nmol/l]",
-                'amylase': "Amylase [U/l]",
-                'il6': "IL-6 [pg/ml]",
-            },
+            'test.text': "MIST",
+            'xaxis.label': "Time relative to MIST start [min]"
         }
 
         self._update_mist_params(phases, subphases, subphase_durations)
@@ -104,8 +86,13 @@ class MIST(base.BaseProtocol):
         Subphase Durations: {}
         """.format(self.name, self.phases, self.subphases, self.subphase_durations)
 
-    def __repr__(self):
-        return self.__str__()
+    @property
+    def mist_times(self):
+        return self.test_times
+
+    @mist_times.setter
+    def mist_times(self, mist_times):
+        self.test_times = mist_times
 
     def _update_mist_params(self, phases: Sequence[str], subphases: Sequence[str], subphase_durations: Sequence[int]):
         if phases:
@@ -680,179 +667,4 @@ class MIST(base.BaseProtocol):
             fig.tight_layout()
             return fig, ax
 
-    def saliva_plot(
-            self,
-            data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-            feature_name: Optional[str] = 'cortisol',
-            saliva_times: Optional[Sequence[int]] = None,
-            groups: Optional[Sequence[str]] = None,
-            group_col: Optional[str] = None,
-            plot_params: Optional[Dict] = None,
-            ylims: Optional[Sequence[float]] = None,
-            ax: Optional[plt.Axes] = None,
-            figsize: Optional[Tuple[float, float]] = None
-    ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
-
-        fig: Union[plt.Figure, None] = None
-        if ax is None:
-            if figsize is None:
-                figsize = plt.rcParams['figure.figsize']
-            fig, ax = plt.subplots(figsize=figsize)
-
-        # update default parameter if plot parameter were passe
-        if plot_params:
-            self.saliva_params.update(plot_params)
-
-        bg_color = self.saliva_params['background.color']
-        bg_alpha = self.saliva_params['background.alpha']
-        mist_color = self.saliva_params['mist.color']
-        mist_alpha = self.saliva_params['mist.alpha']
-        fontsize = self.saliva_params['fontsize']
-        xaxis_label = self.saliva_params['xaxis.label']
-        xaxis_tick_locator = self.saliva_params['xaxis.tick_locator']
-
-        ylim_padding = [0.9, 1.2]
-
-        if saliva_times is None:
-            if isinstance(data, pd.DataFrame):
-                # DataFrame was passed
-                if 'time' in data.index.names:
-                    saliva_times = np.array(data.index.get_level_values('time').unique())
-            else:
-                # Dict was passed => multiple groups (where each entry is a dataframe per group) or multiple biomarker
-                # (where each entry is one biomarker)
-                if all(['time' in d.index.names for d in data.values()]):
-                    saliva_times = np.array([d.index.get_level_values('time').unique() for d in data.values()])
-                    if (saliva_times == saliva_times[0]).all():
-                        saliva_times = saliva_times[0]
-                    else:
-                        raise ValueError("Saliva times inconsistent for the different groups!")
-                else:
-                    raise ValueError("Not all dataframes contain a 'time' column for saliva times!")
-
-        if isinstance(data, dict) and feature_name in data.keys():
-            # multiple biomarkers were passed => get the selected biomarker and try to get the groups from the index
-            data = data[feature_name]
-
-        if not groups:
-            # extract groups from data if they were not supplied
-            if isinstance(data, pd.DataFrame):
-                # get group names from index
-                if "condition" in data.index.names:
-                    groups = list(data.index.get_level_values("condition").unique())
-                elif group_col:
-                    if group_col in data:
-                        groups = list(data[group_col].unique())
-                    else:
-                        raise ValueError(
-                            "`{}`, specified as `group_col` not in columns of the dataframe!".format(group_col))
-                else:
-                    groups = ["Data"]
-            else:
-                # get group names from dict
-                groups = list(data.keys())
-
-        if not ylims:
-            if isinstance(data, pd.DataFrame):
-                ylims = [ylim_padding[0] * (data['mean'] - data['se']).min(),
-                         ylim_padding[1] * (data['mean'] + data['se']).max()]
-            else:
-                ylims = [ylim_padding[0] * min([(d['mean'] - d['se']).min() for d in data.values()])]
-
-        if saliva_times is None:
-            raise ValueError("Must specify saliva times!")
-
-        total_length = saliva_times[-1] - saliva_times[0]
-        x_padding = 0.1 * total_length
-
-        if len(ax.lines) == 0:
-            colors = self.saliva_params['colormap']
-            self._saliva_plot_helper(data, feature_name, groups, saliva_times, ylims, fontsize, ax,
-                                     colors=colors)
-
-            ax.text(x=self.mist_times[0] + 0.5 * (self.mist_times[1] - self.mist_times[0]), y=0.95 * ylims[1], s='MIST',
-                    horizontalalignment='center', verticalalignment='top', fontsize=fontsize)
-            ax.axvspan(*self.mist_times, color=mist_color, alpha=mist_alpha, zorder=1, lw=0)
-            ax.axvspan(saliva_times[0] - x_padding, self.mist_times[0], color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
-            ax.axvspan(self.mist_times[1], saliva_times[-1] + x_padding, color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
-
-            ax.xaxis.set_major_locator(xaxis_tick_locator)
-            ax.set_xlabel(xaxis_label, fontsize=fontsize)
-            ax.set_xlim(saliva_times[0] - x_padding, saliva_times[-1] + x_padding)
-        else:
-            # the was already something drawn into the axis => we are using the same axis to add another feature
-            ax_twin = ax.twinx()
-            colors = self.saliva_params['multi.colormap']
-            self._saliva_plot_helper(data, feature_name, groups, saliva_times, ylims, fontsize, ax_twin,
-                                     x_offset_basis=self.saliva_params['multi.x_offset'],
-                                     colors=colors)
-
-        if len(groups) > 1:
-            # get handles
-            handles, labels = ax.get_legend_handles_labels()
-            # remove the errorbars
-            handles = [h[0] for h in handles]
-            # use them in the legend
-            ax.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.99, 0.99), numpoints=1,
-                      prop={"size": fontsize})
-
-        if fig:
-            fig.tight_layout()
-            return fig, ax
-
     # TODO add methods to remove phases and subphases from MIST dict
-
-    def _saliva_plot_helper(self, data: pd.DataFrame, feature_name: str,
-                            groups: Sequence[str], saliva_times: Sequence[int],
-                            ylims: Sequence[float], fontsize: int,
-                            ax: plt.Axes, x_offset_basis: Optional[float] = 0,
-                            colors: Optional[Sequence[Tuple]] = None) -> plt.Axes:
-        # get all plot parameter
-        line_styles = self.saliva_params['line_styles']
-        markers = self.saliva_params['markers']
-        x_offsets = list(np.array(self.saliva_params['x_offsets']) + x_offset_basis)
-        yaxis_label = self.saliva_params['yaxis.label'][feature_name]
-        if colors is None:
-            colors = sns.color_palette(self.saliva_params['colormap'])
-
-        for group, x_off, color, marker, ls in zip(groups, x_offsets, colors, markers, line_styles):
-            df_cort_grp = data.xs(group, level="condition")
-            print(color)
-            ax.errorbar(x=saliva_times + x_off, y=df_cort_grp["mean"], label=group,
-                        yerr=df_cort_grp["se"], capsize=3, marker=marker, color=color, ls=ls)
-
-        ax.set_ylabel(yaxis_label, fontsize=fontsize)
-        ax.set_ylim(ylims)
-        ax.tick_params(axis='both', which='major', labelsize=fontsize)
-        return ax
-
-    def saliva_plot_combine_legend(self, figure: plt.Figure, ax: plt.Axes, biomarkers: Sequence[str],
-                                   separate_legends: Optional[bool] = False):
-        from matplotlib.legend_handler import HandlerTuple
-
-        fontsize = self.saliva_params['multi.fontsize']
-        legend_offset = self.saliva_params['multi.legend_offset']
-
-        labels = [ax.get_legend_handles_labels()[1] for ax in figure.get_axes()]
-        if all([len(l) == 1 for l in labels]):
-            # only one group
-            handles = [ax.get_legend_handles_labels()[0] for ax in figure.get_axes()]
-            print(handles)
-            handles = [h[0] for handle in handles for h in handle]
-            labels = biomarkers
-            ax.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.99, 0.99), prop={"size": fontsize})
-        else:
-            if separate_legends:
-                for (i, a), biomarker in zip(enumerate(reversed(figure.get_axes())), reversed(biomarkers)):
-                    handles, labels = a.get_legend_handles_labels()
-                    l = ax.legend(handles, labels, title=biomarker, loc='upper right',
-                                  bbox_to_anchor=(0.99 - legend_offset * i, 0.99), prop={"size": fontsize})
-                    ax.add_artist(l)
-            else:
-                handles = [ax.get_legend_handles_labels()[0] for ax in figure.get_axes()]
-                handles = [h[0] for handle in handles for h in handle]
-                labels = [ax.get_legend_handles_labels()[1] for ax in figure.get_axes()]
-                labels = ["{}:\n{}".format(b, " - ".join(l)) for b, l in zip(biomarkers, labels)]
-                ax.legend(list(zip(handles[::2], handles[1::2])), labels, loc='upper right',
-                          bbox_to_anchor=(0.99, 0.99), numpoints=1,
-                          handler_map={tuple: HandlerTuple(ndivide=None)}, prop={"size": fontsize})
