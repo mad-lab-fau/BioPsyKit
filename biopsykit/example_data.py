@@ -50,3 +50,14 @@ def get_mist_hr_example() -> Dict[str, pd.DataFrame]:
     from biopsykit.signals.ecg.io import load_hr_subject_dict
     return load_hr_subject_dict(_EXAMPLE_DATA_PATH.joinpath("hr_sample_mist.xlsx"))
 
+
+def get_sleep_analyzer_raw_example() -> pd.DataFrame:
+    from biopsykit.sleep.io import load_withings_sleep_analyzer_raw_folder
+
+    return load_withings_sleep_analyzer_raw_folder(_EXAMPLE_DATA_PATH.joinpath("sleep"))
+
+
+def get_sleep_analyzer_summary_example() -> pd.DataFrame:
+    from biopsykit.sleep.io import load_withings_sleep_analyzer_summary
+
+    return load_withings_sleep_analyzer_summary(_EXAMPLE_DATA_PATH.joinpath("sleep").joinpath("sleep.csv"))

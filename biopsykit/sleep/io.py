@@ -8,6 +8,12 @@ import numpy as np
 
 from biopsykit.utils import path_t, tz
 
+__all__ = [
+    'load_withings_sleep_analyzer_raw_file',
+    'load_withings_sleep_analyzer_raw_folder',
+    'load_withings_sleep_analyzer_summary',
+]
+
 RAW_DATA_SOURCES = {
     'hr': 'heart_rate',
     'respiratory-rate': 'respiration_rate',
@@ -19,11 +25,27 @@ RAW_DATA_SOURCES = {
 
 def load_withings_sleep_analyzer_raw_folder(folder_path: path_t,
                                             timezone: Optional[Union[pytz.timezone, str]] = tz) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    folder_path
+    timezone
+
+    Returns
+    -------
+    columns:
+    heart_rate
+    respiration_rate
+    sleep_state: 0 = awake, 1 = light sleep, 2 = deep sleep, 3 = rem sleep
+    snoring: 0 = no snoring, 100 = snoring
+
+    """
     import re
     # ensure pathlib
     folder_path = Path(folder_path)
     raw_files = list(sorted(folder_path.glob("raw_sleep-monitor_*.csv")))
-    data_sources = [re.findall("raw_sleep-monitor_(\S*).csv", s.name)[0] for s in raw_files]
+    data_sources = [re.findall(r"raw_sleep-monitor_(\S*).csv", s.name)[0] for s in raw_files]
 
     list_data = [load_withings_sleep_analyzer_raw_file(file_path, RAW_DATA_SOURCES[data_source], timezone)
                  for file_path, data_source in zip(raw_files, data_sources)]
@@ -54,6 +76,38 @@ def load_withings_sleep_analyzer_raw_file(file_path: path_t, data_source: str,
     # rename the value column
     data_explode.columns = [data_source]
     return data_explode
+
+
+def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
+    data = pd.read_csv(file_path)
+    for col in ['von', 'bis']:
+        # convert into date time
+        data[col] = pd.to_datetime(data[col])
+
+    # total duration in seconds
+    data['total_duration'] = [int(td.total_seconds()) for td in (data['bis'] - data['von'])]
+    data['time'] = data['von']
+    data.drop(columns=['von', 'bis'], inplace=True)
+    data.set_index('time', inplace=True)
+    data.rename({
+        'leicht (s)': 'total_time_light_sleep',
+        'tief (s)': 'total_time_deep_sleep',
+        'rem (s)': 'total_time_rem_sleep',
+        'wach (s)': 'total_time_awake',
+        'Aufwachen': 'count_wakeup',
+        'Duration to sleep (s)': 'duration_to_sleep',
+        'Duration to wake up (s)': 'duration_to_wakeup',
+        'Snoring episodes': 'count_snoring_episodes',
+        'Snoring (s)': 'total_time_snoring',
+        'Average heart rate': 'heart_rate_avg',
+        'Heart rate (min)': 'heart_rate_min',
+        'Heart rate (max)': 'heart_rate_max'
+    }, axis='columns', inplace=True)
+    # Wake after Sleep Onset (WASO): total time awake after sleep onset
+    data['total_time_waso'] = data['total_time_awake'] - data['duration_to_sleep'] - data['duration_to_wakeup']
+    # compute total sleep duration = total duration - (time to fall asleep + time spent in bed after waking up)
+    data['total_sleep_duration'] = data['total_duration'] - data['duration_to_sleep'] - data['duration_to_wakeup']
+    return data
 
 
 def _explode_timestamp(df: pd.DataFrame) -> pd.DataFrame:
