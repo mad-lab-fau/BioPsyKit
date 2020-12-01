@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Sequence, Dict
+from typing import Sequence, Dict, Optional
 
 import pandas as pd
 
@@ -9,7 +9,11 @@ __all__ = [
     'list_example_data',
     'get_file_path',
     'get_saliva_example',
-    'get_mist_hr_example'
+    'get_saliva_mean_se_example',
+    'get_mist_hr_example',
+    'get_condition_list_example',
+    'get_sleep_analyzer_raw_example',
+    'get_sleep_analyzer_summary_example',
 ]
 
 
@@ -26,9 +30,20 @@ def get_file_path(file_name: str) -> Path:
     raise ValueError("File {} does not exist!".format(file_name))
 
 
-def get_saliva_example():
+def get_condition_list_example() -> pd.DataFrame:
+    from biopsykit.io import load_subject_condition_list
+    return load_subject_condition_list(_EXAMPLE_DATA_PATH.joinpath("condition_list.csv"), subject_col='subject',
+                                       condition_col='condition')
+
+
+def get_saliva_example(saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     from biopsykit.saliva.io import load_saliva
-    return load_saliva(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample.csv"), biomarker_type='cortisol')
+    return load_saliva(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample.csv"), biomarker_type='cortisol',
+                       saliva_times=saliva_times)
+
+
+def get_saliva_mean_se_example() -> Dict[str, pd.DataFrame]:
+    return pd.read_excel(_EXAMPLE_DATA_PATH.joinpath("saliva_example_mean_se.xlsx"), sheet_name=None, index_col='time')
 
 
 def get_mist_hr_example() -> Dict[str, pd.DataFrame]:

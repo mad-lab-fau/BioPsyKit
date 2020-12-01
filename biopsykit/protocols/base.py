@@ -245,6 +245,10 @@ class BaseProtocol:
 
         ylim_padding = [0.9, 1.2]
 
+        if isinstance(data, dict) and feature_name in data.keys():
+            # multiple biomarkers were passed => get the selected biomarker and try to get the groups from the index
+            data = data[feature_name]
+
         if saliva_times is None:
             if isinstance(data, pd.DataFrame):
                 # DataFrame was passed
@@ -254,17 +258,18 @@ class BaseProtocol:
                 # Dict was passed => multiple groups (where each entry is a dataframe per group) or multiple biomarker
                 # (where each entry is one biomarker)
                 if all(['time' in d.index.names for d in data.values()]):
-                    saliva_times = np.array([d.index.get_level_values('time').unique() for d in data.values()])
+                    saliva_times = np.array([d.index.get_level_values('time').unique() for d in data.values()], dtype=object)
+                    if not all([len(saliva_time) == len(saliva_times[0]) for saliva_time in saliva_times]):
+                        raise ValueError(
+                            "Different saliva time lengths passed! Did you pass multiple biomarkers? "
+                            "For plotting multiple biomarkers, call the `saliva_plot` function on the same axis "
+                            "repeatedly for the different biomarkers!")
                     if (saliva_times == saliva_times[0]).all():
                         saliva_times = saliva_times[0]
                     else:
                         raise ValueError("Saliva times inconsistent for the different groups!")
                 else:
                     raise ValueError("Not all dataframes contain a 'time' column for saliva times!")
-
-        if isinstance(data, dict) and feature_name in data.keys():
-            # multiple biomarkers were passed => get the selected biomarker and try to get the groups from the index
-            data = data[feature_name]
 
         if not groups:
             # extract groups from data if they were not supplied
@@ -347,9 +352,13 @@ class BaseProtocol:
             line_colors = self.saliva_params['colormap']
 
         for group, x_off, line_color, marker, ls in zip(groups, x_offsets, line_colors, markers, line_styles):
-            df_cort_grp = data.xs(group, level="condition")
-            ax.errorbar(x=saliva_times + x_off, y=df_cort_grp["mean"], label=group,
-                        yerr=df_cort_grp["se"], capsize=3, marker=marker, color=line_color, ls=ls)
+            if group == 'Data':
+                # no condition index
+                df_grp = data
+            else:
+                df_grp = data.xs(group, level="condition")
+            ax.errorbar(x=saliva_times + x_off, y=df_grp["mean"], label=group,
+                        yerr=df_grp["se"], capsize=3, marker=marker, color=line_color, ls=ls)
 
         ax.set_ylabel(yaxis_label, fontsize=fontsize)
         ax.set_ylim(ylims)
