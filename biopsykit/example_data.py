@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Sequence, Dict, Optional
+from typing import Sequence, Dict, Optional, Tuple
 
 import pandas as pd
 
@@ -49,6 +49,12 @@ def get_saliva_mean_se_example() -> Dict[str, pd.DataFrame]:
 def get_mist_hr_example() -> Dict[str, pd.DataFrame]:
     from biopsykit.signals.ecg.io import load_hr_subject_dict
     return load_hr_subject_dict(_EXAMPLE_DATA_PATH.joinpath("hr_sample_mist.xlsx"))
+
+
+def get_ecg_example() -> Tuple[pd.DataFrame, int]:
+    from biopsykit.io import load_dataset_nilspod
+    return load_dataset_nilspod(file_path=_EXAMPLE_DATA_PATH.joinpath("ecg_sample.bin"), datastreams=['ecg'])
+
 
 
 def get_sleep_analyzer_raw_example() -> pd.DataFrame:
