@@ -110,6 +110,15 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
     return data
 
 
+def save_sleep_data(file_path: path_t, data: pd.DataFrame):
+    data.to_csv(file_path)
+
+
+def load_sleep_data(file_path: path_t) -> pd.DataFrame:
+    data = pd.read_csv(file_path, index_col=['time'])
+    return data
+
+
 def _explode_timestamp(df: pd.DataFrame) -> pd.DataFrame:
     # sum up the time durations and subtract the first value from it (so that we start from 0)
     # dur_sum then looks like this: [0, 60, 120, 180, ...]
