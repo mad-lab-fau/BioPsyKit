@@ -222,6 +222,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
 
     # Plot heart rate
     hr_plot(heart_rate, axs['hr'])
+    axs['hr'].set_xlabel("Time")
 
     # Plot individual heart beats
     if plot_individual_beats:
@@ -428,13 +429,16 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None
             figsize = plt.rcParams['figure.figsize']
         fig, ax = plt.subplots(figsize=figsize)
 
-    ax = sns.distplot(heart_rate, color=colors.fau_color('tech'), ax=ax)
+    ax = sns.histplot(heart_rate, color=colors.fau_color('tech'), ax=ax, kde=True, legend=False)
 
     ax.set_title("Heart Rate Distribution")
+
     ax.set_xlabel("Heart Rate [bpm]")
     ax.set_xlim(heart_rate.min().min() - 1, heart_rate.max().max() + 1)
     ax.tick_params(axis='x', which='major', bottom=True, labelbottom=True)
+
     ax.set_yticks([])
+    ax.set_ylabel("")
 
     if fig:
         fig.tight_layout()
@@ -536,9 +540,8 @@ def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 25
     rri = _get_rr_intervals(rpeaks, sampling_rate)
 
     sns.set_palette(colors.cmap_fau_blue('2'))
-    sns.distplot(rri, ax=ax, bins=10, kde=False, rug=True,
-                 rug_kws={'lw': 1.5, 'height': 0.05, 'zorder': 2},
-                 hist_kws={'alpha': 0.5, 'zorder': 1})
+    sns.histplot(rri, ax=ax, bins=10, kde=False, alpha=0.5, zorder=1)
+    sns.rugplot(rri, ax=ax, lw=1.5, height=0.05, zorder=2)
     ax2 = ax.twinx()
     sns.kdeplot(rri, ax=ax2, lw=2.0, zorder=1)
     ax2.set_ylim(0)
@@ -621,10 +624,10 @@ def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
     area = np.pi * sd1 * sd2
 
     sns.set_palette(colors.cmap_fau_blue('2'))
-    sns.kdeplot(rri[:-1], rri[1:], ax=axs[0], n_levels=20, shade=True, shade_lowest=False, alpha=0.8)
-    sns.scatterplot(rri[:-1], rri[1:], ax=axs[0], alpha=0.5, edgecolor=colors.fau_color('fau'))
-    sns.distplot(rri[:-1], bins=int(len(rri) / 10), ax=axs[1], hist_kws=dict(edgecolor="none"))
-    sns.distplot(rri[1:], bins=int(len(rri) / 10), ax=axs[2], vertical=True, hist_kws=dict(edgecolor="none"))
+    sns.kdeplot(x=rri[:-1], y=rri[1:], ax=axs[0], n_levels=20, shade=True, thresh=0.05, alpha=0.8)
+    sns.scatterplot(x=rri[:-1], y=rri[1:], ax=axs[0], alpha=0.5, edgecolor=colors.fau_color('fau'))
+    sns.histplot(x=rri[:-1], bins=int(len(rri) / 10), ax=axs[1], edgecolor="none")
+    sns.histplot(y=rri[1:], bins=int(len(rri) / 10), ax=axs[2], edgecolor="none")
 
     ellipse = mpl.patches.Ellipse((mean_rri, mean_rri), width=2 * sd2, height=2 * sd1, angle=45,
                                   ec=colors.fau_color('fau'),
@@ -708,6 +711,10 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]
     out_bands.columns = [col.replace('HRV_', '') for col in out_bands.columns]
     _hrv_frequency_show(rri, out_bands, sampling_rate=256, ax=ax)
+
+    ax.set_title("Power Spectral Density (PSD)")
+    ax.set_ylabel("Spectrum $[{ms}^2/Hz]$")
+    ax.set_xlabel("Frequency [Hz]")
 
     ax.tick_params(axis='both', left=True, bottom=True)
     ax.margins(x=0)
