@@ -43,7 +43,7 @@ def get_saliva_example(saliva_times: Optional[Sequence[int]] = None) -> pd.DataF
 
 
 def get_saliva_mean_se_example() -> Dict[str, pd.DataFrame]:
-    return pd.read_excel(_EXAMPLE_DATA_PATH.joinpath("saliva_example_mean_se.xlsx"), sheet_name=None, index_col='time')
+    return pd.read_excel(_EXAMPLE_DATA_PATH.joinpath("saliva_sample_mean_se.xlsx"), sheet_name=None, index_col='time')
 
 
 def get_mist_hr_example() -> Dict[str, pd.DataFrame]:
