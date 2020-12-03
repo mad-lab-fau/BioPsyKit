@@ -26,7 +26,7 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     Raises
     ------
     ValueError
-        if no dataframe or series is passed, of if the dataframe/series has no datetime index
+        if no dataframe or series is passed, or if the dataframe/series has no datetime index
 
     """
 
@@ -156,7 +156,7 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
 def remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x_old: Optional[np.ndarray] = None,
                                    desired_length: Optional[int] = None) -> np.ndarray:
     """
-    Sets all detected outlier to nan, imputes them by linearly interpolation their neighbors and interpolates
+    Sets all detected outlier to nan, imputes them by linear interpolation their neighbors and interpolates
     the resulting values to a desired length.
 
     Parameters
