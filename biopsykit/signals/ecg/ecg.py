@@ -188,6 +188,10 @@ class EcgProcessor:
         """
         return self.heart_rate
 
+    @property
+    def phases(self) -> Sequence[str]:
+        return list(self.ecg_result.keys())
+
     @classmethod
     def outlier_corrections(cls) -> Sequence[str]:
         """
@@ -655,6 +659,25 @@ class EcgProcessor:
             hrv.index = [index]
             hrv.index.name = index_name
         return hrv
+
+    def hrv_batch_process(self, hrv_types: Optional[Sequence[str]] = ['hrv_time', 'hrv_nonlinear']) -> pd.DataFrame:
+        """
+        Computes HRV (using `EcgProcessor.hrv_process()`) over all phases.
+
+        Parameters
+        ----------
+        hrv_types: list or str, optional
+            List of HRV types to be computed. Must be a subset of ['hrv_time', 'hrv_nonlinear', 'hrv_frequency']
+            or 'all' to compute all types of HRV.
+            Default: ['hrv_time', 'hrv_nonlinear']. Refer to `neurokit.hrv` for further information on HRV
+
+        Returns
+        -------
+        dataframe
+            Dataframe with HRV parameters over all phases
+
+        """
+        return pd.concat([self.hrv_process(self, key=key, index=key, hrv_types=hrv_types) for key in self.phases])
 
     @classmethod
     def ecg_extract_edr(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
