@@ -3,7 +3,7 @@
 A Python package for the analysis of biopsychological data.
 
 With this package you have everything you need for analyzing biopsychological data, including:
-* Data processing pipelines for biosignals (currently ECG, more signals coming soon...)
+* Data processing pipelines for biosignals (ECG, EEG, ...)
 * Methods for analyzing saliva samples (cortisol, amylase)
 * Implementation of various psychological and HCI-related questionnaires
 
