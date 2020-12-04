@@ -4,16 +4,28 @@ Top level package for biopsykit.
 
 import biopsykit.signals
 import biopsykit.saliva
+import biopsykit.sleep
 import biopsykit.protocols
-import biopsykit.plotting
 import biopsykit.questionnaires
 import biopsykit.metadata
-import biopsykit.utils
 import biopsykit.io
 
+import biopsykit.colors
 import biopsykit.example_data
+import biopsykit.utils
 
-# from .utils import *
+__all__ = [
+    'signals',
+    'saliva',
+    'sleep',
+    'protocols',
+    'questionnaires',
+    'metadata',
+    'io',
+    'colors',
+    'example_data',
+    'utils'
+]
 
 # Info
 __version__ = "0.0.1"

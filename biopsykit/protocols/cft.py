@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-import biopsykit.utils as utils
+import biopsykit.colors as colors
 
 
 class CFT:
@@ -225,6 +225,7 @@ class CFT:
         time_before
         time_after
         ax
+        figsize
         plot_poly_fit
         plot_peak_brady
         plot_onset
@@ -236,7 +237,7 @@ class CFT:
 
         """
 
-        from biopsykit.plotting import hr_plot
+        from biopsykit.signals.ecg.plotting import hr_plot
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
@@ -344,20 +345,23 @@ class CFT:
         max_hr_cft = float(self.extract_cft_interval(data).max())
         cft_start = cft_times['cft_start']
 
+        color = colors.fau_color(color_key)
+        color_adjust = colors.adjust_color(color_key, 1.5)
+
         # Peak Bradycardia vline
         ax.axvline(
             x=brady_time,
             ls="--",
             lw=2,
             alpha=0.6,
-            color=utils.fau_color(color_key)
+            color=color
         )
 
         # Peak Bradycardia marker
         ax.plot(
             brady_time,
             data.loc[brady_time],
-            color=utils.fau_color(color_key),
+            color=color,
             marker="o",
             markersize=7,
         )
@@ -369,7 +373,7 @@ class CFT:
             xmax=brady_time + pd.Timedelta(seconds=20),
             ls="--",
             lw=2,
-            color=utils.adjust_color(color_key),
+            color=color_adjust,
             alpha=0.6,
         )
 
@@ -383,7 +387,7 @@ class CFT:
             arrowprops=dict(
                 arrowstyle="<->",
                 lw=2,
-                color=utils.adjust_color(color_key),
+                color=color_adjust,
                 shrinkA=0.0, shrinkB=0.0,
             )
         )
@@ -405,7 +409,7 @@ class CFT:
             arrowprops=dict(
                 arrowstyle="<->",
                 lw=2,
-                color=utils.fau_color(color_key),
+                color=color,
                 shrinkA=0.0, shrinkB=0.0,
             )
         )
@@ -425,6 +429,8 @@ class CFT:
                            cft_times: Dict,
                            ax: plt.Axes,
                            bbox: Dict) -> None:
+        color_key = 'tech'
+
         # Baseline HR
         ax.hlines(
             y=cft_params['baseline_hr'],
@@ -432,7 +438,7 @@ class CFT:
             xmax=cft_times['cft_end'],
             ls="--",
             lw=2,
-            color=utils.fau_color('tech'),
+            color=colors.fau_color(color_key),
             alpha=0.6
         )
 
@@ -443,8 +449,8 @@ class CFT:
                                    ax: plt.Axes,
                                    bbox: Dict) -> None:
 
+        color_key = 'wiso'
         mean_hr = cft_params['mean_hr_bpm']
-
         cft_start = cft_times['cft_start']
         cft_end = cft_times['cft_end']
         # Mean HR during CFT
@@ -454,7 +460,7 @@ class CFT:
             xmax=cft_end,
             ls="--",
             lw=2,
-            color=utils.adjust_color('wiso'),
+            color=colors.adjust_color(color_key),
             alpha=0.6
         )
 
@@ -466,7 +472,7 @@ class CFT:
             arrowprops=dict(
                 arrowstyle="<->",
                 lw=2,
-                color=utils.adjust_color('wiso', 1.5),
+                color=colors.adjust_color(color_key, 1.5),
                 shrinkA=0.0, shrinkB=0.0,
             )
         )
@@ -487,8 +493,10 @@ class CFT:
                         ax: plt.Axes,
                         bbox: Dict) -> None:
 
+        color_key = 'med'
         onset_time = cft_params['onset']
         onset_y = float(data.loc[onset_time])
+        color = colors.fau_color(color_key)
 
         # CFT Onset vline
         ax.axvline(
@@ -496,14 +504,14 @@ class CFT:
             ls="--",
             lw=2,
             alpha=0.6,
-            color=utils.fau_color('med')
+            color=color
         )
 
         # CFT Onset marker
         ax.plot(
             onset_time,
             onset_y,
-            color=utils.fau_color('med'),
+            color=color,
             marker="o",
             markersize=7,
         )
@@ -516,7 +524,7 @@ class CFT:
             arrowprops=dict(
                 arrowstyle="<->",
                 lw=2,
-                color=utils.fau_color('med'),
+                color=color,
                 shrinkA=0.0, shrinkB=0.0,
             )
         )
@@ -536,6 +544,8 @@ class CFT:
                            cft_times: Dict,
                            ax: plt.Axes,
                            bbox: Dict) -> None:
+
+        color_key = 'phil'
         df_cft = self.extract_cft_interval(data)
         x_poly = df_cft.index.astype(int) / 1e9
         x_poly = x_poly - x_poly[0]
@@ -546,7 +556,7 @@ class CFT:
             df_cft.index,
             y_poly,
             lw=2,
-            color=utils.fau_color('phil'),
+            color=colors.fau_color(color_key),
             alpha=0.6,
             zorder=2
         )

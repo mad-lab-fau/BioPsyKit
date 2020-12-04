@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Optional, Dict
+from typing import Union, Tuple, Optional, Dict, Sequence
 
 import pandas as pd
 import numpy as np
@@ -26,7 +26,7 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     Raises
     ------
     ValueError
-        if no dataframe or series is passed, of if the dataframe/series has no datetime index
+        if no dataframe or series is passed, or if the dataframe/series has no datetime index
 
     """
 
@@ -69,6 +69,64 @@ def interpolate_dict_sec(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[
             phase: interpolate_sec(df_hr) for phase, df_hr in dict_hr.items()
         } for subject_id, dict_hr in data_dict.items()
     }
+
+
+def interpolate_and_cut(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+
+    data_dict = interpolate_dict_sec(data_dict)
+    durations = np.array([[len(df) for phase, df in dict_hr.items()] for dict_hr in data_dict.values()])
+    phase_names = np.array([list(val.keys()) for key, val in data_dict.items()])
+    if (phase_names[0] == phase_names).all():
+        phase_names = phase_names[0]
+    else:
+        raise ValueError("Phases are not the same for all subjects!")
+
+    # minimal duration of each Phase
+    min_dur = {phase: dur for phase, dur in zip(phase_names, np.min(durations, axis=0))}
+
+    for subject_id, dict_hr in data_dict.items():
+        dict_cut = {}
+        for phase in phase_names:
+            dict_cut[phase] = dict_hr[phase][0:min_dur[phase]]
+        data_dict[subject_id] = dict_cut
+
+    return data_dict
+
+
+def concat_phase_dict(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
+                      phases: Sequence[str]) -> Dict[str, pd.DataFrame]:
+    """
+    Rearranges a 'HR subject dict' (see ``utils.load_hr_excel_all_subjects``) into a 'Phase dict', i.e. a dictionary
+    with one dataframe per Phase where each dataframe contains column-wise HR data for all subjects.
+
+    The **output** format will be the following:
+
+    { <"Phase"> : hr_dataframe, 1 subject per column }
+
+    E.g., see ``biopsykit.protocols.mist.concat_phase_dict()`` for further information.
+
+    Parameters
+    ----------
+    dict_hr_subject : dict
+        'HR subject dict', i.e. a nested dict with heart rate data per phase and subject
+    phases : list
+        list of phase names
+
+    Returns
+    -------
+    dict
+        'Phase dict', i.e. a dict with heart rate data of all subjects per phase
+
+    """
+
+    dict_phase: Dict[str, pd.DataFrame] = {key: pd.DataFrame(columns=list(dict_hr_subject.keys())) for key in
+                                           phases}
+    for subj in dict_hr_subject:
+        dict_bl = dict_hr_subject[subj]
+        for phase in phases:
+            dict_phase[phase][subj] = dict_bl[phase]['ECG_Rate']
+
+    return dict_phase
 
 
 def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
@@ -156,7 +214,7 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
 def remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x_old: Optional[np.ndarray] = None,
                                    desired_length: Optional[int] = None) -> np.ndarray:
     """
-    Sets all detected outlier to nan, imputes them by linearly interpolation their neighbors and interpolates
+    Sets all detected outlier to nan, imputes them by linear interpolation their neighbors and interpolates
     the resulting values to a desired length.
 
     Parameters

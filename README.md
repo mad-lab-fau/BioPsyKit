@@ -26,7 +26,7 @@ Additionally, there are modules to analyze and visualize data acquired from spec
     * R peak detection (using `Neurokit`: https://github.com/neuropsychology/NeuroKit)
     * R peak outlier removal and interpolation
     * HRV feature computation
-    * ECG-based respiration (EDA) estimation for respiration rate and respiratory sinus arrhythmia (RSA) (_experimental_)
+    * ECG-derived respiration (EDR) estimation for respiration rate and respiratory sinus arrhythmia (RSA) (_experimental_)
 * Visualization of results
 
 ... more biosignals coming soon!

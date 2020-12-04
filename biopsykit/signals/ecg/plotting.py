@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Optional, Union, Sequence, Tuple, Dict
 
-import biopsykit.utils as utils
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import neurokit2 as nk
@@ -9,6 +8,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+import biopsykit.utils as utils
+import biopsykit.colors as colors
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.utils import path_t
 
@@ -25,65 +26,6 @@ mpl_rc_params = {
     'mathtext.default': 'regular'
 }
 plt.rcParams.update(mpl_rc_params)
-
-
-def export_figure(fig: plt.Figure, filename: path_t, base_dir: path_t, formats: Optional[Sequence[str]] = None,
-                  use_subfolder: Optional[bool] = True) -> None:
-    """
-    Exports a figure to a file.
-
-    Parameters
-    ----------
-    fig : Figure
-        matplotlib figure object
-    filename : path or str
-        name of the output file
-    base_dir : path or str
-        base directory to save file
-    formats: list of str, optional
-        list of file formats to export or ``None`` to export as pdf. Default: ``None``
-    use_subfolder : bool, optional
-        whether to create an own subfolder per file format and export figures into these subfolders. Default: True
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> import biopsykit as bp
-    >>> fig = plt.Figure()
-    >>>
-    >>> base_dir = "./img"
-    >>> filename = "plot"
-    >>> formats = ["pdf", "png"]
-
-    >>> # Export into subfolders (default)
-    >>> bp.plotting.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats)
-    >>> # | img/
-    >>> # | - pdf/
-    >>> # | - - plot.pdf
-    >>> # | - png/
-    >>> # | - - plot.png
-
-    >>> # Export into one folder
-    >>> bp.plotting.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats, use_subfolder=False)
-    >>> # | img/
-    >>> # | - plot.pdf
-    >>> # | - plot.png
-    """
-    if formats is None:
-        formats = ['pdf']
-
-    # ensure pathlib
-    base_dir = Path(base_dir)
-    filename = Path(filename)
-    subfolders = [base_dir] * len(formats)
-
-    if use_subfolder:
-        subfolders = [base_dir.joinpath(f) for f in formats]
-        for folder in subfolders:
-            folder.mkdir(exist_ok=True, parents=True)
-
-    for f, subfolder in zip(formats, subfolders):
-        fig.savefig(subfolder.joinpath(filename.name + '.' + f), transparent=(f == 'pdf'), format=f)
 
 
 # TODO add signal plot method for all phases
@@ -145,7 +87,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
         heart_rate = ecg_processor.heart_rate[key]
         sampling_rate = ecg_processor.sampling_rate
 
-    sns.set_palette(utils.cmap_fau)
+    sns.set_palette(colors.cmap_fau)
     if isinstance(ecg_signal.index, pd.DatetimeIndex):
         plt.rcParams['timezone'] = ecg_signal.index.tz.zone
 
@@ -191,7 +133,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
 
     # Plot quality area first
     axs['ecg'].fill_between(x_axis, minimum_line, quality, alpha=0.2, zorder=2,
-                            interpolate=True, facecolor=utils.fau_color('med'), label='Quality')
+                            interpolate=True, facecolor=colors.fau_color('med'), label='Quality')
 
     peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
     outlier = np.array([])
@@ -201,12 +143,12 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     peaks = np.setdiff1d(peaks, outlier)
     # Plot signals
     # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=utils.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
-    axs['ecg'].plot(ecg_clean, color=utils.fau_color('fau'), label="Cleaned", zorder=1,
+    axs['ecg'].plot(ecg_clean, color=colors.fau_color('fau'), label="Cleaned", zorder=1,
                     linewidth=1.5)
-    axs['ecg'].scatter(x_axis[peaks], ecg_clean.iloc[peaks], color=utils.fau_color('nat'),
+    axs['ecg'].scatter(x_axis[peaks], ecg_clean.iloc[peaks], color=colors.fau_color('nat'),
                        label="R Peaks", zorder=2)
     if "R_Peak_Outlier" in ecg_signal:
-        axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=utils.fau_color('phil'),
+        axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=colors.fau_color('phil'),
                            label="Outlier", zorder=2)
     axs['ecg'].set_ylabel("ECG Quality")
 
@@ -221,6 +163,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
 
     # Plot heart rate
     hr_plot(heart_rate, axs['hr'])
+    axs['hr'].set_xlabel("Time")
 
     # Plot individual heart beats
     if plot_individual_beats:
@@ -270,7 +213,7 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
 
-    sns.set_palette(utils.cmap_fau)
+    sns.set_palette(colors.cmap_fau)
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
@@ -282,11 +225,11 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
         ax.set_title("Heart Rate – {}".format(title))
 
     ax.set_ylabel("Heart Rate [bpm]")
-    ax.plot(heart_rate["ECG_Rate"], color=utils.fau_color('wiso'), label="Heart Rate", linewidth=1.5)
+    ax.plot(heart_rate["ECG_Rate"], color=colors.fau_color('wiso'), label="Heart Rate", linewidth=1.5)
     if plot_mean:
         rate_mean = heart_rate["ECG_Rate"].mean()
         ax.axhline(y=rate_mean, label="Mean: {:.1f} bpm".format(rate_mean), linestyle="--",
-                   color=utils.adjust_color('wiso'), linewidth=2)
+                   color=colors.adjust_color('wiso'), linewidth=2)
         ax.margins(x=0)
         ax.legend(loc="upper right")
 
@@ -427,13 +370,16 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None
             figsize = plt.rcParams['figure.figsize']
         fig, ax = plt.subplots(figsize=figsize)
 
-    ax = sns.distplot(heart_rate, color=utils.fau_color('tech'), ax=ax)
+    ax = sns.histplot(heart_rate, color=colors.fau_color('tech'), ax=ax, kde=True, legend=False)
 
     ax.set_title("Heart Rate Distribution")
+
     ax.set_xlabel("Heart Rate [bpm]")
     ax.set_xlim(heart_rate.min().min() - 1, heart_rate.max().max() + 1)
     ax.tick_params(axis='x', which='major', bottom=True, labelbottom=True)
+
     ax.set_yticks([])
+    ax.set_ylabel("")
 
     if fig:
         fig.tight_layout()
@@ -534,10 +480,9 @@ def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 25
 
     rri = _get_rr_intervals(rpeaks, sampling_rate)
 
-    sns.set_palette(utils.cmap_fau_blue('2'))
-    sns.distplot(rri, ax=ax, bins=10, kde=False, rug=True,
-                 rug_kws={'lw': 1.5, 'height': 0.05, 'zorder': 2},
-                 hist_kws={'alpha': 0.5, 'zorder': 1})
+    sns.set_palette(colors.cmap_fau_blue('2'))
+    sns.histplot(rri, ax=ax, bins=10, kde=False, alpha=0.5, zorder=1)
+    sns.rugplot(rri, ax=ax, lw=1.5, height=0.05, zorder=2)
     ax2 = ax.twinx()
     sns.kdeplot(rri, ax=ax2, lw=2.0, zorder=1)
     ax2.set_ylim(0)
@@ -555,10 +500,10 @@ def rr_distribution_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 25
         widths=ax2.get_ylim()[-1] / 10,
         manage_ticks=False,
         patch_artist=True,
-        boxprops=dict(linewidth=2.0, color=utils.adjust_color('tech', 0.5), facecolor=utils.fau_color('tech')),
-        medianprops=dict(linewidth=2.0, color=utils.adjust_color('tech', 0.5)),
-        whiskerprops=dict(linewidth=2.0, color=utils.adjust_color('tech', 0.5)),
-        capprops=dict(linewidth=2.0, color=utils.adjust_color('tech', 0.5)),
+        boxprops=dict(linewidth=2.0, color=colors.adjust_color('tech', 0.5), facecolor=colors.fau_color('tech')),
+        medianprops=dict(linewidth=2.0, color=colors.adjust_color('tech', 0.5)),
+        whiskerprops=dict(linewidth=2.0, color=colors.adjust_color('tech', 0.5)),
+        capprops=dict(linewidth=2.0, color=colors.adjust_color('tech', 0.5)),
         zorder=4
     )
 
@@ -619,32 +564,32 @@ def hrv_poincare_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
 
     area = np.pi * sd1 * sd2
 
-    sns.set_palette(utils.cmap_fau_blue('2'))
-    sns.kdeplot(rri[:-1], rri[1:], ax=axs[0], n_levels=20, shade=True, shade_lowest=False, alpha=0.8)
-    sns.scatterplot(rri[:-1], rri[1:], ax=axs[0], alpha=0.5, edgecolor=utils.fau_color('fau'))
-    sns.distplot(rri[:-1], bins=int(len(rri) / 10), ax=axs[1], hist_kws=dict(edgecolor="none"))
-    sns.distplot(rri[1:], bins=int(len(rri) / 10), ax=axs[2], vertical=True, hist_kws=dict(edgecolor="none"))
+    sns.set_palette(colors.cmap_fau_blue('2'))
+    sns.kdeplot(x=rri[:-1], y=rri[1:], ax=axs[0], n_levels=20, shade=True, thresh=0.05, alpha=0.8)
+    sns.scatterplot(x=rri[:-1], y=rri[1:], ax=axs[0], alpha=0.5, edgecolor=colors.fau_color('fau'))
+    sns.histplot(x=rri[:-1], bins=int(len(rri) / 10), ax=axs[1], edgecolor="none")
+    sns.histplot(y=rri[1:], bins=int(len(rri) / 10), ax=axs[2], edgecolor="none")
 
     ellipse = mpl.patches.Ellipse((mean_rri, mean_rri), width=2 * sd2, height=2 * sd1, angle=45,
-                                  ec=utils.fau_color('fau'),
-                                  fc=utils.adjust_color('fau', 1.5), alpha=0.8)
+                                  ec=colors.fau_color('fau'),
+                                  fc=colors.adjust_color('fau', 1.5), alpha=0.8)
     axs[0].add_artist(ellipse)
 
     na = 4
     arr_sd1 = axs[0].arrow(mean_rri, mean_rri, -(sd1 - na) * np.cos(np.deg2rad(45)),
                            (sd1 - na) * np.cos(np.deg2rad(45)), head_width=na, head_length=na, linewidth=2.0,
-                           ec=utils.fau_color('phil'), fc=utils.fau_color('phil'), zorder=4)
+                           ec=colors.fau_color('phil'), fc=colors.fau_color('phil'), zorder=4)
     arr_sd2 = axs[0].arrow(mean_rri, mean_rri, (sd2 - na) * np.cos(np.deg2rad(45)),
                            (sd2 - na) * np.sin(np.deg2rad(45)), head_width=na, head_length=na, linewidth=2.0,
-                           ec=utils.fau_color('med'), fc=utils.fau_color('med'), zorder=4)
+                           ec=colors.fau_color('med'), fc=colors.fau_color('med'), zorder=4)
     axs[0].add_line(
         mpl.lines.Line2D((np.min(rri), np.max(rri)),
                          (np.min(rri), np.max(rri)),
-                         c=utils.fau_color('med'), ls=':', lw=2.0, alpha=0.8))
+                         c=colors.fau_color('med'), ls=':', lw=2.0, alpha=0.8))
     axs[0].add_line(
         mpl.lines.Line2D((mean_rri - sd1 * np.cos(np.deg2rad(45)) * na, mean_rri + sd1 * np.cos(np.deg2rad(45)) * na),
                          (mean_rri + sd1 * np.sin(np.deg2rad(45)) * na, mean_rri - sd1 * np.sin(np.deg2rad(45)) * na),
-                         c=utils.fau_color('phil'), ls=':', lw=2.0, alpha=0.8))
+                         c=colors.fau_color('phil'), ls=':', lw=2.0, alpha=0.8))
     # for Area and SD1/SD2 in Legend
     a3 = mpl.patches.Patch(facecolor='white', alpha=0.0)
     a4 = mpl.patches.Patch(facecolor='white', alpha=0.0)
@@ -707,6 +652,10 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]
     out_bands.columns = [col.replace('HRV_', '') for col in out_bands.columns]
     _hrv_frequency_show(rri, out_bands, sampling_rate=256, ax=ax)
+
+    ax.set_title("Power Spectral Density (PSD)")
+    ax.set_ylabel("Spectrum $[{ms}^2/Hz]$")
+    ax.set_xlabel("Frequency [Hz]")
 
     ax.tick_params(axis='both', left=True, bottom=True)
     ax.margins(x=0)

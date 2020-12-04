@@ -3,16 +3,12 @@
 
 @author: Robert Richer, Arne Küderle
 """
-import warnings
 from pathlib import Path
-from typing import TypeVar, Sequence, Optional, Dict, Union, List
+from typing import TypeVar, Sequence, Optional, Dict, Union
 import pytz
-import datetime
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 from nilspodlib import Dataset
 
 path_t = TypeVar('path_t', str, Path)
@@ -21,41 +17,72 @@ T = TypeVar('T')
 tz = pytz.timezone('Europe/Berlin')
 utc = pytz.timezone('UTC')
 
-cmap_fau = sns.color_palette(["#003865", "#c99313", "#8d1429", "#00b1eb", "#009b77", "#98a4ae"])
-_keys_fau = ['fau', 'phil', 'wiso', 'med', 'nat', 'tech']
 
+def export_figure(fig: 'plt.Figure', filename: path_t, base_dir: path_t, formats: Optional[Sequence[str]] = None,
+                  use_subfolder: Optional[bool] = True) -> None:
+    """
+    Exports a figure to a file.
 
-def cmap_fau_blue(cmap_type: Union[str, None]) -> Sequence[str]:
-    palette_fau = sns.color_palette(
-        ["#001628", "#001F38", "#002747", "#003056", "#003865",
-         "#26567C", "#4D7493", "#7392AA", "#99AFC1", "#BFCDD9",
-         "#E6EBF0"]
-    )
-    if cmap_type == '3':
-        return palette_fau[1::3]
-    elif cmap_type == '2':
-        return palette_fau[5::4]
-    elif cmap_type == '2_lp':
-        return palette_fau[2::5]
-    else:
-        return palette_fau
+    Parameters
+    ----------
+    fig : Figure
+        matplotlib figure object
+    filename : path or str
+        name of the output file
+    base_dir : path or str
+        base directory to save file
+    formats: list of str, optional
+        list of file formats to export or ``None`` to export as pdf. Default: ``None``
+    use_subfolder : bool, optional
+        whether to create an own subfolder per file format and export figures into these subfolders. Default: True
 
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import biopsykit as bp
+    >>> fig = plt.Figure()
+    >>>
+    >>> base_dir = "./img"
+    >>> filename = "plot"
+    >>> formats = ["pdf", "png"]
 
-def fau_color(key: str) -> str:
-    return cmap_fau[_keys_fau.index(key)] or cmap_fau['fau']
+    >>> # Export into subfolders (default)
+    >>> bp.plotting.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats)
+    >>> # | img/
+    >>> # | - pdf/
+    >>> # | - - plot.pdf
+    >>> # | - png/
+    >>> # | - - plot.png
 
+    >>> # Export into one folder
+    >>> bp.plotting.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats, use_subfolder=False)
+    >>> # | img/
+    >>> # | - plot.pdf
+    >>> # | - plot.png
+    """
+    import matplotlib.pyplot as plt
 
-def adjust_color(key: str, amount: Optional[float] = 1.5) -> str:
-    import colorsys
-    import matplotlib.colors as mc
-    c = colorsys.rgb_to_hls(*mc.to_rgb(fau_color(key)))
-    return mc.to_hex(colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2]))
+    if formats is None:
+        formats = ['pdf']
+
+    # ensure pathlib
+    base_dir = Path(base_dir)
+    filename = Path(filename)
+    subfolders = [base_dir] * len(formats)
+
+    if use_subfolder:
+        subfolders = [base_dir.joinpath(f) for f in formats]
+        for folder in subfolders:
+            folder.mkdir(exist_ok=True, parents=True)
+
+    for f, subfolder in zip(formats, subfolders):
+        fig.savefig(subfolder.joinpath(filename.name + '.' + f), transparent=(f == 'pdf'), format=f)
 
 
 def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
                dataset: Optional[Dataset] = None, df: Optional[pd.DataFrame] = None,
-               timezone: Optional[Union[str, pytz.timezone]] = tz, include_start: Optional[bool] = False) -> Dict[
-    str, pd.DataFrame]:
+               timezone: Optional[Union[str, pytz.timezone]] = tz,
+               include_start: Optional[bool] = False) -> Dict[str, pd.DataFrame]:
     """
     Splits the data into parts based on time intervals.
 

@@ -45,6 +45,7 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
         timezone = pytz.timezone(timezone)
     # convert dataset to dataframe and localize timestamp
     df = dataset.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
+    df.index.name = "time"
     return df, int(dataset.info.sampling_rate_hz)
 
 
@@ -76,7 +77,7 @@ def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[S
     df.index = ((df.index / sampling_rate) * 1e9).astype(int)
     # add start time as offset and convert into datetime index
     df.index = pd.to_datetime(df.index + start_time)
-    df.index.name = "date"
+    df.index.name = "time"
 
     df_filt = pd.DataFrame(index=df.index)
     if datastreams is None:
@@ -198,7 +199,7 @@ def load_subject_condition_list(file_path: path_t, subject_col: Optional[str] = 
     if excluded_subjects:
         df_cond.drop(index=excluded_subjects, inplace=True)
     if return_dict:
-        return df_cond.groupby("condition").groups
+        return df_cond.groupby(condition_col).groups
     else:
         return df_cond
 
