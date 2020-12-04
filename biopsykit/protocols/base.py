@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import biopsykit.colors as colors
+import biopsykit.signals.utils as utils
 
 
 class BaseProtocol:
@@ -52,8 +53,8 @@ class BaseProtocol:
     def saliva_params(self, saliva_params: Dict):
         self._saliva_params.update(saliva_params)
 
-    def _concat_phase_dict(self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
-                           phases: Sequence[str]) -> Dict[str, pd.DataFrame]:
+    def concat_phase_dict(self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
+                          phases: Sequence[str]) -> Dict[str, pd.DataFrame]:
         """
         Rearranges the 'HR subject dict' (see `utils.load_hr_excel_all_subjects`) into 'Phase dict', i.e. a dictionary with
         one dataframe per Stress Test phase where each dataframe contains column-wise HR data for all subjects.
@@ -77,18 +78,11 @@ class BaseProtocol:
 
         """
 
-        dict_phase: Dict[str, pd.DataFrame] = {key: pd.DataFrame(columns=list(dict_hr_subject.keys())) for key in
-                                               phases}
-        for subj in dict_hr_subject:
-            dict_bl = dict_hr_subject[subj]
-            for phase in phases:
-                dict_phase[phase][subj] = dict_bl[phase]['ECG_Rate']
+        return utils.concat_phase_dict(dict_hr_subject, phases)
 
-        return dict_phase
-
-    def _split_subphases(self, data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-                         subphase_names: Sequence[str], subphase_times: Sequence[Tuple[int, int]],
-                         is_group_dict: Optional[bool] = False) \
+    def split_subphases(self, data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
+                        subphase_names: Sequence[str], subphase_times: Sequence[Tuple[int, int]],
+                        is_group_dict: Optional[bool] = False) \
             -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
         """
         Splits a `Phase dict` (or a dict of such, in case of multiple groups, see ``bp.protocols.utils.concat_dicts``)
@@ -132,8 +126,8 @@ class BaseProtocol:
         if is_group_dict:
             # recursively call this function for each group
             return {
-                group: self._split_subphases(data=dict_group, subphase_names=subphase_names,
-                                             subphase_times=subphase_times)
+                group: self.split_subphases(data=dict_group, subphase_names=subphase_names,
+                                            subphase_times=subphase_times)
                 for group, dict_group in data.items()}
         else:
             phase_dict = {}
@@ -143,8 +137,8 @@ class BaseProtocol:
                                      zip(subphase_names, subphase_times)}
             return phase_dict
 
-    def _split_groups(self, phase_dict: Dict[str, pd.DataFrame],
-                      condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+    def split_groups(self, phase_dict: Dict[str, pd.DataFrame],
+                     condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Splits 'Phase dict' into group dict, i.e. one 'Phase dict' per group.
 
@@ -258,7 +252,8 @@ class BaseProtocol:
                 # Dict was passed => multiple groups (where each entry is a dataframe per group) or multiple biomarker
                 # (where each entry is one biomarker)
                 if all(['time' in d.index.names for d in data.values()]):
-                    saliva_times = np.array([d.index.get_level_values('time').unique() for d in data.values()], dtype=object)
+                    saliva_times = np.array([d.index.get_level_values('time').unique() for d in data.values()],
+                                            dtype=object)
                     if not all([len(saliva_time) == len(saliva_times[0]) for saliva_time in saliva_times]):
                         raise ValueError(
                             "Different saliva time lengths passed! Did you pass multiple biomarkers? "

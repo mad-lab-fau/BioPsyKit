@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tqdm.notebook import tqdm
 
 import biopsykit.signals.ecg as ecg
-from biopsykit.signals.ecg import EcgProcessor
+import biopsykit.signals.utils as utils
 import biopsykit.colors as colors
 import biopsykit.protocols.base as base
 
@@ -102,12 +102,13 @@ class MIST(base.BaseProtocol):
         if subphase_durations:
             self.subphase_durations = subphase_durations
 
-    def cut_feedback_interval(
+    def interpolate_and_cut_feedback_interval(
             self,
             dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]
     ) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
-        Cuts heart rate data of each subject to equal length, i.e. to the minimal duration of each MIST phase
+        Interpolates heart rate input to a frequency of 1 Hz and then cuts heart rate data of
+        each subject to equal length, i.e. to the minimal duration of each MIST phase
         (due to variable length of the Feedback interval).
 
         Parameters
@@ -123,24 +124,17 @@ class MIST(base.BaseProtocol):
             where each MIST phase is cut to the minimum duration of all subjects
 
         """
+        dict_hr_subject = dict_hr_subject.copy()
         # skip Part1 and Part2, extract only MIST Phases
+        for subject_id, dict_subject in dict_hr_subject.items():
+            for phase in ['Part1', 'Part2']:
+                if phase in dict_subject:
+                    dict_subject.pop(phase)
 
-        durations = np.array(
-            [[len(df) for phase, df in dict_hr.items() if phase not in ['Part1', 'Part2']] for dict_hr in
-             dict_hr_subject.values()])
+        return utils.interpolate_and_cut(dict_hr_subject)
 
-        # minimal duration of each MIST Phase
-        min_dur = {phase: dur for phase, dur in zip(self.phases, np.min(durations, axis=0))}
-
-        for subject_id, dict_hr in dict_hr_subject.items():
-            dict_hr_cut = {}
-            for phase in self.phases:
-                dict_hr_cut[phase] = dict_hr[phase][0:min_dur[phase]]
-            dict_hr_subject[subject_id] = dict_hr_cut
-
-        return dict_hr_subject
-
-    def concat_phase_dict(self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, pd.DataFrame]:
+    def concat_phase_dict(self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
+                          **kwargs) -> Dict[str, pd.DataFrame]:
         """
         Rearranges the 'HR subject dict' (see `util s.load_hr_excel_all_subjects`) into 'MIST Phase dict'.
         See ``bp.protocols.utils.concat_phase_dict`` for further information.
@@ -149,6 +143,7 @@ class MIST(base.BaseProtocol):
         ----------
         dict_hr_subject : dict
             'HR subject dict', i.e. a nested dict with heart rate data per MIST phase and subject
+        **kwargs
 
         Returns
         -------
@@ -156,13 +151,14 @@ class MIST(base.BaseProtocol):
             'MIST dict', i.e. a dict with heart rate data of all subjects per MIST phase
 
         """
-        return super()._concat_phase_dict(dict_hr_subject, self.phases)
+        if 'phases' in kwargs:
+            return super().concat_phase_dict(dict_hr_subject, kwargs['phases'])
+        else:
+            return super().concat_phase_dict(dict_hr_subject, self.phases)
 
-    def split_subphases(
-            self,
-            phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-            is_group_dict: Optional[bool] = False
-    ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
+    def split_subphases(self, phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
+                        is_group_dict: Optional[bool] = False, **kwargs) -> Union[
+        Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
         """
         Splits a `MIST Phase dict` (or a dict of such, in case of multiple groups,
         see ``bp.protocols.utils.concat_dict``)
@@ -174,6 +170,7 @@ class MIST(base.BaseProtocol):
             'Phase dict' or nested dict of 'Phase dicts' if `is_group_dict` is ``True``
         is_group_dict : bool, optional
             ``True`` if group dict was passed, ``False`` otherwise. Default: ``False``
+        **kwargs
 
         Returns
         -------
@@ -182,10 +179,14 @@ class MIST(base.BaseProtocol):
             nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
 
         """
-        subphase_times = self.get_mist_times(phase_dict=phase_dict, is_group_dict=is_group_dict)
-        return super()._split_subphases(data=phase_dict, subphase_names=self.subphases,
-                                        subphase_times=subphase_times,
-                                        is_group_dict=is_group_dict)
+        if 'subphase_times' in kwargs and 'subphases' in kwargs:
+            subphase_times = kwargs['subphase_times']
+            subphase_names = kwargs['subphases']
+        else:
+            subphase_times = self.get_mist_times(phase_dict=phase_dict, is_group_dict=is_group_dict)
+            subphase_names = self.subphases
+        return super().split_subphases(data=phase_dict, subphase_names=subphase_names, subphase_times=subphase_times,
+                                       is_group_dict=is_group_dict)
 
     @classmethod
     def split_groups(cls, phase_dict: Dict[str, pd.DataFrame],
@@ -206,9 +207,9 @@ class MIST(base.BaseProtocol):
         -------
         dict
             nested group dict with one 'MIST Phase dict' per group
-
         """
-        return super()._split_groups(phase_dict, condition_dict)
+
+        return super().split_groups(phase_dict, condition_dict)
 
     def get_mist_times(
             self,
@@ -322,7 +323,7 @@ class MIST(base.BaseProtocol):
             raise ValueError("Either `ecg_processor` or `dict_rpeaks` and `dict_ecg` must be passed as arguments!")
 
         # get all desired parameter types
-        possible_param_types = {'hrv': EcgProcessor.hrv_process, 'rsp': EcgProcessor.rsp_rsa_process}
+        possible_param_types = {'hrv': ecg.EcgProcessor.hrv_process, 'rsp': ecg.EcgProcessor.rsp_rsa_process}
         if param_types == 'all':
             param_types = possible_param_types
 
