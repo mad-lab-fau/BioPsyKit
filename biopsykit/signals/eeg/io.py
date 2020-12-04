@@ -16,3 +16,7 @@ def load_eeg_muse(file_path: path_t) -> Tuple[pd.DataFrame, int]:
     # drop the AUX column
     data.drop(columns="Right AUX", inplace=True)
     return data, sampling_rate
+
+
+def write_frequency_bands(data: pd.DataFrame, file_path: path_t):
+    data.to_csv(file_path)
