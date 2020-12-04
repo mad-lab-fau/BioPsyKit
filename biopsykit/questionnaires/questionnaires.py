@@ -123,7 +123,8 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
-def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+           idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """
     **Trier Inventory for Chronic Stress (Short Version) (TICS-S)**
 
@@ -155,12 +156,25 @@ def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
         See `questionnaires.utils.convert_scale()`
+    idxs : dict, optional
+        dictionary with subscales as keys and the indices of the subscale items as values
 
     Returns
     -------
     pd.DataFrame
         TICS score
 
+
+    Examples
+    --------
+    >>> from biopsykit.questionnaires import tics_s
+    >>> # custom indices
+    >>> idxs = {
+    >>>     'WorkOverload': [1, 2, 3],
+    >>>     'SocialOverload': [4, 5, 6],
+    >>>     # ...
+    >>> }
+    >>> tics_s_result = tics_s(data, idxs=idxs)
 
     References
     ------------
@@ -176,18 +190,19 @@ def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
 
     _check_score_range_exception(data, score_range)
 
-    idxs = {
-        'WorkOverload': [1, 3, 21],
-        'SocialOverload': [11, 18, 28],
-        'PressureToPerform': [5, 14, 29],
-        'WorkDiscontent': [8, 13, 24],
-        'DemandsWork': [12, 16, 27],
-        'PressureSocial': [6, 15, 22],
-        'LackSocialRec': [2, 20, 23],
-        'SocialTension': [4, 9, 26],
-        'SocialIsolation': [19, 25, 30],
-        'ChronicWorry': [7, 10, 17]
-    }
+    if idxs is None:
+        idxs = {
+            'WorkOverload': [1, 3, 21],
+            'SocialOverload': [11, 18, 28],
+            'PressureToPerform': [5, 14, 29],
+            'WorkDiscontent': [8, 13, 24],
+            'DemandsWork': [12, 16, 27],
+            'PressureSocial': [6, 15, 22],
+            'LackSocialRec': [2, 20, 23],
+            'SocialTension': [4, 9, 26],
+            'SocialIsolation': [19, 25, 30],
+            'ChronicWorry': [7, 10, 17]
+        }
 
     tics = {
         '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
@@ -198,7 +213,8 @@ def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     return pd.DataFrame(tics, index=data.index)
 
 
-def tics_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def tics_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+           idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """
     **Trier Inventory for Chronic Stress (Long Version) (TICS-L)**
 
@@ -230,6 +246,8 @@ def tics_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
         See `questionnaires.utils.convert_scale()`
+    idxs : dict, optional
+        dictionary with subscales as keys and the indices of the subscale items as values
 
     Returns
     -------
@@ -251,17 +269,18 @@ def tics_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
 
     _check_score_range_exception(data, score_range)
 
-    idxs = {
-        'WorkOverload': [50, 38, 44, 54, 17, 4, 27, 1],  # Arbeitsüberlastung
-        'SocialOverload': [39, 28, 49, 19, 7, 57],  # Soziale Überlastung
-        'PressureToPerform': [23, 43, 32, 22, 12, 14, 8, 40, 30],  # Erfolgsdruck
-        'WorkDiscontent': [21, 53, 10, 48, 41, 13, 37, 5],  # Unzufriedenheit mit der Arbeit
-        'DemandsWork': [55, 24, 20, 35, 47, 3],  # Überforderung bei der Arbeit
-        'LackSocialRec': [31, 18, 46, 2],  # Mangel an sozialer Anerkennung
-        'SocialTension': [26, 15, 45, 52, 6, 33],  # Soziale Spannungen
-        'SocialIsolation': [42, 51, 34, 56, 11, 29],  # Soziale Isolation
-        'ChronicWorry': [36, 25, 16, 9]  # Chronische Besorgnis
-    }
+    if idxs is None:
+        idxs = {
+            'WorkOverload': [50, 38, 44, 54, 17, 4, 27, 1],  # Arbeitsüberlastung
+            'SocialOverload': [39, 28, 49, 19, 7, 57],  # Soziale Überlastung
+            'PressureToPerform': [23, 43, 32, 22, 12, 14, 8, 40, 30],  # Erfolgsdruck
+            'WorkDiscontent': [21, 53, 10, 48, 41, 13, 37, 5],  # Unzufriedenheit mit der Arbeit
+            'DemandsWork': [55, 24, 20, 35, 47, 3],  # Überforderung bei der Arbeit
+            'LackSocialRec': [31, 18, 46, 2],  # Mangel an sozialer Anerkennung
+            'SocialTension': [26, 15, 45, 52, 6, 33],  # Soziale Spannungen
+            'SocialIsolation': [42, 51, 34, 56, 11, 29],  # Soziale Isolation
+            'ChronicWorry': [36, 25, 16, 9]  # Chronische Besorgnis
+        }
 
     tics = {
         '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
@@ -432,7 +451,8 @@ def hads(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     return pd.DataFrame(hads_data, index=data.index)
 
 
-def type_d_scale(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def type_d_scale(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+                 idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Type D Personality Scale"""
 
     score_name = "DS"
@@ -447,10 +467,11 @@ def type_d_scale(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
     # Reverse scores 1, 3
     invert(data, cols=to_idx([1, 3]), score_range=score_range)
 
-    idxs = {
-        'NegativeAffect': [2, 4, 5, 7, 9, 12, 13],
-        'SocialInhibition': [1, 3, 6, 8, 10, 11, 14]
-    }
+    if idxs is None:
+        idxs = {
+            'NegativeAffect': [2, 4, 5, 7, 9, 12, 13],
+            'SocialInhibition': [1, 3, 6, 8, 10, 11, 14]
+        }
 
     ds = {'{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
     ds[score_name] = data.sum(axis=1)
@@ -474,7 +495,8 @@ def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
-def scs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def scs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Self-Compassion Scale
     https://www.academia.edu/2040459
     """
@@ -491,14 +513,15 @@ def scs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     # Reverse scores 1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25
     invert(data, cols=to_idx([1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25]), score_range=score_range)
 
-    idxs = {
-        'SelfKindness': [5, 12, 19, 23, 26],
-        'SelfJudgment': [1, 8, 11, 16, 21],
-        'CommonHumanity': [3, 7, 10, 15],
-        'Isolation': [4, 13, 18, 25],
-        'Mindfulness': [9, 14, 17, 22],
-        'OverIdentified': [2, 6, 20, 24]
-    }
+    if idxs is None:
+        idxs = {
+            'SelfKindness': [5, 12, 19, 23, 26],
+            'SelfJudgment': [1, 8, 11, 16, 21],
+            'CommonHumanity': [3, 7, 10, 15],
+            'Isolation': [4, 13, 18, 25],
+            'Mindfulness': [9, 14, 17, 22],
+            'OverIdentified': [2, 6, 20, 24]
+        }
 
     # SCS is a mean, not a sum score!
     scs_data = {
@@ -547,7 +570,8 @@ def midi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     return pd.DataFrame(data.mean(axis=1), columns=[score_name])
 
 
-def tsgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def tsgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+         idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Trait Shame and Guilt Scale"""
 
     score_name = "TSGS"
@@ -559,11 +583,12 @@ def tsgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     _check_score_range_exception(data, score_range)
 
-    idxs = {
-        'Shame': [2, 5, 8, 11, 14],
-        'Guilt': [3, 6, 9, 12, 15],
-        'Pride': [1, 4, 7, 10, 13],
-    }
+    if idxs is None:
+        idxs = {
+            'Shame': [2, 5, 8, 11, 14],
+            'Guilt': [3, 6, 9, 12, 15],
+            'Pride': [1, 4, 7, 10, 13],
+        }
 
     tsgs_data = {
         '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
@@ -572,7 +597,8 @@ def tsgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     return pd.DataFrame(tsgs_data, index=data.index)
 
 
-def rmidips(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def rmidips(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+            idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Revised Midlife Development Inventory (MIDI) Personality Scale"""
 
     score_name = "RMIDIPS"
@@ -590,14 +616,15 @@ def rmidips(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]
     # re-reverse scores 19, 24
     invert(data, cols=to_idx([19, 24]), score_range=score_range)
 
-    idxs = {
-        'Neuroticism': [3, 8, 13, 19],
-        'Extraversion': [1, 6, 11, 23, 27],
-        'Openness': [14, 17, 21, 22, 25, 28, 29],
-        'Conscientiousness': [4, 9, 16, 24, 31],
-        'Agreeableness': [2, 7, 12, 18, 26],
-        'Agency': [5, 10, 15, 20, 30]
-    }
+    if idxs is None:
+        idxs = {
+            'Neuroticism': [3, 8, 13, 19],
+            'Extraversion': [1, 6, 11, 23, 27],
+            'Openness': [14, 17, 21, 22, 25, 28, 29],
+            'Conscientiousness': [4, 9, 16, 24, 31],
+            'Agreeableness': [2, 7, 12, 18, 26],
+            'Agency': [5, 10, 15, 20, 30]
+        }
 
     # RMIDIPS is a mean, not a sum score!
     rmidips_data = {
@@ -631,7 +658,8 @@ def lsq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     return pd.DataFrame(lsq_data, index=data.index)
 
 
-def ctq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def ctq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Childhood Trauma Questionnaire"""
 
     score_name = "CTQ"
@@ -646,14 +674,15 @@ def ctq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     # reverse scores 2, 5, 7, 13, 19, 26, 28
     invert(data, cols=to_idx([2, 5, 7, 13, 19, 26, 28]), score_range=score_range)
 
-    idxs = {
-        'PhysicalAbuse': [9, 11, 12, 15, 17],
-        'SexualAbuse': [20, 21, 23, 24, 27],
-        'EmotionalNeglect': [5, 7, 13, 19, 28],
-        'PhysicalNeglect': [1, 2, 4, 6, 26],
-        'EmotionalAbuse': [3, 8, 14, 18, 25],
-        'Validity': [10, 16, 22]
-    }
+    if idxs is None:
+        idxs = {
+            'PhysicalAbuse': [9, 11, 12, 15, 17],
+            'SexualAbuse': [20, 21, 23, 24, 27],
+            'EmotionalNeglect': [5, 7, 13, 19, 28],
+            'PhysicalNeglect': [1, 2, 4, 6, 26],
+            'EmotionalAbuse': [3, 8, 14, 18, 25],
+            'Validity': [10, 16, 22]
+        }
 
     ctq_data = {
         '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
@@ -714,7 +743,8 @@ def trait_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
-def body_esteem(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def body_esteem(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+                idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Body-Esteem Scale for Adolescents and Adults"""
 
     score_name = "BodyEsteem"
@@ -729,11 +759,12 @@ def body_esteem(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.In
     # reverse scores 4, 7, 9, 11, 13, 17, 18, 19, 21
     invert(data, cols=to_idx([4, 7, 9, 11, 13, 17, 18, 19, 21]), score_range=score_range)
 
-    idxs = {
-        'Appearance': [1, 6, 9, 7, 11, 13, 15, 17, 21, 23],
-        'Weight': [3, 4, 8, 10, 16, 18, 19, 22],
-        'Attribution': [2, 5, 12, 14, 20],
-    }
+    if idxs is None:
+        idxs = {
+            'Appearance': [1, 6, 9, 7, 11, 13, 15, 17, 21, 23],
+            'Weight': [3, 4, 8, 10, 16, 18, 19, 22],
+            'Attribution': [2, 5, 12, 14, 20],
+        }
 
     # BE is a mean, not a sum score!
     be = {
@@ -744,7 +775,8 @@ def body_esteem(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.In
     return pd.DataFrame(be, index=data.index)
 
 
-def fscr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def fscr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+         idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Forms of Self-Criticizing/Attacking and Self-Reassuring Scale"""
 
     score_name = "FSCR"
@@ -756,20 +788,22 @@ def fscr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     _check_score_range_exception(data, score_range)
 
-    idxs_fscr = {
-        'InadequateSelf': [1, 2, 4, 6, 7, 14, 17, 18, 20],
-        'HatedSelf': [9, 10, 12, 15, 22],
-        'ReassuringSelf': [3, 5, 8, 11, 13, 16, 19, 21],
-    }
+    if idxs is None:
+        idxs = {
+            'InadequateSelf': [1, 2, 4, 6, 7, 14, 17, 18, 20],
+            'HatedSelf': [9, 10, 12, 15, 22],
+            'ReassuringSelf': [3, 5, 8, 11, 13, 16, 19, 21],
+        }
 
     fscr_data = {
-        '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs_fscr[key])].sum(axis=1) for key in idxs_fscr
+        '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
 
     return pd.DataFrame(fscr_data, index=data.index)
 
 
-def pasa(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def pasa(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+         idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Primary Appraisal Secondary Appraisal Scale"""
 
     score_name = "PASA"
@@ -784,27 +818,32 @@ def pasa(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     # reverse scores 1, 6, 7, 9, 10
     invert(data, cols=to_idx([1, 6, 7, 9, 10]), score_range=score_range)
 
-    idxs_pasa = {
-        'Threat': [1, 9, 5, 13],
-        'Challenge': [6, 10, 2, 14],
-        'SelfConcept': [7, 3, 11, 15],
-        'ControlExp': [4, 8, 12, 16]
-    }
+    if idxs is None:
+        idxs = {
+            'Threat': [1, 9, 5, 13],
+            'Challenge': [6, 10, 2, 14],
+            'SelfConcept': [7, 3, 11, 15],
+            'ControlExp': [4, 8, 12, 16]
+        }
 
     pasa_data = {
-        '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs_pasa[key])].sum(axis=1) for key in idxs_pasa
+        '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
 
-    pasa_data[score_name + '_Primary'] = pasa_data[score_name + '_Threat'] + pasa_data[score_name + '_Challenge']
-    pasa_data[score_name + '_Secondary'] = pasa_data[score_name + '_SelfConcept'] + pasa_data[
-        score_name + '_ControlExp']
-    pasa_data[score_name + '_StressComposite'] = pasa_data[score_name + '_Primary'] - pasa_data[
-        score_name + '_Secondary']
+    if 'Threat' in idxs and 'Challenge' in idxs:
+        pasa_data[score_name + '_Primary'] = pasa_data[score_name + '_Threat'] + pasa_data[score_name + '_Challenge']
+    if 'SelfConcept' in idxs and 'ControlExp' in idxs:
+        pasa_data[score_name + '_Secondary'] = pasa_data[score_name + '_SelfConcept'] + pasa_data[
+            score_name + '_ControlExp']
+    if 'PASA_Primary' in pasa_data and 'PASA_Secondary' in pasa_data:
+        pasa_data[score_name + '_StressComposite'] = pasa_data[score_name + '_Primary'] - pasa_data[
+            score_name + '_Secondary']
 
     return pd.DataFrame(pasa_data, index=data.index)
 
 
-def ssgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def ssgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+         idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """State Shame and Guilt Scale"""
 
     score_name = "SSGS"
@@ -816,14 +855,15 @@ def ssgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     _check_score_range_exception(data, score_range)
 
-    idxs_ssgs = {
-        'Pride': [1, 4, 7, 10, 13],
-        'Shame': [2, 5, 8, 11, 14],
-        'Guilt': [3, 6, 9, 12, 15],
-    }
+    if idxs is None:
+        idxs = {
+            'Pride': [1, 4, 7, 10, 13],
+            'Shame': [2, 5, 8, 11, 14],
+            'Guilt': [3, 6, 9, 12, 15],
+        }
 
     ssgs_data = {
-        '{}_State{}'.format(score_name, key): data.iloc[:, to_idx(idxs_ssgs[key])].sum(axis=1) for key in idxs_ssgs
+        '{}_State{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
 
     return pd.DataFrame(ssgs_data, index=data.index)
@@ -1011,7 +1051,8 @@ def stadi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] 
     return df_stadi.join(df_meta)
 
 
-def svf_120(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def svf_120(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+            idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Stressverarbeitungsfragebogen - 120 items
 
     NOTE: This implementation expects a score range of [1, 5].
@@ -1026,41 +1067,43 @@ def svf_120(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]
 
     _check_score_range_exception(data, score_range)
 
-    idx_svf = {
-        'Bag': [10, 31, 50, 67, 88, 106],  # Bagatellisierung
-        'Her': [17, 38, 52, 77, 97, 113],  # Herunterspielen
-        'Schab': [5, 30, 43, 65, 104, 119],  # Schuldabwehr
-        'Abl': [1, 20, 45, 86, 101, 111],  # Ablenkung
-        'Ers': [22, 36, 64, 74, 80, 103],  # Ersatzbefriedigung
-        'Sebest': [34, 47, 59, 78, 95, 115],  # Selbstbestätigung
-        'Entsp': [12, 28, 58, 81, 99, 114],  # Entspannung
-        'Sitkon': [11, 18, 39, 66, 91, 116],  # Situationskontrolle
-        'Rekon': [2, 26, 54, 68, 85, 109],  # Reaktionskontrolle
-        'Posi': [15, 37, 56, 71, 83, 96],  # Positive Selbstinstruktion
-        'Sozube': [3, 21, 42, 63, 84, 102],  # Soziales Unterstützungsbedürfnis
-        'Verm': [8, 29, 48, 69, 98, 118],  # Vermeidung
-        'Flu': [14, 24, 40, 62, 73, 120],  # Flucht
-        'Soza': [6, 27, 49, 76, 92, 107],  # Soziale Abkapselung
-        'Gedw': [16, 23, 55, 72, 100, 110],  # Gedankliche Weiterbeschäftigung
-        'Res': [4, 32, 46, 60, 89, 105],  # Resignation
-        'Selmit': [13, 41, 51, 79, 94, 117],  # Selbstbemitleidung
-        'Sesch': [9, 25, 35, 57, 75, 87],  # Selbstbeschuldigung
-        'Agg': [33, 44, 61, 82, 93, 112],  # Aggression
-        'Pha': [7, 19, 53, 70, 90, 108],  # Pharmakaeinnahme
-    }
+    if idxs is None:
+        idxs = {
+            'Bag': [10, 31, 50, 67, 88, 106],  # Bagatellisierung
+            'Her': [17, 38, 52, 77, 97, 113],  # Herunterspielen
+            'Schab': [5, 30, 43, 65, 104, 119],  # Schuldabwehr
+            'Abl': [1, 20, 45, 86, 101, 111],  # Ablenkung
+            'Ers': [22, 36, 64, 74, 80, 103],  # Ersatzbefriedigung
+            'Sebest': [34, 47, 59, 78, 95, 115],  # Selbstbestätigung
+            'Entsp': [12, 28, 58, 81, 99, 114],  # Entspannung
+            'Sitkon': [11, 18, 39, 66, 91, 116],  # Situationskontrolle
+            'Rekon': [2, 26, 54, 68, 85, 109],  # Reaktionskontrolle
+            'Posi': [15, 37, 56, 71, 83, 96],  # Positive Selbstinstruktion
+            'Sozube': [3, 21, 42, 63, 84, 102],  # Soziales Unterstützungsbedürfnis
+            'Verm': [8, 29, 48, 69, 98, 118],  # Vermeidung
+            'Flu': [14, 24, 40, 62, 73, 120],  # Flucht
+            'Soza': [6, 27, 49, 76, 92, 107],  # Soziale Abkapselung
+            'Gedw': [16, 23, 55, 72, 100, 110],  # Gedankliche Weiterbeschäftigung
+            'Res': [4, 32, 46, 60, 89, 105],  # Resignation
+            'Selmit': [13, 41, 51, 79, 94, 117],  # Selbstbemitleidung
+            'Sesch': [9, 25, 35, 57, 75, 87],  # Selbstbeschuldigung
+            'Agg': [33, 44, 61, 82, 93, 112],  # Aggression
+            'Pha': [7, 19, 53, 70, 90, 108],  # Pharmakaeinnahme
+        }
     svf = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_svf[key])].sum(axis=1) for key in idx_svf
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
 
     svf = pd.DataFrame(svf, index=data.index)
 
     names = ["Pos1", "Pos2", "Pos3", "Pos_Gesamt", "Neg_Gesamt"]
-    subscales = [('Bag', 'Her', 'Schab'),
-                 ('Abl', 'Ers', 'Sebest', 'Entsp'),
-                 ('Sitkon', 'Rekon', 'Posi'),
-                 ('Bag', 'Her', 'Schab', 'Abl', 'Ers', 'Sebest', 'Entsp', 'Sitkon', 'Rekon', 'Posi'),
-                 ('Flu', 'Soza', 'Gedw', 'Res', 'Selmit', 'Sesch')
-                 ]
+    subscales = [
+        ('Bag', 'Her', 'Schab'),
+        ('Abl', 'Ers', 'Sebest', 'Entsp'),
+        ('Sitkon', 'Rekon', 'Posi'),
+        ('Bag', 'Her', 'Schab', 'Abl', 'Ers', 'Sebest', 'Entsp', 'Sitkon', 'Rekon', 'Posi'),
+        ('Flu', 'Soza', 'Gedw', 'Res', 'Selmit', 'Sesch')
+    ]
 
     for n, subsc in zip(names, subscales):
         svf["{}_{}".format(score_name, n)] = svf[["{}_{}".format(score_name, s) for s in subsc]].mean(axis=1)
@@ -1068,7 +1111,8 @@ def svf_120(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]
     return svf
 
 
-def svf_42(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def svf_42(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+           idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Stressverarbeitungsfragebogen - 42 items"""
 
     score_name = "SVF42"
@@ -1080,31 +1124,32 @@ def svf_42(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
 
     _check_score_range_exception(data, score_range)
 
-    idx_svf = {
-        'Bag': [7, 22],  # Bagatellisierung
-        'Her': [11, 35],  # Herunterspielen
-        'Schab': [2, 34],  # Schuldabwehr
-        'Abl': [1, 32],  # Ablenkung
-        'Ers': [12, 42],  # Ersatzbefriedigung
-        'Sebest': [19, 37],  # Selbstbestätigung
-        'Entsp': [13, 26],  # Entspannung
-        'Sitkon': [4, 23],  # Situationskontrolle
-        'Rekon': [17, 33],  # Reaktionskontrolle
-        'Posi': [9, 24],  # Positive Selbstinstruktion
-        'Sozube': [14, 27],  # Soziales Unterstützungsbedürfnis
-        'Verm': [6, 30],  # Vermeidung
-        'Flu': [16, 40],  # Flucht
-        'Soza': [20, 29],  # Soziale Abkapselung
-        'Gedw': [10, 25],  # Gedankliche Weiterbeschäftigung
-        'Res': [38, 15],  # Resignation
-        'Hilf': [18, 28],  # Hilflosigkeit
-        'Selmit': [8, 31],  # Selbstbemitleidung
-        'Sesch': [21, 36],  # Selbstbeschuldigung
-        'Agg': [3, 39],  # Aggression
-        'Pha': [5, 41],  # Pharmakaeinnahme
-    }
+    if idxs is None:
+        idxs = {
+            'Bag': [7, 22],  # Bagatellisierung
+            'Her': [11, 35],  # Herunterspielen
+            'Schab': [2, 34],  # Schuldabwehr
+            'Abl': [1, 32],  # Ablenkung
+            'Ers': [12, 42],  # Ersatzbefriedigung
+            'Sebest': [19, 37],  # Selbstbestätigung
+            'Entsp': [13, 26],  # Entspannung
+            'Sitkon': [4, 23],  # Situationskontrolle
+            'Rekon': [17, 33],  # Reaktionskontrolle
+            'Posi': [9, 24],  # Positive Selbstinstruktion
+            'Sozube': [14, 27],  # Soziales Unterstützungsbedürfnis
+            'Verm': [6, 30],  # Vermeidung
+            'Flu': [16, 40],  # Flucht
+            'Soza': [20, 29],  # Soziale Abkapselung
+            'Gedw': [10, 25],  # Gedankliche Weiterbeschäftigung
+            'Res': [38, 15],  # Resignation
+            'Hilf': [18, 28],  # Hilflosigkeit
+            'Selmit': [8, 31],  # Selbstbemitleidung
+            'Sesch': [21, 36],  # Selbstbeschuldigung
+            'Agg': [3, 39],  # Aggression
+            'Pha': [5, 41],  # Pharmakaeinnahme
+        }
     svf = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_svf[key])].sum(axis=1) for key in idx_svf
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
 
     svf = pd.DataFrame(svf, index=data.index)
@@ -1118,7 +1163,8 @@ def svf_42(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     return svf
 
 
-def brief_cope(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def brief_cope(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+               idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Brief-COPE - 28 items"""
 
     score_name = "BriefCope"
@@ -1130,30 +1176,32 @@ def brief_cope(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Ind
 
     _check_score_range_exception(data, score_range)
 
-    idx_cope = {
-        'Self_Distraction': [1, 19],  # Ablenkung
-        'Active_Coping': [2, 7],  # Aktive Bewältigung
-        'Denial': [3, 8],  # Verleugnung
-        'Substance_Use': [4, 11],  # Alkohol/Drogen
-        'Emotional_Support': [5, 15],  # Emotionale Unterstützung
-        'Instrumental_Support': [10, 23],  # Instrumentelle Unterstützung
-        'Behavioral_Disengagement': [6, 16],  # Verhaltensrückzug
-        'Venting': [9, 21],  # Ausleben von Emotionen
-        'Pos_Reframing': [12, 17],  # Positive Umdeutung
-        'Planning': [14, 25],  # Planung
-        'Humor': [18, 28],  # Humor
-        'Acceptance': [20, 24],  # Akzeptanz
-        'Religion': [22, 27],  # Religion
-        'Self_Blame': [13, 26],  # Selbstbeschuldigung
-    }
+    if idxs is None:
+        idxs = {
+            'Self_Distraction': [1, 19],  # Ablenkung
+            'Active_Coping': [2, 7],  # Aktive Bewältigung
+            'Denial': [3, 8],  # Verleugnung
+            'Substance_Use': [4, 11],  # Alkohol/Drogen
+            'Emotional_Support': [5, 15],  # Emotionale Unterstützung
+            'Instrumental_Support': [10, 23],  # Instrumentelle Unterstützung
+            'Behavioral_Disengagement': [6, 16],  # Verhaltensrückzug
+            'Venting': [9, 21],  # Ausleben von Emotionen
+            'Pos_Reframing': [12, 17],  # Positive Umdeutung
+            'Planning': [14, 25],  # Planung
+            'Humor': [18, 28],  # Humor
+            'Acceptance': [20, 24],  # Akzeptanz
+            'Religion': [22, 27],  # Religion
+            'Self_Blame': [13, 26],  # Selbstbeschuldigung
+        }
     cope = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_cope[key])].sum(axis=1) for key in idx_cope
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
 
     return pd.DataFrame(cope, index=data.index)
 
 
-def bfi_k(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def bfi_k(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+          idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Big Five Inventory - Kurzversion"""
 
     score_name = "BFI-K"
@@ -1168,22 +1216,24 @@ def bfi_k(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] 
     # invert items 1, 2, 8, 9, 11, 12, 17, 21
     invert(data, cols=to_idx([1, 2, 8, 9, 11, 12, 17, 21]), score_range=score_range)
 
-    idx_bfik = {
-        'E': [1, 6, 11, 16],  # Extraversion
-        'V': [2, 7, 12, 17],  # Verträglichkeit
-        'G': [3, 8, 13, 18],  # Gewissenhaftigkeit
-        'N': [4, 9, 14, 19],  # Neurotizismus
-        'O': [5, 10, 15, 20, 21],  # Offenheit für neue Erfahrungen
-    }
+    if idxs is None:
+        idxs = {
+            'E': [1, 6, 11, 16],  # Extraversion
+            'V': [2, 7, 12, 17],  # Verträglichkeit
+            'G': [3, 8, 13, 18],  # Gewissenhaftigkeit
+            'N': [4, 9, 14, 19],  # Neurotizismus
+            'O': [5, 10, 15, 20, 21],  # Offenheit für neue Erfahrungen
+        }
 
     bfik = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_bfik[key])].mean(axis=1) for key in idx_bfik
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs
     }
 
     return pd.DataFrame(bfik, index=data.index)
 
 
-def rsq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def rsq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Response Styles Questionnaire"""
 
     score_name = "RSQ"
@@ -1195,22 +1245,24 @@ def rsq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     _check_score_range_exception(data, score_range)
 
-    idx_rsq = {
-        'SympRum': [2, 3, 4, 8, 11, 12, 13, 25],  # Symptomfokussierte Rumination
-        'SelbstRum': [1, 19, 26, 28, 30, 31, 32],  # Selbstfokussierte Rumination
-        'Distract': [5, 6, 7, 9, 14, 16, 18, 20],  # Distraktion
-    }
+    if idxs is None:
+        idxs = {
+            'SympRum': [2, 3, 4, 8, 11, 12, 13, 25],  # Symptomfokussierte Rumination
+            'SelbstRum': [1, 19, 26, 28, 30, 31, 32],  # Selbstfokussierte Rumination
+            'Distract': [5, 6, 7, 9, 14, 16, 18, 20],  # Distraktion
+        }
 
     rsq_data = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_rsq[key])].mean(axis=1) for key in idx_rsq
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs
     }
     rsq_data = pd.DataFrame(rsq_data, index=data.index)
 
     # invert items 5, 6, 7, 9, 14, 16, 18, 20 to add "Distract" subscale to total score
-    rsq_data["{}_{}".format(score_name, 'Distract')] = \
-        invert(data, cols=to_idx(idx_rsq['Distract']),
-               score_range=score_range,
-               inplace=False).iloc[:, to_idx(idx_rsq['Distract'])].mean(axis=1)
+    rsq_data["{}_{}".format(score_name, 'Distract')] = invert(
+        data, cols=to_idx(idxs['Distract']),
+        score_range=score_range,
+        inplace=False
+    ).iloc[:, to_idx(idxs['Distract'])].mean(axis=1)
     rsq_data[score_name] = pd.DataFrame(rsq_data, index=data.index).mean(axis=1)
     return rsq_data
 
@@ -1230,7 +1282,8 @@ def sss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
-def fkk(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def fkk(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Fragebogen zur Kompetenz- und Kontrollüberzeugungen"""
 
     score_name = "FKK"
@@ -1245,15 +1298,16 @@ def fkk(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     # invert items 4, 8, 12, 24
     invert(data, cols=to_idx([4, 8, 12, 24]), score_range=score_range)
 
-    # Primärskalenwerte
-    idx_fkk = {
-        'SK': [4, 8, 12, 24, 16, 20, 28, 32],
-        'I': [1, 5, 6, 11, 23, 25, 27, 30],
-        'P': [3, 10, 14, 17, 19, 22, 26, 29],
-        'C': [2, 7, 9, 13, 15, 18, 21, 31],
-    }
+    if idxs is None:
+        # Primärskalenwerte
+        idxs = {
+            'SK': [4, 8, 12, 24, 16, 20, 28, 32],
+            'I': [1, 5, 6, 11, 23, 25, 27, 30],
+            'P': [3, 10, 14, 17, 19, 22, 26, 29],
+            'C': [2, 7, 9, 13, 15, 18, 21, 31],
+        }
     fkk_data = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_fkk[key])].sum(axis=1) for key in idx_fkk
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
     fkk_data = pd.DataFrame(fkk_data, index=data.index)
 
@@ -1266,7 +1320,8 @@ def fkk(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     return fkk_data
 
 
-def bidr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def bidr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+         idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Balanced Inventory of Desirable Responding"""
 
     score_name = "BIDR"
@@ -1282,18 +1337,20 @@ def bidr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     invert(data, score_range=score_range)
     invert(data, cols=to_idx([1, 3, 6, 8, 13, 16, 19]), score_range=score_range)
 
-    idx_bidr = {
-        'ST': np.arange(1, 11),  # Selbsttäuschung
-        'FT': np.arange(11, 21),  # Fremdtäuschung
-    }
+    if idxs is None:
+        idxs = {
+            'ST': np.arange(1, 11),  # Selbsttäuschung
+            'FT': np.arange(11, 21),  # Fremdtäuschung
+        }
 
     bidr_data = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_bidr[key])].sum(axis=1) for key in idx_bidr
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
     return pd.DataFrame(bidr_data, index=data.index)
 
 
-def kkg(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def kkg(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Kontrollüberzeugungen zu Krankheit und Gesundheit"""
 
     score_name = "KKG"
@@ -1305,14 +1362,15 @@ def kkg(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     _check_score_range_exception(data, score_range)
 
-    idx_kkg = {
-        'I': [1, 5, 8, 16, 17, 18, 21],
-        'P': [2, 4, 6, 10, 12, 14, 20],
-        'C': [3, 7, 9, 11, 13, 15, 19]
-    }
+    if idxs is None:
+        idxs = {
+            'I': [1, 5, 8, 16, 17, 18, 21],
+            'P': [2, 4, 6, 10, 12, 14, 20],
+            'C': [3, 7, 9, 11, 13, 15, 19]
+        }
 
     kkg_data = {
-        score_name + "_" + key: data.iloc[:, to_idx(idx_kkg[key])].sum(axis=1) for key in idx_kkg
+        score_name + "_" + key: data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
     return pd.DataFrame(kkg_data, index=data.index)
 
@@ -1336,7 +1394,8 @@ def thoughts_questionnaire(data: pd.DataFrame,
 
 
 def fee(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        questionnaire_version: Optional[str] = 'german') -> pd.DataFrame:
+        questionnaire_version: Optional[str] = 'german',
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Fragebogen zum erinnerten elterlichen Erziehungsverhalten"""
 
     score_name = "FEE"
@@ -1362,24 +1421,26 @@ def fee(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         df_mother = data.filter(like="Mother").copy()
         df_father = data.filter(like="Father").copy()
 
-    idx_fee = {
-        'Ablehnung_Strafe': [1, 3, 6, 8, 16, 18, 20, 22],
-        'Emot_Waerme': [2, 7, 9, 12, 14, 15, 17, 24],
-        'Kontrolle': [4, 5, 10, 11, 13, 19, 21, 23],
-    }
+    if idxs is None:
+        idxs = {
+            'Ablehnung_Strafe': [1, 3, 6, 8, 16, 18, 20, 22],
+            'Emot_Waerme': [2, 7, 9, 12, 14, 15, 17, 24],
+            'Kontrolle': [4, 5, 10, 11, 13, 19, 21, 23],
+        }
 
     fee_mother = {
-        "{}_{}_Mother".format(score_name, key): df_mother.iloc[:, to_idx(idx_fee[key])].mean(axis=1) for key in idx_fee
+        "{}_{}_Mother".format(score_name, key): df_mother.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs
     }
     fee_father = {
-        "{}_{}_Father".format(score_name, key): df_father.iloc[:, to_idx(idx_fee[key])].mean(axis=1) for key in idx_fee
+        "{}_{}_Father".format(score_name, key): df_father.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs
     }
     fee_mother.update(fee_father)
 
     return pd.DataFrame(fee_mother, index=data.index)
 
 
-def mbi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def mbi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Maslach Burnout Inventory"""
 
     score_name = "MBI"
@@ -1402,14 +1463,15 @@ def mbi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         items[i].columns = items[0].columns
     data = pd.concat(items).sort_index()
 
-    idx_mbi = {
-        'EmotErsch': [1, 2, 3, 4, 5],
-        'PersErf': [6, 7, 8, 11, 12, 16],
-        'Deperson': [9, 10, 13, 14, 15],
-    }
+    if idxs is None:
+        idxs = {
+            'EmotErsch': [1, 2, 3, 4, 5],
+            'PersErf': [6, 7, 8, 11, 12, 16],
+            'Deperson': [9, 10, 13, 14, 15],
+        }
 
     mbi_data = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_mbi[key])].mean(axis=1) for key in idx_mbi
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs
     }
 
     data = pd.DataFrame(mbi_data, index=data.index)
@@ -1417,7 +1479,8 @@ def mbi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     return data
 
 
-def mlq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def mlq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Meaning in Life Questionnaire"""
 
     score_name = "MLQ"
@@ -1432,13 +1495,14 @@ def mlq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     # invert item 9
     invert(data, cols=to_idx([9]), score_range=score_range)
 
-    idx_mlq = {
-        'PresenceMeaning': [1, 4, 5, 6, 9],
-        'SearchMeaning': [2, 3, 7, 8, 10],
-    }
+    if idxs is None:
+        idxs = {
+            'PresenceMeaning': [1, 4, 5, 6, 9],
+            'SearchMeaning': [2, 3, 7, 8, 10],
+        }
 
     mlq_data = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_mlq[key])].mean(axis=1) for key in idx_mlq
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs
     }
     return pd.DataFrame(mlq_data, index=data.index)
 
@@ -1465,7 +1529,8 @@ def ceca(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     return pd.DataFrame(ceca_data, index=data.index, columns=[score_name])
 
 
-def pfb(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def pfb(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """Partnerschaftsfragebogen"""
 
     score_name = "PFB"
@@ -1480,15 +1545,16 @@ def pfb(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     # invert item 19
     invert(data, cols=to_idx([19]), score_range=score_range)
 
-    idx_pfb = {
-        'Zaertlichkeit': [2, 3, 5, 9, 13, 14, 16, 23, 27, 28],
-        'Streitverhalten': [1, 6, 8, 17, 18, 19, 21, 22, 24, 26],
-        'Gemeinsamkeit': [4, 7, 10, 11, 12, 15, 20, 25, 29, 30],
-        'Glueck': [31]
-    }
+    if idxs is None:
+        idxs = {
+            'Zaertlichkeit': [2, 3, 5, 9, 13, 14, 16, 23, 27, 28],
+            'Streitverhalten': [1, 6, 8, 17, 18, 19, 21, 22, 24, 26],
+            'Gemeinsamkeit': [4, 7, 10, 11, 12, 15, 20, 25, 29, 30],
+            'Glueck': [31]
+        }
 
     pfb_data = {
-        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idx_pfb[key])].sum(axis=1) for key in idx_pfb
+        "{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
 
     pfb_data[score_name] = data.iloc[:, 0:30].sum(axis=1)
@@ -1541,7 +1607,8 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     return pd.DataFrame(data.mean(axis=1), columns=[score_name])
 
 
-def mdbf(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def mdbf(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+         idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
     """
     **Multidimensionaler Befindlichkeitsfragebogen (MDBF)**
 
@@ -1591,14 +1658,15 @@ def mdbf(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     # invert items 3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23
     invert(data, cols=to_idx([3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23]), score_range=score_range)
 
-    mdbf_idx = {
-        'GoodBad': [1, 4, 8, 11, 14, 16, 18, 21],
-        'AwakeTired': [2, 5, 7, 10, 13, 17, 20, 23],
-        'CalmNervous': [3, 6, 9, 12, 15, 19, 22, 24]
-    }
+    if idxs is None:
+        idxs = {
+            'GoodBad': [1, 4, 8, 11, 14, 16, 18, 21],
+            'AwakeTired': [2, 5, 7, 10, 13, 17, 20, 23],
+            'CalmNervous': [3, 6, 9, 12, 15, 19, 22, 24]
+        }
 
     mdbf_data = {
-        '{}_{}'.format(score_name, key): data.iloc[:, to_idx(mdbf_idx[key])].sum(axis=1) for key in mdbf_idx
+        '{}_{}'.format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs
     }
 
     mdbf_data[score_name] = data.sum(axis=1)
