@@ -80,10 +80,10 @@ def saliva_wrong_time_02():
     return data
 
 
-def saliva_time(feature_name: Optional[str] = 'cortisol'):
+def saliva_time(biomarker_type: Optional[str] = 'cortisol'):
     data = pd.DataFrame(index=pd.MultiIndex.from_product([range(1, 9), range(0, 5)], names=['subject', 'sample']),
-                        columns=[feature_name, 'time'])
-    data[feature_name] = np.concatenate([
+                        columns=[biomarker_type, 'time'])
+    data[biomarker_type] = np.concatenate([
         [0, 0, 0, 0, 0],
         [1, 1, 1, 1, 1],
         [0, 1, 2, 3, 4],
@@ -122,7 +122,7 @@ def saliva_pruessner_2003():
     return data
 
 
-def saliva_multi_days(feature_name: Optional[str] = 'cortisol'):
+def saliva_multi_days(biomarker_type: Optional[str] = 'cortisol'):
     data = pd.DataFrame(
         index=pd.MultiIndex.from_product([range(1, 5), range(0, 2), range(0, 5)], names=['subject', 'day', 'sample']),
         columns=['cortisol', 'time'])
@@ -142,11 +142,11 @@ def saliva_multi_days(feature_name: Optional[str] = 'cortisol'):
 
 params_max_increase = [(True,
                         pd.DataFrame(
-                            [0, 0, 3, -1, 4, 4, 12, np.nan], columns=['cortisol_max_inc'],
+                            [0, 0, 3, -1, 4, 4, 12, np.nan], columns=pd.Index(['cortisol_max_inc'], name='biomarker'),
                             index=pd.Index(range(1, 9), name='subject')
                         )),
                        (False, pd.DataFrame(
-                           [0, 0, 4, -1, -4, 12, -6, 6], columns=['cortisol_max_inc'],
+                           [0, 0, 4, -1, -4, 12, -6, 6], columns=pd.Index(['cortisol_max_inc'], name='biomarker'),
                            index=pd.Index(range(1, 9), name='subject')
                        ))
                        ]
@@ -154,12 +154,12 @@ params_max_increase = [(True,
 params_max_increase_percent = [(True,
                                 pd.DataFrame(
                                     [np.nan, 0, 300.0, -25.0, 200.0, 200.0, 200.0, np.nan],
-                                    columns=['cortisol_max_inc_percent'],
+                                    columns=pd.Index(['cortisol_max_inc_percent'], name='biomarker'),
                                     index=pd.Index(range(1, 9), name='subject')
                                 )),
                                (False, pd.DataFrame(
                                    [np.nan, 0.0, np.inf, -20.0, -40.0, 200.0, -50.0, 300.0],
-                                   columns=['cortisol_max_inc_percent'],
+                                   columns=pd.Index(['cortisol_max_inc_percent'], name='biomarker'),
                                    index=pd.Index(range(1, 9), name='subject')
                                ))
                                ]
@@ -170,6 +170,7 @@ params_auc = [(False,
                     'cortisol_auc_i': [0, 0, 80, -80, -220, 340, -370, np.nan],
                     'cortisol_auc_i_post': [0, 0, 20, -20, 10, 10, 10, -50]
                     },
+                   columns=pd.Index(['cortisol_auc_g', 'cortisol_auc_i', 'cortisol_auc_i_post'], name="biomarker"),
                    index=pd.Index(range(1, 9), name='subject')
                )),
               (True, pd.DataFrame(
@@ -177,6 +178,7 @@ params_auc = [(False,
                    'cortisol_auc_i': [0, 0, 45, -45, 60, 60, 260, np.nan],
                    'cortisol_auc_i_post': [0, 0, 20, -20, 10, 10, 10, -50]
                    },
+                  columns=pd.Index(['cortisol_auc_g', 'cortisol_auc_i', 'cortisol_auc_i_post'], name="biomarker"),
                   index=pd.Index(range(1, 9), name='subject')
               ))
               ]
@@ -187,13 +189,17 @@ params_auc_mutiple_pre = [(False,
                                 'cortisol_auc_i': [0, 0, 80, -80, -220, 340, -370, np.nan],
                                 'cortisol_auc_i_post': [0, 0, 5, -5, 10, 10, 10, 10]
                                 },
-                               index=pd.Index(range(1, 9), name='subject')
+                               index=pd.Index(range(1, 9), name='subject'),
+                               columns=pd.Index(['cortisol_auc_g', 'cortisol_auc_i', 'cortisol_auc_i_post'],
+                                                name='biomarker'),
                            )),
                           (True, pd.DataFrame(
                               {'cortisol_auc_g': [0, 30, 75, 75, 120, 120, 80, np.nan],
                                'cortisol_auc_i': [0, 0, 45, -45, 60, 60, 260, np.nan],
                                'cortisol_auc_i_post': [0, 0, 5, -5, 10, 10, 10, 10]
                                },
+                              columns=pd.Index(['cortisol_auc_g', 'cortisol_auc_i', 'cortisol_auc_i_post'],
+                                               name='biomarker'),
                               index=pd.Index(range(1, 9), name='subject')
                           ))
                           ]
@@ -201,22 +207,26 @@ params_auc_mutiple_pre = [(False,
 params_slope = [((0, 1),
                  pd.DataFrame(
                      {'cortisol_slope01': [0.0, 0.0, 0.1, -0.1, -0.8, 0.8, -1.8, np.nan]},
-                     index=pd.Index(range(1, 9), name='subject')
+                     index=pd.Index(range(1, 9), name='subject'),
+                     columns=pd.Index(['cortisol_slope01'], name='biomarker')
                  )),
                 ((1, 2),
                  pd.DataFrame(
                      {'cortisol_slope12': [0.0, 0.0, 0.1, -0.1, 0.2, 0.2, 1.0, np.nan]},
-                     index=pd.Index(range(1, 9), name='subject')
+                     index=pd.Index(range(1, 9), name='subject'),
+                     columns=pd.Index(['cortisol_slope12'], name='biomarker'),
                  )),
                 ((0, 4),
                  pd.DataFrame(
                      {'cortisol_slope04': [0.0, 0.0, 0.1, -0.1, -0.1, 0.3, -0.15, 0.1]},
-                     index=pd.Index(range(1, 9), name='subject')
+                     index=pd.Index(range(1, 9), name='subject'),
+                     columns=pd.Index(['cortisol_slope04'], name='biomarker'),
                  )),
                 ((0, -1),
                  pd.DataFrame(
                      {'cortisol_slope04': [0.0, 0.0, 0.1, -0.1, -0.1, 0.3, -0.15, 0.1]},
-                     index=pd.Index(range(1, 9), name='subject')
+                     index=pd.Index(range(1, 9), name='subject'),
+                     columns=pd.Index(['cortisol_slope04'], name='biomarker'),
                  ))
                 ]
 
@@ -230,25 +240,25 @@ class TestSaliva:
         with pytest.raises(ValueError):
             saliva.max_increase(input_data)
 
-    @pytest.mark.parametrize("feature_name, expectation",
+    @pytest.mark.parametrize("biomarker_type, expectation",
                              [
                                  ("cortisol", does_not_raise()),
                                  ("amylase", pytest.raises(ValueError)),
                                  ("il6", pytest.raises(ValueError)),
                                  (None, pytest.raises(ValueError))
                              ])
-    def test_max_increase_raises_feature_name(self, feature_name, expectation):
+    def test_max_increase_raises_biomarker_type(self, biomarker_type, expectation):
         data = saliva_time()
         with expectation:
-            saliva.max_increase(data, feature_name=feature_name)
+            saliva.max_increase(data, biomarker_type=biomarker_type)
 
     @pytest.mark.parametrize(
-        "feature_name, expected_columns",
+        "biomarker_type, expected_columns",
         [('cortisol', ['cortisol_max_inc']), ('amylase', ['amylase_max_inc']), ('il6', ['il6_max_inc'])]
     )
-    def test_max_increase_columns(self, feature_name, expected_columns):
-        data_in = saliva_time(feature_name)
-        data_out = saliva.max_increase(data_in, feature_name)
+    def test_max_increase_columns(self, biomarker_type, expected_columns):
+        data_in = saliva_time(biomarker_type)
+        data_out = saliva.max_increase(data_in, biomarker_type)
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize(
@@ -275,16 +285,16 @@ class TestSaliva:
         assert_frame_equal(out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
-        "feature_name, expected_columns",
+        "biomarker_type, expected_columns",
         [
             ('cortisol', ['cortisol_auc_g', 'cortisol_auc_i', 'cortisol_auc_i_post']),
             ('amylase', ['amylase_auc_g', 'amylase_auc_i', 'amylase_auc_i_post']),
             ('il6', ['il6_auc_g', 'il6_auc_i', 'il6_auc_i_post'])
         ]
     )
-    def test_auc_columns(self, feature_name, expected_columns):
-        data_in = saliva_time(feature_name)
-        data_out = saliva.auc(data_in, feature_name)
+    def test_auc_columns(self, biomarker_type, expected_columns):
+        data_in = saliva_time(biomarker_type)
+        data_out = saliva.auc(data_in, biomarker_type)
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize("data", [saliva_no_time(), saliva_wrong_time_01(), saliva_wrong_time_02()],
@@ -293,17 +303,17 @@ class TestSaliva:
         with pytest.raises(ValueError):
             saliva.auc(data)
 
-    @pytest.mark.parametrize("feature_name, expectation",
+    @pytest.mark.parametrize("biomarker_type, expectation",
                              [
                                  ("cortisol", does_not_raise()),
                                  ("amylase", pytest.raises(ValueError)),
                                  ("il6", pytest.raises(ValueError)),
                                  (None, pytest.raises(ValueError))
                              ])
-    def test_auc_raises_feature_name(self, feature_name, expectation):
+    def test_auc_raises_biomarker_type(self, biomarker_type, expectation):
         data = saliva_time()
         with expectation:
-            saliva.auc(data, feature_name=feature_name)
+            saliva.auc(data, biomarker_type=biomarker_type)
 
     @pytest.mark.parametrize(
         "remove_s0, expected", params_auc
@@ -348,6 +358,7 @@ class TestSaliva:
                 'cortisol_auc_g': [34.75, 390],
                 'cortisol_auc_i': [20.75, 232.50]
             },
+            columns=pd.Index(['cortisol_auc_g', 'cortisol_auc_i'], name="biomarker"),
             index=pd.Index(range(1, 3), name='subject')
         )
 
@@ -368,16 +379,16 @@ class TestSaliva:
         assert_frame_equal(out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
-        "feature_name, expected_columns",
+        "biomarker_type, expected_columns",
         [
             ('cortisol', ['cortisol_slope01']),
             ('amylase', ['amylase_slope01']),
             ('il6', ['il6_slope01'])
         ]
     )
-    def test_slope_columns_feature_name(self, feature_name, expected_columns):
-        data_in = saliva_time(feature_name)
-        data_out = saliva.slope(data_in, sample_idx=(0, 1), feature_name=feature_name)
+    def test_slope_columns_biomarker_type(self, biomarker_type, expected_columns):
+        data_in = saliva_time(biomarker_type)
+        data_out = saliva.slope(data_in, sample_idx=(0, 1), biomarker_type=biomarker_type)
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize(
@@ -391,18 +402,18 @@ class TestSaliva:
     )
     def test_slope_columns_sample_idx(self, sample_idx, expected_columns):
         # check with sample_idx = tuple
-        data_in = saliva_time(feature_name='cortisol')
-        data_out = saliva.slope(data_in, sample_idx=sample_idx, feature_name='cortisol')
+        data_in = saliva_time(biomarker_type='cortisol')
+        data_out = saliva.slope(data_in, sample_idx=sample_idx, biomarker_type='cortisol')
         assert list(data_out.columns) == expected_columns
 
         # check with sample_idx = list
         sample_idx = list(sample_idx)
-        data_out = saliva.slope(data_in, sample_idx=sample_idx, feature_name='cortisol')
+        data_out = saliva.slope(data_in, sample_idx=sample_idx, biomarker_type='cortisol')
         assert list(data_out.columns) == expected_columns
 
         # check with sample_idx = numpy array
         sample_idx = np.array(sample_idx)
-        data_out = saliva.slope(data_in, sample_idx=sample_idx, feature_name='cortisol')
+        data_out = saliva.slope(data_in, sample_idx=sample_idx, biomarker_type='cortisol')
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize(
@@ -411,7 +422,7 @@ class TestSaliva:
     )
     def test_slope_invalid_idx(self, sample_idx):
         with pytest.raises(ValueError):
-            saliva.slope(saliva_time(), sample_idx=sample_idx, feature_name='cortisol')
+            saliva.slope(saliva_time(), sample_idx=sample_idx, biomarker_type='cortisol')
 
     @pytest.mark.parametrize(
         "sample_idx, expected", params_slope
@@ -432,16 +443,16 @@ class TestSaliva:
         assert_frame_equal(out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
-        "feature_name, expected_columns",
+        "biomarker_type, expected_columns",
         [
             ('cortisol', ['cortisol_argmax', 'cortisol_mean', 'cortisol_std', 'cortisol_skew', 'cortisol_kurt']),
             ('amylase', ['amylase_argmax', 'amylase_mean', 'amylase_std', 'amylase_skew', 'amylase_kurt']),
             ('il6', ['il6_argmax', 'il6_mean', 'il6_std', 'il6_skew', 'il6_kurt']),
         ]
     )
-    def test_standard_features_columns_feature_name(self, feature_name, expected_columns):
-        data_in = saliva_time(feature_name)
-        data_out = saliva.standard_features(data_in, feature_name=feature_name)
+    def test_standard_features_columns_biomarker_type(self, biomarker_type, expected_columns):
+        data_in = saliva_time(biomarker_type)
+        data_out = saliva.standard_features(data_in, biomarker_type=biomarker_type)
         # columns must be Index, not MultiIndex
         assert isinstance(data_out.columns, pd.Index)
         assert not isinstance(data_out.columns, pd.MultiIndex)
@@ -470,7 +481,9 @@ class TestSaliva:
                                   ss.kurtosis([12, -6, 4, 4, 6], bias=False),
                                   ss.kurtosis([2, np.nan, 8, 4, 6], bias=False, nan_policy='omit')]
             },
-            index=pd.Index(range(1, 9), name='subject')
+            index=pd.Index(range(1, 9), name='subject'),
+            columns=pd.Index(['cortisol_argmax', 'cortisol_mean', 'cortisol_std', 'cortisol_skew', 'cortisol_kurt'],
+                             name='biomarker')
         )
         assert_frame_equal(data_out, expected, check_dtype=False)
 
@@ -495,7 +508,9 @@ class TestSaliva:
                                   ss.kurtosis([12, -6, 4, 4, 6], bias=False),
                                   ss.kurtosis([2, np.nan, 8, 4, 6], bias=False, nan_policy='omit')]
             },
-            index=pd.Index(range(1, 9), name='subject')
+            index=pd.Index(range(1, 9), name='subject'),
+            columns=pd.Index(['cortisol_argmax', 'cortisol_mean', 'cortisol_std', 'cortisol_skew', 'cortisol_kurt'],
+                             name='biomarker')
         )
 
         # set correct index to the expected output

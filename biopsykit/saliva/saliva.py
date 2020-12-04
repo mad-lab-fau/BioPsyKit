@@ -5,27 +5,27 @@ import pandas as pd
 import numpy as np
 
 
-def wide_to_long(data: pd.DataFrame, feature_name: Optional[str] = 'cortisol') -> pd.DataFrame:
+def wide_to_long(data: pd.DataFrame, biomarker_type: Optional[str] = 'cortisol') -> pd.DataFrame:
     idx_col = ['subject']
     if 'condition' in data.index.names:
         idx_col.append('condition')
     if 'day' in data.index.names:
         idx_col.append('day')
-    return pd.wide_to_long(data.reset_index(), stubnames=feature_name, sep='_',
-                           i=idx_col, j='feature', suffix=r"\w+")
+    return pd.wide_to_long(data.reset_index(), stubnames=biomarker_type, sep='_',
+                           i=idx_col, j='biomarker', suffix=r"\w+")
 
 
-def saliva_mean_se(data: pd.DataFrame, feature_name: Optional[Union[str, Sequence[str]]] = 'cortisol',
+def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = 'cortisol',
                    remove_s0: Optional[bool] = True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """Computes mean and standard error per saliva sample"""
 
-    if isinstance(feature_name, list):
+    if isinstance(biomarker_type, list):
         dict_result = {}
-        for feature in feature_name:
-            feature_cols = [feature]
+        for biomarker in biomarker_type:
+            biomarker_cols = [biomarker]
             if 'time' in data:
-                feature_cols = ['time'] + feature_cols
-            dict_result[feature] = saliva_mean_se(data[feature_cols], feature_name=feature, remove_s0=remove_s0)
+                biomarker_cols = ['time'] + biomarker_cols
+            dict_result[biomarker] = saliva_mean_se(data[biomarker_cols], biomarker_type=biomarker, remove_s0=remove_s0)
         return dict_result
 
     if remove_s0:
@@ -33,51 +33,51 @@ def saliva_mean_se(data: pd.DataFrame, feature_name: Optional[Union[str, Sequenc
 
     if 'time' in data:
         data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
-            {'mean': df_sample[feature_name].mean(), 'se': df_sample[feature_name].std() / np.sqrt(len(df_sample)),
+            {'mean': df_sample[biomarker_type].mean(), 'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample)),
              'time': int(df_sample['time'].unique())}))
         data_grp = data_grp.set_index('time', append=True)
     else:
         data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
-            {'mean': df_sample[feature_name].mean(), 'se': df_sample[feature_name].std() / np.sqrt(len(df_sample))}))
+            {'mean': df_sample[biomarker_type].mean(), 'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample))}))
     return data_grp
 
 
-def max_increase(data: pd.DataFrame, feature_name: Optional[Union[str, Sequence[str]]] = "cortisol",
+def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
                  remove_s0: Optional[bool] = True,
                  percent: Optional[bool] = False) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     # computes (absolute or relative) maximum increase between first sample and all others.
     _check_data_format(data)
 
-    if isinstance(feature_name, list):
+    if isinstance(biomarker_type, list):
         dict_result = {}
-        for feature in feature_name:
-            feature_cols = [feature]
+        for biomarker in biomarker_type:
+            biomarker_cols = [biomarker]
             if 'time' in data:
-                feature_cols = ['time'] + feature_cols
-            dict_result[feature] = max_increase(data[feature_cols], feature_name=feature, remove_s0=remove_s0,
-                                                percent=percent)
+                biomarker_cols = ['time'] + biomarker_cols
+            dict_result[biomarker] = max_increase(data[biomarker_cols], biomarker_type=biomarker, remove_s0=remove_s0,
+                                                  percent=percent)
         return dict_result
 
     if remove_s0:
         # We have a S0 sample => drop it
         data = data.drop(0, level='sample')
 
-    if feature_name not in data:
-        raise ValueError("No `{}` columns in data!".format(feature_name))
-    data = data[[feature_name]].unstack()
+    if biomarker_type not in data:
+        raise ValueError("No `{}` columns in data!".format(biomarker_type))
+    data = data[[biomarker_type]].unstack()
 
     max_inc = (data.iloc[:, 1:].max(axis=1) - data.iloc[:, 0])
     if percent:
         max_inc = 100.0 * max_inc / np.abs(data.iloc[:, 0])
 
     out = pd.DataFrame(max_inc, columns=[
-        "{}_max_inc_percent".format(feature_name) if percent else "{}_max_inc".format(feature_name)],
+        "{}_max_inc_percent".format(biomarker_type) if percent else "{}_max_inc".format(biomarker_type)],
                        index=max_inc.index)
-    out.columns.name = "feature"
+    out.columns.name = "biomarker"
     return out
 
 
-def auc(data: pd.DataFrame, feature_name: Optional[Union[str, Sequence[str]]] = "cortisol",
+def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
         remove_s0: Optional[bool] = True,
         saliva_times: Optional[Sequence[int]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     # TODO IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
@@ -87,23 +87,23 @@ def auc(data: pd.DataFrame, feature_name: Optional[Union[str, Sequence[str]]] = 
     saliva_times = _get_saliva_times(data, saliva_times, remove_s0)
     _check_saliva_times(saliva_times)
 
-    if isinstance(feature_name, list):
+    if isinstance(biomarker_type, list):
         dict_result = {}
-        for feature in feature_name:
-            feature_cols = [feature]
+        for biomarker in biomarker_type:
+            biomarker_cols = [biomarker]
             if 'time' in data:
-                feature_cols = ['time'] + feature_cols
-            dict_result[feature] = auc(data[feature_cols], feature_name=feature, remove_s0=remove_s0,
-                                       saliva_times=saliva_times)
+                biomarker_cols = ['time'] + biomarker_cols
+            dict_result[biomarker] = auc(data[biomarker_cols], biomarker_type=biomarker, remove_s0=remove_s0,
+                                         saliva_times=saliva_times)
         return dict_result
 
     if remove_s0:
         # We have a S0 sample => drop it
         data = data.drop(0, level='sample')
 
-    if feature_name not in data:
-        raise ValueError("No `{}` columns in data!".format(feature_name))
-    data = data[[feature_name]].unstack()
+    if biomarker_type not in data:
+        raise ValueError("No `{}` columns in data!".format(biomarker_type))
+    data = data[[biomarker_type]].unstack()
 
     idxs_post = None
     if saliva_times.ndim == 1:
@@ -121,25 +121,25 @@ def auc(data: pd.DataFrame, feature_name: Optional[Union[str, Sequence[str]]] = 
         data_post = data.iloc[:, idxs_post]
         auc_data['auc_i_post'] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), saliva_times[idxs_post])
 
-    out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(feature_name))
-    out.columns.name = "feature"
+    out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(biomarker_type))
+    out.columns.name = "biomarker"
     return out
 
 
 def standard_features(data: pd.DataFrame,
-                      feature_name: Optional[Union[str, Sequence[str]]] = "cortisol") -> Union[
+                      biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol") -> Union[
     pd.DataFrame, Dict[str, pd.DataFrame]]:
     group_cols = ['subject']
 
     _check_data_format(data)
 
-    if isinstance(feature_name, list):
+    if isinstance(biomarker_type, list):
         dict_result = {}
-        for feature in feature_name:
-            feature_cols = [feature]
+        for biomarker in biomarker_type:
+            biomarker_cols = [biomarker]
             if 'time' in data:
-                feature_cols = ['time'] + feature_cols
-            dict_result[feature] = standard_features(data[feature_cols], feature_name=feature)
+                biomarker_cols = ['time'] + biomarker_cols
+            dict_result[biomarker] = standard_features(data[biomarker_cols], biomarker_type=biomarker)
         return dict_result
 
     if 'condition' in data.index.names:
@@ -148,27 +148,27 @@ def standard_features(data: pd.DataFrame,
     if 'day' in data.index.names:
         group_cols.append('day')
 
-    if feature_name not in data:
-        raise ValueError("No `{}` columns in data!".format(feature_name))
+    if biomarker_type not in data:
+        raise ValueError("No `{}` columns in data!".format(biomarker_type))
 
-    out = data[[feature_name]].groupby(group_cols).agg(
+    out = data[[biomarker_type]].groupby(group_cols).agg(
         [np.argmax, pd.DataFrame.mean, pd.DataFrame.std, pd.DataFrame.skew, pd.DataFrame.kurt])
-    # drop 'feature_name' multiindex column and add as prefix to columns
+    # drop 'biomarker_type' multiindex column and add as prefix to columns
     out.columns = out.columns.droplevel(0)
-    out = out.add_prefix("{}_".format(feature_name))
-    out.columns.name = "feature"
+    out = out.add_prefix("{}_".format(biomarker_type))
+    out.columns.name = "biomarker"
     return out
 
 
 def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
-          feature_name: Optional[Union[str, Sequence[str]]] = "cortisol",
+          biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
           saliva_times: Optional[Sequence[int]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     _check_data_format(data)
     saliva_times = _get_saliva_times(data, saliva_times, remove_s0=False)
     _check_saliva_times(saliva_times)
 
-    if feature_name not in data:
-        raise ValueError("No `{}` columns in data!".format(feature_name))
+    if biomarker_type not in data:
+        raise ValueError("No `{}` columns in data!".format(biomarker_type))
 
     # ensure list
     sample_idx = list(sample_idx)
@@ -176,16 +176,16 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
     if len(sample_idx) != 2:
         raise ValueError("Exactly 2 indices needed for computing slope. Got {} indices.".format(len(sample_idx)))
 
-    if isinstance(feature_name, list):
+    if isinstance(biomarker_type, list):
         dict_result = {}
-        for feature in feature_name:
-            feature_cols = [feature]
+        for biomarker in biomarker_type:
+            biomarker_cols = [biomarker]
             if 'time' in data:
-                feature_cols = ['time'] + feature_cols
-            dict_result[feature] = slope(data[feature_cols], sample_idx=sample_idx, feature_name=feature_name,
-                                         saliva_times=saliva_times)
+                biomarker_cols = ['time'] + biomarker_cols
+            dict_result[biomarker] = slope(data[biomarker_cols], sample_idx=sample_idx, biomarker_type=biomarker_type,
+                                           saliva_times=saliva_times)
 
-    data = data[[feature_name]].unstack()
+    data = data[[biomarker_type]].unstack()
 
     # replace idx values like '-1' with the actual index
     if sample_idx[0] < 0:
@@ -202,8 +202,8 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
         raise ValueError("`sample_idx[1]` is out of bounds!")
 
     out = pd.DataFrame(np.diff(data.iloc[:, sample_idx]) / np.diff(saliva_times[sample_idx]), index=data.index,
-                       columns=['{}_slope{}{}'.format(feature_name, *sample_idx)])
-    out.columns.name = "feature"
+                       columns=['{}_slope{}{}'.format(biomarker_type, *sample_idx)])
+    out.columns.name = "biomarker"
     return out
 
 
