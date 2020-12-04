@@ -71,3 +71,9 @@ def get_sleep_analyzer_summary_example() -> pd.DataFrame:
     from biopsykit.sleep.io import load_withings_sleep_analyzer_summary
 
     return load_withings_sleep_analyzer_summary(_EXAMPLE_DATA_PATH.joinpath("sleep").joinpath("sleep.csv"))
+
+
+def get_eeg_example() -> Tuple[pd.DataFrame, int]:
+    from biopsykit.signals.eeg.io import load_eeg_muse
+
+    return load_eeg_muse(_EXAMPLE_DATA_PATH.joinpath("eeg_muse_example.csv"))
