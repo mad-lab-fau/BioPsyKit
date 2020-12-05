@@ -1,7 +1,8 @@
 import datetime
 from pathlib import Path
-from typing import Optional, Union, Sequence, Dict, List, Tuple
+from typing import Optional, Union, Sequence, Dict, Tuple
 
+import numpy as np
 import pandas as pd
 import pytz
 
@@ -235,3 +236,37 @@ def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset
         date = datetime.datetime(date)
     time_log = time_log.applymap(lambda x: pytz.timezone(timezone).localize(datetime.datetime.combine(date, x)))
     return time_log
+
+
+def check_nilspod_dataset_corrupted(dataset: 'Dataset') -> bool:
+    return np.where(np.diff(dataset.counter) != 1.0)[0].size != 0
+
+
+def get_nilspod_dataset_corrupted_info(dataset: 'Dataset', file_path: path_t) -> Dict:
+    import re
+    nilspod_file_pattern = r"NilsPodX-\w{4}_(.*?).bin"
+    # ensure pathlib
+    file_path = Path(file_path)
+
+    keys = ['name', 'percent_corrupt', 'condition']
+    dict_res = dict.fromkeys(keys)
+    if not check_nilspod_dataset_corrupted(dataset):
+        dict_res['condition'] = 'fine'
+        return dict_res
+
+    idx_diff = np.diff(dataset.counter)
+    idx_corrupt = np.where(idx_diff != 1.0)[0]
+    percent_corrupt = ((len(idx_corrupt) / len(idx_diff)) * 100.0)
+    condition = "parts"
+    if percent_corrupt > 90.0:
+        condition = "lost"
+    elif percent_corrupt < 50.0:
+        if (idx_corrupt[0] / len(idx_corrupt)) < 0.30:
+            condition = "start_only"
+        elif (idx_corrupt[0] / len(idx_corrupt)) > 0.70:
+            condition = "end_only"
+
+    dict_res['name'] = re.search(nilspod_file_pattern, file_path.name).group(1)
+    dict_res['percent_corrupt'] = percent_corrupt
+    dict_res['condition'] = condition
+    return dict_res
