@@ -4,6 +4,7 @@ from typing import Optional, Sequence, Dict
 
 import pandas as pd
 import numpy as np
+import biopsykit.utils as utils
 
 from biopsykit.utils import path_t
 
@@ -12,8 +13,34 @@ def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biom
                       saliva_times: Optional[Sequence[int]] = None,
                       condition_list: Optional[pd.Index] = None,
                       sheet_name: Optional[str] = None,
-                      excluded_subjects: Optional[Sequence[str]] = None) -> pd.DataFrame:
-    """Reads saliva from an Excel sheet in 'plate' format."""
+                      excluded_subjects: Optional[Sequence[int]] = None) -> pd.DataFrame:
+    """
+    Reads saliva from an Excel sheet in 'plate' format.
+
+    Parameters
+    ----------
+    file_path: str or path
+        path to the Excel sheet in 'plate' format containing saliva data
+    sample_id_col: str
+        column name of the Excel sheet containing the sample ID
+    data_col: str
+        column name of the Excel sheet containing data to be analyzed
+    biomarker_type: str
+        type of the used biomarker
+    saliva_times: list or int, optional
+        times at which saliva samples were collected
+    condition_list: 1d-array, optional
+        list of conditions which are assigned to ID
+    sheet_name: str, optional
+        name of the excel sheet
+    excluded_subjects: list or int, optional
+        list of subjects which should be excluded
+        Note: subject exclusion is performed AFTER assigning conditions
+    Returns
+    -------
+    pd.DataFrame
+        dataframe with saliva parameters
+    """
     # TODO documentation
     # TODO add remove_nan option (all or any)
 
@@ -52,14 +79,10 @@ def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biom
                 append=True).reorder_levels(["subject", "condition", "sample"])
 
     # Subject Exclusion
-    # TODO move subject exclusion to extra function
     # TODO add warning to documentation that subject exclusion is performed *AFTER* assigning conditions
     # TODO add warning if this fails (e.g. because condition list has already excluded subjects and we're trying to merge it)
     if excluded_subjects:
-        try:
-            df_saliva.drop(index=excluded_subjects, inplace=True)
-        except KeyError:
-            warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
+        utils._exclude_subjects(excluded_subjects, df_saliva)
 
     num_subjects = len(df_saliva.index.get_level_values("subject").unique())
     if saliva_times:
@@ -108,3 +131,4 @@ def _check_saliva_times(num_samples: int, num_subjects: int, saliva_times: Seque
         raise ValueError(
             "Length of `saliva_times` does not match the number of saliva samples! Expected: {}, got: {}".format(
                 int(num_samples / num_subjects), len(saliva_times)))
+

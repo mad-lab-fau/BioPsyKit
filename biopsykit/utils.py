@@ -10,6 +10,7 @@ import pytz
 import pandas as pd
 import numpy as np
 from nilspodlib import Dataset
+import warnings
 
 path_t = TypeVar('path_t', str, Path)
 T = TypeVar('T')
@@ -214,3 +215,26 @@ def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarr
 
 def check_tz_aware(data: pd.DataFrame) -> bool:
     return isinstance(data.index, pd.DatetimeIndex) and (data.index.tzinfo is not None)
+
+
+def _exclude_subjects(excluded_subjects: Sequence[int],
+                      data1: pd.DataFrame,
+                      data2: Optional[pd.DataFrame] = None,
+                      data3: Optional[pd.DataFrame] = None,
+                      data4: Optional[pd.DataFrame] = None) -> Dict[str, pd.DataFrame]:
+
+    cleaned_data: Dict[str, pd.DataFrame] = {}
+    biomarker = ['cortisol','sAA']
+    data_all = [data1, data2, data3, data4]
+    for data in data_all:
+        if data is None:
+            break
+        if list(data.columns)[0] in biomarker:
+            for subject in excluded_subjects:
+                excluded_subjects = "0" + str(subject) if (subject < 10) else str(subject)
+        try:
+            cleaned_data[list(data.columns)[0]] = data.drop(index=excluded_subjects)
+        except KeyError:
+            warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
+
+    return cleaned_data
