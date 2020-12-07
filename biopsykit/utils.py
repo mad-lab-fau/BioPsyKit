@@ -217,24 +217,28 @@ def check_tz_aware(data: pd.DataFrame) -> bool:
     return isinstance(data.index, pd.DatetimeIndex) and (data.index.tzinfo is not None)
 
 
-def _exclude_subjects(excluded_subjects: Sequence[int],
-                      data1: pd.DataFrame,
-                      data2: Optional[pd.DataFrame] = None,
-                      data3: Optional[pd.DataFrame] = None,
-                      data4: Optional[pd.DataFrame] = None) -> Dict[str, pd.DataFrame]:
-
+def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
+                     **kwargs) -> Dict[str, pd.DataFrame]:
     cleaned_data: Dict[str, pd.DataFrame] = {}
-    biomarker = ['cortisol','sAA']
-    data_all = [data1, data2, data3, data4]
-    for data in data_all:
-        if data is None:
-            break
-        if list(data.columns)[0] in biomarker:
-            for subject in excluded_subjects:
-                excluded_subjects = "0" + str(subject) if (subject < 10) else str(subject)
-        try:
-            cleaned_data[list(data.columns)[0]] = data.drop(index=excluded_subjects)
-        except KeyError:
-            warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
 
+    for key, data in kwargs.items():
+        if 'subject' in data.index.names:
+            if (data.index.get_level_values('subject').dtype == np.object and all(
+                    [isinstance(s, str) for s in excluded_subjects])) or (
+                    data.index.get_level_values('subject').dtype == np.int and
+                    all([isinstance(s, int) for s in excluded_subjects])):
+                # dataframe index and subjects are both strings or both integers
+                try:
+                    if isinstance(data.index, pd.MultiIndex):
+                        # MultiIndex => specify index level
+                        cleaned_data[key] = data.drop(index=excluded_subjects, level='subject')
+                    else:
+                        # Regular Index
+                        cleaned_data[key] = data.drop(index=excluded_subjects)
+                except KeyError:
+                    warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
+            else:
+                raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
+        else:
+            raise ValueError("No 'subject' level in index!")
     return cleaned_data
