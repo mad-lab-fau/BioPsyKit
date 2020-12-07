@@ -12,8 +12,7 @@ from biopsykit.utils import path_t
 def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biomarker_type: str,
                       saliva_times: Optional[Sequence[int]] = None,
                       condition_list: Optional[pd.Index] = None,
-                      sheet_name: Optional[str] = None,
-                      excluded_subjects: Optional[Sequence[int]] = None) -> pd.DataFrame:
+                      sheet_name: Optional[str] = None) -> pd.DataFrame:
     """
     Reads saliva from an Excel sheet in 'plate' format.
 
@@ -33,9 +32,6 @@ def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biom
         list of conditions which are assigned to ID
     sheet_name: str, optional
         name of the excel sheet
-    excluded_subjects: list or int, optional
-        list of subjects which should be excluded
-        Note: subject exclusion is performed AFTER assigning conditions
     Returns
     -------
     pd.DataFrame
@@ -78,12 +74,6 @@ def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biom
                 condition_list.index.repeat(len(df_saliva.index.get_level_values('sample').unique())),
                 append=True).reorder_levels(["subject", "condition", "sample"])
 
-    # Subject Exclusion
-    # TODO add warning to documentation that subject exclusion is performed *AFTER* assigning conditions
-    # TODO add warning if this fails (e.g. because condition list has already excluded subjects and we're trying to merge it)
-    if excluded_subjects:
-        utils._exclude_subjects(excluded_subjects, df_saliva)
-
     num_subjects = len(df_saliva.index.get_level_values("subject").unique())
     if saliva_times:
         _check_saliva_times(len(df_saliva), num_subjects, saliva_times)
@@ -109,7 +99,8 @@ def load_saliva(
     index_cols = [subject_col]
     if condition_col:
         index_cols.append(condition_col)
-    data = pd.read_csv(file_path, index_col=index_cols)
+    data = pd.read_csv(file_path, dtype={subject_col: str})
+    data.set_index(index_cols, inplace=True)
 
     num_subjects = len(data)
     data.columns = data.columns.astype(int)
