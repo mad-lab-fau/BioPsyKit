@@ -8,7 +8,7 @@ from tqdm.notebook import tqdm
 
 from biopsykit.utils import path_t, utc, tz
 
-_LOG_FILENAME_PATTERN = "logs_(.*?)"
+LOG_FILENAME_PATTERN = "logs_(.*?)"
 
 
 def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True,
@@ -20,6 +20,7 @@ def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True,
     has_subfolder
     path : path or str
         path to folder containing logs
+    log_filename_pattern
 
     Returns
     -------
@@ -31,7 +32,7 @@ def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True,
     path = Path(path)
 
     if log_filename_pattern is None:
-        log_filename_pattern = _LOG_FILENAME_PATTERN + ".csv"
+        log_filename_pattern = LOG_FILENAME_PATTERN + ".csv"
 
     dict_log_files = {}
     if has_subfolder:
@@ -71,7 +72,7 @@ def load_log_one_subject(path: path_t, log_filename_pattern: Optional[str] = Non
     import zipfile
 
     if log_filename_pattern is None:
-        log_filename_pattern = _LOG_FILENAME_PATTERN + ".zip"
+        log_filename_pattern = LOG_FILENAME_PATTERN + ".zip"
 
     path = Path(path)
 
