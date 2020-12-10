@@ -9,6 +9,7 @@ import biopsykit.protocols
 import biopsykit.questionnaires
 import biopsykit.metadata
 import biopsykit.io
+import biopsykit.log_data
 
 import biopsykit.colors
 import biopsykit.example_data
@@ -22,6 +23,7 @@ __all__ = [
     'questionnaires',
     'metadata',
     'io',
+    'log_data',
     'colors',
     'example_data',
     'utils'
