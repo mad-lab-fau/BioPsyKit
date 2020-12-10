@@ -13,8 +13,9 @@ def load_eeg_muse(file_path: path_t) -> Tuple[pd.DataFrame, int]:
     data['timestamps'] = pd.to_datetime(data['timestamps'], unit='s')
     data.set_index('timestamps', inplace=True)
     data = data.tz_localize("UTC").tz_convert("Europe/Berlin")
-    # drop the AUX column
-    data.drop(columns="Right AUX", inplace=True)
+    if "Right AUX" in data.columns:
+        # drop the AUX column
+        data.drop(columns="Right AUX", inplace=True)
     return data, sampling_rate
 
 
