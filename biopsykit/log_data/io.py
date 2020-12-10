@@ -11,7 +11,8 @@ from biopsykit.utils import path_t, utc, tz
 _LOG_FILENAME_PATTERN = "logs_(.*?)"
 
 
-def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True, log_filename_pattern: Optional[str] = None):
+def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True,
+                           log_filename_pattern: Optional[str] = None):
     """
 
     Parameters
@@ -42,7 +43,10 @@ def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True, l
         file_list = [p for p in sorted(path.glob("*.csv"))]
         for file in tqdm(file_list):
             subject_id = re.search(log_filename_pattern, file.name).group(1)
-            dict_log_files[subject_id] = pd.read_csv(file, sep=';')
+            df = pd.read_csv(file, sep=';')
+            df['time'] = pd.to_datetime(df['time'])
+            df.set_index('time', inplace=True)
+            dict_log_files[subject_id] = df
 
     return dict_log_files
 
