@@ -7,9 +7,9 @@ import pandas as pd
 
 from datetime import datetime
 
-import biopsykit.log_data.log_actions as log_actions
-import biopsykit.log_data.log_extras as log_extras
-from biopsykit.utils import tz
+import biopsykit.carwatch_logs.log_actions as log_actions
+import biopsykit.carwatch_logs.log_extras as log_extras
+import biopsykit.carwatch_logs.utils as utils
 
 subject_conditions: Dict[str, str] = {
     'UNDEFINED': "Undefined",
@@ -115,7 +115,8 @@ class LogData:
         log_actions.screen_on: [],
         log_actions.user_present: [],
         log_actions.phone_boot_init: [],
-        log_actions.phone_boot_complete: []
+        log_actions.phone_boot_complete: [],
+        # TODO add further log actions
     }
 
     def __init__(self, df: pd.DataFrame, error_handling: Optional[str] = 'ignore'):
@@ -127,7 +128,7 @@ class LogData:
 
     def extract_info(self) -> LogDataInfo:
         # Subject Information
-        subject_dict = get_extras(self, log_actions.subject_id_set)
+        subject_dict = utils.get_extras_for_log(self, log_actions.subject_id_set)
         subject_id: str = ""
         condition: str = subject_conditions['UNDEFINED']
 
@@ -143,14 +144,13 @@ class LogData:
             warnings.warn("Action 'Subject ID Set' not found – Log Data may be invalid!")
 
         # App Metadata
-        app_dict = get_extras(self, log_actions.app_metadata)
+        app_dict = utils.get_extras_for_log(self, log_actions.app_metadata)
         # Phone Metadata
-        phone_dict = get_extras(self, log_actions.phone_metadata)
+        phone_dict = utils.get_extras_for_log(self, log_actions.phone_metadata)
         if log_extras.model in phone_dict and phone_dict[log_extras.model] in smartphone_models:
             phone_dict[log_extras.model] = smartphone_models[phone_dict[log_extras.model]]
 
         # Log Info
-        # print(self.df.index)
         log_days = np.array([ts.date() for ts in self.df.index.normalize().unique()])
         log_info = LogDataInfo(subject_id, condition, log_days)
         log_info.log_days = log_days
@@ -158,6 +158,19 @@ class LogData:
         if app_dict:
             log_info.app_metadata = app_dict
         return log_info
+
+    def _ipython_display_(self):
+        self.print_info()
+
+    def print_info(self):
+        from IPython.display import display, Markdown
+
+        display(Markdown("Subject ID: **{}**".format(self.subject_id)))
+        display(Markdown("Condition: **{}**".format(self.condition)))
+        display(Markdown("App Version: **{}**".format(self.app_version)))
+        display(Markdown("Android Version: **{}**".format(self.android_version)))
+        display(Markdown("Phone: **{}**".format(self.model)))
+        display(Markdown("Logging Days: **{} – {}**".format(str(self.start_date), str(self.end_date))))
 
     @property
     def subject_id(self) -> str:
@@ -185,7 +198,7 @@ class LogData:
 
     @property
     def finished_days(self) -> Sequence[datetime.date]:
-        return get_action(self, log_actions.day_finished).index
+        return utils.get_logs_for_action(self, log_actions.day_finished).index
 
     @property
     def num_finished_days(self) -> int:
@@ -197,73 +210,12 @@ class LogData:
 
     @property
     def start_date(self) -> datetime.date:
-        if self.log_dates and len(self.log_dates) > 0:
+        if self.log_dates is not None and len(self.log_dates) > 0:
             return self.log_dates[0]
         return None
 
     @property
     def end_date(self) -> datetime.date:
-        if self.log_dates and len(self.log_dates) > 0:
+        if self.log_dates is not None and len(self.log_dates) > 0:
             return self.log_dates[-1]
         return None
-
-
-def filtered_logs(log_data: 'LogData') -> pd.DataFrame:
-    return get_action(log_data, log_action=log_data.selected_action, selected_day=log_data.selected_day)
-
-
-def get_logs_for_date(log_data: Union['LogData', pd.DataFrame], date: Union[str, datetime.date]) -> pd.DataFrame:
-    if isinstance(log_data, pd.DataFrame):
-        df = log_data
-    else:
-        df = log_data.df
-
-    date = pd.Timestamp(date).tz_localize(tz)
-
-    if date is pd.NaT:
-        return df
-
-    return df.loc[df.index.normalize() == date]
-
-
-def split_nights(log_data: Union['LogData', pd.DataFrame], diff_hours: Optional[int] = 12) -> Sequence[pd.DataFrame]:
-    if isinstance(log_data, pd.DataFrame):
-        df = log_data
-    else:
-        df = log_data.df
-
-    idx_split = np.where(np.diff(df.index, prepend=df.index[0]) > pd.Timedelta(diff_hours, 'hours'))[0]
-    list_nights = np.split(df, idx_split)
-    return list_nights
-
-
-def get_action(log_data: Union['LogData', pd.DataFrame], log_action: str,
-               selected_day: Optional[datetime] = None,
-               rows: Optional[Union[str, int, Sequence[int]]] = None) -> Union[pd.DataFrame, pd.Series]:
-    if isinstance(log_data, pd.DataFrame):
-        df = log_data
-    else:
-        df = log_data.df
-
-    if selected_day is not None:
-        df = get_logs_for_date(df, date=selected_day)
-
-    if log_action is None:
-        return df
-    elif log_action not in LogData.log_actions:
-        return pd.DataFrame()
-
-    if rows:
-        actions = df[df['action'] == log_action].iloc[rows, :]
-    else:
-        actions = df[df['action'] == log_action]
-    return actions
-
-
-def get_extras(log_data: Union['LogData', pd.DataFrame], log_action: str) -> Dict[str, str]:
-    row = get_action(log_data, log_action, rows=0)
-    if row.empty:
-        # warnings.warn("Log file has no action {}!".format(log_action))
-        return {}
-
-    return json.loads(row['extras'].iloc[0])
