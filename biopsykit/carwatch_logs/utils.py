@@ -5,7 +5,6 @@ from typing import Union, Optional, Sequence, Dict
 import pandas as pd
 import numpy as np
 
-from biopsykit.carwatch_logs import LogData
 from biopsykit.utils import tz
 
 
@@ -41,6 +40,7 @@ def split_nights(log_data: Union['LogData', pd.DataFrame], diff_hours: Optional[
 def get_logs_for_action(log_data: Union['LogData', pd.DataFrame], log_action: str,
                         selected_day: Optional[datetime] = None,
                         rows: Optional[Union[str, int, Sequence[int]]] = None) -> Union[pd.DataFrame, pd.Series]:
+    from biopsykit.carwatch_logs.log_data import LogData
     if isinstance(log_data, pd.DataFrame):
         df = log_data
     else:
