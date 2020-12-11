@@ -23,3 +23,5 @@ screen_on: str = 'screen_on'
 user_present: str = 'user_present'
 phone_boot_init: str = 'phone_boot_init'
 phone_boot_complete: str = 'phone_boot_complete'
+
+# TODO add further log actions

@@ -115,7 +115,8 @@ class LogData:
         log_actions.screen_on: [],
         log_actions.user_present: [],
         log_actions.phone_boot_init: [],
-        log_actions.phone_boot_complete: []
+        log_actions.phone_boot_complete: [],
+        # TODO add further log actions
     }
 
     def __init__(self, df: pd.DataFrame, error_handling: Optional[str] = 'ignore'):
