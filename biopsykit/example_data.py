@@ -80,5 +80,5 @@ def get_eeg_example() -> Tuple[pd.DataFrame, int]:
 
 
 def get_log_data_example() -> pd.DataFrame:
-    from biopsykit.log_data.io import load_log_one_subject
-    return load_log_one_subject(_EXAMPLE_DATA_PATH.joinpath("log_data").joinpath("AB12C"))
+    from biopsykit.carwatch_logs.io import load_log_one_subject
+    return load_log_one_subject(_EXAMPLE_DATA_PATH.joinpath("carwatch_logs").joinpath("AB12C"))

@@ -130,7 +130,7 @@ def log_folder_to_dataframe(folder_path: path_t) -> pd.DataFrame:
 
 def save_log_data(log_data: Union[pd.DataFrame, 'LogData'], path: path_t, subject_id: Optional[str] = None,
                   overwrite: Optional[bool] = False, show_skipped: Optional[bool] = False):
-    from biopsykit.log_data import LogData
+    from biopsykit.carwatch_logs import LogData
 
     if isinstance(log_data, pd.DataFrame):
         if isinstance(log_data.index, pd.MultiIndex):
