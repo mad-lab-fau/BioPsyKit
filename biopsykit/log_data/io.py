@@ -1,7 +1,7 @@
 import re
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Union
 
 import pandas as pd
 from tqdm.notebook import tqdm
@@ -12,7 +12,8 @@ LOG_FILENAME_PATTERN = "logs_(.*?)"
 
 
 def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True,
-                           log_filename_pattern: Optional[str] = None):
+                           log_filename_pattern: Optional[str] = None,
+                           return_df: Optional[bool] = True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """
 
     Parameters
@@ -49,7 +50,10 @@ def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True,
             df.set_index('time', inplace=True)
             dict_log_files[subject_id] = df
 
-    return dict_log_files
+    if return_df:
+        return pd.concat(dict_log_files)
+    else:
+        return dict_log_files
 
 
 def load_log_one_subject(path: path_t, log_filename_pattern: Optional[str] = None,
