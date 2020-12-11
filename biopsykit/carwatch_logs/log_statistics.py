@@ -46,7 +46,7 @@ class LogStatistics:
         # df.sort_values(by=['count', 'app_version'], ascending=[False, True], inplace=True)
         return df
 
-    def manufacturers(self, skip_na: Optional[bool] = True) -> pd.DataFrame:
+    def manufacturer(self, skip_na: Optional[bool] = True) -> pd.DataFrame:
         series = pd.Series([log.manufacturer for log in self.log_data], name="count")
         if skip_na:
             series = series[~series.str.contains("n/a")]
@@ -73,7 +73,7 @@ class LogStatistics:
         return df
 
     def days(self) -> pd.DataFrame:
-        series = pd.Series(np.concatenate([log.log_days for log in self.log_data]), name="count")
+        series = pd.Series(np.concatenate([log.log_dates for log in self.log_data]), name="count")
         df = series.value_counts(sort=False)
         df.sort_index(inplace=True)
 
@@ -87,15 +87,15 @@ class LogStatistics:
         if ax is None:
             fig, ax = plt.subplots()
 
-        if plot_id in ['condition']:
+        if plot_id in ['condition', 'conditions']:
             df = self.conditions()
         elif plot_id in ['manufacturer', 'manufacturers']:
-            df = self.manufacturers()
+            df = self.manufacturer()
         elif plot_id in ['android', 'android_version', 'android_versions']:
             df = self.android_versions()
-        elif plot_id in ['app', 'app_version']:
+        elif plot_id in ['app', 'app_version', 'app_versions']:
             df = self.app_versions()
-        elif plot_id in ['model']:
+        elif plot_id in ['model', 'models']:
             df = self.models()
         elif plot_id in ['finished', 'finished_days']:
             df = self.finished_days()
