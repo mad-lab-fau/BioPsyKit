@@ -151,7 +151,6 @@ class LogData:
             phone_dict[log_extras.model] = smartphone_models[phone_dict[log_extras.model]]
 
         # Log Info
-        # print(self.df.index)
         log_days = np.array([ts.date() for ts in self.df.index.normalize().unique()])
         log_info = LogDataInfo(subject_id, condition, log_days)
         log_info.log_days = log_days
@@ -159,6 +158,19 @@ class LogData:
         if app_dict:
             log_info.app_metadata = app_dict
         return log_info
+
+    def _ipython_display_(self):
+        self.print_info()
+
+    def print_info(self):
+        from IPython.display import display, Markdown
+
+        display(Markdown("Subject ID: **{}**".format(self.subject_id)))
+        display(Markdown("Condition: **{}**".format(self.condition)))
+        display(Markdown("App Version: **{}**".format(self.app_version)))
+        display(Markdown("Android Version: **{}**".format(self.android_version)))
+        display(Markdown("Phone: **{}**".format(self.model)))
+        display(Markdown("Logging Days: **{} – {}**".format(str(self.start_date), str(self.end_date))))
 
     @property
     def subject_id(self) -> str:
@@ -198,13 +210,13 @@ class LogData:
 
     @property
     def start_date(self) -> datetime.date:
-        if self.log_dates and len(self.log_dates) > 0:
+        if self.log_dates is not None and len(self.log_dates) > 0:
             return self.log_dates[0]
         return None
 
     @property
     def end_date(self) -> datetime.date:
-        if self.log_dates and len(self.log_dates) > 0:
+        if self.log_dates is not None and len(self.log_dates) > 0:
             return self.log_dates[-1]
         return None
 
