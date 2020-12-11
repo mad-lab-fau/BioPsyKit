@@ -30,7 +30,7 @@ def log_file_subject_dropdown(path: path_t, input_type: Optional[str] = 'file', 
         log_file_list = [log_file for log_file in list(sorted(path.glob("*.csv")))]
         subject_list = [re.search(log_file_pattern, log_file.name).group(1) for log_file in log_file_list]
     if input_type == 'folder':
-        log_file_list = [folder for folder in path.glob("*") if folder.is_dir()]
+        log_file_list = [folder for folder in path.glob("*") if folder.is_dir() and not folder.name.startswith(".")]
         subject_list = [folder.name for folder in log_file_list]
 
     option_list = [("Select Subject", None)]

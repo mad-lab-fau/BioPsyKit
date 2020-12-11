@@ -9,7 +9,7 @@ from datetime import datetime
 
 import biopsykit.carwatch_logs.log_actions as log_actions
 import biopsykit.carwatch_logs.log_extras as log_extras
-from biopsykit.utils import tz
+import biopsykit.carwatch_logs.utils as utils
 
 subject_conditions: Dict[str, str] = {
     'UNDEFINED': "Undefined",
@@ -128,7 +128,7 @@ class LogData:
 
     def extract_info(self) -> LogDataInfo:
         # Subject Information
-        subject_dict = get_extras_for_log(self, log_actions.subject_id_set)
+        subject_dict = utils.get_extras_for_log(self, log_actions.subject_id_set)
         subject_id: str = ""
         condition: str = subject_conditions['UNDEFINED']
 
@@ -144,9 +144,9 @@ class LogData:
             warnings.warn("Action 'Subject ID Set' not found – Log Data may be invalid!")
 
         # App Metadata
-        app_dict = get_extras_for_log(self, log_actions.app_metadata)
+        app_dict = utils.get_extras_for_log(self, log_actions.app_metadata)
         # Phone Metadata
-        phone_dict = get_extras_for_log(self, log_actions.phone_metadata)
+        phone_dict = utils.get_extras_for_log(self, log_actions.phone_metadata)
         if log_extras.model in phone_dict and phone_dict[log_extras.model] in smartphone_models:
             phone_dict[log_extras.model] = smartphone_models[phone_dict[log_extras.model]]
 
@@ -198,7 +198,7 @@ class LogData:
 
     @property
     def finished_days(self) -> Sequence[datetime.date]:
-        return get_logs_for_action(self, log_actions.day_finished).index
+        return utils.get_logs_for_action(self, log_actions.day_finished).index
 
     @property
     def num_finished_days(self) -> int:
