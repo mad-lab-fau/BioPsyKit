@@ -12,14 +12,14 @@ from biopsykit.utils import path_t, utc, tz
 LOG_FILENAME_PATTERN = "logs_(.*?)"
 
 
-def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True,
+def load_logs_all_subjects(path: path_t, has_subject_folders: Optional[bool] = True,
                            log_filename_pattern: Optional[str] = None,
                            return_df: Optional[bool] = True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """
 
     Parameters
     ----------
-    has_subfolder
+    has_subject_folders
     path : path or str
         path to folder containing logs
     log_filename_pattern : str, optional
@@ -35,7 +35,7 @@ def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True,
     path = Path(path)
 
     dict_log_files = {}
-    if has_subfolder:
+    if has_subject_folders:
         folder_list = [p for p in sorted(path.glob("*")) if p.is_dir() and not p.name.startswith('.')]
         for folder in tqdm(folder_list):
             subject_id = folder.name
@@ -63,8 +63,7 @@ def load_logs_all_subjects(path: path_t, has_subfolder: Optional[bool] = True,
                     dict_log_files[subject_id] = load_log_one_subject(file)
 
     if return_df:
-        df = pd.concat(dict_log_files, names=['subject_id'])
-        return df
+        return pd.concat(dict_log_files, names=['subject_id'])
     else:
         return dict_log_files
 
