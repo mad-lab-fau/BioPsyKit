@@ -75,16 +75,14 @@ class ActivityCounts:
         return padded_data.reshape((len(padded_data) // n_samples, -1)).mean(axis=1)
 
     def calculate(self, data: np.ndarray, sampling_rate: Union[int, float]) -> 'ActivityCounts':
-        self.data = data
-        self.sampling_rate = sampling_rate
-        tmp = self.data.copy()
+        data = data.copy()
 
-        tmp = self._downsample(tmp, sampling_rate, 30)
-        tmp = self._aliasing_filter(tmp, 30)
-        tmp = self._actigraph_filter(tmp)
-        tmp = self._downsample(tmp, 30, 10)
-        tmp = np.abs(tmp)
-        tmp = self._truncate(tmp)
-        tmp = self._digitize_8bit(tmp)
-        self.activity_counts_ = self._accumulate_minute_bins(tmp)
+        data = self._downsample(data, sampling_rate, 30)
+        data = self._aliasing_filter(data, 30)
+        data = self._actigraph_filter(data)
+        data = self._downsample(data, 30, 10)
+        data = np.abs(data)
+        data = self._truncate(data)
+        data = self._digitize_8bit(data)
+        self.activity_counts_ = self._accumulate_minute_bins(data)
         return self
