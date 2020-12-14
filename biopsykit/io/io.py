@@ -11,6 +11,7 @@ from biopsykit.utils import path_t, utc, tz
 
 def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['Dataset'] = None,
                          datastreams: Optional[Sequence[str]] = None,
+                         factory_calibrate: Optional[bool] = True,
                          timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
     Converts a recorded by NilsPod into a dataframe.
@@ -27,6 +28,9 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
     datastreams : list of str, optional
         list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
         Datastreams that are not part of the current dataset will be silently ignored.
+    factory_calibrate: bool, optional
+        Whether to apply factory calibration to the data or not. Only required when NilsPod dataset is passed/loaded
+        and dataset contains IMU data
     timezone : str or pytz.timezone, optional
             timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
@@ -52,6 +56,10 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
     if isinstance(timezone, str):
         # convert to pytz object
         timezone = pytz.timezone(timezone)
+
+    if factory_calibrate:
+        # TODO add function argument to optionally pass calibration files
+        dataset.factory_calibrate_imu(inplace=True)
     # convert dataset to dataframe and localize timestamp
     df = dataset.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
     df.index.name = "time"
