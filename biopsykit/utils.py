@@ -4,7 +4,7 @@
 @author: Robert Richer, Arne Küderle
 """
 from pathlib import Path
-from typing import TypeVar, Sequence, Optional, Dict, Union
+from typing import TypeVar, Sequence, Optional, Dict, Union, Tuple
 import pytz
 
 import pandas as pd
@@ -213,7 +213,10 @@ def sanitize_input_1d(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.nd
     return data
 
 
-def sanitize_input_nd(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
+def sanitize_input_nd(
+        data: Union[pd.DataFrame, pd.Series, np.ndarray],
+        ncols: Union[int, Tuple[int, ...]]
+) -> np.ndarray:
     """
     Converts nD array-like data (numpy array, pandas dataframe/series) to a numpy array.
 
@@ -221,14 +224,29 @@ def sanitize_input_nd(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.nd
     ----------
     data : array_like
         input data
+    ncols : int or tuple of ints
+        number of columns (2nd dimension) the 'data' array should have
 
     Returns
     -------
     array_like
         data as numpy array
     """
+
+    # ensure tuple
+    if isinstance(ncols, int):
+        ncols = (ncols,)
+
     if isinstance(data, (pd.Series, pd.DataFrame)):
         data = np.squeeze(data.values)
+
+    if data.ndim == 1:
+        if 1 in ncols:
+            return data
+        else:
+            raise ValueError("Invalid number of columns! Expected one of {}, got 1.".format(ncols))
+    elif data.shape[1] not in ncols:
+        raise ValueError("Invalid number of columns! Expected one of {}, got {}.".format(ncols, data.shape[1]))
     return data
 
 
