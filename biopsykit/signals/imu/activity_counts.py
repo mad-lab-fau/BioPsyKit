@@ -110,5 +110,6 @@ class ActivityCounts:
             data = pd.DataFrame(data, columns=['activity_counts'])
             start_time = float(start_time.to_datetime64()) / 1e9
             data.index = pd.to_datetime((data.index * 60 + start_time).astype(int), utc=True, unit='s').tz_convert(tz)
+            data.index.name = "time"
 
         return data
