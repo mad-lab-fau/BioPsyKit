@@ -3,7 +3,7 @@ from typing import Union, Tuple, Optional, Dict, Sequence
 import pandas as pd
 import numpy as np
 import neurokit2 as nk
-from biopsykit.utils import sanitize_input
+from biopsykit.utils import sanitize_input_1d
 
 
 def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
@@ -43,7 +43,7 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
     x_old = np.array((data.index - data.index[0]).total_seconds())
     x_new = np.arange(1, np.ceil(x_old[-1]) + 1)
-    data = sanitize_input(data)
+    data = sanitize_input_1d(data)
     interpol_f = interpolate.interp1d(x=x_old, y=data, fill_value="extrapolate")
     x_new = pd.Index(x_new, name="Time")
     return pd.DataFrame(interpol_f(x_new), index=x_new, columns=column_name)
@@ -175,8 +175,8 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
     extrema_func = extrema_funcs[extrema_type]
 
     # ensure numpy
-    data = sanitize_input(data)
-    indices = sanitize_input(indices)
+    data = sanitize_input_1d(data)
+    indices = sanitize_input_1d(indices)
     indices = indices.astype(int)
     # possible start offset if beginning of array needs to be padded to ensure radius
     start_padding = 0
