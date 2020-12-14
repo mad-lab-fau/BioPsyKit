@@ -189,7 +189,7 @@ def check_input(ecg_processor: 'EcgProcessor', key: str, ecg_signal: pd.DataFram
     return True
 
 
-def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
+def sanitize_input_1d(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
     """
     Converts 1D array-like data (numpy array, pandas dataframe/series) to a numpy array.
 
@@ -210,6 +210,25 @@ def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarr
             raise ValueError("Only 1D DataFrames allowed!")
         data = np.squeeze(data.values)
 
+    return data
+
+
+def sanitize_input_nd(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
+    """
+    Converts nD array-like data (numpy array, pandas dataframe/series) to a numpy array.
+
+    Parameters
+    ----------
+    data : array_like
+        input data
+
+    Returns
+    -------
+    array_like
+        data as numpy array
+    """
+    if isinstance(data, (pd.Series, pd.DataFrame)):
+        data = np.squeeze(data.values)
     return data
 
 

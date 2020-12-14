@@ -784,7 +784,7 @@ class EcgProcessor:
         """
 
         # find peaks: minimal distance between peaks: 1 seconds
-        rsp_signal = utils.sanitize_input(rsp_signal)
+        rsp_signal = utils.sanitize_input_1d(rsp_signal)
         edr_maxima = ss.find_peaks(rsp_signal, height=0, distance=sampling_rate)[0]
         edr_minima = ss.find_peaks(-1 * rsp_signal, height=0, distance=sampling_rate)[0]
         # threshold: 0.2 * Q3 (= 75th percentile)
@@ -850,7 +850,7 @@ class EcgProcessor:
         """
 
         # ensure numpy
-        rsp_signal = utils.sanitize_input(rsp_signal)
+        rsp_signal = utils.sanitize_input_1d(rsp_signal)
         # Process raw respiration input
         rsp_output = nk.rsp_process(rsp_signal, sampling_rate)[0]
         rsp_output.index = ecg_signal.index
