@@ -63,15 +63,17 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
     wake_bouts = df_start_stop[df_start_stop['sleep_wake'].ne(0)].drop(columns=["sleep_wake"]).reset_index(
         drop=True)
     num_wake_bouts = len(wake_bouts)
-    sleep_onset = sleep_time.index[0]
-    wake_onset = sleep_time.index[-1]
+    sleep_onset = str(sleep_time.index[0])
+    wake_onset = str(sleep_time.index[-1])
+    mrp_start = str(major_rest_periods['start'][0])
+    mrp_end = str(major_rest_periods['end'][0])
 
     dict_result = {
         'sleep_onset': sleep_onset,
         'wake_onset': wake_onset,
         'total_sleep_time': tst,
-        'major_rest_period_start': major_rest_periods['start'][0],
-        'major_rest_period_end': major_rest_periods['end'][0],
+        'major_rest_period_start': mrp_start,
+        'major_rest_period_end': mrp_end,
         'sleep_efficiency': se,
         'sleep_onset_latency': sol,
         'wake_after_sleep_onset': waso,
@@ -80,3 +82,27 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
         'number_wake_bouts': num_wake_bouts
     }
     return dict_result
+
+
+def endpoints_as_df(sleep_endpoints: Dict, subject_id: str) -> pd.DataFrame:
+    sleep_endpoints = sleep_endpoints.copy()
+    sleep_bouts = sleep_endpoints.pop('sleep_bouts', None).values.tolist()
+    wake_bouts = sleep_endpoints.pop('wake_bouts', None).values.tolist()
+
+    sleep_bouts = [tuple(v) for v in sleep_bouts]
+    wake_bouts = [tuple(v) for v in wake_bouts]
+
+    date = pd.to_datetime(sleep_endpoints['major_rest_period_start'])
+    if date.hour < 12:
+        date = date - pd.Timedelta("1d")
+        date = date.normalize()
+
+    index = pd.MultiIndex.from_tuples([(subject_id, date)], names=['subject_id', 'date'])
+
+    df = pd.DataFrame(sleep_endpoints, index=index)
+    df.fillna(value=np.nan, inplace=True)
+    df['sleep_bouts'] = None
+    df['wake_bouts'] = None
+    df.at[df.index[0], 'sleep_bouts'] = sleep_bouts
+    df.at[df.index[0], 'wake_bouts'] = wake_bouts
+    return df
