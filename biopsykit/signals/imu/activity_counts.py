@@ -24,6 +24,9 @@ class ActivityCounts:
     sampling_rate = None
     activity_counts_ = None
 
+    def __init__(self, sampling_rate: int):
+        self.sampling_rate = sampling_rate
+
     @staticmethod
     def _compute_norm(data: np.ndarray) -> np.ndarray:
         return np.linalg.norm(data, axis=1)
@@ -80,15 +83,18 @@ class ActivityCounts:
         padded_data = np.pad(data, (0, n_samples - len(data) % n_samples), 'constant', constant_values=0)
         return padded_data.reshape((len(padded_data) // n_samples, -1)).mean(axis=1)
 
-    def calculate(self, data: Union[np.ndarray, pd.DataFrame], sampling_rate: Union[int, float]) -> Union[
-        np.ndarray, pd.DataFrame]:
+    def calculate(
+            self,
+            data: Union[np.ndarray, pd.DataFrame]
+    ) -> Union[np.ndarray, pd.DataFrame]:
+
         start_time = None
         if isinstance(data, pd.DataFrame):
             data = data.filter(like='acc')
             start_time = data.index[0]
 
         data = data.copy()
-        data = sanitize_input_nd(data)
+        data = sanitize_input_nd(data, ncols=(1, 3))
 
         if data.shape[1] not in (1, 3):
             raise ValueError("{} takes only 1D or 3D accelerometer data! Got {}D data.".format(self.__class__.__name__,
@@ -96,7 +102,7 @@ class ActivityCounts:
         if data.shape[1] != 1:
             data = self._compute_norm(data)
 
-        data = self._downsample(data, sampling_rate, 30)
+        data = self._downsample(data, self.sampling_rate, 30)
         data = self._aliasing_filter(data, 30)
         data = self._actigraph_filter(data)
         data = self._downsample(data, 30, 10)
