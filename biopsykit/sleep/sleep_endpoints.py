@@ -68,7 +68,13 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
     mrp_start = str(major_rest_periods['start'][0])
     mrp_end = str(major_rest_periods['end'][0])
 
+    date = pd.to_datetime(mrp_start)
+    if date.hour < 12:
+        date = date - pd.Timedelta("1d")
+        date = str(date.normalize())
+
     dict_result = {
+        'date': date,
         'sleep_onset': sleep_onset,
         'wake_onset': wake_onset,
         'total_sleep_time': tst,
@@ -92,14 +98,9 @@ def endpoints_as_df(sleep_endpoints: Dict, subject_id: str) -> pd.DataFrame:
     sleep_bouts = [tuple(v) for v in sleep_bouts]
     wake_bouts = [tuple(v) for v in wake_bouts]
 
-    date = pd.to_datetime(sleep_endpoints['major_rest_period_start'])
-    if date.hour < 12:
-        date = date - pd.Timedelta("1d")
-        date = date.normalize()
-
-    index = pd.MultiIndex.from_tuples([(subject_id, date)], names=['subject_id', 'date'])
-
-    df = pd.DataFrame(sleep_endpoints, index=index)
+    df = pd.DataFrame(sleep_endpoints, index=[subject_id])
+    df.index.names = ['subject_id']
+    df.set_index('date', append=True, inplace=True)
     df.fillna(value=np.nan, inplace=True)
     df['sleep_bouts'] = None
     df['wake_bouts'] = None
