@@ -37,7 +37,7 @@ def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biom
     pd.DataFrame
         dataframe with saliva parameters
     """
-    # TODO documentation
+
     # TODO add remove_nan option (all or any)
 
     # ensure pathlib

@@ -4,8 +4,22 @@ import pandas as pd
 import numpy as np
 
 
-def extract_saliva_columns(data: pd.DataFrame, var: str, col_pattern: Optional[str] = None):
-    # TODO documentation
+def extract_saliva_columns(data: pd.DataFrame, var: str, col_pattern: Optional[str] = None) -> pd.DataFrame:
+    """
+    Extracts the columns of a passed dataframe containing the saliva samples.
+    Parameters
+    ----------
+    data: pd.DataFrame
+        dataframe which should be extracted
+    var: str
+        ?variable which should be included in the extraction?
+    col_pattern: str, optional
+        column pattern to identify the saliva samples
+    Returns
+    -------
+    pd.DataFrame
+        dataframe containing the saliva samples
+    """
     if col_pattern is None:
         col_suggs = get_saliva_column_suggestions(data, var)
         if len(col_suggs) > 1:
@@ -18,7 +32,19 @@ def extract_saliva_columns(data: pd.DataFrame, var: str, col_pattern: Optional[s
 
 
 def get_saliva_column_suggestions(data: pd.DataFrame, var: str) -> Sequence[str]:
-    # TODO documentation
+    """
+    This function suggests the column in a dataframe that contains the saliva samples.
+    Parameters
+    ----------
+    data: pd.DataFrame
+        dataframe which should be extracted
+    var: str
+        ?variable which should be included in the extraction?
+    Returns
+    -------
+    list
+        suggested column containing the salvia samples
+    """
     import re
 
     sugg_filt = list(filter(lambda col: any(k in col for k in _dict_words[var]), data.columns))

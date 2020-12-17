@@ -13,7 +13,7 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
                          datastreams: Optional[Sequence[str]] = None,
                          timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
-    Converts a recorded by NilsPod into a dataframe.
+    Converts a file recorded by NilsPod into a dataframe.
 
     You can either pass a Dataset object obtained from `nilspodlib` or directly pass the path to the file to load 
     and convert the file at once.
@@ -61,16 +61,22 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
 def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[Sequence[str]] = None,
                      timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
-    TODO: add documentation
+    Converts a CSV file recorded by NilsPod into a dataframe.
+
     Parameters
     ----------
-    file_path
-    datastreams
-    timezone
+    file_path : str or path, optional ???
+        path to dataset object to load
+    datastreams : list of str, optional
+        list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
+        Datastreams that are not part of the current dataset will be silently ignored.
+    timezone : str or pytz.timezone, optional
+        timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
     Returns
     -------
-
+    tuple
+        tuple of pandas dataframe with sensor data and sampling rate
     """
     import re
 
@@ -132,7 +138,16 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
     ValueError
         if number of phases does not match the number of datasets in the folder
 
-    # TODO add examples
+    Examples
+    --------
+    >>> import biopsykit as bp
+    >>> folder_path = "./nilspod"
+    >>> # load all datasets from the selected folder with all datastreams
+    >>> dataset_dict, sampling_rate = bp.io.load_folder_nilspod(folder_path)
+    >>> # load only ECG data of all datasets from the selected folder
+    >>> dataset_dict, sampling_rate = bp.io.load_dataset_nilspod(folder_path, datastreams=['ecg'])
+    >>> # load all datasets from the selected folder with correspondng phase names
+    >>> dataset_dict, sampling_rate = bp.io.load_dataset_nilspod(folder_path, phase_names=['VP01','VP02','VP03'])
     """
     # ensure pathlib
     folder_path = Path(folder_path)
@@ -176,7 +191,15 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
     ValueError
         if file format is none of [.xls, .xlsx, .csv]
 
-    TODO: add examples
+
+    >>> import biopsykit as bp
+    >>> file_path = "./timelog.csv"
+    >>> # load time log file into a pandas dataframe
+    >>> df_time_log = bp.io.load_time_log(file_path)
+    >>> # load time log file into a pandas dataframe by using a fixed index from the time log file
+    >>> df_time_log = bp.io.load_time_log(file_path,index_cols = "time_log_index")
+    >>> # load the time log information of a column into a pandas dataframe
+    >>> df_time_log = bp.io.load_time_log(file_path,phase_cols="time_log")
     """
     # ensure pathlib
     file_path = Path(file_path)
@@ -217,17 +240,23 @@ def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset
                               date: Optional[Union[str, 'datetime']] = None,
                               timezone: Optional[str] = "Europe/Berlin") -> pd.DataFrame:
     """
-    TODO: add documentation
+    Converts pandas dataframe with time log information into datetime.
 
     Parameters
     ----------
-    time_log
-    dataset
-    date
-    timezone
+    time_log : pd.DataFrame
+        pandas dataframe with time log information
+    dataset : Dataset, optional
+        Dataset object to convert time log information into datetime
+    date : str or datatime, optional
+        date to convert into time log into datetime
+    timezone : str or pytz.timezone, optional
+        timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
     Returns
     -------
+    pd.DataFrame
+        pandas dataframe with log time converted into datetime
 
     Raises
     ------
