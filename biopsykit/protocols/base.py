@@ -203,6 +203,25 @@ class BaseProtocol:
             ax: Optional[plt.Axes] = None,
             figsize: Optional[Tuple[float, float]] = None
     ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
+        """
+        TODO: add documentation
+
+        Parameters
+        ----------
+        data
+        feature_name
+        saliva_times
+        groups
+        group_col
+        plot_params
+        ylims
+        ax
+        figsize
+
+        Returns
+        -------
+
+        """
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
@@ -348,6 +367,20 @@ class BaseProtocol:
 
     def saliva_plot_combine_legend(self, figure: plt.Figure, ax: plt.Axes, biomarkers: Sequence[str],
                                    separate_legends: Optional[bool] = False):
+        """
+        TODO: add documentation
+
+        Parameters
+        ----------
+        figure
+        ax
+        biomarkers
+        separate_legends
+
+        Returns
+        -------
+
+        """
         from matplotlib.legend_handler import HandlerTuple
 
         fontsize = self.saliva_params['multi.fontsize']
