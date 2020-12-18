@@ -133,8 +133,11 @@ class MIST(base.BaseProtocol):
 
         return utils.interpolate_and_cut(dict_hr_subject)
 
-    def concat_phase_dict(self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
-                          **kwargs) -> Dict[str, pd.DataFrame]:
+    def concat_phase_dict(
+            self,
+            dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
+            **kwargs
+    ) -> Dict[str, pd.DataFrame]:
         """
         Rearranges the 'HR subject dict' (see `util s.load_hr_excel_all_subjects`) into 'MIST Phase dict'.
         See ``bp.protocols.utils.concat_phase_dict`` for further information.
@@ -156,9 +159,12 @@ class MIST(base.BaseProtocol):
         else:
             return super().concat_phase_dict(dict_hr_subject, self.phases)
 
-    def split_subphases(self, phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-                        is_group_dict: Optional[bool] = False, **kwargs) -> Union[
-        Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
+    def split_subphases(
+            self,
+            phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
+            is_group_dict: Optional[bool] = False,
+            **kwargs
+    ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
         """
         Splits a `MIST Phase dict` (or a dict of such, in case of multiple groups,
         see ``bp.protocols.utils.concat_dict``)
