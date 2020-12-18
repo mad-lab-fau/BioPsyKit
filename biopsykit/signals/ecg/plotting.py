@@ -9,6 +9,7 @@ import pandas as pd
 import seaborn as sns
 
 import biopsykit.utils as utils
+import biopsykit.signals.utils as su
 import biopsykit.colors as colors
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.utils import path_t
@@ -81,7 +82,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
 
-    utils.check_input(ecg_processor, key, ecg_signal, heart_rate)
+    su.check_ecg_input(ecg_processor, key, ecg_signal, heart_rate)
     if ecg_processor:
         ecg_signal = ecg_processor.ecg_result[key]
         heart_rate = ecg_processor.heart_rate[key]
@@ -142,7 +143,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
 
     peaks = np.setdiff1d(peaks, outlier)
     # Plot signals
-    # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=utils.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
+    # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=colors.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
     axs['ecg'].plot(ecg_clean, color=colors.fau_color('fau'), label="Cleaned", zorder=1,
                     linewidth=1.5)
     axs['ecg'].scatter(x_axis[peaks], ecg_clean.iloc[peaks], color=colors.fau_color('nat'),
@@ -298,7 +299,7 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     if figsize is None:
         figsize = (14, 7)
 
-    utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+    su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
     if ecg_processor:
         ecg_signal = ecg_processor.ecg_result[key]
         rpeaks = ecg_processor.rpeaks[key]
