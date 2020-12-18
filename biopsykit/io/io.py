@@ -70,7 +70,7 @@ def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[S
 
     Parameters
     ----------
-    file_path : str or path, optional ???
+    file_path : str or path
         path to dataset object to load
     datastreams : list of str, optional
         list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
@@ -82,6 +82,11 @@ def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[S
     -------
     tuple
         tuple of pandas dataframe with sensor data and sampling rate
+
+    See Also
+    --------
+    `biopsykit.io.load_dataset_nilspod()`
+
     """
     import re
 
@@ -120,6 +125,8 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
                         timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[Dict[str, pd.DataFrame], int]:
     """
     Loads all NilsPod datasets from one folder, converts them into dataframes and combines them into one dictionary.
+
+    This function can for example be used when single session were recorded for different phases.
 
     Parameters
     ----------
@@ -174,7 +181,8 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
 def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str]]] = None,
                   phase_cols: Optional[Sequence[str]] = None) -> pd.DataFrame:
     """
-    Loads time log file.
+    Loads a 'time log file', i.e. a file where time information about start and stop times of recordings or recording
+    phases are stored.
 
     Parameters
     ----------
@@ -201,10 +209,10 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
     >>> file_path = "./timelog.csv"
     >>> # load time log file into a pandas dataframe
     >>> df_time_log = bp.io.load_time_log(file_path)
-    >>> # load time log file into a pandas dataframe by using a fixed index from the time log file
-    >>> df_time_log = bp.io.load_time_log(file_path,index_cols = "time_log_index")
-    >>> # load the time log information of a column into a pandas dataframe
-    >>> df_time_log = bp.io.load_time_log(file_path,phase_cols="time_log")
+    >>> # load time log file into a pandas dataframe and specify the 'subject_id' column in the time log file to be the index of the dataframe
+    >>> df_time_log = bp.io.load_time_log(file_path, index_cols='subject_id')
+    >>> # load time log file into a pandas dataframe and specify the columns 'Phase1' 'Phase2' and 'Phase3' in the time log file to be the used for extracting time information
+    >>> df_time_log = bp.io.load_time_log(file_path, phase_cols=['Phase1', 'Phase2', 'Phase3'])
     """
     # ensure pathlib
     file_path = Path(file_path)
@@ -242,10 +250,12 @@ def load_subject_condition_list(file_path: path_t, subject_col: Optional[str] = 
 
 
 def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset'] = None,
-                              date: Optional[Union[str, 'datetime']] = None,
+                              df: Optional[pd.DataFrame] = None, date: Optional[Union[str, 'datetime']] = None,
                               timezone: Optional[str] = "Europe/Berlin") -> pd.DataFrame:
     """
-    Converts pandas dataframe with time log information into datetime.
+    Converts the time information of a time log pandas dataframe into datetime objects, i.e. adds the recording date
+    to the time. Thus, either a NilsPodLib 'Dataset' or pandas DataFrame with DateTimeIndex must be supplied from which
+    the recording date can be extracted or the date must explicitly be specified.
 
     Parameters
     ----------
@@ -253,6 +263,7 @@ def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset
         pandas dataframe with time log information
     dataset : Dataset, optional
         Dataset object to convert time log information into datetime
+    df : pd.DataFrame, optional
     date : str or datatime, optional
         date to convert into time log into datetime
     timezone : str or pytz.timezone, optional
@@ -266,13 +277,19 @@ def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset
     Raises
     ------
     ValueError
-        if none of `dataset` and `date` is supplied as argument
+        if none of `dataset`, `df` and `date` are supplied as argument
     """
-    if dataset is None and date is None:
-        raise ValueError("Either `dataset` or `date` must be supplied as argument!")
+    if dataset is None and date is None and df is None:
+        raise ValueError("Either `dataset`, `df` or `date` must be supplied as argument!")
 
     if dataset is not None:
         date = dataset.info.utc_datetime_start.date()
+    if df is not None:
+        if isinstance(df.index, pd.DatetimeIndex):
+            date = df.index.normalize().unique()[0]
+            date = date.to_pydatetime()
+        else:
+            raise ValueError("Index of DataFrame must be DatetimeIndex!")
     if isinstance(date, str):
         # ensure datetime
         date = datetime.datetime(date)
