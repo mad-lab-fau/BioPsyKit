@@ -9,12 +9,12 @@ _keys_fau = ['fau', 'phil', 'wiso', 'med', 'nat', 'tech']
 def cmap_fau_blue(cmap_type: Union[str, None]) -> Sequence[str]:
     # generated using this link: https://noeldelgado.github.io/shadowlord
     fau_blue = sns.color_palette(
-        ["#001628", "#001F38", "#002747", "#003056", "#003865",
-         "#26567C", "#4D7493", "#7392AA", "#99AFC1", "#BFCDD9",
-         "#E6EBF0"]
+        ["#001628", "#001c33", "#002747", "#002d51", "#003865",
+         "#194c74", "#336084", "#4d7493", "#809cb2", "#b3c3d1",
+         "#e6ebf0"]
     )
     if cmap_type == '3':
-        return fau_blue[1::3]
+        return [fau_blue[4], fau_blue[7], fau_blue[9]]
     elif cmap_type == '2':
         return fau_blue[5::4]
     elif cmap_type == '2_lp':

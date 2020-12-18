@@ -646,7 +646,7 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
             figsize = plt.rcParams['figure.figsize']
         fig, ax = plt.subplots(figsize=figsize)
 
-    rpeaks = utils.sanitize_input(rpeaks['R_Peak_Idx'])
+    rpeaks = utils.sanitize_input_1d(rpeaks['R_Peak_Idx'])
     rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate, interpolate=True)[0]
     hrv = nk.hrv_frequency(rpeaks, sampling_rate)
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]

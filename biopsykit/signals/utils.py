@@ -3,7 +3,9 @@ from typing import Union, Tuple, Optional, Dict, Sequence
 import pandas as pd
 import numpy as np
 import neurokit2 as nk
-from biopsykit.utils import sanitize_input
+from numpy.lib.stride_tricks import as_strided
+
+from biopsykit.utils import sanitize_input_1d
 
 
 def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
@@ -43,7 +45,7 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
     x_old = np.array((data.index - data.index[0]).total_seconds())
     x_new = np.arange(1, np.ceil(x_old[-1]) + 1)
-    data = sanitize_input(data)
+    data = sanitize_input_1d(data)
     interpol_f = interpolate.interp1d(x=x_old, y=data, fill_value="extrapolate")
     x_new = pd.Index(x_new, name="Time")
     return pd.DataFrame(interpol_f(x_new), index=x_new, columns=column_name)
@@ -72,7 +74,6 @@ def interpolate_dict_sec(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[
 
 
 def interpolate_and_cut(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
-
     data_dict = interpolate_dict_sec(data_dict)
     durations = np.array([[len(df) for phase, df in dict_hr.items()] for dict_hr in data_dict.values()])
     phase_names = np.array([list(val.keys()) for key, val in data_dict.items()])
@@ -175,8 +176,8 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
     extrema_func = extrema_funcs[extrema_type]
 
     # ensure numpy
-    data = sanitize_input(data)
-    indices = sanitize_input(indices)
+    data = sanitize_input_1d(data)
+    indices = sanitize_input_1d(indices)
     indices = indices.astype(int)
     # possible start offset if beginning of array needs to be padded to ensure radius
     start_padding = 0
@@ -257,3 +258,27 @@ def remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x
     # interpolate signal
     x_new = np.linspace(x_old[0], x_old[-1], desired_length)
     return nk.signal_interpolate(x_old, data, x_new, method='linear')
+
+
+def sliding_window(
+        data: Union[np.array, pd.Series, pd.DataFrame],
+        sampling_rate: Union[int, float],
+        window_s: int,
+        overlap_percent: Optional[float] = 0,
+        overlap_samples: Optional[int] = 0
+):
+    data = sanitize_input_1d(data)
+    window = int(sampling_rate * window_s)
+
+    if overlap_samples == 0:
+        window_step = window - int(overlap_percent * window)
+    else:
+        window_step = overlap_samples
+
+    data = np.pad(data, (0, window - data.shape[0] % window), 'constant', constant_values=0)
+    new_shape = data.shape[:-1] + ((data.shape[-1] - int(overlap_percent * window)) // window_step,
+                                   window)
+    new_strides = (data.strides[:-1] + (window_step * data.strides[-1],) +
+                   data.strides[-1:])
+    arr_new = as_strided(data, shape=new_shape, strides=new_strides)
+    return arr_new
