@@ -4,24 +4,27 @@ import pandas as pd
 import numpy as np
 
 
-def extract_saliva_columns(data: pd.DataFrame, var: str, col_pattern: Optional[str] = None) -> pd.DataFrame:
+def extract_saliva_columns(data: pd.DataFrame, biomarker: str, col_pattern: Optional[str] = None) -> pd.DataFrame:
     """
-    Extracts the columns of a passed dataframe containing the saliva samples.
+    Extracts columns containing saliva samples from a DataFrame.
+
     Parameters
     ----------
     data: pd.DataFrame
         dataframe which should be extracted
-    var: str
-        ?variable which should be included in the extraction?
+    biomarker: str
+        biomarker variable which should be used to extract columns (e.g. 'cortisol')
     col_pattern: str, optional
-        column pattern to identify the saliva samples
+        string pattern to identify saliva columns. If None, it is attempted to automatically infer column names using
+        `bp.saliva.utils.get_saliva_column_suggestions()`
+
     Returns
     -------
     pd.DataFrame
-        dataframe containing the saliva samples
+        dataframe containing saliva data
     """
     if col_pattern is None:
-        col_suggs = get_saliva_column_suggestions(data, var)
+        col_suggs = get_saliva_column_suggestions(data, biomarker)
         if len(col_suggs) > 1:
             raise KeyError(
                 "More than one possible column pattern was found! Please check manually which pattern is correct: {}".format(
@@ -31,23 +34,27 @@ def extract_saliva_columns(data: pd.DataFrame, var: str, col_pattern: Optional[s
     return data.filter(regex=col_pattern)
 
 
-def get_saliva_column_suggestions(data: pd.DataFrame, var: str) -> Sequence[str]:
+def get_saliva_column_suggestions(data: pd.DataFrame, biomarker: str) -> Sequence[str]:
     """
-    This function suggests the column in a dataframe that contains the saliva samples.
+    Extracts possible columns containing saliva data from a dataframe.
+    This is for example useful when one large dataframe is used to store demographic information,
+    questionnaire data and biomarker data.
+
     Parameters
     ----------
     data: pd.DataFrame
         dataframe which should be extracted
-    var: str
-        ?variable which should be included in the extraction?
+    biomarker: str
+        biomarker variable which should be used to extract columns (e.g. 'cortisol')
+
     Returns
     -------
     list
-        suggested column containing the salvia samples
+        list of suggested columns containing saliva data
     """
     import re
 
-    sugg_filt = list(filter(lambda col: any(k in col for k in _dict_words[var]), data.columns))
+    sugg_filt = list(filter(lambda col: any(k in col for k in _dict_biomarker_suggs[biomarker]), data.columns))
     sugg_filt = list(filter(lambda s: any(str(i) in s for i in range(0, 20)), sugg_filt))
     sugg_filt = list(
         filter(
@@ -65,8 +72,27 @@ def get_saliva_column_suggestions(data: pd.DataFrame, var: str) -> Sequence[str]
     return sugg_filt
 
 
-def convert_saliva_wide_to_long(data: pd.DataFrame, feature_name: str, col_pattern: str,
+def convert_saliva_wide_to_long(data: pd.DataFrame, biomarker: str, col_pattern: str,
                                 saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
+    """
+    Converts a dataframe containing saliva data from wide-format into long-format.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject
+    biomarker : str
+        Biomarker type (e.g. 'cortisol')
+    col_pattern : str
+        Pattern of saliva column names to extract days and samples from (will be used to build the long-format index)
+    saliva_times : list of int, optional
+        list of saliva time points that can be expanded in the long-format dataframe or `None` to not include saliva times
+
+    Returns
+    -------
+    pd.DataFrame
+        pandas DataFrame in long-format
+    """
     data = data.copy()
     data.index.name = "subject"
     df_day_sample = data.columns.str.extract(col_pattern)
@@ -79,7 +105,7 @@ def convert_saliva_wide_to_long(data: pd.DataFrame, feature_name: str, col_patte
         data.columns = df_day_sample.values
         var_name = "sample"
 
-    df_long = pd.melt(data.reset_index(), id_vars=['subject'], value_name=feature_name, var_name=var_name)
+    df_long = pd.melt(data.reset_index(), id_vars=['subject'], value_name=biomarker, var_name=var_name)
     df_long.set_index('subject', inplace=True)
     df_long.set_index(var_name, append=True, inplace=True)
     df_long.sort_index(inplace=True)
@@ -89,8 +115,11 @@ def convert_saliva_wide_to_long(data: pd.DataFrame, feature_name: str, col_patte
     return df_long
 
 
-_dict_words: Dict[str, Sequence[str]] = {
+_dict_biomarker_suggs: Dict[str, Sequence[str]] = {
     'cortisol': ['cortisol', 'cort', 'Cortisol', '_c_'],
     'amylase': ['amylase', 'amy', 'Amylase', 'sAA'],
     'il6': ['il6', 'IL6', 'il-6', 'IL-6', "il_6", "IL_6"]
 }
+"""
+Dictionary containing possible column patterns for different biomarkers. 
+"""
