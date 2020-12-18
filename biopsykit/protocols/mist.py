@@ -495,7 +495,7 @@ class MIST(base.BaseProtocol):
             hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
             ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1), linestyle=line_styles[i])
             ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=0.4)
-            # TODO check hardcoded plot params
+            # TODO check hardcoded plot params and change to ax.transAxes
             ax.vlines(x=mist_dur[i], ymin=-20, ymax=40, linestyles='dashed', colors="#bdbdbd", zorder=3)
             ax.text(x=mist_dur[i] - 5, y=10 + 5 * i, s=end_phase_text.format(i + 1), fontsize=fontsize - 4,
                     horizontalalignment='right', bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
@@ -640,6 +640,7 @@ class MIST(base.BaseProtocol):
         # add decorators: spans and MIST Phase labels
         for (i, name), (x_l, x_u), color, alpha in zip(enumerate(self.phases), span_lims, bg_colors, bg_alphas):
             ax.axvspan(x_l, x_u, color=color, alpha=alpha, zorder=0, lw=0)
+            # TODO change to ax.transAxes
             ax.text(x=x_l + 0.5 * (x_u - x_l), y=0.9 * ylims[-1], s=phase_text.format(i + 1),
                     horizontalalignment='center',
                     verticalalignment='top',
