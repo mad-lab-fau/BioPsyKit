@@ -98,8 +98,6 @@ def saliva_plot(
     xaxis_label = saliva_params['xaxis.label']
     xaxis_tick_locator = saliva_params['xaxis.tick_locator']
 
-    ylim_padding = [0.9, 1.2]
-
     if isinstance(data, dict) and biomarker in data.keys():
         # multiple biomarkers were passed => get the selected biomarker and try to get the groups from the index
         data = data[biomarker]
@@ -145,13 +143,6 @@ def saliva_plot(
             # get group names from dict
             groups = list(data.keys())
 
-    if not ylims:
-        if isinstance(data, pd.DataFrame):
-            ylims = [ylim_padding[0] * (data['mean'] - data['se']).min(),
-                     ylim_padding[1] * (data['mean'] + data['se']).max()]
-        else:
-            ylims = [ylim_padding[0] * min([(d['mean'] - d['se']).min() for d in data.values()])]
-
     if saliva_times is None:
         raise ValueError("Must specify saliva times!")
 
@@ -163,7 +154,8 @@ def saliva_plot(
         _saliva_plot_helper(data, biomarker, groups, saliva_times, ylims, fontsize, ax,
                             line_colors=line_colors)
 
-        ax.text(x=test_times[0] + 0.5 * (test_times[1] - test_times[0]), y=0.95 * ylims[1],
+        ax.text(x=test_times[0] + 0.5 * (test_times[1] - test_times[0]), y=0.95,
+                transform=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
                 s=test_text, horizontalalignment='center', verticalalignment='top', fontsize=fontsize)
         ax.axvspan(*test_times, color=test_color, alpha=test_alpha, zorder=1, lw=0)
         ax.axvspan(saliva_times[0] - x_padding, test_times[0], color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
@@ -225,7 +217,12 @@ def _saliva_plot_helper(
                     yerr=df_grp["se"], capsize=3, marker=marker, color=line_color, ls=ls)
 
     ax.set_ylabel(yaxis_label, fontsize=fontsize)
-    ax.set_ylim(ylims)
+
+    if ylims:
+        ax.set_ylim(ylims)
+    else:
+        ax.margins(x=0, y=0.15)
+
     ax.tick_params(axis='both', which='major', labelsize=fontsize)
     return ax
 
@@ -453,7 +450,11 @@ def hr_mean_plot(
 
     # customize y axis
     ax.tick_params(axis="y", which='major', left=True)
-    ax.set_ylim(ylims)
+    if ylims:
+        ax.set_ylim(ylims)
+    else:
+        ax.margins(x=0, y=0.15)
+
     ax.set_ylabel(yaxis_label, fontsize=fontsize)
 
     # axis tick label fontsize
@@ -466,7 +467,7 @@ def hr_mean_plot(
         # remove the errorbars
         handles = [h[0] for h in handles]
         # use them in the legend
-        ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.01, 0.85), numpoints=1,
+        ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.01, 0.90), numpoints=1,
                   prop={"size": fontsize})
 
     if fig:
