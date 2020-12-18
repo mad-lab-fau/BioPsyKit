@@ -421,7 +421,7 @@ class MIST(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return super()._hr_mean_subphases(data, self.subphases, is_group_dict)
+        return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
     # TODO add kw_args
     def hr_ensemble_plot(

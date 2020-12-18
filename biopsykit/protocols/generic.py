@@ -38,4 +38,4 @@ class GenericProtocol(base.BaseProtocol):
             subphases: Sequence[str],
             is_group_dict: Optional[bool] = False
     ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-        return super()._hr_mean_subphases(data, subphases, is_group_dict)
+        return super()._mean_se_subphases(data, subphases, is_group_dict)
