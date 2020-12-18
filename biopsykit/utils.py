@@ -112,7 +112,7 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
 
     Examples
     --------
-    >>> import biopsykit.utils as utils
+    >>> import biopsykit.su as utils
     >>>
     >>> # Example 1: define time intervals (start and end) of the different recording phases as dictionary
     >>> time_intervals = {"Part1": ("09:00", "09:30"), "Part2": ("09:30", "09:45"), "Part3": ("09:45", "10:00")}

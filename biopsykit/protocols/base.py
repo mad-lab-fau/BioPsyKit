@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import biopsykit.colors as colors
-import biopsykit.signals.utils as utils
+import biopsykit.signals.utils as su
 
 
 class BaseProtocol:
@@ -78,14 +78,17 @@ class BaseProtocol:
 
         """
 
-        return utils.concat_phase_dict(dict_hr_subject, phases)
+        return su.concat_phase_dict(dict_hr_subject, phases)
 
-    def split_subphases(self, data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-                        subphase_names: Sequence[str], subphase_times: Sequence[Tuple[int, int]],
-                        is_group_dict: Optional[bool] = False) \
-            -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
+    def split_subphases(
+            self,
+            data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
+            subphase_names: Sequence[str],
+            subphase_times: Sequence[Tuple[int, int]],
+            is_group_dict: Optional[bool] = False
+    ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
         """
-        Splits a `Phase dict` (or a dict of such, in case of multiple groups, see ``bp.protocols.utils.concat_dicts``)
+        Splits a `Phase dict` (or a dict of such, in case of multiple groups, see ``bp.signals.utils.concat_dicts``)
         into a `Subphase dict` (see below for further explanation).
 
         The **input** is a `Phase dict`, i.e. a dictionary with heart rate data per Stress Test phase
@@ -123,21 +126,11 @@ class BaseProtocol:
             nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
 
         """
-        if is_group_dict:
-            # recursively call this function for each group
-            return {
-                group: self.split_subphases(data=dict_group, subphase_names=subphase_names,
-                                            subphase_times=subphase_times)
-                for group, dict_group in data.items()}
-        else:
-            phase_dict = {}
-            # split data into subphases for each Phase
-            for phase, df in data.items():
-                phase_dict[phase] = {subph: df[start:end] for subph, (start, end) in
-                                     zip(subphase_names, subphase_times)}
-            return phase_dict
+        return su.split_subphases(data=data, subphase_names=subphase_names, subphase_times=subphase_times,
+                                  is_group_dict=is_group_dict)
 
-    def split_groups(self, phase_dict: Dict[str, pd.DataFrame],
+    @classmethod
+    def split_groups(cls, phase_dict: Dict[str, pd.DataFrame],
                      condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Splits 'Phase dict' into group dict, i.e. one 'Phase dict' per group.
@@ -156,15 +149,14 @@ class BaseProtocol:
             nested group dict with one 'Phase dict' per group
 
         """
-        return {
-            condition: {key: df[condition_dict[condition]] for key, df in phase_dict.items()} for condition
-            in condition_dict.keys()
-        }
+        return su.split_groups(phase_dict=phase_dict, condition_dict=condition_dict)
 
-    def _hr_mean_subphases(self, data: Union[
-        Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
-                           subphases: Sequence[str],
-                           is_group_dict: Optional[bool] = False) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    def _mean_se_subphases(
+            self,
+            data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
+            subphases: Optional[Sequence[str]] = None,
+            is_group_dict: Optional[bool] = False
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
         Computes the heart rate mean and standard error per subphase over all subjects.
 
@@ -197,13 +189,7 @@ class BaseProtocol:
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        if is_group_dict:
-            return {group: self._hr_mean_subphases(dict_group, subphases) for group, dict_group in data.items()}
-        else:
-            mean_hr = {phase: pd.DataFrame({subph: df[subph].mean() for subph in subphases}) for phase, df in
-                       data.items()}
-            df_test = pd.concat(mean_hr.values(), axis=1, keys=mean_hr.keys())
-            return pd.concat([df_test.mean(), df_test.std() / np.sqrt(df_test.shape[0])], axis=1, keys=["mean", "se"])
+        return su.mean_se_nested_dict(data, subphases=subphases, is_group_dict=is_group_dict)
 
     def saliva_plot(
             self,

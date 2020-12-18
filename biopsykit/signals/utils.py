@@ -102,9 +102,9 @@ def concat_phase_dict(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
 
     The **output** format will be the following:
 
-    { <"Phase"> : hr_dataframe, 1 subject per column }
+    { "<Phase>" : hr_dataframe, 1 subject per column }
 
-    E.g., see ``biopsykit.protocols.mist.concat_phase_dict()`` for further information.
+    E.g., see ``biopsykit.protocols.mist.MIST.concat_phase_dict()`` for further information.
 
     Parameters
     ----------
@@ -128,6 +128,212 @@ def concat_phase_dict(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
             dict_phase[phase][subj] = dict_bl[phase]['ECG_Rate']
 
     return dict_phase
+
+
+def split_subphases(
+        data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
+        subphase_names: Sequence[str],
+        subphase_times: Sequence[Tuple[int, int]],
+        is_group_dict: Optional[bool] = False
+) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
+    """
+    Splits a `Phase dict` (or a dict of such, in case of multiple groups, see ``bp.signals.utils.concat_phase_dict``)
+    into a `Subphase dict` (see below for further explanation).
+
+    The **input** is a `Phase dict`, i.e. a dictionary with data (e.g. heart rate) per Phase
+    in the following format:
+
+    { <"Phase"> : dataframe, 1 subject per column }
+
+    If multiple groups are present, then the expected input is nested, i.e. a dict of 'Phase dicts',
+    with one entry per group.
+
+    The **output** is a `Subphase dict`, i.e. a nested dictionary with data (e.g. heart rate) per Subphase in the
+    following format:
+
+    { <"Phase"> : { <"Subphase"> : dataframe, 1 subject per column } }
+
+    If multiple groups are present, then the output is nested, i.e. a dict of 'Subphase dicts',
+    with one entry per group.
+
+
+    Parameters
+    ----------
+    data : dict
+        'Phase dict' or nested dict of 'Phase dicts' if `is_group_dict` is ``True``
+    subphase_names : list
+        List with names of subphases
+    subphase_times : list
+        List with start and end times of each subphase in seconds
+    is_group_dict : bool, optional
+        ``True`` if group dict was passed, ``False`` otherwise. Default: ``False``
+
+    Returns
+    -------
+    dict
+        'Subphase dict' with course of data per Phase, Subphase and Subject, respectively or
+        nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
+
+    """
+    if is_group_dict:
+        # recursively call this function for each group
+        return {
+            group: split_subphases(
+                dict_group, subphase_names=subphase_names, subphase_times=subphase_times
+            ) for group, dict_group in data.items()
+        }
+    else:
+        phase_dict = {}
+        # split data into subphases for each Phase
+        for phase, df in data.items():
+            phase_dict[phase] = {subph: df[start:end] for subph, (start, end) in
+                                 zip(subphase_names, subphase_times)}
+        return phase_dict
+
+
+def split_groups(phase_dict: Dict[str, pd.DataFrame],
+                 condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+    """
+    Splits 'Phase dict' into group dict, i.e. one 'Phase dict' per group.
+
+    Parameters
+    ----------
+    phase_dict : dict
+        'Phase dict' to be split in groups. See ``bp.signals.utils.concat_phase_dict`` for further information
+    condition_dict : dict
+        dictionary of group membership. Keys are the different groups, values are lists of subject IDs that belong
+        to the respective group
+
+    Returns
+    -------
+    dict
+        nested group dict with one 'Phase dict' per group
+
+    """
+    return {
+        condition: {key: df[condition_dict[condition]] for key, df in phase_dict.items()} for condition
+        in condition_dict.keys()
+    }
+
+
+def mean_se_nested_dict(
+        data: Dict[str, Dict[str, pd.DataFrame]],
+        subphases: Optional[Sequence[str]] = None,
+        is_group_dict: Optional[bool] = False,
+        std_type: Optional[str] = 'se'
+) -> pd.DataFrame:
+    """
+    Computes mean and standard error (se) or standard deviation (std) for a nested dictionary.
+
+    As input either
+    (a) a 'Subject dict' (e.g. like returned from bp.signals.ecg.io.load_combine_hr_all_subjects()),
+    (b) a 'Subphase dict' (for only one group), or
+    (c) a dict of 'Subphase dict', one dict per group (for multiple groups, if ``is_group_dict`` is ``True``)
+    can be passed (see ``utils.split        _subphases`` for more explanation). Both dictionaries are outputs from
+    ``utils.split_subphases``.
+
+    The input dict structure is expected to look like one of these examples:
+        (a) { "<Subject>" : { "<Phase>" : dataframe with values } }
+        (b) { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } }
+        (c) { "<Group>" : { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } } }
+
+    The output is a 'mse dataframe' (or a dict of such, in case of multiple groups), a pandas dataframe with:
+        * columns: ['mean', 'se'] for mean and standard error or ['mean', 'std] for mean and standard deviation
+        * rows: MultiIndex with level 0 = Phases and level 1 = Subphases.
+
+    Parameters
+    ----------
+    data : dict
+        nested dictionary containing data to be reduced (e.g. heart rate)
+    subphases : list, optional
+        list of subphase names or ``None`` to use default subphase names. Default: ``None``
+    is_group_dict : boolean, optional
+        ``True`` if `data` is a group dict, i.e. contains dictionaries for multiple groups, ``False`` otherwise.
+        Default: ``False``
+    std_type : str, optional
+        'std' to compute standard deviation, 'se' to compute standard error. Default: 'se'
+
+    Returns
+    -------
+    dict or pd.DataFrame
+        'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
+
+    Examples
+    --------
+    >>> import biopsykit.signals.su as su
+    >>> # Example (a): Nested dictionary with outer-keys = Subjects, inner-keys = Phases, inner-values = pandas dataframe with 1 column
+    >>> # Construct dictionary (as example)
+    >>> dict_subject = {
+    >>>     'Vp_01': {
+    >>>         'Phase1': pd.DataFrame([1, 2, 3, 4, 5]),
+    >>>         'Phase2': pd.DataFrame([6, 7, 8, 9, 10]),
+    >>>         'Phase3': pd.DataFrame([11, 12, 13, 14, 15])
+    >>>     },
+    >>>     'Vp_02': {
+    >>>         'Phase1': pd.DataFrame([1, 2, 3, 4, 5]),
+    >>>         'Phase2': pd.DataFrame([6, 7, 8, 9, 10]),
+    >>>         'Phase3': pd.DataFrame([11, 12, 13, 14, 15])
+    >>>     },
+    >>>     # ...
+    >>> }
+    >>> df_mse = su.mean_se_nested_dict(dict_subject)
+    >>> print(df_mse)
+    >>> # Output = DataFrame with
+    >>> #   Row Index:       [Phase1, Phase2, Phase3]
+    >>> #   Column Index:    [mean, se]
+    >>>
+    >>>
+    >>> # Example (b): Nested dictionary with outer-keys = Phases, inner-keys = Subphases, inner-values = pandas dataframe with multiple columns, 1 column per subject
+    >>> # Construct dictionary (as example)
+    >>> dict_subject = {
+    >>>     'Phase1': {
+    >>>         'Subphase1': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]}),
+    >>>         'Subphase2': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]}),
+    >>>         'Subphase3': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]})
+    >>>     },
+    >>>     'Phase2': {
+    >>>         'Subphase1': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]}),
+    >>>         'Subphase2': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]}),
+    >>>         'Subphase3': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]})
+    >>>     },
+    >>>     # ...
+    >>> }
+    >>> df_mse = su.mean_se_nested_dict(dict_subject)
+    >>> print(df_mse)
+    >>> # Output = DataFrame with
+    >>> #   Row Index: MultiIndex with 1st level = Phases, 2nd level = Subphases
+    >>> #   Column Index:    [mean, se]
+
+    """
+
+    if std_type not in ['std', 'se']:
+        raise ValueError("Invalid argument for 'std_type'! Must be one of {}, not {}.".format(['std', 'se'], std_type))
+
+    if is_group_dict:
+        return {group: mean_se_nested_dict(dict_group, subphases, std_type=std_type) for group, dict_group in
+                data.items()}
+    else:
+        if subphases is None:
+            # compute mean value per nested dictionary entry
+            dict_mean = {key: pd.DataFrame({subkey: dict_val[subkey].mean() for subkey in dict_val})
+                         for key, dict_val in data.items()}
+        else:
+            dict_mean = {key: pd.DataFrame({subph: dict_val[subph].mean() for subph in subphases})
+                         for key, dict_val in data.items()}
+
+        if (np.array([len(df) for df in dict_mean.values()]) == 1).all():
+            # Dataframes with one row => concat on this axis
+            df_mean = pd.concat(dict_mean)
+        else:
+            df_mean = pd.concat(dict_mean.values(), axis=1, keys=dict_mean.keys())
+
+        if isinstance(df_mean.index, pd.MultiIndex):
+            # if resulting index is a MultiIndex drop the second index level because it's redundant
+            df_mean.index = df_mean.index.droplevel(1)
+        if std_type == 'se':
+            return pd.concat([df_mean.mean(), df_mean.std() / np.sqrt(df_mean.shape[0])], axis=1, keys=["mean", "se"])
+        else:
+            return pd.concat([df_mean.mean(), df_mean.std()], axis=1, keys=["mean", "std"])
 
 
 def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
