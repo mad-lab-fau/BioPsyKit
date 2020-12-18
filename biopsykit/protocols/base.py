@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 import biopsykit.colors as colors
 import biopsykit.signals.utils as su
+import biopsykit.protocols.plotting as plot
 
 
 class BaseProtocol:
@@ -194,7 +195,7 @@ class BaseProtocol:
     def saliva_plot(
             self,
             data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-            feature_name: Optional[str] = 'cortisol',
+            biomarker: Optional[str] = 'cortisol',
             saliva_times: Optional[Sequence[int]] = None,
             groups: Optional[Sequence[str]] = None,
             group_col: Optional[str] = None,
@@ -209,7 +210,7 @@ class BaseProtocol:
         Parameters
         ----------
         data
-        feature_name
+        biomarker
         saliva_times
         groups
         group_col
@@ -223,156 +224,35 @@ class BaseProtocol:
 
         """
 
-        fig: Union[plt.Figure, None] = None
-        if ax is None:
-            if figsize is None:
-                figsize = plt.rcParams['figure.figsize']
-            fig, ax = plt.subplots(figsize=figsize)
-
-        # update default parameter if plot parameter were passe
         if plot_params:
             self.saliva_params.update(plot_params)
 
-        bg_color = self.saliva_params['background.color']
-        bg_alpha = self.saliva_params['background.alpha']
-        test_text = self.saliva_params['test.text']
-        test_color = self.saliva_params['test.color']
-        test_alpha = self.saliva_params['test.alpha']
-        fontsize = self.saliva_params['fontsize']
-        xaxis_label = self.saliva_params['xaxis.label']
-        xaxis_tick_locator = self.saliva_params['xaxis.tick_locator']
+        return plot.saliva_plot(
+            data=data, biomarker=biomarker, saliva_times=saliva_times, test_times=self.test_times,
+            groups=groups, group_col=group_col, plot_params=self.saliva_params, ylims=ylims, ax=ax,
+            figsize=figsize
+        )
 
-        ylim_padding = [0.9, 1.2]
-
-        if isinstance(data, dict) and feature_name in data.keys():
-            # multiple biomarkers were passed => get the selected biomarker and try to get the groups from the index
-            data = data[feature_name]
-
-        if saliva_times is None:
-            if isinstance(data, pd.DataFrame):
-                # DataFrame was passed
-                if 'time' in data.index.names:
-                    saliva_times = np.array(data.index.get_level_values('time').unique())
-            else:
-                # Dict was passed => multiple groups (where each entry is a dataframe per group) or multiple biomarker
-                # (where each entry is one biomarker)
-                if all(['time' in d.index.names for d in data.values()]):
-                    saliva_times = np.array([d.index.get_level_values('time').unique() for d in data.values()],
-                                            dtype=object)
-                    if not all([len(saliva_time) == len(saliva_times[0]) for saliva_time in saliva_times]):
-                        raise ValueError(
-                            "Different saliva time lengths passed! Did you pass multiple biomarkers? "
-                            "For plotting multiple biomarkers, call the `saliva_plot` function on the same axis "
-                            "repeatedly for the different biomarkers!")
-                    if (saliva_times == saliva_times[0]).all():
-                        saliva_times = saliva_times[0]
-                    else:
-                        raise ValueError("Saliva times inconsistent for the different groups!")
-                else:
-                    raise ValueError("Not all dataframes contain a 'time' column for saliva times!")
-
-        if not groups:
-            # extract groups from data if they were not supplied
-            if isinstance(data, pd.DataFrame):
-                # get group names from index
-                if "condition" in data.index.names:
-                    groups = list(data.index.get_level_values("condition").unique())
-                elif group_col:
-                    if group_col in data:
-                        groups = list(data[group_col].unique())
-                    else:
-                        raise ValueError(
-                            "`{}`, specified as `group_col` not in columns of the dataframe!".format(group_col))
-                else:
-                    groups = ["Data"]
-            else:
-                # get group names from dict
-                groups = list(data.keys())
-
-        if not ylims:
-            if isinstance(data, pd.DataFrame):
-                ylims = [ylim_padding[0] * (data['mean'] - data['se']).min(),
-                         ylim_padding[1] * (data['mean'] + data['se']).max()]
-            else:
-                ylims = [ylim_padding[0] * min([(d['mean'] - d['se']).min() for d in data.values()])]
-
-        if saliva_times is None:
-            raise ValueError("Must specify saliva times!")
-
-        total_length = saliva_times[-1] - saliva_times[0]
-        x_padding = 0.1 * total_length
-
-        if len(ax.lines) == 0:
-            line_colors = self.saliva_params['colormap']
-            self._saliva_plot_helper(data, feature_name, groups, saliva_times, ylims, fontsize, ax,
-                                     line_colors=line_colors)
-
-            ax.text(x=self.test_times[0] + 0.5 * (self.test_times[1] - self.test_times[0]), y=0.95 * ylims[1],
-                    s=test_text, horizontalalignment='center', verticalalignment='top', fontsize=fontsize)
-            ax.axvspan(*self.test_times, color=test_color, alpha=test_alpha, zorder=1, lw=0)
-            ax.axvspan(saliva_times[0] - x_padding, self.test_times[0], color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
-            ax.axvspan(self.test_times[1], saliva_times[-1] + x_padding, color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
-
-            ax.xaxis.set_major_locator(xaxis_tick_locator)
-            ax.set_xlabel(xaxis_label, fontsize=fontsize)
-            ax.set_xlim(saliva_times[0] - x_padding, saliva_times[-1] + x_padding)
-        else:
-            # the was already something drawn into the axis => we are using the same axis to add another feature
-            ax_twin = ax.twinx()
-            line_colors = self.saliva_params['multi.colormap']
-            self._saliva_plot_helper(data, feature_name, groups, saliva_times, ylims, fontsize, ax_twin,
-                                     x_offset_basis=self.saliva_params['multi.x_offset'],
-                                     line_colors=line_colors)
-
-        if len(groups) > 1:
-            # get handles
-            handles, labels = ax.get_legend_handles_labels()
-            # remove the errorbars
-            handles = [h[0] for h in handles]
-            # use them in the legend
-            ax.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.99, 0.99), numpoints=1,
-                      prop={"size": fontsize})
-
-        if fig:
-            fig.tight_layout()
-            return fig, ax
-
-    def _saliva_plot_helper(self, data: pd.DataFrame, feature_name: str,
+    def _saliva_plot_helper(self, data: pd.DataFrame, biomarker: str,
                             groups: Sequence[str], saliva_times: Sequence[int],
                             ylims: Sequence[float], fontsize: int,
                             ax: plt.Axes,
                             x_offset_basis: Optional[float] = 0,
                             line_colors: Optional[Sequence[Tuple]] = None) -> plt.Axes:
-        # get all plot parameter
-        line_styles = self.saliva_params['line_styles']
-        markers = self.saliva_params['markers']
-        x_offsets = list(np.array(self.saliva_params['x_offsets']) + x_offset_basis)
-        yaxis_label = self.saliva_params['yaxis.label'][feature_name]
-        if line_colors is None:
-            line_colors = self.saliva_params['colormap']
+        return plot._saliva_plot_helper(
+            data=data, biomarker=biomarker, groups=groups, saliva_times=saliva_times,
+            ylims=ylims, fontsize=fontsize, ax=ax, x_offset_basis=x_offset_basis,
+            line_colors=line_colors
+        )
 
-        for group, x_off, line_color, marker, ls in zip(groups, x_offsets, line_colors, markers, line_styles):
-            if group == 'Data':
-                # no condition index
-                df_grp = data
-            else:
-                df_grp = data.xs(group, level="condition")
-            ax.errorbar(x=saliva_times + x_off, y=df_grp["mean"], label=group,
-                        yerr=df_grp["se"], capsize=3, marker=marker, color=line_color, ls=ls)
-
-        ax.set_ylabel(yaxis_label, fontsize=fontsize)
-        ax.set_ylim(ylims)
-        ax.tick_params(axis='both', which='major', labelsize=fontsize)
-        return ax
-
-    def saliva_plot_combine_legend(self, figure: plt.Figure, ax: plt.Axes, biomarkers: Sequence[str],
+    def saliva_plot_combine_legend(self, fig: plt.Figure, ax: plt.Axes, biomarkers: Sequence[str],
                                    separate_legends: Optional[bool] = False):
         """
         TODO: add documentation
 
         Parameters
         ----------
-        figure
+        fig
         ax
         biomarkers
         separate_legends
@@ -381,30 +261,4 @@ class BaseProtocol:
         -------
 
         """
-        from matplotlib.legend_handler import HandlerTuple
-
-        fontsize = self.saliva_params['multi.fontsize']
-        legend_offset = self.saliva_params['multi.legend_offset']
-
-        labels = [ax.get_legend_handles_labels()[1] for ax in figure.get_axes()]
-        if all([len(l) == 1 for l in labels]):
-            # only one group
-            handles = [ax.get_legend_handles_labels()[0] for ax in figure.get_axes()]
-            handles = [h[0] for handle in handles for h in handle]
-            labels = biomarkers
-            ax.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.99, 0.99), prop={"size": fontsize})
-        else:
-            if separate_legends:
-                for (i, a), biomarker in zip(enumerate(reversed(figure.get_axes())), reversed(biomarkers)):
-                    handles, labels = a.get_legend_handles_labels()
-                    l = ax.legend(handles, labels, title=biomarker, loc='upper right',
-                                  bbox_to_anchor=(0.99 - legend_offset * i, 0.99), prop={"size": fontsize})
-                    ax.add_artist(l)
-            else:
-                handles = [ax.get_legend_handles_labels()[0] for ax in figure.get_axes()]
-                handles = [h[0] for handle in handles for h in handle]
-                labels = [ax.get_legend_handles_labels()[1] for ax in figure.get_axes()]
-                labels = ["{}:\n{}".format(b, " - ".join(l)) for b, l in zip(biomarkers, labels)]
-                ax.legend(list(zip(handles[::2], handles[1::2])), labels, loc='upper right',
-                          bbox_to_anchor=(0.99, 0.99), numpoints=1,
-                          handler_map={tuple: HandlerTuple(ndivide=None)}, prop={"size": fontsize})
+        return plot.saliva_plot_combine_legend(fig=fig, ax=ax, biomarkers=biomarkers, separate_legends=separate_legends)

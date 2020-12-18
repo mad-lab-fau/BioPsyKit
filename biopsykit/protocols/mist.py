@@ -11,6 +11,7 @@ import biopsykit.signals.ecg as ecg
 import biopsykit.signals.utils as utils
 import biopsykit.colors as colors
 import biopsykit.protocols.base as base
+import biopsykit.protocols.plotting as plot
 
 
 class MIST(base.BaseProtocol):
@@ -55,8 +56,8 @@ class MIST(base.BaseProtocol):
             'fontsize': 14,
             'xaxis.label': r"MIST Subphases",
             'yaxis.label': r"$\Delta$HR [%]",
-            'mist.phase_text': "MIST Phase {}",
-            'mist.end_phase_text': "End Phase {}",
+            'phase_text': "MIST Phase {}",
+            'end_phase_text': "End Phase {}",
         }
 
         self.hr_mean_plot_params = {
@@ -69,7 +70,7 @@ class MIST(base.BaseProtocol):
             'fontsize': 14,
             'xaxis.label': "MIST Subphases",
             'yaxis.label': r"$\Delta$HR [%]",
-            'mist.phase_text': "MIST Phase {}"
+            'phase_text': "MIST Phase {}"
         }
 
         self.saliva_params = {
@@ -479,8 +480,8 @@ class MIST(base.BaseProtocol):
         fontsize = self.hr_ensemble_plot_params['fontsize']
         xaxis_label = self.hr_ensemble_plot_params['xaxis.label']
         yaxis_label = self.hr_ensemble_plot_params['yaxis.label']
-        phase_text = self.hr_ensemble_plot_params['mist.phase_text']
-        end_phase_text = self.hr_ensemble_plot_params['mist.end_phase_text']
+        phase_text = self.hr_ensemble_plot_params['phase_text']
+        end_phase_text = self.hr_ensemble_plot_params['end_phase_text']
         bg_color = self.hr_ensemble_plot_params['background.color']
         bg_alpha = self.hr_ensemble_plot_params['background.alpha']
 
@@ -581,98 +582,9 @@ class MIST(base.BaseProtocol):
             Tuple of Figure and Axes or None if Axes object was passed
         """
 
-        fig: Union[plt.Figure, None] = None
-        if ax is None:
-            if figsize is None:
-                figsize = plt.rcParams['figure.figsize']
-            fig, ax = plt.subplots(figsize=figsize)
-
-        # update default parameter if plot parameter were passe
         if plot_params:
             self.hr_mean_plot_params.update(plot_params)
-
-        # get all plot parameter
-        sns.set_palette(self.hr_mean_plot_params['colormap'])
-        line_styles = self.hr_mean_plot_params['line_styles']
-        markers = self.hr_mean_plot_params['markers']
-        bg_colors = self.hr_mean_plot_params['background.color']
-        bg_alphas = self.hr_mean_plot_params['background.alpha']
-        x_offsets = self.hr_mean_plot_params['x_offsets']
-        fontsize = self.hr_mean_plot_params['fontsize']
-        xaxis_label = self.hr_mean_plot_params['xaxis.label']
-        yaxis_label = self.hr_mean_plot_params['yaxis.label']
-        phase_text = self.hr_mean_plot_params['mist.phase_text']
-
-        if isinstance(data, pd.DataFrame):
-            # get subphase labels from data
-            subphase_labels = data.index.get_level_values(1)
-            if not ylims:
-                ylims = [1.1 * (data['mean'] - data['se']).min(), 1.5 * (data['mean'] + data['se']).max()]
-            if group_col and not groups:
-                # get group names from data if groups were not supplied
-                groups = list(data[group_col].unique())
-        else:
-            # get subphase labels from data
-            subphase_labels = list(data.values())[0].index.get_level_values(1)
-            if not ylims:
-                ylims = [1.1 * min([(d['mean'] - d['se']).min() for d in data.values()]),
-                         1.5 * max([(d['mean'] + d['se']).max() for d in data.values()])]
-            if not groups:
-                # get group names from dict if groups were not supplied
-                groups = list(data.keys())
-
-        num_subph = len(self.subphases)
-        # build x axis, axis limits and limits for MIST phase spans
-        x = np.arange(len(subphase_labels))
-        xlims = np.append(x, x[-1] + 1)
-        xlims = xlims[::num_subph] + 0.5 * (xlims[::num_subph] - xlims[::num_subph] - 1)
-        span_lims = [(x_l, x_u) for x_l, x_u in zip(xlims, xlims[1::])]
-
-        # plot data as errorbar with mean and se
-        if groups:
-            for group, x_off, marker, ls in zip(groups, x_offsets, markers, line_styles):
-                ax.errorbar(x=x + x_off, y=data[group]['mean'], label=group, yerr=data[group]['se'], capsize=3,
-                            marker=marker, linestyle=ls)
-        else:
-            ax.errorbar(x=x, y=data['mean'], yerr=data['se'], capsize=3, marker=markers[0],
-                        linestyle=line_styles[0])
-
-        # add decorators: spans and MIST Phase labels
-        for (i, name), (x_l, x_u), color, alpha in zip(enumerate(self.phases), span_lims, bg_colors, bg_alphas):
-            ax.axvspan(x_l, x_u, color=color, alpha=alpha, zorder=0, lw=0)
-            # TODO change to ax.transAxes
-            ax.text(x=x_l + 0.5 * (x_u - x_l), y=0.9 * ylims[-1], s=phase_text.format(i + 1),
-                    horizontalalignment='center',
-                    verticalalignment='top',
-                    fontsize=fontsize)
-
-        # customize x axis
-        ax.tick_params(axis='x', bottom=True)
-        ax.set_xticks(x)
-        ax.set_xticklabels(subphase_labels)
-        ax.set_xlim([span_lims[0][0], span_lims[-1][-1]])
-        ax.set_xlabel(xaxis_label, fontsize=fontsize)
-
-        # customize y axis
-        ax.tick_params(axis="y", which='major', left=True)
-        ax.set_ylim(ylims)
-        ax.set_ylabel(yaxis_label, fontsize=fontsize)
-
-        # axis tick label fontsize
-        ax.tick_params(labelsize=fontsize)
-
-        # customize legend
-        if groups:
-            # get handles
-            handles, labels = ax.get_legend_handles_labels()
-            # remove the errorbars
-            handles = [h[0] for h in handles]
-            # use them in the legend
-            ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.01, 0.85), numpoints=1,
-                      prop={"size": fontsize})
-
-        if fig:
-            fig.tight_layout()
-            return fig, ax
+        return plot.hr_mean_plot(data=data, groups=groups, group_col=group_col, plot_params=self.hr_mean_plot_params,
+                                 ylims=ylims, ax=ax, figsize=figsize)
 
     # TODO add methods to remove phases and subphases from MIST dict

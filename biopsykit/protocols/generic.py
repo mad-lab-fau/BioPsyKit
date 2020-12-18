@@ -32,7 +32,7 @@ class GenericProtocol(base.BaseProtocol):
     ) -> Dict[str, Dict[str, pd.DataFrame]]:
         return super()._split_groups(phase_dict, condition_dict)
 
-    def hr_mean_subphases(
+    def mean_se_subphases(
             self,
             data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
             subphases: Sequence[str],
