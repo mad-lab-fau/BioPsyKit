@@ -17,6 +17,7 @@ def predict_pipeline(data: Union[pd.DataFrame, np.array], sampling_rate: int,
     wd = sleep.imu.wear_detection.WearDetection(sampling_rate=sampling_rate)
     mrp = sleep.imu.mrp.MajorRestPeriod(sampling_rate=sampling_rate)
 
+    # TODO discuss how to integrate wear detection
     df_wear = wd.predict(data)
     df_ac = ac.calculate(data)
     df_sw = sw.predict(df_ac)
