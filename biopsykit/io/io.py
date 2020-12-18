@@ -35,15 +35,20 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
     tuple
         tuple of pandas dataframe with sensor data and sampling rate
 
-    # TODO add examples
     Examples
     --------
     >>> import biopsykit as bp
-    >>> file_path = "./NilsPodData.bin"
+    >>> # Option 1: Import data by passing file name
+    >>> file_path = "./<filename-of-nilspod-data>.bin"
     >>> # load dataset with all datastreams
-    >>> bp.io.load_dataset_nilspod(file_path)
+    >>> df, fs = bp.io.load_dataset_nilspod(file_path=file_path)
     >>> # load only ECG data of dataset
-    >>> bp.io.load_dataset_nilspod(file_path, datastreams=['ecg'])
+    >>> df, fs = bp.io.load_dataset_nilspod(file_path=file_path, datastreams=['ecg'])
+    >>>
+    >>> # Option 2: Import data by passing Dataset object imported from NilsPodLib (in this example, only acceleration data)
+    >>> from nilspodlib import Dataset
+    >>> dataset = Dataset.from_bin_file("<filename>.bin")
+    >>> df, fs = bp.io.load_dataset_nilspod(dataset=dataset, datastreams=['acc'])
     """
     from nilspodlib import Dataset
 
