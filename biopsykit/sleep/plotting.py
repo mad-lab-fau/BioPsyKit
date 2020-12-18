@@ -167,9 +167,19 @@ def sleep_imu_plot(data: pd.DataFrame,
 
         handles[bout_name] = handle
 
-    l = ax.legend(handles=list(handles.values()), labels=list(handles.keys()), loc='lower right', framealpha=1.0,
-                  fontsize=14)
-    ax.add_artist(l)
+    # wear_time['end'] = wear_time.index.shift(1, freq=pd.Timedelta("15M"))
+    # wear_time = wear_time[wear_time['wear'] == 0.0]
+    # wear_time = wear_time.reset_index()
+    #
+    # handle = None
+    # for idx, row in wear_time.iterrows():
+    #     handle = ax.axvspan(row['index'], row['end'], color=colors.fau_color('wiso'), alpha=0.5, lw=0)
+    # if handle is not None:
+    #     handles['non-wear'] = handle
+
+    legend = ax.legend(handles=list(handles.values()), labels=list(handles.keys()), loc='lower right', framealpha=1.0,
+                       fontsize=14)
+    ax.add_artist(legend)
 
     ax.legend(loc='lower left', framealpha=1.0, fontsize=14)
 
