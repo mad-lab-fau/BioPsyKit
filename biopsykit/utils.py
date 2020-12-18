@@ -153,42 +153,6 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
     return data_dict
 
 
-def check_input(ecg_processor: 'EcgProcessor', key: str, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame) -> bool:
-    """
-    Checks valid input, i.e. if either `ecg_processor` **and** `key` are supplied as arguments *or* `ecg_signal` **and**
-    `rpeaks`. Used as helper method for several functions.
-
-    Parameters
-    ----------
-    ecg_processor : EcgProcessor
-        `EcgProcessor` object. If this argument is passed, the `key` argument needs to be supplied as well
-    key : str
-        Dictionary key of the sub-phase to process. Needed when `ecg_processor` is passed as argument
-    ecg_signal : str
-        dataframe with ECG signal. Output of `EcgProcessor.ecg_process()`
-    rpeaks : str
-        dataframe with R peaks. Output of `EcgProcessor.ecg_process()`
-
-    Returns
-    -------
-    ``True`` if correct input was supplied, raises ValueError otherwise
-
-    Raises
-    ------
-    ValueError
-        if invalid input supplied
-    """
-
-    if all([x is None for x in [ecg_processor, key, ecg_signal, rpeaks]]):
-        raise ValueError(
-            "Either `ecg_processor` and `key` or `rpeaks` and `ecg_signal` must be passed as arguments!")
-    if ecg_processor:
-        if key is None:
-            raise ValueError("`key` must be passed as argument when `ecg_processor` is passed!")
-
-    return True
-
-
 def sanitize_input_1d(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
     """
     Converts 1D array-like data (numpy array, pandas dataframe/series) to a numpy array.
