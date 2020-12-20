@@ -219,7 +219,7 @@ def check_tz_aware(data: pd.DataFrame) -> bool:
 
 
 def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
-                     **kwargs) -> Dict[str, pd.DataFrame]:
+                     **kwargs) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     cleaned_data: Dict[str, pd.DataFrame] = {}
 
     for key, data in kwargs.items():
@@ -242,4 +242,6 @@ def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
                 raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
         else:
             raise ValueError("No 'subject' level in index!")
+    if len(cleaned_data) == 1:
+        cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data
