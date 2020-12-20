@@ -162,8 +162,8 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
     return dataset_dict, sampling_rate
 
 
-def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str]]] = None,
-                  phase_cols: Optional[Sequence[str]] = None) -> pd.DataFrame:
+def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
+                  phase_cols: Optional[Union[Sequence[str], Dict[str, str]]] = None) -> pd.DataFrame:
     """
     Loads time log file.
 
@@ -198,13 +198,27 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
     else:
         raise ValueError("Unrecognized file format {}!".format(file_path.suffix))
 
+    new_index_cols = None
     if isinstance(index_cols, str):
         index_cols = [index_cols]
+    elif isinstance(index_cols, dict):
+        new_index_cols = list(index_cols.values())
+        index_cols = list(index_cols.keys())
+
+    new_phase_cols = None
+    if isinstance(phase_cols, dict):
+        new_phase_cols = phase_cols
+        phase_cols = list(phase_cols.keys())
 
     if index_cols:
         df_time_log.set_index(index_cols, inplace=True)
+    if new_index_cols:
+        df_time_log.index.rename(new_index_cols, inplace=True)
+
     if phase_cols:
         df_time_log = df_time_log.loc[:, phase_cols]
+    if new_phase_cols:
+        df_time_log.rename(columns=new_phase_cols, inplace=True)
     return df_time_log
 
 
