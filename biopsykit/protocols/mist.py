@@ -286,6 +286,7 @@ class MIST(base.BaseProtocol):
         # compute start/end times per subphase
         return [(start, end) for start, end in zip(np.append([0], times_cum[:-1]), times_cum)]
 
+    # TODO move out of MIST so that it can be used independently
     def param_subphases(
             self,
             ecg_processor: Optional[ecg.EcgProcessor] = None,
@@ -374,7 +375,6 @@ class MIST(base.BaseProtocol):
                 # skip Part1, Part2 for subphase parameter analysis (parameters in total are computed above)
                 for subph, dur in zip(self.subphases, self.subphase_durations):
                     # get the first xx seconds of data (i.e., get only the current subphase)
-                    # TODO change to mist.mist_get_times?
                     if dur > 0:
                         df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
                     else:
