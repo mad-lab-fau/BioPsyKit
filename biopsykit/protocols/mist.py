@@ -327,83 +327,9 @@ class MIST(base.BaseProtocol):
             dataframe with computed parameters over the single MIST subphases
         """
 
-        if ecg_processor is None and dict_rpeaks is None and dict_ecg is None:
-            raise ValueError("Either `ecg_processor` or `dict_rpeaks` and `dict_ecg` must be passed as arguments!")
-
-        # get all desired parameter types
-        possible_param_types = {'hrv': ecg.EcgProcessor.hrv_process, 'rsp': ecg.EcgProcessor.rsp_rsa_process}
-        if param_types == 'all':
-            param_types = possible_param_types
-
-        if isinstance(param_types, str):
-            param_types = {param_types: possible_param_types[param_types]}
-        if not all([param in possible_param_types for param in param_types]):
-            raise ValueError(
-                "`param_types` must all be of {}, not {}".format(possible_param_types.keys(), param_types.keys()))
-
-        param_types = {param: possible_param_types[param] for param in param_types}
-
-        if ecg_processor:
-            sampling_rate = ecg_processor.sampling_rate
-            dict_rpeaks = ecg_processor.rpeaks
-            dict_ecg = ecg_processor.ecg_result
-
-        if 'rsp' in param_types and dict_ecg is None:
-            raise ValueError("`dict_ecg` must be passed if param_type is {}!".format(param_types))
-
-        index_name = "Subphase"
-        # dict to store results. one entry per parameter and a list of dataframes per MIST phase
-        # that will later be concated to one large dataframes
-        dict_df_subphases = {param: list() for param in param_types}
-
-        # iterate through all phases in the data
-        for (phase, rpeaks), (ecg_phase, ecg_data) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc=title):
-            rpeaks = rpeaks.copy()
-            ecg_data = ecg_data.copy()
-
-            # dict to store intermediate results of subphases. one entry per parameter with a
-            # list of dataframes per subphase that will later be concated to one dataframe per MIST phase
-            dict_subphases = {param: list() for param in param_types}
-            if include_total:
-                # compute HRV, RSP over complete phase
-                for param_type, param_func in param_types.items():
-                    dict_subphases[param_type].append(
-                        param_func(ecg_signal=ecg_data, rpeaks=rpeaks, index="Total", index_name=index_name,
-                                   sampling_rate=sampling_rate))
-
-            if phase not in ["Part1", "Part2"]:
-                # skip Part1, Part2 for subphase parameter analysis (parameters in total are computed above)
-                for subph, dur in zip(self.subphases, self.subphase_durations):
-                    # get the first xx seconds of data (i.e., get only the current subphase)
-                    if dur > 0:
-                        df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
-                    else:
-                        # duration of 0 seconds = Feedback Interval, don't cut slice the beginning,
-                        # use all remaining data
-                        df_subph_rpeaks = rpeaks
-                    # ECG does not need to be sliced because rpeaks are already sliced and
-                    # will select only the relevant ECG signal parts anyways
-                    df_subph_ecg = ecg_data
-
-                    for param_type, param_func in param_types.items():
-                        # compute HRV, RSP over subphases
-                        dict_subphases[param_type].append(
-                            param_func(ecg_signal=df_subph_ecg, rpeaks=df_subph_rpeaks, index=subph,
-                                       index_name=index_name,
-                                       sampling_rate=sampling_rate))
-
-                    # remove the currently analyzed subphase of data
-                    # (so that the next subphase is first in the next iteration)
-                    rpeaks = rpeaks[~rpeaks.index.isin(df_subph_rpeaks.index)]
-
-            for param in dict_subphases:
-                # concat dataframe of all subphases to one dataframe per MIST phase and add to parameter dict
-                dict_df_subphases[param].append(pd.concat(dict_subphases[param]))
-
-        # concat all dataframes together to one big result dataframes
-        return pd.concat(
-            [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["Phase"]) for dict_df in dict_df_subphases.values()],
-            axis=1)
+        return utils.param_subphases(ecg_processor=ecg_processor, dict_ecg=dict_ecg, dict_rpeaks=dict_rpeaks,
+                                     subphases=self.subphases, subphase_durations=self.subphase_durations,
+                                     param_types=param_types, sampling_rate=sampling_rate, title=title)
 
     def hr_mean_subphases(
             self,
