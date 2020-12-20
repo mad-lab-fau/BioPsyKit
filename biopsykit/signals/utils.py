@@ -76,7 +76,7 @@ def interpolate_dict_sec(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[
 def interpolate_and_cut(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
     data_dict = interpolate_dict_sec(data_dict)
     durations = np.array([[len(df) for phase, df in dict_hr.items()] for dict_hr in data_dict.values()])
-    phase_names = np.array([list(val.keys()) for key, val in data_dict.items()])
+    phase_names = np.array([np.array(list(val.keys())) for key, val in data_dict.items()])
     if (phase_names[0] == phase_names).all():
         phase_names = phase_names[0]
     else:
