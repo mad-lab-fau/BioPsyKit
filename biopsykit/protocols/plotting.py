@@ -44,6 +44,7 @@ _hr_mean_plot_params = {
 }
 
 
+# TODO add ylim to be also a float, then it's interpreted as ymargin
 def saliva_plot(
         data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
         biomarker: str,
@@ -283,6 +284,7 @@ def saliva_plot_combine_legend(
 
 # TODO add support for groups in one dataframe (indicated by group column)
 # TODO add kw_args
+# TODO add ylim to be also a float, then it's interpreted as ymargin
 def hr_mean_plot(
         data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
         phases: Optional[Sequence[str]] = None,
