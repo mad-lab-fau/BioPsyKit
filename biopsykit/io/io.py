@@ -65,6 +65,9 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
     if factory_calibrate:
         # TODO add function argument to optionally pass calibration files
         dataset.factory_calibrate_imu(inplace=True)
+
+    if len(np.where(np.diff(dataset.counter) < 1)[0]) > 0:
+        raise ValueError("Error loading dataset. Counter not monotonously increasing!")
     # convert dataset to dataframe and localize timestamp
     df = dataset.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
     df.index.name = "time"
