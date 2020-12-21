@@ -239,6 +239,8 @@ class CFT:
 
         from biopsykit.signals.ecg.plotting import hr_plot
 
+        import matplotlib.patches as mpatch
+
         fig: Union[plt.Figure, None] = None
         if ax is None:
             if figsize is None:
@@ -282,12 +284,16 @@ class CFT:
 
         for (start, end), bg_color, bg_alpha, name in zip(times, bg_colors, bg_alphas, names):
             ax.axvspan(xmin=start, xmax=end, color=bg_color, alpha=bg_alpha, lw=0)
-            ax.text(x=start + 0.5 * (end - start), y=0.95 * ylims[-1], s=name,
+            ax.text(x=start + 0.5 * (end - start), y=0.95,
+                    transform=ax.get_xaxis_transform(),
+                    s=name,
                     # bbox=bbox,
-                    horizontalalignment='center',
-                    verticalalignment='bottom',
+                    ha='center',
+                    va='center',
                     fontsize=14)
-        ax.axhspan(ymin=0.93, ymax=1.0, transform=ax.get_xaxis_transform(),color='white', alpha=0.4, zorder=3, lw=0)
+        rect = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1,
+                                color='white', alpha=0.4, zorder=3, lw=0, transform=ax.transAxes)
+        ax.add_patch(rect)
 
         if plot_baseline:
             self._add_baseline_plot(data, cft_params, times_dict, ax, bbox)
@@ -397,7 +403,7 @@ class CFT:
         ax.annotate(
             "$Peak_{CFT}$: " + "{:.1f} %".format(cft_params['peak_brady_percent']),
             xy=(brady_time + pd.Timedelta(seconds=10), float(data.loc[brady_time])),
-            xytext=(7.5, -5),
+            xytext=(10, -5),
             textcoords="offset points",
             size=14, bbox=bbox, ha='left', va='top'
         )
@@ -478,13 +484,13 @@ class CFT:
             )
         )
 
-        # Peak Bradycardia Text
+        # Mean Bradycardia Text
         ax.annotate(
             "$Mean_{CFT}$: " + "{:.1f} %".format(cft_params['mean_brady_percent']),
-            xy=(cft_end, mean_hr),
-            xytext=(0, 0),
+            xy=(cft_end - pd.Timedelta(seconds=5), mean_hr),
+            xytext=(10, -5),
             textcoords="offset points",
-            size=14, bbox=bbox, ha='left', va='bottom'
+            size=14, bbox=bbox, ha='left', va='top'
         )
 
     def _add_onset_plot(self,
@@ -534,7 +540,7 @@ class CFT:
         ax.annotate(
             "$Onset_{CFT}$: " + "{:.1f} s".format(cft_params['onset_latency']),
             xy=(onset_time, onset_y),
-            xytext=(-7.5, -10),
+            xytext=(-10, -10),
             textcoords="offset points",
             size=14, bbox=bbox, ha='right', va='top'
         )
