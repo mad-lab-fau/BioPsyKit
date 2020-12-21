@@ -293,7 +293,6 @@ def saliva_plot_combine_legend(
 
 
 # TODO add support for groups in one dataframe (indicated by group column)
-# TODO add kw_args
 # TODO add ylim to be also a float, then it's interpreted as ymargin
 def hr_mean_plot(
         data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
@@ -302,9 +301,8 @@ def hr_mean_plot(
         groups: Optional[Sequence[str]] = None,
         group_col: Optional[str] = None,
         plot_params: Optional[Dict] = None,
-        ylims: Optional[Sequence[float]] = None,
         ax: Optional[plt.Axes] = None,
-        figsize: Optional[Tuple[float, float]] = None
+        **kwargs
 ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     """
     Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
@@ -316,6 +314,7 @@ def hr_mean_plot(
 
     Regardless of the kind of input the dataframes need to be in the format of a 'mse dataframe', as returned
     by ``MIST.hr_course_mist`` (see ``MIST.hr_course_mist`` for further information).
+
 
 
     Parameters
@@ -338,13 +337,13 @@ def hr_mean_plot(
     plot_params : dict, optional
         dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
         For an overview of parameters and their default values, see `mist.hr_course_params`
-    ylims : list, optional
-        y axis limits or ``None`` to infer y axis limits from data. Default: ``None``
     ax : plt.Axes, optional
         Axes to plot on, otherwise create a new one. Default: ``None``
-    figsize : tuple, optional
-        figure size
-
+    kwargs: dict, optional
+        optional parameters to be passed to the plot, such as:
+            * figsize: tuple specifying figure dimensions
+            * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
+            for further information), None to automatically infer y-axis limits
 
     Returns
     -------
@@ -354,14 +353,21 @@ def hr_mean_plot(
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
-        if figsize is None:
+        if 'figsize' in kwargs:
+            figsize = kwargs['figsize']
+        else:
             figsize = plt.rcParams['figure.figsize']
         fig, ax = plt.subplots(figsize=figsize)
 
     hr_mean_plot_params = _hr_mean_plot_params.copy()
+
     # update default parameter if plot parameter were passed
     if plot_params:
         hr_mean_plot_params.update(plot_params)
+
+    ylims = None
+    if 'ylims' in kwargs:
+        ylims = kwargs['ylims']
 
     # get all plot parameter
     sns.set_palette(hr_mean_plot_params['colormap'])
@@ -373,6 +379,7 @@ def hr_mean_plot(
     fontsize = hr_mean_plot_params['fontsize']
     xaxis_label = hr_mean_plot_params['xaxis.label']
     yaxis_label = hr_mean_plot_params['yaxis.label']
+
     phase_text = None
     if 'phase_text' in hr_mean_plot_params:
         phase_text = hr_mean_plot_params['phase_text']
@@ -470,10 +477,13 @@ def hr_mean_plot(
 
     # customize y axis
     ax.tick_params(axis="y", which='major', left=True)
-    if ylims:
+    if isinstance(ylims, (tuple, list)):
         ax.set_ylim(ylims)
     else:
-        ax.margins(x=0, y=0.15)
+        ymargin = 0.15
+        if isinstance(ylims, float):
+            ymargin = ylims
+        ax.margins(x=0, y=ymargin)
 
     ax.set_ylabel(yaxis_label, fontsize=fontsize)
 
