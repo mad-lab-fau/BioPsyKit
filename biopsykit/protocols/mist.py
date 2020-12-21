@@ -5,8 +5,6 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from tqdm.notebook import tqdm
-
 import biopsykit.signals.ecg as ecg
 import biopsykit.signals.utils as utils
 import biopsykit.colors as colors
@@ -54,10 +52,11 @@ class MIST(base.BaseProtocol):
             'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
             'background.alpha': [0.5, 0.5, 0.5],
             'fontsize': 14,
-            'xaxis.label': r"MIST Subphases",
+            'xaxis.label': r"Time [s]",
             'yaxis.label': r"$\Delta$HR [%]",
             'phase_text': "MIST Phase {}",
-            'end_phase_text': "End Phase {}",
+            'end_phase.text': "End Phase {}",
+            'end_phase.line_color': "#e0e0e0"
         }
 
         self.hr_mean_plot_params = {
@@ -390,6 +389,7 @@ class MIST(base.BaseProtocol):
             Tuple of Figure and Axes or None if Axes object was passed
         """
         import matplotlib.ticker as mticks
+        import matplotlib.patches as mpatch
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
@@ -407,7 +407,8 @@ class MIST(base.BaseProtocol):
         xaxis_label = self.hr_ensemble_plot_params['xaxis.label']
         yaxis_label = self.hr_ensemble_plot_params['yaxis.label']
         phase_text = self.hr_ensemble_plot_params['phase_text']
-        end_phase_text = self.hr_ensemble_plot_params['end_phase_text']
+        end_phase_text = self.hr_ensemble_plot_params['end_phase.text']
+        end_phase_color = self.hr_ensemble_plot_params['end_phase.line_color']
         bg_color = self.hr_ensemble_plot_params['background.color']
         bg_alpha = self.hr_ensemble_plot_params['background.alpha']
 
@@ -422,11 +423,26 @@ class MIST(base.BaseProtocol):
             hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
             ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1), linestyle=line_styles[i])
             ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=0.4)
-            # TODO check hardcoded plot params and change to ax.transAxes
-            ax.vlines(x=mist_dur[i], ymin=-20, ymax=40, linestyles='dashed', colors="#bdbdbd", zorder=3)
-            ax.text(x=mist_dur[i] - 5, y=10 + 5 * i, s=end_phase_text.format(i + 1), fontsize=fontsize - 4,
-                    horizontalalignment='right', bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
-                    zorder=3)
+            ax.vlines(x=mist_dur[i], ymin=0, ymax=1, transform=ax.get_xaxis_transform(), linestyles='dashed',
+                      colors=end_phase_color, zorder=3)
+            ax.annotate(
+                text=end_phase_text.format(i + 1),
+                xy=(mist_dur[i], 0.85 - 0.05 * i),
+                xytext=(-5, 0),
+                xycoords=ax.get_xaxis_transform(),
+                textcoords='offset points',
+                ha='right',
+                fontsize=fontsize - 4,
+                bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
+                zorder=3
+            )
+
+        for (start, end), subphase in zip(start_end, subphases):
+            ax.text(x=start + 0.5 * (end - start), y=0.95, transform=ax.get_xaxis_transform(),
+                    s=subphase, ha='center', va='center', fontsize=fontsize)
+        p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
+                             zorder=3, lw=0)
+        ax.add_patch(p)
 
         ax.set_xlabel(xaxis_label, fontsize=fontsize)
         ax.set_xticks([start for (start, end) in start_end])
@@ -436,15 +452,13 @@ class MIST(base.BaseProtocol):
         ax.set_ylabel(yaxis_label, fontsize=fontsize)
         ax.tick_params(axis="y", which='major', left=True)
 
-        for (start, end), subphase in zip(start_end, subphases):
-            # TODO check hardcoded plot params
-            ax.text(x=start + 0.5 * (end - start), y=35, s=subphase, horizontalalignment='center',
-                    fontsize=fontsize)
+        if ylims:
+            ax.margins(x=0)
+            ax.set_ylim(ylims)
+        else:
+            ax.margins(0, 0.1)
 
         ax.legend(loc='upper left', bbox_to_anchor=(0.01, 0.85), prop={'size': fontsize})
-        if ylims:
-            ax.set_ylim(ylims)
-        ax._xmargin = 0
 
         for (start, end), color, alpha in zip(start_end, bg_color,
                                               bg_alpha):

@@ -6,7 +6,6 @@ import seaborn as sns
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import matplotlib.transforms as mtrans
 
 import biopsykit.colors as colors
 
@@ -114,9 +113,9 @@ def _plot_sleep_onset(sleep_onset, bbox: Dict, ax: plt.Axes):
     ax.annotate(
         "Sleep Onset",
         xy=(mdates.date2num(sleep_onset), 0.90),
-        xycoords=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+        xycoords=ax.get_xaxis_transform(),
         xytext=(mdates.date2num(sleep_onset + pd.Timedelta("20M")), 0.90),
-        textcoords=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+        textcoords=ax.get_xaxis_transform(),
         ha='left',
         va='center',
         bbox=bbox,
@@ -139,9 +138,9 @@ def _plot_wake_onset(wake_onset, bbox: Dict, ax: plt.Axes):
     ax.annotate(
         "Wake Onset",
         xy=(mdates.date2num(wake_onset), 0.90),
-        xycoords=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+        xycoords=ax.get_xaxis_transform(),
         xytext=(mdates.date2num(wake_onset - pd.Timedelta("20M")), 0.90),
-        textcoords=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+        textcoords=ax.get_xaxis_transform(),
         ha='right',
         va='center',
         bbox=bbox,
@@ -163,9 +162,9 @@ def _plot_mrp_start(sleep_onset, mrp_start, bbox: Dict, ax: plt.Axes):
     ax.annotate(
         "MRP Start",
         xy=(mdates.date2num(mrp_start), 0.80),
-        xycoords=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+        xycoords=ax.get_xaxis_transform(),
         xytext=(mdates.date2num(sleep_onset + pd.Timedelta("20M")), 0.80),
-        textcoords=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+        textcoords=ax.get_xaxis_transform(),
         ha='left',
         va='center',
         bbox=bbox,
@@ -187,9 +186,9 @@ def _plot_mrp_end(wake_onset, mrp_end, bbox: Dict, ax: plt.Axes):
     ax.annotate(
         "MRP End",
         xy=(mdates.date2num(mrp_end), 0.80),
-        xycoords=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+        xycoords=ax.get_xaxis_transform(),
         xytext=(mdates.date2num(wake_onset - pd.Timedelta("20M")), 0.80),
-        textcoords=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+        textcoords=ax.get_xaxis_transform(),
         ha='right',
         va='center',
         bbox=bbox,

@@ -270,6 +270,7 @@ class CFT:
 
         hr_plot(heart_rate=df_plot, ax=ax, plot_mean=False)
 
+        # TODO change hardcoded plot parameter
         ylims = [0.9 * float(df_plot.min()), 1.1 * float(df_plot.max())]
         ax.set_ylim(ylims)
 
@@ -286,7 +287,7 @@ class CFT:
                     horizontalalignment='center',
                     verticalalignment='bottom',
                     fontsize=14)
-        ax.axhspan(ymin=0.93 * ylims[-1], ymax=ylims[-1], color='white', alpha=0.4, zorder=3, lw=0)
+        ax.axhspan(ymin=0.93, ymax=1.0, transform=ax.get_xaxis_transform(),color='white', alpha=0.4, zorder=3, lw=0)
 
         if plot_baseline:
             self._add_baseline_plot(data, cft_params, times_dict, ax, bbox)
