@@ -71,8 +71,10 @@ class CFT:
         parameters = ['onset', 'peak_bradycardia', 'mean_bradycardia', 'poly_fit']
 
         df_cft = self.extract_cft_interval(data)
+
         hr_bl = self.baseline_hr(data)
         dict_cft['baseline_hr'] = hr_bl
+        dict_cft['cft_start_idx'] = data.index.get_loc(df_cft.index[0])
         for parameter in parameters:
             dict_cft.update(
                 getattr(self, parameter)(data=df_cft, is_cft_interval=True, compute_baseline=False, hr_bl=hr_bl))
@@ -105,9 +107,12 @@ class CFT:
                 "cft_start is 0, no baseline can be extracted! Using the first HR value in the dataframe as baseline."
             )
         # end of baseline = start of CFT
-        bl_end = bl_start + pd.Timedelta(minutes=int(self.cft_start / 60))
-        # heart rate during Baseline
-        hr_bl = data.between_time(bl_start.time(), bl_end.time())
+        if isinstance(data.index, pd.DatetimeIndex):
+            bl_end = bl_start + pd.Timedelta(minutes=int(self.cft_start / 60))
+            # heart rate during Baseline
+            hr_bl = data.between_time(bl_start.time(), bl_end.time())
+        else:
+            hr_bl = data.loc[bl_start: bl_start + self.cft_start]
         return float(hr_bl.mean())
 
     def extract_cft_interval(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -121,9 +126,12 @@ class CFT:
         -------
 
         """
-        cft_start = data.index[0] + pd.Timedelta(minutes=int(self.cft_start / 60))
-        cft_end = data.index[0] + pd.Timedelta(minutes=int((self.cft_start + self.cft_duration) / 60))
-        return data.between_time(cft_start.time(), cft_end.time())
+        if isinstance(data.index, pd.DatetimeIndex):
+            cft_start = data.index[0] + pd.Timedelta(minutes=int(self.cft_start / 60))
+            cft_end = data.index[0] + pd.Timedelta(minutes=int((self.cft_start + self.cft_duration) / 60))
+            return data.between_time(cft_start.time(), cft_end.time())
+        else:
+            return data.loc[self.cft_start:self.cft_start + self.cft_duration]
 
     def onset(self,
               data: pd.DataFrame,
@@ -131,7 +139,6 @@ class CFT:
               compute_baseline: Optional[bool] = True,
               hr_bl: Optional[float] = None
               ) -> Dict:
-
         df_hr_cft, hr_bl = self._sanitize_cft_input(data, is_cft_interval, compute_baseline, hr_bl)
 
         # bradycardia mask (True where heart rate is below baseline, False otherwise)
@@ -143,11 +150,14 @@ class CFT:
         # CFT onset is the third beat
         cft_onset = brady_phases.index[2]
         cft_onset_latency = (cft_onset - df_hr_cft.index[0]).total_seconds()
+        cft_onset_idx = df_hr_cft.index.get_loc(cft_onset)
+
         # heart rate at onset point
         hr_onset = np.squeeze(df_hr_cft.loc[cft_onset])
         return {
             'onset': cft_onset,
             'onset_latency': cft_onset_latency,
+            'onset_idx': cft_onset_idx,
             'onset_hr': hr_onset,
             'onset_hr_percent': (1 - hr_onset / hr_bl) * 100,
             'onset_slope': (hr_onset - hr_bl) / cft_onset_latency
@@ -163,10 +173,12 @@ class CFT:
 
         peak_brady = np.squeeze(df_hr_cft.idxmin())
         peak_brady_seconds = (peak_brady - df_hr_cft.index[0]).total_seconds()
+        peak_brady_idx = df_hr_cft.index.get_loc(peak_brady)
         hr_brady = np.squeeze(df_hr_cft.loc[peak_brady])
         return {
             'peak_brady': peak_brady,
             'peak_brady_latency': peak_brady_seconds,
+            'peak_brady_idx': peak_brady_idx,
             'peak_brady_bpm': hr_brady - hr_bl,
             'peak_brady_percent': (hr_brady / hr_bl - 1) * 100,
             'peak_brady_slope': (hr_brady - hr_bl) / peak_brady_seconds
@@ -210,12 +222,14 @@ class CFT:
             time_before: Optional[int] = None,
             time_after: Optional[int] = None,
             ax: Optional[plt.Axes] = None,
-            figsize: Optional[Tuple[int, int]] = None,
             plot_baseline: Optional[bool] = True,
             plot_mean: Optional[bool] = True,
             plot_onset: Optional[bool] = True,
             plot_peak_brady: Optional[bool] = True,
             plot_poly_fit: Optional[bool] = True,
+            plot_params: Optional[dict] = None,
+            plot_datetime_index: Optional[bool] = False,
+            **kwargs
     ) -> Union[Tuple[plt.Figure, plt.Axes], plt.Axes]:
         """
 
@@ -225,12 +239,16 @@ class CFT:
         time_before
         time_after
         ax
-        figsize
         plot_poly_fit
         plot_peak_brady
         plot_onset
         plot_mean
         plot_baseline
+        kwargs: dict, optional
+            optional parameters to be passed to the plot, such as:
+                * figsize: tuple specifying figure dimensions
+                * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
+                for further information), None to automatically infer y-axis limits
 
         Returns
         -------
@@ -243,9 +261,19 @@ class CFT:
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
-            if figsize is None:
+            if 'figsize' in kwargs:
+                figsize = kwargs['figsize']
+            else:
                 figsize = plt.rcParams['figure.figsize']
             fig, ax = plt.subplots(figsize=figsize)
+
+        # update default parameter if plot parameter were passed
+        if plot_params:
+            self.cft_plot_params.update(plot_params)
+
+        ylims = None
+        if 'ylims' in kwargs:
+            ylims = kwargs['ylims']
 
         if time_before is None:
             time_before = self.cft_start
@@ -256,14 +284,25 @@ class CFT:
         bg_alphas = self.cft_plot_params['background.alpha']
         names = self.cft_plot_params['phase.names']
 
+        data = data.copy()
         cft_params = self.compute_cft_parameter(data, return_dict=True)
 
-        cft_start = data.index[0] + pd.Timedelta(minutes=int(self.cft_start / 60))
-        plot_start = cft_start - pd.Timedelta(minutes=int(time_before / 60))
-        cft_end = cft_start + pd.Timedelta(minutes=int(self.cft_duration / 60))
-        plot_end = cft_end + pd.Timedelta(minutes=int(time_after / 60))
+        if not plot_datetime_index:
+            data.index = (data.index - data.index[0]).astype(int) / 1e9
 
-        df_plot = data.between_time(plot_start.time(), plot_end.time())
+        if isinstance(data.index, pd.DatetimeIndex):
+            cft_start = data.index[0] + pd.Timedelta(minutes=int(self.cft_start / 60))
+            plot_start = cft_start - pd.Timedelta(minutes=int(time_before / 60))
+            cft_end = cft_start + pd.Timedelta(minutes=int(self.cft_duration / 60))
+            plot_end = cft_end + pd.Timedelta(minutes=int(time_after / 60))
+            df_plot = data.between_time(plot_start.time(), plot_end.time())
+        else:
+            cft_start = data.index[0] + self.cft_start
+            plot_start = cft_start - time_before
+            cft_end = cft_start + self.cft_duration
+            plot_end = cft_end + time_after
+            df_plot = data.loc[plot_start:plot_end]
+
         df_cft = self.extract_cft_interval(data)
         hr_bl = self.baseline_hr(data)
 
@@ -271,10 +310,6 @@ class CFT:
         times = [(start, end) for start, end in zip(list(times_dict.values()), list(times_dict.values())[1:])]
 
         hr_plot(heart_rate=df_plot, ax=ax, plot_mean=False)
-
-        # TODO change hardcoded plot parameter
-        ylims = [0.9 * float(df_plot.min()), 1.1 * float(df_plot.max())]
-        ax.set_ylim(ylims)
 
         bbox = dict(
             fc=(1, 1, 1, plt.rcParams['legend.framealpha']),
@@ -310,10 +345,20 @@ class CFT:
         if plot_poly_fit:
             self._add_poly_fit_plot(data, cft_params, times_dict, ax, bbox)
 
-        ax._xmargin = 0
+        if isinstance(ylims, (tuple, list)):
+            ax.set_ylim(ylims)
+        else:
+            ymargin = 0.1
+            if isinstance(ylims, float):
+                ymargin = ylims
+            ax.margins(x=0, y=ymargin)
+
+        if isinstance(data.index, pd.DatetimeIndex):
+            ax.set_xlabel("Time")
+        else:
+            ax.set_xlabel("Time [s]")
 
         if fig:
-            ax.set_xlabel("Time")
             fig.tight_layout()
             fig.autofmt_xdate(rotation=0, ha='center')
             return fig, ax
@@ -347,7 +392,15 @@ class CFT:
                                    bbox: Dict) -> None:
 
         color_key = 'fau'
-        brady_time = cft_params['peak_brady']
+        if isinstance(data.index, pd.DatetimeIndex):
+            brady_loc = cft_params['peak_brady']
+            brady_x = brady_loc
+            brady_y = float(data.loc[brady_loc])
+        else:
+            brady_loc = cft_params['cft_start_idx'] + cft_params['peak_brady_idx']
+            brady_x = data.index[brady_loc]
+            brady_y = float(data.iloc[brady_loc])
+
         hr_bl = cft_params['baseline_hr']
         max_hr_cft = float(self.extract_cft_interval(data).max())
         cft_start = cft_times['cft_start']
@@ -357,7 +410,7 @@ class CFT:
 
         # Peak Bradycardia vline
         ax.axvline(
-            x=brady_time,
+            x=brady_x,
             ls="--",
             lw=2,
             alpha=0.6,
@@ -366,18 +419,23 @@ class CFT:
 
         # Peak Bradycardia marker
         ax.plot(
-            brady_time,
-            data.loc[brady_time],
+            brady_x,
+            brady_y,
             color=color,
             marker="o",
             markersize=7,
         )
 
         # Peak Bradycardia hline
+        if isinstance(data.index, pd.DatetimeIndex):
+            xmax = brady_x + pd.Timedelta(seconds=20)
+        else:
+            xmax = brady_x + 20
+
         ax.hlines(
-            y=data.loc[brady_time],
-            xmin=brady_time,
-            xmax=brady_time + pd.Timedelta(seconds=20),
+            y=brady_y,
+            xmin=brady_x,
+            xmax=xmax,
             ls="--",
             lw=2,
             color=color_adjust,
@@ -385,12 +443,15 @@ class CFT:
         )
 
         # Peak Bradycardia arrow
+        if isinstance(data.index, pd.DatetimeIndex):
+            brady_x_offset = brady_x + pd.Timedelta(seconds=10)
+        else:
+            brady_x_offset = brady_x + 10
+
         ax.annotate(
             "",
-            xy=(
-                brady_time + pd.Timedelta(seconds=10),
-                float(data.loc[brady_time])),
-            xytext=(brady_time + pd.Timedelta(seconds=10), hr_bl),
+            xy=(brady_x_offset, brady_y),
+            xytext=(brady_x_offset, hr_bl),
             arrowprops=dict(
                 arrowstyle="<->",
                 lw=2,
@@ -402,7 +463,7 @@ class CFT:
         # Peak Bradycardia Text
         ax.annotate(
             "$Peak_{CFT}$: " + "{:.1f} %".format(cft_params['peak_brady_percent']),
-            xy=(brady_time + pd.Timedelta(seconds=10), float(data.loc[brady_time])),
+            xy=(brady_x_offset, brady_y),
             xytext=(10, -5),
             textcoords="offset points",
             size=14, bbox=bbox, ha='left', va='top'
@@ -412,7 +473,7 @@ class CFT:
         ax.annotate(
             "",
             xy=(cft_start, max_hr_cft),
-            xytext=(brady_time, max_hr_cft),
+            xytext=(brady_x, max_hr_cft),
             arrowprops=dict(
                 arrowstyle="<->",
                 lw=2,
@@ -424,7 +485,7 @@ class CFT:
         # Peak Bradycardia Latency Text
         ax.annotate(
             "$Latency_{CFT}$: " + "{:.1f} s".format(cft_params['peak_brady_latency']),
-            xy=(brady_time, max_hr_cft),
+            xy=(brady_x, max_hr_cft),
             xytext=(-7.5, 10),
             textcoords="offset points",
             size=14, bbox=bbox, ha='right', va='bottom'
@@ -460,6 +521,7 @@ class CFT:
         mean_hr = cft_params['mean_hr_bpm']
         cft_start = cft_times['cft_start']
         cft_end = cft_times['cft_end']
+
         # Mean HR during CFT
         ax.hlines(
             y=mean_hr,
@@ -471,11 +533,16 @@ class CFT:
             alpha=0.6
         )
 
+        if isinstance(data.index, pd.DatetimeIndex):
+            x_offset = cft_end - pd.Timedelta(seconds=5)
+        else:
+            x_offset = cft_end - 5
+
         # Mean Bradycardia arrow
         ax.annotate(
             "",
-            xy=(cft_end - pd.Timedelta(seconds=5), mean_hr),
-            xytext=(cft_end - pd.Timedelta(seconds=5), cft_params['baseline_hr']),
+            xy=(x_offset, mean_hr),
+            xytext=(x_offset, cft_params['baseline_hr']),
             arrowprops=dict(
                 arrowstyle="<->",
                 lw=2,
@@ -487,7 +554,7 @@ class CFT:
         # Mean Bradycardia Text
         ax.annotate(
             "$Mean_{CFT}$: " + "{:.1f} %".format(cft_params['mean_brady_percent']),
-            xy=(cft_end - pd.Timedelta(seconds=5), mean_hr),
+            xy=(x_offset, mean_hr),
             xytext=(10, -5),
             textcoords="offset points",
             size=14, bbox=bbox, ha='left', va='top'
@@ -501,13 +568,20 @@ class CFT:
                         bbox: Dict) -> None:
 
         color_key = 'med'
-        onset_time = cft_params['onset']
-        onset_y = float(data.loc[onset_time])
         color = colors.fau_color(color_key)
+
+        if isinstance(data.index, pd.DatetimeIndex):
+            onset_idx = cft_params['onset']
+            onset_x = onset_idx
+            onset_y = float(data.loc[onset_idx])
+        else:
+            onset_idx = cft_params['cft_start_idx'] + cft_params['onset_idx']
+            onset_y = float(data.iloc[onset_idx])
+            onset_x = data.index[onset_idx]
 
         # CFT Onset vline
         ax.axvline(
-            onset_time,
+            onset_x,
             ls="--",
             lw=2,
             alpha=0.6,
@@ -516,7 +590,7 @@ class CFT:
 
         # CFT Onset marker
         ax.plot(
-            onset_time,
+            onset_x,
             onset_y,
             color=color,
             marker="o",
@@ -526,7 +600,7 @@ class CFT:
         # CFT Onset arrow
         ax.annotate(
             "",
-            xy=(onset_time, onset_y),
+            xy=(onset_x, onset_y),
             xytext=(cft_times['cft_start'], onset_y),
             arrowprops=dict(
                 arrowstyle="<->",
@@ -539,7 +613,7 @@ class CFT:
         # CFT Onset Text
         ax.annotate(
             "$Onset_{CFT}$: " + "{:.1f} s".format(cft_params['onset_latency']),
-            xy=(onset_time, onset_y),
+            xy=(onset_x, onset_y),
             xytext=(-10, -10),
             textcoords="offset points",
             size=14, bbox=bbox, ha='right', va='top'
@@ -554,7 +628,11 @@ class CFT:
 
         color_key = 'phil'
         df_cft = self.extract_cft_interval(data)
-        x_poly = df_cft.index.astype(int) / 1e9
+        if isinstance(df_cft.index, pd.DatetimeIndex):
+            x_poly = df_cft.index.astype(int) / 1e9
+        else:
+            x_poly = df_cft.index
+
         x_poly = x_poly - x_poly[0]
         y_poly = cft_params['poly_fit_a0'] * x_poly ** 2 + cft_params['poly_fit_a1'] * x_poly + cft_params[
             'poly_fit_a2']
