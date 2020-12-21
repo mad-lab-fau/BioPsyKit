@@ -15,6 +15,8 @@ def cmap_fau_blue(cmap_type: Union[str, None]) -> Sequence[str]:
     )
     if cmap_type == '3':
         return [fau_blue[4], fau_blue[7], fau_blue[9]]
+    if cmap_type == '3_ens':
+        return [fau_blue[3], fau_blue[5], fau_blue[8]]
     elif cmap_type == '2':
         return fau_blue[5::4]
     elif cmap_type == '2_lp':
