@@ -7,15 +7,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import biopsykit.colors as colors
-import matplotlib.transforms as mtrans
 import matplotlib.patches as mpatch
 
 _saliva_params: Dict = {
     'colormap': colors.cmap_fau_blue('2_lp'),
     'line_styles': ['-', '--'],
     'markers': ['o', 'P'],
-    'background.color': "#e0e0e0",
-    'background.alpha': 0.5,
+    # 'background.color': "#e0e0e0",
+    # 'background.alpha': 0.5,
+    # 'x_padding': 0.1,
     'test.color': "#9e9e9e",
     'test.alpha': 0.5,
     'x_offsets': [0, 0.5],
@@ -91,8 +91,15 @@ def saliva_plot(
     if plot_params:
         saliva_params.update(plot_params)
 
-    bg_color = saliva_params['background.color']
-    bg_alpha = saliva_params['background.alpha']
+    bg_color = None
+    bg_alpha = None
+    x_padding = None
+    if 'background.color' in saliva_params:
+        bg_color = saliva_params['background.color']
+    if 'background.alpha' in saliva_params:
+        bg_alpha = saliva_params['background.alpha']
+    if 'x_padding' in saliva_params:
+        x_padding = saliva_params['x_padding']
     test_text = saliva_params['test.text']
     test_color = saliva_params['test.color']
     test_alpha = saliva_params['test.alpha']
@@ -154,9 +161,17 @@ def saliva_plot(
                             line_colors=line_colors)
 
         ax.text(x=test_times[0] + 0.5 * (test_times[1] - test_times[0]), y=0.95,
-                transform=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+                transform=ax.get_xaxis_transform(),
                 s=test_text, horizontalalignment='center', verticalalignment='top', fontsize=fontsize)
+
         ax.axvspan(*test_times, color=test_color, alpha=test_alpha, zorder=1, lw=0)
+        if bg_color is not None:
+            if x_padding is None:
+                total_length = saliva_times[-1] - saliva_times[0]
+                x_padding = 0.1 * total_length
+            ax.axvspan(saliva_times[0] - x_padding, test_times[0], color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
+            ax.axvspan(test_times[1], saliva_times[-1] + x_padding, color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
+            ax.set_xlim(saliva_times[0] - x_padding, saliva_times[-1] + x_padding)
 
         ax.xaxis.set_major_locator(xaxis_tick_locator)
         ax.set_xlabel(xaxis_label, fontsize=fontsize)
@@ -432,7 +447,7 @@ def hr_mean_plot(
                 name = phase_text.format(i + 1)
 
             ax.text(x=x_l + 0.5 * (x_u - x_l), y=0.95, s=name,
-                    transform=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
+                    transform=ax.get_xaxis_transform(),
                     horizontalalignment='center',
                     verticalalignment='center',
                     fontsize=fontsize)
