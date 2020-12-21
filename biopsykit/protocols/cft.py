@@ -7,6 +7,17 @@ import matplotlib.pyplot as plt
 
 import biopsykit.colors as colors
 
+plt_fontsize = 14
+mpl_rc_params = {
+    'xtick.labelsize': plt_fontsize,
+    'ytick.labelsize': plt_fontsize,
+    'axes.labelsize': plt_fontsize,
+    'axes.titlesize': plt_fontsize,
+    'legend.title_fontsize': plt_fontsize,
+    'legend.fontsize': plt_fontsize,
+    'mathtext.default': 'regular'
+}
+
 
 class CFT:
     """
@@ -37,7 +48,8 @@ class CFT:
         self.cft_plot_params = {
             'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
             'background.alpha': [0.5, 0.5, 0.5],
-            'phase.names': ["Baseline", "Cold Face Test", "Recovery"]
+            'phase.names': ["Baseline", "Cold Face Test", "Recovery"],
+            'fontsize': 14
         }
 
     def _set_cft_params(self, name: str, cft_start: int, cft_duration: int):
@@ -276,6 +288,7 @@ class CFT:
         if time_after is None:
             time_after = self.cft_start
 
+        fontsize = self.cft_plot_params['fontsize']
         bg_colors = self.cft_plot_params['background.color']
         bg_alphas = self.cft_plot_params['background.alpha']
         names = self.cft_plot_params['phase.names']
@@ -321,7 +334,7 @@ class CFT:
                     # bbox=bbox,
                     ha='center',
                     va='center',
-                    fontsize=14)
+                    fontsize=fontsize)
         rect = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1,
                                 color='white', alpha=0.4, zorder=3, lw=0, transform=ax.transAxes)
         ax.add_patch(rect)
