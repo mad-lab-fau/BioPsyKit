@@ -234,16 +234,16 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
         ax.margins(x=0)
         ax.legend(loc="upper right")
 
-    ax.tick_params(axis='x', which='both', bottom=True)
-
     if isinstance(heart_rate.index, pd.DatetimeIndex):
         # TODO add axis style for non-Datetime axes
         ax.xaxis.set_major_locator(mdates.MinuteLocator())
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
         ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
+    ax.tick_params(axis='x', which='both', bottom=True)
     ax.tick_params(axis='y', which='major', left=True)
     ax.yaxis.set_major_locator(mticks.MaxNLocator(5, steps=[5, 10]))
+    ax.set_ylim(auto=True)
 
     if fig:
         ax.set_xlabel("Time")
