@@ -45,7 +45,6 @@ _hr_mean_plot_params = {
 }
 
 
-# TODO add ylim to be also a float, then it's interpreted as ymargin
 def saliva_plot(
         data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
         biomarker: str,
@@ -54,9 +53,7 @@ def saliva_plot(
         groups: Optional[Sequence[str]] = None,
         group_col: Optional[str] = None,
         plot_params: Optional[Dict] = None,
-        ylims: Optional[Sequence[float]] = None,
-        ax: Optional[plt.Axes] = None,
-        figsize: Optional[Tuple[float, float]] = None
+        **kwargs
 ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     """
     TODO: add documentation
@@ -70,9 +67,12 @@ def saliva_plot(
     groups
     group_col
     plot_params
-    ylims
-    ax
-    figsize
+    kwargs: dict, optional
+            optional parameters to be passed to the plot, such as:
+                * ax: Axes object to plot on
+                * figsize: tuple specifying figure dimensions
+                * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``plt.Axes.margin()``
+                for further information), None to automatically infer y-axis limits
 
     Returns
     -------
@@ -80,9 +80,10 @@ def saliva_plot(
     """
 
     fig: Union[plt.Figure, None] = None
+    ax: Union[plt.Axes, None] = kwargs.get('ax', None)
+
     if ax is None:
-        if figsize is None:
-            figsize = plt.rcParams['figure.figsize']
+        figsize = kwargs.get('figsize', plt.rcParams['figure.figsize'])
         fig, ax = plt.subplots(figsize=figsize)
 
     saliva_params = _saliva_params.copy()
@@ -91,15 +92,10 @@ def saliva_plot(
     if plot_params:
         saliva_params.update(plot_params)
 
-    bg_color = None
-    bg_alpha = None
-    x_padding = None
-    if 'background.color' in saliva_params:
-        bg_color = saliva_params['background.color']
-    if 'background.alpha' in saliva_params:
-        bg_alpha = saliva_params['background.alpha']
-    if 'x_padding' in saliva_params:
-        x_padding = saliva_params['x_padding']
+    bg_color = saliva_params.get('background.color', None)
+    bg_alpha = saliva_params.get('background.alpha', None)
+    x_padding = saliva_params.get('x_padding', None)
+    ylims = kwargs.get('ylims', None)
     test_text = saliva_params['test.text']
     test_color = saliva_params['test.color']
     test_alpha = saliva_params['test.alpha']
@@ -157,7 +153,7 @@ def saliva_plot(
 
     if len(ax.lines) == 0:
         line_colors = saliva_params['colormap']
-        _saliva_plot_helper(data, biomarker, groups, saliva_times, ylims, fontsize, ax,
+        _saliva_plot_helper(data, biomarker, groups, saliva_times, ylims=ylims, fontsize=fontsize, ax=ax,
                             line_colors=line_colors)
 
         ax.text(x=test_times[0] + 0.5 * (test_times[1] - test_times[0]), y=0.95,
@@ -179,7 +175,7 @@ def saliva_plot(
         # the was already something drawn into the axis => we are using the same axis to add another feature
         ax_twin = ax.twinx()
         line_colors = saliva_params['multi.colormap']
-        _saliva_plot_helper(data, biomarker, groups, saliva_times, ylims, fontsize, ax_twin,
+        _saliva_plot_helper(data, biomarker, groups, saliva_times, ylims=ylims, fontsize=fontsize, ax=ax_twin,
                             x_offset_basis=saliva_params['multi.x_offset'],
                             line_colors=line_colors)
 
@@ -200,23 +196,23 @@ def saliva_plot(
 def _saliva_plot_helper(
         data: pd.DataFrame, biomarker: str,
         groups: Sequence[str], saliva_times: Sequence[int],
-        ylims: Sequence[float], fontsize: int,
-        ax: plt.Axes,
-        x_offset_basis: Optional[float] = 0,
-        line_colors: Optional[Sequence[Tuple]] = None,
-        plot_params: Optional[Dict] = None
+        plot_params: Optional[Dict] = None,
+        **kwargs
 ) -> plt.Axes:
     saliva_params = _saliva_params.copy()
     if plot_params:
         saliva_params.update(plot_params)
 
+    ax: Union[plt.Axes, None] = kwargs.get('ax', None)
     # get all plot parameter
+    ylims = kwargs.get('ylims', None)
+    fontsize = kwargs.get('fontsize', saliva_params['fontsize'])
+    line_colors = kwargs.get('line_colors', saliva_params['colormap'])
+    x_offset_basis = kwargs.get('x_offset_basis', 0)
     line_styles = saliva_params['line_styles']
     markers = saliva_params['markers']
-    x_offsets = list(np.array(saliva_params['x_offsets']) + x_offset_basis)
     yaxis_label = saliva_params['yaxis.label'][biomarker]
-    if line_colors is None:
-        line_colors = saliva_params['colormap']
+    x_offsets = list(np.array(saliva_params['x_offsets']) + x_offset_basis)
 
     for group, x_off, line_color, marker, ls in zip(groups, x_offsets, line_colors, markers, line_styles):
         if group == 'Data':
@@ -229,10 +225,13 @@ def _saliva_plot_helper(
 
     ax.set_ylabel(yaxis_label, fontsize=fontsize)
 
-    if ylims:
+    if isinstance(ylims, (tuple, list)):
         ax.set_ylim(ylims)
     else:
-        ax.margins(x=0.05, y=0.15)
+        ymargin = 0.15
+        if isinstance(ylims, float):
+            ymargin = ylims
+        ax.margins(x=0.05, y=ymargin)
 
     ax.tick_params(axis='both', which='major', labelsize=fontsize)
     return ax
@@ -254,6 +253,7 @@ def saliva_plot_combine_legend(
     ax
     biomarkers
     separate_legends
+    plot_params
 
     Returns
     -------
@@ -293,7 +293,6 @@ def saliva_plot_combine_legend(
 
 
 # TODO add support for groups in one dataframe (indicated by group column)
-# TODO add ylim to be also a float, then it's interpreted as ymargin
 def hr_mean_plot(
         data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
         phases: Optional[Sequence[str]] = None,
@@ -301,7 +300,6 @@ def hr_mean_plot(
         groups: Optional[Sequence[str]] = None,
         group_col: Optional[str] = None,
         plot_params: Optional[Dict] = None,
-        ax: Optional[plt.Axes] = None,
         **kwargs
 ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     """
@@ -337,10 +335,9 @@ def hr_mean_plot(
     plot_params : dict, optional
         dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
         For an overview of parameters and their default values, see `mist.hr_course_params`
-    ax : plt.Axes, optional
-        Axes to plot on, otherwise create a new one. Default: ``None``
     kwargs: dict, optional
         optional parameters to be passed to the plot, such as:
+            * Axes to plot on, otherwise create a new one. Default: ``None``
             * figsize: tuple specifying figure dimensions
             * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
             for further information), None to automatically infer y-axis limits
@@ -352,11 +349,9 @@ def hr_mean_plot(
     """
 
     fig: Union[plt.Figure, None] = None
+    ax: Union[plt.Axes, None] = kwargs.get('ax', None)
     if ax is None:
-        if 'figsize' in kwargs:
-            figsize = kwargs['figsize']
-        else:
-            figsize = plt.rcParams['figure.figsize']
+        figsize = kwargs.get('figsize', plt.rcParams['figure.figsize'])
         fig, ax = plt.subplots(figsize=figsize)
 
     hr_mean_plot_params = _hr_mean_plot_params.copy()
@@ -365,9 +360,7 @@ def hr_mean_plot(
     if plot_params:
         hr_mean_plot_params.update(plot_params)
 
-    ylims = None
-    if 'ylims' in kwargs:
-        ylims = kwargs['ylims']
+    ylims = kwargs.get('ylims', None)
 
     # get all plot parameter
     sns.set_palette(hr_mean_plot_params['colormap'])
@@ -379,10 +372,7 @@ def hr_mean_plot(
     fontsize = hr_mean_plot_params['fontsize']
     xaxis_label = hr_mean_plot_params['xaxis.label']
     yaxis_label = hr_mean_plot_params['yaxis.label']
-
-    phase_text = None
-    if 'phase_text' in hr_mean_plot_params:
-        phase_text = hr_mean_plot_params['phase_text']
+    phase_text = hr_mean_plot_params.get('phase_text', None)
 
     if phases is None:
         if isinstance(data, pd.DataFrame):

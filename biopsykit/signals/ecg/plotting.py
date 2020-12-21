@@ -345,6 +345,7 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     return fig, list(axs.values())
 
 
+# TODO Vicky: add kwargs for ax and figsize (see bp.protocols.cft.cft_plot() or bp.protocols.plotting.saliva_plot() for examples)
 def hr_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
                          figsize: Optional[Tuple[float, float]] = None) -> Tuple[plt.Figure, plt.Axes]:
     """
