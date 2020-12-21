@@ -221,12 +221,6 @@ class CFT:
             data: pd.DataFrame,
             time_before: Optional[int] = None,
             time_after: Optional[int] = None,
-            ax: Optional[plt.Axes] = None,
-            plot_baseline: Optional[bool] = True,
-            plot_mean: Optional[bool] = True,
-            plot_onset: Optional[bool] = True,
-            plot_peak_brady: Optional[bool] = True,
-            plot_poly_fit: Optional[bool] = True,
             plot_params: Optional[dict] = None,
             plot_datetime_index: Optional[bool] = False,
             **kwargs
@@ -235,24 +229,30 @@ class CFT:
 
         Parameters
         ----------
-        data
-        time_before
-        time_after
-        ax
-        plot_poly_fit
-        plot_peak_brady
-        plot_onset
-        plot_mean
-        plot_baseline
+        data : pd.DataFrame
+            CFT data
+        time_before : int, optional
+        time_after : int, optional
+        plot_params : dict, optional
+        plot_datetime_index : bool, optional
+            ``True`` to plot date with absolute time (with datetime index), ``False`` to plot data with relative time
+            (starting from second 0). Default: ``False``
         kwargs: dict, optional
             optional parameters to be passed to the plot, such as:
+                * ax: Axes object to plot on
                 * figsize: tuple specifying figure dimensions
-                * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
+                * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``plt.Axes.margin()``
                 for further information), None to automatically infer y-axis limits
+                * plot_onset: whether to plot CFT Onset
+                * plot_peak_brady: whether to plot CFT peak bradycardia
+                * plot_mean: whether to plot CFT mean bradycardia
+                * plot_baseline: whether to plot heart rate baseline
+                * plot_poly_fit: whether to plot polynomial fit
 
         Returns
         -------
-
+        tuple
+            Tuple of Figure and Axes
         """
 
         from biopsykit.signals.ecg.plotting import hr_plot
@@ -260,20 +260,16 @@ class CFT:
         import matplotlib.patches as mpatch
 
         fig: Union[plt.Figure, None] = None
+        ax: Union[plt.Axes, None] = kwargs.get('ax', None)
         if ax is None:
-            if 'figsize' in kwargs:
-                figsize = kwargs['figsize']
-            else:
-                figsize = plt.rcParams['figure.figsize']
+            figsize = kwargs.get('figsize', plt.rcParams['figure.figsize'])
             fig, ax = plt.subplots(figsize=figsize)
 
         # update default parameter if plot parameter were passed
         if plot_params:
             self.cft_plot_params.update(plot_params)
 
-        ylims = None
-        if 'ylims' in kwargs:
-            ylims = kwargs['ylims']
+        ylims = kwargs.get('ylims', None)
 
         if time_before is None:
             time_before = self.cft_start
@@ -330,18 +326,20 @@ class CFT:
                                 color='white', alpha=0.4, zorder=3, lw=0, transform=ax.transAxes)
         ax.add_patch(rect)
 
+        plot_baseline = kwargs.get('plot_baseline', False)
+        plot_mean = kwargs.get('plot_mean', False)
+        plot_onset = kwargs.get('plot_onset', False)
+        plot_peak_brady = kwargs.get('plot_peak_brady', False)
+        plot_poly_fit = kwargs.get('plot_poly_fit', False)
+
         if plot_baseline:
             self._add_baseline_plot(data, cft_params, times_dict, ax, bbox)
-
         if plot_mean:
             self._add_mean_bradycardia_plot(data, cft_params, times_dict, ax, bbox)
-
         if plot_onset:
             self._add_onset_plot(data, cft_params, times_dict, ax, bbox)
-
         if plot_peak_brady:
             self._add_peak_bradycardia_plot(data, cft_params, times_dict, ax, bbox)
-
         if plot_poly_fit:
             self._add_poly_fit_plot(data, cft_params, times_dict, ax, bbox)
 
