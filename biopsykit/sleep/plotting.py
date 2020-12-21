@@ -16,18 +16,17 @@ sleep_imu_plot_params = {
 
 
 def sleep_imu_plot(data: pd.DataFrame,
-                   sleep_endpoints: Union[Dict, pd.DataFrame],
+                   sleep_endpoints: Optional[Union[Dict, pd.DataFrame]] = None,
                    downsample_factor: Optional[float] = 1,
-                   ax: Optional[plt.Axes] = None,
-                   figsize: Optional[Tuple[float, float]] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+                   **kwargs) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     import matplotlib.ticker as mticks
 
     fig: Union[plt.Figure, None] = None
+    ax: Union[plt.Axes, None] = kwargs.get('ax', None)
     sns.set_palette(colors.cmap_fau_blue('3'))
 
     if ax is None:
-        if figsize is None:
-            figsize = plt.rcParams['figure.figsize']
+        figsize = kwargs.get('figsize', plt.rcParams['figure.figsize'])
         fig, ax = plt.subplots(figsize=figsize)
 
     if isinstance(data.index, pd.DatetimeIndex):
@@ -37,6 +36,28 @@ def sleep_imu_plot(data: pd.DataFrame,
         raise ValueError("Invalid downsample factor!")
     data = data.filter(like="acc")[::downsample_factor]
 
+    data.plot(ax=ax)
+
+    if sleep_endpoints is not None:
+        _plot_sleep_endpoints(sleep_endpoints=sleep_endpoints, ax=ax)
+
+    ax.legend(loc='lower left', framealpha=1.0, fontsize=14)
+
+    ax.set_ylabel("Acceleration [g]")
+
+    if isinstance(data.index, pd.DatetimeIndex):
+        # TODO add axis style for non-Datetime axes
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
+        ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
+
+    if fig:
+        ax.set_xlabel("Time")
+        fig.tight_layout()
+        fig.autofmt_xdate(rotation=0, ha='center')
+        return fig, ax
+
+
+def _plot_sleep_endpoints(sleep_endpoints: Dict, ax: plt.Axes):
     mrp_start = pd.to_datetime(sleep_endpoints['major_rest_period_start'])
     mrp_end = pd.to_datetime(sleep_endpoints['major_rest_period_end'])
     sleep_onset = pd.to_datetime(sleep_endpoints['sleep_onset'])
@@ -52,8 +73,6 @@ def sleep_imu_plot(data: pd.DataFrame,
         date = sleep_endpoints.index[0][1]
 
     date = pd.to_datetime(date)
-
-    data.plot(ax=ax)
 
     # 00:00 (12 am) vline (if present)
     if date == mrp_start.normalize():
@@ -83,25 +102,10 @@ def sleep_imu_plot(data: pd.DataFrame,
     # if handle is not None:
     #     handles['non-wear'] = handle
 
-    legend = ax.legend(handles=list(handles.values()), labels=list(handles.keys()), loc='lower right', framealpha=1.0,
-                       fontsize=14)
+    legend = ax.legend(handles=list(handles.values()), labels=list(handles.keys()), loc='lower right',
+                       framealpha=1.0, fontsize=14)
     ax.add_artist(legend)
-
-    ax.legend(loc='lower left', framealpha=1.0, fontsize=14)
-
-    ax.set_ylabel("Acceleration [g]")
     ax.set_title("Sleep IMU Data: {} – {}".format(date.date(), (date + pd.Timedelta("1d")).date()))
-
-    if isinstance(data.index, pd.DatetimeIndex):
-        # TODO add axis style for non-Datetime axes
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
-        ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
-
-    if fig:
-        ax.set_xlabel("Time")
-        fig.tight_layout()
-        fig.autofmt_xdate(rotation=0, ha='center')
-        return fig, ax
 
 
 def _plot_sleep_onset(sleep_onset, bbox: Dict, ax: plt.Axes):
