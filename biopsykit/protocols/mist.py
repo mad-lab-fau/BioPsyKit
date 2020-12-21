@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticks
 
 import biopsykit.signals.ecg as ecg
 import biopsykit.signals.utils as utils
@@ -47,16 +48,22 @@ class MIST(base.BaseProtocol):
         """
 
         self.hr_ensemble_plot_params = {
-            'colormap': colors.cmap_fau_blue('3'),
+            'colormap': colors.cmap_fau_blue('3_ens'),
             'line_styles': ['-', '--', ':'],
+            'ensemble.alpha': 0.4,
             'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
             'background.alpha': [0.5, 0.5, 0.5],
             'fontsize': 14,
             'xaxis.label': r"Time [s]",
+            'xaxis.minor_ticks': mticks.MultipleLocator(60),
             'yaxis.label': r"$\Delta$HR [%]",
+            'legend.loc': 'lower right',
+            'legend.bbox_to_anchor': (0.99, 0.01),
             'phase_text': "MIST Phase {}",
             'end_phase.text': "End Phase {}",
-            'end_phase.line_color': "#e0e0e0"
+            'end_phase.line_color': "#e0e0e0",
+            'end_phase.line_style': 'dashed',
+            'end_phase.line_width': 2.0
         }
 
         self.hr_mean_plot_params = {
@@ -285,7 +292,6 @@ class MIST(base.BaseProtocol):
         # compute start/end times per subphase
         return [(start, end) for start, end in zip(np.append([0], times_cum[:-1]), times_cum)]
 
-    # TODO move out of MIST so that it can be used independently
     def param_subphases(
             self,
             ecg_processor: Optional[ecg.EcgProcessor] = None,
@@ -355,14 +361,13 @@ class MIST(base.BaseProtocol):
 
         return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
-    # TODO add kw_args
     def hr_ensemble_plot(
             self,
             data: Dict[str, pd.DataFrame],
             plot_params: Optional[Dict] = None,
             ylims: Optional[Sequence[float]] = None,
             ax: Optional[plt.Axes] = None,
-            figsize: Optional[Tuple[float, float]] = None
+            **kwargs
     ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         """
         Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
@@ -380,20 +385,19 @@ class MIST(base.BaseProtocol):
             y axis limits or ``None`` to infer y axis limits from data. Default: ``None``
         ax : plt.Axes, optional
             Axes to plot on, otherwise create a new one. Default: ``None``
-        figsize : tuple, optional
-            figure size
 
         Returns
         -------
         tuple or none
             Tuple of Figure and Axes or None if Axes object was passed
         """
-        import matplotlib.ticker as mticks
         import matplotlib.patches as mpatch
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
-            if figsize is None:
+            if 'figsize' in kwargs:
+                figsize = kwargs['figsize']
+            else:
                 figsize = plt.rcParams['figure.figsize']
             fig, ax = plt.subplots(figsize=figsize)
 
@@ -406,11 +410,17 @@ class MIST(base.BaseProtocol):
         fontsize = self.hr_ensemble_plot_params['fontsize']
         xaxis_label = self.hr_ensemble_plot_params['xaxis.label']
         yaxis_label = self.hr_ensemble_plot_params['yaxis.label']
+        xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis.minor_ticks']
+        ensemble_alpha = self.hr_ensemble_plot_params['ensemble.alpha']
+        bg_color = self.hr_ensemble_plot_params['background.color']
+        bg_alpha = self.hr_ensemble_plot_params['background.alpha']
         phase_text = self.hr_ensemble_plot_params['phase_text']
         end_phase_text = self.hr_ensemble_plot_params['end_phase.text']
         end_phase_color = self.hr_ensemble_plot_params['end_phase.line_color']
-        bg_color = self.hr_ensemble_plot_params['background.color']
-        bg_alpha = self.hr_ensemble_plot_params['background.alpha']
+        end_phase_line_style = self.hr_ensemble_plot_params['end_phase.line_style']
+        end_phase_line_width = self.hr_ensemble_plot_params['end_phase.line_width']
+        legend_loc = self.hr_ensemble_plot_params['legend.loc']
+        legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend.bbox_to_anchor']
 
         subphases = np.array(self.subphases)
         mist_dur = [len(v) for v in data.values()]
@@ -422,8 +432,9 @@ class MIST(base.BaseProtocol):
             hr_mean = hr_mist.mean(axis=1)
             hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
             ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1), linestyle=line_styles[i])
-            ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=0.4)
-            ax.vlines(x=mist_dur[i], ymin=0, ymax=1, transform=ax.get_xaxis_transform(), linestyles='dashed',
+            ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
+            ax.vlines(x=mist_dur[i] - 0.5, ymin=0, ymax=1, transform=ax.get_xaxis_transform(),
+                      ls=end_phase_line_style, lw=end_phase_line_width,
                       colors=end_phase_color, zorder=3)
             ax.annotate(
                 text=end_phase_text.format(i + 1),
@@ -444,9 +455,12 @@ class MIST(base.BaseProtocol):
                              zorder=3, lw=0)
         ax.add_patch(p)
 
+        for (start, end), color, alpha in zip(start_end, bg_color, bg_alpha):
+            ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
+
         ax.set_xlabel(xaxis_label, fontsize=fontsize)
         ax.set_xticks([start for (start, end) in start_end])
-        ax.xaxis.set_minor_locator(mticks.MultipleLocator(60))
+        ax.xaxis.set_minor_locator(xaxis_minor_ticks)
         ax.tick_params(axis="x", which='both', bottom=True)
 
         ax.set_ylabel(yaxis_label, fontsize=fontsize)
@@ -458,27 +472,21 @@ class MIST(base.BaseProtocol):
         else:
             ax.margins(0, 0.1)
 
-        ax.legend(loc='upper left', bbox_to_anchor=(0.01, 0.85), prop={'size': fontsize})
-
-        for (start, end), color, alpha in zip(start_end, bg_color,
-                                              bg_alpha):
-            ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
+        ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor, prop={'size': fontsize})
 
         if fig:
             fig.tight_layout()
             return fig, ax
 
     # TODO add support for groups in one dataframe (indicated by group column)
-    # TODO add kw_args
     def hr_mean_plot(
             self,
             data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
             groups: Optional[Sequence[str]] = None,
             group_col: Optional[str] = None,
             plot_params: Optional[Dict] = None,
-            ylims: Optional[Sequence[float]] = None,
             ax: Optional[plt.Axes] = None,
-            figsize: Optional[Tuple[float, float]] = None
+            **kwargs
     ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
         """
         Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
@@ -508,12 +516,13 @@ class MIST(base.BaseProtocol):
         plot_params : dict, optional
             dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
             For an overview of parameters and their default values, see `mist.hr_course_params`
-        ylims : list, optional
-            y axis limits or ``None`` to infer y axis limits from data. Default: ``None``
         ax : plt.Axes, optional
             Axes to plot on, otherwise create a new one. Default: ``None``
-        figsize : tuple, optional
-            figure size
+        kwargs: dict, optional
+            optional parameters to be passed to the plot, such as:
+                * figsize: tuple specifying figure dimensions
+                * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
+                for further information), None to automatically infer y-axis limits
 
 
         Returns
@@ -525,6 +534,6 @@ class MIST(base.BaseProtocol):
         if plot_params:
             self.hr_mean_plot_params.update(plot_params)
         return plot.hr_mean_plot(data=data, groups=groups, group_col=group_col, plot_params=self.hr_mean_plot_params,
-                                 ylims=ylims, ax=ax, figsize=figsize)
+                                 ax=ax, **kwargs)
 
     # TODO add methods to remove phases and subphases from MIST dict
