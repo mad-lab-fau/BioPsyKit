@@ -8,6 +8,7 @@ import seaborn as sns
 
 import biopsykit.colors as colors
 import matplotlib.transforms as mtrans
+import matplotlib.patches as mpatch
 
 _saliva_params: Dict = {
     'colormap': colors.cmap_fau_blue('2_lp'),
@@ -147,9 +148,6 @@ def saliva_plot(
     if saliva_times is None:
         raise ValueError("Must specify saliva times!")
 
-    total_length = saliva_times[-1] - saliva_times[0]
-    x_padding = 0.1 * total_length
-
     if len(ax.lines) == 0:
         line_colors = saliva_params['colormap']
         _saliva_plot_helper(data, biomarker, groups, saliva_times, ylims, fontsize, ax,
@@ -159,12 +157,9 @@ def saliva_plot(
                 transform=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
                 s=test_text, horizontalalignment='center', verticalalignment='top', fontsize=fontsize)
         ax.axvspan(*test_times, color=test_color, alpha=test_alpha, zorder=1, lw=0)
-        ax.axvspan(saliva_times[0] - x_padding, test_times[0], color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
-        ax.axvspan(test_times[1], saliva_times[-1] + x_padding, color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
 
         ax.xaxis.set_major_locator(xaxis_tick_locator)
         ax.set_xlabel(xaxis_label, fontsize=fontsize)
-        ax.set_xlim(saliva_times[0] - x_padding, saliva_times[-1] + x_padding)
     else:
         # the was already something drawn into the axis => we are using the same axis to add another feature
         ax_twin = ax.twinx()
@@ -222,7 +217,7 @@ def _saliva_plot_helper(
     if ylims:
         ax.set_ylim(ylims)
     else:
-        ax.margins(x=0, y=0.15)
+        ax.margins(x=0.05, y=0.15)
 
     ax.tick_params(axis='both', which='major', labelsize=fontsize)
     return ax
@@ -314,6 +309,10 @@ def hr_mean_plot(
         Heart rate data to plot. Can either be one dataframe (in case of only one group or in case of
         multiple groups, together with `group_col`) or a dictionary of dataframes,
         where one dataframe belongs to one group
+    phases : list of str, optional
+        list of phase names or ``None`` to infer from data
+    subphases : list of str, optional
+        list of subphase names of ``None`` to infer from data
     groups : list, optional:
          List of group names. If ``None`` is passed, the groups and their order are inferred from the
          dictionary keys or from the unique values in `group_col`. If list is supplied the groups are
@@ -435,8 +434,12 @@ def hr_mean_plot(
             ax.text(x=x_l + 0.5 * (x_u - x_l), y=0.95, s=name,
                     transform=mtrans.blended_transform_factory(ax.transData, ax.transAxes),
                     horizontalalignment='center',
-                    verticalalignment='top',
+                    verticalalignment='center',
                     fontsize=fontsize)
+
+    p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
+                         zorder=3, lw=0)
+    ax.add_patch(p)
 
     # customize x axis
     ax.tick_params(axis='x', bottom=True)
