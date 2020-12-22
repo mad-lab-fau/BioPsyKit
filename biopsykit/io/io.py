@@ -238,6 +238,27 @@ def load_subject_condition_list(file_path: path_t, subject_col: Optional[str] = 
         return df_cond
 
 
+def load_questionnaire_data(file_path: path_t,
+                            index_cols: Optional[Union[str, Sequence[str]]] = None,
+                            remove_nan_rows: Optional[bool] = True,
+                            replace_missing_vals: Optional[bool] = True,
+                            sheet_name: Optional[Union[str, int]] = 0) -> pd.DataFrame:
+    from biopsykit.questionnaires.utils import convert_nan
+    # ensure pathlib
+    file_path = Path(file_path)
+    if file_path.suffix == '.csv':
+        data = pd.read_csv(file_path, index_col=index_cols)
+    elif file_path.suffix in ('.xlsx', '.xls'):
+        data = pd.read_excel(file_path, index_col=index_cols, sheet_name=sheet_name)
+    else:
+        raise ValueError("Invalid file type!")
+    if remove_nan_rows:
+        data = data.dropna(how='all')
+    if replace_missing_vals:
+        data = convert_nan(data)
+    return data
+
+
 def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset'] = None,
                               date: Optional[Union[str, 'datetime']] = None,
                               timezone: Optional[str] = "Europe/Berlin") -> pd.DataFrame:
