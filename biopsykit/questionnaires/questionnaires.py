@@ -3,7 +3,7 @@ from typing import Optional, Sequence, Union, Dict
 import numpy as np
 import pandas as pd
 
-from .utils import invert, find_cols, bin_scale, to_idx, _check_score_range_exception
+from biopsykit.questionnaires.utils import invert, find_cols, bin_scale, to_idx, _check_score_range_exception
 
 
 def compute_questionnaire_scores(data: pd.DataFrame,
@@ -1672,3 +1672,43 @@ def mdbf(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     mdbf_data[score_name] = data.sum(axis=1)
 
     return pd.DataFrame(mdbf_data, index=data.index)
+
+
+def meq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None,
+        idxs: Optional[Dict[str, Sequence[int]]] = None) -> pd.DataFrame:
+    """
+        **Morningness Eveningness Questionnaire (MEQ)**
+
+        The MDBF measures different bipolar dimensions of current mood and psychological
+        wellbeing.
+
+        It consists of three subscales:
+
+        * Good-Bad mood (`GoodBad`)
+        * Awake-Tired (`AwakeTired`)
+        * Calm-Nervous (`CalmNervous`)
+
+        NOTE: This implementation assumes a score range of [1, 5]. Use ``questionnaires.utils.convert_scale()`` to
+        convert the items into the correct range.
+
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+            a complete dataframe if `columns` parameter is supplied
+        columns : list of string, optional
+            list with column names to use for computing this score if a complete dataframe is supplied.
+            See `questionnaires.utils.convert_scale()`
+
+        Returns
+        -------
+        pd.DataFrame
+            MEQ score
+
+        References
+        ------------
+        Steyer, R., Schwenkmezger, P., Notz, P., & Eid, M. (1997). Der Mehrdimensionale Befindlichkeitsfragebogen MDBF
+        [Multidimensional mood questionnaire]. *Göttingen, Germany: Hogrefe*.
+
+        """
