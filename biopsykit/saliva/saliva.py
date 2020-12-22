@@ -80,7 +80,7 @@ def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequenc
 def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
         remove_s0: Optional[bool] = True,
         saliva_times: Optional[Sequence[int]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-    # TODO IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
+    # TODO add documentation; IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
     # => auc_post means all saliva times after beginning of stress (>= 0)
 
     _check_data_format(data)
