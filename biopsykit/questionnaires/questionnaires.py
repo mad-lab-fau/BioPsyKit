@@ -334,7 +334,7 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     # Reverse scores 4, 5, 7, 8
     invert(data, cols=to_idx([4, 5, 7, 8]), score_range=score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, skipna=False), columns=[score_name])
 
 
 def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
@@ -1688,8 +1688,8 @@ def meq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         * Awake-Tired (`AwakeTired`)
         * Calm-Nervous (`CalmNervous`)
 
-        NOTE: This implementation assumes a score range of [1, 5]. Use ``questionnaires.utils.convert_scale()`` to
-        convert the items into the correct range.
+        NOTE: This implementation assumes a score range of [1, 4], with some items having a score range of [1, 5].
+        Use ``questionnaires.utils.convert_scale()`` to convert the items into the correct range.
 
 
         Parameters
@@ -1704,11 +1704,58 @@ def meq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         Returns
         -------
         pd.DataFrame
-            MEQ score
+            MEQ score and Chronotype Classification in two levels:
+            * 5 levels ('Chronotype_Fine'):
+                - 0: definite evening type (MEQ score 14-30)
+                - 1: moderate evening type (MEQ score 31-41)
+                - 2: intermediate type (MEQ score 42-58)
+                - 3: moderate morning type (MEQ score 59-69)
+                - 4: definite morning type (MEQ score 70-86)
+            * 3 levels ('Chronotype_Coarse'):
+                - 0: evening type (MEQ score 14-41)
+                - 2: intermediate type (MEQ score 42-58)
+                - 3: morning type (MEQ score 59-86)
 
         References
         ------------
-        Steyer, R., Schwenkmezger, P., Notz, P., & Eid, M. (1997). Der Mehrdimensionale Befindlichkeitsfragebogen MDBF
-        [Multidimensional mood questionnaire]. *Göttingen, Germany: Hogrefe*.
+        Horne, J. A., & Östberg, O. (1976). A self-assessment questionnaire to determine morningness-eveningness in
+        human circadian rhythms. International journal of chronobiology.
 
         """
+
+    score_name = "MEQ"
+    score_range = [1, 4]
+
+    if columns:
+        # if columns parameter is supplied: slice columns from dataframe
+        data = data[columns]
+
+    # some columns have scores from 1-5 => check them separately
+    col_idx = to_idx([1, 2, 10, 17, 18])
+    try:
+        _check_score_range_exception(data.iloc[:, col_idx], [1, 5])
+        col_mask = np.arange(0, len(data.columns))
+        col_mask = col_mask[~np.isin(col_mask, to_idx([1, 2, 10, 17, 18]))]
+        _check_score_range_exception(data.iloc[:, col_mask], score_range)
+    except ValueError:
+        raise ValueError(
+            "Attention! This implementation of MEQ expects all values in the range {}, except the columns {}, "
+            "which are expected to be in the range {}! "
+            "Please consider converting to the correct range using "
+            "`biopsykit.questionnaire.utils.convert_scale`.".format(score_range, col_idx, [1, 5]))
+
+    # invert items 1, 2, 10, 17, 18 (score range [1,5])
+    invert(data, cols=to_idx([1, 2, 10, 17, 18]), score_range=[1, 5])
+    # invert items 3, 8, 9, 10, 11, 13, 15, 19 (score range [1,4])
+    invert(data, cols=to_idx([3, 8, 9, 11, 13, 15, 19]), score_range=score_range)
+
+    # recode items 11, 12, 19
+    data.iloc[:, to_idx(11)] = data.iloc[:, to_idx(11)].replace({1: 0, 2: 2, 3: 4, 4: 6})
+    data.iloc[:, to_idx(12)] = data.iloc[:, to_idx(12)].replace({1: 0, 2: 2, 3: 3, 4: 5})
+    data.iloc[:, to_idx(19)] = data.iloc[:, to_idx(19)].replace({1: 0, 2: 2, 3: 4, 4: 6})
+
+    meq = pd.DataFrame(data.sum(axis=1, skipna=False), columns=[score_name])
+    meq['Chronotype_Fine'] = bin_scale(meq[score_name], bins=[0, 30, 41, 58, 69, 86], inplace=False)
+    meq['Chronotype_Coarse'] = bin_scale(meq[score_name], bins=[0, 41, 58, 86], inplace=False)
+
+    return meq
