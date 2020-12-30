@@ -12,7 +12,6 @@ import biopsykit.utils as utils
 import biopsykit.signals.utils as su
 import biopsykit.colors as colors
 from biopsykit.signals.ecg import EcgProcessor
-from biopsykit.utils import path_t
 
 sns.set(context="paper", style="white")
 

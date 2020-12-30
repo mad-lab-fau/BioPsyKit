@@ -3,10 +3,9 @@ from typing import Union
 import pandas as pd
 import numpy as np
 from scipy import signal
-from scipy import interpolate
 
 from biopsykit.utils import sanitize_input_nd, tz
-import biopsykit.signals.imu.utils as iu
+import biopsykit.signals.utils as su
 
 
 class ActivityCounts:
@@ -30,7 +29,7 @@ class ActivityCounts:
 
     @staticmethod
     def _compute_norm(data: np.ndarray) -> np.ndarray:
-        return iu.imu_norm(data)
+        return np.linalg.norm(data, axis=1)
 
     @staticmethod
     def _aliasing_filter(data: np.ndarray, sampling_rate: Union[int, float]) -> np.ndarray:
@@ -50,7 +49,7 @@ class ActivityCounts:
     @staticmethod
     def _downsample(data: np.ndarray, sampling_rate: Union[int, float],
                     final_sampling_rate: Union[int, float]) -> np.ndarray:
-        return iu.downsample(data, sampling_rate, final_sampling_rate)
+        return su.downsample(data, sampling_rate, final_sampling_rate)
 
     @staticmethod
     def _truncate(data: np.ndarray) -> np.ndarray:
@@ -78,34 +77,36 @@ class ActivityCounts:
             data: Union[np.ndarray, pd.DataFrame]
     ) -> Union[np.ndarray, pd.DataFrame]:
 
-        start_time = None
+        start_idx = None
         if isinstance(data, pd.DataFrame):
             data = data.filter(like='acc')
-            start_time = data.index[0]
+            if isinstance(data.index, pd.DatetimeIndex):
+                start_idx = data.index[0]
 
-        data = data.copy()
-        data = sanitize_input_nd(data, ncols=(1, 3))
+        arr = sanitize_input_nd(data, ncols=(1, 3))
 
-        if data.shape[1] not in (1, 3):
+        if arr.shape[1] not in (1, 3):
             raise ValueError("{} takes only 1D or 3D accelerometer data! Got {}D data.".format(self.__class__.__name__,
-                                                                                               data.shape[1]))
-        if data.shape[1] != 1:
-            data = self._compute_norm(data)
+                                                                                               arr.shape[1]))
+        if arr.shape[1] != 1:
+            arr = self._compute_norm(arr)
 
-        data = self._downsample(data, self.sampling_rate, 30)
-        data = self._aliasing_filter(data, 30)
-        data = self._actigraph_filter(data)
-        data = self._downsample(data, 30, 10)
-        data = np.abs(data)
-        data = self._truncate(data)
-        data = self._digitize_8bit(data)
-        data = self._accumulate_minute_bins(data)
+        arr = self._downsample(arr, self.sampling_rate, 30)
+        arr = self._aliasing_filter(arr, 30)
+        arr = self._actigraph_filter(arr)
+        arr = self._downsample(arr, 30, 10)
+        arr = np.abs(arr)
+        arr = self._truncate(arr)
+        arr = self._digitize_8bit(arr)
+        arr = self._accumulate_minute_bins(arr)
 
-        if start_time is not None:
+        if isinstance(data, pd.DataFrame):
             # input was dataframe
-            data = pd.DataFrame(data, columns=['activity_counts'])
-            start_time = float(start_time.to_datetime64()) / 1e9
-            data.index = pd.to_datetime((data.index * 60 + start_time).astype(int), utc=True, unit='s').tz_convert(tz)
-            data.index.name = "time"
+            arr = pd.DataFrame(arr, columns=['activity_counts'])
+            if start_idx is not None:
+                # index das DateTimeIndex
+                start_idx = float(start_idx.to_datetime64()) / 1e9
+                arr.index = pd.to_datetime((arr.index * 60 + start_idx).astype(int), utc=True, unit='s').tz_convert(tz)
+                arr.index.name = "time"
 
-        return data
+        return arr
