@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import Optional, Union, Sequence, Dict, Tuple
+from typing import Optional, Union, Sequence, Dict, Tuple, Literal
 
 import numpy as np
 import pandas as pd
@@ -8,10 +8,14 @@ import pytz
 
 from biopsykit.utils import path_t, utc, tz
 
+COUNTER_INCONSISTENCY_HANDLING = Literal['raise', 'warn', 'ignore']
 
-def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['Dataset'] = None,
+
+def load_dataset_nilspod(file_path: Optional[path_t] = None,
+                         dataset: Optional['Dataset'] = None,
                          datastreams: Optional[Sequence[str]] = None,
                          factory_calibrate: Optional[bool] = True,
+                         handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = 'raise',
                          timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
     Converts a file recorded by NilsPod into a dataframe.
@@ -28,9 +32,13 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
     datastreams : list of str, optional
         list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
         Datastreams that are not part of the current dataset will be silently ignored.
-    factory_calibrate: bool, optional
+    factory_calibrate : bool, optional
         Whether to apply factory calibration to the data or not. Only required when NilsPod dataset is passed/loaded
         and dataset contains IMU data
+    handle_counter_inconsistency : str, optional
+         how to handle if counter of dataset is not monotonously increasing, which might be an indicator for a
+         corrupted dataset. `raise` to raise an error, `warn` to issue a warning but still return a dataframe,
+         `ignore` to ignore the counter check result
     timezone : str or pytz.timezone, optional
             timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
@@ -55,6 +63,7 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
     >>> df, fs = bp.io.load_dataset_nilspod(dataset=dataset, datastreams=['acc'])
     """
     from nilspodlib import Dataset
+    import warnings
 
     if file_path:
         dataset = Dataset.from_bin_file(file_path)
@@ -67,14 +76,53 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
         dataset.factory_calibrate_imu(inplace=True)
 
     if len(np.where(np.diff(dataset.counter) < 1)[0]) > 0:
-        raise ValueError("Error loading dataset. Counter not monotonously increasing!")
+        if handle_counter_inconsistency == "raise":
+            raise ValueError("Error loading dataset. Counter not monotonously increasing!")
+        elif handle_counter_inconsistency == "warn":
+            warnings.warn("Counter not monotonously increasing. This might indicate that the dataset is corrupted or "
+                          "that the dataset was recorded as part of a synchronized session and might need to be loaded "
+                          "using `biopsykit.io.load_synced_session_nilspod()`. "
+                          "Check the counter of the DataFrame manually!")
+
     # convert dataset to dataframe and localize timestamp
     df = dataset.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
     df.index.name = "time"
     return df, int(dataset.info.sampling_rate_hz)
 
 
-def load_csv_nilspod(file_path: path_t = None, datastreams: Optional[Sequence[str]] = None,
+def load_synced_session_nilspod(folder_path: path_t,
+                                datastreams: Optional[Sequence[str]],
+                                factory_calibrate: Optional[bool] = True,
+                                handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = 'raise',
+                                timezone: Optional[Union[pytz.timezone, str]] = tz
+                                ) -> Tuple[pd.DataFrame, int]:
+    from nilspodlib import SyncedSession
+    import warnings
+
+    nilspod_files = list(sorted(folder_path.glob("*.bin")))
+    if len(nilspod_files) == 0:
+        raise ValueError("No NilsPod files found in directory!")
+
+    session = SyncedSession.from_folder_path(folder_path)
+    session.align_to_syncregion(inplace=True)
+
+    if factory_calibrate:
+        # TODO add function argument to optionally pass calibration files
+        session.factory_calibrate_imu(inplace=True)
+    if len(np.where(np.diff(session.counter) < 1)[0]) > 0:
+        if handle_counter_inconsistency == "raise":
+            raise ValueError("Error loading session. Counter not monotonously increasing!")
+        elif handle_counter_inconsistency == "warn":
+            warnings.warn("Counter not monotonously increasing. This might indicate that the session is corrupted. "
+                          "Check the counter of the DataFrame manually!")
+
+    # convert dataset to dataframe and localize timestamp
+    df = session.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
+    df.index.name = "time"
+    return df, int(session.info.sampling_rate_hz)
+
+
+def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[Sequence[str]] = None,
                      timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
     Converts a CSV file recorded by NilsPod into a dataframe.
