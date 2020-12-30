@@ -29,11 +29,11 @@ class MajorRestPeriod:
         window_s = 5  # 5 seconds
         overlap = 0
 
-        angle_sliding = su.sliding_window(angle, sampling_rate=self.sampling_rate,
-                                          window_s=window_s,
+        angle_sliding = su.sliding_window(angle, window_sec=window_s,
+                                          sampling_rate=self.sampling_rate,
                                           overlap_percent=overlap)
-        index_resample = su.sliding_window(df_acc.index.values, sampling_rate=self.sampling_rate,
-                                           window_s=window_s,
+        index_resample = su.sliding_window(df_acc.index.values, window_sec=window_s,
+                                           sampling_rate=self.sampling_rate,
                                            overlap_percent=overlap)[:, 0]
 
         if isinstance(df_acc.index, pd.DatetimeIndex):
@@ -80,11 +80,16 @@ class MajorRestPeriod:
         group = df_angle.groupby("block")
         grp_max = group.get_group(group.size().idxmax())
 
-        mrp = {'start': grp_max.index[0], 'end': grp_max.index[-1],
-               'total_duration': (df_acc.index[-1] - df_acc.index[0]).total_seconds() / 3600.0}
+        total_duration = (df_acc.index[-1] - df_acc.index[0])
+        if isinstance(df_acc.index, pd.DatetimeIndex):
+            total_duration = total_duration.total_seconds() / 3600.0
+            start = grp_max.index[0]
+            end = grp_max.index[-1]
+        else:
+            total_duration = (total_duration / self.sampling_rate) / 3600.0
+            start = int(grp_max.index[0] / (self.sampling_rate * 60))
+            end = int(grp_max.index[-1] / (self.sampling_rate * 60))
 
-        mrp['mrp_duration'] = (mrp['end'] - mrp['start']).total_seconds() / 3600.0
+        mrp = {'start': start, 'end': end, 'total_duration': total_duration}
 
-        df_mrp = pd.DataFrame(columns=mrp.keys())
-        df_mrp = df_mrp.append(mrp, ignore_index=True)
-        return df_mrp
+        return pd.DataFrame(mrp, index=[0])

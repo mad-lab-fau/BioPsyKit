@@ -35,8 +35,9 @@ def predict_pipeline(data: Union[pd.DataFrame, np.array], sampling_rate: int,
 
 
 def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFrame) -> Dict:
+    from numbers import Number
     # sleep/wake data during major rest period
-    sleep_wake = sleep_wake[major_rest_periods['start'][0]:major_rest_periods['end'][0]]
+    sleep_wake = sleep_wake.loc[major_rest_periods['start'][0]:major_rest_periods['end'][0]]
 
     # total sleep time in minutes (= length of 'sleep' predictions (value 0) in dataframe)
     sleep_time = sleep_wake[sleep_wake['sleep_wake'].eq(0)]
@@ -52,27 +53,40 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
 
     df_sw_sleep["block"] = df_sw_sleep['sleep_wake'].diff().ne(0).cumsum()
     df_sw_sleep.reset_index(inplace=True)
+    df_sw_sleep.rename(columns={'index': 'time'}, inplace=True)
     bouts = df_sw_sleep.groupby(by="block")
     df_start_stop = bouts.first()
     df_start_stop.rename(columns={'time': 'start'}, inplace=True)
     df_start_stop['end'] = bouts.last()['time']
+
     # add 1 min to end for continuous time coverage
-    df_start_stop['end'] = df_start_stop['end'] + pd.Timedelta("1m")
+    if df_start_stop['end'].dtype == np.int64:
+        df_start_stop['end'] = df_start_stop['end'] + 1
+    else:
+        df_start_stop['end'] = df_start_stop['end'] + pd.Timedelta("1m")
+    print(df_start_stop)
 
     sleep_bouts = df_start_stop[df_start_stop['sleep_wake'].eq(0)].drop(columns=["sleep_wake"]).reset_index(
         drop=True)
     wake_bouts = df_start_stop[df_start_stop['sleep_wake'].ne(0)].drop(columns=["sleep_wake"]).reset_index(
         drop=True)
     num_wake_bouts = len(wake_bouts)
-    sleep_onset = str(sleep_time.index[0])
-    wake_onset = str(sleep_time.index[-1])
-    mrp_start = str(major_rest_periods['start'][0])
-    mrp_end = str(major_rest_periods['end'][0])
+    sleep_onset = sleep_time.index[0]
+    wake_onset = sleep_time.index[-1]
+    mrp_start = major_rest_periods['start'][0]
+    mrp_end = major_rest_periods['end'][0]
 
-    date = pd.to_datetime(mrp_start)
-    if date.hour < 12:
-        date = date - pd.Timedelta("1d")
-        date = str(date.normalize())
+    if isinstance(mrp_start, Number):
+        date = 0
+    else:
+        mrp_start = str(mrp_start)
+        mrp_end = str(mrp_end)
+        sleep_onset = str(sleep_onset)
+        wake_onset = str(wake_onset)
+        date = pd.to_datetime(mrp_start)
+        if date.hour < 12:
+            date = date - pd.Timedelta("1d")
+            date = str(date.normalize())
 
     dict_result = {
         'date': date,
