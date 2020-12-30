@@ -28,13 +28,13 @@ class WearDetection:
         overlap_percent = 1.0 - (overlap / window)
 
         acc_sliding = {
-            col: su.sliding_window(data[col].values, sampling_rate=self.sampling_rate, window_s=window * 60,
+            col: su.sliding_window(data[col].values, window_sec=window * 60, sampling_rate=self.sampling_rate,
                                    overlap_percent=overlap_percent) for col in data
         }
 
         if index is not None:
-            index_resample = su.sliding_window(index.values, sampling_rate=self.sampling_rate,
-                                               window_s=window * 60,
+            index_resample = su.sliding_window(index.values, window_sec=window * 60,
+                                               sampling_rate=self.sampling_rate,
                                                overlap_percent=overlap_percent)[:, 0]
             if isinstance(index, pd.DatetimeIndex):
                 index_resample = pd.DatetimeIndex(index_resample)
