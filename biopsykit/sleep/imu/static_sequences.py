@@ -4,19 +4,25 @@ import pandas as pd
 import numpy as np
 from scipy.stats import skew
 
-import biopsykit.signals.imu as imu
 from biopsykit.utils import sanitize_input_nd
 
 
-def compute_static_sequences_features(data: pd.DataFrame, static_sequences: pd.DataFrame,
-                                      split_boundaries: Sequence[Tuple[int, int]],
-                                      sleep_endpoints: Dict):
-    feature_list = [static_sequences_features(data, static_sequences=static_sequences, sleep_endpoints=sleep_endpoints,
-                                              index="total")]
-
-    static_sequences = sanitize_input_nd(static_sequences, ncols=2)
+def compute_static_sequences_features(data: pd.DataFrame,
+                                      static_sequences: pd.DataFrame,
+                                      sleep_endpoints: Dict,
+                                      split_boundaries: Optional[Sequence[Tuple[int, int]]] = None,
+                                      ):
     sleep_bouts = sleep_endpoints['sleep_bouts']
     wake_bouts = sleep_endpoints['wake_bouts']
+
+    if split_boundaries is None:
+        return static_sequences_features(data, static_sequences=static_sequences, sleep_endpoints=sleep_endpoints)
+    else:
+        feature_list = [
+            static_sequences_features(data, static_sequences=static_sequences, sleep_endpoints=sleep_endpoints,
+                                      index="total")]
+    static_sequences = sanitize_input_nd(static_sequences, ncols=2)
+
     for i, (start, end) in enumerate(split_boundaries):
         start_date = data.index[start].round('s')
         end_date = data.index[end].round('s')
@@ -61,7 +67,8 @@ def static_sequences_features(
     feature_dict['sleep_bouts_number'.format(index)] = len(sleep_bouts)
     feature_dict['wake_bouts_number'] = len(wake_bouts)
     feature_dict['static_sequence_max_position'] = loc_max_sequence_relative
-    dict_ori = {'static_sequence_dominant_orientation_{}'.format(x): dominant_orientation.loc['acc_{}'.format(x)] for x in
+    dict_ori = {'static_sequence_dominant_orientation_{}'.format(x): dominant_orientation.loc['acc_{}'.format(x)] for x
+                in
                 ['x', 'y', 'z']}
     feature_dict.update(dict_ori)
 
