@@ -62,6 +62,9 @@ def get_static_sequences(
     )
     start_end = find_static_sequences(data, window_length=window, overlap=overlap, inactive_signal_th=threshold,
                                       metric='variance')
+    if start_end[-1, -1] >= len(data):
+        # fix: handle edge case manually
+        start_end[-1, -1] = len(data) - 1
     return pd.DataFrame(start_end, columns=['start', 'end'])
 
 
