@@ -63,7 +63,7 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['
     return df, int(dataset.info.sampling_rate_hz)
 
 
-def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[Sequence[str]] = None,
+def load_csv_nilspod(file_path: path_t = None, datastreams: Optional[Sequence[str]] = None,
                      timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
     Converts a CSV file recorded by NilsPod into a dataframe.
@@ -235,14 +235,11 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
 
 def load_subject_condition_list(file_path: path_t, subject_col: Optional[str] = 'subject',
                                 condition_col: Optional[str] = 'condition',
-                                excluded_subjects: Optional[Sequence] = None,
                                 return_dict: Optional[bool] = True) -> Union[Dict, pd.DataFrame]:
     # enforce subject ID to be string
     df_cond = pd.read_csv(file_path, dtype={condition_col: str, subject_col: str})
     df_cond.set_index(subject_col, inplace=True)
-    # exclude subjects
-    if excluded_subjects:
-        df_cond.drop(index=excluded_subjects, inplace=True)
+
     if return_dict:
         return df_cond.groupby(condition_col).groups
     else:
