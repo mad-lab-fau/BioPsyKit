@@ -1,37 +1,59 @@
-from typing import Dict, Union, Optional
+import warnings
+from typing import Dict, Union, Optional, Tuple
 
 import pandas as pd
 import numpy as np
 
-import biopsykit.signals as signals
-import biopsykit.sleep as sleep
+from biopsykit.sleep.imu.sleep_wake import SleepWake
+from biopsykit.sleep.imu.mrp import MajorRestPeriod
+from biopsykit.sleep.imu.wear_detection import WearDetection
+from biopsykit.signals.imu.activity_counts import ActivityCounts
 
 
 def predict_pipeline(data: Union[pd.DataFrame, np.array], sampling_rate: int,
                      sleep_wake_scale_factor: Optional[float] = None) -> Dict:
-    ac = signals.imu.activity_counts.ActivityCounts(sampling_rate)
+    ac = ActivityCounts(sampling_rate)
     if sleep_wake_scale_factor is None:
-        sw = sleep.imu.sleep_wake.SleepWake('cole_kripke')
+        sw = SleepWake('cole_kripke')
     else:
-        sw = sleep.imu.sleep_wake.SleepWake('cole_kripke', scale_factor=sleep_wake_scale_factor)
-    wd = sleep.imu.wear_detection.WearDetection(sampling_rate=sampling_rate)
-    mrp = sleep.imu.mrp.MajorRestPeriod(sampling_rate=sampling_rate)
+        sw = SleepWake('cole_kripke', scale_factor=sleep_wake_scale_factor)
+    wd = WearDetection(sampling_rate=sampling_rate)
+    mrp = MajorRestPeriod(sampling_rate=sampling_rate)
 
-    # TODO discuss how to integrate wear detection
     df_wear = wd.predict(data)
+    major_wear_block = wd.get_major_wear_block(df_wear)
+
+    # cut data to major wear block
+    data = cut_to_wear_block(data, major_wear_block)
+
+    if len(data) == 0:
+        return {}
+
     df_ac = ac.calculate(data)
     df_sw = sw.predict(df_ac)
     df_mrp = mrp.predict(data)
     sleep_endpoints = calculate_endpoints(df_sw, df_mrp)
+    if not sleep_endpoints:
+        return {}
+
+    major_wear_block = [str(d) for d in major_wear_block]
 
     dict_result = {
         'wear_detection': df_wear,
         'activity_counts': df_ac,
         'sleep_wake_prediction': df_sw,
+        'major_wear_block': major_wear_block,
         'major_rest_period': df_mrp,
         'sleep_endpoints': sleep_endpoints
     }
     return dict_result
+
+
+def cut_to_wear_block(data: pd.DataFrame, wear_block: Tuple) -> pd.DataFrame:
+    if isinstance(data.index, pd.DatetimeIndex):
+        return data.loc[wear_block[0]:wear_block[-1]]
+    else:
+        return data.iloc[wear_block[0]:wear_block[-1]]
 
 
 def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFrame) -> Dict:
@@ -42,6 +64,8 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
     # total sleep time in minutes (= length of 'sleep' predictions (value 0) in dataframe)
     sleep_time = sleep_wake[sleep_wake['sleep_wake'].eq(0)]
     tst = len(sleep_time)
+    if sleep_time.empty:
+        return {}
     df_sw_sleep = sleep_wake[sleep_time.index[0]:sleep_time.index[-1]].copy()
 
     # get percent of total time asleep
@@ -64,7 +88,6 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
         df_start_stop['end'] = df_start_stop['end'] + 1
     else:
         df_start_stop['end'] = df_start_stop['end'] + pd.Timedelta("1m")
-    print(df_start_stop)
 
     sleep_bouts = df_start_stop[df_start_stop['sleep_wake'].eq(0)].drop(columns=["sleep_wake"]).reset_index(
         drop=True)
