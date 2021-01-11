@@ -639,10 +639,10 @@ def sanitize_sliding_window_input(
             raise ValueError("Sampling rate must be specified when `window_sec` is used!")
         window = int(sampling_rate * window_sec)
     else:
-        window = window_samples
+        window = int(window_samples)
 
     if overlap_samples is not None:
-        overlap = overlap_samples
+        overlap = int(overlap_samples)
     elif overlap_percent is not None:
         overlap = int(overlap_percent * window)
     else:
