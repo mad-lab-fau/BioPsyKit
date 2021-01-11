@@ -85,25 +85,21 @@ class Stroop(base.BaseProtocol):
         if phase_durations:
             self.phase_durations = phase_durations
 
-    def get_stroop_test_results(df_stroop: Optional[pd.DataFrame] = None,
-                                dict_stroop: Optional[Dict] = None,
-                                iqdat_stroop: Optional[str] = None,
-                          ) -> Dict[str, pd.DataFrame]:
+    #def load_stroop_test_data(self,):
+
+    def get_stroop_test_results(self, data_stroop: pd.DataFrame) -> Dict[str, pd.DataFrame]:
 
         dict_result = {}
         parameters = ['subjectid','sessionid','starttime','elapsedtime','propcorrect','meanRT']
-        print(df_stroop)
-        print(dict_stroop)
-        print(iqdat_stroop)
-        if isinstance(df_stroop, pd.DataFrame):
+        if isinstance(data_stroop, pd.DataFrame):
             print('macht was 1')
-            dict_result['stroop_result'] = df_stroop[parameters]
+            dict_result['stroop_result'] = data_stroop[parameters]
 
-        if isinstance(df_stroop, Dict):
-            dict_result['stroop_result'] = pd.DataFrame(df_stroop, index=[0])[parameters]
+        if isinstance(data_stroop, Dict):
+            dict_result['stroop_result'] = pd.DataFrame(data_stroop, index=[0])[parameters]
 
-        if isinstance(df_stroop, str):
-            with open(df_stroop,'r') as f:
+        if isinstance(data_stroop, str):
+            with open(data_stroop,'r') as f:
                 reader = csv.reader(f, dialect='excel', delimiter='\t')
                 list_values = []
                 for row in reader:
