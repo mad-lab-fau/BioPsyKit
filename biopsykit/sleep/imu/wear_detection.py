@@ -1,9 +1,10 @@
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 import pandas as pd
 
 import biopsykit.signals.utils as su
+
 
 class WearDetection:
     sampling_rate: int
@@ -28,13 +29,13 @@ class WearDetection:
         overlap_percent = 1.0 - (overlap / window)
 
         acc_sliding = {
-            col: su.sliding_window(data[col].values, sampling_rate=self.sampling_rate, window_s=window * 60,
+            col: su.sliding_window(data[col].values, window_sec=window * 60, sampling_rate=self.sampling_rate,
                                    overlap_percent=overlap_percent) for col in data
         }
 
         if index is not None:
-            index_resample = su.sliding_window(index.values, sampling_rate=self.sampling_rate,
-                                               window_s=window * 60,
+            index_resample = su.sliding_window(index.values, window_sec=window * 60,
+                                               sampling_rate=self.sampling_rate,
                                                overlap_percent=overlap_percent)[:, 0]
             if isinstance(index, pd.DatetimeIndex):
                 index_resample = pd.DatetimeIndex(index_resample)
@@ -88,3 +89,12 @@ class WearDetection:
                     data.loc[data['block'] == idx_curr, "wear"] = 0
         data.drop(columns=["block"], inplace=True)
         return data
+
+    @staticmethod
+    def get_major_wear_block(wear_data: pd.DataFrame) -> Tuple:
+        wear_data = wear_data.copy()
+        wear_data['block'] = wear_data.diff().ne(0).cumsum()
+        wear_blocks = list(wear_data.groupby("block").filter(lambda x: (x['wear'] == 1.0).all()).groupby("block"))
+        max_block = wear_blocks[np.argmax([len(b) for i, b in wear_blocks])][1]
+        max_block = (max_block.index[0], max_block.index[-1])
+        return max_block

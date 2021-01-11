@@ -1,4 +1,4 @@
-from typing import Union, Optional, Dict, Tuple
+from typing import Union, Optional, Dict, Tuple, Sequence
 
 import pandas as pd
 import numpy as np
@@ -16,45 +16,60 @@ sleep_imu_plot_params = {
 
 
 def sleep_imu_plot(data: pd.DataFrame,
+                   datastreams: Optional[Union[str, Sequence[str]]] = None,
                    sleep_endpoints: Optional[Union[Dict, pd.DataFrame]] = None,
                    downsample_factor: Optional[float] = 1,
                    **kwargs) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     import matplotlib.ticker as mticks
 
     fig: Union[plt.Figure, None] = None
-    ax: Union[plt.Axes, None] = kwargs.get('ax', None)
+    axs: Union[plt.Axes, Sequence[plt.Axes], None] = kwargs.get('ax', kwargs.get('axs', None))
     sns.set_palette(colors.cmap_fau_blue('3'))
 
-    if ax is None:
+    downsample_factor = int(downsample_factor)
+    if downsample_factor < 1:
+        raise ValueError("Invalid downsample factor!")
+    if datastreams is None:
+        datastreams = ['acc']
+
+    if axs is None:
         figsize = kwargs.get('figsize', plt.rcParams['figure.figsize'])
-        fig, ax = plt.subplots(figsize=figsize)
+        nrows = len(datastreams)
+        fig, axs = plt.subplots(figsize=figsize, nrows=nrows)
+
+    if isinstance(axs, plt.Axes):
+        axs = [axs]
+
+    if len(datastreams) != len(axs):
+        raise ValueError("Number of datastreams to be plotted must match number of supplied subplots!")
 
     if isinstance(data.index, pd.DatetimeIndex):
         plt.rcParams['timezone'] = data.index.tz.zone
 
-    if downsample_factor < 1:
-        raise ValueError("Invalid downsample factor!")
-    data = data.filter(like="acc")[::downsample_factor]
+    yaxis_labels = {
+        'acc': "Acceleration [g]",
+        'gyr': "Angular Velocity [$°/s$]",
+    }
 
-    data.plot(ax=ax)
+    for ax, ds in zip(axs, datastreams):
+        data_plot = data.filter(like=ds)[::downsample_factor]
+        data_plot.plot(ax=ax)
+        if sleep_endpoints is not None:
+            _plot_sleep_endpoints(sleep_endpoints=sleep_endpoints, ax=ax)
 
-    if sleep_endpoints is not None:
-        _plot_sleep_endpoints(sleep_endpoints=sleep_endpoints, ax=ax)
+        if isinstance(data_plot.index, pd.DatetimeIndex):
+            # TODO add axis style for non-Datetime axes
+            ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
+            ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
-    ax.legend(loc='lower left', framealpha=1.0, fontsize=14)
-
-    ax.set_ylabel("Acceleration [g]")
-
-    if isinstance(data.index, pd.DatetimeIndex):
-        # TODO add axis style for non-Datetime axes
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
-        ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
+        ax.set_ylabel(yaxis_labels[ds])
+        ax.set_xlabel("Time")
+        ax.legend(loc='lower left', framealpha=1.0)
 
     if fig:
-        ax.set_xlabel("Time")
         fig.tight_layout()
         fig.autofmt_xdate(rotation=0, ha='center')
-        return fig, ax
+        return fig, axs
 
 
 def _plot_sleep_endpoints(sleep_endpoints: Dict, ax: plt.Axes):

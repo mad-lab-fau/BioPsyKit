@@ -5,9 +5,14 @@ import numpy as np
 import neurokit2 as nk
 from numpy.lib.stride_tricks import as_strided
 
+from scipy import signal
+from scipy import interpolate
+
 from tqdm.notebook import tqdm
 
-from biopsykit.utils import sanitize_input_1d
+from gaitmap.utils.array_handling import sliding_window_view
+
+import biopsykit.utils as utils
 
 
 def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
@@ -47,7 +52,7 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
     x_old = np.array((data.index - data.index[0]).total_seconds())
     x_new = np.arange(1, np.ceil(x_old[-1]) + 1)
-    data = sanitize_input_1d(data)
+    data = utils.sanitize_input_1d(data)
     interpol_f = interpolate.interp1d(x=x_old, y=data, fill_value="extrapolate")
     x_new = pd.Index(x_new, name="Time")
     return pd.DataFrame(interpol_f(x_new), index=x_new, columns=column_name)
@@ -216,6 +221,7 @@ def split_groups(phase_dict: Dict[str, pd.DataFrame],
         condition: {key: df[condition_dict[condition]] for key, df in phase_dict.items()} for condition
         in condition_dict.keys()
     }
+
 
 def param_subphases(
         ecg_processor: Optional['EcgProcessor'] = None,
@@ -511,8 +517,8 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
     extrema_func = extrema_funcs[extrema_type]
 
     # ensure numpy
-    data = sanitize_input_1d(data)
-    indices = sanitize_input_1d(indices)
+    data = utils.sanitize_input_1d(data)
+    indices = utils.sanitize_input_1d(indices)
     indices = indices.astype(int)
     # possible start offset if beginning of array needs to be padded to ensure radius
     start_padding = 0
@@ -597,26 +603,68 @@ def remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x
 
 def sliding_window(
         data: Union[np.array, pd.Series, pd.DataFrame],
-        sampling_rate: Union[int, float],
-        window_s: int,
-        overlap_percent: Optional[float] = 0,
-        overlap_samples: Optional[int] = 0
+        window_samples: Optional[int] = None,
+        window_sec: Optional[int] = None,
+        sampling_rate: Optional[Union[int, float]] = 0,
+        overlap_samples: Optional[int] = None,
+        overlap_percent: Optional[float] = None
 ):
-    data = sanitize_input_1d(data)
-    window = int(sampling_rate * window_s)
+    # check input
+    data = utils.sanitize_input_nd(data, ncols=(1, 3))
 
-    if overlap_samples == 0:
-        window_step = window - int(overlap_percent * window)
+    window, overlap = sanitize_sliding_window_input(
+        window_samples=window_samples,
+        window_sec=window_sec,
+        sampling_rate=sampling_rate,
+        overlap_samples=overlap_samples,
+        overlap_percent=overlap_percent
+    )
+
+    return sliding_window_view(data, window_length=window, overlap=overlap, nan_padding=True)
+
+
+def sanitize_sliding_window_input(
+        window_samples: Optional[int] = None,
+        window_sec: Optional[int] = None,
+        sampling_rate: Optional[Union[int, float]] = 0,
+        overlap_samples: Optional[int] = None,
+        overlap_percent: Optional[float] = None
+) -> Tuple[int, int]:
+    if all([x is None for x in (window_samples, window_sec)]):
+        raise ValueError("Either `window_samples` or `window_sec` in combination with "
+                         "`sampling_rate` must be supplied as parameter!")
+
+    if window_samples is None:
+        if sampling_rate == 0:
+            raise ValueError("Sampling rate must be specified when `window_sec` is used!")
+        window = int(sampling_rate * window_sec)
     else:
-        window_step = overlap_samples
+        window = int(window_samples)
 
-    data = np.pad(data, (0, window - data.shape[0] % window), 'constant', constant_values=0)
-    new_shape = data.shape[:-1] + ((data.shape[-1] - int(overlap_percent * window)) // window_step,
-                                   window)
-    new_strides = (data.strides[:-1] + (window_step * data.strides[-1],) +
-                   data.strides[-1:])
-    arr_new = as_strided(data, shape=new_shape, strides=new_strides)
-    return arr_new
+    if overlap_samples is not None:
+        overlap = int(overlap_samples)
+    elif overlap_percent is not None:
+        overlap = int(overlap_percent * window)
+    else:
+        overlap = window - 1
+
+    return window, overlap
+
+
+def downsample(data: np.ndarray, sampling_rate: Union[int, float],
+               final_sampling_rate: Union[int, float]) -> np.ndarray:
+    if (sampling_rate / final_sampling_rate) % 1 == 0:
+        return signal.decimate(data, int(sampling_rate / final_sampling_rate), axis=0)
+    else:
+        # aliasing filter
+        b, a = signal.cheby1(N=8, rp=0.05, Wn=0.8 / (sampling_rate / final_sampling_rate))
+        data_lp = signal.filtfilt(a=a, b=b, x=data)
+        # interpolation
+        x_old = np.linspace(0, len(data_lp), num=len(data_lp), endpoint=False)
+        x_new = np.linspace(0, len(data_lp), num=int(len(data_lp) / (sampling_rate / final_sampling_rate)),
+                            endpoint=False)
+        interpol = interpolate.interp1d(x=x_old, y=data_lp)
+        return interpol(x_new)
 
 
 def check_ecg_input(ecg_processor: 'EcgProcessor', key: str, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame) -> bool:
