@@ -312,9 +312,6 @@ class CFT:
             plot_end = cft_end + time_after
             df_plot = data.loc[plot_start:plot_end]
 
-        df_cft = self.extract_cft_interval(data)
-        hr_bl = self.baseline_hr(data)
-
         times_dict = {'plot_start': plot_start, 'cft_start': cft_start, 'cft_end': cft_end, 'plot_end': plot_end}
         times = [(start, end) for start, end in zip(list(times_dict.values()), list(times_dict.values())[1:])]
 
@@ -339,11 +336,11 @@ class CFT:
                                 color='white', alpha=0.4, zorder=3, lw=0, transform=ax.transAxes)
         ax.add_patch(rect)
 
-        plot_baseline = kwargs.get('plot_baseline', False)
-        plot_mean = kwargs.get('plot_mean', False)
-        plot_onset = kwargs.get('plot_onset', False)
-        plot_peak_brady = kwargs.get('plot_peak_brady', False)
-        plot_poly_fit = kwargs.get('plot_poly_fit', False)
+        plot_baseline = kwargs.get('plot_baseline', True)
+        plot_mean = kwargs.get('plot_mean', True)
+        plot_onset = kwargs.get('plot_onset', True)
+        plot_peak_brady = kwargs.get('plot_peak_brady', True)
+        plot_poly_fit = kwargs.get('plot_poly_fit', True)
 
         if plot_baseline:
             self._add_baseline_plot(data, cft_params, times_dict, ax, bbox)
