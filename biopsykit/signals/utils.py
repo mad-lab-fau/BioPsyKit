@@ -367,7 +367,8 @@ def mean_se_nested_dict(
     The input dict structure is expected to look like one of these examples:
         (a) { "<Subject>" : { "<Phase>" : dataframe with values } }
         (b) { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } }
-        (c) { "<Group>" : { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } } }
+        (c) { "<Group>" : { "<Phase>" : dataframe with values } }
+        (d) { "<Group>" : { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } } }
 
     The output is a 'mse dataframe' (or a dict of such, in case of multiple groups), a pandas dataframe with:
         * columns: ['mean', 'se'] for mean and standard error or ['mean', 'std] for mean and standard deviation
@@ -447,8 +448,14 @@ def mean_se_nested_dict(
     else:
         if subphases is None:
             # compute mean value per nested dictionary entry
-            dict_mean = {key: pd.DataFrame({subkey: dict_val[subkey].mean() for subkey in dict_val})
-                         for key, dict_val in data.items()}
+            dict_mean = {}
+            for key, dict_val in data.items():
+                if isinstance(dict_val, dict):
+                    # passed dict was case (b) or (d) explained in docstring
+                    dict_mean[key] = pd.DataFrame({subkey: dict_val[subkey].mean() for subkey in dict_val})
+                else:
+                    # passed dict was case (c) explained in docstring
+                    dict_mean[key] = dict_val.mean()
         else:
             dict_mean = {key: pd.DataFrame({subph: dict_val[subph].mean() for subph in subphases})
                          for key, dict_val in data.items()}
