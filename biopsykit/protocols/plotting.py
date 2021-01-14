@@ -369,9 +369,9 @@ def hr_mean_plot(
     bg_colors = hr_mean_plot_params['background.color']
     bg_alphas = hr_mean_plot_params['background.alpha']
     x_offsets = hr_mean_plot_params['x_offsets']
-    fontsize = hr_mean_plot_params['fontsize']
-    xaxis_label = hr_mean_plot_params['xaxis.label']
-    yaxis_label = hr_mean_plot_params['yaxis.label']
+    fontsize = kwargs.get("fontsize", hr_mean_plot_params['fontsize'])
+    xaxis_label = kwargs.get("xlabel", hr_mean_plot_params['xaxis.label'])
+    yaxis_label = kwargs.get("ylabel", hr_mean_plot_params['yaxis.label'])
     phase_text = hr_mean_plot_params.get('phase_text', None)
 
     if phases is None:
