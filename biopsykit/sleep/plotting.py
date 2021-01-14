@@ -46,10 +46,11 @@ def sleep_imu_plot(data: pd.DataFrame,
     if isinstance(data.index, pd.DatetimeIndex):
         plt.rcParams['timezone'] = data.index.tz.zone
 
-    yaxis_labels = {
-        'acc': "Acceleration [g]",
+    ylabel = kwargs.get('ylabel', {
+        'acc': "Acceleration [$m/s^2$]",
         'gyr': "Angular Velocity [$°/s$]",
-    }
+    })
+    xlabel = kwargs.get('xlabel', "Time")
 
     for ax, ds in zip(axs, datastreams):
         data_plot = data.filter(like=ds)[::downsample_factor]
@@ -62,8 +63,8 @@ def sleep_imu_plot(data: pd.DataFrame,
             ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
             ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
-        ax.set_ylabel(yaxis_labels[ds])
-        ax.set_xlabel("Time")
+        ax.set_ylabel(ylabel[ds])
+        ax.set_xlabel(xlabel)
         ax.legend(loc='lower left', framealpha=1.0)
 
     if fig:
