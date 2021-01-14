@@ -413,7 +413,11 @@ def hr_mean_plot(
             # get group names from dict if groups were not supplied
             groups = list(data.keys())
         # get subphase labels from data
-        subphase_labels = list(data.values())[0].index.get_level_values(1)
+        data_grp = list(data.values())[0]
+        if isinstance(data_grp.index, pd.MultiIndex):
+            subphase_labels = data_grp.index.get_level_values(1)
+        else:
+            subphase_labels = [""]
 
     num_subph = len(subphases)
 
@@ -449,9 +453,9 @@ def hr_mean_plot(
                     verticalalignment='center',
                     fontsize=fontsize)
 
-    p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
-                         zorder=3, lw=0)
-    ax.add_patch(p)
+        p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
+                             zorder=3, lw=0)
+        ax.add_patch(p)
 
     # customize x axis
     ax.tick_params(axis='x', bottom=True)
