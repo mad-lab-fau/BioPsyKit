@@ -5,20 +5,19 @@ import numpy as np
 from numpy.linalg import norm
 from typing_extensions import Literal
 
-from gaitmap.utils import array_handling
-from gaitmap.utils.array_handling import _bool_fill
-
 # supported metric functions
 _METRIC_FUNCTIONS = {"maximum": np.nanmax, "variance": np.nanvar, "mean": np.nanmean, "median": np.nanmedian}
 METRIC_FUNCTION_NAMES = Literal["maximum", "variance", "mean", "median"]
 
+from biopsykit.signals.utils import sliding_window_view, _bool_fill, bool_array_to_start_end_array
+
 
 def find_static_samples(
-    signal: np.ndarray,
-    window_length: int,
-    inactive_signal_th: float,
-    metric: METRIC_FUNCTION_NAMES = "mean",
-    overlap: int = None,
+        signal: np.ndarray,
+        window_length: int,
+        inactive_signal_th: float,
+        metric: METRIC_FUNCTION_NAMES = "mean",
+        overlap: int = None,
 ) -> np.ndarray:
     """Search for static samples within given input signal, based on windowed L2-norm thresholding.
 
@@ -64,7 +63,7 @@ def find_static_samples(
 
     See Also
     --------
-    gaitmap.utils.array_handling.sliding_window_view: Details on the used windowing function for this method.
+    biopsykit.signals.utils.sliding_window_view: Details on the used windowing function for this method.
 
     """
     # test for correct input data shape
@@ -87,11 +86,11 @@ def find_static_samples(
     mfunc = _METRIC_FUNCTIONS[metric]
 
     # Create windowed view of norm
-    windowed_norm = array_handling.sliding_window_view(signal_norm, window_length, overlap, nan_padding=False)
+    windowed_norm = sliding_window_view(signal_norm, window_length, overlap, nan_padding=False)
     is_static = np.broadcast_to(mfunc(windowed_norm, axis=1) <= inactive_signal_th, windowed_norm.shape[::-1]).T
 
     # create the list of indices for sliding windows with overlap
-    windowed_indices = array_handling.sliding_window_view(
+    windowed_indices = sliding_window_view(
         np.arange(0, len(signal)), window_length, overlap, nan_padding=False
     )
 
@@ -102,11 +101,11 @@ def find_static_samples(
 
 
 def find_static_sequences(
-    signal: np.ndarray,
-    window_length: int,
-    inactive_signal_th: float,
-    metric: METRIC_FUNCTION_NAMES = "mean",
-    overlap: int = None,
+        signal: np.ndarray,
+        window_length: int,
+        inactive_signal_th: float,
+        metric: METRIC_FUNCTION_NAMES = "mean",
+        overlap: int = None,
 ) -> np.ndarray:
     """Search for static sequences within given input signal, based on windowed L2-norm thresholding.
 
@@ -152,7 +151,7 @@ def find_static_sequences(
 
     See Also
     --------
-    gaitmap.utils.array_handling.sliding_window_view: Details on the used windowing function for this method.
+    biopsykit.signals.utils.sliding_window_view: Details on the used windowing function for this method.
 
     """
     static_moment_bool_array = find_static_samples(
@@ -162,11 +161,11 @@ def find_static_sequences(
         metric=metric,
         overlap=overlap,
     )
-    return array_handling.bool_array_to_start_end_array(static_moment_bool_array)
+    return bool_array_to_start_end_array(static_moment_bool_array)
 
 
 def find_first_static_window_multi_sensor(
-    signals: Sequence[np.ndarray], window_length: int, inactive_signal_th: float, metric: METRIC_FUNCTION_NAMES
+        signals: Sequence[np.ndarray], window_length: int, inactive_signal_th: float, metric: METRIC_FUNCTION_NAMES
 ) -> Tuple[int, int]:
     """Find the first time window in the signal where all provided sensors are static.
 
@@ -216,7 +215,7 @@ def find_first_static_window_multi_sensor(
 
     n_signals = signals.shape[1]
 
-    windows = array_handling.sliding_window_view(
+    windows = sliding_window_view(
         signals.reshape((signals.shape[0], -1)),
         window_length=window_length,
         overlap=window_length - 1,
