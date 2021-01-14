@@ -14,7 +14,6 @@ COUNTER_INCONSISTENCY_HANDLING = Literal['raise', 'warn', 'ignore']
 def load_dataset_nilspod(file_path: Optional[path_t] = None,
                          dataset: Optional['Dataset'] = None,
                          datastreams: Optional[Sequence[str]] = None,
-                         factory_calibrate: Optional[bool] = True,
                          handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = 'raise',
                          timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
@@ -32,9 +31,6 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
     datastreams : list of str, optional
         list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
         Datastreams that are not part of the current dataset will be silently ignored.
-    factory_calibrate : bool, optional
-        Whether to apply factory calibration to the data or not. Only required when NilsPod dataset is passed/loaded
-        and dataset contains IMU data
     handle_counter_inconsistency : str, optional
          how to handle if counter of dataset is not monotonously increasing, which might be an indicator for a
          corrupted dataset. `raise` to raise an error, `warn` to issue a warning but still return a dataframe,
@@ -66,10 +62,6 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
         # convert to pytz object
         timezone = pytz.timezone(timezone)
 
-    if factory_calibrate:
-        # TODO add function argument to optionally pass calibration files
-        dataset.factory_calibrate_imu(inplace=True)
-
     if len(np.where(np.diff(dataset.counter) < 1)[0]) > 0:
         if handle_counter_inconsistency == "raise":
             raise ValueError("Error loading dataset. Counter not monotonously increasing!")
@@ -87,7 +79,6 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
 
 def load_synced_session_nilspod(folder_path: path_t,
                                 datastreams: Optional[Sequence[str]],
-                                factory_calibrate: Optional[bool] = True,
                                 handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = 'raise',
                                 timezone: Optional[Union[pytz.timezone, str]] = tz
                                 ) -> Tuple[pd.DataFrame, int]:
@@ -101,9 +92,6 @@ def load_synced_session_nilspod(folder_path: path_t,
     session = SyncedSession.from_folder_path(folder_path)
     session.align_to_syncregion(inplace=True)
 
-    if factory_calibrate:
-        # TODO add function argument to optionally pass calibration files
-        session.factory_calibrate_imu(inplace=True)
     if len(np.where(np.diff(session.counter) < 1)[0]) > 0:
         if handle_counter_inconsistency == "raise":
             raise ValueError("Error loading session. Counter not monotonously increasing!")
