@@ -7,6 +7,16 @@ import biopsykit.signals.utils as su
 from biopsykit.signals.static_moment_detection import find_static_sequences
 
 
+def convert_acc_data_to_g(data: Union[pd.DataFrame], inplace: Optional[bool] = False) -> Union[None, pd.DataFrame]:
+    acc_cols = data.filter(like='acc').columns
+    if not inplace:
+        data = data.copy()
+    data.loc[:, acc_cols] = data.loc[:, acc_cols] / 9.81
+
+    if not inplace:
+        return data
+
+
 def get_windows(data: Union[np.array, pd.Series, pd.DataFrame],
                 window_samples: Optional[int] = None,
                 window_sec: Optional[int] = None,
