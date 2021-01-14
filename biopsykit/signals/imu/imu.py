@@ -4,8 +4,7 @@ import pandas as pd
 import numpy as np
 
 import biopsykit.signals.utils as su
-
-from gaitmap.utils.static_moment_detection import find_static_sequences
+from biopsykit.signals.static_moment_detection import find_static_sequences
 
 
 def get_windows(data: Union[np.array, pd.Series, pd.DataFrame],
