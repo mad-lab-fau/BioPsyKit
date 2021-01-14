@@ -13,7 +13,7 @@ from biopsykit.signals.imu import convert_acc_data_to_g
 
 
 def predict_pipeline(data: Union[pd.DataFrame, np.array], sampling_rate: int,
-                     sleep_wake_scale_factor: Optional[float] = None) -> Dict:
+                     sleep_wake_scale_factor: Optional[float] = None, convert_to_g: Optional[bool] = True) -> Dict:
     ac = ActivityCounts(sampling_rate)
     if sleep_wake_scale_factor is None:
         sw = SleepWake('cole_kripke')
@@ -22,7 +22,8 @@ def predict_pipeline(data: Union[pd.DataFrame, np.array], sampling_rate: int,
     wd = WearDetection(sampling_rate=sampling_rate)
     mrp = MajorRestPeriod(sampling_rate=sampling_rate)
 
-    data = convert_acc_data_to_g(data, inplace=False)
+    if convert_to_g:
+        data = convert_acc_data_to_g(data, inplace=False)
 
     df_wear = wd.predict(data)
     major_wear_block = wd.get_major_wear_block(df_wear)
