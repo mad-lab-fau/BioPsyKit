@@ -15,6 +15,7 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
                          dataset: Optional['Dataset'] = None,
                          datastreams: Optional[Sequence[str]] = None,
                          handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = 'raise',
+                         legacy_support: Optional[str] = 'resolve',
                          timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
     Converts a recorded by NilsPod into a dataframe.
@@ -35,6 +36,14 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
          how to handle if counter of dataset is not monotonously increasing, which might be an indicator for a
          corrupted dataset. `raise` to raise an error, `warn` to issue a warning but still return a dataframe,
          `ignore` to ignore the counter check result
+    legacy_support : str, optional
+        This indicates how to deal with older NilsPod firmware versions.
+        If `error`: An error is raised, if an unsupported version is detected.
+        If `warn`: A warning is raised, but the file is parsed without modification
+        If `resolve`: A legacy conversion is performed to load old files. If no suitable conversion is found,
+        an error is raised. See the `legacy` package and the README of `nilspodlib` to learn more about available
+        conversions.
+        Default: `resolve`
     timezone : str or pytz.timezone, optional
             timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
@@ -57,7 +66,7 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
     import warnings
 
     if file_path:
-        dataset = Dataset.from_bin_file(file_path)
+        dataset = Dataset.from_bin_file(file_path, legacy_support=legacy_support)
     if isinstance(timezone, str):
         # convert to pytz object
         timezone = pytz.timezone(timezone)
@@ -80,6 +89,7 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
 def load_synced_session_nilspod(folder_path: path_t,
                                 datastreams: Optional[Sequence[str]],
                                 handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = 'raise',
+                                legacy_support: Optional[str] = 'resolve',
                                 timezone: Optional[Union[pytz.timezone, str]] = tz
                                 ) -> Tuple[pd.DataFrame, int]:
     from nilspodlib import SyncedSession
@@ -89,7 +99,7 @@ def load_synced_session_nilspod(folder_path: path_t,
     if len(nilspod_files) == 0:
         raise ValueError("No NilsPod files found in directory!")
 
-    session = SyncedSession.from_folder_path(folder_path)
+    session = SyncedSession.from_folder_path(folder_path, legacy_support=legacy_support)
     session.align_to_syncregion(inplace=True)
 
     if len(np.where(np.diff(session.counter) < 1)[0]) > 0:
@@ -153,6 +163,7 @@ def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[S
 
 def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]] = None,
                         datastreams: Optional[Sequence[str]] = None,
+                        legacy_support: Optional[str] = 'resolve',
                         timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[Dict[str, pd.DataFrame], int]:
     """
     Loads all NilsPod datasets from one folder, converts them into dataframes and combines them into one dictionary.
@@ -166,6 +177,14 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
     datastreams : list of str, optional
         list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
         Datastreams that are not part of the current dataset will be silently ignored.
+    legacy_support : str, optional
+        This indicates how to deal with older NilsPod firmware versions.
+        If `error`: An error is raised, if an unsupported version is detected.
+        If `warn`: A warning is raised, but the file is parsed without modification
+        If `resolve`: A legacy conversion is performed to load old files. If no suitable conversion is found,
+        an error is raised. See the `legacy` package and the README of `nilspodlib` to learn more about available
+        conversions.
+        Default: `resolve`
     timezone : str or pytz.timezone, optional
             timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
@@ -191,8 +210,10 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
     if len(phase_names) != len(dataset_list):
         raise ValueError("Number of phases does not match number of datasets in the folder!")
 
-    dataset_dict = {phase: load_dataset_nilspod(file_path=dataset_path, datastreams=datastreams, timezone=timezone) for
-                    phase, dataset_path in zip(phase_names, dataset_list)}
+    dataset_dict = {
+        phase: load_dataset_nilspod(file_path=dataset_path, datastreams=datastreams, legacy_support=legacy_support,
+                                    timezone=timezone) for
+        phase, dataset_path in zip(phase_names, dataset_list)}
     # assume equal sampling rates for all datasets in folder => take sampling rate from first dataset
     sampling_rate = list(dataset_dict.values())[0].info.sampling_rate_hz
     return dataset_dict, sampling_rate
