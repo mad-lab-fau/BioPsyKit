@@ -466,7 +466,8 @@ def hr_mean_plot(
         # no subphases
         ax.set_xticklabels(phases)
 
-    ax.set_xlim([span_lims[0][0], span_lims[-1][-1]])
+    xlims = kwargs.get('xlims', [span_lims[0][0], span_lims[-1][-1]])
+    ax.set_xlim(xlims)
     ax.set_xlabel(xaxis_label, fontsize=fontsize)
 
     # customize y axis
