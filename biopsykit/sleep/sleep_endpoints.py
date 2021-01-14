@@ -9,6 +9,8 @@ from biopsykit.sleep.imu.mrp import MajorRestPeriod
 from biopsykit.sleep.imu.wear_detection import WearDetection
 from biopsykit.signals.imu.activity_counts import ActivityCounts
 
+from biopsykit.signals.imu import convert_acc_data_to_g
+
 
 def predict_pipeline(data: Union[pd.DataFrame, np.array], sampling_rate: int,
                      sleep_wake_scale_factor: Optional[float] = None) -> Dict:
@@ -19,6 +21,8 @@ def predict_pipeline(data: Union[pd.DataFrame, np.array], sampling_rate: int,
         sw = SleepWake('cole_kripke', scale_factor=sleep_wake_scale_factor)
     wd = WearDetection(sampling_rate=sampling_rate)
     mrp = MajorRestPeriod(sampling_rate=sampling_rate)
+
+    data = convert_acc_data_to_g(data, inplace=False)
 
     df_wear = wd.predict(data)
     major_wear_block = wd.get_major_wear_block(df_wear)
