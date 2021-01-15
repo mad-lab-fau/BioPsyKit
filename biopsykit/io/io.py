@@ -18,7 +18,7 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
                          legacy_support: Optional[str] = 'resolve',
                          timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
-    Converts a recorded by NilsPod into a dataframe.
+    Converts a file recorded by NilsPod into a dataframe.
 
     You can either pass a Dataset object obtained from `nilspodlib` or directly pass the path to the file to load 
     and convert the file at once.
@@ -52,15 +52,20 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
     tuple
         tuple of pandas dataframe with sensor data and sampling rate
 
-    # TODO add examples
     Examples
     --------
     >>> import biopsykit as bp
-    >>> file_path = "./NilsPodData.bin"
+    >>> # Option 1: Import data by passing file name
+    >>> file_path = "./<filename-of-nilspod-data>.bin"
     >>> # load dataset with all datastreams
-    >>> bp.io.load_dataset_nilspod(file_path)
+    >>> df, fs = bp.io.load_dataset_nilspod(file_path=file_path)
     >>> # load only ECG data of dataset
-    >>> bp.io.load_dataset_nilspod(file_path, datastreams=['ecg'])
+    >>> df, fs = bp.io.load_dataset_nilspod(file_path=file_path, datastreams=['ecg'])
+    >>>
+    >>> # Option 2: Import data by passing Dataset object imported from NilsPodLib (in this example, only acceleration data)
+    >>> from nilspodlib import Dataset
+    >>> dataset = Dataset.from_bin_file("<filename>.bin")
+    >>> df, fs = bp.io.load_dataset_nilspod(dataset=dataset, datastreams=['acc'])
     """
     from nilspodlib import Dataset
     import warnings
@@ -115,18 +120,29 @@ def load_synced_session_nilspod(folder_path: path_t,
     return df, int(session.info.sampling_rate_hz)
 
 
-def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[Sequence[str]] = None,
+def load_csv_nilspod(file_path: path_t = None, datastreams: Optional[Sequence[str]] = None,
                      timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
     """
-    TODO: add documentation
+    Converts a CSV file recorded by NilsPod into a dataframe.
+
     Parameters
     ----------
-    file_path
-    datastreams
-    timezone
+    file_path : str or path
+        path to dataset object to load
+    datastreams : list of str, optional
+        list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
+        Datastreams that are not part of the current dataset will be silently ignored.
+    timezone : str or pytz.timezone, optional
+        timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
     Returns
     -------
+    tuple
+        tuple of pandas dataframe with sensor data and sampling rate
+
+    See Also
+    --------
+    `biopsykit.io.load_dataset_nilspod()`
 
     """
     import re
@@ -168,6 +184,8 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
     """
     Loads all NilsPod datasets from one folder, converts them into dataframes and combines them into one dictionary.
 
+    This function can for example be used when single session were recorded for different phases.
+
     Parameters
     ----------
     folder_path : str or path
@@ -198,7 +216,16 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
     ValueError
         if number of phases does not match the number of datasets in the folder
 
-    # TODO add examples
+    Examples
+    --------
+    >>> import biopsykit as bp
+    >>> folder_path = "./nilspod"
+    >>> # load all datasets from the selected folder with all datastreams
+    >>> dataset_dict, sampling_rate = bp.io.load_folder_nilspod(folder_path)
+    >>> # load only ECG data of all datasets from the selected folder
+    >>> dataset_dict, sampling_rate = bp.io.load_dataset_nilspod(folder_path, datastreams=['ecg'])
+    >>> # load all datasets from the selected folder with correspondng phase names
+    >>> dataset_dict, sampling_rate = bp.io.load_dataset_nilspod(folder_path, phase_names=['VP01','VP02','VP03'])
     """
     # ensure pathlib
     folder_path = Path(folder_path)
@@ -222,7 +249,8 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
 def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
                   phase_cols: Optional[Union[Sequence[str], Dict[str, str]]] = None) -> pd.DataFrame:
     """
-    Loads time log file.
+    Loads a 'time log file', i.e. a file where time information about start and stop times of recordings or recording
+    phases are stored.
 
     Parameters
     ----------
@@ -244,7 +272,15 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
     ValueError
         if file format is none of [.xls, .xlsx, .csv]
 
-    TODO: add examples
+
+    >>> import biopsykit as bp
+    >>> file_path = "./timelog.csv"
+    >>> # load time log file into a pandas dataframe
+    >>> df_time_log = bp.io.load_time_log(file_path)
+    >>> # load time log file into a pandas dataframe and specify the 'subject_id' column in the time log file to be the index of the dataframe
+    >>> df_time_log = bp.io.load_time_log(file_path, index_cols='subject_id')
+    >>> # load time log file into a pandas dataframe and specify the columns 'Phase1' 'Phase2' and 'Phase3' in the time log file to be the used for extracting time information
+    >>> df_time_log = bp.io.load_time_log(file_path, phase_cols=['Phase1', 'Phase2', 'Phase3'])
     """
     # ensure pathlib
     file_path = Path(file_path)
@@ -281,14 +317,11 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
 
 def load_subject_condition_list(file_path: path_t, subject_col: Optional[str] = 'subject',
                                 condition_col: Optional[str] = 'condition',
-                                excluded_subjects: Optional[Sequence] = None,
                                 return_dict: Optional[bool] = True) -> Union[Dict, pd.DataFrame]:
     # enforce subject ID to be string
     df_cond = pd.read_csv(file_path, dtype={condition_col: str, subject_col: str})
     df_cond.set_index(subject_col, inplace=True)
-    # exclude subjects
-    if excluded_subjects:
-        df_cond.drop(index=excluded_subjects, inplace=True)
+
     if return_dict:
         return df_cond.groupby(condition_col).groups
     else:
@@ -317,31 +350,46 @@ def load_questionnaire_data(file_path: path_t,
 
 
 def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset'] = None,
-                              date: Optional[Union[str, 'datetime']] = None,
+                              df: Optional[pd.DataFrame] = None, date: Optional[Union[str, 'datetime']] = None,
                               timezone: Optional[str] = "Europe/Berlin") -> pd.DataFrame:
     """
-    TODO: add documentation
+    Converts the time information of a time log pandas dataframe into datetime objects, i.e. adds the recording date
+    to the time. Thus, either a NilsPodLib 'Dataset' or pandas DataFrame with DateTimeIndex must be supplied from which
+    the recording date can be extracted or the date must explicitly be specified.
 
     Parameters
     ----------
-    time_log
-    dataset
-    date
-    timezone
+    time_log : pd.DataFrame
+        pandas dataframe with time log information
+    dataset : Dataset, optional
+        Dataset object to convert time log information into datetime
+    df : pd.DataFrame, optional
+    date : str or datatime, optional
+        date to convert into time log into datetime
+    timezone : str or pytz.timezone, optional
+        timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
     Returns
     -------
+    pd.DataFrame
+        pandas dataframe with log time converted into datetime
 
     Raises
     ------
     ValueError
-        if none of `dataset` and `date` is supplied as argument
+        if none of `dataset`, `df` and `date` are supplied as argument
     """
-    if dataset is None and date is None:
-        raise ValueError("Either `dataset` or `date` must be supplied as argument!")
+    if dataset is None and date is None and df is None:
+        raise ValueError("Either `dataset`, `df` or `date` must be supplied as argument!")
 
     if dataset is not None:
         date = dataset.info.utc_datetime_start.date()
+    if df is not None:
+        if isinstance(df.index, pd.DatetimeIndex):
+            date = df.index.normalize().unique()[0]
+            date = date.to_pydatetime()
+        else:
+            raise ValueError("Index of DataFrame must be DatetimeIndex!")
     if isinstance(date, str):
         # ensure datetime
         date = datetime.datetime(date)

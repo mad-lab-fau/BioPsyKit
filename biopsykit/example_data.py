@@ -42,6 +42,12 @@ def get_saliva_example(saliva_times: Optional[Sequence[int]] = None) -> pd.DataF
                        saliva_times=saliva_times)
 
 
+def get_saliva_example_stroop(saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
+    from biopsykit.saliva.io import load_saliva
+    return load_saliva(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample_stroop.csv"), biomarker_type='cortisol',
+                       saliva_times=saliva_times)
+
+
 def get_saliva_mean_se_example() -> Dict[str, pd.DataFrame]:
     return pd.read_excel(_EXAMPLE_DATA_PATH.joinpath("saliva_sample_mean_se.xlsx"), sheet_name=None, index_col='time')
 
