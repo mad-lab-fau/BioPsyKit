@@ -4,7 +4,7 @@
 @author: Robert Richer, Arne Küderle
 """
 from pathlib import Path
-from typing import TypeVar, Sequence, Optional, Dict, Union
+from typing import TypeVar, Sequence, Optional, Dict, Union, Tuple
 import pytz
 
 import pandas as pd
@@ -112,7 +112,7 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
 
     Examples
     --------
-    >>> import biopsykit.utils as utils
+    >>> import biopsykit.su as utils
     >>>
     >>> # Example 1: define time intervals (start and end) of the different recording phases as dictionary
     >>> time_intervals = {"Part1": ("09:00", "09:30"), "Part2": ("09:30", "09:45"), "Part3": ("09:45", "10:00")}
@@ -153,43 +153,7 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
     return data_dict
 
 
-def check_input(ecg_processor: 'EcgProcessor', key: str, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame) -> bool:
-    """
-    Checks valid input, i.e. if either `ecg_processor` **and** `key` are supplied as arguments *or* `ecg_signal` **and**
-    `rpeaks`. Used as helper method for several functions.
-
-    Parameters
-    ----------
-    ecg_processor : EcgProcessor
-        `EcgProcessor` object. If this argument is passed, the `key` argument needs to be supplied as well
-    key : str
-        Dictionary key of the sub-phase to process. Needed when `ecg_processor` is passed as argument
-    ecg_signal : str
-        dataframe with ECG signal. Output of `EcgProcessor.ecg_process()`
-    rpeaks : str
-        dataframe with R peaks. Output of `EcgProcessor.ecg_process()`
-
-    Returns
-    -------
-    ``True`` if correct input was supplied, raises ValueError otherwise
-
-    Raises
-    ------
-    ValueError
-        if invalid input supplied
-    """
-
-    if all([x is None for x in [ecg_processor, key, ecg_signal, rpeaks]]):
-        raise ValueError(
-            "Either `ecg_processor` and `key` or `rpeaks` and `ecg_signal` must be passed as arguments!")
-    if ecg_processor:
-        if key is None:
-            raise ValueError("`key` must be passed as argument when `ecg_processor` is passed!")
-
-    return True
-
-
-def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
+def sanitize_input_1d(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
     """
     Converts 1D array-like data (numpy array, pandas dataframe/series) to a numpy array.
 
@@ -213,12 +177,49 @@ def sanitize_input(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarr
     return data
 
 
+def sanitize_input_nd(
+        data: Union[pd.DataFrame, pd.Series, np.ndarray],
+        ncols: Union[int, Tuple[int, ...]]
+) -> np.ndarray:
+    """
+    Converts nD array-like data (numpy array, pandas dataframe/series) to a numpy array.
+
+    Parameters
+    ----------
+    data : array_like
+        input data
+    ncols : int or tuple of ints
+        number of columns (2nd dimension) the 'data' array should have
+
+    Returns
+    -------
+    array_like
+        data as numpy array
+    """
+
+    # ensure tuple
+    if isinstance(ncols, int):
+        ncols = (ncols,)
+
+    if isinstance(data, (pd.Series, pd.DataFrame)):
+        data = np.squeeze(data.values)
+
+    if data.ndim == 1:
+        if 1 in ncols:
+            return data
+        else:
+            raise ValueError("Invalid number of columns! Expected one of {}, got 1.".format(ncols))
+    elif data.shape[1] not in ncols:
+        raise ValueError("Invalid number of columns! Expected one of {}, got {}.".format(ncols, data.shape[1]))
+    return data
+
+
 def check_tz_aware(data: pd.DataFrame) -> bool:
     return isinstance(data.index, pd.DatetimeIndex) and (data.index.tzinfo is not None)
 
 
 def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
-                     **kwargs) -> Dict[str, pd.DataFrame]:
+                     **kwargs) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     cleaned_data: Dict[str, pd.DataFrame] = {}
 
     for key, data in kwargs.items():
@@ -241,4 +242,6 @@ def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
                 raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
         else:
             raise ValueError("No 'subject' level in index!")
+    if len(cleaned_data) == 1:
+        cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data

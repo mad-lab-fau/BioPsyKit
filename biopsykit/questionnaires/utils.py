@@ -41,8 +41,10 @@ def fill_col_leading_zeros(df: pd.DataFrame, inplace: Optional[bool] = False) ->
         return df
 
 
-def convert_nan(data: Union[pd.DataFrame, pd.Series], inplace: Optional[bool] = True) -> Union[
-    pd.DataFrame, pd.Series, None]:
+def convert_nan(
+        data: Union[pd.DataFrame, pd.Series],
+        inplace: Optional[bool] = False
+) -> Union[pd.DataFrame, pd.Series, None]:
     if inplace:
         data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=True)
     else:

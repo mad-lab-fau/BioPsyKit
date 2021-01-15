@@ -79,6 +79,17 @@ def get_sleep_analyzer_summary_example() -> pd.DataFrame:
     return load_withings_sleep_analyzer_summary(_EXAMPLE_DATA_PATH.joinpath("sleep").joinpath("sleep.csv"))
 
 
+def get_sleep_imu_example() -> Tuple[pd.DataFrame, int]:
+    from biopsykit.io import load_dataset_nilspod
+    try:
+        return load_dataset_nilspod(
+            file_path=_EXAMPLE_DATA_PATH.joinpath("sleep_imu").joinpath("sleep_imu_sample_01.bin"))
+    except:
+        raise ValueError("Dataset can not be loaded. Checking out this large binary file requires Git "
+                         "Large File Storage ('git-lfs'), probably don't have it installed. "
+                         "Please install 'git-lfs' (https://git-lfs.github.com/) and check out the repository again!")
+
+
 def get_eeg_example() -> Tuple[pd.DataFrame, int]:
     from biopsykit.signals.eeg.io import load_eeg_muse
 

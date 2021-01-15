@@ -48,7 +48,7 @@ def load_withings_sleep_analyzer_raw_folder(folder_path: path_t,
     data_sources = [re.findall(r"raw_sleep-monitor_(\S*).csv", s.name)[0] for s in raw_files]
 
     list_data = [load_withings_sleep_analyzer_raw_file(file_path, RAW_DATA_SOURCES[data_source], timezone)
-                 for file_path, data_source in zip(raw_files, data_sources)]
+                 for file_path, data_source in zip(raw_files, data_sources) if data_source in RAW_DATA_SOURCES]
     return pd.concat(list_data, axis=1)
 
 

@@ -1,7 +1,7 @@
 from typing import Optional, Dict, Tuple, Union, Sequence, Callable, List
 
 import biopsykit.utils as utils
-import biopsykit.signals.utils as signal
+import biopsykit.signals.utils as su
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
@@ -440,7 +440,7 @@ class EcgProcessor:
         >>>                         )
         """
 
-        utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
             rpeaks = ecg_processor.rpeaks[key]
@@ -557,7 +557,7 @@ class EcgProcessor:
         >>> rpeaks_corrected = ecg_processor.correct_rpeaks(ecg_processor, key="Data")
         """
 
-        utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             rpeaks = ecg_processor.rpeaks[key]
             ecg_signal = ecg_processor.ecg_result[key]
@@ -629,7 +629,7 @@ class EcgProcessor:
         >>> # HRV processing using using all types, and without R peak correction
         >>> hrv_output = ecg_processor.hrv_process(ecg_processor, key="Data", hrv_types='all', correct_rpeaks=False)
         """
-        utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
             rpeaks = ecg_processor.rpeaks[key]
@@ -723,7 +723,7 @@ class EcgProcessor:
         >>> rsp_signal = ecg_processor.ecg_extract_edr(ecg_processor, key="Data", edr_type='peak_trough_diff')
         """
 
-        utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
             rpeaks = ecg_processor.rpeaks[key]
@@ -738,14 +738,14 @@ class EcgProcessor:
         peaks = np.squeeze(rpeaks['R_Peak_Idx'].values)
 
         # find troughs (minimum 0.1s before R peak)
-        troughs = signal.find_extrema_in_radius(ecg_signal['ECG_Clean'], peaks, radius=(int(0.1 * sampling_rate), 0))
+        troughs = su.find_extrema_in_radius(ecg_signal['ECG_Clean'], peaks, radius=(int(0.1 * sampling_rate), 0))
         # R peak outlier should not be included into EDR estimation
         outlier_mask = rpeaks['R_Peak_Outlier'] == 1
 
         # estimate raw EDR signal
         edr_signal_raw = edr_func(ecg_signal['ECG_Clean'], peaks, troughs)
         # remove R peak outlier, impute missing data, and interpolate signal to length of raw ECG signal
-        edr_signal = signal.remove_outlier_and_interpolate(edr_signal_raw, outlier_mask, peaks, len(ecg_signal))
+        edr_signal = su.remove_outlier_and_interpolate(edr_signal_raw, outlier_mask, peaks, len(ecg_signal))
         # Preprocessing: 10-th order Butterworth bandpass filter (0.1-0.5 Hz)
         edr_signal = nk.signal_filter(edr_signal, sampling_rate=sampling_rate, lowcut=0.1, highcut=0.5, order=10)
 
@@ -784,7 +784,7 @@ class EcgProcessor:
         """
 
         # find peaks: minimal distance between peaks: 1 seconds
-        rsp_signal = utils.sanitize_input(rsp_signal)
+        rsp_signal = utils.sanitize_input_1d(rsp_signal)
         edr_maxima = ss.find_peaks(rsp_signal, height=0, distance=sampling_rate)[0]
         edr_minima = ss.find_peaks(-1 * rsp_signal, height=0, distance=sampling_rate)[0]
         # threshold: 0.2 * Q3 (= 75th percentile)
@@ -850,7 +850,7 @@ class EcgProcessor:
         """
 
         # ensure numpy
-        rsp_signal = utils.sanitize_input(rsp_signal)
+        rsp_signal = utils.sanitize_input_1d(rsp_signal)
         # Process raw respiration input
         rsp_output = nk.rsp_process(rsp_signal, sampling_rate)[0]
         rsp_output.index = ecg_signal.index
@@ -914,7 +914,7 @@ class EcgProcessor:
         >>> rsp_signal = ecg_processor.rsp_rsa_process(ecg_processor, key="Data", return_mean=False)
         """
 
-        utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
             rpeaks = ecg_processor.rpeaks[key]

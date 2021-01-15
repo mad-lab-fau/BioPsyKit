@@ -4,13 +4,13 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-
-from tqdm.notebook import tqdm
+import matplotlib.ticker as mticks
 
 import biopsykit.signals.ecg as ecg
 import biopsykit.signals.utils as utils
 import biopsykit.colors as colors
 import biopsykit.protocols.base as base
+import biopsykit.protocols.plotting as plot
 
 
 class MIST(base.BaseProtocol):
@@ -48,15 +48,22 @@ class MIST(base.BaseProtocol):
         """
 
         self.hr_ensemble_plot_params = {
-            'colormap': colors.cmap_fau_blue('3'),
+            'colormap': colors.cmap_fau_blue('3_ens'),
             'line_styles': ['-', '--', ':'],
+            'ensemble.alpha': 0.4,
             'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
             'background.alpha': [0.5, 0.5, 0.5],
             'fontsize': 14,
-            'xaxis.label': r"MIST Subphases",
+            'xaxis.label': r"Time [s]",
+            'xaxis.minor_ticks': mticks.MultipleLocator(60),
             'yaxis.label': r"$\Delta$HR [%]",
-            'mist.phase_text': "MIST Phase {}",
-            'mist.end_phase_text': "End Phase {}",
+            'legend.loc': 'lower right',
+            'legend.bbox_to_anchor': (0.99, 0.01),
+            'phase_text': "MIST Phase {}",
+            'end_phase.text': "End Phase {}",
+            'end_phase.line_color': "#e0e0e0",
+            'end_phase.line_style': 'dashed',
+            'end_phase.line_width': 2.0
         }
 
         self.hr_mean_plot_params = {
@@ -69,7 +76,7 @@ class MIST(base.BaseProtocol):
             'fontsize': 14,
             'xaxis.label': "MIST Subphases",
             'yaxis.label': r"$\Delta$HR [%]",
-            'mist.phase_text': "MIST Phase {}"
+            'phase_text': "MIST Phase {}"
         }
 
         self.saliva_params = {
@@ -133,8 +140,11 @@ class MIST(base.BaseProtocol):
 
         return utils.interpolate_and_cut(dict_hr_subject)
 
-    def concat_phase_dict(self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
-                          **kwargs) -> Dict[str, pd.DataFrame]:
+    def concat_phase_dict(
+            self,
+            dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
+            **kwargs
+    ) -> Dict[str, pd.DataFrame]:
         """
         Rearranges the 'HR subject dict' (see `util s.load_hr_excel_all_subjects`) into 'MIST Phase dict'.
         See ``bp.protocols.utils.concat_phase_dict`` for further information.
@@ -156,9 +166,12 @@ class MIST(base.BaseProtocol):
         else:
             return super().concat_phase_dict(dict_hr_subject, self.phases)
 
-    def split_subphases(self, phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-                        is_group_dict: Optional[bool] = False, **kwargs) -> Union[
-        Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
+    def split_subphases(
+            self,
+            phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
+            is_group_dict: Optional[bool] = False,
+            **kwargs
+    ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
         """
         Splits a `MIST Phase dict` (or a dict of such, in case of multiple groups,
         see ``bp.protocols.utils.concat_dict``)
@@ -319,84 +332,9 @@ class MIST(base.BaseProtocol):
             dataframe with computed parameters over the single MIST subphases
         """
 
-        if ecg_processor is None and dict_rpeaks is None and dict_ecg is None:
-            raise ValueError("Either `ecg_processor` or `dict_rpeaks` and `dict_ecg` must be passed as arguments!")
-
-        # get all desired parameter types
-        possible_param_types = {'hrv': ecg.EcgProcessor.hrv_process, 'rsp': ecg.EcgProcessor.rsp_rsa_process}
-        if param_types == 'all':
-            param_types = possible_param_types
-
-        if isinstance(param_types, str):
-            param_types = {param_types: possible_param_types[param_types]}
-        if not all([param in possible_param_types for param in param_types]):
-            raise ValueError(
-                "`param_types` must all be of {}, not {}".format(possible_param_types.keys(), param_types.keys()))
-
-        param_types = {param: possible_param_types[param] for param in param_types}
-
-        if ecg_processor:
-            sampling_rate = ecg_processor.sampling_rate
-            dict_rpeaks = ecg_processor.rpeaks
-            dict_ecg = ecg_processor.ecg_result
-
-        if 'rsp' in param_types and dict_ecg is None:
-            raise ValueError("`dict_ecg` must be passed if param_type is {}!".format(param_types))
-
-        index_name = "Subphase"
-        # dict to store results. one entry per parameter and a list of dataframes per MIST phase
-        # that will later be concated to one large dataframes
-        dict_df_subphases = {param: list() for param in param_types}
-
-        # iterate through all phases in the data
-        for (phase, rpeaks), (ecg_phase, ecg_data) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc=title):
-            rpeaks = rpeaks.copy()
-            ecg_data = ecg_data.copy()
-
-            # dict to store intermediate results of subphases. one entry per parameter with a
-            # list of dataframes per subphase that will later be concated to one dataframe per MIST phase
-            dict_subphases = {param: list() for param in param_types}
-            if include_total:
-                # compute HRV, RSP over complete phase
-                for param_type, param_func in param_types.items():
-                    dict_subphases[param_type].append(
-                        param_func(ecg_signal=ecg_data, rpeaks=rpeaks, index="Total", index_name=index_name,
-                                   sampling_rate=sampling_rate))
-
-            if phase not in ["Part1", "Part2"]:
-                # skip Part1, Part2 for subphase parameter analysis (parameters in total are computed above)
-                for subph, dur in zip(self.subphases, self.subphase_durations):
-                    # get the first xx seconds of data (i.e., get only the current subphase)
-                    # TODO change to mist.mist_get_times?
-                    if dur > 0:
-                        df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
-                    else:
-                        # duration of 0 seconds = Feedback Interval, don't cut slice the beginning,
-                        # use all remaining data
-                        df_subph_rpeaks = rpeaks
-                    # ECG does not need to be sliced because rpeaks are already sliced and
-                    # will select only the relevant ECG signal parts anyways
-                    df_subph_ecg = ecg_data
-
-                    for param_type, param_func in param_types.items():
-                        # compute HRV, RSP over subphases
-                        dict_subphases[param_type].append(
-                            param_func(ecg_signal=df_subph_ecg, rpeaks=df_subph_rpeaks, index=subph,
-                                       index_name=index_name,
-                                       sampling_rate=sampling_rate))
-
-                    # remove the currently analyzed subphase of data
-                    # (so that the next subphase is first in the next iteration)
-                    rpeaks = rpeaks[~rpeaks.index.isin(df_subph_rpeaks.index)]
-
-            for param in dict_subphases:
-                # concat dataframe of all subphases to one dataframe per MIST phase and add to parameter dict
-                dict_df_subphases[param].append(pd.concat(dict_subphases[param]))
-
-        # concat all dataframes together to one big result dataframes
-        return pd.concat(
-            [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["Phase"]) for dict_df in dict_df_subphases.values()],
-            axis=1)
+        return utils.param_subphases(ecg_processor=ecg_processor, dict_ecg=dict_ecg, dict_rpeaks=dict_rpeaks,
+                                     subphases=self.subphases, subphase_durations=self.subphase_durations,
+                                     param_types=param_types, sampling_rate=sampling_rate, title=title)
 
     def hr_mean_subphases(
             self,
@@ -421,16 +359,15 @@ class MIST(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return super()._hr_mean_subphases(data, self.subphases, is_group_dict)
+        return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
-    # TODO add kw_args
     def hr_ensemble_plot(
             self,
             data: Dict[str, pd.DataFrame],
             plot_params: Optional[Dict] = None,
             ylims: Optional[Sequence[float]] = None,
             ax: Optional[plt.Axes] = None,
-            figsize: Optional[Tuple[float, float]] = None
+            **kwargs
     ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         """
         Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
@@ -448,19 +385,19 @@ class MIST(base.BaseProtocol):
             y axis limits or ``None`` to infer y axis limits from data. Default: ``None``
         ax : plt.Axes, optional
             Axes to plot on, otherwise create a new one. Default: ``None``
-        figsize : tuple, optional
-            figure size
 
         Returns
         -------
         tuple or none
             Tuple of Figure and Axes or None if Axes object was passed
         """
-        import matplotlib.ticker as mticks
+        import matplotlib.patches as mpatch
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
-            if figsize is None:
+            if 'figsize' in kwargs:
+                figsize = kwargs['figsize']
+            else:
                 figsize = plt.rcParams['figure.figsize']
             fig, ax = plt.subplots(figsize=figsize)
 
@@ -473,10 +410,17 @@ class MIST(base.BaseProtocol):
         fontsize = self.hr_ensemble_plot_params['fontsize']
         xaxis_label = self.hr_ensemble_plot_params['xaxis.label']
         yaxis_label = self.hr_ensemble_plot_params['yaxis.label']
-        phase_text = self.hr_ensemble_plot_params['mist.phase_text']
-        end_phase_text = self.hr_ensemble_plot_params['mist.end_phase_text']
+        xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis.minor_ticks']
+        ensemble_alpha = self.hr_ensemble_plot_params['ensemble.alpha']
         bg_color = self.hr_ensemble_plot_params['background.color']
         bg_alpha = self.hr_ensemble_plot_params['background.alpha']
+        phase_text = self.hr_ensemble_plot_params['phase_text']
+        end_phase_text = self.hr_ensemble_plot_params['end_phase.text']
+        end_phase_color = self.hr_ensemble_plot_params['end_phase.line_color']
+        end_phase_line_style = self.hr_ensemble_plot_params['end_phase.line_style']
+        end_phase_line_width = self.hr_ensemble_plot_params['end_phase.line_width']
+        legend_loc = self.hr_ensemble_plot_params['legend.loc']
+        legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend.bbox_to_anchor']
 
         subphases = np.array(self.subphases)
         mist_dur = [len(v) for v in data.values()]
@@ -488,50 +432,61 @@ class MIST(base.BaseProtocol):
             hr_mean = hr_mist.mean(axis=1)
             hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
             ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1), linestyle=line_styles[i])
-            ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=0.4)
-            # TODO check hardcoded plot params
-            ax.vlines(x=mist_dur[i], ymin=-20, ymax=40, linestyles='dashed', colors="#bdbdbd", zorder=3)
-            ax.text(x=mist_dur[i] - 5, y=10 + 5 * i, s=end_phase_text.format(i + 1), fontsize=fontsize - 4,
-                    horizontalalignment='right', bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
-                    zorder=3)
+            ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
+            ax.vlines(x=mist_dur[i] - 0.5, ymin=0, ymax=1, transform=ax.get_xaxis_transform(),
+                      ls=end_phase_line_style, lw=end_phase_line_width,
+                      colors=end_phase_color, zorder=3)
+            ax.annotate(
+                text=end_phase_text.format(i + 1),
+                xy=(mist_dur[i], 0.85 - 0.05 * i),
+                xytext=(-5, 0),
+                xycoords=ax.get_xaxis_transform(),
+                textcoords='offset points',
+                ha='right',
+                fontsize=fontsize - 4,
+                bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
+                zorder=3
+            )
+
+        for (start, end), subphase in zip(start_end, subphases):
+            ax.text(x=start + 0.5 * (end - start), y=0.95, transform=ax.get_xaxis_transform(),
+                    s=subphase, ha='center', va='center', fontsize=fontsize)
+        p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
+                             zorder=3, lw=0)
+        ax.add_patch(p)
+
+        for (start, end), color, alpha in zip(start_end, bg_color, bg_alpha):
+            ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
 
         ax.set_xlabel(xaxis_label, fontsize=fontsize)
         ax.set_xticks([start for (start, end) in start_end])
-        ax.xaxis.set_minor_locator(mticks.MultipleLocator(60))
+        ax.xaxis.set_minor_locator(xaxis_minor_ticks)
         ax.tick_params(axis="x", which='both', bottom=True)
 
         ax.set_ylabel(yaxis_label, fontsize=fontsize)
         ax.tick_params(axis="y", which='major', left=True)
 
-        for (start, end), subphase in zip(start_end, subphases):
-            # TODO check hardcoded plot params
-            ax.text(x=start + 0.5 * (end - start), y=35, s=subphase, horizontalalignment='center',
-                    fontsize=fontsize)
-
-        ax.legend(loc='upper left', bbox_to_anchor=(0.01, 0.85), prop={'size': fontsize})
         if ylims:
+            ax.margins(x=0)
             ax.set_ylim(ylims)
-        ax._xmargin = 0
+        else:
+            ax.margins(0, 0.1)
 
-        for (start, end), color, alpha in zip(start_end, bg_color,
-                                              bg_alpha):
-            ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
+        ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor, prop={'size': fontsize})
 
         if fig:
             fig.tight_layout()
             return fig, ax
 
     # TODO add support for groups in one dataframe (indicated by group column)
-    # TODO add kw_args
     def hr_mean_plot(
             self,
             data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
             groups: Optional[Sequence[str]] = None,
             group_col: Optional[str] = None,
             plot_params: Optional[Dict] = None,
-            ylims: Optional[Sequence[float]] = None,
             ax: Optional[plt.Axes] = None,
-            figsize: Optional[Tuple[float, float]] = None
+            **kwargs
     ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
         """
         Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
@@ -561,12 +516,13 @@ class MIST(base.BaseProtocol):
         plot_params : dict, optional
             dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
             For an overview of parameters and their default values, see `mist.hr_course_params`
-        ylims : list, optional
-            y axis limits or ``None`` to infer y axis limits from data. Default: ``None``
         ax : plt.Axes, optional
             Axes to plot on, otherwise create a new one. Default: ``None``
-        figsize : tuple, optional
-            figure size
+        kwargs: dict, optional
+            optional parameters to be passed to the plot, such as:
+                * figsize: tuple specifying figure dimensions
+                * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
+                for further information), None to automatically infer y-axis limits
 
 
         Returns
@@ -575,97 +531,9 @@ class MIST(base.BaseProtocol):
             Tuple of Figure and Axes or None if Axes object was passed
         """
 
-        fig: Union[plt.Figure, None] = None
-        if ax is None:
-            if figsize is None:
-                figsize = plt.rcParams['figure.figsize']
-            fig, ax = plt.subplots(figsize=figsize)
-
-        # update default parameter if plot parameter were passe
         if plot_params:
             self.hr_mean_plot_params.update(plot_params)
-
-        # get all plot parameter
-        sns.set_palette(self.hr_mean_plot_params['colormap'])
-        line_styles = self.hr_mean_plot_params['line_styles']
-        markers = self.hr_mean_plot_params['markers']
-        bg_colors = self.hr_mean_plot_params['background.color']
-        bg_alphas = self.hr_mean_plot_params['background.alpha']
-        x_offsets = self.hr_mean_plot_params['x_offsets']
-        fontsize = self.hr_mean_plot_params['fontsize']
-        xaxis_label = self.hr_mean_plot_params['xaxis.label']
-        yaxis_label = self.hr_mean_plot_params['yaxis.label']
-        phase_text = self.hr_mean_plot_params['mist.phase_text']
-
-        if isinstance(data, pd.DataFrame):
-            # get subphase labels from data
-            subphase_labels = data.index.get_level_values(1)
-            if not ylims:
-                ylims = [1.1 * (data['mean'] - data['se']).min(), 1.5 * (data['mean'] + data['se']).max()]
-            if group_col and not groups:
-                # get group names from data if groups were not supplied
-                groups = list(data[group_col].unique())
-        else:
-            # get subphase labels from data
-            subphase_labels = list(data.values())[0].index.get_level_values(1)
-            if not ylims:
-                ylims = [1.1 * min([(d['mean'] - d['se']).min() for d in data.values()]),
-                         1.5 * max([(d['mean'] + d['se']).max() for d in data.values()])]
-            if not groups:
-                # get group names from dict if groups were not supplied
-                groups = list(data.keys())
-
-        num_subph = len(self.subphases)
-        # build x axis, axis limits and limits for MIST phase spans
-        x = np.arange(len(subphase_labels))
-        xlims = np.append(x, x[-1] + 1)
-        xlims = xlims[::num_subph] + 0.5 * (xlims[::num_subph] - xlims[::num_subph] - 1)
-        span_lims = [(x_l, x_u) for x_l, x_u in zip(xlims, xlims[1::])]
-
-        # plot data as errorbar with mean and se
-        if groups:
-            for group, x_off, marker, ls in zip(groups, x_offsets, markers, line_styles):
-                ax.errorbar(x=x + x_off, y=data[group]['mean'], label=group, yerr=data[group]['se'], capsize=3,
-                            marker=marker, linestyle=ls)
-        else:
-            ax.errorbar(x=x, y=data['mean'], yerr=data['se'], capsize=3, marker=markers[0],
-                        linestyle=line_styles[0])
-
-        # add decorators: spans and MIST Phase labels
-        for (i, name), (x_l, x_u), color, alpha in zip(enumerate(self.phases), span_lims, bg_colors, bg_alphas):
-            ax.axvspan(x_l, x_u, color=color, alpha=alpha, zorder=0, lw=0)
-            ax.text(x=x_l + 0.5 * (x_u - x_l), y=0.9 * ylims[-1], s=phase_text.format(i + 1),
-                    horizontalalignment='center',
-                    verticalalignment='top',
-                    fontsize=fontsize)
-
-        # customize x axis
-        ax.tick_params(axis='x', bottom=True)
-        ax.set_xticks(x)
-        ax.set_xticklabels(subphase_labels)
-        ax.set_xlim([span_lims[0][0], span_lims[-1][-1]])
-        ax.set_xlabel(xaxis_label, fontsize=fontsize)
-
-        # customize y axis
-        ax.tick_params(axis="y", which='major', left=True)
-        ax.set_ylim(ylims)
-        ax.set_ylabel(yaxis_label, fontsize=fontsize)
-
-        # axis tick label fontsize
-        ax.tick_params(labelsize=fontsize)
-
-        # customize legend
-        if groups:
-            # get handles
-            handles, labels = ax.get_legend_handles_labels()
-            # remove the errorbars
-            handles = [h[0] for h in handles]
-            # use them in the legend
-            ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.01, 0.85), numpoints=1,
-                      prop={"size": fontsize})
-
-        if fig:
-            fig.tight_layout()
-            return fig, ax
+        return plot.hr_mean_plot(data=data, groups=groups, group_col=group_col, plot_params=self.hr_mean_plot_params,
+                                 ax=ax, **kwargs)
 
     # TODO add methods to remove phases and subphases from MIST dict

@@ -5,14 +5,12 @@ import pandas as pd
 import numpy as np
 
 
-def wide_to_long(data: pd.DataFrame, biomarker_type: Optional[str] = 'cortisol') -> pd.DataFrame:
-    idx_col = ['subject']
-    if 'condition' in data.index.names:
-        idx_col.append('condition')
-    if 'day' in data.index.names:
-        idx_col.append('day')
+def wide_to_long(data: pd.DataFrame, biomarker_type: Optional[str] = 'cortisol',
+                 idx_cols: Optional[Sequence[str]] = None) -> pd.DataFrame:
+    if idx_cols is None:
+        idx_cols = list(data.index.names)
     return pd.wide_to_long(data.reset_index(), stubnames=biomarker_type, sep='_',
-                           i=idx_col, j='biomarker', suffix=r"\w+")
+                           i=idx_cols, j='biomarker', suffix=r"\w+")
 
 
 def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = 'cortisol',
@@ -29,7 +27,9 @@ def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Seque
         return dict_result
 
     if remove_s0:
-        data = data.drop(0, level="sample")
+        data = data.drop(0, level='sample', errors='ignore')
+        data = data.drop('0', level='sample', errors='ignore')
+        data = data.drop('S0', level='sample', errors='ignore')
 
     if 'time' in data:
         data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
@@ -38,7 +38,8 @@ def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Seque
         data_grp = data_grp.set_index('time', append=True)
     else:
         data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
-            {'mean': df_sample[biomarker_type].mean(), 'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample))}))
+            {'mean': df_sample[biomarker_type].mean(),
+             'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample))}))
     return data_grp
 
 
@@ -60,7 +61,9 @@ def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequenc
 
     if remove_s0:
         # We have a S0 sample => drop it
-        data = data.drop(0, level='sample')
+        data = data.drop(0, level='sample', errors='ignore')
+        data = data.drop('0', level='sample', errors='ignore')
+        data = data.drop('S0', level='sample', errors='ignore')
 
     if biomarker_type not in data:
         raise ValueError("No `{}` columns in data!".format(biomarker_type))
@@ -80,7 +83,7 @@ def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequenc
 def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
         remove_s0: Optional[bool] = True,
         saliva_times: Optional[Sequence[int]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-    # TODO IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
+    # TODO add documentation; IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
     # => auc_post means all saliva times after beginning of stress (>= 0)
 
     _check_data_format(data)
@@ -99,7 +102,9 @@ def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] 
 
     if remove_s0:
         # We have a S0 sample => drop it
-        data = data.drop(0, level='sample')
+        data = data.drop(0, level='sample', errors='ignore')
+        data = data.drop('0', level='sample', errors='ignore')
+        data = data.drop('S0', level='sample', errors='ignore')
 
     if biomarker_type not in data:
         raise ValueError("No `{}` columns in data!".format(biomarker_type))
