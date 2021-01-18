@@ -87,63 +87,60 @@ class Stroop(base.BaseProtocol):
             self.phase_durations = phase_durations
 
     def load_stroop_test_data(self, folder=str) -> Dict[str,pd.DataFrame]:
-        #TODO: for Schleife für dict_sub einfügen --> momentan überschreibt das die Werte
         #TODO: kommentieren
         dict_stroop_data = {}
         dataset = os.listdir(folder)
+        tmp_ID = stroop_ID = ""
+        dict_sub = {}
+        first = True
+
         for data in dataset:
-            dict_sub = {}
-            dict_sub_sub = {}
-            print(data)
+
             if ('raw' in data):
                 continue
 
             if data.endswith('.csv'):
-                dict_sub_sub = {'stroop_result': pd.read_csv(folder + data, sep=';')}
+                dict_tmp = {'stroop_result': pd.read_csv(folder + data, sep=';')}
                 df_tmp = pd.read_csv(folder + data.replace('summary', 'raw'), sep=';')
 
             elif data.endswith('.iqdat'):
-                dict_sub_sub = self.get_stroop_test_results(data_stroop=folder + data)
+                dict_tmp = self.get_stroop_test_results(data_stroop=folder + data)
                 df_tmp = self.get_stroop_test_results(data_stroop=folder + data.replace('summary','raw'))
 
-            stroop_ID = dict_sub_sub['stroop_result']['subjectid'][0]
-
-            stroop_n = 'Stroop ' + str(dict_sub_sub['stroop_result']['sessionid'][0])[-1]
-            print('Stroop ' + str(dict_sub_sub['stroop_result']['sessionid'][0])[-1])
+            stroop_ID = dict_tmp['stroop_result']['subjectid'][0]
+            stroop_n = 'Stroop ' + str(dict_tmp['stroop_result']['sessionid'][0])[-1]
             duration = int(
                 df_tmp['stroop_result']['latency'].astype(int).sum() // 1000 + (len(df_tmp['stroop_result']) + 1) * 0.5)
 
+            if first:
+                tmp_ID = stroop_ID
+                first = False
+            elif(stroop_ID != tmp_ID):
+                dict_stroop_data[tmp_ID] = dict_sub
+                tmp_ID = stroop_ID
+                dict_sub = {}
+
+            dict_sub_sub = dict_tmp
             dict_sub_sub['stroop_times'] = (df_tmp['stroop_result']['time'][0], str(pd.to_timedelta(
                                             df_tmp['stroop_result']['time'][0]) + pd.to_timedelta(duration, unit='s'))[7:])
+
             dict_sub[stroop_n] = dict_sub_sub
 
-            dict_stroop_data[stroop_ID] = dict_sub
+        dict_stroop_data[stroop_ID] = dict_sub
 
         return dict_stroop_data
 
-    def get_stroop_test_results(self, data_stroop: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def get_stroop_test_results(self, data_stroop: Union[pd.DataFrame, str, Dict]) -> Dict[str, pd.DataFrame]:
         ###TODO: kommentieren
         dict_result = {}
 
         if isinstance(data_stroop, pd.DataFrame):
-            print('macht was 1')
             dict_result['stroop_result'] = data_stroop
 
         if isinstance(data_stroop, Dict):
             dict_result['stroop_result'] = pd.DataFrame(data_stroop, index=[0])
 
         if isinstance(data_stroop, str):
-            first = True
-            with open(data_stroop, 'r') as f:
-                reader = csv.reader(f, dialect='excel', delimiter='\t')
-                for row in reader:
-                    if first:
-                        columns = row
-                        df = pd.DataFrame(columns=columns)
-                        first = False
-                        continue
-                    df = df.append(pd.DataFrame(columns=columns, data=[row]), ignore_index =True)
-
-                dict_result['stroop_result'] = df
+            dict_result['stroop_result'] = pd.read_csv(data_stroop, sep='\t')
 
         return dict_result
