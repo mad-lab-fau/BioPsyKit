@@ -5,6 +5,7 @@ import biopsykit.colors as colors
 import pandas as pd
 import os
 
+
 class Stroop(base.BaseProtocol):
     """
     Class representing the Stroop test.
@@ -86,9 +87,9 @@ class Stroop(base.BaseProtocol):
         if phase_durations:
             self.phase_durations = phase_durations
 
-    def load_stroop_test_data(self, folder=str) -> Dict[str,pd.DataFrame]:
-        #TODO: for Schleife für dict_sub einfügen --> momentan überschreibt das die Werte
-        #TODO: kommentieren
+    def load_stroop_test_data(self, folder=str) -> Dict[str, pd.DataFrame]:
+        # TODO: for Schleife für dict_sub einfügen --> momentan überschreibt das die Werte
+        # TODO: kommentieren
         dict_stroop_data = {}
         dataset = os.listdir(folder)
         for data in dataset:
@@ -104,7 +105,7 @@ class Stroop(base.BaseProtocol):
 
             elif data.endswith('.iqdat'):
                 dict_sub_sub = self.get_stroop_test_results(data_stroop=folder + data)
-                df_tmp = self.get_stroop_test_results(data_stroop=folder + data.replace('summary','raw'))
+                df_tmp = self.get_stroop_test_results(data_stroop=folder + data.replace('summary', 'raw'))
 
             stroop_ID = dict_sub_sub['stroop_result']['subjectid'][0]
 
@@ -114,14 +115,15 @@ class Stroop(base.BaseProtocol):
                 df_tmp['stroop_result']['latency'].astype(int).sum() // 1000 + (len(df_tmp['stroop_result']) + 1) * 0.5)
 
             dict_sub_sub['stroop_times'] = (df_tmp['stroop_result']['time'][0], str(pd.to_timedelta(
-                                            df_tmp['stroop_result']['time'][0]) + pd.to_timedelta(duration, unit='s'))[7:])
+                df_tmp['stroop_result']['time'][0]) + pd.to_timedelta(duration, unit='s'))[7:])
             dict_sub[stroop_n] = dict_sub_sub
 
             dict_stroop_data[stroop_ID] = dict_sub
 
         return dict_stroop_data
 
-    def get_stroop_test_results(self, data_stroop: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def get_stroop_test_results(self, data_stroop: Union[pd.DataFrame, Dict[str, pd.DataFrame], str]) -> Dict[
+        str, pd.DataFrame]:
         ###TODO: kommentieren
         dict_result = {}
 
@@ -129,7 +131,7 @@ class Stroop(base.BaseProtocol):
             print('macht was 1')
             dict_result['stroop_result'] = data_stroop
 
-        if isinstance(data_stroop, Dict):
+        if isinstance(data_stroop, dict):
             dict_result['stroop_result'] = pd.DataFrame(data_stroop, index=[0])
 
         if isinstance(data_stroop, str):
@@ -142,7 +144,7 @@ class Stroop(base.BaseProtocol):
                         df = pd.DataFrame(columns=columns)
                         first = False
                         continue
-                    df = df.append(pd.DataFrame(columns=columns, data=[row]), ignore_index =True)
+                    df = df.append(pd.DataFrame(columns=columns, data=[row]), ignore_index=True)
 
                 dict_result['stroop_result'] = df
 
