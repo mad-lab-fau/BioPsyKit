@@ -1,4 +1,5 @@
-from typing import Dict, Optional, List
+from pathlib import Path
+from typing import Dict, Optional, List, Union
 
 import pandas as pd
 
@@ -25,6 +26,9 @@ def load_hr_subject_dict(file_path: path_t) -> Dict[str, pd.DataFrame]:
     dict
         Excel sheet dictionary
     """
+    # ensure pathlib
+    file_path = Path(file_path)
+
     dict_hr = pd.read_excel(file_path, index_col="time", sheet_name=None)
     # (re-)localize each sheet since Excel does not support timezone-aware dates
     dict_hr = {k: v.tz_localize(tz) for k, v in dict_hr.items()}
@@ -69,6 +73,9 @@ def load_combine_hr_all_subjects(base_path: path_t, subject_folder_pattern: str,
     >>>     # ...
     >>> }
     """
+    # ensure pathlib
+    base_path = Path(base_path)
+
     subject_dirs = list(sorted(base_path.glob(subject_folder_pattern)))
     dict_hr_subjects = {}
     for subject_dir in subject_dirs:
@@ -82,7 +89,7 @@ def load_combine_hr_all_subjects(base_path: path_t, subject_folder_pattern: str,
     return dict_hr_subjects
 
 
-def write_hr_subject_dict(ecg_processor: 'EcgProcessor', file_path: path_t) -> None:
+def write_hr_subject_dict(ep_or_dict: Union['EcgProcessor', Dict[str, pd.DataFrame]], file_path: path_t) -> None:
     """
     Writes heart rate dictionary of one subject to an Excel file.
     Each of the phases in the dictionary will be a separate sheet in the file.
@@ -91,16 +98,20 @@ def write_hr_subject_dict(ecg_processor: 'EcgProcessor', file_path: path_t) -> N
         * date: timestamps of the heart rate samples (string, will be converted to DateTimeIndex)
         * ECG_Rate: heart rate samples (float)
 
-
     Parameters
     ----------
-    ecg_processor : EcgProcessor
-        EcgProcessor instance
+    ep_or_dict : EcgProcessor or dict
+        EcgProcessor instance or 'HR subject dict'
     file_path : path or str
         path to file
     """
+    from biopsykit.signals.ecg import EcgProcessor
 
-    write_pandas_dict_excel(ecg_processor.heart_rate, file_path)
+    if isinstance(ep_or_dict, EcgProcessor):
+        hr_subject_dict = ep_or_dict.heart_rate
+    else:
+        hr_subject_dict = ep_or_dict
+    write_pandas_dict_excel(hr_subject_dict, file_path)
 
 
 def write_pandas_dict_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_t,
@@ -117,6 +128,8 @@ def write_pandas_dict_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_
     index_col : bool, optional
         ``True`` to include dataframe index in Excel export, ``False`` otherwise. Default: ``True``
     """
+    # ensure pathlib
+    file_path = Path(file_path)
 
     writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
     for key in data_dict:
@@ -129,8 +142,8 @@ def write_pandas_dict_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_
 
 
 def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
-                      identifier_col: Optional[str] = "Subject_ID",
-                      index_cols: Optional[List[str]] = ["Phase", "Subphase"],
+                      identifier_col: Optional[str] = "subject",
+                      index_cols: Optional[List[str]] = ["phase"],
                       overwrite_file: Optional[bool] = False) -> None:
     """
     Saves dictionary with processing results (e.g. HR, HRV, RSA) of all subjects as csv file.
@@ -145,8 +158,8 @@ def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
         * If a file with same name exists at the specified location, it is assumed that this is a result file from a
           previous run and the current results should be appended to this file.
           (To disable this behavior, set `overwrite_file` to ``False``).
-        * Per default, it is assumed that the 'values' dataframes has a multi-index with columns ["Phase", "Subphase"].
-          The resulting dataframe would, thus, per default have the columns ["Subject_ID", "Phase", "Subphase"].
+        * Per default, it is assumed that the 'values' dataframes has a multi-index with columns ["phase"].
+          The resulting dataframe would, thus, per default have the columns ["subject", "phase"].
           This can be changed by the parameter `index_cols`.
 
     Parameters
@@ -178,8 +191,11 @@ def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
     >>> }
     >>>
     >>> ep.write_result_dict(dict_param_output, file_path=file_path,
-    >>>                             identifier_col="Subject_ID", index_cols=["Phase", "Subphase"])
+    >>>                             identifier_col="subject", index_cols=["phase", "subphase"])
     """
+
+    # ensure pathlib
+    file_path = Path(file_path)
 
     # TODO check if index_cols is really needed?
 
@@ -188,7 +204,7 @@ def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
     if index_cols is None:
         index_cols = []
 
-    df_result_concat = pd.concat(result_dict, names=identifier_col)
+    df_result_concat = pd.concat(result_dict, names=identifier_col + index_cols)
     if file_path.exists() and not overwrite_file:
         # ensure that all identifier columns are read as str
         df_result_old = pd.read_csv(file_path, dtype={col: str for col in identifier_col})
