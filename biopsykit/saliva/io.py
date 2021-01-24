@@ -48,7 +48,7 @@ def load_saliva_plate(file_path: path_t, sample_id_col: str, data_col: str, biom
     else:
         df_saliva = pd.read_excel(file_path, skiprows=2, sheet_name=sheet_name, usecols=[sample_id_col, data_col])
 
-    df_saliva[["subject", "sample"]] = df_saliva[sample_id_col].str.extract("Vp(\d+) S(\d)")
+    df_saliva[["subject", "sample"]] = df_saliva[sample_id_col].str.extract("(Vp\d+) S(\d)")
     df_saliva["sample"] = df_saliva["sample"].astype(int)
 
     df_saliva.drop(columns=[sample_id_col], inplace=True, errors='ignore')
