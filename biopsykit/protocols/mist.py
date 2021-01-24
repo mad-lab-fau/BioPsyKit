@@ -336,7 +336,7 @@ class MIST(base.BaseProtocol):
                                      subphases=self.subphases, subphase_durations=self.subphase_durations,
                                      param_types=param_types, sampling_rate=sampling_rate, title=title)
 
-    def hr_mean_subphases(
+    def hr_mean_se_subphases(
             self,
             data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
             is_group_dict: Optional[bool] = False
@@ -391,6 +391,8 @@ class MIST(base.BaseProtocol):
         tuple or none
             Tuple of Figure and Axes or None if Axes object was passed
         """
+        # TODO add option to apply moving average filter before plotting ensemble plot
+
         import matplotlib.patches as mpatch
 
         fig: Union[plt.Figure, None] = None
