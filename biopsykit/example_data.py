@@ -59,23 +59,23 @@ def get_mist_hr_example() -> Dict[str, pd.DataFrame]:
 
 def get_ecg_example() -> Tuple[pd.DataFrame, int]:
     from biopsykit.io import load_dataset_nilspod
-    return load_dataset_nilspod(file_path=_EXAMPLE_DATA_PATH.joinpath("ecg_sample_01.bin"), datastreams=['ecg'])
+    return load_dataset_nilspod(file_path=_EXAMPLE_DATA_PATH.joinpath("ecg").joinpath("ecg_sample_Vp01.bin"),
+                                datastreams=['ecg'])
 
 
 def get_ecg_example_02() -> Tuple[pd.DataFrame, int]:
     from biopsykit.io import load_dataset_nilspod
-    return load_dataset_nilspod(file_path=_EXAMPLE_DATA_PATH.joinpath("ecg_sample_02.bin"), datastreams=['ecg'])
+    return load_dataset_nilspod(file_path=_EXAMPLE_DATA_PATH.joinpath("ecg").joinpath("ecg_sample_Vp02.bin"),
+                                datastreams=['ecg'])
 
 
 def get_sleep_analyzer_raw_example() -> pd.DataFrame:
     from biopsykit.sleep.io import load_withings_sleep_analyzer_raw_folder
-
     return load_withings_sleep_analyzer_raw_folder(_EXAMPLE_DATA_PATH.joinpath("sleep"))
 
 
 def get_sleep_analyzer_summary_example() -> pd.DataFrame:
     from biopsykit.sleep.io import load_withings_sleep_analyzer_summary
-
     return load_withings_sleep_analyzer_summary(_EXAMPLE_DATA_PATH.joinpath("sleep").joinpath("sleep.csv"))
 
 
