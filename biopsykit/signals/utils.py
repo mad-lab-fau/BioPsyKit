@@ -99,10 +99,26 @@ def interpolate_and_cut(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[s
 
 
 def concat_phase_dict(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
-                      phases: Sequence[str]) -> Dict[str, pd.DataFrame]:
+                      phases: Optional[Sequence[str]] = None) -> Dict[str, pd.DataFrame]:
     """
-    Rearranges a 'HR subject dict' (see ``utils.load_hr_excel_all_subjects``) into a 'Phase dict', i.e. a dictionary
-    with one dataframe per Phase where each dataframe contains column-wise HR data for all subjects.
+    Rearranges a 'HR subject dict' (a nested dictionary containing heart rate data, see below and
+    ``utils.load_hr_excel_all_subjects()`` for further information) into a 'Phase dict', i.e. a dictionary with
+    one dataframe per Phase where each dataframe contains column-wise HR data for all subjects.
+
+    The **input** needs to be a 'HR subject dict', a nested dictionary with the following format:
+    {
+        "<Subject_1>" : {
+            "<Phase_1>" : hr_dataframe,
+            "<Phase_2>" : hr_dataframe,
+            ...
+        },
+        "<Subject_2>" : {
+            "<Phase_1>" : hr_dataframe,
+            "<Phase_2>" : hr_dataframe,
+            ...
+        },
+        ...
+    }
 
     The **output** format will be the following:
 
@@ -114,8 +130,8 @@ def concat_phase_dict(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
     ----------
     dict_hr_subject : dict
         'HR subject dict', i.e. a nested dict with heart rate data per phase and subject
-    phases : list
-        list of phase names
+    phases : list, optional
+        list of phase names. If `None` is passed, phases are inferred from the keys of the first subject
 
     Returns
     -------
@@ -123,6 +139,9 @@ def concat_phase_dict(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
         'Phase dict', i.e. a dict with heart rate data of all subjects per phase
 
     """
+
+    if phases is None:
+        phases = list(dict_hr_subject.values())[0].keys()
 
     dict_phase: Dict[str, pd.DataFrame] = {key: pd.DataFrame(columns=list(dict_hr_subject.keys())) for key in
                                            phases}

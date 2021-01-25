@@ -36,29 +36,36 @@ class WearDetection:
         if index is not None:
             index_resample = su.sliding_window(index.values, window_sec=window * 60,
                                                sampling_rate=self.sampling_rate,
-                                               overlap_percent=overlap_percent)[:, 0]
-            if isinstance(index, pd.DatetimeIndex):
-                index_resample = pd.DatetimeIndex(index_resample)
-                index_resample = index_resample.tz_localize('UTC').tz_convert(index.tzinfo)
+                                               overlap_percent=overlap_percent)[:, :]
+            start_end = index_resample[:, [0, -1]]
+            if np.isnan(start_end[-1, -1]):
+                last_idx = index_resample[-1, np.where(~np.isnan(index_resample[-1, :]))[0][-1]]
+                start_end[-1, -1] = last_idx
 
-        acc_std = pd.DataFrame({axis: acc_sliding[axis].std(axis=1) for axis in acc_sliding})
+            if isinstance(index, pd.DatetimeIndex):
+                index_resample = pd.DataFrame(start_end, columns=['start', 'end'])
+                index_resample = index_resample.apply(lambda df: pd.to_datetime(df).dt.tz_localize('UTC').dt.tz_convert(index.tzinfo))
+
+        acc_std = pd.DataFrame({axis: np.nanstd(acc_sliding[axis], ddof=1, axis=1) for axis in acc_sliding})
 
         acc_std[acc_std >= 0.013] = 1
         acc_std[acc_std < 0.013] = 0
-        acc_std = np.sum(acc_std, axis=1)
+        acc_std = np.nansum(acc_std, axis=1)
 
         acc_range = pd.DataFrame(
-            {axis: acc_sliding[axis].max(axis=1) - acc_sliding[axis].min(axis=1) for axis in acc_sliding}
+            {axis: np.nanmax(acc_sliding[axis], axis=1) - np.nanmin(acc_sliding[axis], axis=1) for axis in acc_sliding}
         )
 
         acc_range[acc_range >= 0.15] = 1
         acc_range[acc_range < 0.15] = 0
-        acc_range = np.sum(acc_range, axis=1)
+        acc_range = np.nansum(acc_range, axis=1)
 
         wear = np.ones(shape=acc_std.shape)
         wear[np.logical_or(acc_std < 1.0, acc_range < 1.0)] = 0.0
 
-        wear = pd.DataFrame(wear, columns=['wear'], index=index_resample)
+        wear = pd.DataFrame(wear, columns=['wear'])
+        if index_resample is not None:
+            wear = wear.join(index_resample)
 
         # apply rescoring three times
         wear = self._rescore_wear_detection(wear)
@@ -93,8 +100,8 @@ class WearDetection:
     @staticmethod
     def get_major_wear_block(wear_data: pd.DataFrame) -> Tuple:
         wear_data = wear_data.copy()
-        wear_data['block'] = wear_data.diff().ne(0).cumsum()
+        wear_data['block'] = wear_data['wear'].diff().ne(0).cumsum()
         wear_blocks = list(wear_data.groupby("block").filter(lambda x: (x['wear'] == 1.0).all()).groupby("block"))
         max_block = wear_blocks[np.argmax([len(b) for i, b in wear_blocks])][1]
-        max_block = (max_block.index[0], max_block.index[-1])
+        max_block = (max_block['start'].iloc[0], max_block['end'].iloc[-1])
         return max_block

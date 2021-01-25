@@ -406,6 +406,8 @@ def hr_mean_plot(
         if isinstance(data.index, pd.MultiIndex):
             # get subphase labels from data
             subphase_labels = data.index.get_level_values(1)
+            if "condition" in data.index.names:
+                groups = list(data.index.get_level_values(level="condition").unique())
         else:
             subphase_labels = [""]
     else:
