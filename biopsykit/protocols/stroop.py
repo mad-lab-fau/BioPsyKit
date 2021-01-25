@@ -6,6 +6,7 @@ import pandas as pd
 import os
 from tqdm.notebook import tqdm
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Stroop(base.BaseProtocol):
     """
@@ -220,15 +221,9 @@ class Stroop(base.BaseProtocol):
 
         return df_stroop
 
-    def get_stroop_mean(self,data=Union[Dict[str,Dict],pd.DataFrame], columns:Optional[Sequence[str]] = None) -> pd.DataFrame:
+    def plot_stroop_mean(self,data=Union[Dict[str,Dict],pd.DataFrame]) -> pd.DataFrame:
 
-        if columns:
-            if 'phase' not in columns:
-                columns = ['phase'] + columns
-            if 'subject' not in columns:
-                columns = ['subject'] + columns
-        else:
-            columns = ['subject', 'phase', 'propcorrect', 'meanRT']
+        columns = ['subject', 'phase', 'propcorrect', 'meanRT']
 
         if isinstance(data, Dict):
             df_stroop = self.get_stroop_dataframe(data, columns)
@@ -240,14 +235,51 @@ class Stroop(base.BaseProtocol):
 
         labels = ['Stroop1', 'Stroop2', 'Stroop3']
         columns_mean = [col + '_mean' for col in columns]
-        df_stroop_mean = pd.DataFrame(columns=['phase']+columns_mean)
+        columns_std = [col + '_std' for col in columns]
+        df_stroop_mean = pd.DataFrame(columns=['phase']+columns_mean+columns_std)
         df_stroop_mean['phase'] = labels
 
         for label in labels:
             index = df_stroop_mean['phase'] == label
-            df_stroop_mean[columns_mean[0]][index] = round(
-                df_stroop.groupby('phase').get_group(label)[columns[0]].mean(), 4) * 100
-            df_stroop_mean[columns_mean[1]][index] = round(
-                df_stroop.groupby('phase').get_group(label)[columns[1]].mean(), 2)
+            for i in range(2):
+                df_stroop_mean[columns_mean[i]][index] = df_stroop.groupby('phase').get_group(label)[columns[i]].mean()
+                df_stroop_mean[columns_std[i]][index] = df_stroop.groupby('phase').get_group(label)[columns[i]].std()
+
+        df_stroop_mean[['propcorrect_mean','propcorrect_std']] = df_stroop_mean[['propcorrect_mean','propcorrect_std']] * 100
+        #df_stroop_mean[columns_mean+columns_std] = df_stroop_mean[columns_mean+columns_std].round(decimals=2)
+
+        #begin plotting
+        fig, ax1 = plt.subplots(figsize=(8, 5))
+
+        x = np.arange(len(df_stroop_mean))
+        xlims = np.append(x, x[-1] + 1)
+
+        color = 'royalblue'
+        line1 = ax1.errorbar(x, df_stroop_mean['propcorrect_mean'], yerr=df_stroop_mean['propcorrect_std'], color=color,
+                             label='Correct answers', lw=2, errorevery=1, ls='-.', marker="D", capsize=3)
+
+        ax1.tick_params(axis='x', bottom=True)
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(labels)
+        ax1.tick_params(axis='y')
+        ax1.set_ylabel('Correct answers [%]')
+        ax1.set_ylim(0, 110)
+
+        ax2 = ax1.twinx()
+
+        color = 'slategrey'
+        ax2.set_ylabel('Response time [ms]')  # we already handled the x-label with ax1
+        line2 = ax2.errorbar(x, df_stroop_mean['meanRT_mean'], yerr=df_stroop_mean['meanRT_std'], label='Response time',
+                             lw=2, errorevery=1, marker="D", capsize=3, color='color')
+        ax2.tick_params(axis='y')
+        ax2.set_ylim(0, 2000)
+
+        plt.title('Stroop test', size=20, weight='bold')
+        plt.legend(handles=[line1, line2], loc='lower right', prop={'size': 12})
+
+        for i in range(0, 3):
+            ax1.axvspan(i - .4, i + .4, facecolor='lightgrey', alpha=0.5)
+
+        fig.tight_layout()
 
         return df_stroop_mean
