@@ -115,7 +115,7 @@ def cmap_fau_tech(cmap_type: Union[str, None]) -> Sequence[str]:
 
 
 def fau_color(key: str) -> str:
-    return cmap_fau[key]
+    return fau_colors[key]
 
 
 def adjust_color(key: str, amount: Optional[float] = 1.5) -> str:
