@@ -50,38 +50,38 @@ class MIST(base.BaseProtocol):
         self.hr_ensemble_plot_params = {
             'colormap': colors.cmap_fau_blue('3_ens'),
             'line_styles': ['-', '--', ':'],
-            'ensemble.alpha': 0.4,
-            'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
-            'background.alpha': [0.5, 0.5, 0.5],
+            'ensemble_alpha': 0.4,
+            'background_color': ['#e0e0e0', '#9e9e9e', '#757575'],
+            'background_alpha': [0.5, 0.5, 0.5],
             'fontsize': 14,
-            'xaxis.label': r"Time [s]",
-            'xaxis.minor_ticks': mticks.MultipleLocator(60),
-            'yaxis.label': r"$\Delta$HR [%]",
-            'legend.loc': 'lower right',
-            'legend.bbox_to_anchor': (0.99, 0.01),
+            'xaxis_label': r"Time [s]",
+            'xaxis_minor_ticks': mticks.MultipleLocator(60),
+            'yaxis_label': r"$\Delta$HR [%]",
+            'legend_loc': 'lower right',
+            'legend_bbox_to_anchor': (0.99, 0.01),
             'phase_text': "MIST Phase {}",
-            'end_phase.text': "End Phase {}",
-            'end_phase.line_color': "#e0e0e0",
-            'end_phase.line_style': 'dashed',
-            'end_phase.line_width': 2.0
+            'end_phase_text': "End Phase {}",
+            'end_phase_line_color': "#e0e0e0",
+            'end_phase_line_style': 'dashed',
+            'end_phase_line_width': 2.0
         }
 
         self.hr_mean_plot_params = {
             'colormap': colors.cmap_fau_blue('2_lp'),
             'line_styles': ['-', '--'],
             'markers': ['o', 'P'],
-            'background.color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
-            'background.alpha': [0.5, 0.5, 0.5],
+            'background_color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
+            'background_alpha': [0.5, 0.5, 0.5],
             'x_offsets': [0, 0.05],
             'fontsize': 14,
-            'xaxis.label': "MIST Subphases",
-            'yaxis.label': r"$\Delta$HR [%]",
+            'xaxis_label': "MIST Subphases",
+            'yaxis_label': r"$\Delta$HR [%]",
             'phase_text': "MIST Phase {}"
         }
 
         self.saliva_params = {
-            'test.text': "MIST",
-            'xaxis.label': "Time relative to MIST start [min]"
+            'test_text': "MIST",
+            'xaxis_label': "Time relative to MIST start [min]"
         }
 
         self._update_mist_params(phases, subphases, subphase_durations)
@@ -410,19 +410,19 @@ class MIST(base.BaseProtocol):
         sns.set_palette(self.hr_ensemble_plot_params['colormap'])
         line_styles = self.hr_ensemble_plot_params['line_styles']
         fontsize = self.hr_ensemble_plot_params['fontsize']
-        xaxis_label = self.hr_ensemble_plot_params['xaxis.label']
-        yaxis_label = self.hr_ensemble_plot_params['yaxis.label']
-        xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis.minor_ticks']
-        ensemble_alpha = self.hr_ensemble_plot_params['ensemble.alpha']
-        bg_color = self.hr_ensemble_plot_params['background.color']
-        bg_alpha = self.hr_ensemble_plot_params['background.alpha']
+        xaxis_label = self.hr_ensemble_plot_params['xaxis_label']
+        yaxis_label = self.hr_ensemble_plot_params['yaxis_label']
+        xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis_minor_ticks']
+        ensemble_alpha = self.hr_ensemble_plot_params['ensemble_alpha']
+        bg_color = self.hr_ensemble_plot_params['background_color']
+        bg_alpha = self.hr_ensemble_plot_params['background_alpha']
         phase_text = self.hr_ensemble_plot_params['phase_text']
-        end_phase_text = self.hr_ensemble_plot_params['end_phase.text']
-        end_phase_color = self.hr_ensemble_plot_params['end_phase.line_color']
-        end_phase_line_style = self.hr_ensemble_plot_params['end_phase.line_style']
-        end_phase_line_width = self.hr_ensemble_plot_params['end_phase.line_width']
-        legend_loc = self.hr_ensemble_plot_params['legend.loc']
-        legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend.bbox_to_anchor']
+        end_phase_text = self.hr_ensemble_plot_params['end_phase_text']
+        end_phase_color = self.hr_ensemble_plot_params['end_phase_line_color']
+        end_phase_line_style = self.hr_ensemble_plot_params['end_phase_line_style']
+        end_phase_line_width = self.hr_ensemble_plot_params['end_phase_line_width']
+        legend_loc = self.hr_ensemble_plot_params['legend_loc']
+        legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend_bbox_to_anchor']
 
         subphases = np.array(self.subphases)
         mist_dur = [len(v) for v in data.values()]
