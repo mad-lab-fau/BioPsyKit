@@ -7,6 +7,7 @@ import os
 from tqdm.notebook import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
+import biopsykit.protocols.plotting as plot
 
 class Stroop(base.BaseProtocol):
     """
@@ -24,7 +25,7 @@ class Stroop(base.BaseProtocol):
 
         self.stroop_times: Sequence[int] = [0, 10]
 
-        self.phases: Sequence[str] = ["Stroop1", "Stroop2", "Stroop3"]
+        self.phases: Sequence[str] = ["Baseline", "Stroop", "Postline"]
         """
         Stroop Phases
 
@@ -283,3 +284,134 @@ class Stroop(base.BaseProtocol):
         fig.tight_layout()
 
         return df_stroop_mean
+
+    def concat_phase_dict(
+            self,
+            dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
+            **kwargs
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        Rearranges the 'HR subject dict' (see `util s.load_hr_excel_all_subjects`) into 'MIST Phase dict'.
+        See ``bp.protocols.utils.concat_phase_dict`` for further information.
+
+        Parameters
+        ----------
+        dict_hr_subject : dict
+            'HR subject dict', i.e. a nested dict with heart rate data per MIST phase and subject
+        **kwargs
+
+        Returns
+        -------
+        dict
+            'MIST dict', i.e. a dict with heart rate data of all subjects per MIST phase
+
+        """
+        if 'phases' in kwargs:
+            return super().concat_phase_dict(dict_hr_subject, kwargs['phases'])
+        else:
+            return super().concat_phase_dict(dict_hr_subject, self.phases)
+
+    def split_groups(cls, phase_dict: Dict[str, pd.DataFrame],
+                     condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+        """
+        Splits 'Stroop Phase dict' into group dict, i.e. one 'Stroop Phase dict' per group.
+
+        Parameters
+        ----------
+        phase_dict : dict
+            'Stroop Phase dict' to be split in groups. See ``bp.protocols.utils.concat_phase_dict``
+            for further information
+        condition_dict : dict
+            dictionary of group membership. Keys are the different groups, values are lists of subject IDs that
+            belong to the respective group
+
+        Returns
+        -------
+        dict
+            nested group dict with one 'Stroop Phase dict' per group
+        """
+
+        return super().split_groups(phase_dict, condition_dict)
+
+    def hr_mean_plot(
+            self,
+            data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+            groups: Optional[Sequence[str]] = None,
+            group_col: Optional[str] = None,
+            plot_params: Optional[Dict] = None,
+            ax: Optional[plt.Axes] = None,
+            **kwargs
+    ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
+        """
+        Plots the course of heart rate during the complete Stroop test (mean ± standard error per phase).
+
+        In case of only one group a pandas dataframe can be passed.
+
+        In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
+        to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
+
+        Regardless of the kind of input the dataframes need to be in the format of a 'mse dataframe', as returned
+        by ``stroop.hr_course_mist`` (see ``MIST.hr_course_mist`` for further information).
+
+
+        Parameters
+        ----------
+        data : dataframe or dict
+            Heart rate data to plot. Can either be one dataframe (in case of only one group or in case of
+            multiple groups, together with `group_col`) or a dictionary of dataframes,
+            where one dataframe belongs to one group
+        groups : list, optional:
+             List of group names. If ``None`` is passed, the groups and their order are inferred from the
+             dictionary keys or from the unique values in `group_col`. If list is supplied the groups are
+             plotted in that order.
+             Default: ``None``
+        group_col : str, optional
+            Name of group column in the dataframe in case of multiple groups and one dataframe
+        plot_params : dict, optional
+            dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
+            For an overview of parameters and their default values, see `mist.hr_course_params`
+        ax : plt.Axes, optional
+            Axes to plot on, otherwise create a new one. Default: ``None``
+        kwargs: dict, optional
+            optional parameters to be passed to the plot, such as:
+                * figsize: tuple specifying figure dimensions
+                * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
+                for further information), None to automatically infer y-axis limits
+
+
+        Returns
+        -------
+        tuple or none
+            Tuple of Figure and Axes or None if Axes object was passed
+        """
+
+        if plot_params:
+            self.hr_mean_plot_params.update(plot_params)
+        return plot.hr_mean_plot(data=data, groups=groups, group_col=group_col, plot_params=self.hr_mean_plot_params,
+                                 ax=ax, **kwargs)
+
+    def hr_mean_se(
+            self,
+            data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
+            is_group_dict: Optional[bool] = False
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+        """
+        Computes the heart rate mean and standard error per phase over all subjects.
+        See ``bp.protocols.utils.hr_course`` for further information.
+
+        Parameters
+        ----------
+        data : dict
+            nested dictionary containing heart rate data.
+        is_group_dict : boolean, optional
+            ``True`` if `data` is a group dict, i.e. contains dictionaries for multiple groups, ``False`` otherwise.
+            Default: ``False``
+
+        Returns
+        -------
+        dict or pd.DataFrame
+            'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
+        """
+
+        return super()._mean_se_subphases(data, is_group_dict=is_group_dict)
+

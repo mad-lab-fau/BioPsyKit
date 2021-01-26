@@ -191,7 +191,9 @@ class BaseProtocol:
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return su.mean_se_nested_dict(data, subphases=subphases, is_group_dict=is_group_dict)
+        return su.mean_se_nested_dict(data=data, subphases=subphases, is_group_dict=is_group_dict)
+
+
 
     def saliva_plot(
             self,
