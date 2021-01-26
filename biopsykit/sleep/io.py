@@ -1,6 +1,6 @@
 from ast import literal_eval
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 
 import pytz
 import pandas as pd
@@ -112,6 +112,15 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
 
 def save_sleep_data(file_path: path_t, data: pd.DataFrame):
     data.to_csv(file_path)
+
+
+def save_sleep_endpoints(file_path: path_t, df_or_dict: Union[pd.DataFrame, Dict]) -> None:
+    if isinstance(df_or_dict, pd.DataFrame):
+        df_or_dict.to_csv(file_path)
+    else:
+        # TODO save dict as json
+        raise NotImplementedError(
+            "Exporting sleep endpoint dictionary not implemented yet! Consider importing sleep endpoints as dataframe.")
 
 
 def load_sleep_data(file_path: path_t) -> pd.DataFrame:
