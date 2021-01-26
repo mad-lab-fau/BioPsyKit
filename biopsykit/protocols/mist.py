@@ -334,7 +334,8 @@ class MIST(base.BaseProtocol):
 
         return utils.param_subphases(ecg_processor=ecg_processor, dict_ecg=dict_ecg, dict_rpeaks=dict_rpeaks,
                                      subphases=self.subphases, subphase_durations=self.subphase_durations,
-                                     param_types=param_types, sampling_rate=sampling_rate, title=title)
+                                     include_total=include_total, param_types=param_types,
+                                     sampling_rate=sampling_rate, title=title)
 
     def hr_mean_se_subphases(
             self,
