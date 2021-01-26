@@ -31,13 +31,16 @@ def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Seque
         data = data.drop('0', level='sample', errors='ignore')
         data = data.drop('S0', level='sample', errors='ignore')
 
+    group_cols = list(data.index.names)
+    group_cols.remove('subject')
+
     if 'time' in data:
-        data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
+        data_grp = data.groupby(group_cols).apply(lambda df_sample: pd.Series(
             {'mean': df_sample[biomarker_type].mean(), 'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample)),
              'time': int(df_sample['time'].unique())}))
         data_grp = data_grp.set_index('time', append=True)
     else:
-        data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
+        data_grp = data.groupby(group_cols).apply(lambda df_sample: pd.Series(
             {'mean': df_sample[biomarker_type].mean(),
              'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample))}))
     return data_grp
