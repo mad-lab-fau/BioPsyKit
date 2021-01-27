@@ -80,6 +80,7 @@ def load_withings_sleep_analyzer_raw_file(file_path: path_t, data_source: str,
 
 def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
     data = pd.read_csv(file_path)
+
     for col in ['von', 'bis']:
         # convert into date time
         data[col] = pd.to_datetime(data[col])
@@ -87,26 +88,44 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
     # total duration in seconds
     data['total_duration'] = [int(td.total_seconds()) for td in (data['bis'] - data['von'])]
     data['time'] = data['von']
-    data.drop(columns=['von', 'bis'], inplace=True)
-    data.set_index('time', inplace=True)
+
     data.rename({
         'leicht (s)': 'total_time_light_sleep',
         'tief (s)': 'total_time_deep_sleep',
         'rem (s)': 'total_time_rem_sleep',
         'wach (s)': 'total_time_awake',
-        'Aufwachen': 'count_wakeup',
-        'Duration to sleep (s)': 'duration_to_sleep',
-        'Duration to wake up (s)': 'duration_to_wakeup',
+        'Aufwachen': 'num_wake_bouts',
+        'Duration to sleep (s)': 'sleep_onset_latency',
+        'Duration to wake up (s)': 'getup_latency',
         'Snoring episodes': 'count_snoring_episodes',
         'Snoring (s)': 'total_time_snoring',
         'Average heart rate': 'heart_rate_avg',
         'Heart rate (min)': 'heart_rate_min',
         'Heart rate (max)': 'heart_rate_max'
     }, axis='columns', inplace=True)
+
+    data['sleep_onset'] = data['time'] + pd.to_timedelta(data['sleep_onset_latency'], unit='seconds')
     # Wake after Sleep Onset (WASO): total time awake after sleep onset
-    data['total_time_waso'] = data['total_time_awake'] - data['duration_to_sleep'] - data['duration_to_wakeup']
-    # compute total sleep duration = total duration - (time to fall asleep + time spent in bed after waking up)
-    data['total_sleep_duration'] = data['total_duration'] - data['duration_to_sleep'] - data['duration_to_wakeup']
+    data['wake_after_sleep_onset'] = data['total_time_awake'] - data['sleep_onset_latency'] - data['getup_latency']
+    data['wake_onset'] = data['bis'] - pd.to_timedelta(data['getup_latency'], unit='seconds')
+    # compute total sleep duration
+    # = total duration - (time to fall asleep + time to get up (= time spent in bed after waking up))
+    data['total_sleep_duration'] = data['total_duration'] - data['sleep_onset_latency'] - data['getup_latency']
+
+    transform_cols = ['total_time_light_sleep', 'total_time_deep_sleep', 'total_time_rem_sleep', 'total_time_awake',
+                      'sleep_onset_latency', 'getup_latency', 'total_time_snoring', 'wake_after_sleep_onset',
+                      'total_sleep_duration']
+    data[transform_cols] = data[transform_cols].transform(lambda column: (column / 60).astype(int))
+
+    data.drop(columns=['von', 'bis'], inplace=True)
+    data.set_index('time', inplace=True)
+
+    # reindex column order
+    new_cols = list(data.columns)
+    sowo = ['sleep_onset', 'wake_onset']
+    for d in sowo:
+        new_cols.remove(d)
+    data = data[sowo + new_cols]
     return data
 
 
