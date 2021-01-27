@@ -21,9 +21,9 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "PSQI"
     score_range = [0, 3]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -54,12 +54,10 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     sdist = sdist.drop([sdist.columns[0], sdist.columns[-2]], axis='columns')
 
-    sd = invert(bin_scale(sd, bins=[0, 4.9, 6, 7], last_max=True, inplace=False), score_range=score_range,
-                inplace=False)
-    hse = invert(bin_scale(hse, bins=[0, 64, 74, 84], last_max=True, inplace=False), score_range=score_range,
-                 inplace=False)
+    sd = invert(bin_scale(sd, bins=[0, 4.9, 6, 7], last_max=True), score_range=score_range)
+    hse = invert(bin_scale(hse, bins=[0, 64, 74, 84], last_max=True), score_range=score_range)
     sdist = sdist.sum(axis=1)
-    sdist = bin_scale(sdist, bins=[-1, 0, 9, 18, 27], inplace=False)
+    sdist = bin_scale(sdist, bins=[-1, 0, 9, 18, 27])
 
     psqi_data = {
         score_name + '_SubjectiveSleepQuality': ssq,
@@ -112,14 +110,14 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "MVES"
     score_range = [0, 2]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 9, 14
-    invert(data, cols=to_idx([9, 14]), score_range=score_range)
+    data = invert(data, cols=to_idx([9, 14]), score_range=score_range)
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
@@ -184,9 +182,9 @@ def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     score_name = "TICS_S"
     score_range = [0, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -263,9 +261,9 @@ def tics_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     score_name = "TICS_L"
     score_range = [0, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -325,14 +323,14 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "PSS"
     score_range = [0, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 4, 5, 7, 8
-    invert(data, cols=to_idx([4, 5, 7, 8]), score_range=score_range)
+    data = invert(data, cols=to_idx([4, 5, 7, 8]), score_range=score_range)
 
     return pd.DataFrame(data.sum(axis=1, skipna=False), columns=[score_name])
 
@@ -372,14 +370,14 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "CESD"
     score_range = [0, 3]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 4, 8, 12, 16
-    invert(data, cols=to_idx([4, 8, 12, 16]), score_range=score_range)
+    data = invert(data, cols=to_idx([4, 8, 12, 16]), score_range=score_range)
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
@@ -417,14 +415,14 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "GHQ"
     score_range = [0, 3]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 1, 3, 4, 7, 8, 12
-    invert(data, cols=to_idx([1, 3, 4, 7, 8, 12]), score_range=score_range)
+    data = invert(data, cols=to_idx([1, 3, 4, 7, 8, 12]), score_range=score_range)
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
@@ -434,14 +432,14 @@ def hads(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "HADS"
     score_range = [0, 3]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 2, 4, 6, 7, 12, 14
-    invert(data, cols=to_idx([2, 4, 6, 7, 12, 14]), score_range=score_range)
+    data = invert(data, cols=to_idx([2, 4, 6, 7, 12, 14]), score_range=score_range)
 
     hads_data = {
         score_name: data.sum(axis=1),
@@ -458,14 +456,14 @@ def type_d_scale(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
     score_name = "DS"
     score_range = [0, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 1, 3
-    invert(data, cols=to_idx([1, 3]), score_range=score_range)
+    data = invert(data, cols=to_idx([1, 3]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -484,14 +482,14 @@ def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "RSE"
     score_range = [0, 3]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 2, 5, 6, 8, 9
-    invert(data, cols=to_idx([2, 5, 6, 8, 9]), score_range=score_range)
+    data = invert(data, cols=to_idx([2, 5, 6, 8, 9]), score_range=score_range)
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
@@ -504,14 +502,14 @@ def scs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "SCS"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25
-    invert(data, cols=to_idx([1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25]), score_range=score_range)
+    data = invert(data, cols=to_idx([1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -538,14 +536,14 @@ def rfis(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "RFIS"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 2, 6, 10, 14
-    invert(data, cols=to_idx([2, 6, 10, 14]), score_range=score_range)
+    data = invert(data, cols=to_idx([2, 6, 10, 14]), score_range=score_range)
 
     # SCS is a mean, not a sum score!
     return pd.DataFrame(data.mean(axis=1), columns=[score_name])
@@ -557,14 +555,14 @@ def midi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "MIDI"
     score_range = [1, 7]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # Reverse scores 1, 2, 4, 5, 7, 9, 10, 11
-    invert(data, cols=to_idx([1, 2, 4, 5, 7, 9, 10, 11]), score_range=score_range)
+    data = invert(data, cols=to_idx([1, 2, 4, 5, 7, 9, 10, 11]), score_range=score_range)
 
     # MIDI is a mean, not a sum score!
     return pd.DataFrame(data.mean(axis=1), columns=[score_name])
@@ -577,9 +575,9 @@ def tsgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "TSGS"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -604,17 +602,17 @@ def rmidips(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]
     score_name = "RMIDIPS"
     score_range = [1, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # "most items need to be reverse scored before subscales are computed => reverse all"
-    invert(data, score_range=score_range)
+    data = invert(data, score_range=score_range)
 
     # re-reverse scores 19, 24
-    invert(data, cols=to_idx([19, 24]), score_range=score_range)
+    data = invert(data, cols=to_idx([19, 24]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -643,9 +641,9 @@ def lsq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "LSQ"
     score_range = [0, 1]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -665,14 +663,14 @@ def ctq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "CTQ"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # reverse scores 2, 5, 7, 13, 19, 26, 28
-    invert(data, cols=to_idx([2, 5, 7, 13, 19, 26, 28]), score_range=score_range)
+    data = invert(data, cols=to_idx([2, 5, 7, 13, 19, 26, 28]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -697,9 +695,9 @@ def peat(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "PEAT"
     score_range = [0, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -712,14 +710,14 @@ def purpose_life(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
     score_name = "PurposeLife"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # reverse scores 2, 3, 5, 6, 10
-    invert(data, cols=to_idx([2, 3, 5, 6, 10]), score_range=score_range)
+    data = invert(data, cols=to_idx([2, 3, 5, 6, 10]), score_range=score_range)
 
     # Purpose in Life is a mean, not a sum score!
     return pd.DataFrame(data.mean(axis=1), columns=[score_name])
@@ -734,9 +732,9 @@ def trait_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
     score_name = "TraitRumination"
     score_range = [0, 1]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -750,14 +748,14 @@ def body_esteem(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.In
     score_name = "BodyEsteem"
     score_range = [0, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # reverse scores 4, 7, 9, 11, 13, 17, 18, 19, 21
-    invert(data, cols=to_idx([4, 7, 9, 11, 13, 17, 18, 19, 21]), score_range=score_range)
+    data = invert(data, cols=to_idx([4, 7, 9, 11, 13, 17, 18, 19, 21]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -782,9 +780,9 @@ def fscr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "FSCR"
     score_range = [0, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -809,14 +807,14 @@ def pasa(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "PASA"
     score_range = [1, 6]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # reverse scores 1, 6, 7, 9, 10
-    invert(data, cols=to_idx([1, 6, 7, 9, 10]), score_range=score_range)
+    data = invert(data, cols=to_idx([1, 6, 7, 9, 10]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -849,9 +847,9 @@ def ssgs(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "SSGS"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -894,9 +892,9 @@ def panas(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] 
         raise AttributeError(
             "questionnaire_version must be one of {}, not {}.".format(supported_versions, questionnaire_version))
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -926,14 +924,14 @@ def state_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
     score_name = "StateRumination"
     score_range = [0, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # reverse scores 1, 6, 9, 12, 15, 17, 18, 20, 27
-    invert(data, cols=to_idx([1, 6, 9, 12, 15, 17, 18, 20, 27]), score_range=score_range)
+    data = invert(data, cols=to_idx([1, 6, 9, 12, 15, 17, 18, 20, 27]), score_range=score_range)
 
     state_rum = {
         score_name: data.sum(axis=1)
@@ -950,9 +948,9 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "ABI"
     score_range = [1, 2]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -994,9 +992,9 @@ def stadi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] 
     score_name = "STADI"
     score_range = [1, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -1061,9 +1059,9 @@ def svf_120(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]
     score_name = "SVF120"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -1118,9 +1116,9 @@ def svf_42(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     score_name = "SVF42"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -1170,9 +1168,9 @@ def brief_cope(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Ind
     score_name = "BriefCope"
     score_range = [1, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -1207,14 +1205,14 @@ def bfi_k(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] 
     score_name = "BFI-K"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # invert items 1, 2, 8, 9, 11, 12, 17, 21
-    invert(data, cols=to_idx([1, 2, 8, 9, 11, 12, 17, 21]), score_range=score_range)
+    data = invert(data, cols=to_idx([1, 2, 8, 9, 11, 12, 17, 21]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -1239,9 +1237,9 @@ def rsq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "RSQ"
     score_range = [1, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -1273,9 +1271,9 @@ def sss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "SSS"
     score_range = [1, 10]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -1289,14 +1287,14 @@ def fkk(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "FKK"
     score_range = [1, 6]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # invert items 4, 8, 12, 24
-    invert(data, cols=to_idx([4, 8, 12, 24]), score_range=score_range)
+    data = invert(data, cols=to_idx([4, 8, 12, 24]), score_range=score_range)
 
     if idxs is None:
         # Primärskalenwerte
@@ -1327,15 +1325,15 @@ def bidr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "BIDR"
     score_range = [1, 7]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # invert items 2, 4, 5, 7, 9, 10, 11, 12, 14, 15, 17, 18, 20 => invert all and re-invert the others
-    invert(data, score_range=score_range)
-    invert(data, cols=to_idx([1, 3, 6, 8, 13, 16, 19]), score_range=score_range)
+    data = invert(data, score_range=score_range)
+    data = invert(data, cols=to_idx([1, 3, 6, 8, 13, 16, 19]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -1356,9 +1354,9 @@ def kkg(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "KKG"
     score_range = [1, 6]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -1382,14 +1380,14 @@ def thoughts_questionnaire(data: pd.DataFrame,
     score_name = "Thoughts"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # invert items 1, 6, 9, 12, 15, 17, 18, 20, 27
-    invert(data, cols=to_idx([1, 6, 9, 12, 15, 17, 18, 20, 27]), score_range=score_range)
+    data = invert(data, cols=to_idx([1, 6, 9, 12, 15, 17, 18, 20, 27]), score_range=score_range)
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
@@ -1406,9 +1404,9 @@ def fee(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         raise AttributeError(
             "questionnaire_version must be one of {}, not {}.".format(supported_versions, questionnaire_version))
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -1446,9 +1444,9 @@ def mbi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "MBI"
     score_range = [1, 6]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
@@ -1486,14 +1484,14 @@ def mlq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "MLQ"
     score_range = [1, 7]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # invert item 9
-    invert(data, cols=to_idx([9]), score_range=score_range)
+    data = invert(data, cols=to_idx([9]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -1512,9 +1510,9 @@ def ceca(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     score_name = "CECA"
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     ceca_data = [
         data.filter(like="Q3_05"),
@@ -1536,14 +1534,14 @@ def pfb(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "PFB"
     score_range = [1, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # invert item 19
-    invert(data, cols=to_idx([19]), score_range=score_range)
+    data = invert(data, cols=to_idx([19]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -1595,14 +1593,14 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "ASQ"
     score_range = [1, 11]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # invert items 2,3
-    invert(data, cols=to_idx([2, 3]), score_range=score_range)
+    data = invert(data, cols=to_idx([2, 3]), score_range=score_range)
 
     return pd.DataFrame(data.mean(axis=1), columns=[score_name])
 
@@ -1649,14 +1647,14 @@ def mdbf(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "MDBF"
     score_range = [1, 5]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     _check_score_range_exception(data, score_range)
 
     # invert items 3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23
-    invert(data, cols=to_idx([3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23]), score_range=score_range)
+    data = invert(data, cols=to_idx([3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23]), score_range=score_range)
 
     if idxs is None:
         idxs = {
@@ -1726,9 +1724,9 @@ def meq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "MEQ"
     score_range = [1, 4]
 
-    if columns:
+    if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
-        data = data[columns]
+        data = data.loc[:, columns]
 
     # some columns have scores from 1-5 => check them separately
     col_idx = to_idx([1, 2, 10, 17, 18])
@@ -1745,9 +1743,9 @@ def meq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
             "`biopsykit.questionnaire.utils.convert_scale`.".format(score_range, col_idx, [1, 5]))
 
     # invert items 1, 2, 10, 17, 18 (score range [1,5])
-    invert(data, cols=to_idx([1, 2, 10, 17, 18]), score_range=[1, 5])
+    data = invert(data, cols=to_idx([1, 2, 10, 17, 18]), score_range=[1, 5])
     # invert items 3, 8, 9, 10, 11, 13, 15, 19 (score range [1,4])
-    invert(data, cols=to_idx([3, 8, 9, 11, 13, 15, 19]), score_range=score_range)
+    data = invert(data, cols=to_idx([3, 8, 9, 11, 13, 15, 19]), score_range=score_range)
 
     # recode items 11, 12, 19
     data.iloc[:, to_idx(11)] = data.iloc[:, to_idx(11)].replace({1: 0, 2: 2, 3: 4, 4: 6})
