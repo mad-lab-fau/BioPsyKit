@@ -77,7 +77,7 @@ def invert(data: Union[pd.DataFrame, pd.Series], score_range: Sequence[int],
 
 def convert_scale(data: Union[pd.DataFrame, pd.Series], offset: int,
                   cols: Optional[Union[pd.DataFrame, pd.Series]] = None,
-                  inplace: Optional[bool] = True) -> Union[pd.DataFrame, pd.Series, None]:
+                  inplace: Optional[bool] = False) -> Union[pd.DataFrame, pd.Series, None]:
     if inplace:
         if isinstance(data, pd.DataFrame):
             if cols is None:
