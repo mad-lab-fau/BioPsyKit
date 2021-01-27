@@ -85,6 +85,7 @@ def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequenc
 
 def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
         remove_s0: Optional[bool] = True,
+        compute_auc_post: Optional[bool] = False,
         saliva_times: Optional[Sequence[int]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     # TODO add documentation; IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
     # => auc_post means all saliva times after beginning of stress (>= 0)
@@ -113,21 +114,21 @@ def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] 
         raise ValueError("No `{}` columns in data!".format(biomarker_type))
     data = data[[biomarker_type]].unstack()
 
-    idxs_post = None
-    if saliva_times.ndim == 1:
-        idxs_post = np.where(saliva_times > 0)[0]
-    elif saliva_times.ndim == 2:
-        warnings.warn("Not computing `auc_i_post` values because this is only implemented if `saliva_times` "
-                      "are the same for all subjects.")
-
     auc_data = {
         'auc_g': np.trapz(data, saliva_times),
         'auc_i': np.trapz(data.sub(data.iloc[:, 0], axis=0), saliva_times)
     }
 
-    if idxs_post is not None:
-        data_post = data.iloc[:, idxs_post]
-        auc_data['auc_i_post'] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), saliva_times[idxs_post])
+    if compute_auc_post:
+        idxs_post = None
+        if saliva_times.ndim == 1:
+            idxs_post = np.where(saliva_times > 0)[0]
+        elif saliva_times.ndim == 2:
+            warnings.warn("Not computing `auc_i_post` values because this is only implemented if `saliva_times` "
+                          "are the same for all subjects.")
+        if idxs_post is not None:
+            data_post = data.iloc[:, idxs_post]
+            auc_data['auc_i_post'] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), saliva_times[idxs_post])
 
     out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(biomarker_type))
     out.columns.name = "biomarker"
