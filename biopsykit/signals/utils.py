@@ -1,3 +1,4 @@
+from numbers import Number
 from typing import Union, Tuple, Optional, Dict, Sequence
 
 import pandas as pd
@@ -187,7 +188,7 @@ def split_subphases(
     subphase_names : list
         List with names of subphases
     subphase_times : list
-        List with start and end times of each subphase in seconds
+        List with start and end times (as tuples) of each subphase in seconds or list with subphase durations
     is_group_dict : bool, optional
         ``True`` if group dict was passed, ``False`` otherwise. Default: ``False``
 
@@ -198,6 +199,10 @@ def split_subphases(
         nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
 
     """
+    if isinstance(subphase_times[0], Number):
+        times_cum = np.cumsum(np.array(subphase_times))
+        subphase_times = [(start, end) for start, end in zip(np.append([0], times_cum[:-1]), times_cum)]
+
     if is_group_dict:
         # recursively call this function for each group
         return {
