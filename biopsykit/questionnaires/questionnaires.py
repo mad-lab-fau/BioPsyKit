@@ -83,7 +83,7 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     The MVES uses 23 items to assess the concept of Vital Exhaustion (VE), which is characterized by feelings of
     excessive fatigue, lack of energy, irritability, and feelings of demoralization.
 
-    NOTE: This implementation assumes a score range of [0, 2]. Use ``questionnaires.utils.convert_scale()`` to
+    NOTE: This implementation assumes a score range of [0, 2]. Use ``bp.questionnaires.utils.convert_scale()`` to
     convert the items into the correct range.
 
 
@@ -94,7 +94,7 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
-        See `questionnaires.utils.convert_scale()`
+        See ``bp.questionnaires.utils.convert_scale()``
 
     Returns
     -------
@@ -144,7 +144,7 @@ def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     * Worry Propensity (`ChronicWorry`)
 
 
-    NOTE: This implementation assumes a score range of [0, 4]. Use ``questionnaires.utils.convert_scale()`` to
+    NOTE: This implementation assumes a score range of [0, 4]. Use ``bp.questionnaires.utils.convert_scale()`` to
     convert the items into the correct range.
 
 
@@ -155,7 +155,7 @@ def tics_s(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
-        See `questionnaires.utils.convert_scale()`
+        See ``bp.questionnaires.utils.convert_scale()``
     idxs : dict, optional
         dictionary with subscales as keys and the indices of the subscale items as values
 
@@ -234,7 +234,7 @@ def tics_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     * Worry Propensity (`ChronicWorry`)
 
 
-    NOTE: This implementation assumes a score range of [0, 4]. Use ``questionnaires.utils.convert_scale()`` to
+    NOTE: This implementation assumes a score range of [0, 4]. Use ``bp.questionnaires.utils.convert_scale()`` to
     convert the items into the correct range.
 
 
@@ -245,7 +245,7 @@ def tics_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
-        See `questionnaires.utils.convert_scale()`
+        See ``bp.questionnaires.utils.convert_scale()``
     idxs : dict, optional
         dictionary with subscales as keys and the indices of the subscale items as values
 
@@ -297,7 +297,7 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     about how stressful a person has found his/her life during the previous month.
 
 
-    NOTE: This implementation assumes a score range of [0, 4]. Use ``questionnaires.utils.convert_scale()`` to
+    NOTE: This implementation assumes a score range of [0, 4]. Use ``bp.questionnaires.utils.convert_scale()`` to
     convert the items into the correct range.
 
 
@@ -308,7 +308,7 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
-        See `questionnaires.utils.convert_scale()`
+        See ``bp.questionnaires.utils.convert_scale()``
 
     Returns
     -------
@@ -344,7 +344,7 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     The CES-D asks about depressive symptoms experienced over the past week.
 
 
-    NOTE: This implementation assumes a score range of [0, 3]. Use ``questionnaires.utils.convert_scale()`` to
+    NOTE: This implementation assumes a score range of [0, 3]. Use ``bp.questionnaires.utils.convert_scale()`` to
     convert the items into the correct range.
 
 
@@ -355,7 +355,7 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
-        See `questionnaires.utils.convert_scale()`
+        See ``bp.questionnaires.utils.convert_scale()``
 
     Returns
     -------
@@ -391,7 +391,7 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     excluding psychological and psychiatric morbidity.
 
 
-    NOTE: This implementation assumes a score range of [0, 3]. Use ``questionnaires.utils.convert_scale()`` to
+    NOTE: This implementation assumes a score range of [0, 3]. Use ``bp.questionnaires.utils.convert_scale()`` to
     convert the items into the correct range.
 
 
@@ -402,7 +402,7 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
-        See `questionnaires.utils.convert_scale()`
+        See ``bp.questionnaires.utils.convert_scale()``
 
     Returns
     -------
@@ -1567,7 +1567,7 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     The ASQ measures anticipation of stress on the upcoming day.
 
-    NOTE: This implementation assumes a score range of [1, 11]. Use ``questionnaires.utils.convert_scale()`` to
+    NOTE: This implementation assumes a score range of [1, 11]. Use ``bp.questionnaires.utils.convert_scale()`` to
     convert the items into the correct range.
 
 
@@ -1578,7 +1578,7 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
-        See `questionnaires.utils.convert_scale()`
+        See ``bp.questionnaires.utils.convert_scale()``
 
     Returns
     -------
@@ -1621,7 +1621,7 @@ def mdbf(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     * Awake-Tired (`AwakeTired`)
     * Calm-Nervous (`CalmNervous`)
 
-    NOTE: This implementation assumes a score range of [1, 5]. Use ``questionnaires.utils.convert_scale()`` to
+    NOTE: This implementation assumes a score range of [1, 5]. Use ``bp.questionnaires.utils.convert_scale()`` to
     convert the items into the correct range.
 
 
@@ -1632,7 +1632,7 @@ def mdbf(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
-        See `questionnaires.utils.convert_scale()`
+        See ``bp.questionnaires.utils.convert_scale()``
 
     Returns
     -------
@@ -1689,7 +1689,7 @@ def meq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         * Calm-Nervous (`CalmNervous`)
 
         NOTE: This implementation assumes a score range of [1, 4], with some items having a score range of [1, 5].
-        Use ``questionnaires.utils.convert_scale()`` to convert the items into the correct range.
+        Use ``bp.questionnaires.utils.convert_scale()`` to convert the items into the correct range.
 
 
         Parameters
@@ -1699,7 +1699,7 @@ def meq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
             a complete dataframe if `columns` parameter is supplied
         columns : list of string, optional
             list with column names to use for computing this score if a complete dataframe is supplied.
-            See `questionnaires.utils.convert_scale()`
+            See ``bp.questionnaires.utils.convert_scale()``
 
         Returns
         -------
