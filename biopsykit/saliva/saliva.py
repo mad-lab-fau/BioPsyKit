@@ -210,7 +210,7 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
     if sample_idx[1] > (len(data.columns) - 1):
         raise ValueError("`sample_idx[1]` is out of bounds!")
 
-    out = pd.DataFrame(np.diff(data.iloc[:, sample_idx]) / np.diff(saliva_times[sample_idx]), index=data.index,
+    out = pd.DataFrame(np.diff(data.iloc[:, sample_idx]) / np.diff(saliva_times[..., sample_idx]), index=data.index,
                        columns=['{}_slope{}{}'.format(biomarker_type, *sample_idx)])
     out.columns.name = "biomarker"
     return out
@@ -245,10 +245,8 @@ def _get_saliva_times(data: pd.DataFrame, saliva_times: np.array, remove_s0: boo
 
     if remove_s0:
         # check whether we have the same saliva times for all subjects (1d array) or not (2d array)
-        if saliva_times.ndim == 1:
-            saliva_times = saliva_times[1:]
-        elif saliva_times.ndim == 2:
-            saliva_times = saliva_times[:, 1:]
+        if saliva_times.ndim <= 2:
+            saliva_times = saliva_times[..., 1:]
         else:
             raise ValueError("`saliva_times` has invalid dimensions: {}".format(saliva_times.ndim))
 
