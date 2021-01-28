@@ -140,8 +140,10 @@ def load_saliva_wide_format(
         condition_col: Optional[str] = None,
         saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     index_cols = [subject_col]
+
     if condition_col is not None:
-        index_cols.append(condition_col)
+        index_cols = [condition_col] + index_cols
+
     data = pd.read_csv(file_path, dtype={subject_col: str})
     data.set_index(index_cols, inplace=True)
 
