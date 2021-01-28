@@ -119,7 +119,8 @@ def load_saliva_plate(file_path: path_t,
     except ValueError as e:
         raise ValueError(
             """Error converting  all saliva values into numbers: '{}'
-            Please check your saliva values whether there is any text etc. in the column '{}' and delete the values or replace them by NaN!""".format(e, data_col))
+            Please check your saliva values whether there is any text etc. in the column '{}' and delete the values or replace them by NaN!""".format(
+                e, data_col))
     return df_saliva
 
 
@@ -132,20 +133,19 @@ def save_saliva(file_path: path_t, data: pd.DataFrame) -> None:
     data.to_csv(file_path)
 
 
-def load_saliva(
+def load_saliva_wide_format(
         file_path: path_t,
         biomarker_type: str,
         subject_col: Optional[str] = "subject",
-        condition_col: Optional[str] = 'condition',
+        condition_col: Optional[str] = None,
         saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     index_cols = [subject_col]
-    if condition_col:
+    if condition_col is not None:
         index_cols.append(condition_col)
     data = pd.read_csv(file_path, dtype={subject_col: str})
     data.set_index(index_cols, inplace=True)
 
     num_subjects = len(data)
-    data.columns = data.columns.astype(int)
     data.columns = pd.MultiIndex.from_product([[biomarker_type], data.columns], names=["", "sample"])
 
     data = data.stack()
