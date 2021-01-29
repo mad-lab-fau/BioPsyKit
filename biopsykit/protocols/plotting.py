@@ -13,19 +13,21 @@ _saliva_params: Dict = {
     'colormap': colors.cmap_fau_blue('2_lp'),
     'line_styles': ['-', '--'],
     'markers': ['o', 'P'],
-    # 'background.color': "#e0e0e0",
-    # 'background.alpha': 0.5,
+    # 'background_color': "#e0e0e0",
+    # 'background_alpha': 0.5,
     # 'x_padding': 0.1,
-    'test.color': "#9e9e9e",
-    'test.alpha': 0.5,
+    'test_text': "",
+    'test_color': "#9e9e9e",
+    'test_alpha': 0.5,
     'x_offsets': [0, 0.5],
     'fontsize': 14,
-    'multi.x_offset': 1,
-    'multi.fontsize': 10,
-    'multi.legend_offset': 0.3,
-    'multi.colormap': colors.cmap_fau_phil('2_lp'),
-    'xaxis.tick_locator': plt.MultipleLocator(20),
-    'yaxis.label': {
+    'multi_x_offset': 1,
+    'multi_fontsize': 10,
+    'multi_legend_offset': 0.3,
+    'multi_colormap': colors.cmap_fau_phil('2_lp'),
+    'xaxis_tick_locator': plt.MultipleLocator(20),
+    'xaxis_label': "Time [min]",
+    'yaxis_label': {
         'cortisol': "Cortisol [nmol/l]",
         'amylase': "Amylase [U/l]",
         'il6': "IL-6 [pg/ml]",
@@ -52,7 +54,6 @@ def saliva_plot(
         test_times: Sequence[int],
         groups: Optional[Sequence[str]] = None,
         group_col: Optional[str] = None,
-        plot_params: Optional[Dict] = None,
         **kwargs
 ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     """
@@ -88,20 +89,16 @@ def saliva_plot(
 
     saliva_params = _saliva_params.copy()
 
-    # update default parameter if plot parameter were passe
-    if plot_params:
-        saliva_params.update(plot_params)
-
-    bg_color = saliva_params.get('background.color', None)
-    bg_alpha = saliva_params.get('background.alpha', None)
-    x_padding = saliva_params.get('x_padding', None)
+    bg_color = kwargs.get('background_color', saliva_params.get('background_color', None))
+    bg_alpha = kwargs.get('background_alpha', saliva_params.get('background_alpha', None))
+    x_padding = kwargs.get('x_padding', saliva_params.get('x_padding', None))
     ylims = kwargs.get('ylims', None)
-    test_text = saliva_params['test.text']
-    test_color = saliva_params['test.color']
-    test_alpha = saliva_params['test.alpha']
-    fontsize = saliva_params['fontsize']
-    xaxis_label = saliva_params['xaxis.label']
-    xaxis_tick_locator = saliva_params['xaxis.tick_locator']
+    test_text = kwargs.get('test_text', saliva_params['test_text'])
+    test_color = kwargs.get('test_color', saliva_params['test_color'])
+    test_alpha = kwargs.get('test_alpha', saliva_params['test_alpha'])
+    fontsize = kwargs.get('fontsize', saliva_params['fontsize'])
+    xaxis_label = kwargs.get('xaxis_label', saliva_params['xaxis_label'])
+    xaxis_tick_locator = kwargs.get('xaxis_tick_locator', saliva_params['xaxis_tick_locator'])
 
     if isinstance(data, dict) and biomarker in data.keys():
         # multiple biomarkers were passed => get the selected biomarker and try to get the groups from the index
@@ -174,9 +171,9 @@ def saliva_plot(
     else:
         # the was already something drawn into the axis => we are using the same axis to add another feature
         ax_twin = ax.twinx()
-        line_colors = saliva_params['multi.colormap']
+        line_colors = saliva_params['multi_colormap']
         _saliva_plot_helper(data, biomarker, groups, saliva_times, ylims=ylims, fontsize=fontsize, ax=ax_twin,
-                            x_offset_basis=saliva_params['multi.x_offset'],
+                            x_offset_basis=saliva_params['multi_x_offset'],
                             line_colors=line_colors)
 
     if len(groups) > 1:
@@ -211,7 +208,7 @@ def _saliva_plot_helper(
     x_offset_basis = kwargs.get('x_offset_basis', 0)
     line_styles = saliva_params['line_styles']
     markers = saliva_params['markers']
-    yaxis_label = saliva_params['yaxis.label'][biomarker]
+    yaxis_label = saliva_params['yaxis_label'][biomarker]
     x_offsets = list(np.array(saliva_params['x_offsets']) + x_offset_basis)
 
     for group, x_off, line_color, marker, ls in zip(groups, x_offsets, line_colors, markers, line_styles):
@@ -265,8 +262,8 @@ def saliva_plot_combine_legend(
     if plot_params:
         saliva_params.update(plot_params)
 
-    fontsize = saliva_params['multi.fontsize']
-    legend_offset = saliva_params['multi.legend_offset']
+    fontsize = saliva_params['multi_fontsize']
+    legend_offset = saliva_params['multi_legend_offset']
 
     labels = [ax.get_legend_handles_labels()[1] for ax in fig.get_axes()]
     if all([len(l) == 1 for l in labels]):
@@ -366,12 +363,12 @@ def hr_mean_plot(
     sns.set_palette(hr_mean_plot_params['colormap'])
     line_styles = hr_mean_plot_params['line_styles']
     markers = hr_mean_plot_params['markers']
-    bg_colors = hr_mean_plot_params['background.color']
-    bg_alphas = hr_mean_plot_params['background.alpha']
+    bg_colors = hr_mean_plot_params['background_color']
+    bg_alphas = hr_mean_plot_params['background_alpha']
     x_offsets = hr_mean_plot_params['x_offsets']
     fontsize = kwargs.get("fontsize", hr_mean_plot_params['fontsize'])
-    xaxis_label = kwargs.get("xlabel", hr_mean_plot_params['xaxis.label'])
-    yaxis_label = kwargs.get("ylabel", hr_mean_plot_params['yaxis.label'])
+    xaxis_label = kwargs.get("xlabel", hr_mean_plot_params['xaxis_label'])
+    yaxis_label = kwargs.get("ylabel", hr_mean_plot_params['yaxis_label'])
     phase_text = hr_mean_plot_params.get('phase_text', None)
 
     if phases is None:

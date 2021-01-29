@@ -77,8 +77,6 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
     se = 100.0 * (len(sleep_time) / len(sleep_wake))
     # wake after sleep onset = duration of wake during first and last 'sleep' sample
     waso = int(df_sw_sleep.sum()[0])
-    # sleep onset latency = duration between beginning of recording and first 'sleep' sample
-    sol = len(sleep_wake[sleep_wake.index[0]:sleep_time.index[0]])
 
     df_sw_sleep["block"] = df_sw_sleep['sleep_wake'].diff().ne(0).cumsum()
     df_sw_sleep.reset_index(inplace=True)
@@ -101,8 +99,15 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
     num_wake_bouts = len(wake_bouts)
     sleep_onset = sleep_time.index[0]
     wake_onset = sleep_time.index[-1]
+
+    # start and end of major rest period
     mrp_start = major_rest_periods['start'][0]
     mrp_end = major_rest_periods['end'][0]
+
+    # sleep onset latency = duration between major rest period start and sleep onset
+    sol = len(sleep_wake[sleep_wake.index[0]:sleep_time.index[0]])
+    # getup latency = duration between last 'sleep' sample and major rest period end
+    gup = len(sleep_wake[sleep_time.index[-1]:sleep_wake.index[-1]])
 
     if isinstance(mrp_start, Number):
         date = 0
@@ -125,6 +130,7 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
         'major_rest_period_end': mrp_end,
         'sleep_efficiency': se,
         'sleep_onset_latency': sol,
+        'getup_latency': gup,
         'wake_after_sleep_onset': waso,
         'sleep_bouts': sleep_bouts,
         'wake_bouts': wake_bouts,

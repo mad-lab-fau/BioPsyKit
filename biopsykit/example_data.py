@@ -37,15 +37,15 @@ def get_condition_list_example() -> pd.DataFrame:
 
 
 def get_saliva_example(saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
-    from biopsykit.saliva.io import load_saliva
-    return load_saliva(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample.csv"), biomarker_type='cortisol',
-                       saliva_times=saliva_times)
+    from biopsykit.saliva.io import load_saliva_wide_format
+    return load_saliva_wide_format(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample.csv"), biomarker_type='cortisol',
+                                   saliva_times=saliva_times)
 
 
 def get_saliva_example_stroop(saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
-    from biopsykit.saliva.io import load_saliva
-    return load_saliva(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample_stroop.csv"), biomarker_type='cortisol',
-                       saliva_times=saliva_times)
+    from biopsykit.saliva.io import load_saliva_wide_format
+    return load_saliva_wide_format(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample_stroop.csv"), biomarker_type='cortisol',
+                                   saliva_times=saliva_times)
 
 
 def get_saliva_mean_se_example() -> Dict[str, pd.DataFrame]:
@@ -104,3 +104,7 @@ def get_log_data_example() -> pd.DataFrame:
 def get_time_log_example() -> pd.DataFrame:
     from biopsykit.io import load_time_log
     return load_time_log(_EXAMPLE_DATA_PATH.joinpath("ecg_time_log.xlsx"))
+
+
+def get_questionnaire_example() -> pd.DataFrame:
+    return pd.read_csv(_EXAMPLE_DATA_PATH.joinpath("questionnaire_sample.csv"), index_col=['subject'])

@@ -31,13 +31,16 @@ def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Seque
         data = data.drop('0', level='sample', errors='ignore')
         data = data.drop('S0', level='sample', errors='ignore')
 
+    group_cols = list(data.index.names)
+    group_cols.remove('subject')
+
     if 'time' in data:
-        data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
+        data_grp = data.groupby(group_cols).apply(lambda df_sample: pd.Series(
             {'mean': df_sample[biomarker_type].mean(), 'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample)),
              'time': int(df_sample['time'].unique())}))
         data_grp = data_grp.set_index('time', append=True)
     else:
-        data_grp = data.groupby(["sample", 'condition']).apply(lambda df_sample: pd.Series(
+        data_grp = data.groupby(group_cols).apply(lambda df_sample: pd.Series(
             {'mean': df_sample[biomarker_type].mean(),
              'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample))}))
     return data_grp
@@ -82,6 +85,7 @@ def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequenc
 
 def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
         remove_s0: Optional[bool] = True,
+        compute_auc_post: Optional[bool] = False,
         saliva_times: Optional[Sequence[int]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     # TODO add documentation; IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
     # => auc_post means all saliva times after beginning of stress (>= 0)
@@ -110,21 +114,21 @@ def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] 
         raise ValueError("No `{}` columns in data!".format(biomarker_type))
     data = data[[biomarker_type]].unstack()
 
-    idxs_post = None
-    if saliva_times.ndim == 1:
-        idxs_post = np.where(saliva_times > 0)[0]
-    elif saliva_times.ndim == 2:
-        warnings.warn("Not computing `auc_i_post` values because this is only implemented if `saliva_times` "
-                      "are the same for all subjects.")
-
     auc_data = {
         'auc_g': np.trapz(data, saliva_times),
         'auc_i': np.trapz(data.sub(data.iloc[:, 0], axis=0), saliva_times)
     }
 
-    if idxs_post is not None:
-        data_post = data.iloc[:, idxs_post]
-        auc_data['auc_i_post'] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), saliva_times[idxs_post])
+    if compute_auc_post:
+        idxs_post = None
+        if saliva_times.ndim == 1:
+            idxs_post = np.where(saliva_times > 0)[0]
+        elif saliva_times.ndim == 2:
+            warnings.warn("Not computing `auc_i_post` values because this is only implemented if `saliva_times` "
+                          "are the same for all subjects.")
+        if idxs_post is not None:
+            data_post = data.iloc[:, idxs_post]
+            auc_data['auc_i_post'] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), saliva_times[idxs_post])
 
     out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(biomarker_type))
     out.columns.name = "biomarker"
@@ -206,7 +210,7 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
     if sample_idx[1] > (len(data.columns) - 1):
         raise ValueError("`sample_idx[1]` is out of bounds!")
 
-    out = pd.DataFrame(np.diff(data.iloc[:, sample_idx]) / np.diff(saliva_times[sample_idx]), index=data.index,
+    out = pd.DataFrame(np.diff(data.iloc[:, sample_idx]) / np.diff(saliva_times[..., sample_idx]), index=data.index,
                        columns=['{}_slope{}{}'.format(biomarker_type, *sample_idx)])
     out.columns.name = "biomarker"
     return out
@@ -241,10 +245,8 @@ def _get_saliva_times(data: pd.DataFrame, saliva_times: np.array, remove_s0: boo
 
     if remove_s0:
         # check whether we have the same saliva times for all subjects (1d array) or not (2d array)
-        if saliva_times.ndim == 1:
-            saliva_times = saliva_times[1:]
-        elif saliva_times.ndim == 2:
-            saliva_times = saliva_times[:, 1:]
+        if saliva_times.ndim <= 2:
+            saliva_times = saliva_times[..., 1:]
         else:
             raise ValueError("`saliva_times` has invalid dimensions: {}".format(saliva_times.ndim))
 

@@ -202,7 +202,6 @@ class BaseProtocol:
             saliva_times: Optional[Sequence[int]] = None,
             groups: Optional[Sequence[str]] = None,
             group_col: Optional[str] = None,
-            plot_params: Optional[Dict] = None,
             ylims: Optional[Sequence[float]] = None,
             ax: Optional[plt.Axes] = None,
             figsize: Optional[Tuple[float, float]] = None
@@ -227,25 +226,16 @@ class BaseProtocol:
 
         """
 
-        if plot_params:
-            self.saliva_params.update(plot_params)
-
         return plot.saliva_plot(
             data=data, biomarker=biomarker, saliva_times=saliva_times, test_times=self.test_times,
-            groups=groups, group_col=group_col, plot_params=self.saliva_params, ylims=ylims, ax=ax,
-            figsize=figsize
+            groups=groups, group_col=group_col, ylims=ylims, ax=ax, figsize=figsize, **self.saliva_params
         )
 
     def _saliva_plot_helper(self, data: pd.DataFrame, biomarker: str,
                             groups: Sequence[str], saliva_times: Sequence[int],
-                            ylims: Sequence[float], fontsize: int,
-                            ax: plt.Axes,
-                            x_offset_basis: Optional[float] = 0,
-                            line_colors: Optional[Sequence[Tuple]] = None) -> plt.Axes:
+                            **kwargs) -> plt.Axes:
         return plot._saliva_plot_helper(
-            data=data, biomarker=biomarker, groups=groups, saliva_times=saliva_times,
-            ylims=ylims, fontsize=fontsize, ax=ax, x_offset_basis=x_offset_basis,
-            line_colors=line_colors
+            data=data, biomarker=biomarker, groups=groups, saliva_times=saliva_times, **kwargs
         )
 
     def saliva_plot_combine_legend(self, fig: plt.Figure, ax: plt.Axes, biomarkers: Sequence[str],

@@ -57,7 +57,7 @@ def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
 
 def invert(data: Union[pd.DataFrame, pd.Series], score_range: Sequence[int],
            cols: Optional[Union[Sequence[int], Sequence[str]]] = None,
-           inplace: Optional[bool] = True) -> Union[pd.DataFrame, pd.Series, None]:
+           inplace: Optional[bool] = False) -> Union[pd.DataFrame, pd.Series, None]:
     if inplace:
         if isinstance(data, pd.DataFrame):
             if cols is not None:
@@ -77,7 +77,7 @@ def invert(data: Union[pd.DataFrame, pd.Series], score_range: Sequence[int],
 
 def convert_scale(data: Union[pd.DataFrame, pd.Series], offset: int,
                   cols: Optional[Union[pd.DataFrame, pd.Series]] = None,
-                  inplace: Optional[bool] = True) -> Union[pd.DataFrame, pd.Series, None]:
+                  inplace: Optional[bool] = False) -> Union[pd.DataFrame, pd.Series, None]:
     if inplace:
         if isinstance(data, pd.DataFrame):
             if cols is None:
@@ -92,7 +92,12 @@ def convert_scale(data: Union[pd.DataFrame, pd.Series], offset: int,
         else:
             raise ValueError("Only pd.DataFrame and pd.Series supported!")
     else:
-        return data + offset
+        data = data.copy()
+        if cols is not None:
+            data[cols] = data[cols] + offset
+            return data
+        else:
+            return data + offset
 
 
 def crop_scale(data: Union[pd.DataFrame, pd.Series], score_scale: Sequence[int], inplace: Optional[bool] = True,
@@ -112,7 +117,7 @@ def crop_scale(data: Union[pd.DataFrame, pd.Series], score_scale: Sequence[int],
 
 
 def bin_scale(data: Union[pd.DataFrame, pd.Series], bins: Sequence[float], col: Optional[Union[int, str]] = None,
-              last_max: Optional[bool] = False, inplace: Optional[bool] = True, right: Optional[bool] = True) \
+              last_max: Optional[bool] = False, inplace: Optional[bool] = False, right: Optional[bool] = True) \
         -> Union[pd.Series, None]:
     if last_max:
         if isinstance(col, int):

@@ -46,9 +46,9 @@ class CFT:
         self._set_cft_params(name, cft_start, cft_duration)
 
         self.cft_plot_params = {
-            'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
-            'background.alpha': [0.5, 0.5, 0.5],
-            'phase.names': ["Baseline", "Cold Face Test", "Recovery"],
+            'background_color': ['#e0e0e0', '#9e9e9e', '#757575'],
+            'background_alpha': [0.5, 0.5, 0.5],
+            'phase_names': ["Baseline", "Cold Face Test", "Recovery"],
             'fontsize': 14
         }
 
@@ -233,7 +233,6 @@ class CFT:
             data: pd.DataFrame,
             time_before: Optional[int] = None,
             time_after: Optional[int] = None,
-            plot_params: Optional[dict] = None,
             plot_datetime_index: Optional[bool] = False,
             **kwargs
     ) -> Union[Tuple[plt.Figure, plt.Axes], plt.Axes]:
@@ -277,10 +276,6 @@ class CFT:
             figsize = kwargs.get('figsize', plt.rcParams['figure.figsize'])
             fig, ax = plt.subplots(figsize=figsize)
 
-        # update default parameter if plot parameter were passed
-        if plot_params:
-            self.cft_plot_params.update(plot_params)
-
         ylims = kwargs.get('ylims', None)
 
         if time_before is None:
@@ -288,9 +283,9 @@ class CFT:
         if time_after is None:
             time_after = self.cft_start
 
-        fontsize = self.cft_plot_params['fontsize']
-        bg_colors = self.cft_plot_params['background.color']
-        bg_alphas = self.cft_plot_params['background.alpha']
+        fontsize = kwargs.get('fontsize', self.cft_plot_params['fontsize'])
+        bg_colors = kwargs.get('background_color', self.cft_plot_params['background_color'])
+        bg_alphas = self.cft_plot_params['background_alpha']
         names = self.cft_plot_params['phase.names']
 
         data = data.copy()

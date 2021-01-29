@@ -1,3 +1,4 @@
+from numbers import Number
 from typing import Union, Tuple, Optional, Dict, Sequence
 
 import pandas as pd
@@ -187,7 +188,7 @@ def split_subphases(
     subphase_names : list
         List with names of subphases
     subphase_times : list
-        List with start and end times of each subphase in seconds
+        List with start and end times (as tuples) of each subphase in seconds or list with subphase durations
     is_group_dict : bool, optional
         ``True`` if group dict was passed, ``False`` otherwise. Default: ``False``
 
@@ -198,6 +199,10 @@ def split_subphases(
         nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
 
     """
+    if isinstance(subphase_times[0], Number):
+        times_cum = np.cumsum(np.array(subphase_times))
+        subphase_times = [(start, end) for start, end in zip(np.append([0], times_cum[:-1]), times_cum)]
+
     if is_group_dict:
         # recursively call this function for each group
         return {
@@ -250,7 +255,7 @@ def param_subphases(
         title: Optional[str] = None
 ) -> pd.DataFrame:
     """
-    Computes specified parameters (HRV / RSA / ...) over phases and subphases.
+    Computes specified parameters (HRV / RSA / ...) over phases and subphases **for one subject**.
 
     To use this function, either simply pass an ``EcgProcessor`` object or two dictionaries
     ``dict_ecg`` and ``dict_rpeaks`` resulting from ``EcgProcessor.ecg_process()``.
@@ -367,6 +372,50 @@ def param_subphases(
         axis=1)
 
 
+def mean_per_subject_nested_dict(data: Dict[str, Dict[str, pd.DataFrame]], param_name: str,
+                                 is_group_dict: Optional[bool] = False) -> pd.DataFrame:
+    df_result = _mean_per_subject_nested_dict(data, param_name)
+
+    # name index levels correctly (depending on number of levels)
+    nlevels = df_result.index.nlevels
+    if is_group_dict:
+        nlevels -= 1
+
+    index_names = ['phase']
+    if nlevels == 3:
+        index_names = ['phase', 'subphase']
+
+    if is_group_dict:
+        index_names = ['condition'] + index_names
+
+    index_names = index_names + ['subject']
+    df_result.index.names = index_names
+
+    # last index level is always 'subject' => reorder index levels to that 'subject' is the first
+    # (except when 'condition' index is present, then this is the first, 'subject' is second)
+    index_names = [index_names[-1]] + index_names[:-1]
+    if 'condition' in index_names:
+        index_names.remove('condition')
+        index_names = ['condition'] + index_names
+    return df_result.reorder_levels(index_names).sort_index()
+
+
+def _mean_per_subject_nested_dict(data: Dict[str, Dict[str, pd.DataFrame]], param_name: str) -> pd.DataFrame:
+    result_data = {}
+
+    for phase, data_phase in data.items():
+        if isinstance(data_phase, dict):
+            # nested dictionary
+            result_data[phase] = _mean_per_subject_nested_dict(data_phase, param_name)
+        elif isinstance(data_phase, pd.DataFrame):
+            df = pd.DataFrame(data_phase.mean(), columns=[param_name], )
+            result_data[phase] = df
+        else:
+            raise ValueError("Invalid input!")
+
+    return pd.concat(result_data)
+
+
 def mean_se_nested_dict(
         data: Dict[str, Dict[str, pd.DataFrame]],
         subphases: Optional[Sequence[str]] = None,
@@ -380,18 +429,19 @@ def mean_se_nested_dict(
     (a) a 'Subject dict' (e.g. like returned from bp.signals.ecg.io.load_combine_hr_all_subjects()),
     (b) a 'Subphase dict' (for only one group), or
     (c) a dict of 'Subphase dict', one dict per group (for multiple groups, if ``is_group_dict`` is ``True``)
-    can be passed (see ``utils.split        _subphases`` for more explanation). Both dictionaries are outputs from
+    can be passed (see ``utils.split_subphases`` for more explanation). Both dictionaries are outputs from
     ``utils.split_subphases``.
 
     The input dict structure is expected to look like one of these examples:
         (a) { "<Subject>" : { "<Phase>" : dataframe with values } }
-        (b) { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } }
-        (c) { "<Group>" : { "<Phase>" : dataframe with values } }
-        (d) { "<Group>" : { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } } }
+        (b) { "<Phase>" : dataframe with values, 1 subject per column }
+        (c) { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } }
+        (d) { "<Group>" : { "<Phase>" : dataframe with values } }
+        (e) { "<Group>" : { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } } }
 
-    The output is a 'mse dataframe' (or a dict of such, in case of multiple groups), a pandas dataframe with:
-        * columns: ['mean', 'se'] for mean and standard error or ['mean', 'std] for mean and standard deviation
-        * rows: MultiIndex with level 0 = Phases and level 1 = Subphases.
+    The output is a 'mse dataframe', a pandas dataframe with:
+        * columns: ['mean', 'se'] for mean and standard error or ['mean', 'std'] for mean and standard deviation
+        * rows: MultiIndex with level 0 = Condition, level 1 = Phases and level 2 = Subphases (depending on input).
 
     Parameters
     ----------
@@ -407,8 +457,8 @@ def mean_se_nested_dict(
 
     Returns
     -------
-    dict or pd.DataFrame
-        'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
+    pd.DataFrame
+        'mse dataframe' with MultiIndex (order: condition, phase, subphase, depending on input data)
 
     Examples
     --------
@@ -458,10 +508,14 @@ def mean_se_nested_dict(
 
     """
 
+    # TODO improve interface: automatically check for groups, phases, subphases, always return a dataframe (instead of a dict when data for different groups is passed), name index levels
+
     if std_type not in ['std', 'se']:
         raise ValueError("Invalid argument for 'std_type'! Must be one of {}, not {}.".format(['std', 'se'], std_type))
 
     if is_group_dict:
+        # return pd.concat({group: mean_se_nested_dict(dict_group, subphases, std_type=std_type) for group, dict_group in
+        #                           data.items()})
         return {group: mean_se_nested_dict(dict_group, subphases, std_type=std_type) for group, dict_group in
                 data.items()}
     else:
@@ -470,10 +524,10 @@ def mean_se_nested_dict(
             dict_mean = {}
             for key, dict_val in data.items():
                 if isinstance(dict_val, dict):
-                    # passed dict was case (b) or (d) explained in docstring
+                    # passed dict was case (c) or (e) explained in docstring
                     dict_mean[key] = pd.DataFrame({subkey: dict_val[subkey].mean() for subkey in dict_val})
                 else:
-                    # passed dict was case (c) explained in docstring
+                    # passed dict was case (d) explained in docstring
                     dict_mean[key] = dict_val.mean()
         else:
             dict_mean = {key: pd.DataFrame({subph: dict_val[subph].mean() for subph in subphases})
@@ -488,6 +542,7 @@ def mean_se_nested_dict(
         if isinstance(df_mean.index, pd.MultiIndex):
             # if resulting index is a MultiIndex drop the second index level because it's redundant
             df_mean.index = df_mean.index.droplevel(1)
+
         if std_type == 'se':
             return pd.concat([df_mean.mean(), df_mean.std() / np.sqrt(df_mean.shape[0])], axis=1, keys=["mean", "se"])
         else:

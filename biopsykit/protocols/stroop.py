@@ -41,31 +41,31 @@ class Stroop(base.BaseProtocol):
         self.hr_ensemble_plot_params = {
             'colormap': colors.cmap_fau_blue('3'),
             'line_styles': ['-', '--', ':'],
-            'background.color': ['#e0e0e0', '#9e9e9e', '#757575'],
-            'background.alpha': [0.5, 0.5, 0.5],
+            'background_color': ['#e0e0e0', '#9e9e9e', '#757575'],
+            'background_alpha': [0.5, 0.5, 0.5],
             'fontsize': 14,
-            'xaxis.label': r"Stroop Subphases",
-            'yaxis.label': r"$\Delta$HR [%]",
-            'mist.phase_text': "Stroop Phase {}",
-            'mist.end_phase_text': "End Phase {}",
+            'xaxis_label': r"Stroop Subphases",
+            'yaxis_label': r"$\Delta$HR [%]",
+            'mist_phase_text': "Stroop Phase {}",
+            'mist_end_phase_text': "End Phase {}",
         }
 
         self.hr_mean_plot_params = {
             'colormap': colors.cmap_fau_blue('2_lp'),
             'line_styles': ['-', '--'],
             'markers': ['o', 'P'],
-            'background.color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
-            'background.alpha': [0.5, 0.5, 0.5],
+            'background_color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
+            'background_alpha': [0.5, 0.5, 0.5],
             'x_offsets': [0, 0.05],
             'fontsize': 14,
-            'xaxis.label': "MIST Subphases",
-            'yaxis.label': r"$\Delta$HR [%]",
-            'mist.phase_text': "MIST Phase {}"
+            'xaxis_label': "MIST Subphases",
+            'yaxis_label': r"$\Delta$HR [%]",
+            'mist_phase_text': "MIST Phase {}"
         }
 
         self.saliva_params = {
-            'test.text': "Stroop",
-            'xaxis.label': "Time relative to Stroop start [min]"
+            'test_text': "Stroop",
+            'xaxis_label': "Time relative to Stroop start [min]"
         }
 
         self._update_stroop_params(phases, phase_durations)
