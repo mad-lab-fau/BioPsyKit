@@ -92,11 +92,11 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
 
 
 def load_synced_session_nilspod(folder_path: path_t,
-                                datastreams: Optional[Sequence[str]],
+                                datastreams: Optional[Sequence[str]] = None,
                                 handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = 'raise',
                                 legacy_support: Optional[str] = 'resolve',
                                 timezone: Optional[Union[pytz.timezone, str]] = tz
-                                ) -> Tuple[pd.DataFrame, int]:
+                                ) -> Tuple[pd.DataFrame, Union[int, Tuple[int, ...]]]:
     from nilspodlib import SyncedSession
     import warnings
 
@@ -115,9 +115,14 @@ def load_synced_session_nilspod(folder_path: path_t,
                           "Check the counter of the DataFrame manually!")
 
     # convert dataset to dataframe and localize timestamp
-    df = session.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
+    df = session.data_as_df(datastreams, index="utc_datetime", concat_df=True).tz_localize(tz=utc).tz_convert(
+        tz=timezone)
     df.index.name = "time"
-    return df, int(session.info.sampling_rate_hz)
+    if len(set(session.info.sampling_rate_hz)) > 1:
+        fs = tuple([int(s) for s in session.info.sampling_rate_hz])
+    else:
+        fs = int(session.info.sampling_rate_hz[0])
+    return df, fs
 
 
 def load_csv_nilspod(file_path: path_t = None, datastreams: Optional[Sequence[str]] = None,
