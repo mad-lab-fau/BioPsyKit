@@ -1739,8 +1739,8 @@ def meq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
                 - 4: definite morning type (MEQ score 70-86)
             * 3 levels ('Chronotype_Coarse'):
                 - 0: evening type (MEQ score 14-41)
-                - 2: intermediate type (MEQ score 42-58)
-                - 3: morning type (MEQ score 59-86)
+                - 1: intermediate type (MEQ score 42-58)
+                - 2: morning type (MEQ score 59-86)
 
         References
         ------------
@@ -1769,19 +1769,19 @@ def meq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
             "which are expected to be in the range {}! "
             "Please consider converting to the correct range using "
             "`biopsykit.questionnaire.utils.convert_scale`.".format(score_range, col_idx, [1, 5]))
-
+    
     # invert items 1, 2, 10, 17, 18 (score range [1,5])
-    data = invert(data, cols=to_idx([1, 2, 10, 17, 18]), score_range=[1, 5])
+    invert(data, cols=to_idx([1, 2, 10, 17, 18]), score_range=[1, 5], inplace=True)
     # invert items 3, 8, 9, 10, 11, 13, 15, 19 (score range [1,4])
-    data = invert(data, cols=to_idx([3, 8, 9, 11, 13, 15, 19]), score_range=score_range)
+    invert(data, cols=to_idx([3, 8, 9, 11, 13, 15, 19]), score_range=score_range, inplace=True)
 
     # recode items 11, 12, 19
-    data.iloc[:, to_idx(11)] = data.iloc[:, to_idx(11)].replace({1: 0, 2: 2, 3: 4, 4: 6})
-    data.iloc[:, to_idx(12)] = data.iloc[:, to_idx(12)].replace({1: 0, 2: 2, 3: 3, 4: 5})
-    data.iloc[:, to_idx(19)] = data.iloc[:, to_idx(19)].replace({1: 0, 2: 2, 3: 4, 4: 6})
+    data.iloc[:, to_idx(11)].replace({1: 0, 2: 2, 3: 4, 4: 6}, inplace=True)
+    data.iloc[:, to_idx(12)].replace({1: 0, 2: 2, 3: 3, 4: 5}, inplace=True)
+    data.iloc[:, to_idx(19)].replace({1: 0, 2: 2, 3: 4, 4: 6}, inplace=True)
 
-    meq = pd.DataFrame(data.sum(axis=1, skipna=False), columns=[score_name])
-    meq['Chronotype_Fine'] = bin_scale(meq[score_name], bins=[0, 30, 41, 58, 69, 86], inplace=False)
-    meq['Chronotype_Coarse'] = bin_scale(meq[score_name], bins=[0, 41, 58, 86], inplace=False)
+    meq_data = pd.DataFrame(np.sum(data, axis=1), columns=[score_name])
+    meq_data['Chronotype_Fine'] = bin_scale(meq_data[score_name], bins=[0, 30, 41, 58, 69, 86])
+    meq_data['Chronotype_Coarse'] = bin_scale(meq_data[score_name], bins=[0, 41, 58, 86])
 
-    return meq
+    return meq_data
