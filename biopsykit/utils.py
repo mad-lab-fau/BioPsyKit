@@ -245,3 +245,16 @@ def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
     if len(cleaned_data) == 1:
         cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data
+
+
+def get_time_from_date(data: pd.Series,
+                       is_utc: Optional[bool] = False,
+                       tz_convert: Optional[bool] = False,
+                       timezone: Optional[Union[str]] = tz) -> pd.Series:
+    if tz_convert:
+        data = pd.to_datetime(data, utc=is_utc).dt.tz_convert(timezone)
+    else:
+        data = pd.to_datetime(data, utc=is_utc).dt.tz_localize(timezone)
+    data = data - data.dt.normalize()
+
+    return data
