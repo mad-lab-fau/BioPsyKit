@@ -5,12 +5,24 @@ import pandas as pd
 import numpy as np
 
 
-def wide_to_long(data: pd.DataFrame, biomarker_type: Optional[str] = 'cortisol',
-                 idx_cols: Optional[Sequence[str]] = None) -> pd.DataFrame:
-    if idx_cols is None:
-        idx_cols = list(data.index.names)
-    return pd.wide_to_long(data.reset_index(), stubnames=biomarker_type, sep='_',
-                           i=idx_cols, j='biomarker', suffix=r"\w+")
+def wide_to_long(data: pd.DataFrame, biomarker_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
+    if isinstance(levels, str):
+        levels = [levels]
+
+    data = data.filter(like=biomarker_name)
+    # reverse level order because nested multi-level index will be constructed from back to front
+    levels = levels[::-1]
+    # iteratively build up long-format dataframe
+    for i, level in enumerate(levels):
+        stubnames = list(data.columns)
+        # stubnames are everything except the last part separated by underscore
+        stubnames = set(['_'.join(s.split('_')[:-1]) for s in stubnames])
+        print(stubnames)
+        data = pd.wide_to_long(data.reset_index(), stubnames=stubnames, i=['subject'] + levels[0:i], j=level,
+                               sep='_', suffix=r'\w+')
+
+    # reorder levels and sort
+    return data.reorder_levels(['subject'] + levels[::-1]).sort_index()
 
 
 def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = 'cortisol',
