@@ -34,7 +34,7 @@ class WearDetection:
         }
 
         if index is not None:
-            index_resample = su.sliding_window(index.values, window_sec=window * 60,
+            index_resample = su.sliding_window(np.arange(0, len(index)), window_sec=window * 60,
                                                sampling_rate=self.sampling_rate,
                                                overlap_percent=overlap_percent)[:, :]
             start_end = index_resample[:, [0, -1]]
@@ -42,8 +42,10 @@ class WearDetection:
                 last_idx = index_resample[-1, np.where(~np.isnan(index_resample[-1, :]))[0][-1]]
                 start_end[-1, -1] = last_idx
 
+            start_end = start_end.astype(int)
+
             if isinstance(index, pd.DatetimeIndex):
-                index_resample = pd.DataFrame(start_end, columns=['start', 'end'])
+                index_resample = pd.DataFrame(index.values[start_end], columns=['start', 'end'])
                 index_resample = index_resample.apply(lambda df: pd.to_datetime(df).dt.tz_localize('UTC').dt.tz_convert(index.tzinfo))
 
         acc_std = pd.DataFrame({axis: np.nanstd(acc_sliding[axis], ddof=1, axis=1) for axis in acc_sliding})

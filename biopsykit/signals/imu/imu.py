@@ -78,11 +78,6 @@ def get_static_sequences(
 
 
 def split_sequences(data: pd.DataFrame, n_splits: int):
-    idx_split = np.arange(0, n_splits + 1) * (len(data) // n_splits)
-    split_boundaries = list(
-        zip(
-            idx_split[:-1],
-            idx_split[1:]
-        )
-    )
+    idx_split = np.arange(0, n_splits + 1) * ((len(data) - 1) // n_splits)
+    split_boundaries = list(zip(idx_split[:-1], idx_split[1:]))
     return split_boundaries
