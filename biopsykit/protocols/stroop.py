@@ -42,7 +42,7 @@ class Stroop(base.BaseProtocol):
         Total duration of phases in seconds
         """
 
-        self.subphases: Sequence[str] = ['Stroop 1', 'Stroop 2', 'Stroop 3']
+        self.subphases: Sequence[str] = ['Stroop1', 'Stroop2', 'Stroop3']
         """
         Stroop Subphases
 
@@ -135,7 +135,7 @@ class Stroop(base.BaseProtocol):
         dict_sub = {}
         first = True
         result = pd.DataFrame()
-        result_raw = pd.DataFrame()
+        #result_raw = pd.DataFrame()
         times = {}
         #iterate through data
         for data in dataset:
@@ -158,7 +158,7 @@ class Stroop(base.BaseProtocol):
             stroop_n = 'Stroop' + str(dict_tmp['stroop_result']['sessionid'][0])[-1]
             duration = int(
                 df_tmp['stroop_result']['latency'].astype(int).sum() // 1000 + (len(df_tmp['stroop_result']) + 1))
-            raw_data = df_tmp['stroop_result'][['latency','correct']]
+            #raw_data = df_tmp['stroop_result'][['latency','correct']]
             #handle first iteration
             if first:
                 tmp_ID = stroop_ID
@@ -166,22 +166,22 @@ class Stroop(base.BaseProtocol):
             #detect new ID --> save dict sub to corresponding ID
             elif(stroop_ID != tmp_ID):
                 dict_sub['stroop_results'] = result
-                dict_sub['stroop_raw'] = result_raw
+                #dict_sub['stroop_raw'] = result_raw
                 dict_sub['stroop_times'] = times
                 dict_stroop_data[tmp_ID] = dict_sub
                 tmp_ID = stroop_ID
                 dict_sub = {}
                 times = {}
                 result = pd.DataFrame()
-                result_raw = pd.DataFrame()
+                #result_raw = pd.DataFrame()
 
 
             dict_tmp['stroop_result']['phase'] = stroop_n
             columns = ['phase'] + list(dict_tmp['stroop_result'])[8:16]
             result = result.append(dict_tmp['stroop_result'][columns]).reset_index(drop=True)
 
-            raw_data['phase'] = stroop_n
-            result_raw = result_raw.append(raw_data).reset_index(drop=True)
+            #raw_data['phase'] = stroop_n
+            #result_raw = result_raw.append(raw_data).reset_index(drop=True)
             times[stroop_n] = (df_tmp['stroop_result']['time'][0], str(pd.to_timedelta(
                 df_tmp['stroop_result']['time'][0]) + pd.to_timedelta(duration, unit='s'))[7:])
 
@@ -193,7 +193,7 @@ class Stroop(base.BaseProtocol):
 
         dict_sub['stroop_results'] = result
         dict_sub['stroop_times'] = times
-        dict_sub['stroop_raw'] = result_raw
+        #dict_sub['stroop_raw'] = result_raw
         dict_stroop_data[stroop_ID] = dict_sub
 
         return dict_stroop_data
@@ -366,64 +366,81 @@ class Stroop(base.BaseProtocol):
 
         return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
-    def get_stroop_dataframe(self, data=Dict[str,Dict], columns: Optional[Sequence[str]] = None,
-                             condition_list: Optional[Sequence[str]] = None):
+    def get_stroop_dataframe(self, dict_stroop=Dict[str,Dict], columns: Optional[Sequence[str]] = None,
+                             is_group_dict: Optional[bool] = False):
 
         if columns:
             if 'phase' not in columns:
                 columns = ['phase'] + columns
-            columns = ['condition'] + columns
+
             if 'subject' not in columns:
                 columns = ['subject'] + columns
         else:
-            columns = ['subject','condition', 'phase', 'propcorrect', 'meanRT']
-
+            columns = ['subject', 'phase', 'propcorrect', 'meanRT']
+        if is_group_dict:
+            columns = ['condition'] + columns
         df_stroop = pd.DataFrame(columns=columns)
         df_tmp = pd.DataFrame(columns=columns)
 
         columns.remove('phase')
         columns.remove('subject')
+        if is_group_dict: columns.remove('condition')
+        if is_group_dict:
+            for condition,dict_data in tqdm(dict_stroop.items(), desc="Subjects"):
+                for subject_id, data in tqdm(dict_data.items(), desc="Subjects"):
+                    df_tmp = data['stroop_results'][['phase'] + columns]
+                    df_tmp['subject'] = subject_id
+                    df_tmp['condition'] = condition
+                    df_stroop = df_stroop.append(df_tmp, ignore_index=True)
+            df_stroop = df_stroop.set_index(['condition','subject', 'phase']).sort_index()
+        else:
+            for subject_id, data_dict in tqdm(dict_stroop.items(), desc="Subjects"):
+                df_tmp = data_dict['stroop_results'][['phase']+columns]
+                df_tmp['subject'] = subject_id
+                df_stroop = df_stroop.append(df_tmp, ignore_index=True)
 
-        for subject_id, data_dict in tqdm(data.items(), desc="Subjects"):
-            df_tmp = data_dict['stroop_results'][['phase']+columns]
-            df_tmp['subject'] = subject_id
-            df_stroop = df_stroop.append(df_tmp, ignore_index=True)
-
-        df_stroop = df_stroop.set_index(['subject', 'phase']).sort_index()
+            df_stroop = df_stroop.set_index(['subject', 'phase']).sort_index()
 
         df_stroop['propcorrect'] = df_stroop['propcorrect'].str.replace(',', '.').replace(np.nan, '1.0').astype(float)
         df_stroop['meanRT'] = df_stroop['meanRT'].str.replace(',', '.').replace(np.nan, '1.0').astype(float)
 
         return df_stroop
 
-    def plot_stroop_mean(self,data=Union[Dict[str,Dict],pd.DataFrame]) -> pd.DataFrame:
+    def stroop_mean(self,data=pd.DataFrame,is_group_dict: Optional[bool]=False) -> pd.DataFrame:
 
-        columns = ['subject', 'phase', 'propcorrect', 'meanRT']
+        labels = self.subphases
+        columns = list(data)
+        data_concat = pd.DataFrame()
+        if is_group_dict:
+            for cols in columns:
+                mean = pd.DataFrame({cols + '_mean-' + condition: {
+                    stroop: data.loc[pd.IndexSlice[condition, :, stroop]][cols].mean() for stroop in
+                    labels} for condition in ['IG', 'KG']})
+                std = pd.DataFrame({cols + '_std-' + condition: {
+                    stroop: data.loc[pd.IndexSlice[condition, :, stroop]][cols].std() for stroop in
+                    labels} for condition in ['IG', 'KG']})
+                data_concat = pd.concat([data_concat, pd.concat([mean, std], axis=1)], axis=1)
 
-        if isinstance(data, Dict):
-            df_stroop = self.get_stroop_dataframe(data, columns)
+            data_concat = data_concat.reset_index().rename(columns={'index': 'phase'})
 
-        if isinstance(data, pd.DataFrame):
-            df_stroop = data
-            columns.remove('phase')
-            columns.remove('subject')
+            result = pd.wide_to_long(data_concat,
+                                        stubnames=['meanRT_mean', 'meanRT_std', 'propcorrect_mean', 'propcorrect_std'],
+                                        sep='-', suffix='\D+', i=['phase'], j='condition')
 
-        labels = ['Stroop1', 'Stroop2', 'Stroop3']
-        columns_mean = [col + '_mean' for col in columns]
-        columns_std = [col + '_std' for col in columns]
-        df_stroop_mean = pd.DataFrame(columns=['phase']+columns_mean+columns_std)
-        df_stroop_mean['phase'] = labels
 
-        for label in labels:
-            index = df_stroop_mean['phase'] == label
-            for i in range(2):
-                df_stroop_mean[columns_mean[i]][index] = df_stroop.groupby('phase').get_group(label)[columns[i]].mean()
-                df_stroop_mean[columns_std[i]][index] = df_stroop.groupby('phase').get_group(label)[columns[i]].std()
+        else:
+            mean = pd.DataFrame({cols + '_mean': {stroop: data.xs(stroop, level='phase')[cols].mean() for stroop in labels} for
+                    cols in columns})
+            std = pd.DataFrame({cols + '_std': {stroop: data.xs(stroop, level='phase')[cols].std() for stroop in labels} for
+                   cols in columns})
+            result = pd.concat([mean, std], axis=1)
+        result[['propcorrect_mean', 'propcorrect_std']] = result[['propcorrect_mean', 'propcorrect_std']]*100
+        return result
 
-        df_stroop_mean[['propcorrect_mean','propcorrect_std']] = df_stroop_mean[['propcorrect_mean','propcorrect_std']] * 100
-        #df_stroop_mean[columns_mean+columns_std] = df_stroop_mean[columns_mean+columns_std].round(decimals=2)
+    def plot_stroop(self, data=pd.DataFrame, is_group_dict: Optional[bool]=False,
+                    variable: Optional[str] = 'meanRT'):
 
-        #begin plotting
+        #start plotting
         fig, ax1 = plt.subplots(figsize=(8, 5))
 
         sns.set_palette(self.hr_ensemble_plot_params['colormap'])
@@ -434,43 +451,44 @@ class Stroop(base.BaseProtocol):
         xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis_minor_ticks']
         ensemble_alpha = self.hr_ensemble_plot_params['ensemble_alpha']
         bg_color = self.hr_ensemble_plot_params['background_color']
-        bg_alpha = self.hr_ensemble_plot_params['background_alpha']
         legend_loc = self.hr_ensemble_plot_params['legend_loc']
         legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend_bbox_to_anchor']
+        labels = self.subphases
 
-
-        x = np.arange(len(df_stroop_mean))
+        x = np.arange(len(labels))
         xlims = np.append(x, x[-1] + 1)
 
-        color = 'royalblue'
-        line1 = ax1.errorbar(x, df_stroop_mean['propcorrect_mean'], yerr=df_stroop_mean['propcorrect_std'], color=sns.color_palette()[0],
-                             label='Correct answers', lw=2, errorevery=1, ls=line_styles[0], marker="D", capsize=3)
-
+        if is_group_dict:
+            line1 = ax1.errorbar(x, data.xs('IG',level='condition')[variable+'_mean'],
+                                 yerr=data.xs('IG',level='condition')[variable+'_std'],
+                                 color=sns.color_palette()[0],
+                                label='IG', lw=2, errorevery=1, ls=line_styles[0], marker="D", capsize=3)
+            line2 = ax1.errorbar(x, data.xs('KG',level='condition')[variable+'_mean'],
+                                 yerr=data.xs('KG',level='condition')[variable+'_std'],
+                                 color=sns.color_palette()[1],
+                                 label='KG', lw=2, errorevery=1, ls=line_styles[1], marker="D", capsize=3)
+            plt.legend(handles=[line1, line2], loc='upper right', prop={'size': 12})
+        else:
+            ax1.errorbar(x, data[variable+'_mean'],yerr=data[variable+'_std'],
+                         color=sns.color_palette()[0], lw=2, errorevery=1, ls=line_styles[0],
+                         marker="D", capsize=3)
         ax1.tick_params(axis='x', bottom=True)
         ax1.set_xticks(x)
         ax1.set_xticklabels(labels)
         ax1.tick_params(axis='y')
-        ax1.set_ylabel('Correct answers [%]')
-        ax1.set_ylim(0, 110)
+        ax1.set_ylabel(variable+' [ms]')
+        if (variable == 'propcorrect'):
+            ax1.set_ylim(0, 105)
+            ax1.set_ylabel(r'$\Delta$Correct answers [%]')
+        elif (variable == 'meanRT'):
+            ax1.set_ylabel(r'$\Delta$Response time [ms]')
 
-        ax2 = ax1.twinx()
-
-        color = 'slategrey'
-        ax2.set_ylabel('Response time [ms]')  # we already handled the x-label with ax1
-        line2 = ax2.errorbar(x, df_stroop_mean['meanRT_mean'], yerr=df_stroop_mean['meanRT_std'], label='Response time',
-                             lw=2, errorevery=1, marker="D", ls=line_styles[1], capsize=3, color=sns.color_palette()[1])
-        ax2.tick_params(axis='y')
-        ax2.set_ylim(0, 2000)
 
         plt.title('Stroop test', size=20, weight='bold')
-        plt.legend(handles=[line1, line2], loc='lower right', prop={'size': 12})
-
-        for i in range(0, 3):
-            ax1.axvspan(i - .4, i + .4, facecolor='lightgrey', alpha=0.5)
 
         fig.tight_layout()
 
-        return df_stroop_mean
+
 
     def concat_phase_dict(
             self,
@@ -497,6 +515,30 @@ class Stroop(base.BaseProtocol):
             return super().concat_phase_dict(dict_hr_subject, kwargs['phases'])
         else:
             return super().concat_phase_dict(dict_hr_subject, self.phases)
+    def split_groups_stroop(self,
+                            dict_stroop=Dict[str,Dict[str,pd.DataFrame]],
+                            condition_dict=Dict[str,Sequence[str]]) ->Dict[str, Dict[str, pd.DataFrame]]:
+        """
+        Splits 'Stroop dict' into group dict, i.e. one 'Stroop dict' per group.
+
+        Parameters
+        ----------
+        phase_dict : dict
+            'Dict stroop' to be split in groups. This is the outcome of 'stroop.load_stroop_test_data()'
+        condition_dict : dict
+            dictionary of group membership. Keys are the different groups, values are lists of subject IDs that
+            belong to the respective group
+
+        Returns
+        -------
+        dict
+            group dict with one 'Stroop dict' per group
+
+        """
+        return {
+            condition: {ID: dict_stroop[ID] for ID in IDs} for condition, IDs in condition_dict.items()
+        }
+
 
     def split_groups(cls, phase_dict: Dict[str, pd.DataFrame],
                      condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
@@ -519,6 +561,7 @@ class Stroop(base.BaseProtocol):
         """
 
         return super().split_groups(phase_dict, condition_dict)
+
 
     def hr_mean_plot(
             self,
