@@ -25,6 +25,32 @@ def wide_to_long(data: pd.DataFrame, biomarker_name: str, levels: Union[str, Seq
     return data.reorder_levels(['subject'] + levels[::-1]).sort_index()
 
 
+def saliva_times_datetime_to_minute(saliva_times: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
+    from datetime import time, datetime
+
+    if not isinstance(saliva_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64)):
+        raise ValueError("Saliva times must be instance of `datetime.datetime()`, `datetime.time()` or `pd.Timedelta`!")
+
+    if isinstance(saliva_times, pd.Series) and 'sample' in saliva_times.index.names:
+        # unstack the multi-index dataframe in the 'samples' level so that time differences can be computes in minutes.
+        # Then stack it back together
+        if isinstance(saliva_times[0], pd.Timedelta):
+            saliva_times = pd.to_timedelta(saliva_times).unstack(level='sample').diff(axis=1)
+        else:
+            saliva_times = pd.to_datetime(saliva_times.astype(str)).unstack(level='sample').diff(axis=1)
+        saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
+        saliva_times = saliva_times.cumsum(axis=1)
+        saliva_times.iloc[:, 0].fillna(0, inplace=True)
+        saliva_times = saliva_times.stack()
+        return saliva_times
+    else:
+        # assume saliva times are already unstacked in the 'samples' level
+        saliva_times = saliva_times.astype(str).apply(pd.to_datetime).diff(axis=1)
+        saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
+        saliva_times.iloc[:, 0].fillna(0, inplace=True)
+        return saliva_times
+
+
 def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = 'cortisol',
                    remove_s0: Optional[bool] = True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """Computes mean and standard error per saliva sample"""
