@@ -108,7 +108,7 @@ def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequenc
 
     if biomarker_type not in data:
         raise ValueError("No `{}` columns in data!".format(biomarker_type))
-    data = data[[biomarker_type]].unstack()
+    data = data[[biomarker_type]].unstack(level='sample')
 
     max_inc = (data.iloc[:, 1:].max(axis=1) - data.iloc[:, 0])
     if percent:
@@ -124,7 +124,8 @@ def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequenc
 def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
         remove_s0: Optional[bool] = True,
         compute_auc_post: Optional[bool] = False,
-        saliva_times: Optional[Sequence[int]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+        saliva_times: Optional[Union[np.ndarray, Sequence[int], str]] = None) -> Union[
+    pd.DataFrame, Dict[str, pd.DataFrame]]:
     # TODO add documentation; IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
     # => auc_post means all saliva times after beginning of stress (>= 0)
 
@@ -150,7 +151,7 @@ def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] 
 
     if biomarker_type not in data:
         raise ValueError("No `{}` columns in data!".format(biomarker_type))
-    data = data[[biomarker_type]].unstack()
+    data = data[[biomarker_type]].unstack(level='sample')
 
     auc_data = {
         'auc_g': np.trapz(data, saliva_times),
@@ -277,6 +278,10 @@ def _get_saliva_times(data: pd.DataFrame, saliva_times: np.array, remove_s0: boo
                 saliva_times = saliva_times[0]
         else:
             raise ValueError("No saliva times specified!")
+
+    if isinstance(saliva_times, str):
+        saliva_times = data[saliva_times]
+        saliva_times = saliva_times.unstack(level='sample')
 
     # ensure numpy
     saliva_times = np.array(saliva_times)
