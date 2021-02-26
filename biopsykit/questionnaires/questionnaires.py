@@ -6,8 +6,8 @@ import pandas as pd
 from biopsykit.questionnaires.utils import invert, find_cols, bin_scale, to_idx, _check_score_range_exception
 
 
-def compute_questionnaire_scores(data: pd.DataFrame,
-                                 quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
+def compute_scores(data: pd.DataFrame,
+                   quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
     df_scores = pd.DataFrame(index=data.index)
     for score, columns in quest_dict.items():
         score = score.lower()
@@ -24,7 +24,7 @@ def compute_questionnaire_scores(data: pd.DataFrame,
     return df_scores
 
 
-def questionnaire_wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
+def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
     if isinstance(levels, str):
         levels = [levels]
 
