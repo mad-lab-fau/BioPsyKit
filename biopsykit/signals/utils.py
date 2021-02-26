@@ -45,10 +45,10 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     else:
         raise ValueError("Only 'pd.DataFrame' or 'pd.Series' allowed as input!")
 
-    if not isinstance(data.index, pd.DatetimeIndex):
-        raise ValueError("Index of data needs to be 'pd.DateTimeIndex'!")
-
-    x_old = np.array((data.index - data.index[0]).total_seconds())
+    if isinstance(data.index, pd.DatetimeIndex):
+        x_old = np.array((data.index - data.index[0]).total_seconds())
+    else:
+        x_old = np.array(data.index - data.index[0])
     x_new = np.arange(1, np.ceil(x_old[-1]) + 1)
     data = utils.sanitize_input_1d(data)
     interpol_f = interpolate.interp1d(x=x_old, y=data, fill_value="extrapolate")
