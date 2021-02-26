@@ -19,6 +19,12 @@ tz = pytz.timezone('Europe/Berlin')
 utc = pytz.timezone('UTC')
 
 
+def multi_xs(data: pd.DataFrame, keys: Sequence[str], level: str) -> pd.DataFrame:
+    levels = data.index.names
+    data_xs = pd.concat({key: data.xs(key, level=level) for key in keys}, names=[level])
+    return data_xs.reorder_levels(levels).sort_index()
+
+
 def export_figure(fig: 'plt.Figure', filename: path_t, base_dir: path_t, formats: Optional[Sequence[str]] = None,
                   use_subfolder: Optional[bool] = True) -> None:
     """
@@ -179,7 +185,7 @@ def sanitize_input_1d(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.nd
 
 def sanitize_input_nd(
         data: Union[pd.DataFrame, pd.Series, np.ndarray],
-        ncols: Union[int, Tuple[int, ...]]
+        ncols: Optional[Union[int, Tuple[int, ...]]] = None
 ) -> np.ndarray:
     """
     Converts nD array-like data (numpy array, pandas dataframe/series) to a numpy array.
@@ -247,6 +253,8 @@ def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
     return cleaned_data
 
 
+# TODO add "time_utils" submodule
+
 def get_time_from_date(data: pd.Series,
                        is_utc: Optional[bool] = False,
                        tz_convert: Optional[bool] = False,
@@ -257,4 +265,22 @@ def get_time_from_date(data: pd.Series,
         data = pd.to_datetime(data, utc=is_utc).dt.tz_localize(timezone)
     data = data - data.dt.normalize()
 
+    return data
+
+
+def time_to_datetime(data: pd.Series) -> pd.Series:
+    col_data = pd.to_datetime(data.astype(str))
+    return col_data - col_data.dt.normalize()
+
+
+def timedelta_to_time(data: pd.Series) -> pd.Series:
+    import datetime
+    data_cpy = data.copy()
+    # ensure pd.Timedelta
+    data = data + pd.Timedelta("0h")
+    # convert to datetime
+    data = datetime.datetime.min + data.dt.to_pytimedelta()
+    # convert to time
+    data = [d.time() if d is not pd.NaT else None for d in data]
+    data = pd.Series(np.array(data), index=data_cpy.index, name=data_cpy.name)
     return data
