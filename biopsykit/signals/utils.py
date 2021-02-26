@@ -56,7 +56,8 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     return pd.DataFrame(interpol_f(x_new), index=x_new, columns=column_name)
 
 
-def interpolate_dict_sec(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+def interpolate_dict_sec(data_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]]) -> Dict[
+    str, Dict[str, pd.DataFrame]]:
     """
     Interpolates all data in the dictionary to 1Hz data (see `interpolate_sec` for further information).
 
@@ -71,31 +72,41 @@ def interpolate_dict_sec(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[
         nested data dict with heart rate data interpolated to seconds
     """
 
-    return {
-        subject_id: {
-            phase: interpolate_sec(df_hr) for phase, df_hr in dict_hr.items()
-        } for subject_id, dict_hr in data_dict.items()
-    }
+    result_dict = {}
+    for key, value in data_dict.items():
+        if isinstance(value, (pd.DataFrame, pd.Series)):
+            result_dict[key] = interpolate_sec(value)
+        elif isinstance(value, dict):
+            result_dict[key] = interpolate_dict_sec(value)
+        else:
+            raise ValueError("Invalid input format!")
+    return result_dict
 
 
 def interpolate_and_cut(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
     data_dict = interpolate_dict_sec(data_dict)
-    durations = np.array([[len(df) for phase, df in dict_hr.items()] for dict_hr in data_dict.values()])
-    phase_names = np.array([np.array(list(val.keys())) for key, val in data_dict.items()])
-    if (phase_names[0] == phase_names).all():
-        phase_names = phase_names[0]
+
+    durations = np.array([[len(df) for phase, df in data.items()] for data in data_dict.values()])
+    value_types = np.array([isinstance(value, dict) for value in data_dict.values()])
+
+    if value_types.all():
+        # all values are dictionaries
+        phase_names = np.array([np.array(list(val.keys())) for key, val in data_dict.items()])
+        if (phase_names[0] == phase_names).all():
+            phase_names = phase_names[0]
+        else:
+            raise ValueError("Phases are not the same for all subjects!")
+        # minimal duration of each Phase
+        min_dur = {phase: dur for phase, dur in zip(phase_names, np.min(durations, axis=0))}
+        for key, value in data_dict.items():
+            dict_cut = {}
+            for phase in phase_names:
+                dict_cut[phase] = value[phase][0:min_dur[phase]]
+            data_dict[key] = dict_cut
     else:
-        raise ValueError("Phases are not the same for all subjects!")
-
-    # minimal duration of each Phase
-    min_dur = {phase: dur for phase, dur in zip(phase_names, np.min(durations, axis=0))}
-
-    for subject_id, dict_hr in data_dict.items():
-        dict_cut = {}
-        for phase in phase_names:
-            dict_cut[phase] = dict_hr[phase][0:min_dur[phase]]
-        data_dict[subject_id] = dict_cut
-
+        min_dur = np.min(durations)
+        for key, value in data_dict.items():
+            data_dict[key] = value[0:min_dur]
     return data_dict
 
 
