@@ -5,7 +5,8 @@ import pandas as pd
 import numpy as np
 
 
-def wide_to_long(data: pd.DataFrame, biomarker_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
+def wide_to_long(data: pd.DataFrame, biomarker_name: str, levels: Union[str, Sequence[str]],
+                 sep: Optional[str] = '_') -> pd.DataFrame:
     if isinstance(levels, str):
         levels = [levels]
 
@@ -16,10 +17,9 @@ def wide_to_long(data: pd.DataFrame, biomarker_name: str, levels: Union[str, Seq
     for i, level in enumerate(levels):
         stubnames = list(data.columns)
         # stubnames are everything except the last part separated by underscore
-        stubnames = set(['_'.join(s.split('_')[:-1]) for s in stubnames])
-        print(stubnames)
+        stubnames = sorted(set(['_'.join(s.split('_')[:-1]) for s in stubnames]))
         data = pd.wide_to_long(data.reset_index(), stubnames=stubnames, i=['subject'] + levels[0:i], j=level,
-                               sep='_', suffix=r'\w+')
+                               sep=sep, suffix=r'\w+')
 
     # reorder levels and sort
     return data.reorder_levels(['subject'] + levels[::-1]).sort_index()
