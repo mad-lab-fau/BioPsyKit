@@ -38,12 +38,12 @@ _hr_mean_plot_params = {
     'colormap': colors.cmap_fau_blue('2_lp'),
     'line_styles': ['-', '--'],
     'markers': ['o', 'P'],
-    'background.color': None,
-    'background.alpha': None,
+    'background_color': None,
+    'background_alpha': None,
     'x_offsets': [0, 0.05],
     'fontsize': 14,
-    'xaxis.label': "Phases",
-    'yaxis.label': "Value",
+    'xaxis_label': "Phases",
+    'yaxis_label': "Value",
 }
 
 
@@ -67,7 +67,6 @@ def saliva_plot(
     test_times
     groups
     group_col
-    plot_params
     kwargs: dict, optional
             optional parameters to be passed to the plot, such as:
                 * ax: Axes object to plot on
@@ -363,8 +362,8 @@ def hr_mean_plot(
     sns.set_palette(hr_mean_plot_params['colormap'])
     line_styles = hr_mean_plot_params['line_styles']
     markers = hr_mean_plot_params['markers']
-    bg_colors = hr_mean_plot_params['background_color']
-    bg_alphas = hr_mean_plot_params['background_alpha']
+    bg_colors = kwargs.get('background_color', hr_mean_plot_params['background_color'])
+    bg_alphas = kwargs.get('background_alpha', hr_mean_plot_params['background_alpha'])
     x_offsets = hr_mean_plot_params['x_offsets']
     fontsize = kwargs.get("fontsize", hr_mean_plot_params['fontsize'])
     xaxis_label = kwargs.get("xlabel", hr_mean_plot_params['xaxis_label'])
