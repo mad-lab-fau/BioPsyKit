@@ -6,43 +6,6 @@ import pandas as pd
 from biopsykit.questionnaires.utils import invert, find_cols, bin_scale, to_idx, _check_score_range_exception
 
 
-def compute_scores(data: pd.DataFrame,
-                   quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
-    df_scores = pd.DataFrame(index=data.index)
-    for score, columns in quest_dict.items():
-        score = score.lower()
-        suffix = None
-        if '-' in score:
-            score_split = score.split('-')
-            score = score_split[0]
-            suffix = score_split[1]
-        df = globals()[score](data[columns])
-        if suffix is not None:
-            df.columns = ["{}_{}".format(col, suffix) for col in df.columns]
-        df_scores = df_scores.join(df)
-
-    return df_scores
-
-
-def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
-    if isinstance(levels, str):
-        levels = [levels]
-
-    data = data.filter(like=quest_name)
-    # reverse level order because nested multi-level index will be constructed from back to front
-    levels = levels[::-1]
-    # iteratively build up long-format dataframe
-    for i, level in enumerate(levels):
-        stubnames = list(data.columns)
-        # stubnames are everything except the last part separated by underscore
-        stubnames = set(['_'.join(s.split('_')[:-1]) for s in stubnames])
-        data = pd.wide_to_long(data.reset_index(), stubnames=stubnames, i=['subject'] + levels[0:i], j=level,
-                               sep='_', suffix=r'\w+')
-
-    # reorder levels and sort
-    return data.reorder_levels(['subject'] + levels[::-1]).sort_index()
-
-
 def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
     """Pittsburgh Sleep Quality Index"""
 
