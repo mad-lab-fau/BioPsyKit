@@ -1,89 +1,18 @@
-# -*- coding: utf-8 -*-
-"""Set of helper functions used throughout the library.
-
-@author: Robert Richer, Arne Küderle
-"""
-from pathlib import Path
-from typing import TypeVar, Sequence, Optional, Dict, Union, Tuple
-import pytz
-
-import pandas as pd
-import numpy as np
-from nilspodlib import Dataset
 import warnings
+from typing import Sequence, Union, Dict, Optional
 
-path_t = TypeVar('path_t', str, Path)
-T = TypeVar('T')
+import numpy as np
+import pandas as pd
+import pytz
+from nilspodlib import Dataset
 
-tz = pytz.timezone('Europe/Berlin')
-utc = pytz.timezone('UTC')
+from biopsykit.utils.time import tz, utc
 
 
 def multi_xs(data: pd.DataFrame, keys: Sequence[str], level: str) -> pd.DataFrame:
     levels = data.index.names
     data_xs = pd.concat({key: data.xs(key, level=level) for key in keys}, names=[level])
     return data_xs.reorder_levels(levels).sort_index()
-
-
-def export_figure(fig: 'plt.Figure', filename: path_t, base_dir: path_t, formats: Optional[Sequence[str]] = None,
-                  use_subfolder: Optional[bool] = True) -> None:
-    """
-    Exports a figure to a file.
-
-    Parameters
-    ----------
-    fig : Figure
-        matplotlib figure object
-    filename : path or str
-        name of the output file
-    base_dir : path or str
-        base directory to save file
-    formats: list of str, optional
-        list of file formats to export or ``None`` to export as pdf. Default: ``None``
-    use_subfolder : bool, optional
-        whether to create an own subfolder per file format and export figures into these subfolders. Default: True
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> import biopsykit as bp
-    >>> fig = plt.Figure()
-    >>>
-    >>> base_dir = "./img"
-    >>> filename = "plot"
-    >>> formats = ["pdf", "png"]
-
-    >>> # Export into subfolders (default)
-    >>> bp.plotting.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats)
-    >>> # | img/
-    >>> # | - pdf/
-    >>> # | - - plot.pdf
-    >>> # | - png/
-    >>> # | - - plot.png
-
-    >>> # Export into one folder
-    >>> bp.plotting.export_figure(fig, filename=filename, base_dir=base_dir, formats=formats, use_subfolder=False)
-    >>> # | img/
-    >>> # | - plot.pdf
-    >>> # | - plot.png
-    """
-    import matplotlib.pyplot as plt
-
-    if formats is None:
-        formats = ['pdf']
-
-    # ensure pathlib
-    base_dir = Path(base_dir)
-    filename = Path(filename)
-    subfolders = [base_dir] * len(formats)
-
-    if use_subfolder:
-        subfolders = [base_dir.joinpath(f) for f in formats]
-        for folder in subfolders:
-            folder.mkdir(exist_ok=True, parents=True)
-
-    for f, subfolder in zip(formats, subfolders):
-        fig.savefig(subfolder.joinpath(filename.name + '.' + f), transparent=(f == 'pdf'), format=f)
 
 
 def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
@@ -159,71 +88,6 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
     return data_dict
 
 
-def sanitize_input_1d(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.ndarray:
-    """
-    Converts 1D array-like data (numpy array, pandas dataframe/series) to a numpy array.
-
-    Parameters
-    ----------
-    data : array_like
-        input data. Needs to be 1D
-
-    Returns
-    -------
-    array_like
-        data as numpy array
-
-    """
-    if isinstance(data, (pd.Series, pd.DataFrame)):
-        # only 1D pandas DataFrame allowed
-        if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
-            raise ValueError("Only 1D DataFrames allowed!")
-        data = np.squeeze(data.values)
-
-    return data
-
-
-def sanitize_input_nd(
-        data: Union[pd.DataFrame, pd.Series, np.ndarray],
-        ncols: Optional[Union[int, Tuple[int, ...]]] = None
-) -> np.ndarray:
-    """
-    Converts nD array-like data (numpy array, pandas dataframe/series) to a numpy array.
-
-    Parameters
-    ----------
-    data : array_like
-        input data
-    ncols : int or tuple of ints
-        number of columns (2nd dimension) the 'data' array should have
-
-    Returns
-    -------
-    array_like
-        data as numpy array
-    """
-
-    # ensure tuple
-    if isinstance(ncols, int):
-        ncols = (ncols,)
-
-    if isinstance(data, (pd.Series, pd.DataFrame)):
-        data = np.squeeze(data.values)
-
-    if data.ndim == 1:
-        if 1 in ncols:
-            return data
-        else:
-            raise ValueError("Invalid number of columns! Expected one of {}, got 1.".format(ncols))
-    elif data.shape[1] not in ncols:
-        raise ValueError("Invalid number of columns! Expected one of {}, got {}.".format(ncols, data.shape[1]))
-    return data
-
-
-def check_tz_aware(data: pd.DataFrame) -> bool:
-    return isinstance(data.index, pd.DatetimeIndex) and (data.index.tzinfo is not None)
-
-
 def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
                      **kwargs) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     cleaned_data: Dict[str, pd.DataFrame] = {}
@@ -251,36 +115,3 @@ def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
     if len(cleaned_data) == 1:
         cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data
-
-
-# TODO add "time_utils" submodule
-
-def get_time_from_date(data: pd.Series,
-                       is_utc: Optional[bool] = False,
-                       tz_convert: Optional[bool] = False,
-                       timezone: Optional[Union[str]] = tz) -> pd.Series:
-    if tz_convert:
-        data = pd.to_datetime(data, utc=is_utc).dt.tz_convert(timezone)
-    else:
-        data = pd.to_datetime(data, utc=is_utc).dt.tz_localize(timezone)
-    data = data - data.dt.normalize()
-
-    return data
-
-
-def time_to_datetime(data: pd.Series) -> pd.Series:
-    col_data = pd.to_datetime(data.astype(str))
-    return col_data - col_data.dt.normalize()
-
-
-def timedelta_to_time(data: pd.Series) -> pd.Series:
-    import datetime
-    data_cpy = data.copy()
-    # ensure pd.Timedelta
-    data = data + pd.Timedelta("0h")
-    # convert to datetime
-    data = datetime.datetime.min + data.dt.to_pytimedelta()
-    # convert to time
-    data = [d.time() if d is not pd.NaT else None for d in data]
-    data = pd.Series(np.array(data), index=data_cpy.index, name=data_cpy.name)
-    return data
