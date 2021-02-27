@@ -87,7 +87,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
         heart_rate = ecg_processor.heart_rate[key]
         sampling_rate = ecg_processor.sampling_rate
 
-    sns.set_palette(colors.cmap_fau)
+    sns.set_palette(colors.fau_palette)
     if isinstance(ecg_signal.index, pd.DatetimeIndex):
         plt.rcParams['timezone'] = ecg_signal.index.tz.zone
 
@@ -213,7 +213,7 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
 
-    sns.set_palette(colors.cmap_fau)
+    sns.set_palette(colors.fau_palette)
 
     fig: Union[plt.Figure, None] = None
     if ax is None:

@@ -2,12 +2,16 @@ from typing import Union, Sequence, Optional
 
 import seaborn as sns
 
-fau_colors = {
-    'fau': "#003865", 'phil': "#c99313", 'wiso': "#8d1429",
-    'med': "#00b1eb", 'nat': "#009b77", 'tech': "#98a4ae"
+fau_color_dict = {
+    'fau': "#003865",
+    'phil': "#c99313",
+    'wiso': "#8d1429",
+    'med': "#00b1eb",
+    'nat': "#009b77",
+    'tech': "#98a4ae"
 }
 
-cmap_fau = sns.color_palette(fau_colors.values())
+fau_palette = sns.color_palette(fau_color_dict.values())
 
 
 def cmap_fau_blue(cmap_type: Union[str, None]) -> Sequence[str]:
@@ -115,7 +119,7 @@ def cmap_fau_tech(cmap_type: Union[str, None]) -> Sequence[str]:
 
 
 def fau_color(key: str) -> str:
-    return fau_colors[key]
+    return fau_color_dict[key]
 
 
 def adjust_color(key: str, amount: Optional[float] = 1.5) -> str:
