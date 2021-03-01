@@ -38,13 +38,13 @@ def get_condition_list_example() -> pd.DataFrame:
 
 def get_saliva_example(saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     from biopsykit.io.saliva import load_saliva_wide_format
-    return load_saliva_wide_format(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample.csv"), biomarker_type='cortisol',
-                                   saliva_times=saliva_times)
+    return load_saliva_wide_format(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample.csv"), biomarker_name='cortisol',
+                                   condition_col='condition', saliva_times=saliva_times)
 
 
 def get_saliva_example_stroop(saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     from biopsykit.io.saliva import load_saliva_wide_format
-    return load_saliva_wide_format(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample_stroop.csv"), biomarker_type='cortisol',
+    return load_saliva_wide_format(_EXAMPLE_DATA_PATH.joinpath("cortisol_sample_stroop.csv"), biomarker_name='cortisol',
                                    saliva_times=saliva_times)
 
 
@@ -97,7 +97,7 @@ def get_eeg_example() -> Tuple[pd.DataFrame, int]:
 
 
 def get_log_data_example() -> pd.DataFrame:
-    from biopsykit.carwatch_logs.io import load_log_one_subject
+    from biopsykit.io.carwatch_logs import load_log_one_subject
     return load_log_one_subject(_EXAMPLE_DATA_PATH.joinpath("log_data").joinpath("AB12C"))
 
 

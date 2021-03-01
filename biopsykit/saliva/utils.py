@@ -3,6 +3,8 @@ from typing import Optional, Dict, Sequence, Union
 import pandas as pd
 import numpy as np
 
+from biopsykit.utils.functions import se
+
 
 def extract_saliva_columns(data: pd.DataFrame, biomarker: str, col_pattern: Optional[str] = None) -> pd.DataFrame:
     """
@@ -158,6 +160,33 @@ def saliva_times_datetime_to_minute(saliva_times: Union[pd.Series, pd.DataFrame]
         saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
         saliva_times.iloc[:, 0].fillna(0, inplace=True)
         return saliva_times
+
+
+def mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = 'cortisol',
+            remove_s0: Optional[bool] = False) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    """Computes mean and standard error per saliva sample"""
+
+    if isinstance(biomarker_type, list):
+        dict_result = {}
+        for biomarker in biomarker_type:
+            biomarker_cols = [biomarker]
+            if 'time' in data:
+                biomarker_cols = ['time'] + biomarker_cols
+            dict_result[biomarker] = mean_se(data[biomarker_cols], biomarker_type=biomarker, remove_s0=remove_s0)
+        return dict_result
+
+    if remove_s0:
+        data = data.drop(0, level='sample', errors='ignore')
+        data = data.drop('0', level='sample', errors='ignore')
+        data = data.drop('S0', level='sample', errors='ignore')
+
+    group_cols = list(data.index.names)
+    group_cols.remove('subject')
+
+    if 'time' in data:
+        group_cols = group_cols + ['time']
+    data_grp = data.groupby(group_cols).agg([np.mean, se])[biomarker_type]
+    return data_grp
 
 
 def _check_data_format(data: pd.DataFrame):

@@ -64,6 +64,7 @@ def sleep_imu_plot(data: pd.DataFrame,
         data_plot = data.filter(like=ds)[::downsample_factor]
         data_plot.plot(ax=ax)
         if sleep_endpoints is not None:
+            kwargs['ax'] = ax
             _plot_sleep_endpoints(sleep_endpoints=sleep_endpoints, **kwargs)
 
         if isinstance(data_plot.index, pd.DatetimeIndex):

@@ -269,7 +269,12 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
 
 def compute_scores(data: pd.DataFrame,
                    quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
+    from inspect import getmembers, isfunction
+    from biopsykit.questionnaires import questionnaires
     df_scores = pd.DataFrame(index=data.index)
+
+    quest_funcs = dict(getmembers(questionnaires, isfunction))
+
     for score, columns in quest_dict.items():
         score = score.lower()
         suffix = None
@@ -277,7 +282,7 @@ def compute_scores(data: pd.DataFrame,
             score_split = score.split('-')
             score = score_split[0]
             suffix = score_split[1]
-        df = globals()[score](data[columns])
+        df = quest_funcs[score](data[columns])
         if suffix is not None:
             df.columns = ["{}_{}".format(col, suffix) for col in df.columns]
         df_scores = df_scores.join(df)

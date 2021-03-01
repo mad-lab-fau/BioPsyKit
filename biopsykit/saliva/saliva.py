@@ -7,41 +7,6 @@ import numpy as np
 from biopsykit.saliva.utils import _check_data_format, _check_saliva_times, _get_saliva_times
 
 
-def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = 'cortisol',
-                   remove_s0: Optional[bool] = False) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-    """Computes mean and standard error per saliva sample"""
-
-    if isinstance(biomarker_type, list):
-        dict_result = {}
-        for biomarker in biomarker_type:
-            biomarker_cols = [biomarker]
-            if 'time' in data:
-                biomarker_cols = ['time'] + biomarker_cols
-            dict_result[biomarker] = saliva_mean_se(data[biomarker_cols], biomarker_type=biomarker, remove_s0=remove_s0)
-        return dict_result
-
-    if remove_s0:
-        data = data.drop(0, level='sample', errors='ignore')
-        data = data.drop('0', level='sample', errors='ignore')
-        data = data.drop('S0', level='sample', errors='ignore')
-
-    group_cols = list(data.index.names)
-    group_cols.remove('subject')
-
-    #TODO check with mean/sd
-    if 'time' in data:
-        data_grp = data.groupby(group_cols).apply(lambda df_sample: pd.Series(
-            {'mean': df_sample[biomarker_type].mean(),
-             'se': np.std(df_sample[biomarker_type], ddof=1) / np.sqrt(len(df_sample)),
-             'time': int(df_sample['time'].unique())}))
-        data_grp = data_grp.set_index('time', append=True)
-    else:
-        data_grp = data.groupby(group_cols).apply(lambda df_sample: pd.Series(
-            {'mean': df_sample[biomarker_type].mean(),
-             'se': np.std(df_sample[biomarker_type], ddof=1) / np.sqrt(len(df_sample))}))
-    return data_grp
-
-
 def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
                  remove_s0: Optional[bool] = False,
                  percent: Optional[bool] = False) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
@@ -211,5 +176,3 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
                        columns=['{}_slope{}{}'.format(biomarker_type, *sample_idx)])
     out.columns.name = "biomarker"
     return out
-
-

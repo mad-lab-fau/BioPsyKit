@@ -286,7 +286,7 @@ class CFT:
         fontsize = kwargs.get('fontsize', self.cft_plot_params['fontsize'])
         bg_colors = kwargs.get('background_color', self.cft_plot_params['background_color'])
         bg_alphas = self.cft_plot_params['background_alpha']
-        names = self.cft_plot_params['phase.names']
+        names = self.cft_plot_params['phase_names']
 
         data = data.copy()
         cft_params = self.compute_cft_parameter(data, return_dict=True)

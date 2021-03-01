@@ -135,24 +135,29 @@ def save_saliva(file_path: path_t, data: pd.DataFrame) -> None:
 
 def load_saliva_wide_format(
         file_path: path_t,
-        biomarker_type: str,
+        biomarker_name: str,
         subject_col: Optional[str] = "subject",
         condition_col: Optional[str] = None,
         saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     index_cols = [subject_col]
 
+    data = pd.read_csv(file_path, dtype={subject_col: str})
+
+    if condition_col is None:
+        if 'condition' in data.columns:
+            condition_col = "condition"
+
     if condition_col is not None:
         index_cols = [condition_col] + index_cols
 
-    data = pd.read_csv(file_path, dtype={subject_col: str})
     data.set_index(index_cols, inplace=True)
 
     num_subjects = len(data)
-    data.columns = pd.MultiIndex.from_product([[biomarker_type], data.columns], names=["", "sample"])
+    data.columns = pd.MultiIndex.from_product([[biomarker_name], data.columns], names=["", "sample"])
 
     data = data.stack()
 
-    if saliva_times:
+    if saliva_times is not None:
         _check_saliva_times(len(data), num_subjects, saliva_times)
         data['time'] = np.array(saliva_times * num_subjects)
 

@@ -5,7 +5,7 @@ from typing import Union, Optional, Sequence, Dict
 import pandas as pd
 import numpy as np
 
-from biopsykit.utils import tz
+from biopsykit.utils.time import tz
 
 
 def get_filtered_logs(log_data: 'LogData') -> pd.DataFrame:
