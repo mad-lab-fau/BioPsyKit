@@ -4,55 +4,11 @@ from typing import Optional, Sequence, Tuple, Union, Dict
 import pandas as pd
 import numpy as np
 
-
-def wide_to_long(data: pd.DataFrame, biomarker_name: str, levels: Union[str, Sequence[str]],
-                 sep: Optional[str] = '_') -> pd.DataFrame:
-    if isinstance(levels, str):
-        levels = [levels]
-
-    data = data.filter(like=biomarker_name)
-    # reverse level order because nested multi-level index will be constructed from back to front
-    levels = levels[::-1]
-    # iteratively build up long-format dataframe
-    for i, level in enumerate(levels):
-        stubnames = list(data.columns)
-        # stubnames are everything except the last part separated by underscore
-        stubnames = sorted(set(['_'.join(s.split('_')[:-1]) for s in stubnames]))
-        data = pd.wide_to_long(data.reset_index(), stubnames=stubnames, i=['subject'] + levels[0:i], j=level,
-                               sep=sep, suffix=r'\w+')
-
-    # reorder levels and sort
-    return data.reorder_levels(['subject'] + levels[::-1]).sort_index()
-
-
-def saliva_times_datetime_to_minute(saliva_times: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
-    from datetime import time, datetime
-
-    if not isinstance(saliva_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64)):
-        raise ValueError("Saliva times must be instance of `datetime.datetime()`, `datetime.time()` or `pd.Timedelta`!")
-
-    if isinstance(saliva_times, pd.Series) and 'sample' in saliva_times.index.names:
-        # unstack the multi-index dataframe in the 'samples' level so that time differences can be computes in minutes.
-        # Then stack it back together
-        if isinstance(saliva_times[0], pd.Timedelta):
-            saliva_times = pd.to_timedelta(saliva_times).unstack(level='sample').diff(axis=1)
-        else:
-            saliva_times = pd.to_datetime(saliva_times.astype(str)).unstack(level='sample').diff(axis=1)
-        saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
-        saliva_times = saliva_times.cumsum(axis=1)
-        saliva_times.iloc[:, 0].fillna(0, inplace=True)
-        saliva_times = saliva_times.stack()
-        return saliva_times
-    else:
-        # assume saliva times are already unstacked in the 'samples' level
-        saliva_times = saliva_times.astype(str).apply(pd.to_datetime).diff(axis=1)
-        saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
-        saliva_times.iloc[:, 0].fillna(0, inplace=True)
-        return saliva_times
+from biopsykit.saliva.utils import _check_data_format, _check_saliva_times, _get_saliva_times
 
 
 def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = 'cortisol',
-                   remove_s0: Optional[bool] = True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+                   remove_s0: Optional[bool] = False) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """Computes mean and standard error per saliva sample"""
 
     if isinstance(biomarker_type, list):
@@ -72,20 +28,22 @@ def saliva_mean_se(data: pd.DataFrame, biomarker_type: Optional[Union[str, Seque
     group_cols = list(data.index.names)
     group_cols.remove('subject')
 
+    #TODO check with mean/sd
     if 'time' in data:
         data_grp = data.groupby(group_cols).apply(lambda df_sample: pd.Series(
-            {'mean': df_sample[biomarker_type].mean(), 'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample)),
+            {'mean': df_sample[biomarker_type].mean(),
+             'se': np.std(df_sample[biomarker_type], ddof=1) / np.sqrt(len(df_sample)),
              'time': int(df_sample['time'].unique())}))
         data_grp = data_grp.set_index('time', append=True)
     else:
         data_grp = data.groupby(group_cols).apply(lambda df_sample: pd.Series(
             {'mean': df_sample[biomarker_type].mean(),
-             'se': df_sample[biomarker_type].std() / np.sqrt(len(df_sample))}))
+             'se': np.std(df_sample[biomarker_type], ddof=1) / np.sqrt(len(df_sample))}))
     return data_grp
 
 
 def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-                 remove_s0: Optional[bool] = True,
+                 remove_s0: Optional[bool] = False,
                  percent: Optional[bool] = False) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     # computes (absolute or relative) maximum increase between first sample and all others.
     _check_data_format(data)
@@ -122,7 +80,7 @@ def max_increase(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequenc
 
 
 def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-        remove_s0: Optional[bool] = True,
+        remove_s0: Optional[bool] = False,
         compute_auc_post: Optional[bool] = False,
         saliva_times: Optional[Union[np.ndarray, Sequence[int], str]] = None) -> Union[
     pd.DataFrame, Dict[str, pd.DataFrame]]:
@@ -255,42 +213,3 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
     return out
 
 
-def _check_data_format(data: pd.DataFrame):
-    if data is None:
-        raise ValueError("`data` must not be None!")
-    if 'sample' not in data.index.names or data.index.nlevels <= 1:
-        raise ValueError("`data` is expected in long-format with subject IDs ('subject', 0-n) as 1st level and "
-                         "sample IDs ('sample', 0-m) as 2nd level!")
-
-
-def _check_saliva_times(saliva_times: np.array):
-    if np.any(np.diff(saliva_times) <= 0):
-        raise ValueError("`saliva_times` must be increasing!")
-
-
-def _get_saliva_times(data: pd.DataFrame, saliva_times: np.array, remove_s0: bool) -> np.array:
-    if saliva_times is None:
-        # check if dataframe has 'time' column
-        if 'time' in data.columns:
-            saliva_times = np.array(data.unstack()['time'])
-            if np.all((saliva_times == saliva_times[0])):
-                # all subjects have the same saliva times
-                saliva_times = saliva_times[0]
-        else:
-            raise ValueError("No saliva times specified!")
-
-    if isinstance(saliva_times, str):
-        saliva_times = data[saliva_times]
-        saliva_times = saliva_times.unstack(level='sample')
-
-    # ensure numpy
-    saliva_times = np.array(saliva_times)
-
-    if remove_s0:
-        # check whether we have the same saliva times for all subjects (1d array) or not (2d array)
-        if saliva_times.ndim <= 2:
-            saliva_times = saliva_times[..., 1:]
-        else:
-            raise ValueError("`saliva_times` has invalid dimensions: {}".format(saliva_times.ndim))
-
-    return saliva_times
