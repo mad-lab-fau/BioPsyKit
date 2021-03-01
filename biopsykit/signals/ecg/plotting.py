@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Optional, Union, Sequence, Tuple, Dict
 
 import matplotlib as mpl
@@ -8,8 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import biopsykit.utils as utils
-import biopsykit.signals.utils as su
+from biopsykit.signals.ecg import check_ecg_input, sanitize_input_1d
 import biopsykit.colors as colors
 from biopsykit.signals.ecg import EcgProcessor
 
@@ -81,7 +79,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
 
-    su.check_ecg_input(ecg_processor, key, ecg_signal, heart_rate)
+    check_ecg_input(ecg_processor, key, ecg_signal, heart_rate)
     if ecg_processor:
         ecg_signal = ecg_processor.ecg_result[key]
         heart_rate = ecg_processor.heart_rate[key]
@@ -298,7 +296,7 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     if figsize is None:
         figsize = (14, 7)
 
-    su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
+    check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
     if ecg_processor:
         ecg_signal = ecg_processor.ecg_result[key]
         rpeaks = ecg_processor.rpeaks[key]
@@ -647,7 +645,7 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
             figsize = plt.rcParams['figure.figsize']
         fig, ax = plt.subplots(figsize=figsize)
 
-    rpeaks = utils.sanitize_input_1d(rpeaks['R_Peak_Idx'])
+    rpeaks = sanitize_input_1d(rpeaks['R_Peak_Idx'])
     rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate, interpolate=True)[0]
     hrv = nk.hrv_frequency(rpeaks, sampling_rate)
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]
