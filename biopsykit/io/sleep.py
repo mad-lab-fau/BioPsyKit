@@ -6,7 +6,8 @@ import pytz
 import pandas as pd
 import numpy as np
 
-from biopsykit.utils import path_t, tz
+from biopsykit.utils import path_t
+from biopsykit.utils.time import tz
 
 __all__ = [
     'load_withings_sleep_analyzer_raw_file',
