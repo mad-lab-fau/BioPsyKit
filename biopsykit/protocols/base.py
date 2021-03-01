@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import biopsykit.colors as colors
-import biopsykit.signals.utils as su
 import biopsykit.protocols.plotting as plot
+import biopsykit.utils.data
 
 
 class BaseProtocol:
@@ -80,7 +80,7 @@ class BaseProtocol:
 
         """
 
-        return su.concat_phase_dict(dict_hr_subject, phases)
+        return biopsykit.utils.data.concat_phase_dict(dict_hr_subject, phases)
 
     def split_subphases(
             self,
@@ -128,8 +128,8 @@ class BaseProtocol:
             nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
 
         """
-        return su.split_subphases(data=data, subphase_names=subphase_names, subphase_times=subphase_times,
-                                  is_group_dict=is_group_dict)
+        return biopsykit.utils.data.split_subphases(data=data, subphase_names=subphase_names, subphase_times=subphase_times,
+                                                    is_group_dict=is_group_dict)
 
     @classmethod
     def split_groups(cls, phase_dict: Dict[str, pd.DataFrame],
@@ -151,7 +151,7 @@ class BaseProtocol:
             nested group dict with one 'Phase dict' per group
 
         """
-        return su.split_groups(phase_dict=phase_dict, condition_dict=condition_dict)
+        return biopsykit.utils.data.split_groups(phase_dict=phase_dict, condition_dict=condition_dict)
 
     def _mean_se_subphases(
             self,
@@ -191,7 +191,7 @@ class BaseProtocol:
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return su.mean_se_nested_dict(data, subphases=subphases, is_group_dict=is_group_dict)
+        return biopsykit.utils.data.mean_se_nested_dict(data, subphases=subphases, is_group_dict=is_group_dict)
 
     def saliva_plot(
             self,

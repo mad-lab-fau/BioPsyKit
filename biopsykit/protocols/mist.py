@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticks
 
 import biopsykit.signals.ecg as ecg
-import biopsykit.signals.utils as utils
 import biopsykit.colors as colors
 import biopsykit.protocols.base as base
 import biopsykit.protocols.plotting as plot
+import biopsykit.utils.array_handling
+import biopsykit.utils.data
 
 
 class MIST(base.BaseProtocol):
@@ -138,7 +139,7 @@ class MIST(base.BaseProtocol):
                 if phase in dict_subject:
                     dict_subject.pop(phase)
 
-        return utils.interpolate_and_cut(dict_hr_subject)
+        return biopsykit.utils.array_handling.interpolate_and_cut(dict_hr_subject)
 
     def concat_phase_dict(
             self,
@@ -332,10 +333,10 @@ class MIST(base.BaseProtocol):
             dataframe with computed parameters over the single MIST subphases
         """
 
-        return utils.param_subphases(ecg_processor=ecg_processor, dict_ecg=dict_ecg, dict_rpeaks=dict_rpeaks,
-                                     subphases=self.subphases, subphase_durations=self.subphase_durations,
-                                     include_total=include_total, param_types=param_types,
-                                     sampling_rate=sampling_rate, title=title)
+        return biopsykit.utils.data.param_subphases(ecg_processor=ecg_processor, dict_ecg=dict_ecg, dict_rpeaks=dict_rpeaks,
+                                                    subphases=self.subphases, subphase_durations=self.subphase_durations,
+                                                    include_total=include_total, param_types=param_types,
+                                                    sampling_rate=sampling_rate, title=title)
 
     def hr_mean_se_subphases(
             self,
