@@ -11,6 +11,7 @@ import biopsykit.metadata
 import biopsykit.io
 import biopsykit.carwatch_logs
 import biopsykit.classification
+import biopsykit.plotting
 
 import biopsykit.colors
 import biopsykit.example_data
