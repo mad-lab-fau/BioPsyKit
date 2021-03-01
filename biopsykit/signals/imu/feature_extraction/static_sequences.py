@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple, Dict, Optional, Union
+from typing import Optional, Union
 
 import pandas as pd
 import numpy as np
@@ -10,11 +10,9 @@ from biopsykit.utils.array_handling import sanitize_input_nd
 def static_sequence_features(
         data: pd.DataFrame,
         static_sequences: pd.DataFrame,
-        start,
-        end,
-        index: Optional[Union[int, str]] = None,
-        **kwargs):
-
+        start: Union[str, pd.Timestamp],
+        end: Union[str, pd.Timestamp],
+        index: Optional[Union[int, str]] = None):
     start = pd.Timestamp(start, tz="Europe/Berlin")
     end = pd.Timestamp(end, tz="Europe/Berlin")
 
