@@ -70,6 +70,4 @@ def export_figure(fig: 'plt.Figure', filename: path_t, base_dir: path_t, formats
     for f, subfolder in zip(formats, subfolders):
         fig.savefig(subfolder.joinpath(filename.name + '.' + f), transparent=(f == 'pdf'), format=f)
 
-# TODO add "time_utils" submodule
-
 
