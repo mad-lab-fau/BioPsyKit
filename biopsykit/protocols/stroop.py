@@ -48,7 +48,7 @@ class Stroop(base.BaseProtocol):
 
         Names of Stroop subphases
         """
-        self.subphase_durations: Sequence[int] = [2*60, 2*60, 2*60]
+        self.subphase_durations: Sequence[int] = [10*60, 10*60, 10*60]
         """
         Stroop Subphase Durations
 
@@ -79,7 +79,7 @@ class Stroop(base.BaseProtocol):
             'background_color': ['#e0e0e0', '#9e9e9e', '#757575'],
             'background_alpha': [0.5, 0.5, 0.5],
             'fontsize': 14,
-            'xaxis_label': r"Time [s] ",
+            'xaxis_label': r"Stroop phases",
             'xaxis_minor_ticks': mticks.MultipleLocator(60),
             'yaxis_label': r"$\Delta$Mean HR [bpm]",
             'legend_loc': 'upper right',
@@ -302,14 +302,16 @@ class Stroop(base.BaseProtocol):
         else:
             start_end = []
             add=0
+            pal = sns.color_palette()[0]
             for i, key in enumerate(data):
+
                 stroop = data[key]
                 start_end.append((add+1, add + len(stroop)))
                 x = stroop.index + add
                 add += len(stroop)
                 stroop_mean = stroop.mean(axis=1)
                 stroop_stderr = stroop.std(axis=1) / np.sqrt(stroop.shape[1])
-                ax.plot(x, stroop_mean, zorder=2, label=key, linestyle=line_styles[i])
+                ax.plot(x, stroop_mean, zorder=2, label=key,color=pal, linestyle=line_styles[i])
                 ax.fill_between(x, stroop_mean - stroop_stderr, stroop_mean + stroop_stderr, zorder=1, alpha=ensemble_alpha)
             ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor, prop={'size': fontsize})
 
@@ -406,7 +408,7 @@ class Stroop(base.BaseProtocol):
 
         return df_stroop
 
-    def stroop_mean(self,data=pd.DataFrame,is_group_dict: Optional[bool]=False) -> pd.DataFrame:
+    def stroop_mean_se(self,data=pd.DataFrame,is_group_dict: Optional[bool]=False) -> pd.DataFrame:
 
         labels = self.subphases
         columns = list(data)
@@ -437,57 +439,114 @@ class Stroop(base.BaseProtocol):
         result[['propcorrect_mean', 'propcorrect_std']] = result[['propcorrect_mean', 'propcorrect_std']]*100
         return result
 
-    def plot_stroop(self, data=pd.DataFrame, is_group_dict: Optional[bool]=False,
-                    variable: Optional[str] = 'meanRT'):
+    def stroop_plot(self, data=pd.DataFrame, variable: Optional[str] = 'meanRT',
+                    is_group_dict: Optional[bool] = False,
+                    group_col: Optional[str] = 'condition',
+                    ylims: Optional[Sequence[float]] = None,
+                    ax: Optional[plt.Axes] = None,
+                    **kwargs) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+        """
+        Plots the mean response time or correct answers during the different Stroop task (mean ± standard error per phase).
 
-        #start plotting
-        fig, ax1 = plt.subplots(figsize=(8, 5))
+        In case of only one group a pandas dataframe can be passed.
 
-        sns.set_palette(self.hr_ensemble_plot_params['colormap'])
-        line_styles = self.hr_ensemble_plot_params['line_styles']
-        fontsize = self.hr_ensemble_plot_params['fontsize']
-        xaxis_label = self.hr_ensemble_plot_params['xaxis_label']
-        yaxis_label = self.hr_ensemble_plot_params['yaxis_label']
-        xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis_minor_ticks']
-        ensemble_alpha = self.hr_ensemble_plot_params['ensemble_alpha']
-        bg_color = self.hr_ensemble_plot_params['background_color']
-        legend_loc = self.hr_ensemble_plot_params['legend_loc']
-        legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend_bbox_to_anchor']
-        labels = self.subphases
+        In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
+        to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
 
-        x = np.arange(len(labels))
-        xlims = np.append(x, x[-1] + 1)
+        Regardless of the kind of input the dataframes need to be in the format of a 'mean dataframe', as returned
+        by ``stroop_mean`` (see ``Stroop.stroop_mean`` for further information).
 
+
+        Parameters
+        ----------
+        data : dataframe or dict
+            Mean response/Correct answers data to plot. It has to be one dataframe which is in the kind of format as
+            returned by `stroop_mean`
+        variable : str
+             Determines if the mean response times (``meanRT``) or correct answers (``propcorrect``) of the stroop
+             test should be plotted.
+             Default: ``meanRT``
+        is_group_dict : bool, optional:
+             List of group names. If ``None`` is passed, the groups and their order are inferred from the
+             dictionary keys or from the unique values in `group_col`. If list is supplied the groups are
+             plotted in that order.
+             Default: ``None``
+        group_col : str, optional
+            Name of group column in the dataframe in case of multiple groups and one dataframe
+        ylims : Tuple(int,int)
+            Integer to scale the y axes.
+            Default: ``None``
+        ax : plt.Axes, optional
+            Axes to plot on, otherwise create a new one. Default: ``None``
+        kwargs: dict, optional
+            optional parameters to be passed to the plot, such as:
+                * figsize: tuple specifying figure dimensions
+                * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
+                for further information), None to automatically infer y-axis limits
+        """
+
+        fig: Union[plt.Figure, None] = None
+        if ax is None:
+            if 'figsize' in kwargs:
+                figsize = kwargs['figsize']
+            else:
+                figsize = plt.rcParams['figure.figsize']
+            fig, ax = plt.subplots(figsize=figsize)
+
+        sns.set_palette(self.stroop_plot_params['colormap'])
+        line_styles = self.stroop_plot_params['line_styles']
+        fontsize = self.stroop_plot_params['fontsize']
+        xaxis_label = self.stroop_plot_params['xaxis_label']
+        xaxis_minor_ticks = self.stroop_plot_params['xaxis_minor_ticks']
+        bg_color = self.stroop_plot_params['background_color']
+        bg_alpha = self.stroop_plot_params['background_alpha']
+        x_labels = self.subphases
+
+        x = np.arange(len(x_labels))
+        start_end = [(i - 0.5, i + 0.5) for i in x]
         if is_group_dict:
-            line1 = ax1.errorbar(x, data.xs('IG',level='condition')[variable+'_mean'],
-                                 yerr=data.xs('IG',level='condition')[variable+'_std'],
+            conditions = list(set(data.index.get_level_values(group_col)))
+            line1 = ax.errorbar(x, data.xs(conditions[0],level=group_col)[variable+'_mean'],
+                                 yerr=data.xs(conditions[0],level=group_col)[variable+'_std'],
                                  color=sns.color_palette()[0],
-                                label='IG', lw=2, errorevery=1, ls=line_styles[0], marker="D", capsize=3)
-            line2 = ax1.errorbar(x, data.xs('KG',level='condition')[variable+'_mean'],
-                                 yerr=data.xs('KG',level='condition')[variable+'_std'],
+                                label=conditions[0], lw=2, errorevery=1, ls=line_styles[0], marker="D", capsize=3)
+            line2 = ax.errorbar(x, data.xs(conditions[1],level=group_col)[variable+'_mean'],
+                                 yerr=data.xs(conditions[1],level=group_col)[variable+'_std'],
                                  color=sns.color_palette()[1],
-                                 label='KG', lw=2, errorevery=1, ls=line_styles[1], marker="D", capsize=3)
-            plt.legend(handles=[line1, line2], loc='upper right', prop={'size': 12})
+                                 label=conditions[1], lw=2, errorevery=1, ls=line_styles[1], marker="D", capsize=3)
+            plt.legend(handles=[line1, line2], loc='upper right', prop={'size': fontsize})
         else:
-            ax1.errorbar(x, data[variable+'_mean'],yerr=data[variable+'_std'],
+            ax.errorbar(x, data[variable+'_mean'],yerr=data[variable+'_std'],
                          color=sns.color_palette()[0], lw=2, errorevery=1, ls=line_styles[0],
                          marker="D", capsize=3)
-        ax1.tick_params(axis='x', bottom=True)
-        ax1.set_xticks(x)
-        ax1.set_xticklabels(labels)
-        ax1.tick_params(axis='y')
-        ax1.set_ylabel(variable+' [ms]')
+
+        for (start, end), color, alpha in zip(start_end, bg_color, bg_alpha):
+            ax.axvspan(start,end,color=color, alpha=alpha, zorder=0, lw=0)
+
+        ax.set_xticklabels(x_labels, fontsize=fontsize)
+        ax.set_xlabel(xaxis_label, fontsize=fontsize)
+        ax.set_xticks([start + 0.5 for (start, end) in start_end])
+        ax.xaxis.set_minor_locator(xaxis_minor_ticks)
+        ax.tick_params(axis="x", which='both', bottom=True)
+
         if (variable == 'propcorrect'):
-            ax1.set_ylim(0, 105)
-            ax1.set_ylabel(r'$\Delta$Correct answers [%]')
+            ax.set_ylim(0, 105)
+            ax.set_ylabel(r'$\Delta$Correct answers [%]',fontsize=fontsize)
         elif (variable == 'meanRT'):
-            ax1.set_ylabel(r'$\Delta$Response time [ms]')
+            ax.set_ylabel(r'$\Delta$Response time [ms]', fontsize=fontsize)
+
+        ax.tick_params(axis="y", which='major', left=True,labelsize=fontsize)
+
+        if ylims:
+            ax.margins(x=0)
+            ax.set_ylim(ylims)
+        else:
+            ax.margins(0, 0.1)
 
 
-        plt.title('Stroop test', size=20, weight='bold')
-
-        fig.tight_layout()
-
+        if fig:
+            fig.tight_layout()
+            return fig, ax
 
 
     def concat_phase_dict(
