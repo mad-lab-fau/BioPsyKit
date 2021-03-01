@@ -1,12 +1,11 @@
-import warnings
 from typing import Dict, Union, Optional, Tuple
 
 import pandas as pd
 import numpy as np
 
-from biopsykit.sleep.imu.sleep_wake import SleepWake
-from biopsykit.sleep.imu.mrp import MajorRestPeriod
-from biopsykit.sleep.imu.wear_detection import WearDetection
+from biopsykit.sleep.sleep_wake.sleep_wake import SleepWake
+from biopsykit.sleep.mrp import MajorRestPeriod
+from biopsykit.signals.imu.wear_detection import WearDetection
 from biopsykit.signals.imu.activity_counts import ActivityCounts
 
 from biopsykit.signals.imu import convert_acc_data_to_g

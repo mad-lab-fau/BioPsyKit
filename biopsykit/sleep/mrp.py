@@ -3,7 +3,7 @@ from typing import Union
 import pandas as pd
 import numpy as np
 
-import biopsykit.signals.utils as su
+from biopsykit.utils.array_handling import sliding_window
 
 
 class MajorRestPeriod:
@@ -29,12 +29,12 @@ class MajorRestPeriod:
         window_s = 5  # 5 seconds
         overlap = 0
 
-        angle_sliding = su.sliding_window(angle, window_sec=window_s,
-                                          sampling_rate=self.sampling_rate,
-                                          overlap_percent=overlap)
-        index_resample = su.sliding_window(df_acc.index.values, window_sec=window_s,
-                                           sampling_rate=self.sampling_rate,
-                                           overlap_percent=overlap)[:, 0]
+        angle_sliding = sliding_window(angle, window_sec=window_s,
+                                       sampling_rate=self.sampling_rate,
+                                       overlap_percent=overlap)
+        index_resample = sliding_window(df_acc.index.values, window_sec=window_s,
+                                        sampling_rate=self.sampling_rate,
+                                        overlap_percent=overlap)[:, 0]
 
         if isinstance(df_acc.index, pd.DatetimeIndex):
             index_resample = pd.DatetimeIndex(index_resample)
