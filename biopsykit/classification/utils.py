@@ -5,7 +5,7 @@ import numpy as np
 
 
 def strip_df(data: pd.DataFrame) -> np.ndarray:
-    return data.copy().reset_index(drop=True).values
+    return data.reset_index(drop=True).values
 
 
 def strip_labels(data: Union[pd.DataFrame, pd.Series]) -> np.ndarray:
