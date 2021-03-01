@@ -1,254 +1,13 @@
 import datetime
 from pathlib import Path
-from typing import Optional, Union, Sequence, Dict, Tuple, Literal
+from typing import Optional, Union, Sequence, Dict, Literal, List
 
-import numpy as np
 import pandas as pd
 import pytz
 
-from biopsykit.utils import path_t, utc, tz
+from biopsykit.utils import path_t
 
 COUNTER_INCONSISTENCY_HANDLING = Literal['raise', 'warn', 'ignore']
-
-
-def load_dataset_nilspod(file_path: Optional[path_t] = None,
-                         dataset: Optional['Dataset'] = None,
-                         datastreams: Optional[Sequence[str]] = None,
-                         handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = 'raise',
-                         legacy_support: Optional[str] = 'resolve',
-                         timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
-    """
-    Converts a file recorded by NilsPod into a dataframe.
-
-    You can either pass a Dataset object obtained from `nilspodlib` or directly pass the path to the file to load 
-    and convert the file at once.
-
-    Parameters
-    ----------
-    file_path : str or path, optional
-        path to dataset object to converted
-    dataset : Dataset
-        Dataset object to convert
-    datastreams : list of str, optional
-        list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
-        Datastreams that are not part of the current dataset will be silently ignored.
-    handle_counter_inconsistency : str, optional
-         how to handle if counter of dataset is not monotonously increasing, which might be an indicator for a
-         corrupted dataset. `raise` to raise an error, `warn` to issue a warning but still return a dataframe,
-         `ignore` to ignore the counter check result
-    legacy_support : str, optional
-        This indicates how to deal with older NilsPod firmware versions.
-        If `error`: An error is raised, if an unsupported version is detected.
-        If `warn`: A warning is raised, but the file is parsed without modification
-        If `resolve`: A legacy conversion is performed to load old files. If no suitable conversion is found,
-        an error is raised. See the `legacy` package and the README of `nilspodlib` to learn more about available
-        conversions.
-        Default: `resolve`
-    timezone : str or pytz.timezone, optional
-            timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
-
-    Returns
-    -------
-    tuple
-        tuple of pandas dataframe with sensor data and sampling rate
-
-    Examples
-    --------
-    >>> import biopsykit as bp
-    >>> # Option 1: Import data by passing file name
-    >>> file_path = "./<filename-of-nilspod-data>.bin"
-    >>> # load dataset with all datastreams
-    >>> df, fs = bp.io.load_dataset_nilspod(file_path=file_path)
-    >>> # load only ECG data of dataset
-    >>> df, fs = bp.io.load_dataset_nilspod(file_path=file_path, datastreams=['ecg'])
-    >>>
-    >>> # Option 2: Import data by passing Dataset object imported from NilsPodLib (in this example, only acceleration data)
-    >>> from nilspodlib import Dataset
-    >>> dataset = Dataset.from_bin_file("<filename>.bin")
-    >>> df, fs = bp.io.load_dataset_nilspod(dataset=dataset, datastreams=['acc'])
-    """
-    from nilspodlib import Dataset
-    import warnings
-
-    if file_path:
-        dataset = Dataset.from_bin_file(file_path, legacy_support=legacy_support)
-    if isinstance(timezone, str):
-        # convert to pytz object
-        timezone = pytz.timezone(timezone)
-
-    if len(np.where(np.diff(dataset.counter) < 1)[0]) > 0:
-        if handle_counter_inconsistency == "raise":
-            raise ValueError("Error loading dataset. Counter not monotonously increasing!")
-        elif handle_counter_inconsistency == "warn":
-            warnings.warn("Counter not monotonously increasing. This might indicate that the dataset is corrupted or "
-                          "that the dataset was recorded as part of a synchronized session and might need to be loaded "
-                          "using `biopsykit.io.load_synced_session_nilspod()`. "
-                          "Check the counter of the DataFrame manually!")
-
-    # convert dataset to dataframe and localize timestamp
-    df = dataset.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
-    df.index.name = "time"
-    return df, int(dataset.info.sampling_rate_hz)
-
-
-def load_synced_session_nilspod(folder_path: path_t,
-                                datastreams: Optional[Sequence[str]] = None,
-                                handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = 'raise',
-                                legacy_support: Optional[str] = 'resolve',
-                                timezone: Optional[Union[pytz.timezone, str]] = tz
-                                ) -> Tuple[pd.DataFrame, Union[int, Tuple[int, ...]]]:
-    from nilspodlib import SyncedSession
-    import warnings
-
-    nilspod_files = list(sorted(folder_path.glob("*.bin")))
-    if len(nilspod_files) == 0:
-        raise ValueError("No NilsPod files found in directory!")
-
-    session = SyncedSession.from_folder_path(folder_path, legacy_support=legacy_support)
-    session.align_to_syncregion(inplace=True)
-
-    if len(np.where(np.diff(session.counter) < 1)[0]) > 0:
-        if handle_counter_inconsistency == "raise":
-            raise ValueError("Error loading session. Counter not monotonously increasing!")
-        elif handle_counter_inconsistency == "warn":
-            warnings.warn("Counter not monotonously increasing. This might indicate that the session is corrupted. "
-                          "Check the counter of the DataFrame manually!")
-
-    # convert dataset to dataframe and localize timestamp
-    df = session.data_as_df(datastreams, index="utc_datetime", concat_df=True).tz_localize(tz=utc).tz_convert(
-        tz=timezone)
-    df.index.name = "time"
-    if len(set(session.info.sampling_rate_hz)) > 1:
-        fs = tuple([int(s) for s in session.info.sampling_rate_hz])
-    else:
-        fs = int(session.info.sampling_rate_hz[0])
-    return df, fs
-
-
-def load_csv_nilspod(file_path: path_t = None, datastreams: Optional[Sequence[str]] = None,
-                     timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
-    """
-    Converts a CSV file recorded by NilsPod into a dataframe.
-
-    Parameters
-    ----------
-    file_path : str or path
-        path to dataset object to load
-    datastreams : list of str, optional
-        list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
-        Datastreams that are not part of the current dataset will be silently ignored.
-    timezone : str or pytz.timezone, optional
-        timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
-
-    Returns
-    -------
-    tuple
-        tuple of pandas dataframe with sensor data and sampling rate
-
-    See Also
-    --------
-    `biopsykit.io.load_dataset_nilspod()`
-
-    """
-    import re
-
-    df = pd.read_csv(file_path, header=1, index_col="timestamp")
-    header = pd.read_csv(file_path, header=None, nrows=1)
-
-    # infer start time from filename
-    start_time = re.findall(r"NilsPodX-[^\s]{4}_(.*?).csv", str(file_path.name))[0]
-    start_time = pd.to_datetime(start_time, format="%Y%m%d_%H%M%S").to_datetime64().astype(int)
-    # sampling rate is in second column of header
-    sampling_rate = int(header.iloc[0, 1])
-    # convert index to nanoseconds
-    df.index = ((df.index / sampling_rate) * 1e9).astype(int)
-    # add start time as offset and convert into datetime index
-    df.index = pd.to_datetime(df.index + start_time)
-    df.index.name = "time"
-
-    df_filt = pd.DataFrame(index=df.index)
-    if datastreams is None:
-        df_filt = df
-    else:
-        # filter only desired datastreams
-        for ds in datastreams:
-            df_filt = df_filt.join(df.filter(like=ds))
-
-    if isinstance(timezone, str):
-        # convert to pytz object
-        timezone = pytz.timezone(timezone)
-    # localize timezone (is already in correct timezone since start time is inferred from file name)
-    df_filt = df_filt.tz_localize(tz=timezone)
-    return df_filt, sampling_rate
-
-
-def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]] = None,
-                        datastreams: Optional[Sequence[str]] = None,
-                        legacy_support: Optional[str] = 'resolve',
-                        timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[Dict[str, pd.DataFrame], int]:
-    """
-    Loads all NilsPod datasets from one folder, converts them into dataframes and combines them into one dictionary.
-
-    This function can for example be used when single session were recorded for different phases.
-
-    Parameters
-    ----------
-    folder_path : str or path
-        path to folder containing data
-    phase_names: list, optional
-        list of phase names corresponding to the files in the folder. Must match the number of recordings
-    datastreams : list of str, optional
-        list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
-        Datastreams that are not part of the current dataset will be silently ignored.
-    legacy_support : str, optional
-        This indicates how to deal with older NilsPod firmware versions.
-        If `error`: An error is raised, if an unsupported version is detected.
-        If `warn`: A warning is raised, but the file is parsed without modification
-        If `resolve`: A legacy conversion is performed to load old files. If no suitable conversion is found,
-        an error is raised. See the `legacy` package and the README of `nilspodlib` to learn more about available
-        conversions.
-        Default: `resolve`
-    timezone : str or pytz.timezone, optional
-            timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
-
-    Returns
-    -------
-    tuple
-        tuple of dictionary with phase names as keys and pandas dataframes with sensor data as values and sampling rate
-
-    Raises
-    ------
-    ValueError
-        if number of phases does not match the number of datasets in the folder
-
-    Examples
-    --------
-    >>> import biopsykit as bp
-    >>> folder_path = "./nilspod"
-    >>> # load all datasets from the selected folder with all datastreams
-    >>> dataset_dict, sampling_rate = bp.io.load_folder_nilspod(folder_path)
-    >>> # load only ECG data of all datasets from the selected folder
-    >>> dataset_dict, sampling_rate = bp.io.load_dataset_nilspod(folder_path, datastreams=['ecg'])
-    >>> # load all datasets from the selected folder with correspondng phase names
-    >>> dataset_dict, sampling_rate = bp.io.load_dataset_nilspod(folder_path, phase_names=['VP01','VP02','VP03'])
-    """
-    # ensure pathlib
-    folder_path = Path(folder_path)
-    # look for all NilsPod binary files in the folder
-    dataset_list = list(sorted(folder_path.glob("*.bin")))
-    if phase_names is None:
-        phase_names = ["Part{}".format(i) for i in range(len(dataset_list))]
-
-    if len(phase_names) != len(dataset_list):
-        raise ValueError("Number of phases does not match number of datasets in the folder!")
-
-    dataset_dict = {
-        phase: load_dataset_nilspod(file_path=dataset_path, datastreams=datastreams, legacy_support=legacy_support,
-                                    timezone=timezone) for
-        phase, dataset_path in zip(phase_names, dataset_list)}
-    # assume equal sampling rates for all datasets in folder => take sampling rate from first dataset
-    sampling_rate = list(dataset_dict.values())[0].info.sampling_rate_hz
-    return dataset_dict, sampling_rate
 
 
 def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
@@ -402,35 +161,100 @@ def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset
     return time_log
 
 
-def check_nilspod_dataset_corrupted(dataset: 'Dataset') -> bool:
-    return np.where(np.diff(dataset.counter) != 1.0)[0].size != 0
+def write_pandas_dict_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_t,
+                            index_col: Optional[bool] = True) -> None:
+    """
+    Writes a dictionary containing pandas dataframes to an Excel file.
 
-
-def get_nilspod_dataset_corrupted_info(dataset: 'Dataset', file_path: path_t) -> Dict:
-    import re
-    nilspod_file_pattern = r"NilsPodX-\w{4}_(.*?).bin"
+    Parameters
+    ----------
+    data_dict : dict
+        dict with pandas dataframes
+    file_path : str or path
+        filepath
+    index_col : bool, optional
+        ``True`` to include dataframe index in Excel export, ``False`` otherwise. Default: ``True``
+    """
     # ensure pathlib
     file_path = Path(file_path)
 
-    keys = ['name', 'percent_corrupt', 'condition']
-    dict_res = dict.fromkeys(keys)
-    if not check_nilspod_dataset_corrupted(dataset):
-        dict_res['condition'] = 'fine'
-        return dict_res
+    writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
+    for key in data_dict:
+        if isinstance(data_dict[key].index, pd.DatetimeIndex):
+            # un-localize DateTimeIndex because Excel doesn't support timezone-aware dates
+            data_dict[key].tz_localize(None).to_excel(writer, sheet_name=key, index=index_col)
+        else:
+            data_dict[key].to_excel(writer, sheet_name=key, index=index_col)
+    writer.save()
 
-    idx_diff = np.diff(dataset.counter)
-    idx_corrupt = np.where(idx_diff != 1.0)[0]
-    percent_corrupt = ((len(idx_corrupt) / len(idx_diff)) * 100.0)
-    condition = "parts"
-    if percent_corrupt > 90.0:
-        condition = "lost"
-    elif percent_corrupt < 50.0:
-        if (idx_corrupt[0] / len(idx_corrupt)) < 0.30:
-            condition = "start_only"
-        elif (idx_corrupt[0] / len(idx_corrupt)) > 0.70:
-            condition = "end_only"
 
-    dict_res['name'] = re.search(nilspod_file_pattern, file_path.name).group(1)
-    dict_res['percent_corrupt'] = percent_corrupt
-    dict_res['condition'] = condition
-    return dict_res
+def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
+                      identifier_col: Optional[str] = "subject",
+                      index_cols: Optional[List[str]] = ["phase"],
+                      overwrite_file: Optional[bool] = False) -> None:
+    """
+    Saves dictionary with processing results (e.g. HR, HRV, RSA) of all subjects as csv file.
+
+    Simply pass a dictionary with processing results. The keys in the dictionary should be the Subject IDs
+    (or any other identifier), the values should be pandas dataframes. The resulting index can be specified by the
+    `identifier_col` parameter.
+
+    The dictionary will be concatenated to one large dataframe which will then be saved as csv file.
+
+    *Notes*:
+        * If a file with same name exists at the specified location, it is assumed that this is a result file from a
+          previous run and the current results should be appended to this file.
+          (To disable this behavior, set `overwrite_file` to ``False``).
+        * Per default, it is assumed that the 'values' dataframes has a multi-index with columns ["phase"].
+          The resulting dataframe would, thus, per default have the columns ["subject", "phase"].
+          This can be changed by the parameter `index_cols`.
+
+    Parameters
+    ----------
+    result_dict : dict
+        Dictionary containing processing results for all subjects. The keys in the dictionary should be the Subject IDs
+        (or any other identifier), the values should be pandas dataframes
+    file_path : path, str
+        path to file
+    identifier_col : str, optional
+        Name of the index in the concatenated dataframe. Default: "Subject_ID"
+    index_cols : list of str, optional
+        List of index columns of the single dataframes in the dictionary. Not needed if `overwrite_file` is ``False``.
+        Default: ["Phase", "Subphase"]
+    overwrite_file : bool, optional
+        ``True`` to overwrite the file if it already exists, ``False`` otherwise. Default: ``True``
+
+    Examples
+    --------
+    >>>
+    >>> from biopsykit.signals.ecg.io import write_result_dict
+    >>>
+    >>> file_path = "./param_results.csv"
+    >>>
+    >>> dict_param_output = {
+    >>> 'S01' : pd.DataFrame(), # dataframe from mist_param_subphases,
+    >>> 'S02' : pd.DataFrame(),
+    >>> # ...
+    >>> }
+    >>>
+    >>> write_result_dict(dict_param_output, file_path=file_path,
+    >>>                             identifier_col="subject", index_cols=["phase", "subphase"])
+    """
+
+    # ensure pathlib
+    file_path = Path(file_path)
+
+    # TODO check if index_cols is really needed?
+
+    identifier_col = [identifier_col]
+
+    if index_cols is None:
+        index_cols = []
+
+    df_result_concat = pd.concat(result_dict, names=identifier_col + index_cols)
+    if file_path.exists() and not overwrite_file:
+        # ensure that all identifier columns are read as str
+        df_result_old = pd.read_csv(file_path, dtype={col: str for col in identifier_col})
+        df_result_old.set_index(identifier_col + index_cols, inplace=True)
+        df_result_concat = df_result_concat.combine_first(df_result_old).sort_index(level=0)
+    df_result_concat.reset_index().to_csv(file_path, index=False)
