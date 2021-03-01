@@ -1,2 +1,2 @@
 from biopsykit.signals.imu.imu import *
-import biopsykit.signals.imu.activity_counts
+from biopsykit.signals.imu import activity_counts, static_moment_detection, wear_detection, feature_extraction

@@ -3,8 +3,8 @@ from typing import Union, Optional
 import pandas as pd
 import numpy as np
 
-import biopsykit.signals.utils as su
-from biopsykit.signals.static_moment_detection import find_static_sequences
+import biopsykit.utils.array_handling
+from biopsykit.signals.imu.static_moment_detection import find_static_sequences
 
 
 def convert_acc_data_to_g(data: Union[pd.DataFrame], inplace: Optional[bool] = False) -> Union[None, pd.DataFrame]:
@@ -28,15 +28,15 @@ def get_windows(data: Union[np.array, pd.Series, pd.DataFrame],
     if isinstance(data, (pd.DataFrame, pd.Series)):
         index = data.index
 
-    data_window = su.sliding_window(data,
-                                    window_samples=window_samples, window_sec=window_sec,
-                                    sampling_rate=sampling_rate, overlap_samples=overlap_samples,
-                                    overlap_percent=overlap_percent)
+    data_window = biopsykit.utils.array_handling.sliding_window(data,
+                                                                window_samples=window_samples, window_sec=window_sec,
+                                                                sampling_rate=sampling_rate, overlap_samples=overlap_samples,
+                                                                overlap_percent=overlap_percent)
     if index is not None:
-        index_resample = su.sliding_window(index.values,
-                                           window_samples=window_samples, window_sec=window_sec,
-                                           sampling_rate=sampling_rate, overlap_samples=overlap_samples,
-                                           overlap_percent=overlap_percent)[:, 0]
+        index_resample = biopsykit.utils.array_handling.sliding_window(index.values,
+                                                                       window_samples=window_samples, window_sec=window_sec,
+                                                                       sampling_rate=sampling_rate, overlap_samples=overlap_samples,
+                                                                       overlap_percent=overlap_percent)[:, 0]
         if isinstance(index, pd.DatetimeIndex):
             index_resample = pd.DatetimeIndex(index_resample)
             index_resample = index_resample.tz_localize('UTC').tz_convert(index.tzinfo)
@@ -65,7 +65,7 @@ def get_static_sequences(
         overlap_percent: Optional[float] = None,
 ) -> pd.DataFrame:
     # compute the data_norm of the variance in the windows
-    window, overlap = su.sanitize_sliding_window_input(
+    window, overlap = biopsykit.utils.array_handling.sanitize_sliding_window_input(
         window_samples=window_samples, window_sec=window_sec,
         sampling_rate=sampling_rate, overlap_samples=overlap_samples, overlap_percent=overlap_percent
     )

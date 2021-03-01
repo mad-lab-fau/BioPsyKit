@@ -4,32 +4,21 @@ import pandas as pd
 import numpy as np
 from scipy.stats import skew
 
-from biopsykit.utils import sanitize_input_nd
+from biopsykit.utils.array_handling import sanitize_input_nd
 
 
-def compute_static_sequences_features(data: pd.DataFrame,
-                                      static_sequences: pd.DataFrame,
-                                      sleep_endpoints: Dict):
-    return static_sequences_features(data, static_sequences=static_sequences, sleep_endpoints=sleep_endpoints)
-
-
-def static_sequences_features(
+def static_sequence_features(
         data: pd.DataFrame,
         static_sequences: pd.DataFrame,
-        sleep_endpoints: Optional[Dict] = None,
+        start,
+        end,
         index: Optional[Union[int, str]] = None,
         **kwargs):
-    if sleep_endpoints is None:
-        sleep_endpoints = {}
 
-    sleep_bouts = kwargs.get('sleep_bouts', sleep_endpoints.get('sleep_bouts', None))
-    wake_bouts = kwargs.get('wake_bouts', sleep_endpoints.get('wake_bouts', None))
-    sleep_onset = kwargs.get('sleep_onset', sleep_endpoints.get('sleep_onset', None))
-    wake_onset = kwargs.get('wake_onset', sleep_endpoints.get('wake_onset', None))
-    sleep_onset = pd.Timestamp(sleep_onset, tz="Europe/Berlin")
-    wake_onset = pd.Timestamp(wake_onset, tz="Europe/Berlin")
+    start = pd.Timestamp(start, tz="Europe/Berlin")
+    end = pd.Timestamp(end, tz="Europe/Berlin")
 
-    total_sleep_time = (wake_onset - sleep_onset)
+    total_time = (end - start)
 
     static_sequences = sanitize_input_nd(static_sequences, ncols=2)
 
@@ -37,7 +26,7 @@ def static_sequences_features(
     durations_60 = durations[durations >= 60]
 
     loc_max_sequence = data.index[static_sequences[np.argmax(durations)][0]]
-    loc_max_sequence_relative = (loc_max_sequence - sleep_onset) / total_sleep_time
+    loc_max_sequence_relative = (loc_max_sequence - start) / total_time
 
     feature_dict = {}
     feature_dict['ss_max_position'] = loc_max_sequence_relative

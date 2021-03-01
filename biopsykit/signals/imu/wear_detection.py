@@ -3,7 +3,7 @@ from typing import Union, Tuple
 import numpy as np
 import pandas as pd
 
-import biopsykit.signals.utils as su
+import biopsykit.utils.array_handling
 
 
 class WearDetection:
@@ -29,14 +29,14 @@ class WearDetection:
         overlap_percent = 1.0 - (overlap / window)
 
         acc_sliding = {
-            col: su.sliding_window(data[col].values, window_sec=window * 60, sampling_rate=self.sampling_rate,
-                                   overlap_percent=overlap_percent) for col in data
+            col: biopsykit.utils.array_handling.sliding_window(data[col].values, window_sec=window * 60, sampling_rate=self.sampling_rate,
+                                                               overlap_percent=overlap_percent) for col in data
         }
 
         if index is not None:
-            index_resample = su.sliding_window(np.arange(0, len(index)), window_sec=window * 60,
-                                               sampling_rate=self.sampling_rate,
-                                               overlap_percent=overlap_percent)[:, :]
+            index_resample = biopsykit.utils.array_handling.sliding_window(np.arange(0, len(index)), window_sec=window * 60,
+                                                                           sampling_rate=self.sampling_rate,
+                                                                           overlap_percent=overlap_percent)[:, :]
             start_end = index_resample[:, [0, -1]]
             if np.isnan(start_end[-1, -1]):
                 last_idx = index_resample[-1, np.where(~np.isnan(index_resample[-1, :]))[0][-1]]
