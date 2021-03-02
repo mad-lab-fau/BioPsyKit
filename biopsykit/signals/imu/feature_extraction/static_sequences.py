@@ -13,8 +13,10 @@ def static_sequence_features(
         start: Union[str, pd.Timestamp],
         end: Union[str, pd.Timestamp],
         index: Optional[Union[int, str]] = None):
-    start = pd.Timestamp(start, tz="Europe/Berlin")
-    end = pd.Timestamp(end, tz="Europe/Berlin")
+    if isinstance(start, str):
+        start = pd.Timestamp(start, tz="Europe/Berlin")
+    if isinstance(end, str):
+        end = pd.Timestamp(end, tz="Europe/Berlin")
 
     total_time = (end - start)
 

@@ -55,7 +55,7 @@ def sanitize_input_nd(
         ncols = (ncols,)
 
     if isinstance(data, (pd.Series, pd.DataFrame)):
-        data = np.squeeze(data.values)
+        data = data.values
 
     if data.ndim == 1:
         if 1 in ncols:
@@ -483,3 +483,9 @@ def bool_array_to_start_end_array(bool_array: np.ndarray) -> np.ndarray:
 
     slices = np.ma.flatnotmasked_contiguous(np.ma.masked_equal(bool_array, 0))
     return np.array([[s.start, s.stop] for s in slices])
+
+
+def split_array_equally(data: pd.DataFrame, n_splits: int):
+    idx_split = np.arange(0, n_splits + 1) * ((len(data) - 1) // n_splits)
+    split_boundaries = list(zip(idx_split[:-1], idx_split[1:]))
+    return split_boundaries
