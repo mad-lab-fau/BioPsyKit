@@ -3,6 +3,7 @@ from typing import Union, Optional
 import pandas as pd
 import numpy as np
 
+from biopsykit.utils.time import utc
 from biopsykit.utils.array_handling import sliding_window, sanitize_sliding_window_input
 from biopsykit.signals.imu.static_moment_detection import find_static_sequences
 
@@ -39,7 +40,7 @@ def get_windows(data: Union[np.array, pd.Series, pd.DataFrame],
                                         overlap_percent=overlap_percent)[:, 0]
         if isinstance(index, pd.DatetimeIndex):
             index_resample = pd.DatetimeIndex(index_resample)
-            index_resample = index_resample.tz_localize('UTC').tz_convert(index.tzinfo)
+            index_resample = index_resample.tz_localize(utc).tz_convert(index.tzinfo)
 
     data_window = np.transpose(data_window)
     data_window = {axis: pd.DataFrame(np.transpose(data), index=index_resample) for axis, data in
