@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Sequence, Dict, Optional, Tuple
+from typing import Sequence, Dict, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -69,9 +69,9 @@ def get_ecg_example_02() -> Tuple[pd.DataFrame, int]:
                                 datastreams=['ecg'])
 
 
-def get_sleep_analyzer_raw_example() -> pd.DataFrame:
+def get_sleep_analyzer_raw_example(split_nights: Optional[bool] = True) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     from biopsykit.io.sleep import load_withings_sleep_analyzer_raw_folder
-    return load_withings_sleep_analyzer_raw_folder(_EXAMPLE_DATA_PATH.joinpath("sleep"))
+    return load_withings_sleep_analyzer_raw_folder(_EXAMPLE_DATA_PATH.joinpath("sleep"), split_nights=split_nights)
 
 
 def get_sleep_analyzer_summary_example() -> pd.DataFrame:

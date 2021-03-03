@@ -1,6 +1,6 @@
 from ast import literal_eval
 from pathlib import Path
-from typing import Optional, Union, Dict
+from typing import Optional, Union, Dict, Sequence
 
 import pytz
 import pandas as pd
@@ -25,7 +25,10 @@ RAW_DATA_SOURCES = {
 
 
 def load_withings_sleep_analyzer_raw_folder(folder_path: path_t,
-                                            timezone: Optional[Union[pytz.timezone, str]] = tz) -> pd.DataFrame:
+                                            timezone: Optional[Union[pytz.timezone, str]] = tz,
+                                            split_nights: Optional[bool] = True) -> Union[
+    pd.DataFrame, Sequence[pd.DataFrame]]:
+    import biopsykit.sleep.utils as utils
     """
 
     Parameters
@@ -50,7 +53,11 @@ def load_withings_sleep_analyzer_raw_folder(folder_path: path_t,
 
     list_data = [load_withings_sleep_analyzer_raw_file(file_path, RAW_DATA_SOURCES[data_source], timezone)
                  for file_path, data_source in zip(raw_files, data_sources) if data_source in RAW_DATA_SOURCES]
-    return pd.concat(list_data, axis=1)
+    data = pd.concat(list_data, axis=1)
+    if split_nights:
+        data = utils.split_nights(data)
+        data = [d.resample("1min").interpolate() for d in data]
+    return data
 
 
 def load_withings_sleep_analyzer_raw_file(file_path: path_t, data_source: str,
@@ -76,6 +83,11 @@ def load_withings_sleep_analyzer_raw_file(file_path: path_t, data_source: str,
     data_explode = data_explode.tz_localize('UTC').tz_convert(timezone)
     # rename the value column
     data_explode.columns = [data_source]
+    # convert dtypes from object into numerical values
+    data_explode = data_explode.astype(int)
+    # sort index and drop duplicate index values
+    data_explode = data_explode.sort_index()
+    data_explode = data_explode[~data_explode.index.duplicated()]
     return data_explode
 
 
