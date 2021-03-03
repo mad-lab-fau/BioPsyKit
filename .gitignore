@@ -1,3 +1,7 @@
+# Ignore result folder in examples
+examples/results/
+
+
 # Created by .ignore support plugin (hsz.mobi)
 ### JupyterNotebooks template
 # gitignore template for Jupyter Notebooks
