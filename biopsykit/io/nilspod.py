@@ -53,18 +53,18 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
 
     Examples
     --------
-    >>> import biopsykit as bp
+    >>> from biopsykit.io.nilspod import load_dataset_nilspod
     >>> # Option 1: Import data by passing file name
     >>> file_path = "./<filename-of-nilspod-data>.bin"
     >>> # load dataset with all datastreams
-    >>> df, fs = bp.io.load_dataset_nilspod(file_path=file_path)
+    >>> df, fs = load_dataset_nilspod(file_path=file_path)
     >>> # load only ECG data of dataset
-    >>> df, fs = bp.io.load_dataset_nilspod(file_path=file_path, datastreams=['ecg'])
+    >>> df, fs = load_dataset_nilspod(file_path=file_path, datastreams=['ecg'])
     >>>
     >>> # Option 2: Import data by passing Dataset object imported from NilsPodLib (in this example, only acceleration data)
     >>> from nilspodlib import Dataset
     >>> dataset = Dataset.from_bin_file("<filename>.bin")
-    >>> df, fs = bp.io.load_dataset_nilspod(dataset=dataset, datastreams=['acc'])
+    >>> df, fs = load_dataset_nilspod(dataset=dataset, datastreams=['acc'])
     """
     from nilspodlib import Dataset
     import warnings
@@ -223,13 +223,14 @@ def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]
     Examples
     --------
 import biopsykit.io.nilspod    >>> import biopsykit as bp
+    >>> from biopsykit.io.nilspod import load_folder_nilspod
     >>> folder_path = "./nilspod"
     >>> # load all datasets from the selected folder with all datastreams
-    >>> dataset_dict, sampling_rate = bp.io.load_folder_nilspod(folder_path)
+    >>> dataset_dict, fs = load_folder_nilspod(folder_path)
     >>> # load only ECG data of all datasets from the selected folder
-    >>> dataset_dict, sampling_rate = biopsykit.io.nilspod.load_dataset_nilspod(folder_path, datastreams=['ecg'])
+    >>> dataset_dict, fs = load_folder_nilspod(folder_path, datastreams=['ecg'])
     >>> # load all datasets from the selected folder with correspondng phase names
-    >>> dataset_dict, sampling_rate = biopsykit.io.nilspod.load_dataset_nilspod(folder_path, phase_names=['VP01','VP02','VP03'])
+    >>> dataset_dict, fs = load_folder_nilspod(folder_path, phase_names=['VP01','VP02','VP03'])
     """
     # ensure pathlib
     folder_path = Path(folder_path)

@@ -62,9 +62,9 @@ def load_combine_hr_all_subjects(base_path: path_t, subject_folder_pattern: str,
 
     Examples
     --------
-    >>> import biopsykit as ep
+    >>> from biopsykit.io.ecg import load_combine_hr_all_subjects
     >>> base_path = "../signals/ecg/"
-    >>> dict_hr_subjects = ep.load_combine_hr_all_subjects(
+    >>> dict_hr_subjects = load_combine_hr_all_subjects(
     >>>                         base_path, subject_folder_pattern="Vp_*",
     >>>                         filename_pattern="ecg_result*.xlsx")
     >>>
@@ -114,5 +114,3 @@ def write_hr_subject_dict(ep_or_dict: Union['EcgProcessor', Dict[str, pd.DataFra
     else:
         hr_subject_dict = ep_or_dict
     write_pandas_dict_excel(hr_subject_dict, file_path)
-
-

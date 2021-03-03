@@ -97,7 +97,7 @@ def load_questionnaire_data(file_path: path_t,
                             remove_nan_rows: Optional[bool] = True,
                             replace_missing_vals: Optional[bool] = True,
                             sheet_name: Optional[Union[str, int]] = 0) -> pd.DataFrame:
-    from biopsykit.questionnaires.utils import convert_nan
+    from biopsykit.utils.dataframe_handling import convert_nan
     # ensure pathlib
     file_path = Path(file_path)
     if file_path.suffix == '.csv':
@@ -227,7 +227,7 @@ def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
     Examples
     --------
     >>>
-    >>> from biopsykit.signals.ecg.io import write_result_dict
+    >>> from biopsykit.io import write_result_dict
     >>>
     >>> file_path = "./param_results.csv"
     >>>

@@ -11,12 +11,6 @@ from tqdm.notebook import tqdm
 from biopsykit.utils.time import tz, utc
 
 
-def multi_xs(data: pd.DataFrame, keys: Sequence[str], level: str) -> pd.DataFrame:
-    levels = data.index.names
-    data_xs = pd.concat({key: data.xs(key, level=level) for key in keys}, names=[level])
-    return data_xs.reorder_levels(levels).sort_index()
-
-
 def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
                dataset: Optional[Dataset] = None, df: Optional[pd.DataFrame] = None,
                timezone: Optional[Union[str, pytz.timezone]] = tz,
@@ -49,7 +43,7 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
 
     Examples
     --------
-    >>> from biopsykit.utils.data import split_data
+    >>> from biopsykit.utils.data_processing import split_data
     >>> # Example 1: define time intervals (start and end) of the different recording phases as dictionary
     >>> time_intervals = {"Part1": ("09:00", "09:30"), "Part2": ("09:30", "09:45"), "Part3": ("09:45", "10:00")}
     >>> # Example 2: define time intervals as pandas Series. Here, only start times of the are required, it is assumed
@@ -481,7 +475,7 @@ def mean_se_nested_dict(
 
     Examples
     --------
-    >>> from biopsykit.utils.data import mean_se_nested_dict
+    >>> from biopsykit.utils.data_processing import mean_se_nested_dict
     >>> # Example (a): Nested dictionary with outer-keys = Subjects, inner-keys = Phases, inner-values = pandas dataframe with 1 column
     >>> # Construct dictionary (as example)
     >>> dict_subject = {

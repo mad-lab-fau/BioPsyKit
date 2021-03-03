@@ -7,7 +7,7 @@ import scipy.signal as ss
 from tqdm.notebook import tqdm
 import pytz
 
-from biopsykit.utils.data import split_data
+from biopsykit.utils.data_processing import split_data
 from biopsykit.utils.array_handling import find_extrema_in_radius, remove_outlier_and_interpolate, sanitize_input_1d
 from biopsykit.utils.time import tz, utc, check_tz_aware
 
