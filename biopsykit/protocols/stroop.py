@@ -28,27 +28,27 @@ class Stroop(base.BaseProtocol):
 
         self.stroop_times: Sequence[int] = [0, 10]
 
-        self.phases: Sequence[str] = ["Baseline", "Stroop", "Postline"]
+        self.phases: Sequence[str] = ["Stroop1", "Stroop2","Stroop3"]
         """
         Stroop Phases
 
         Names of Stroop phases
         """
 
-        self.phase_durations: Sequence[int] = [10 * 60, 10 * 60, 10 * 60]
+        self.phase_durations: Sequence[int] = [3 * 60, 3 * 60, 3 * 60]
         """
         Stroop Phase Durations
         
         Total duration of phases in seconds
         """
 
-        self.subphases: Sequence[str] = ['Stroop1', 'Stroop2', 'Stroop3']
+        self.subphases: Sequence[str] = ['Stroop', 'Feedback']
         """
         Stroop Subphases
 
         Names of Stroop subphases
         """
-        self.subphase_durations: Sequence[int] = [10*60, 10*60, 10*60]
+        self.subphase_durations: Sequence[int] = [70, 60]
         """
         Stroop Subphase Durations
 
@@ -57,7 +57,7 @@ class Stroop(base.BaseProtocol):
 
         self.hr_ensemble_plot_params = {
             'colormap': colors.cmap_fau_blue('3_ens'),
-            'line_styles': ['-', '--', ':'],
+            'line_styles': ['-', '--', '-.'],
             'ensemble_alpha': 0.4,
             'background_color': ['#e0e0e0', '#9e9e9e', '#757575'],
             'background_alpha': [0.5, 0.5, 0.5],
@@ -66,7 +66,7 @@ class Stroop(base.BaseProtocol):
             'xaxis_minor_ticks': mticks.MultipleLocator(60),
             'yaxis_label': r"$\Delta$Mean HR [bpm]",
             'legend_loc': 'upper right',
-            'legend_bbox_to_anchor': (1.00, 0.90),
+            'legend_bbox_to_anchor': (0.25, 0.90),
             'phase_text': "Stroop Phase {}",
             'end_phase_text': "End Phase {}",
             'end_phase_line_color': "#e0e0e0",
@@ -75,7 +75,7 @@ class Stroop(base.BaseProtocol):
         }
         self.stroop_plot_params = {
             'colormap': colors.cmap_fau_blue('3_ens'),
-            'line_styles': ['-', '--', ':'],
+            'line_styles': ['-', '--', '-.'],
             'background_color': ['#e0e0e0', '#9e9e9e', '#757575'],
             'background_alpha': [0.5, 0.5, 0.5],
             'fontsize': 14,
@@ -212,9 +212,156 @@ class Stroop(base.BaseProtocol):
             dict_result['stroop_result'] = pd.read_csv(data_stroop, sep='\t')
 
         return dict_result
-
-    
     def hr_ensemble_plot(
+            self,
+            data: Dict[str, pd.DataFrame],
+            plot_params: Optional[Dict] = None,
+            ylims: Optional[Sequence[float]] = None,
+            ax: Optional[plt.Axes] = None,
+            is_group_dict: Optional[bool] = False,
+            **kwargs
+    ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+        """
+        Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
+        Simply pass a 'MIST dict' dictionary with one pandas heart rate dataframe per MIST phase
+        (see ``MIST.concat_mist_dicts`` for further explanation), i.e. heart rate data with one column per subject.
+
+        Parameters
+        ----------
+        data : dict
+            dict with heart rate data to plot
+        plot_params : dict, optional
+            dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
+            For an overview of parameters and their default values, see `mist.hr_ensemble_params`
+        ylims : list, optional
+            y axis limits or ``None`` to infer y axis limits from data. Default: ``None``
+        ax : plt.Axes, optional
+            Axes to plot on, otherwise create a new one. Default: ``None``
+
+        Returns
+        -------
+        tuple or none
+            Tuple of Figure and Axes or None if Axes object was passed
+        """
+        # TODO add option to apply moving average filter before plotting ensemble plot
+
+        import matplotlib.patches as mpatch
+
+        fig: Union[plt.Figure, None] = None
+        if ax is None:
+            if 'figsize' in kwargs:
+                figsize = kwargs['figsize']
+            else:
+                figsize = plt.rcParams['figure.figsize']
+            fig, ax = plt.subplots(figsize=figsize)
+
+        if plot_params:
+            self.hr_ensemble_plot_params.update(plot_params)
+
+        # sns.despine()
+        sns.set_palette(self.hr_ensemble_plot_params['colormap'])
+        line_styles = self.hr_ensemble_plot_params['line_styles']
+        fontsize = self.hr_ensemble_plot_params['fontsize']
+        xaxis_label = self.hr_ensemble_plot_params['xaxis_label']
+        yaxis_label = self.hr_ensemble_plot_params['yaxis_label']
+        xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis_minor_ticks']
+        ensemble_alpha = self.hr_ensemble_plot_params['ensemble_alpha']
+        bg_color = self.hr_ensemble_plot_params['background_color']
+        bg_alpha = self.hr_ensemble_plot_params['background_alpha']
+        phase_text = self.hr_ensemble_plot_params['phase_text']
+        end_phase_text = self.hr_ensemble_plot_params['end_phase_text']
+        end_phase_color = self.hr_ensemble_plot_params['end_phase_line_color']
+        end_phase_line_style = self.hr_ensemble_plot_params['end_phase_line_style']
+        end_phase_line_width = self.hr_ensemble_plot_params['end_phase_line_width']
+        legend_loc = self.hr_ensemble_plot_params['legend_loc']
+        legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend_bbox_to_anchor']
+
+        subphases = np.array(self.subphases)
+        #mist_dur = [len(v) for v in data.values()]
+        start_end = [(0,self.subphase_durations[0]),(self.subphase_durations[0],self.subphase_durations[0]+self.subphase_durations[1])]
+
+        if is_group_dict:
+            for j,condition in enumerate(data):
+                mist_dur = [len(v) for v in data[condition].values()]
+                for i, key in enumerate(data[condition]):
+                    pal = sns.color_palette()[j]
+
+                    hr_mist = data[condition][key]
+                    x = hr_mist.index
+                    hr_mean = hr_mist.mean(axis=1)
+                    hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
+                    ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1)+ ' - ' +condition, linestyle=line_styles[i], color=pal)
+                    ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
+                    ax.vlines(x=mist_dur[i] - 0.5, ymin=0, ymax=1, transform=ax.get_xaxis_transform(),
+                              ls=end_phase_line_style, lw=end_phase_line_width,
+                              colors=end_phase_color, zorder=3)
+                    ax.annotate(
+                        text=end_phase_text.format(i + 1),
+                        xy=(mist_dur[i], 0.85 - 0.05 * i),
+                        xytext=(-5, 0),
+                        xycoords=ax.get_xaxis_transform(),
+                        textcoords='offset points',
+                        ha='right',
+                        fontsize=fontsize - 4,
+                        bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
+                        zorder=3
+                    )
+                ax.legend(loc=legend_loc, bbox_to_anchor=(0.20,0.3), prop={'size': fontsize})
+        else:
+            mist_dur = [len(v) for v in data.values()]
+            for i, key in enumerate(data):
+                hr_mist = data[key]
+                x = hr_mist.index
+                hr_mean = hr_mist.mean(axis=1)
+                hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
+                ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1), linestyle=line_styles[i])
+                ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
+                ax.vlines(x=mist_dur[i] - 0.5, ymin=0, ymax=1, transform=ax.get_xaxis_transform(),
+                          ls=end_phase_line_style, lw=end_phase_line_width,
+                          colors=end_phase_color, zorder=3)
+                ax.annotate(
+                    text=end_phase_text.format(i + 1),
+                    xy=(mist_dur[i], 0.85 - 0.05 * i),
+                    xytext=(-5, 0),
+                    xycoords=ax.get_xaxis_transform(),
+                    textcoords='offset points',
+                    ha='right',
+                    fontsize=fontsize - 4,
+                    bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
+                    zorder=3
+                )
+            ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor, prop={'size': fontsize})
+
+        for (start, end), subphase in zip(start_end, subphases):
+            ax.text(x=start + 0.5 * (end - start), y=0.95, transform=ax.get_xaxis_transform(),
+                    s=subphase, ha='center', va='center', fontsize=fontsize)
+        p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
+                             zorder=3, lw=0)
+        ax.add_patch(p)
+
+        for (start, end), color, alpha in zip(start_end, bg_color, bg_alpha):
+            ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
+
+        ax.set_xlabel(xaxis_label, fontsize=fontsize)
+        ax.set_xticks([start for (start, end) in start_end])
+        ax.xaxis.set_minor_locator(xaxis_minor_ticks)
+        ax.tick_params(axis="x", which='both', bottom=True)
+
+        ax.set_ylabel(yaxis_label, fontsize=fontsize)
+        ax.tick_params(axis="y", which='major', left=True)
+
+        if ylims:
+            ax.margins(x=0)
+            ax.set_ylim(ylims)
+        else:
+            ax.margins(0, 0.1)
+
+
+        if fig:
+            fig.tight_layout()
+            return fig, ax
+    
+    def hr_ensemble_plot_old(
             self,
             data: Dict[str, pd.DataFrame],
             plot_params: Optional[Dict] = None,
@@ -288,7 +435,6 @@ class Stroop(base.BaseProtocol):
                 conditions.append(condition)
                 print(conditions)
                 for i, key in enumerate(data[condition]):
-
                     stroop = data[condition][key]
                     start_end.append((add+1, add+len(stroop)))
                     x = stroop.index + add
