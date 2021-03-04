@@ -556,7 +556,7 @@ class Stroop(base.BaseProtocol):
 
     def stroop_mean_se(self,data=pd.DataFrame,is_group_dict: Optional[bool]=False) -> pd.DataFrame:
 
-        labels = self.subphases
+        labels = self.phases
         columns = list(data)
         data_concat = pd.DataFrame()
         if is_group_dict:
@@ -646,7 +646,7 @@ class Stroop(base.BaseProtocol):
         xaxis_minor_ticks = self.stroop_plot_params['xaxis_minor_ticks']
         bg_color = self.stroop_plot_params['background_color']
         bg_alpha = self.stroop_plot_params['background_alpha']
-        x_labels = self.subphases
+        x_labels = self.phases
 
         x = np.arange(len(x_labels))
         start_end = [(i - 0.5, i + 0.5) for i in x]
