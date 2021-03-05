@@ -4,14 +4,14 @@ import numpy as np
 import pandas as pd
 
 
-def int_from_str_idx(data: pd.DataFrame, idx_name: str, regex: str, func: Optional[Callable] = None) -> pd.DataFrame:
+def int_from_str_idx(data: pd.DataFrame, idx_names: Union[str, Sequence[str]], regex: Union[str, Sequence[str]], func: Optional[Callable] = None) -> pd.DataFrame:
     """
     Extracts an integer from a index level containing string values.
 
     Parameters
     ----------
     data
-    idx_name
+    idx_names
     regex
     func : function to apply to the extracted integers, such as a lambda function to increment all integers by 1
 
@@ -20,16 +20,26 @@ def int_from_str_idx(data: pd.DataFrame, idx_name: str, regex: str, func: Option
     Dataframe with new index
     """
 
-    if idx_name not in data.index.names:
-        raise ValueError("Name `{}` not in index!".format(idx_name))
+    if type(idx_names) is not type(regex):
+        raise ValueError("`idx_names` and `regex` must both be either strings or list of strings!")
 
-    idx_names = data.index.names
+    if isinstance(idx_names, str):
+        idx_names = [idx_names]
+
+    if isinstance(regex, str):
+        regex = [regex]
+
+    if all([idx not in data.index.names for idx in idx_names]):
+        raise ValueError("Not all of `{}` in index!".format(idx_names))
+
+    idx_names_old = data.index.names
     data = data.reset_index()
-    idx_col = data[idx_name].str.extract(regex).astype(int)[0]
-    if func is not None:
-        idx_col = func(idx_col)
-    data[idx_name] = idx_col
-    data = data.set_index(idx_names)
+    for idx, reg in zip(idx_names, regex):
+        idx_col = data[idx].str.extract(reg).astype(int)[0]
+        if func is not None:
+            idx_col = func(idx_col)
+        data[idx] = idx_col
+    data = data.set_index(idx_names_old)
     return data
 
 
