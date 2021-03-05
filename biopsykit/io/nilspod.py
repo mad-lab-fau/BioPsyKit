@@ -1,13 +1,14 @@
 from pathlib import Path
-from typing import Optional, Sequence, Union, Tuple, Dict
+from typing import Optional, Sequence, Union, Tuple, Dict, Literal
 
 import numpy as np
 import pandas as pd
 import pytz
 
-from biopsykit.io import COUNTER_INCONSISTENCY_HANDLING
 from biopsykit.utils import path_t
 from biopsykit.utils.time import tz, utc
+
+COUNTER_INCONSISTENCY_HANDLING = Literal['raise', 'warn', 'ignore']
 
 
 def load_dataset_nilspod(file_path: Optional[path_t] = None,

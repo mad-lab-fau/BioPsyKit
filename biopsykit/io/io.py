@@ -1,13 +1,11 @@
 import datetime
 from pathlib import Path
-from typing import Optional, Union, Sequence, Dict, Literal, List
+from typing import Optional, Union, Sequence, Dict, List
 
 import pandas as pd
 import pytz
 
 from biopsykit.utils import path_t
-
-COUNTER_INCONSISTENCY_HANDLING = Literal['raise', 'warn', 'ignore']
 
 
 def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
