@@ -131,7 +131,8 @@ def standard_features(data: pd.DataFrame,
     return out
 
 
-def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
+def slope(data: pd.DataFrame, sample_labels: Optional[Union[Tuple, Sequence]] = None,
+          sample_idx: Optional[Union[Tuple[int, int], Sequence[int]]] = None,
           biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
           saliva_times: Optional[Sequence[int]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     _check_data_format(data)
@@ -141,11 +142,11 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
     if biomarker_type not in data:
         raise ValueError("No `{}` columns in data!".format(biomarker_type))
 
-    # ensure list
-    sample_idx = list(sample_idx)
+    if sample_idx is None and sample_labels is None:
+        raise ValueError("Either `sample_labels` or `sample_idx` must be supplied as parameter!")
 
-    if len(sample_idx) != 2:
-        raise ValueError("Exactly 2 indices needed for computing slope. Got {} indices.".format(len(sample_idx)))
+    if sample_idx is not None and sample_labels is not None:
+        raise ValueError("Either `sample_labels` or `sample_idx` must be supplied as parameter, not both!")
 
     if isinstance(biomarker_type, list):
         dict_result = {}
@@ -157,6 +158,16 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
                                            saliva_times=saliva_times)
 
     data = data[[biomarker_type]].unstack()
+
+    if sample_labels is not None:
+        sample_idx = [data[biomarker_type].columns.get_loc(label) for label in sample_labels]
+    else:
+        # ensure list
+        sample_idx = list(sample_idx)
+        sample_labels = data[biomarker_type].columns[sample_idx]
+
+    if len(sample_idx) != 2:
+        raise ValueError("Exactly 2 indices needed for computing slope. Got {} indices.".format(len(sample_idx)))
 
     # replace idx values like '-1' with the actual index
     if sample_idx[0] < 0:
@@ -173,6 +184,6 @@ def slope(data: pd.DataFrame, sample_idx: Union[Tuple[int, int], Sequence[int]],
         raise ValueError("`sample_idx[1]` is out of bounds!")
 
     out = pd.DataFrame(np.diff(data.iloc[:, sample_idx]) / np.diff(saliva_times[..., sample_idx]), index=data.index,
-                       columns=['{}_slope{}{}'.format(biomarker_type, *sample_idx)])
+                       columns=['{}_slope{}{}'.format(biomarker_type, *sample_labels)])
     out.columns.name = "biomarker"
     return out
