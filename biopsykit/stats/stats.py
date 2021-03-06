@@ -110,13 +110,12 @@ class StatsPipeline:
                 display(Markdown("""<font size="4"><b> {} </b></font>""".format(MAP_CATEGORIES[category])))
                 for step in steps:
                     display(Markdown("**{}**".format(MAP_NAMES[step])))
+                    df = self.results[step]
                     if sig_only.get(category, False):
-                        df = self._filter_sig(self.results[step])
+                        df = self._filter_sig(df)
                         if df.empty:
                             display(Markdown("*No significant p-values.*"))
                             continue
-                    else:
-                        df = self.results[step]
                     display(df)
 
     @staticmethod
