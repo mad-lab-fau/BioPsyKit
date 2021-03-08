@@ -12,6 +12,7 @@ MAP_STAT_TESTS = {
     'welch_anova': pg.welch_anova,
     'rm_anova': pg.rm_anova,
     'mixed_anova': pg.mixed_anova,
+    'kruskal': pg.kruskal,
     'pairwise_ttests': pg.pairwise_ttests,
     'pairwise_tukey': pg.pairwise_tukey
 }
@@ -23,6 +24,7 @@ MAP_STAT_PARAMS = {
     'welch_anova': ['dv', 'between'],
     'rm_anova': ['dv', 'within', 'subject'],
     'mixed_anova': ['dv', 'between', 'within', 'subject'],
+    'kruskal': ['dv', 'between'],
     'pairwise_ttests': ['dv', 'between', 'within', 'subject', 'effsize', 'tail', 'padjust'],
     'pairwise_tukey': ['dv', 'between', 'effsize']
 }
@@ -34,6 +36,7 @@ MAP_NAMES = {
     'welch_anova': "Welch ANOVA",
     'rm_anova': "Repeated-measurement ANOVA",
     'mixed_anova': "Mixed ANOVA",
+    'kruskal': "Kruskal-Wallis H-test for independent samples",
     'pairwise_ttests': "Pairwise t-Tests",
     'pairwise_tukey': "Pairwise Tukey's HSD (Honestly Significant Differences) Test"
 }
