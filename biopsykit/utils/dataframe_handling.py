@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 
 
-def int_from_str_idx(data: pd.DataFrame, idx_names: Union[str, Sequence[str]], regex: Union[str, Sequence[str]], func: Optional[Callable] = None) -> pd.DataFrame:
+def int_from_str_idx(data: pd.DataFrame, idx_names: Union[str, Sequence[str]], regex: Union[str, Sequence[str]],
+                     func: Optional[Callable] = None) -> pd.DataFrame:
     """
     Extracts an integer from a index level containing string values.
 
@@ -121,3 +122,12 @@ def multi_xs(data: pd.DataFrame, keys: Sequence[str], level: str) -> pd.DataFram
     levels = data.index.names
     data_xs = pd.concat({key: data.xs(key, level=level) for key in keys}, names=[level])
     return data_xs.reorder_levels(levels).sort_index()
+
+
+def stack_groups_percent(data: pd.DataFrame, hue: str, stacked: str,
+                         order: Optional[Sequence[str]] = None) -> pd.DataFrame:
+    data_grouped = pd.DataFrame(data.groupby([hue] + [stacked]).size(), columns=["data"])
+    data_grouped = data_grouped.groupby(hue).apply(lambda x: 100 * (x / x.sum())).T.stack().T
+    if order:
+        data_grouped = data_grouped.reindex(order)
+    return data_grouped["data"]
