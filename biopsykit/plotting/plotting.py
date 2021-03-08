@@ -1,3 +1,5 @@
+from typing import Union, Tuple
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,7 +7,7 @@ import matplotlib.pyplot as plt
 from biopsykit.utils.functions import se
 
 
-def lineplot(data: pd.DataFrame, **kwargs):
+def lineplot(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     markers = None
     style = kwargs.get('style', None)
     ax: plt.Axes = kwargs.get('ax', None)
@@ -56,6 +58,26 @@ def lineplot(data: pd.DataFrame, **kwargs):
     handles = [h[0] for h in handles]
     # use them in the legend
     ax.legend(handles, labels, loc='best', numpoints=1)
+
+    if fig is not None:
+        return fig, ax
+
+
+def stacked_barchart(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
+    fig = None
+    ax: plt.Axes = kwargs.get('ax', None)
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    ylabel = kwargs.get('ylabel', None)
+    order = kwargs.get('order', None)
+    if order:
+        data = data.reindex(order)
+
+    ax = data.plot(kind='bar', stacked=True, ax=ax, rot=0)
+    ax.legend().set_title(None)
+    if ylabel:
+        ax.set_ylabel(ylabel)
 
     if fig is not None:
         return fig, ax
