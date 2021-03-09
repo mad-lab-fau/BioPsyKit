@@ -1,16 +1,12 @@
 from typing import Dict, Tuple, Union, Optional, Sequence
-import csv
 from biopsykit.protocols import base
 import biopsykit.colors as colors
 import pandas as pd
-import os
-from tqdm.notebook import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import biopsykit.protocols.plotting as plot
 import matplotlib.ticker as mticks
 import seaborn as sns
-from matplotlib.lines import Line2D
 
 class Stroop(base.BaseProtocol):
     """
@@ -138,9 +134,9 @@ class Stroop(base.BaseProtocol):
             **kwargs
     ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         """
-        Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
-        Simply pass a 'MIST dict' dictionary with one pandas heart rate dataframe per MIST phase
-        (see ``MIST.concat_mist_dicts`` for further explanation), i.e. heart rate data with one column per subject.
+        Plots the course of heart rate during each Stroop subphase continuously as ensemble plot (mean ± standard error).
+        Simply pass a 'Stroop dict' dictionary with one pandas heart rate dataframe per Stroop subphase
+        (see ``Stroop.concat_stroop_dicts`` for further explanation), i.e. heart rate data with one column per subject.
 
         Parameters
         ----------
@@ -275,134 +271,7 @@ class Stroop(base.BaseProtocol):
         if fig:
             fig.tight_layout()
             return fig, ax
-    
-    def hr_ensemble_plot_old(
-            self,
-            data: Dict[str, pd.DataFrame],
-            plot_params: Optional[Dict] = None,
-            ylims: Optional[Sequence[float]] = None,
-            ax: Optional[plt.Axes] = None,
-            is_group_dict: Optional[bool] = False,
-            **kwargs
-    ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
-        """
-        Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
-        Simply pass a 'MIST dict' dictionary with one pandas heart rate dataframe per MIST phase
-        (see ``MIST.concat_mist_dicts`` for further explanation), i.e. heart rate data with one column per subject.
 
-        Parameters
-        ----------
-        data : dict
-            dict with heart rate data to plot
-        plot_params : dict, optional
-            dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
-            For an overview of parameters and their default values, see `mist.hr_ensemble_params`
-        ylims : list, optional
-            y axis limits or ``None`` to infer y axis limits from data. Default: ``None``
-        ax : plt.Axes, optional
-            Axes to plot on, otherwise create a new one. Default: ``None``
-        is_group_dict : boolean, optional
-            ``True`` if `data` is a group dict, i.e. contains dictionaries for multiple groups, ``False`` otherwise.
-            Default: ``False``
-
-        Returns
-        -------
-        tuple or none
-            Tuple of Figure and Axes or None if Axes object was passed
-        """
-
-        import matplotlib.patches as mpatch
-
-        fig: Union[plt.Figure, None] = None
-        if ax is None:
-            if 'figsize' in kwargs:
-                figsize = kwargs['figsize']
-            else:
-                figsize = plt.rcParams['figure.figsize']
-            fig, ax = plt.subplots(figsize=figsize)
-
-        if plot_params:
-            self.hr_ensemble_plot_params.update(plot_params)
-
-        # sns.despine()
-        sns.set_palette(self.hr_ensemble_plot_params['colormap'])
-        line_styles = self.hr_ensemble_plot_params['line_styles']
-        fontsize = self.hr_ensemble_plot_params['fontsize']
-        xaxis_label = self.hr_ensemble_plot_params['xaxis_label']
-        yaxis_label = self.hr_ensemble_plot_params['yaxis_label']
-        xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis_minor_ticks']
-        ensemble_alpha = self.hr_ensemble_plot_params['ensemble_alpha']
-        bg_color = self.hr_ensemble_plot_params['background_color']
-        bg_alpha = self.hr_ensemble_plot_params['background_alpha']
-        legend_loc = self.hr_ensemble_plot_params['legend_loc']
-        legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend_bbox_to_anchor']
-
-        phases = np.array(self.phases)
-        mist_dur = [len(v) for v in data.values()]
-
-        if is_group_dict:
-            conditions=[]
-            for j, condition in enumerate(data):
-                start_end = []
-                add=0
-                pal = sns.color_palette()[j]
-                conditions.append(condition)
-                print(conditions)
-                for i, key in enumerate(data[condition]):
-                    stroop = data[condition][key]
-                    start_end.append((add+1, add+len(stroop)))
-                    x = stroop.index + add
-                    add += len(stroop)
-                    stroop_mean = stroop.mean(axis=1)
-                    stroop_stderr = stroop.std(axis=1) / np.sqrt(stroop.shape[1])
-                    ax.plot(x, stroop_mean, zorder=2, linestyle=line_styles[j],color=pal)
-                    ax.fill_between(x, stroop_mean - stroop_stderr, stroop_mean + stroop_stderr, zorder=1, alpha=ensemble_alpha)
-            lines = [Line2D([0], [0], color=pal, linewidth=3, linestyle=line_style) for line_style in line_styles[:2]]
-            ax.legend(lines, conditions,loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor, prop={'size': fontsize})
-        else:
-            start_end = []
-            add=0
-            pal = sns.color_palette()[0]
-            for i, key in enumerate(data):
-
-                stroop = data[key]
-                start_end.append((add+1, add + len(stroop)))
-                x = stroop.index + add
-                add += len(stroop)
-                stroop_mean = stroop.mean(axis=1)
-                stroop_stderr = stroop.std(axis=1) / np.sqrt(stroop.shape[1])
-                ax.plot(x, stroop_mean, zorder=2, label=key,color=pal, linestyle=line_styles[i])
-                ax.fill_between(x, stroop_mean - stroop_stderr, stroop_mean + stroop_stderr, zorder=1, alpha=ensemble_alpha)
-            ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor, prop={'size': fontsize})
-
-        for (start, end), phase in zip(start_end, phases):
-            ax.text(x=start + 0.5 * (end - start), y=0.95, transform=ax.get_xaxis_transform(),
-                    s=phase, ha='center', va='center', fontsize=fontsize)
-        p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
-                             zorder=3, lw=0)
-        ax.add_patch(p)
-
-        for (start, end), color, alpha in zip(start_end, bg_color, bg_alpha):
-            ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
-
-        ax.set_xlabel(xaxis_label, fontsize=fontsize)
-        ax.set_xticks([start for (start, end) in start_end])
-        ax.xaxis.set_minor_locator(xaxis_minor_ticks)
-        ax.tick_params(axis="x", which='both', bottom=True)
-
-        ax.set_ylabel(yaxis_label, fontsize=fontsize)
-        ax.tick_params(axis="y", which='major', left=True)
-
-        if ylims:
-            ax.margins(x=0)
-            ax.set_ylim(ylims)
-        else:
-            ax.margins(0, 0.1)
-
-
-        if fig:
-            fig.tight_layout()
-            return fig, ax
 
     def hr_mean_subphases(
             self,
@@ -474,35 +343,38 @@ class Stroop(base.BaseProtocol):
         return df_stroop
 
     def stroop_mean_se(self,data=pd.DataFrame,is_group_dict: Optional[bool]=False) -> pd.DataFrame:
+        """
+        Computes the mean and standard error of the stroop test data per Stroop subphase over all subjects.
 
-        labels = self.phases
-        columns = list(data)
-        data_concat = pd.DataFrame()
+        Parameters
+        ----------
+        data : pd.Dataframe
+            dataframe with data from the stroop test of which mean and standard error should be computed.
+            It has to be one dataframe which is in the kind of format as returned by `stroop_dict_to_dataframe`
+        is_group_dict : bool
+            ``True`` if `data` is a group dict, i.e. contains dictionaries for multiple groups, ``False`` otherwise.
+            Default: ``False``
+
+        Returns
+        -------
+        dataframe:
+            dataframe with mean and standard deviation values.
+        """
         if is_group_dict:
-            for cols in columns:
-                mean = pd.DataFrame({cols + '_mean-' + condition: {
-                    stroop: data.loc[pd.IndexSlice[condition, :, stroop]][cols].mean() for stroop in
-                    labels} for condition in ['IG', 'KG']})
-                std = pd.DataFrame({cols + '_std-' + condition: {
-                    stroop: data.loc[pd.IndexSlice[condition, :, stroop]][cols].std() for stroop in
-                    labels} for condition in ['IG', 'KG']})
-                data_concat = pd.concat([data_concat, pd.concat([mean, std], axis=1)], axis=1)
-
-            data_concat = data_concat.reset_index().rename(columns={'index': 'phase'})
-
-            result = pd.wide_to_long(data_concat,
-                                        stubnames=['meanRT_mean', 'meanRT_std', 'propcorrect_mean', 'propcorrect_std'],
-                                        sep='-', suffix='\D+', i=['phase'], j='condition')
-
-
+            index = [('group','subphase')]
         else:
-            mean = pd.DataFrame({cols + '_mean': {stroop: data.xs(stroop, level='phase')[cols].mean() for stroop in labels} for
-                    cols in columns})
-            std = pd.DataFrame({cols + '_std': {stroop: data.xs(stroop, level='phase')[cols].std() for stroop in labels} for
-                   cols in columns})
-            result = pd.concat([mean, std], axis=1)
-        result[['propcorrect_mean', 'propcorrect_std']] = result[['propcorrect_mean', 'propcorrect_std']]*100
-        return result
+            index = ['subphase']
+
+        mean = data.mean(level=index).add_suffix('_mean')
+        std = data.std(level=index).add_suffix('_std')
+        df_mean_se = mean.join(std)
+
+        #scale correct answers to percent
+        if ('correct_mean' and 'correct_std') in df_mean_se.columns:
+            df_mean_se[['correct_mean', 'correct_std']] = df_mean_se[['correct_mean','correct_std']] * 100
+
+        return df_mean_se
+
 
     def stroop_plot(self, data=pd.DataFrame, variable: Optional[str] = 'meanRT',
                     is_group_dict: Optional[bool] = False,
@@ -526,7 +398,7 @@ class Stroop(base.BaseProtocol):
         ----------
         data : dataframe or dict
             Mean response/Correct answers data to plot. It has to be one dataframe which is in the kind of format as
-            returned by `stroop_mean`
+            returned by `stroop_mean_se`
         variable : str
              Determines if the mean response times (``meanRT``) or correct answers (``propcorrect``) of the stroop
              test should be plotted.
@@ -594,10 +466,10 @@ class Stroop(base.BaseProtocol):
         ax.xaxis.set_minor_locator(xaxis_minor_ticks)
         ax.tick_params(axis="x", which='both', bottom=True)
 
-        if (variable == 'propcorrect'):
+        if (variable == 'correct'):
             ax.set_ylim(0, 105)
             ax.set_ylabel(r'$\Delta$Correct answers [%]',fontsize=fontsize)
-        elif (variable == 'meanRT'):
+        elif (variable == 'latency'):
             ax.set_ylabel(r'$\Delta$Response time [ms]', fontsize=fontsize)
 
         ax.tick_params(axis="y", which='major', left=True,labelsize=fontsize)
@@ -620,19 +492,19 @@ class Stroop(base.BaseProtocol):
             **kwargs
     ) -> Dict[str, pd.DataFrame]:
         """
-        Rearranges the 'HR subject dict' (see `util s.load_hr_excel_all_subjects`) into 'MIST Phase dict'.
+        Rearranges the 'HR subject dict' (see `util s.load_hr_excel_all_subjects`) into 'Stroop subphase dict'.
         See ``bp.protocols.utils.concat_phase_dict`` for further information.
 
         Parameters
         ----------
         dict_hr_subject : dict
-            'HR subject dict', i.e. a nested dict with heart rate data per MIST phase and subject
+            'HR subject dict', i.e. a nested dict with heart rate data per Stroop subphase and subject
         **kwargs
 
         Returns
         -------
         dict
-            'Stroop dict', i.e. a dict with heart rate data of all subjects per Stroop phase
+            'Stroop dict', i.e. a dict with heart rate data of all subjects per Stroop subphase
 
         """
         if 'phases' in kwargs:
