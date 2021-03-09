@@ -354,6 +354,53 @@ def load_questionnaire_data(file_path: path_t,
     return data
 
 
+def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = None) -> Dict[str,pd.DataFrame]:
+    """
+    Loads the stroop test data from a folder and writes parameters like mean response time, number of correct answers,..
+    into a Dictionary. The raw data needs to be as an .iqdat format in the path folder.
+
+    Parameters
+    ----------
+    folder_path : str
+        path to the folder in which the stroop test data is kept
+    cols : Sequence(str)
+        column name of which data should be load into the dictionary
+    Returns
+    -------
+    dict
+        dictionary with parameters of the stroop test like number of correct answers, mean response time,...
+    """
+    dict_stroop = {}
+    #dataset = os.listdir(folder)
+    dict_stroop_subphase = {}
+    subject = ""
+    # ensure pathlib
+    folder_path = Path(folder_path)
+    # look for all Inquisit files in the folder
+    dataset_list = list(sorted(folder_path.glob("*.iqdat")))
+    #iterate through data
+    for data_path in dataset_list:
+
+        df_stroop = pd.read_csv(data_path, sep='\t')
+
+        if(subject != df_stroop['subject'][0]):
+            dict_stroop_subphase = {}
+
+        #set subject, stroop phase
+        subject = df_stroop['subject'][0]
+        subphase = 'Stroop' + str(df_stroop['sessionid'][0])[-1]
+        df_mean = df_stroop.mean(axis=0).to_frame().T
+
+        if cols:
+            dict_stroop_subphase[subphase] = df_mean[cols]
+        else:
+            dict_stroop_subphase[subphase] = df_mean
+
+        dict_stroop[subject] = dict_stroop_subphase
+
+    return dict_stroop
+
+
 def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset'] = None,
                               df: Optional[pd.DataFrame] = None, date: Optional[Union[str, 'datetime']] = None,
                               timezone: Optional[str] = "Europe/Berlin") -> pd.DataFrame:
