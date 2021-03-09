@@ -127,91 +127,7 @@ class Stroop(base.BaseProtocol):
         if phase_durations:
             self.phase_durations = phase_durations
 
-    def load_stroop_test_data(self, folder=str) -> Dict[str,pd.DataFrame]:
-        #TODO: kommentieren
-        dict_stroop_data = {}
-        dataset = os.listdir(folder)
-        tmp_ID = stroop_ID = ""
-        dict_sub = {}
-        first = True
-        result = pd.DataFrame()
-        #result_raw = pd.DataFrame()
-        times = {}
-        #iterate through data
-        for data in dataset:
 
-            #skip raw data --> will be handled later
-            if ('raw' in data):
-                continue
-
-            #get data in .csv format
-            if data.endswith('.csv'):
-                dict_tmp = {'stroop_result': pd.read_csv(folder + data, sep=';')}
-                df_tmp = pd.read_csv(folder + data.replace('summary', 'raw'), sep=';')
-
-            elif data.endswith('.iqdat'):
-                dict_tmp = self.get_stroop_test_results(data_stroop=folder + data)
-                df_tmp = self.get_stroop_test_results(data_stroop=folder + data.replace('summary','raw'))
-
-            #set ID, stroop phase and phase duration
-            stroop_ID = dict_tmp['stroop_result']['subjectid'][0]
-            stroop_n = 'Stroop' + str(dict_tmp['stroop_result']['sessionid'][0])[-1]
-            duration = int(
-                df_tmp['stroop_result']['latency'].astype(int).sum() // 1000 + (len(df_tmp['stroop_result']) + 1))
-            #raw_data = df_tmp['stroop_result'][['latency','correct']]
-            #handle first iteration
-            if first:
-                tmp_ID = stroop_ID
-                first = False
-            #detect new ID --> save dict sub to corresponding ID
-            elif(stroop_ID != tmp_ID):
-                dict_sub['stroop_results'] = result
-                #dict_sub['stroop_raw'] = result_raw
-                dict_sub['stroop_times'] = times
-                dict_stroop_data[tmp_ID] = dict_sub
-                tmp_ID = stroop_ID
-                dict_sub = {}
-                times = {}
-                result = pd.DataFrame()
-                #result_raw = pd.DataFrame()
-
-
-            dict_tmp['stroop_result']['phase'] = stroop_n
-            columns = ['phase'] + list(dict_tmp['stroop_result'])[8:16]
-            result = result.append(dict_tmp['stroop_result'][columns]).reset_index(drop=True)
-
-            #raw_data['phase'] = stroop_n
-            #result_raw = result_raw.append(raw_data).reset_index(drop=True)
-            times[stroop_n] = (df_tmp['stroop_result']['time'][0], str(pd.to_timedelta(
-                df_tmp['stroop_result']['time'][0]) + pd.to_timedelta(duration, unit='s'))[7:])
-
-            #calculate stroop phase time
-            endtime = pd.to_timedelta(dict_tmp['stroop_result']['starttime'][0]) + pd.to_timedelta(
-                dict_tmp['stroop_result']['elapsedtime'][0]//1000, unit='s')
-            starttime = endtime - pd.to_timedelta(duration, unit='s')
-            times[stroop_n] = (str(starttime)[7:], str(endtime)[7:])
-
-        dict_sub['stroop_results'] = result
-        dict_sub['stroop_times'] = times
-        #dict_sub['stroop_raw'] = result_raw
-        dict_stroop_data[stroop_ID] = dict_sub
-
-        return dict_stroop_data
-
-    def get_stroop_test_results(self, data_stroop: Union[pd.DataFrame, str, Dict]) -> Dict[str, pd.DataFrame]:
-        ###TODO: kommentieren
-        dict_result = {}
-
-        if isinstance(data_stroop, pd.DataFrame):
-            dict_result['stroop_result'] = data_stroop
-
-        if isinstance(data_stroop, Dict):
-            dict_result['stroop_result'] = pd.DataFrame(data_stroop, index=[0])
-
-        if isinstance(data_stroop, str):
-            dict_result['stroop_result'] = pd.read_csv(data_stroop, sep='\t')
-
-        return dict_result
     def hr_ensemble_plot(
             self,
             data: Dict[str, pd.DataFrame],
@@ -243,7 +159,6 @@ class Stroop(base.BaseProtocol):
         tuple or none
             Tuple of Figure and Axes or None if Axes object was passed
         """
-        # TODO add option to apply moving average filter before plotting ensemble plot
 
         import matplotlib.patches as mpatch
 
@@ -395,7 +310,6 @@ class Stroop(base.BaseProtocol):
         tuple or none
             Tuple of Figure and Axes or None if Axes object was passed
         """
-        # TODO add option to apply moving average filter before plotting ensemble plot
 
         import matplotlib.patches as mpatch
 
@@ -489,6 +403,7 @@ class Stroop(base.BaseProtocol):
         if fig:
             fig.tight_layout()
             return fig, ax
+
     def hr_mean_subphases(
             self,
             data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
@@ -514,43 +429,47 @@ class Stroop(base.BaseProtocol):
 
         return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
-    def get_stroop_dataframe(self, dict_stroop=Dict[str,Dict], columns: Optional[Sequence[str]] = None,
-                             is_group_dict: Optional[bool] = False):
+    def stroop_dict_to_dataframe(self, dict_stroop=Dict[str,Dict], columns: Optional[Sequence[str]] = None,
+                             is_group_dict: Optional[bool] = False) -> pd.DataFrame:
+        """
+        Converts the dictionary into one dataframe with a MultiIndex (subject, phase). The structure needs to be the same
+        as derived from load_stroop_inquisit_data.
+
+        The dictionary can also be a group dictionary. In this case, the MultiIndex is expanded with 'group'.
+
+        Parameters
+        ----------
+        dict_stroop : dict
+            dictionary which should be converted into a dataframe. The structure should be as followed:
+            {'subject': {'subphase' : data,...},..} or as group_dict {'group':{'subject': {'subphase' : data,...},..},..}
+        columns : str
+            column names which should be used.
+            Default: ``None`` -> all existing columns are used.
+        is_group_dict : bool
+            ``True`` if `data` is a group dict, i.e. contains dictionaries for multiple groups, ``False`` otherwise.
+            Default: ``False``
+        Returns
+        -------
+        dataframe :
+            dataframe with the stroop test data ordered by (group), subject and subphase.
+        """
+        df_stroop = pd.DataFrame()
+
+        if is_group_dict:
+            for group, dict_data in dict_stroop.items():
+                for subject, data in dict_data.items():
+                    for subphase, df in data.items():
+                        df_stroop = pd.concat([df_stroop, df.set_index([[group], [subject], [subphase]])])
+            df_stroop.index.names = (['group','subject', 'subphase'])
+        else:
+            for subject, data in dict_stroop.items():
+                for subphase, df in data.items():
+                    df_stroop = pd.concat([df_stroop, df.set_index([[subject], [subphase]])])
+            df_stroop.index.names = (['subject', 'subphase'])
+
 
         if columns:
-            if 'phase' not in columns:
-                columns = ['phase'] + columns
-
-            if 'subject' not in columns:
-                columns = ['subject'] + columns
-        else:
-            columns = ['subject', 'phase', 'propcorrect', 'meanRT']
-        if is_group_dict:
-            columns = ['condition'] + columns
-        df_stroop = pd.DataFrame(columns=columns)
-        df_tmp = pd.DataFrame(columns=columns)
-
-        columns.remove('phase')
-        columns.remove('subject')
-        if is_group_dict: columns.remove('condition')
-        if is_group_dict:
-            for condition,dict_data in tqdm(dict_stroop.items(), desc="Subjects"):
-                for subject_id, data in tqdm(dict_data.items(), desc="Subjects"):
-                    df_tmp = data['stroop_results'][['phase'] + columns]
-                    df_tmp['subject'] = subject_id
-                    df_tmp['condition'] = condition
-                    df_stroop = df_stroop.append(df_tmp, ignore_index=True)
-            df_stroop = df_stroop.set_index(['condition','subject', 'phase']).sort_index()
-        else:
-            for subject_id, data_dict in tqdm(dict_stroop.items(), desc="Subjects"):
-                df_tmp = data_dict['stroop_results'][['phase']+columns]
-                df_tmp['subject'] = subject_id
-                df_stroop = df_stroop.append(df_tmp, ignore_index=True)
-
-            df_stroop = df_stroop.set_index(['subject', 'phase']).sort_index()
-
-        df_stroop['propcorrect'] = df_stroop['propcorrect'].str.replace(',', '.').replace(np.nan, '1.0').astype(float)
-        df_stroop['meanRT'] = df_stroop['meanRT'].str.replace(',', '.').replace(np.nan, '1.0').astype(float)
+            df_stroop = df_stroop[columns]
 
         return df_stroop
 
@@ -713,7 +632,7 @@ class Stroop(base.BaseProtocol):
         Returns
         -------
         dict
-            'MIST dict', i.e. a dict with heart rate data of all subjects per MIST phase
+            'Stroop dict', i.e. a dict with heart rate data of all subjects per Stroop phase
 
         """
         if 'phases' in kwargs:

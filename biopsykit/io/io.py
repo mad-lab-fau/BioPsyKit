@@ -371,7 +371,6 @@ def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = N
         dictionary with parameters of the stroop test like number of correct answers, mean response time,...
     """
     dict_stroop = {}
-    #dataset = os.listdir(folder)
     dict_stroop_subphase = {}
     subject = ""
     # ensure pathlib
