@@ -138,7 +138,10 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
     return dict_result
 
 
-def endpoints_as_df(sleep_endpoints: Dict, subject_id: str) -> pd.DataFrame:
+def endpoints_as_df(sleep_endpoints: Dict, subject_id: str) -> Optional[pd.DataFrame]:
+    if sleep_endpoints is None:
+        return None
+
     sleep_endpoints = sleep_endpoints.copy()
     sleep_bouts = sleep_endpoints.pop('sleep_bouts', None).values.tolist()
     wake_bouts = sleep_endpoints.pop('wake_bouts', None).values.tolist()
