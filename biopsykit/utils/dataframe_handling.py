@@ -83,6 +83,7 @@ def camel_to_snake(name: str):
 
     """
     import re
+    # TODO don't convert if all in capital letters
     return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
 
 
