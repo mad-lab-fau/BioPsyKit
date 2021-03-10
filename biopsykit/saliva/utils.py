@@ -139,6 +139,9 @@ def wide_to_long(data: pd.DataFrame, biomarker_name: str, levels: Union[str, Seq
 def saliva_times_datetime_to_minute(saliva_times: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
     from datetime import time, datetime
 
+    if isinstance(saliva_times.values.flatten()[0], str):
+        saliva_times = pd.to_timedelta(saliva_times)
+
     if not isinstance(saliva_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64)):
         raise ValueError("Saliva times must be instance of `datetime.datetime()`, `datetime.time()` or `pd.Timedelta`!")
 
