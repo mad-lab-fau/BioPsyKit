@@ -10,9 +10,18 @@ from biopsykit.utils.array_handling import sanitize_input_nd
 def static_sequence_features(
         data: pd.DataFrame,
         static_sequences: pd.DataFrame,
-        start: Union[str, pd.Timestamp],
-        end: Union[str, pd.Timestamp],
+        start: Optional[Union[str, pd.Timestamp]] = None,
+        end: Optional[Union[str, pd.Timestamp]] = None,
         index: Optional[Union[int, str]] = None):
+
+    if data.empty:
+        return None
+
+    if start is None:
+        start = data.index[0]
+    if end is None:
+        end = data.index[-1]
+
     if isinstance(start, str):
         start = pd.Timestamp(start, tz="Europe/Berlin")
     if isinstance(end, str):
