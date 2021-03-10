@@ -69,10 +69,6 @@ class StatsPipeline:
             specific_params = {key.split('__')[1]: value for key, value in self.params.items() if
                                len(key.split('__')) > 1 and step[0] in key.split('__')}
             params = {key: general_params[key] for key in MAP_STAT_PARAMS[step[1]] if key in general_params}
-            # print(step)
-            # print(general_params)
-            # print(specific_params)
-            # print(params)
 
             if 'groupby' in specific_params:
                 grouper = specific_params.pop('groupby')
