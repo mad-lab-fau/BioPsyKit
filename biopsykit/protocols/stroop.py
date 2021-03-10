@@ -8,6 +8,7 @@ import biopsykit.protocols.plotting as plot
 import matplotlib.ticker as mticks
 import seaborn as sns
 
+
 class Stroop(base.BaseProtocol):
     """
     Class representing the Stroop test.
@@ -24,7 +25,7 @@ class Stroop(base.BaseProtocol):
 
         self.stroop_times: Sequence[int] = [0, 10]
 
-        self.phases: Sequence[str] = ["Stroop1", "Stroop2","Stroop3"]
+        self.phases: Sequence[str] = ["Stroop1", "Stroop2", "Stroop3"]
         """
         Stroop Phases
 
@@ -123,7 +124,6 @@ class Stroop(base.BaseProtocol):
         if phase_durations:
             self.phase_durations = phase_durations
 
-
     def hr_ensemble_plot(
             self,
             data: Dict[str, pd.DataFrame],
@@ -188,11 +188,12 @@ class Stroop(base.BaseProtocol):
         legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend_bbox_to_anchor']
 
         subphases = np.array(self.subphases)
-        #mist_dur = [len(v) for v in data.values()]
-        start_end = [(0,self.subphase_durations[0]),(self.subphase_durations[0],self.subphase_durations[0]+self.subphase_durations[1])]
+        # mist_dur = [len(v) for v in data.values()]
+        start_end = [(0, self.subphase_durations[0]),
+                     (self.subphase_durations[0], self.subphase_durations[0] + self.subphase_durations[1])]
 
         if is_group_dict:
-            for j,condition in enumerate(data):
+            for j, condition in enumerate(data):
                 mist_dur = [len(v) for v in data[condition].values()]
                 for i, key in enumerate(data[condition]):
                     pal = sns.color_palette()[j]
@@ -201,7 +202,8 @@ class Stroop(base.BaseProtocol):
                     x = hr_mist.index
                     hr_mean = hr_mist.mean(axis=1)
                     hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
-                    ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1)+ ' - ' +condition, linestyle=line_styles[i], color=pal)
+                    ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1) + ' - ' + condition,
+                            linestyle=line_styles[i], color=pal)
                     ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
                     ax.vlines(x=mist_dur[i] - 0.5, ymin=0, ymax=1, transform=ax.get_xaxis_transform(),
                               ls=end_phase_line_style, lw=end_phase_line_width,
@@ -217,7 +219,7 @@ class Stroop(base.BaseProtocol):
                         bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
                         zorder=3
                     )
-                ax.legend(loc=legend_loc, bbox_to_anchor=(0.20,0.3), prop={'size': fontsize})
+                ax.legend(loc=legend_loc, bbox_to_anchor=(0.20, 0.3), prop={'size': fontsize})
         else:
             mist_dur = [len(v) for v in data.values()]
             for i, key in enumerate(data):
@@ -267,11 +269,9 @@ class Stroop(base.BaseProtocol):
         else:
             ax.margins(0, 0.1)
 
-
         if fig:
             fig.tight_layout()
             return fig, ax
-
 
     def hr_mean_subphases(
             self,
@@ -298,8 +298,8 @@ class Stroop(base.BaseProtocol):
 
         return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
-    def stroop_dict_to_dataframe(self, dict_stroop=Dict[str,Dict], columns: Optional[Sequence[str]] = None,
-                             is_group_dict: Optional[bool] = False) -> pd.DataFrame:
+    def stroop_dict_to_dataframe(self, dict_stroop=Dict[str, Dict], columns: Optional[Sequence[str]] = None,
+                                 is_group_dict: Optional[bool] = False) -> pd.DataFrame:
         """
         Converts the dictionary into one dataframe with a MultiIndex (subject, phase). The structure needs to be the same
         as derived from load_stroop_inquisit_data.
@@ -329,20 +329,19 @@ class Stroop(base.BaseProtocol):
                 for subject, data in dict_data.items():
                     for subphase, df in data.items():
                         df_stroop = pd.concat([df_stroop, df.set_index([[group], [subject], [subphase]])])
-            df_stroop.index.names = (['group','subject', 'subphase'])
+            df_stroop.index.names = (['group', 'subject', 'subphase'])
         else:
             for subject, data in dict_stroop.items():
                 for subphase, df in data.items():
                     df_stroop = pd.concat([df_stroop, df.set_index([[subject], [subphase]])])
             df_stroop.index.names = (['subject', 'subphase'])
 
-
         if columns:
             df_stroop = df_stroop[columns]
 
         return df_stroop
 
-    def stroop_mean_se(self,data=pd.DataFrame,is_group_dict: Optional[bool]=False) -> pd.DataFrame:
+    def stroop_mean_se(self, data=pd.DataFrame, is_group_dict: Optional[bool] = False) -> pd.DataFrame:
         """
         Computes the mean and standard error of the stroop test data per Stroop subphase over all subjects.
 
@@ -361,7 +360,7 @@ class Stroop(base.BaseProtocol):
             dataframe with mean and standard deviation values.
         """
         if is_group_dict:
-            index = [('group','subphase')]
+            index = [('group', 'subphase')]
         else:
             index = ['subphase']
 
@@ -369,12 +368,11 @@ class Stroop(base.BaseProtocol):
         std = data.std(level=index).add_suffix('_std')
         df_mean_se = mean.join(std)
 
-        #scale correct answers to percent
+        # scale correct answers to percent
         if ('correct_mean' and 'correct_std') in df_mean_se.columns:
-            df_mean_se[['correct_mean', 'correct_std']] = df_mean_se[['correct_mean','correct_std']] * 100
+            df_mean_se[['correct_mean', 'correct_std']] = df_mean_se[['correct_mean', 'correct_std']] * 100
 
         return df_mean_se
-
 
     def stroop_plot(self, data=pd.DataFrame, variable: Optional[str] = 'meanRT',
                     is_group_dict: Optional[bool] = False,
@@ -443,22 +441,22 @@ class Stroop(base.BaseProtocol):
         start_end = [(i - 0.5, i + 0.5) for i in x]
         if is_group_dict:
             conditions = list(set(data.index.get_level_values(group_col)))
-            line1 = ax.errorbar(x, data.xs(conditions[0],level=group_col)[variable+'_mean'],
-                                 yerr=data.xs(conditions[0],level=group_col)[variable+'_std'],
-                                 color=sns.color_palette()[0],
+            line1 = ax.errorbar(x, data.xs(conditions[0], level=group_col)[variable + '_mean'],
+                                yerr=data.xs(conditions[0], level=group_col)[variable + '_std'],
+                                color=sns.color_palette()[0],
                                 label=conditions[0], lw=2, errorevery=1, ls=line_styles[0], marker="D", capsize=3)
-            line2 = ax.errorbar(x, data.xs(conditions[1],level=group_col)[variable+'_mean'],
-                                 yerr=data.xs(conditions[1],level=group_col)[variable+'_std'],
-                                 color=sns.color_palette()[1],
-                                 label=conditions[1], lw=2, errorevery=1, ls=line_styles[1], marker="D", capsize=3)
+            line2 = ax.errorbar(x, data.xs(conditions[1], level=group_col)[variable + '_mean'],
+                                yerr=data.xs(conditions[1], level=group_col)[variable + '_std'],
+                                color=sns.color_palette()[1],
+                                label=conditions[1], lw=2, errorevery=1, ls=line_styles[1], marker="D", capsize=3)
             plt.legend(handles=[line1, line2], loc='upper right', prop={'size': fontsize})
         else:
-            ax.errorbar(x, data[variable+'_mean'],yerr=data[variable+'_std'],
-                         color=sns.color_palette()[0], lw=2, errorevery=1, ls=line_styles[0],
-                         marker="D", capsize=3)
+            ax.errorbar(x, data[variable + '_mean'], yerr=data[variable + '_std'],
+                        color=sns.color_palette()[0], lw=2, errorevery=1, ls=line_styles[0],
+                        marker="D", capsize=3)
 
         for (start, end), color, alpha in zip(start_end, bg_color, bg_alpha):
-            ax.axvspan(start,end,color=color, alpha=alpha, zorder=0, lw=0)
+            ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
 
         ax.set_xticklabels(x_labels, fontsize=fontsize)
         ax.set_xlabel(xaxis_label, fontsize=fontsize)
@@ -468,11 +466,11 @@ class Stroop(base.BaseProtocol):
 
         if (variable == 'correct'):
             ax.set_ylim(0, 105)
-            ax.set_ylabel(r'$\Delta$Correct answers [%]',fontsize=fontsize)
+            ax.set_ylabel(r'$\Delta$Correct answers [%]', fontsize=fontsize)
         elif (variable == 'latency'):
             ax.set_ylabel(r'$\Delta$Response time [ms]', fontsize=fontsize)
 
-        ax.tick_params(axis="y", which='major', left=True,labelsize=fontsize)
+        ax.tick_params(axis="y", which='major', left=True, labelsize=fontsize)
 
         if ylims:
             ax.margins(x=0)
@@ -480,11 +478,9 @@ class Stroop(base.BaseProtocol):
         else:
             ax.margins(0, 0.1)
 
-
         if fig:
             fig.tight_layout()
             return fig, ax
-
 
     def concat_phase_dict(
             self,
@@ -511,9 +507,10 @@ class Stroop(base.BaseProtocol):
             return super().concat_phase_dict(dict_hr_subject, kwargs['phases'])
         else:
             return super().concat_phase_dict(dict_hr_subject, self.phases)
+
     def split_groups_stroop(self,
-                            dict_stroop=Dict[str,Dict[str,pd.DataFrame]],
-                            condition_dict=Dict[str,Sequence[str]]) ->Dict[str, Dict[str, pd.DataFrame]]:
+                            dict_stroop=Dict[str, Dict[str, pd.DataFrame]],
+                            condition_dict=Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Splits 'Stroop dict' into group dict, i.e. one 'Stroop dict' per group.
 
@@ -534,7 +531,6 @@ class Stroop(base.BaseProtocol):
         return {
             condition: {ID: dict_stroop[ID] for ID in IDs} for condition, IDs in condition_dict.items()
         }
-
 
     def split_groups(cls, phase_dict: Dict[str, pd.DataFrame],
                      condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
@@ -557,7 +553,6 @@ class Stroop(base.BaseProtocol):
         """
 
         return super().split_groups(phase_dict, condition_dict)
-
 
     def hr_mean_plot(
             self,
@@ -640,4 +635,3 @@ class Stroop(base.BaseProtocol):
         """
 
         return super()._mean_se_subphases(data, is_group_dict=is_group_dict)
-

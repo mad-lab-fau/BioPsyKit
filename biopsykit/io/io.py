@@ -111,7 +111,7 @@ def load_questionnaire_data(file_path: path_t,
     return data
 
 
-def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = None) -> Dict[str,pd.DataFrame]:
+def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = None) -> Dict[str, pd.DataFrame]:
     """
     Loads the stroop test data from a folder and writes parameters like mean response time, number of correct answers,..
     into a Dictionary. The raw data needs to be as an .iqdat format in the path folder.
@@ -134,15 +134,15 @@ def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = N
     folder_path = Path(folder_path)
     # look for all Inquisit files in the folder
     dataset_list = list(sorted(folder_path.glob("*.iqdat")))
-    #iterate through data
+    # iterate through data
     for data_path in dataset_list:
 
         df_stroop = pd.read_csv(data_path, sep='\t')
 
-        if(subject != df_stroop['subject'][0]):
+        if (subject != df_stroop['subject'][0]):
             dict_stroop_subphase = {}
 
-        #set subject, stroop phase
+        # set subject, stroop phase
         subject = df_stroop['subject'][0]
         subphase = 'Stroop' + str(df_stroop['sessionid'][0])[-1]
         df_mean = df_stroop.mean(axis=0).to_frame().T
