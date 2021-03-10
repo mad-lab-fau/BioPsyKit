@@ -70,9 +70,12 @@ def get_static_sequences(
         window_samples=window_samples, window_sec=window_sec,
         sampling_rate=sampling_rate, overlap_samples=overlap_samples, overlap_percent=overlap_percent
     )
-    start_end = find_static_sequences(data, window_length=window, overlap=overlap, inactive_signal_th=threshold,
-                                      metric='variance')
-    if start_end[-1, -1] >= len(data):
-        # fix: handle edge case manually
-        start_end[-1, -1] = len(data) - 1
+    if data.empty:
+        start_end = np.zeros(shape=(0,2))
+    else:
+        start_end = find_static_sequences(data, window_length=window, overlap=overlap, inactive_signal_th=threshold,
+                                          metric='variance')
+        if start_end[-1, -1] >= len(data):
+            # fix: handle edge case manually
+            start_end[-1, -1] = len(data) - 1
     return pd.DataFrame(start_end, columns=['start', 'end'])
