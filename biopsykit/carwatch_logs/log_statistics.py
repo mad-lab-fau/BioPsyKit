@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from biopsykit.carwatch_logs import LogData
 from biopsykit.utils import path_t
-from biopsykit.carwatch_logs.io import load_logs_all_subjects
+from biopsykit.io.carwatch_logs import load_logs_all_subjects
 
 
 class LogStatistics:

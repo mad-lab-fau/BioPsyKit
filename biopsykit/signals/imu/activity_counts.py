@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 from scipy import signal
 
-from biopsykit.utils import sanitize_input_nd, tz
-import biopsykit.signals.utils as su
+from biopsykit.utils.array_handling import sanitize_input_nd, downsample
+from biopsykit.utils.time import tz
 
 
 class ActivityCounts:
@@ -49,7 +49,7 @@ class ActivityCounts:
     @staticmethod
     def _downsample(data: np.ndarray, sampling_rate: Union[int, float],
                     final_sampling_rate: Union[int, float]) -> np.ndarray:
-        return su.downsample(data, sampling_rate, final_sampling_rate)
+        return downsample(data, sampling_rate, final_sampling_rate)
 
     @staticmethod
     def _truncate(data: np.ndarray) -> np.ndarray:

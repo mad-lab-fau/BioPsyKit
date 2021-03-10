@@ -1,12 +1,11 @@
-import warnings
 from typing import Dict, Union, Optional, Tuple
 
 import pandas as pd
 import numpy as np
 
-from biopsykit.sleep.imu.sleep_wake import SleepWake
-from biopsykit.sleep.imu.mrp import MajorRestPeriod
-from biopsykit.sleep.imu.wear_detection import WearDetection
+from biopsykit.sleep.sleep_wake.sleep_wake import SleepWake
+from biopsykit.sleep.mrp import MajorRestPeriod
+from biopsykit.signals.imu.wear_detection import WearDetection
 from biopsykit.signals.imu.activity_counts import ActivityCounts
 
 from biopsykit.signals.imu import convert_acc_data_to_g
@@ -139,7 +138,10 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
     return dict_result
 
 
-def endpoints_as_df(sleep_endpoints: Dict, subject_id: str) -> pd.DataFrame:
+def endpoints_as_df(sleep_endpoints: Dict, subject_id: str) -> Optional[pd.DataFrame]:
+    if sleep_endpoints is None:
+        return None
+
     sleep_endpoints = sleep_endpoints.copy()
     sleep_bouts = sleep_endpoints.pop('sleep_bouts', None).values.tolist()
     wake_bouts = sleep_endpoints.pop('wake_bouts', None).values.tolist()

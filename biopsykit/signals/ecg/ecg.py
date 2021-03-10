@@ -1,13 +1,15 @@
 from typing import Optional, Dict, Tuple, Union, Sequence, Callable, List
 
-import biopsykit.utils as utils
-import biopsykit.signals.utils as su
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import scipy.signal as ss
 from tqdm.notebook import tqdm
 import pytz
+
+from biopsykit.utils.data_processing import split_data
+from biopsykit.utils.array_handling import find_extrema_in_radius, remove_outlier_and_interpolate, sanitize_input_1d
+from biopsykit.utils.time import tz, utc, check_tz_aware
 
 
 class EcgProcessor:
@@ -52,7 +54,7 @@ class EcgProcessor:
     def __init__(self, data_dict: Optional[Dict[str, pd.DataFrame]] = None, df: Optional[pd.DataFrame] = None,
                  time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
                  include_start: Optional[bool] = False,
-                 sampling_rate: Optional[float] = 256.0, timezone: Optional[Union[pytz.timezone, str]] = utils.tz):
+                 sampling_rate: Optional[float] = 256.0, timezone: Optional[Union[pytz.timezone, str]] = tz):
         """
         Initializes an `EcgProcessor` instance that can be used for ECG processing.
 
@@ -90,8 +92,9 @@ class EcgProcessor:
         Examples
         --------
         >>> # Example using NilsPod Dataset
-        >>>
         >>> import biopsykit as bp
+        >>> from biopsykit.io.nilspod import load_dataset_nilspod
+        >>> from biopsykit.signals.ecg import EcgProcessor
         >>> import pandas as pd
         >>> from nilspodlib import Dataset
         >>>
@@ -105,8 +108,8 @@ class EcgProcessor:
         >>>
         >>> # load data from binary file
         >>> dataset = Dataset.from_bin_file(file_path)
-        >>> df, sampling_rate = bp.io.load_dataset_nilspod(dataset=dataset, datastreams=['ecg'], timezone=timezone)
-        >>> ecg_processor = bp.signals.ecg.EcgProcessor(df=df, sampling_rate=sampling_rate, time_intervals=time_intervals)
+        >>> df, sampling_rate = load_dataset_nilspod(dataset=dataset, datastreams=['ecg'], timezone=timezone)
+        >>> ecg_processor = EcgProcessor(df=df, sampling_rate=sampling_rate, time_intervals=time_intervals)
         """
 
         if all([i is None for i in [df, data_dict]]):
@@ -118,13 +121,13 @@ class EcgProcessor:
             self.data_dict = data_dict
         else:
             # check if localized
-            if isinstance(df.index, pd.DatetimeIndex) and not utils.check_tz_aware(df):
+            if isinstance(df.index, pd.DatetimeIndex) and not check_tz_aware(df):
                 # localize dataframe
-                df = df.tz_localize(tz=utils.utc).tz_convert(tz=timezone)
+                df = df.tz_localize(tz=utc).tz_convert(tz=timezone)
 
             if time_intervals is not None:
                 # split data into subphases if time_intervals are passed
-                data_dict = utils.split_data(time_intervals, df=df, timezone=timezone, include_start=include_start)
+                data_dict = split_data(time_intervals, df=df, timezone=timezone, include_start=include_start)
             else:
                 data_dict = {
                     'Data': df
@@ -275,9 +278,9 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import biopsykit as ep
+        >>> from biopsykit.signals.ecg import EcgProcessor
         >>> # initialize EcgProcessor instance
-        >>> ecg_processor = ep.EcgProcessor(...)
+        >>> ecg_processor = EcgProcessor(...)
 
         >>> # use default outlier correction pipeline
         >>> ecg_processor.ecg_process()
@@ -419,9 +422,9 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import biopsykit as ep
+        >>> from biopsykit.signals.ecg import EcgProcessor
         >>> # initialize EcgProcessor instance
-        >>> ecg_processor = ep.EcgProcessor(...)
+        >>> ecg_processor = EcgProcessor(...)
 
         >>> # use default outlier correction pipeline
         >>> ecg_signal, rpeaks = ecg_processor.correct_outlier(ecg_processor, key="Data")
@@ -440,7 +443,7 @@ class EcgProcessor:
         >>>                         )
         """
 
-        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
+        check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
             rpeaks = ecg_processor.rpeaks[key]
@@ -557,7 +560,7 @@ class EcgProcessor:
         >>> rpeaks_corrected = ecg_processor.correct_rpeaks(ecg_processor, key="Data")
         """
 
-        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
+        check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             rpeaks = ecg_processor.rpeaks[key]
             ecg_signal = ecg_processor.ecg_result[key]
@@ -619,9 +622,9 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import biopsykit as ep
+        >>> from biopsykit.signals.ecg import EcgProcessor
         >>> # initialize EcgProcessor instance
-        >>> ecg_processor = ep.EcgProcessor(...)
+        >>> ecg_processor = EcgProcessor(...)
 
         >>> # HRV processing using default parameters (time and nonlinear), including R peak correction
         >>> hrv_output = ecg_processor.hrv_process(ecg_processor, key="Data")
@@ -629,7 +632,7 @@ class EcgProcessor:
         >>> # HRV processing using using all types, and without R peak correction
         >>> hrv_output = ecg_processor.hrv_process(ecg_processor, key="Data", hrv_types='all', correct_rpeaks=False)
         """
-        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
+        check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
             rpeaks = ecg_processor.rpeaks[key]
@@ -715,15 +718,15 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import biopsykit as ep
+        >>> from biopsykit.signals.ecg import EcgProcessor
         >>> # initialize EcgProcessor instance
-        >>> ecg_processor = ep.EcgProcessor(...)
+        >>> ecg_processor = EcgProcessor(...)
 
         >>> # Extract respiration signal estimated from ECG using the 'peak_trough_diff' method
         >>> rsp_signal = ecg_processor.ecg_extract_edr(ecg_processor, key="Data", edr_type='peak_trough_diff')
         """
 
-        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
+        check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
             rpeaks = ecg_processor.rpeaks[key]
@@ -738,14 +741,14 @@ class EcgProcessor:
         peaks = np.squeeze(rpeaks['R_Peak_Idx'].values)
 
         # find troughs (minimum 0.1s before R peak)
-        troughs = su.find_extrema_in_radius(ecg_signal['ECG_Clean'], peaks, radius=(int(0.1 * sampling_rate), 0))
+        troughs = find_extrema_in_radius(ecg_signal['ECG_Clean'], peaks, radius=(int(0.1 * sampling_rate), 0))
         # R peak outlier should not be included into EDR estimation
         outlier_mask = rpeaks['R_Peak_Outlier'] == 1
 
         # estimate raw EDR signal
         edr_signal_raw = edr_func(ecg_signal['ECG_Clean'], peaks, troughs)
         # remove R peak outlier, impute missing data, and interpolate signal to length of raw ECG signal
-        edr_signal = su.remove_outlier_and_interpolate(edr_signal_raw, outlier_mask, peaks, len(ecg_signal))
+        edr_signal = remove_outlier_and_interpolate(edr_signal_raw, outlier_mask, peaks, len(ecg_signal))
         # Preprocessing: 10-th order Butterworth bandpass filter (0.1-0.5 Hz)
         edr_signal = nk.signal_filter(edr_signal, sampling_rate=sampling_rate, lowcut=0.1, highcut=0.5, order=10)
 
@@ -773,9 +776,9 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import biopsykit as ep
+        >>> from biopsykit.signals.ecg import EcgProcessor
         >>> # initialize EcgProcessor instance
-        >>> ecg_processor = ep.EcgProcessor(...)
+        >>> ecg_processor = EcgProcessor(...)
 
         >>> # Extract respiration signal estimated from ECG using the 'peak_trough_diff' method
         >>> rsp_signal = ecg_processor.ecg_extract_edr(ecg_processor, key="Data", edr_type='peak_trough_diff')
@@ -784,7 +787,7 @@ class EcgProcessor:
         """
 
         # find peaks: minimal distance between peaks: 1 seconds
-        rsp_signal = utils.sanitize_input_1d(rsp_signal)
+        rsp_signal = sanitize_input_1d(rsp_signal)
         edr_maxima = ss.find_peaks(rsp_signal, height=0, distance=sampling_rate)[0]
         edr_minima = ss.find_peaks(-1 * rsp_signal, height=0, distance=sampling_rate)[0]
         # threshold: 0.2 * Q3 (= 75th percentile)
@@ -838,9 +841,9 @@ class EcgProcessor:
 
         Examples
         --------
-        >>> import biopsykit as ep
+        >>> from biopsykit.signals.ecg import EcgProcessor
         >>> # initialize EcgProcessor instance
-        >>> ecg_processor = ep.EcgProcessor(...)
+        >>> ecg_processor = EcgProcessor(...)
 
         >>> ecg_signal = ecg_processor.ecg_result['Data']
         >>> # Extract respiration signal estimated from ECG using the 'peak_trough_diff' method
@@ -850,7 +853,7 @@ class EcgProcessor:
         """
 
         # ensure numpy
-        rsp_signal = utils.sanitize_input_1d(rsp_signal)
+        rsp_signal = sanitize_input_1d(rsp_signal)
         # Process raw respiration input
         rsp_output = nk.rsp_process(rsp_signal, sampling_rate)[0]
         rsp_output.index = ecg_signal.index
@@ -914,7 +917,7 @@ class EcgProcessor:
         >>> rsp_signal = ecg_processor.rsp_rsa_process(ecg_processor, key="Data", return_mean=False)
         """
 
-        su.check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
+        check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
         if ecg_processor:
             ecg_signal = ecg_processor.ecg_result[key]
             rpeaks = ecg_processor.rpeaks[key]
@@ -1362,3 +1365,39 @@ _outlier_correction_params_default: Dict[str, Union[float, Sequence[float]]] = {
     'statistical_rr': 2.576,
     'statistical_rr_diff': 1.96
 }
+
+
+def check_ecg_input(ecg_processor: 'EcgProcessor', key: str, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame) -> bool:
+    """
+    Checks valid input, i.e. if either `ecg_processor` **and** `key` are supplied as arguments *or* `ecg_signal` **and**
+    `rpeaks`. Used as helper method for several functions.
+
+    Parameters
+    ----------
+    ecg_processor : EcgProcessor
+        `EcgProcessor` object. If this argument is passed, the `key` argument needs to be supplied as well
+    key : str
+        Dictionary key of the sub-phase to process. Needed when `ecg_processor` is passed as argument
+    ecg_signal : str
+        dataframe with ECG signal. Output of `EcgProcessor.ecg_process()`
+    rpeaks : str
+        dataframe with R peaks. Output of `EcgProcessor.ecg_process()`
+
+    Returns
+    -------
+    ``True`` if correct input was supplied, raises ValueError otherwise
+
+    Raises
+    ------
+    ValueError
+        if invalid input supplied
+    """
+
+    if all([x is None for x in [ecg_processor, key, ecg_signal, rpeaks]]):
+        raise ValueError(
+            "Either `ecg_processor` and `key` or `rpeaks` and `ecg_signal` must be passed as arguments!")
+    if ecg_processor:
+        if key is None:
+            raise ValueError("`key` must be passed as argument when `ecg_processor` is passed!")
+
+    return True

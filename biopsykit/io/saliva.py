@@ -110,6 +110,9 @@ def load_saliva_plate(file_path: path_t,
             ["condition", "subject", "sample"])
 
     num_subjects = len(df_saliva.index.get_level_values("subject").unique())
+
+    _check_num_samples(len(df_saliva), num_subjects)
+
     if saliva_times:
         _check_saliva_times(len(df_saliva), num_subjects, saliva_times)
         df_saliva["time"] = np.array(saliva_times * num_subjects)
@@ -135,28 +138,42 @@ def save_saliva(file_path: path_t, data: pd.DataFrame) -> None:
 
 def load_saliva_wide_format(
         file_path: path_t,
-        biomarker_type: str,
+        biomarker_name: str,
         subject_col: Optional[str] = "subject",
         condition_col: Optional[str] = None,
         saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
     index_cols = [subject_col]
 
+    data = pd.read_csv(file_path, dtype={subject_col: str})
+
+    if condition_col is None:
+        if 'condition' in data.columns:
+            condition_col = "condition"
+
     if condition_col is not None:
         index_cols = [condition_col] + index_cols
 
-    data = pd.read_csv(file_path, dtype={subject_col: str})
     data.set_index(index_cols, inplace=True)
 
     num_subjects = len(data)
-    data.columns = pd.MultiIndex.from_product([[biomarker_type], data.columns], names=["", "sample"])
+    data.columns = pd.MultiIndex.from_product([[biomarker_name], data.columns], names=["", "sample"])
 
     data = data.stack()
 
-    if saliva_times:
+    _check_num_samples(len(data), num_subjects)
+
+    if saliva_times is not None:
         _check_saliva_times(len(data), num_subjects, saliva_times)
         data['time'] = np.array(saliva_times * num_subjects)
 
     return data
+
+
+def _check_num_samples(num_samples: int, num_subjects: int):
+    if num_samples % num_subjects != 0:
+        raise ValueError(
+            "Error during import: Number of samples not equal for all subjects! Got {} samples for {} subjects.".format(
+                num_samples, num_subjects))
 
 
 def _check_saliva_times(num_samples: int, num_subjects: int, saliva_times: Sequence[int]):

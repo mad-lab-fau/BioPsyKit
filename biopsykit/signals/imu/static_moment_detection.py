@@ -9,7 +9,7 @@ from typing_extensions import Literal
 _METRIC_FUNCTIONS = {"maximum": np.nanmax, "variance": np.nanvar, "mean": np.nanmean, "median": np.nanmedian}
 METRIC_FUNCTION_NAMES = Literal["maximum", "variance", "mean", "median"]
 
-from biopsykit.signals.utils import sliding_window_view, _bool_fill, bool_array_to_start_end_array
+from biopsykit.utils.array_handling import sliding_window_view, _bool_fill, bool_array_to_start_end_array
 
 
 def find_static_samples(
