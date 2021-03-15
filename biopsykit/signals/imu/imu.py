@@ -4,8 +4,7 @@ import pandas as pd
 import numpy as np
 
 from biopsykit.utils.time import utc
-from biopsykit.utils.array_handling import sliding_window, sanitize_sliding_window_input
-from biopsykit.signals.imu.static_moment_detection import find_static_sequences
+from biopsykit.utils.array_handling import sliding_window
 
 
 def convert_acc_data_to_g(data: Union[pd.DataFrame], inplace: Optional[bool] = False) -> Union[None, pd.DataFrame]:
@@ -56,26 +55,3 @@ def get_var_norm(data: pd.DataFrame) -> pd.DataFrame:
     return norm
 
 
-def get_static_sequences(
-        data: pd.DataFrame,
-        threshold: float,
-        window_samples: Optional[int] = None,
-        window_sec: Optional[int] = None,
-        sampling_rate: Optional[Union[int, float]] = 0,
-        overlap_samples: Optional[int] = None,
-        overlap_percent: Optional[float] = None,
-) -> pd.DataFrame:
-    # compute the data_norm of the variance in the windows
-    window, overlap = sanitize_sliding_window_input(
-        window_samples=window_samples, window_sec=window_sec,
-        sampling_rate=sampling_rate, overlap_samples=overlap_samples, overlap_percent=overlap_percent
-    )
-    if data.empty:
-        start_end = np.zeros(shape=(0,2))
-    else:
-        start_end = find_static_sequences(data, window_length=window, overlap=overlap, inactive_signal_th=threshold,
-                                          metric='variance')
-        if start_end[-1, -1] >= len(data):
-            # fix: handle edge case manually
-            start_end[-1, -1] = len(data) - 1
-    return pd.DataFrame(start_end, columns=['start', 'end'])
