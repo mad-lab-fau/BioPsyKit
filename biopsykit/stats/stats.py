@@ -119,7 +119,7 @@ class StatsPipeline:
 
     @staticmethod
     def _filter_sig(df: pd.DataFrame) -> pd.DataFrame:
-        for col in ['p-corr', 'p-unc', 'pval']:
+        for col in ['p-corr', 'p-tukey', 'p-unc', 'pval']:
             if col in df.columns:
                 return df[df[col] < 0.05]
 
@@ -127,7 +127,7 @@ class StatsPipeline:
         writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
         workbook = writer.book
         header_format = workbook.add_format({'bold': True})
-        param_df = pd.DataFrame(self.params.values(), index=self.params.keys(), columns=['parameter'])
+        param_df = pd.DataFrame([str(s) for s in self.params.values()], index=self.params.keys(), columns=['parameter'])
         param_df.to_excel(writer, sheet_name="parameter")
         for key, df in self.results.items():
             df.to_excel(writer, sheet_name=key, startrow=1)
