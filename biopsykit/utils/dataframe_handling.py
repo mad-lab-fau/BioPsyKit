@@ -133,3 +133,18 @@ def stack_groups_percent(data: pd.DataFrame, hue: str, stacked: str,
     if order:
         data_grouped = data_grouped.reindex(order)
     return data_grouped["data"]
+
+
+def apply_codebook(path_or_df: Union[path_t, pd.DataFrame], data: pd.DataFrame) -> pd.DataFrame:
+    from biopsykit.io import load_questionnaire_data
+    if isinstance(path_or_df, pd.DataFrame):
+        codebook = path_or_df
+    else:
+        # ensure pathlib
+        codebook = load_questionnaire_data(path_or_df, index_cols='variable')
+
+    for col in data.index.names:
+        if col in codebook.index:
+            data.rename(index=codebook.loc[col], level=col, inplace=True)
+
+    return data
