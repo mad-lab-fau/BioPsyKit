@@ -4,10 +4,9 @@
 @author: Robert Richer, Arne Küderle
 """
 from pathlib import Path
-from typing import TypeVar, Sequence, Optional
+from typing import Sequence, Optional
 
-path_t = TypeVar('path_t', str, Path)
-T = TypeVar('T')
+from biopsykit._types import path_t
 
 
 def export_figure(fig: 'plt.Figure', filename: path_t, base_dir: path_t, formats: Optional[Sequence[str]] = None,

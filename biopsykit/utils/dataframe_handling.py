@@ -2,6 +2,7 @@ from typing import Optional, Callable, Union, Sequence
 
 import numpy as np
 import pandas as pd
+from biopsykit._types import path_t
 
 
 def int_from_str_idx(data: pd.DataFrame, idx_names: Union[str, Sequence[str]], regex: Union[str, Sequence[str]],

@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from biopsykit.carwatch_logs import LogData
-from biopsykit.utils import path_t
+from biopsykit._types import path_t
 from biopsykit.io.carwatch_logs import load_logs_all_subjects
 
 

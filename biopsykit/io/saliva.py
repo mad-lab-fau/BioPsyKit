@@ -4,9 +4,8 @@ from typing import Optional, Sequence, Dict
 
 import pandas as pd
 import numpy as np
-import biopsykit.utils as utils
 
-from biopsykit.utils import path_t
+from biopsykit._types import path_t
 
 _DATA_COL_NAMES = {
     'cortisol': 'cortisol (nmol/l)',

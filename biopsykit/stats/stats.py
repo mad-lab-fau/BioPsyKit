@@ -3,7 +3,7 @@ from typing import Dict, Sequence, Union, Tuple
 import pandas as pd
 import pingouin as pg
 from IPython.core.display import display, Markdown
-from biopsykit.utils import path_t
+from biopsykit._types import path_t
 
 MAP_STAT_TESTS = {
     'normality': pg.normality,

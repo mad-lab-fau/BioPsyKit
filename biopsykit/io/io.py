@@ -5,7 +5,7 @@ from typing import Optional, Union, Sequence, Dict, List
 import pandas as pd
 import pytz
 
-from biopsykit.utils import path_t
+from biopsykit._types import path_t
 
 
 def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,

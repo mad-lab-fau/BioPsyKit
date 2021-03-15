@@ -5,7 +5,7 @@ import pandas as pd
 
 import ipywidgets.widgets
 
-from biopsykit.utils import path_t
+from biopsykit._types import path_t
 from biopsykit.carwatch_logs import LogData
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"

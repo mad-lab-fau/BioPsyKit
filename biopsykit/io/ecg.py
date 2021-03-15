@@ -4,7 +4,7 @@ from typing import Dict, Union
 import pandas as pd
 
 from biopsykit.io import write_pandas_dict_excel
-from biopsykit.utils import path_t
+from biopsykit._types import path_t
 from biopsykit.utils.time import tz
 
 

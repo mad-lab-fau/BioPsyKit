@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytz
 
-from biopsykit.utils import path_t
+from biopsykit._types import path_t
 from biopsykit.utils.time import tz, utc
 
 COUNTER_INCONSISTENCY_HANDLING = Literal['raise', 'warn', 'ignore']
