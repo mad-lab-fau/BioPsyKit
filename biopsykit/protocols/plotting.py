@@ -46,6 +46,242 @@ _hr_mean_plot_params = {
     'yaxis_label': "Value",
 }
 
+_saliva_feature_params = {
+    'yaxis_label': {
+        'cortisol': {
+            'auc_g': r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
+            'auc_i': r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
+            'slope': r"Cortisol Slope $\left[\frac{nmol}{l \cdot min} \right]$",
+            'max': r"Cortisol $\left[\frac{nmol}{l} \right]$",
+            'max_inc': r"Cortisol $\left[\frac{nmol}{l} \right]$",
+        },
+        'amylase': {
+            'auc_g': r"Amylase AUC $\left[\frac{U \cdot min}{l} \right]$",
+            'auc_i': r"Amylase AUC $\left[\frac{U \cdot min}{l} \right]$",
+            'slope': r"Amylase Slope $\left[\frac{U}{l \cdot min} \right]$",
+            'max': r"Amylase $\left[\frac{U}{l} \right]$",
+            'max_inc': r"Amylase $\left[\frac{U}{l} \right]$",
+        },
+    },
+    'xticklabels': {
+        'auc_g': r"$AUC_G$",
+        'auc_i': r"$AUC_I$",
+        'slope': r"$a_{§}$",
+        'max_inc': "$\Delta c_{max}$",
+        'cmax': "$c_{max}$"
+    }
+}
+
+
+# TODO add support for groups in one dataframe (indicated by group column)
+def hr_mean_plot(
+        data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+        phases: Optional[Sequence[str]] = None,
+        subphases: Optional[Sequence[str]] = None,
+        groups: Optional[Sequence[str]] = None,
+        group_col: Optional[str] = None,
+        plot_params: Optional[Dict] = None,
+        **kwargs
+) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
+    """
+    Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
+
+    In case of only one group a pandas dataframe can be passed.
+
+    In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
+    to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
+
+    Regardless of the kind of input the dataframes need to be in the format of a 'mse dataframe', as returned
+    by ``MIST.hr_course_mist`` (see ``MIST.hr_course_mist`` for further information).
+
+
+
+    Parameters
+    ----------
+    data : dataframe or dict
+        Heart rate data to plot. Can either be one dataframe (in case of only one group or in case of
+        multiple groups, together with `group_col`) or a dictionary of dataframes,
+        where one dataframe belongs to one group
+    phases : list of str, optional
+        list of phase names or ``None`` to infer from data
+    subphases : list of str, optional
+        list of subphase names of ``None`` to infer from data
+    groups : list, optional:
+         List of group names. If ``None`` is passed, the groups and their order are inferred from the
+         dictionary keys or from the unique values in `group_col`. If list is supplied the groups are
+         plotted in that order.
+         Default: ``None``
+    group_col : str, optional
+        Name of group column in the dataframe in case of multiple groups and one dataframe
+    plot_params : dict, optional
+        dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
+        For an overview of parameters and their default values, see `mist.hr_course_params`
+    kwargs: dict, optional
+        optional parameters to be passed to the plot, such as:
+            * Axes to plot on, otherwise create a new one. Default: ``None``
+            * figsize: tuple specifying figure dimensions
+            * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
+            for further information), None to automatically infer y-axis limits
+
+    Returns
+    -------
+    tuple or none
+        Tuple of Figure and Axes or None if Axes object was passed
+    """
+
+    fig: Union[plt.Figure, None] = None
+    ax: Union[plt.Axes, None] = kwargs.get('ax', None)
+    if ax is None:
+        figsize = kwargs.get('figsize', plt.rcParams['figure.figsize'])
+        fig, ax = plt.subplots(figsize=figsize)
+
+    hr_mean_plot_params = _hr_mean_plot_params.copy()
+
+    # update default parameter if plot parameter were passed
+    if plot_params:
+        hr_mean_plot_params.update(plot_params)
+
+    ylims = kwargs.get('ylims', None)
+
+    # get all plot parameter
+    sns.set_palette(hr_mean_plot_params['colormap'])
+    line_styles = hr_mean_plot_params['line_styles']
+    markers = hr_mean_plot_params['markers']
+    bg_colors = kwargs.get('background_color', hr_mean_plot_params['background_color'])
+    bg_alphas = kwargs.get('background_alpha', hr_mean_plot_params['background_alpha'])
+    x_offsets = hr_mean_plot_params['x_offsets']
+    fontsize = kwargs.get("fontsize", hr_mean_plot_params['fontsize'])
+    xaxis_label = kwargs.get("xlabel", hr_mean_plot_params['xaxis_label'])
+    yaxis_label = kwargs.get("ylabel", hr_mean_plot_params['yaxis_label'])
+    phase_text = hr_mean_plot_params.get('phase_text', None)
+
+    if phases is None:
+        if isinstance(data, pd.DataFrame):
+            if isinstance(data.index, pd.MultiIndex):
+                phases = list(data.index.get_level_values(0).unique())
+            else:
+                phases = list(data.index)
+        else:
+            data_grp = list(data.values())[0]
+            if isinstance(data_grp.index, pd.MultiIndex):
+                phases = list(data_grp.index.get_level_values(0).unique())
+            else:
+                phases = list(data_grp.index)
+
+    if subphases is None:
+        if isinstance(data, pd.DataFrame):
+            if isinstance(data.index, pd.MultiIndex):
+                subphases = list(data.index.get_level_values(1).unique())
+            else:
+                # No subphases
+                subphases = [""]
+        else:
+            data_grp = list(data.values())[0]
+            if isinstance(data_grp.index, pd.MultiIndex):
+                subphases = list(data_grp.index.get_level_values(1).unique())
+            else:
+                # No subphases
+                subphases = [""]
+
+    if isinstance(data, pd.DataFrame):
+        if isinstance(data.index, pd.MultiIndex):
+            # get subphase labels from data
+            subphase_labels = data.index.get_level_values(1)
+            if "condition" in data.index.names:
+                groups = list(data.index.get_level_values(level="condition").unique())
+        else:
+            subphase_labels = [""]
+    else:
+        if not groups:
+            # get group names from dict if groups were not supplied
+            groups = list(data.keys())
+        # get subphase labels from data
+        data_grp = list(data.values())[0]
+        if isinstance(data_grp.index, pd.MultiIndex):
+            subphase_labels = data_grp.index.get_level_values(1)
+        else:
+            subphase_labels = [""]
+
+    num_subph = len(subphases)
+
+    # build x axis, axis limits and limits for MIST phase spans
+    if len(subphases) == 1:
+        x = np.arange(len(phases))
+    else:
+        x = np.arange(len(subphase_labels))
+
+    xlims = np.append(x, x[-1] + 1)
+    xlims = xlims[::num_subph] + 0.5 * (xlims[::num_subph] - xlims[::num_subph] - 1)
+    span_lims = [(x_l, x_u) for x_l, x_u in zip(xlims, xlims[1::])]
+
+    # plot data as errorbar with mean and se
+    if groups:
+        for group, x_off, marker, ls in zip(groups, x_offsets, markers, line_styles):
+            ax.errorbar(x=x + x_off, y=data[group]['mean'], label=group, yerr=data[group]['se'], capsize=3,
+                        marker=marker, linestyle=ls)
+    else:
+        ax.errorbar(x=x, y=data['mean'], yerr=data['se'], capsize=3, marker=markers[0],
+                    linestyle=line_styles[0])
+
+    # add decorators if specified: spans and Phase labels
+    if bg_colors is not None:
+        for (i, name), (x_l, x_u), color, alpha in zip(enumerate(phases), span_lims, bg_colors, bg_alphas):
+            ax.axvspan(x_l, x_u, color=color, alpha=alpha, zorder=0, lw=0)
+            if phase_text is not None:
+                name = phase_text.format(i + 1)
+
+            ax.text(x=x_l + 0.5 * (x_u - x_l), y=0.95, s=name,
+                    transform=ax.get_xaxis_transform(),
+                    horizontalalignment='center',
+                    verticalalignment='center',
+                    fontsize=fontsize)
+
+        p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
+                             zorder=3, lw=0)
+        ax.add_patch(p)
+
+    # customize x axis
+    ax.tick_params(axis='x', bottom=True)
+    ax.set_xticks(x)
+    if len(subphase_labels) == len(x):
+        ax.set_xticklabels(subphase_labels)
+    else:
+        # no subphases
+        ax.set_xticklabels(phases)
+
+    xlims = kwargs.get('xlims', [span_lims[0][0], span_lims[-1][-1]])
+    ax.set_xlim(xlims)
+    ax.set_xlabel(xaxis_label, fontsize=fontsize)
+
+    # customize y axis
+    ax.tick_params(axis="y", which='major', left=True)
+    if isinstance(ylims, (tuple, list)):
+        ax.set_ylim(ylims)
+    else:
+        ymargin = 0.15
+        if isinstance(ylims, float):
+            ymargin = ylims
+        ax.margins(x=0, y=ymargin)
+
+    ax.set_ylabel(yaxis_label, fontsize=fontsize)
+
+    # axis tick label fontsize
+    ax.tick_params(labelsize=fontsize)
+
+    # customize legend
+    if groups:
+        # get handles
+        handles, labels = ax.get_legend_handles_labels()
+        # remove the errorbars
+        handles = [h[0] for h in handles]
+        # use them in the legend
+        ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.01, 0.90), numpoints=1,
+                  prop={"size": fontsize})
+
+    if fig:
+        fig.tight_layout()
+        return fig, ax
+
 
 def saliva_plot(
         data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
@@ -288,211 +524,57 @@ def saliva_plot_combine_legend(
                       handler_map={tuple: HandlerTuple(ndivide=None)}, prop={"size": fontsize})
 
 
-# TODO add support for groups in one dataframe (indicated by group column)
-def hr_mean_plot(
-        data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-        phases: Optional[Sequence[str]] = None,
-        subphases: Optional[Sequence[str]] = None,
-        groups: Optional[Sequence[str]] = None,
-        group_col: Optional[str] = None,
-        plot_params: Optional[Dict] = None,
-        **kwargs
-) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
+def saliva_feature_boxplot(data: pd.DataFrame, saliva_type: str, hue: str, features: Sequence[str],
+                           filter_features: Optional[bool] = True,
+                           xticklabels: Optional[Dict[str, str]] = None, stats_kwargs: Optional[Dict] = None, **kwargs):
     """
-    Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
-
-    In case of only one group a pandas dataframe can be passed.
-
-    In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
-    to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
-
-    Regardless of the kind of input the dataframes need to be in the format of a 'mse dataframe', as returned
-    by ``MIST.hr_course_mist`` (see ``MIST.hr_course_mist`` for further information).
-
-
 
     Parameters
     ----------
-    data : dataframe or dict
-        Heart rate data to plot. Can either be one dataframe (in case of only one group or in case of
-        multiple groups, together with `group_col`) or a dictionary of dataframes,
-        where one dataframe belongs to one group
-    phases : list of str, optional
-        list of phase names or ``None`` to infer from data
-    subphases : list of str, optional
-        list of subphase names of ``None`` to infer from data
-    groups : list, optional:
-         List of group names. If ``None`` is passed, the groups and their order are inferred from the
-         dictionary keys or from the unique values in `group_col`. If list is supplied the groups are
-         plotted in that order.
-         Default: ``None``
-    group_col : str, optional
-        Name of group column in the dataframe in case of multiple groups and one dataframe
-    plot_params : dict, optional
-        dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
-        For an overview of parameters and their default values, see `mist.hr_course_params`
-    kwargs: dict, optional
-        optional parameters to be passed to the plot, such as:
-            * Axes to plot on, otherwise create a new one. Default: ``None``
-            * figsize: tuple specifying figure dimensions
-            * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
-            for further information), None to automatically infer y-axis limits
+    data
+    saliva_type
+    hue
+    features
+    filter_features : bool, optional
+        ``True`` to filter features by name, ``False`` to match exact feature names. Default: ``True``
+    xticklabels
+    stats_kwargs
+    kwargs
 
     Returns
     -------
-    tuple or none
-        Tuple of Figure and Axes or None if Axes object was passed
+
     """
+    from biopsykit.plotting import multi_feature_boxplot
+    x = kwargs.get('x', 'biomarker')
 
-    fig: Union[plt.Figure, None] = None
-    ax: Union[plt.Axes, None] = kwargs.get('ax', None)
-    if ax is None:
-        figsize = kwargs.get('figsize', plt.rcParams['figure.figsize'])
-        fig, ax = plt.subplots(figsize=figsize)
+    if xticklabels is None:
+        xticklabels = _get_xticklabels(data, features)
 
-    hr_mean_plot_params = _hr_mean_plot_params.copy()
+    if 'ylabels' not in kwargs:
+        kwargs['ylabels'] = _saliva_feature_params['yaxis_label'][saliva_type]
 
-    # update default parameter if plot parameter were passed
-    if plot_params:
-        hr_mean_plot_params.update(plot_params)
+    for feature in features:
+        if 'slope' in feature:
+            kwargs['ylabels'][feature] = kwargs['ylabels']['slope']
 
-    ylims = kwargs.get('ylims', None)
+    return multi_feature_boxplot(data, x=x, y=saliva_type, hue=hue, features=features, filter_features=filter_features,
+                                 xticklabels=xticklabels, stats_kwargs=stats_kwargs, **kwargs)
 
-    # get all plot parameter
-    sns.set_palette(hr_mean_plot_params['colormap'])
-    line_styles = hr_mean_plot_params['line_styles']
-    markers = hr_mean_plot_params['markers']
-    bg_colors = kwargs.get('background_color', hr_mean_plot_params['background_color'])
-    bg_alphas = kwargs.get('background_alpha', hr_mean_plot_params['background_alpha'])
-    x_offsets = hr_mean_plot_params['x_offsets']
-    fontsize = kwargs.get("fontsize", hr_mean_plot_params['fontsize'])
-    xaxis_label = kwargs.get("xlabel", hr_mean_plot_params['xaxis_label'])
-    yaxis_label = kwargs.get("ylabel", hr_mean_plot_params['yaxis_label'])
-    phase_text = hr_mean_plot_params.get('phase_text', None)
 
-    if phases is None:
-        if isinstance(data, pd.DataFrame):
-            if isinstance(data.index, pd.MultiIndex):
-                phases = list(data.index.get_level_values(0).unique())
+def _get_xticklabels(data: pd.DataFrame, features: Sequence[str]) -> Dict[str, Sequence[str]]:
+    import re
+
+    xlabel_dict = {}
+    for feature in features:
+        cols = [d[-1] for d in data.unstack().filter(like=feature).columns]
+        labels = []
+        for c in cols:
+            if 'slope' in c:
+                label = _saliva_feature_params['xticklabels']['slope'].replace("§", re.findall(r"slope(\w+)", c)[0])
             else:
-                phases = list(data.index)
-        else:
-            data_grp = list(data.values())[0]
-            if isinstance(data_grp.index, pd.MultiIndex):
-                phases = list(data_grp.index.get_level_values(0).unique())
-            else:
-                phases = list(data_grp.index)
+                label = _saliva_feature_params['xticklabels'][c]
+            labels.append(label)
 
-    if subphases is None:
-        if isinstance(data, pd.DataFrame):
-            if isinstance(data.index, pd.MultiIndex):
-                subphases = list(data.index.get_level_values(1).unique())
-            else:
-                # No subphases
-                subphases = [""]
-        else:
-            data_grp = list(data.values())[0]
-            if isinstance(data_grp.index, pd.MultiIndex):
-                subphases = list(data_grp.index.get_level_values(1).unique())
-            else:
-                # No subphases
-                subphases = [""]
-
-    if isinstance(data, pd.DataFrame):
-        if isinstance(data.index, pd.MultiIndex):
-            # get subphase labels from data
-            subphase_labels = data.index.get_level_values(1)
-            if "condition" in data.index.names:
-                groups = list(data.index.get_level_values(level="condition").unique())
-        else:
-            subphase_labels = [""]
-    else:
-        if not groups:
-            # get group names from dict if groups were not supplied
-            groups = list(data.keys())
-        # get subphase labels from data
-        data_grp = list(data.values())[0]
-        if isinstance(data_grp.index, pd.MultiIndex):
-            subphase_labels = data_grp.index.get_level_values(1)
-        else:
-            subphase_labels = [""]
-
-    num_subph = len(subphases)
-
-    # build x axis, axis limits and limits for MIST phase spans
-    if len(subphases) == 1:
-        x = np.arange(len(phases))
-    else:
-        x = np.arange(len(subphase_labels))
-
-    xlims = np.append(x, x[-1] + 1)
-    xlims = xlims[::num_subph] + 0.5 * (xlims[::num_subph] - xlims[::num_subph] - 1)
-    span_lims = [(x_l, x_u) for x_l, x_u in zip(xlims, xlims[1::])]
-
-    # plot data as errorbar with mean and se
-    if groups:
-        for group, x_off, marker, ls in zip(groups, x_offsets, markers, line_styles):
-            ax.errorbar(x=x + x_off, y=data[group]['mean'], label=group, yerr=data[group]['se'], capsize=3,
-                        marker=marker, linestyle=ls)
-    else:
-        ax.errorbar(x=x, y=data['mean'], yerr=data['se'], capsize=3, marker=markers[0],
-                    linestyle=line_styles[0])
-
-    # add decorators if specified: spans and Phase labels
-    if bg_colors is not None:
-        for (i, name), (x_l, x_u), color, alpha in zip(enumerate(phases), span_lims, bg_colors, bg_alphas):
-            ax.axvspan(x_l, x_u, color=color, alpha=alpha, zorder=0, lw=0)
-            if phase_text is not None:
-                name = phase_text.format(i + 1)
-
-            ax.text(x=x_l + 0.5 * (x_u - x_l), y=0.95, s=name,
-                    transform=ax.get_xaxis_transform(),
-                    horizontalalignment='center',
-                    verticalalignment='center',
-                    fontsize=fontsize)
-
-        p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
-                             zorder=3, lw=0)
-        ax.add_patch(p)
-
-    # customize x axis
-    ax.tick_params(axis='x', bottom=True)
-    ax.set_xticks(x)
-    if len(subphase_labels) == len(x):
-        ax.set_xticklabels(subphase_labels)
-    else:
-        # no subphases
-        ax.set_xticklabels(phases)
-
-    xlims = kwargs.get('xlims', [span_lims[0][0], span_lims[-1][-1]])
-    ax.set_xlim(xlims)
-    ax.set_xlabel(xaxis_label, fontsize=fontsize)
-
-    # customize y axis
-    ax.tick_params(axis="y", which='major', left=True)
-    if isinstance(ylims, (tuple, list)):
-        ax.set_ylim(ylims)
-    else:
-        ymargin = 0.15
-        if isinstance(ylims, float):
-            ymargin = ylims
-        ax.margins(x=0, y=ymargin)
-
-    ax.set_ylabel(yaxis_label, fontsize=fontsize)
-
-    # axis tick label fontsize
-    ax.tick_params(labelsize=fontsize)
-
-    # customize legend
-    if groups:
-        # get handles
-        handles, labels = ax.get_legend_handles_labels()
-        # remove the errorbars
-        handles = [h[0] for h in handles]
-        # use them in the legend
-        ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.01, 0.90), numpoints=1,
-                  prop={"size": fontsize})
-
-    if fig:
-        fig.tight_layout()
-        return fig, ax
+        xlabel_dict[feature] = labels
+    return xlabel_dict
