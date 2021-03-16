@@ -1,3 +1,4 @@
+from biopsykit.protocols.car import CAR
 from biopsykit.protocols.cft import CFT
 from biopsykit.protocols.mist import MIST
 from biopsykit.protocols.stroop import Stroop
