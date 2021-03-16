@@ -51,14 +51,14 @@ _saliva_feature_params = {
         'cortisol': {
             'auc_g': r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
             'auc_i': r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
-            'slope': r"Cortisol Slope $\left[\frac{nmol}{l \cdot min} \right]$",
+            'slope': r"Cortisol Change $\left[\frac{nmol}{l \cdot min} \right]$",
             'max': r"Cortisol $\left[\frac{nmol}{l} \right]$",
             'max_inc': r"Cortisol $\left[\frac{nmol}{l} \right]$",
         },
         'amylase': {
             'auc_g': r"Amylase AUC $\left[\frac{U \cdot min}{l} \right]$",
             'auc_i': r"Amylase AUC $\left[\frac{U \cdot min}{l} \right]$",
-            'slope': r"Amylase Slope $\left[\frac{U}{l \cdot min} \right]$",
+            'slope': r"Amylase Change $\left[\frac{U}{l \cdot min} \right]$",
             'max': r"Amylase $\left[\frac{U}{l} \right]$",
             'max_inc': r"Amylase $\left[\frac{U}{l} \right]$",
         },
@@ -524,9 +524,23 @@ def saliva_plot_combine_legend(
                       handler_map={tuple: HandlerTuple(ndivide=None)}, prop={"size": fontsize})
 
 
-def saliva_feature_boxplot(data: pd.DataFrame, saliva_type: str, hue: str, features: Sequence[str],
-                           filter_features: Optional[bool] = True,
-                           xticklabels: Optional[Dict[str, str]] = None, stats_kwargs: Optional[Dict] = None, **kwargs):
+def saliva_feature_boxplot(data: pd.DataFrame, x: str, saliva_type: str, feature: Optional[str] = None,
+                           stats_kwargs: Optional[Dict] = None, **kwargs):
+    from biopsykit.plotting import feature_boxplot
+    if feature is not None:
+        if isinstance(feature, str):
+            feature = [feature]
+        ylabel = _get_ylabels(saliva_type, feature)
+        ylabel = [ylabel[f] for f in feature]
+        if len(set(ylabel)) == 1:
+            kwargs['ylabel'] = ylabel[0]
+    return feature_boxplot(data=data, x=x, y=saliva_type, stats_kwargs=stats_kwargs, **kwargs)
+
+
+def saliva_multi_feature_boxplot(data: pd.DataFrame, saliva_type: str, features: Union[str, Sequence[str]],
+                                 filter_features: Optional[bool] = True, hue: Optional[str] = None,
+                                 xticklabels: Optional[Dict[str, str]] = None,
+                                 stats_kwargs: Optional[Dict] = None, **kwargs):
     """
 
     Parameters
@@ -548,18 +562,20 @@ def saliva_feature_boxplot(data: pd.DataFrame, saliva_type: str, hue: str, featu
     from biopsykit.plotting import multi_feature_boxplot
     x = kwargs.get('x', 'biomarker')
 
+    if isinstance(features, str):
+        # ensure list
+        features = [features]
+
     if xticklabels is None:
         xticklabels = _get_xticklabels(data, features)
 
     if 'ylabels' not in kwargs:
-        kwargs['ylabels'] = _saliva_feature_params['yaxis_label'][saliva_type]
+        kwargs['ylabels'] = _get_ylabels(saliva_type, features)
 
-    for feature in features:
-        if 'slope' in feature:
-            kwargs['ylabels'][feature] = kwargs['ylabels']['slope']
-
-    return multi_feature_boxplot(data, x=x, y=saliva_type, hue=hue, features=features, filter_features=filter_features,
-                                 xticklabels=xticklabels, stats_kwargs=stats_kwargs, **kwargs)
+    return multi_feature_boxplot(data, x=x, y=saliva_type, hue=hue, features=features,
+                                 filter_features=filter_features,
+                                 xticklabels=xticklabels, stats_kwargs=stats_kwargs,
+                                 **kwargs)
 
 
 def _get_xticklabels(data: pd.DataFrame, features: Sequence[str]) -> Dict[str, Sequence[str]]:
@@ -578,3 +594,14 @@ def _get_xticklabels(data: pd.DataFrame, features: Sequence[str]) -> Dict[str, S
 
         xlabel_dict[feature] = labels
     return xlabel_dict
+
+
+def _get_ylabels(saliva_type: str, features: Union[str, Sequence[str]]):
+    ylabels = _saliva_feature_params['yaxis_label'][saliva_type]
+    if isinstance(features, str):
+        features = [features]
+    for feature in features:
+        if 'slope' in feature:
+            ylabels[feature] = ylabels['slope']
+
+    return ylabels
