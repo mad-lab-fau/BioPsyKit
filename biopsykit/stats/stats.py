@@ -101,6 +101,9 @@ class StatsPipeline:
         self.results = pipeline_results
         return pipeline_results
 
+    def _ipython_display_(self):
+        display(self._param_df().T)
+
     def display_results(self, **kwargs):
         sig_only = kwargs.get('sig_only', {})
         if sig_only is None:
@@ -117,6 +120,10 @@ class StatsPipeline:
 
         if self.results is None:
             display(Markdown("No results."))
+            return
+
+        display(Markdown("""<font size="4"><b> Overview </b></font>"""))
+        display(self)
         for category, steps in self.category_steps.items():
             if kwargs.get(category, True):
                 display(Markdown("""<font size="4"><b> {} </b></font>""".format(MAP_CATEGORIES[category])))
@@ -140,7 +147,7 @@ class StatsPipeline:
         writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
         workbook = writer.book
         header_format = workbook.add_format({'bold': True})
-        param_df = pd.DataFrame([str(s) for s in self.params.values()], index=self.params.keys(), columns=['parameter'])
+        param_df = self._param_df()
         param_df.to_excel(writer, sheet_name="parameter")
         for key, df in self.results.items():
             df.to_excel(writer, sheet_name=key, startrow=1)
@@ -209,6 +216,9 @@ class StatsPipeline:
 
         dict_pvals = {key: (pvals.loc[key].values).flatten().tolist() for key in dict_pairs.keys()}
         return dict_pairs, dict_pvals
+
+    def _param_df(self):
+        return pd.DataFrame([str(s) for s in self.params.values()], index=self.params.keys(), columns=['parameter'])
 
     def _interaction_effect(self, stats_data: pd.DataFrame):
         return stats_data.loc[~stats_data[self.params['within']].eq('-')]
