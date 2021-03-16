@@ -1,8 +1,9 @@
-from typing import Union, Tuple
+from typing import Union, Tuple, Sequence, Optional, Dict
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from biopsykit.utils.functions import se
 
@@ -79,5 +80,91 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figu
     if ylabel:
         ax.set_ylabel(ylabel)
 
+    return fig, ax
+
+
+def multi_feature_boxplot(data: pd.DataFrame, x: str, y: str, hue: str,
+                          features: Sequence[str], filter_features: Optional[bool] = True,
+                          xticklabels: Optional[Dict[str, Sequence[str]]] = None,
+                          ylabels: Optional[Dict[str, str]] = None,
+                          stats_kwargs: Optional[Dict] = None,
+                          **kwargs) -> Union[None, Tuple[plt.Figure, Sequence[plt.Axes]]]:
+    """
+
+    Parameters
+    ----------
+    data
+    x
+    y
+    hue
+    features
+    filter_features : bool, optional
+        ``True`` to filter features by name, ``False`` to match exact feature names. Default: ``True``
+    xticklabels
+    ylabels
+    stats_kwargs
+    kwargs
+
+    Returns
+    -------
+
+    """
+    from statannot import add_stat_annotation
+
+    axs: Sequence[plt.Axes] = kwargs.get('axs', kwargs.get('ax', None))
+    hue_order = kwargs.get('hue_order', None)
+    notch = kwargs.get('notch', False)
+    legend = kwargs.get('legend', True)
+    xlabels = kwargs.get('xlabels', {})
+    rect = kwargs.get('rect', (0, 0, 0.825, 1.0))
+    pvalue_thresholds = [[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]
+
+    if ylabels is None:
+        ylabels = {}
+    if xticklabels is None:
+        xticklabels = {}
+
+    if axs is None:
+        fig, axs = plt.subplots(figsize=(15, 5), ncols=len(features))
+    else:
+        fig = axs[0].get_figure()
+
+    boxplot_pairs = {}
+    if stats_kwargs is not None:
+        boxplot_pairs = stats_kwargs.pop('boxplot_pairs')
+
+    h, l = None, None
+    for ax, feature in zip(axs, features):
+        if filter_features:
+            data_plot = data.unstack().filter(like=feature).stack()
+        else:
+            data_plot = data.unstack().loc[:, pd.IndexSlice[:, feature]].stack()
+        sns.boxplot(data=data_plot.reset_index(), x=x, y=y, hue=hue, hue_order=hue_order, ax=ax, notch=notch)
+
+        if stats_kwargs is not None:
+            box_pairs = boxplot_pairs.get(feature, [])
+            stats_kwargs['comparisons_correction'] = stats_kwargs.get('comparisons_correction', None)
+            stats_kwargs['test'] = stats_kwargs.get('test', 't-test_ind')
+            stats_kwargs['pvalue_thresholds'] = pvalue_thresholds
+
+            if len(box_pairs) > 0:
+                add_stat_annotation(ax=ax, data=data_plot.reset_index(), box_pairs=box_pairs, x=x, y=y,
+                                    hue=hue, hue_order=hue_order, **stats_kwargs)
+
+        if feature in ylabels:
+            ax.set_ylabel(ylabels[feature])
+
+        if feature in xticklabels:
+            if feature in xlabels:
+                ax.set_xlabel(xlabels[feature])
+            else:
+                ax.set_xlabel(None)
+            ax.set_xticklabels(xticklabels[feature])
+        h, l = ax.get_legend_handles_labels()
+        ax.legend().remove()
+
     if fig is not None:
-        return fig, ax
+        if legend:
+            fig.legend(h, l, loc='upper right', bbox_to_anchor=(1.0, 1.0))
+            fig.tight_layout(pad=0.5, rect=rect)
+        return fig, axs
