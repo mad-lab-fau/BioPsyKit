@@ -47,6 +47,18 @@ MAP_CATEGORIES = {
     'posthoc': "Post-Hoc Analysis"
 }
 
+MAP_LATEX_EXPORT = {
+    'anova': ['ddof1', 'ddof2', 'F', 'p-unc', 'np2']
+}
+
+MAP_LATEX = {
+    'ddof1': r"$\text{df}_{Num}$",
+    'ddof2': r"$\text{df}_{Den}$",
+    'F': 'F',
+    'p-unc': 'p',
+    'np2': r"$\eta^2_p$"
+}
+
 STATS_TYPE = Literal["within", "between", "mixed"]
 PLOT_TYPE = Literal["single", "multi"]
 
@@ -222,3 +234,11 @@ class StatsPipeline:
 
     def _interaction_effect(self, stats_data: pd.DataFrame):
         return stats_data.loc[~stats_data[self.params['within']].eq('-')]
+
+    def df_to_latex(self, step: str, index_labels: Dict[str, str]):
+        # TODO continue
+        df = self.results[step]
+        df = df[MAP_LATEX_EXPORT[step]]
+        df.index = df.index.droplevel(-1)
+        df = df.rename(columns=MAP_LATEX).rename(index=index_labels)
+        return df
