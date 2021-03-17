@@ -49,6 +49,7 @@ _hr_mean_plot_params = {
 _saliva_feature_params = {
     'yaxis_label': {
         'cortisol': {
+            'auc': r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
             'auc_g': r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
             'auc_i': r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
             'slope': r"Cortisol Change $\left[\frac{nmol}{l \cdot min} \right]$",
@@ -64,6 +65,7 @@ _saliva_feature_params = {
         },
     },
     'xticklabels': {
+        'auc': r"$AUC_{$}$",
         'auc_g': r"$AUC_G$",
         'auc_i': r"$AUC_I$",
         'slope': r"$a_{§}$",
