@@ -34,8 +34,8 @@ class TSST(base.BaseProtocol):
         """
 
         self.saliva_params = {
-            'test.text': "TSST",
-            'xaxis.label': "Time relative to TSST start [min]"
+            'test_text': "TSST",
+            'xaxis_label': "Time relative to TSST start [min]"
         }
 
         self._update_tsst_params(phases, phase_durations)

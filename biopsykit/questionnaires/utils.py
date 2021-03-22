@@ -1,4 +1,4 @@
-from typing import Optional, Union, Sequence, Tuple
+from typing import Optional, Union, Sequence, Tuple, Dict
 
 import numpy as np
 import pandas as pd
@@ -41,21 +41,13 @@ def fill_col_leading_zeros(df: pd.DataFrame, inplace: Optional[bool] = False) ->
         return df
 
 
-def convert_nan(data: Union[pd.DataFrame, pd.Series], inplace: Optional[bool] = True) -> Union[
-    pd.DataFrame, pd.Series, None]:
-    if inplace:
-        data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=True)
-    else:
-        return data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=False)
-
-
 def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
     return np.array(col_idxs) - 1
 
 
 def invert(data: Union[pd.DataFrame, pd.Series], score_range: Sequence[int],
            cols: Optional[Union[Sequence[int], Sequence[str]]] = None,
-           inplace: Optional[bool] = True) -> Union[pd.DataFrame, pd.Series, None]:
+           inplace: Optional[bool] = False) -> Union[pd.DataFrame, pd.Series, None]:
     if inplace:
         if isinstance(data, pd.DataFrame):
             if cols is not None:
@@ -75,7 +67,7 @@ def invert(data: Union[pd.DataFrame, pd.Series], score_range: Sequence[int],
 
 def convert_scale(data: Union[pd.DataFrame, pd.Series], offset: int,
                   cols: Optional[Union[pd.DataFrame, pd.Series]] = None,
-                  inplace: Optional[bool] = True) -> Union[pd.DataFrame, pd.Series, None]:
+                  inplace: Optional[bool] = False) -> Union[pd.DataFrame, pd.Series, None]:
     if inplace:
         if isinstance(data, pd.DataFrame):
             if cols is None:
@@ -90,7 +82,12 @@ def convert_scale(data: Union[pd.DataFrame, pd.Series], offset: int,
         else:
             raise ValueError("Only pd.DataFrame and pd.Series supported!")
     else:
-        return data + offset
+        data = data.copy()
+        if cols is not None:
+            data[cols] = data[cols] + offset
+            return data
+        else:
+            return data + offset
 
 
 def crop_scale(data: Union[pd.DataFrame, pd.Series], score_scale: Sequence[int], inplace: Optional[bool] = True,
@@ -110,7 +107,7 @@ def crop_scale(data: Union[pd.DataFrame, pd.Series], score_scale: Sequence[int],
 
 
 def bin_scale(data: Union[pd.DataFrame, pd.Series], bins: Sequence[float], col: Optional[Union[int, str]] = None,
-              last_max: Optional[bool] = False, inplace: Optional[bool] = True, right: Optional[bool] = True) \
+              last_max: Optional[bool] = False, inplace: Optional[bool] = False, right: Optional[bool] = True) \
         -> Union[pd.Series, None]:
     if last_max:
         if isinstance(col, int):
@@ -166,3 +163,45 @@ def _check_score_range_exception(data: pd.DataFrame, score_range: Sequence[int])
             "This implementation expects values in the range {}! "
             "Please consider converting to the correct range using `biopsykit.utils.convert_scale`.".format(
                 score_range))
+
+
+def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
+    if isinstance(levels, str):
+        levels = [levels]
+
+    data = data.filter(like=quest_name)
+    # reverse level order because nested multi-level index will be constructed from back to front
+    levels = levels[::-1]
+    # iteratively build up long-format dataframe
+    for i, level in enumerate(levels):
+        stubnames = list(data.columns)
+        # stubnames are everything except the last part separated by underscore
+        stubnames = set(['_'.join(s.split('_')[:-1]) for s in stubnames])
+        data = pd.wide_to_long(data.reset_index(), stubnames=stubnames, i=['subject'] + levels[0:i], j=level,
+                               sep='_', suffix=r'\w+')
+
+    # reorder levels and sort
+    return data.reorder_levels(['subject'] + levels[::-1]).sort_index()
+
+
+def compute_scores(data: pd.DataFrame,
+                   quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
+    from inspect import getmembers, isfunction
+    from biopsykit.questionnaires import questionnaires
+    df_scores = pd.DataFrame(index=data.index)
+
+    quest_funcs = dict(getmembers(questionnaires, isfunction))
+
+    for score, columns in quest_dict.items():
+        score = score.lower()
+        suffix = None
+        if '-' in score:
+            score_split = score.split('-')
+            score = score_split[0]
+            suffix = score_split[1]
+        df = quest_funcs[score](data[columns])
+        if suffix is not None:
+            df.columns = ["{}_{}".format(col, suffix) for col in df.columns]
+        df_scores = df_scores.join(df)
+
+    return df_scores

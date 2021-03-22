@@ -1,160 +1,18 @@
 import datetime
 from pathlib import Path
-from typing import Optional, Union, Sequence, Dict, Tuple
+from typing import Optional, Union, Sequence, Dict, List
 
-import numpy as np
 import pandas as pd
 import pytz
 
-from biopsykit.utils import path_t, utc, tz
+from biopsykit._types import path_t
 
 
-def load_dataset_nilspod(file_path: Optional[path_t] = None, dataset: Optional['Dataset'] = None,
-                         datastreams: Optional[Sequence[str]] = None,
-                         timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
+def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
+                  phase_cols: Optional[Union[Sequence[str], Dict[str, str]]] = None) -> pd.DataFrame:
     """
-    Converts a recorded by NilsPod into a dataframe.
-
-    You can either pass a Dataset object obtained from `nilspodlib` or directly pass the path to the file to load 
-    and convert the file at once.
-
-    Parameters
-    ----------
-    file_path : str or path, optional
-        path to dataset object to converted
-    dataset : Dataset
-        Dataset object to convert
-    datastreams : list of str, optional
-        list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
-        Datastreams that are not part of the current dataset will be silently ignored.
-    timezone : str or pytz.timezone, optional
-            timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
-
-    Returns
-    -------
-    tuple
-        tuple of pandas dataframe with sensor data and sampling rate
-
-    # TODO add examples
-    Examples
-    --------
-    >>> import biopsykit as bp
-    >>> file_path = "./NilsPodData.bin"
-    >>> # load dataset with all datastreams
-    >>> bp.io.load_dataset_nilspod(file_path)
-    >>> # load only ECG data of dataset
-    >>> bp.io.load_dataset_nilspod(file_path, datastreams=['ecg'])
-    """
-    from nilspodlib import Dataset
-
-    if file_path:
-        dataset = Dataset.from_bin_file(file_path)
-    if isinstance(timezone, str):
-        # convert to pytz object
-        timezone = pytz.timezone(timezone)
-    # convert dataset to dataframe and localize timestamp
-    df = dataset.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
-    df.index.name = "time"
-    return df, int(dataset.info.sampling_rate_hz)
-
-
-def load_csv_nilspod(file_path: Optional[path_t] = None, datastreams: Optional[Sequence[str]] = None,
-                     timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[pd.DataFrame, int]:
-    """
-    TODO: add documentation
-    Parameters
-    ----------
-    file_path
-    datastreams
-    timezone
-
-    Returns
-    -------
-
-    """
-    import re
-
-    df = pd.read_csv(file_path, header=1, index_col="timestamp")
-    header = pd.read_csv(file_path, header=None, nrows=1)
-
-    # infer start time from filename
-    start_time = re.findall(r"NilsPodX-[^\s]{4}_(.*?).csv", str(file_path.name))[0]
-    start_time = pd.to_datetime(start_time, format="%Y%m%d_%H%M%S").to_datetime64().astype(int)
-    # sampling rate is in second column of header
-    sampling_rate = int(header.iloc[0, 1])
-    # convert index to nanoseconds
-    df.index = ((df.index / sampling_rate) * 1e9).astype(int)
-    # add start time as offset and convert into datetime index
-    df.index = pd.to_datetime(df.index + start_time)
-    df.index.name = "time"
-
-    df_filt = pd.DataFrame(index=df.index)
-    if datastreams is None:
-        df_filt = df
-    else:
-        # filter only desired datastreams
-        for ds in datastreams:
-            df_filt = df_filt.join(df.filter(like=ds))
-
-    if isinstance(timezone, str):
-        # convert to pytz object
-        timezone = pytz.timezone(timezone)
-    # localize timezone (is already in correct timezone since start time is inferred from file name)
-    df_filt = df_filt.tz_localize(tz=timezone)
-    return df_filt, sampling_rate
-
-
-def load_folder_nilspod(folder_path: path_t, phase_names: Optional[Sequence[str]] = None,
-                        datastreams: Optional[Sequence[str]] = None,
-                        timezone: Optional[Union[pytz.timezone, str]] = tz) -> Tuple[Dict[str, pd.DataFrame], int]:
-    """
-    Loads all NilsPod datasets from one folder, converts them into dataframes and combines them into one dictionary.
-
-    Parameters
-    ----------
-    folder_path : str or path
-        path to folder containing data
-    phase_names: list, optional
-        list of phase names corresponding to the files in the folder. Must match the number of recordings
-    datastreams : list of str, optional
-        list of datastreams of the Dataset if only specific ones should be included or `None` to load all datastreams.
-        Datastreams that are not part of the current dataset will be silently ignored.
-    timezone : str or pytz.timezone, optional
-            timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
-
-    Returns
-    -------
-    tuple
-        tuple of dictionary with phase names as keys and pandas dataframes with sensor data as values and sampling rate
-
-    Raises
-    ------
-    ValueError
-        if number of phases does not match the number of datasets in the folder
-
-    # TODO add examples
-    """
-    # ensure pathlib
-    folder_path = Path(folder_path)
-    # look for all NilsPod binary files in the folder
-    dataset_list = list(sorted(folder_path.glob("*.bin")))
-    if phase_names is None:
-        phase_names = ["Part{}".format(i) for i in range(len(dataset_list))]
-
-    if len(phase_names) != len(dataset_list):
-        raise ValueError("Number of phases does not match number of datasets in the folder!")
-
-    dataset_dict = {phase: load_dataset_nilspod(file_path=dataset_path, datastreams=datastreams, timezone=timezone) for
-                    phase, dataset_path in zip(phase_names, dataset_list)}
-    # assume equal sampling rates for all datasets in folder => take sampling rate from first dataset
-    sampling_rate = list(dataset_dict.values())[0].info.sampling_rate_hz
-    return dataset_dict, sampling_rate
-
-
-def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str]]] = None,
-                  phase_cols: Optional[Sequence[str]] = None) -> pd.DataFrame:
-    """
-    Loads time log file.
+    Loads a 'time log file', i.e. a file where time information about start and stop times of recordings or recording
+    phases are stored.
 
     Parameters
     ----------
@@ -176,7 +34,15 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
     ValueError
         if file format is none of [.xls, .xlsx, .csv]
 
-    TODO: add examples
+
+    >>> import biopsykit as bp
+    >>> file_path = "./timelog.csv"
+    >>> # load time log file into a pandas dataframe
+    >>> df_time_log = bp.io.load_time_log(file_path)
+    >>> # load time log file into a pandas dataframe and specify the 'subject_id' column in the time log file to be the index of the dataframe
+    >>> df_time_log = bp.io.load_time_log(file_path, index_cols='subject_id')
+    >>> # load time log file into a pandas dataframe and specify the columns 'Phase1' 'Phase2' and 'Phase3' in the time log file to be the used for extracting time information
+    >>> df_time_log = bp.io.load_time_log(file_path, phase_cols=['Phase1', 'Phase2', 'Phase3'])
     """
     # ensure pathlib
     file_path = Path(file_path)
@@ -187,58 +53,151 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
     else:
         raise ValueError("Unrecognized file format {}!".format(file_path.suffix))
 
+    new_index_cols = None
     if isinstance(index_cols, str):
         index_cols = [index_cols]
+    elif isinstance(index_cols, dict):
+        new_index_cols = list(index_cols.values())
+        index_cols = list(index_cols.keys())
+
+    new_phase_cols = None
+    if isinstance(phase_cols, dict):
+        new_phase_cols = phase_cols
+        phase_cols = list(phase_cols.keys())
 
     if index_cols:
         df_time_log.set_index(index_cols, inplace=True)
+    if new_index_cols:
+        df_time_log.index.rename(new_index_cols, inplace=True)
+
     if phase_cols:
         df_time_log = df_time_log.loc[:, phase_cols]
+    if new_phase_cols:
+        df_time_log.rename(columns=new_phase_cols, inplace=True)
     return df_time_log
 
 
 def load_subject_condition_list(file_path: path_t, subject_col: Optional[str] = 'subject',
                                 condition_col: Optional[str] = 'condition',
-                                excluded_subjects: Optional[Sequence] = None,
                                 return_dict: Optional[bool] = True) -> Union[Dict, pd.DataFrame]:
     # enforce subject ID to be string
     df_cond = pd.read_csv(file_path, dtype={condition_col: str, subject_col: str})
     df_cond.set_index(subject_col, inplace=True)
-    # exclude subjects
-    if excluded_subjects:
-        df_cond.drop(index=excluded_subjects, inplace=True)
+
     if return_dict:
         return df_cond.groupby(condition_col).groups
     else:
         return df_cond
 
 
-def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset'] = None,
-                              date: Optional[Union[str, 'datetime']] = None,
-                              timezone: Optional[str] = "Europe/Berlin") -> pd.DataFrame:
+def load_questionnaire_data(file_path: path_t,
+                            index_cols: Optional[Union[str, Sequence[str]]] = None,
+                            remove_nan_rows: Optional[bool] = True,
+                            replace_missing_vals: Optional[bool] = True,
+                            sheet_name: Optional[Union[str, int]] = 0) -> pd.DataFrame:
+    from biopsykit.utils.dataframe_handling import convert_nan
+    # ensure pathlib
+    file_path = Path(file_path)
+    if file_path.suffix == '.csv':
+        data = pd.read_csv(file_path, index_col=index_cols)
+    elif file_path.suffix in ('.xlsx', '.xls'):
+        data = pd.read_excel(file_path, index_col=index_cols, sheet_name=sheet_name)
+    else:
+        raise ValueError("Invalid file type!")
+    if remove_nan_rows:
+        data = data.dropna(how='all')
+    if replace_missing_vals:
+        data = convert_nan(data)
+    return data
+
+
+def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = None) -> Dict[str, pd.DataFrame]:
     """
-    TODO: add documentation
+    Loads the stroop test data from a folder and writes parameters like mean response time, number of correct answers,..
+    into a Dictionary. The raw data needs to be as an .iqdat format in the path folder.
 
     Parameters
     ----------
-    time_log
-    dataset
-    date
-    timezone
+    folder_path : str
+        path to the folder in which the stroop test data is kept
+    cols : Sequence(str)
+        column name of which data should be load into the dictionary
+    Returns
+    -------
+    dict
+        dictionary with parameters of the stroop test like number of correct answers, mean response time,...
+    """
+    dict_stroop = {}
+    dict_stroop_subphase = {}
+    subject = ""
+    # ensure pathlib
+    folder_path = Path(folder_path)
+    # look for all Inquisit files in the folder
+    dataset_list = list(sorted(folder_path.glob("*.iqdat")))
+    # iterate through data
+    for data_path in dataset_list:
+
+        df_stroop = pd.read_csv(data_path, sep='\t')
+
+        if (subject != df_stroop['subject'][0]):
+            dict_stroop_subphase = {}
+
+        # set subject, stroop phase
+        subject = df_stroop['subject'][0]
+        subphase = 'Stroop' + str(df_stroop['sessionid'][0])[-1]
+        df_mean = df_stroop.mean(axis=0).to_frame().T
+
+        if cols:
+            dict_stroop_subphase[subphase] = df_mean[cols]
+        else:
+            dict_stroop_subphase[subphase] = df_mean
+
+        dict_stroop[subject] = dict_stroop_subphase
+
+    return dict_stroop
+
+
+def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset'] = None,
+                              df: Optional[pd.DataFrame] = None, date: Optional[Union[str, 'datetime']] = None,
+                              timezone: Optional[str] = "Europe/Berlin") -> pd.DataFrame:
+    """
+    Converts the time information of a time log pandas dataframe into datetime objects, i.e. adds the recording date
+    to the time. Thus, either a NilsPodLib 'Dataset' or pandas DataFrame with DateTimeIndex must be supplied from which
+    the recording date can be extracted or the date must explicitly be specified.
+
+    Parameters
+    ----------
+    time_log : pd.DataFrame
+        pandas dataframe with time log information
+    dataset : Dataset, optional
+        Dataset object to convert time log information into datetime
+    df : pd.DataFrame, optional
+    date : str or datatime, optional
+        date to convert into time log into datetime
+    timezone : str or pytz.timezone, optional
+        timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
 
     Returns
     -------
+    pd.DataFrame
+        pandas dataframe with log time converted into datetime
 
     Raises
     ------
     ValueError
-        if none of `dataset` and `date` is supplied as argument
+        if none of `dataset`, `df` and `date` are supplied as argument
     """
-    if dataset is None and date is None:
-        raise ValueError("Either `dataset` or `date` must be supplied as argument!")
+    if dataset is None and date is None and df is None:
+        raise ValueError("Either `dataset`, `df` or `date` must be supplied as argument!")
 
     if dataset is not None:
         date = dataset.info.utc_datetime_start.date()
+    if df is not None:
+        if isinstance(df.index, pd.DatetimeIndex):
+            date = df.index.normalize().unique()[0]
+            date = date.to_pydatetime()
+        else:
+            raise ValueError("Index of DataFrame must be DatetimeIndex!")
     if isinstance(date, str):
         # ensure datetime
         date = datetime.datetime(date)
@@ -246,35 +205,100 @@ def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset
     return time_log
 
 
-def check_nilspod_dataset_corrupted(dataset: 'Dataset') -> bool:
-    return np.where(np.diff(dataset.counter) != 1.0)[0].size != 0
+def write_pandas_dict_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_t,
+                            index_col: Optional[bool] = True) -> None:
+    """
+    Writes a dictionary containing pandas dataframes to an Excel file.
 
-
-def get_nilspod_dataset_corrupted_info(dataset: 'Dataset', file_path: path_t) -> Dict:
-    import re
-    nilspod_file_pattern = r"NilsPodX-\w{4}_(.*?).bin"
+    Parameters
+    ----------
+    data_dict : dict
+        dict with pandas dataframes
+    file_path : str or path
+        filepath
+    index_col : bool, optional
+        ``True`` to include dataframe index in Excel export, ``False`` otherwise. Default: ``True``
+    """
     # ensure pathlib
     file_path = Path(file_path)
 
-    keys = ['name', 'percent_corrupt', 'condition']
-    dict_res = dict.fromkeys(keys)
-    if not check_nilspod_dataset_corrupted(dataset):
-        dict_res['condition'] = 'fine'
-        return dict_res
+    writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
+    for key in data_dict:
+        if isinstance(data_dict[key].index, pd.DatetimeIndex):
+            # un-localize DateTimeIndex because Excel doesn't support timezone-aware dates
+            data_dict[key].tz_localize(None).to_excel(writer, sheet_name=key, index=index_col)
+        else:
+            data_dict[key].to_excel(writer, sheet_name=key, index=index_col)
+    writer.save()
 
-    idx_diff = np.diff(dataset.counter)
-    idx_corrupt = np.where(idx_diff != 1.0)[0]
-    percent_corrupt = ((len(idx_corrupt) / len(idx_diff)) * 100.0)
-    condition = "parts"
-    if percent_corrupt > 90.0:
-        condition = "lost"
-    elif percent_corrupt < 50.0:
-        if (idx_corrupt[0] / len(idx_corrupt)) < 0.30:
-            condition = "start_only"
-        elif (idx_corrupt[0] / len(idx_corrupt)) > 0.70:
-            condition = "end_only"
 
-    dict_res['name'] = re.search(nilspod_file_pattern, file_path.name).group(1)
-    dict_res['percent_corrupt'] = percent_corrupt
-    dict_res['condition'] = condition
-    return dict_res
+def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
+                      identifier_col: Optional[str] = "subject",
+                      index_cols: Optional[List[str]] = ["phase"],
+                      overwrite_file: Optional[bool] = False) -> None:
+    """
+    Saves dictionary with processing results (e.g. HR, HRV, RSA) of all subjects as csv file.
+
+    Simply pass a dictionary with processing results. The keys in the dictionary should be the Subject IDs
+    (or any other identifier), the values should be pandas dataframes. The resulting index can be specified by the
+    `identifier_col` parameter.
+
+    The dictionary will be concatenated to one large dataframe which will then be saved as csv file.
+
+    *Notes*:
+        * If a file with same name exists at the specified location, it is assumed that this is a result file from a
+          previous run and the current results should be appended to this file.
+          (To disable this behavior, set `overwrite_file` to ``False``).
+        * Per default, it is assumed that the 'values' dataframes has a multi-index with columns ["phase"].
+          The resulting dataframe would, thus, per default have the columns ["subject", "phase"].
+          This can be changed by the parameter `index_cols`.
+
+    Parameters
+    ----------
+    result_dict : dict
+        Dictionary containing processing results for all subjects. The keys in the dictionary should be the Subject IDs
+        (or any other identifier), the values should be pandas dataframes
+    file_path : path, str
+        path to file
+    identifier_col : str, optional
+        Name of the index in the concatenated dataframe. Default: "Subject_ID"
+    index_cols : list of str, optional
+        List of index columns of the single dataframes in the dictionary. Not needed if `overwrite_file` is ``False``.
+        Default: ["Phase", "Subphase"]
+    overwrite_file : bool, optional
+        ``True`` to overwrite the file if it already exists, ``False`` otherwise. Default: ``True``
+
+    Examples
+    --------
+    >>>
+    >>> from biopsykit.io import write_result_dict
+    >>>
+    >>> file_path = "./param_results.csv"
+    >>>
+    >>> dict_param_output = {
+    >>> 'S01' : pd.DataFrame(), # dataframe from mist_param_subphases,
+    >>> 'S02' : pd.DataFrame(),
+    >>> # ...
+    >>> }
+    >>>
+    >>> write_result_dict(dict_param_output, file_path=file_path,
+    >>>                             identifier_col="subject", index_cols=["phase", "subphase"])
+    """
+
+    # ensure pathlib
+    file_path = Path(file_path)
+
+    # TODO check if index_cols is really needed?
+
+    identifier_col = [identifier_col]
+
+    if index_cols is None:
+        index_cols = []
+
+    df_result_concat = pd.concat(result_dict, names=identifier_col + index_cols)
+    if file_path.exists() and not overwrite_file:
+        # ensure that all identifier columns are read as str
+        df_result_old = pd.read_csv(file_path, dtype={col: str for col in identifier_col})
+        df_result_old.set_index(identifier_col + index_cols, inplace=True)
+        df_result_concat = df_result_concat.combine_first(df_result_old).sort_index(level=0)
+    df_result_concat.reset_index().to_csv(file_path, index=False)

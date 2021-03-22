@@ -1,7 +1,10 @@
-import biopsykit.sleep.io
 import biopsykit.sleep.utils
+import biopsykit.sleep.sleep_endpoints
+import biopsykit.sleep.plotting
 
 __all__ = [
-    'io',
     'utils',
+    'sleep_endpoints',
+    'plotting',
+    'mrp'
 ]

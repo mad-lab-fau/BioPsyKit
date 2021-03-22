@@ -7,7 +7,8 @@ from typing import Optional, Dict, Union
 import pandas as pd
 from tqdm.notebook import tqdm
 
-from biopsykit.utils import path_t, utc, tz
+from biopsykit._types import path_t
+from biopsykit.utils.time import utc, tz
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
 

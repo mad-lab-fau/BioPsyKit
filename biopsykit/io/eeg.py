@@ -2,7 +2,7 @@ from typing import Tuple
 
 import pandas as pd
 
-from biopsykit.utils import path_t
+from biopsykit._types import path_t
 
 
 def load_eeg_muse(file_path: path_t) -> Tuple[pd.DataFrame, int]:

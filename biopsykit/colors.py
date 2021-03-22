@@ -2,19 +2,29 @@ from typing import Union, Sequence, Optional
 
 import seaborn as sns
 
-cmap_fau = sns.color_palette(["#003865", "#c99313", "#8d1429", "#00b1eb", "#009b77", "#98a4ae"])
-_keys_fau = ['fau', 'phil', 'wiso', 'med', 'nat', 'tech']
+fau_color_dict = {
+    'fau': "#003865",
+    'phil': "#c99313",
+    'wiso': "#8d1429",
+    'med': "#00b1eb",
+    'nat': "#009b77",
+    'tech': "#98a4ae"
+}
+
+fau_palette = sns.color_palette(fau_color_dict.values())
 
 
 def cmap_fau_blue(cmap_type: Union[str, None]) -> Sequence[str]:
     # generated using this link: https://noeldelgado.github.io/shadowlord
     fau_blue = sns.color_palette(
-        ["#001628", "#001F38", "#002747", "#003056", "#003865",
-         "#26567C", "#4D7493", "#7392AA", "#99AFC1", "#BFCDD9",
-         "#E6EBF0"]
+        ["#001628", "#001c33", "#002747", "#002d51", "#003865",
+         "#194c74", "#336084", "#4d7493", "#809cb2", "#b3c3d1",
+         "#e6ebf0"]
     )
     if cmap_type == '3':
-        return fau_blue[1::3]
+        return [fau_blue[4], fau_blue[7], fau_blue[9]]
+    if cmap_type == '3_ens':
+        return [fau_blue[3], fau_blue[5], fau_blue[8]]
     elif cmap_type == '2':
         return fau_blue[5::4]
     elif cmap_type == '2_lp':
@@ -109,7 +119,7 @@ def cmap_fau_tech(cmap_type: Union[str, None]) -> Sequence[str]:
 
 
 def fau_color(key: str) -> str:
-    return cmap_fau[_keys_fau.index(key)] or cmap_fau['fau']
+    return fau_color_dict[key]
 
 
 def adjust_color(key: str, amount: Optional[float] = 1.5) -> str:

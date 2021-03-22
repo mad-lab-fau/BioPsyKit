@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Optional, Union, Sequence, Tuple, Dict
 
 import matplotlib as mpl
@@ -8,10 +7,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import biopsykit.utils as utils
+from biopsykit.signals.ecg import check_ecg_input, sanitize_input_1d
 import biopsykit.colors as colors
 from biopsykit.signals.ecg import EcgProcessor
-from biopsykit.utils import path_t
 
 sns.set(context="paper", style="white")
 
@@ -81,13 +79,13 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
 
-    utils.check_input(ecg_processor, key, ecg_signal, heart_rate)
+    check_ecg_input(ecg_processor, key, ecg_signal, heart_rate)
     if ecg_processor:
         ecg_signal = ecg_processor.ecg_result[key]
         heart_rate = ecg_processor.heart_rate[key]
         sampling_rate = ecg_processor.sampling_rate
 
-    sns.set_palette(colors.cmap_fau)
+    sns.set_palette(colors.fau_palette)
     if isinstance(ecg_signal.index, pd.DatetimeIndex):
         plt.rcParams['timezone'] = ecg_signal.index.tz.zone
 
@@ -142,7 +140,7 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
 
     peaks = np.setdiff1d(peaks, outlier)
     # Plot signals
-    # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=utils.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
+    # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=colors.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
     axs['ecg'].plot(ecg_clean, color=colors.fau_color('fau'), label="Cleaned", zorder=1,
                     linewidth=1.5)
     axs['ecg'].scatter(x_axis[peaks], ecg_clean.iloc[peaks], color=colors.fau_color('nat'),
@@ -213,7 +211,7 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
 
-    sns.set_palette(colors.cmap_fau)
+    sns.set_palette(colors.fau_palette)
 
     fig: Union[plt.Figure, None] = None
     if ax is None:
@@ -233,16 +231,16 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
         ax.margins(x=0)
         ax.legend(loc="upper right")
 
-    ax.tick_params(axis='x', which='both', bottom=True)
-
     if isinstance(heart_rate.index, pd.DatetimeIndex):
         # TODO add axis style for non-Datetime axes
         ax.xaxis.set_major_locator(mdates.MinuteLocator())
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
         ax.xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
+    ax.tick_params(axis='x', which='both', bottom=True)
     ax.tick_params(axis='y', which='major', left=True)
     ax.yaxis.set_major_locator(mticks.MaxNLocator(5, steps=[5, 10]))
+    ax.set_ylim(auto=True)
 
     if fig:
         ax.set_xlabel("Time")
@@ -298,7 +296,7 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     if figsize is None:
         figsize = (14, 7)
 
-    utils.check_input(ecg_processor, key, ecg_signal, rpeaks)
+    check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
     if ecg_processor:
         ecg_signal = ecg_processor.ecg_result[key]
         rpeaks = ecg_processor.rpeaks[key]
@@ -344,6 +342,7 @@ def hrv_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     return fig, list(axs.values())
 
 
+# TODO Vicky: add kwargs for ax and figsize (see bp.protocols.cft.cft_plot() or bp.protocols.plotting.saliva_plot() for examples)
 def hr_distribution_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
                          figsize: Optional[Tuple[float, float]] = None) -> Tuple[plt.Figure, plt.Axes]:
     """
@@ -646,7 +645,7 @@ def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256,
             figsize = plt.rcParams['figure.figsize']
         fig, ax = plt.subplots(figsize=figsize)
 
-    rpeaks = utils.sanitize_input(rpeaks['R_Peak_Idx'])
+    rpeaks = sanitize_input_1d(rpeaks['R_Peak_Idx'])
     rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate, interpolate=True)[0]
     hrv = nk.hrv_frequency(rpeaks, sampling_rate)
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]

@@ -1,12 +1,13 @@
 from ast import literal_eval
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Sequence
 
 import pytz
 import pandas as pd
 import numpy as np
 
-from biopsykit.utils import path_t, tz
+from biopsykit._types import path_t
+from biopsykit.utils.time import tz
 
 __all__ = [
     'load_withings_sleep_analyzer_raw_file',
@@ -24,7 +25,10 @@ RAW_DATA_SOURCES = {
 
 
 def load_withings_sleep_analyzer_raw_folder(folder_path: path_t,
-                                            timezone: Optional[Union[pytz.timezone, str]] = tz) -> pd.DataFrame:
+                                            timezone: Optional[Union[pytz.timezone, str]] = tz,
+                                            split_nights: Optional[bool] = True) -> Union[
+    pd.DataFrame, Sequence[pd.DataFrame]]:
+    import biopsykit.sleep.utils as utils
     """
 
     Parameters
@@ -48,8 +52,12 @@ def load_withings_sleep_analyzer_raw_folder(folder_path: path_t,
     data_sources = [re.findall(r"raw_sleep-monitor_(\S*).csv", s.name)[0] for s in raw_files]
 
     list_data = [load_withings_sleep_analyzer_raw_file(file_path, RAW_DATA_SOURCES[data_source], timezone)
-                 for file_path, data_source in zip(raw_files, data_sources)]
-    return pd.concat(list_data, axis=1)
+                 for file_path, data_source in zip(raw_files, data_sources) if data_source in RAW_DATA_SOURCES]
+    data = pd.concat(list_data, axis=1)
+    if split_nights:
+        data = utils.split_nights(data)
+        data = [d.resample("1min").interpolate() for d in data]
+    return data
 
 
 def load_withings_sleep_analyzer_raw_file(file_path: path_t, data_source: str,
@@ -75,11 +83,17 @@ def load_withings_sleep_analyzer_raw_file(file_path: path_t, data_source: str,
     data_explode = data_explode.tz_localize('UTC').tz_convert(timezone)
     # rename the value column
     data_explode.columns = [data_source]
+    # convert dtypes from object into numerical values
+    data_explode = data_explode.astype(int)
+    # sort index and drop duplicate index values
+    data_explode = data_explode.sort_index()
+    data_explode = data_explode[~data_explode.index.duplicated()]
     return data_explode
 
 
 def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
     data = pd.read_csv(file_path)
+
     for col in ['von', 'bis']:
         # convert into date time
         data[col] = pd.to_datetime(data[col])
@@ -87,31 +101,58 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
     # total duration in seconds
     data['total_duration'] = [int(td.total_seconds()) for td in (data['bis'] - data['von'])]
     data['time'] = data['von']
-    data.drop(columns=['von', 'bis'], inplace=True)
-    data.set_index('time', inplace=True)
+
     data.rename({
         'leicht (s)': 'total_time_light_sleep',
         'tief (s)': 'total_time_deep_sleep',
         'rem (s)': 'total_time_rem_sleep',
         'wach (s)': 'total_time_awake',
-        'Aufwachen': 'count_wakeup',
-        'Duration to sleep (s)': 'duration_to_sleep',
-        'Duration to wake up (s)': 'duration_to_wakeup',
+        'Aufwachen': 'num_wake_bouts',
+        'Duration to sleep (s)': 'sleep_onset_latency',
+        'Duration to wake up (s)': 'getup_latency',
         'Snoring episodes': 'count_snoring_episodes',
         'Snoring (s)': 'total_time_snoring',
         'Average heart rate': 'heart_rate_avg',
         'Heart rate (min)': 'heart_rate_min',
         'Heart rate (max)': 'heart_rate_max'
     }, axis='columns', inplace=True)
+
+    data['sleep_onset'] = data['time'] + pd.to_timedelta(data['sleep_onset_latency'], unit='seconds')
     # Wake after Sleep Onset (WASO): total time awake after sleep onset
-    data['total_time_waso'] = data['total_time_awake'] - data['duration_to_sleep'] - data['duration_to_wakeup']
-    # compute total sleep duration = total duration - (time to fall asleep + time spent in bed after waking up)
-    data['total_sleep_duration'] = data['total_duration'] - data['duration_to_sleep'] - data['duration_to_wakeup']
+    data['wake_after_sleep_onset'] = data['total_time_awake'] - data['sleep_onset_latency'] - data['getup_latency']
+    data['wake_onset'] = data['bis'] - pd.to_timedelta(data['getup_latency'], unit='seconds')
+    # compute total sleep duration
+    # = total duration - (time to fall asleep + time to get up (= time spent in bed after waking up))
+    data['total_sleep_duration'] = data['total_duration'] - data['sleep_onset_latency'] - data['getup_latency']
+
+    transform_cols = ['total_time_light_sleep', 'total_time_deep_sleep', 'total_time_rem_sleep', 'total_time_awake',
+                      'sleep_onset_latency', 'getup_latency', 'total_time_snoring', 'wake_after_sleep_onset',
+                      'total_sleep_duration']
+    data[transform_cols] = data[transform_cols].transform(lambda column: (column / 60).astype(int))
+
+    data.drop(columns=['von', 'bis'], inplace=True)
+    data.set_index('time', inplace=True)
+
+    # reindex column order
+    new_cols = list(data.columns)
+    sowo = ['sleep_onset', 'wake_onset']
+    for d in sowo:
+        new_cols.remove(d)
+    data = data[sowo + new_cols]
     return data
 
 
 def save_sleep_data(file_path: path_t, data: pd.DataFrame):
     data.to_csv(file_path)
+
+
+def save_sleep_endpoints(file_path: path_t, df_or_dict: Union[pd.DataFrame, Dict]) -> None:
+    if isinstance(df_or_dict, pd.DataFrame):
+        df_or_dict.to_csv(file_path)
+    else:
+        # TODO save dict as json
+        raise NotImplementedError(
+            "Exporting sleep endpoint dictionary not implemented yet! Consider importing sleep endpoints as dataframe.")
 
 
 def load_sleep_data(file_path: path_t) -> pd.DataFrame:
