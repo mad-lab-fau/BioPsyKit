@@ -98,9 +98,9 @@ def auc(data: pd.DataFrame, biomarker_type: Optional[Union[str, Sequence[str]]] 
 
 
 def standard_features(data: pd.DataFrame,
-                      biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol") -> Union[
+                      biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
+                      group_cols: Optional[Union[str, Sequence[str]]] = None) -> Union[
     pd.DataFrame, Dict[str, pd.DataFrame]]:
-    group_cols = ['subject']
 
     _check_data_format(data)
 
@@ -113,17 +113,25 @@ def standard_features(data: pd.DataFrame,
             dict_result[biomarker] = standard_features(data[biomarker_cols], biomarker_type=biomarker)
         return dict_result
 
-    if 'condition' in data.index.names:
-        group_cols.append('condition')
-    # also group by days and/or condition if we have multiple days present in the index
-    if 'day' in data.index.names:
-        group_cols.append('day')
+    if isinstance(group_cols, str):
+        # ensure list
+        group_cols = [group_cols]
+
+    if group_cols is None:
+        group_cols = ['subject']
+        if 'condition' in data.index.names:
+            group_cols.append('condition')
+        # also group by days and/or condition if we have multiple days present in the index
+        if 'day' in data.index.names:
+            group_cols.append('day')
 
     if biomarker_type not in data:
         raise ValueError("No `{}` columns in data!".format(biomarker_type))
 
     out = data[[biomarker_type]].groupby(group_cols).agg(
         [np.argmax, pd.DataFrame.mean, pd.DataFrame.std, pd.DataFrame.skew, pd.DataFrame.kurt])
+    out.index = data.unstack(level=-1).index
+
     # drop 'biomarker_type' multiindex column and add as prefix to columns
     out.columns = out.columns.droplevel(0)
     out = out.add_prefix("{}_".format(biomarker_type))
