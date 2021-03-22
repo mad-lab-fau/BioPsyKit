@@ -18,6 +18,7 @@ def lineplot(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.
     x = kwargs.get('x')
     y = kwargs.get('y')
     order = kwargs.get('order')
+    legend_fontsize = kwargs.get('legend_fontsize', None)
 
     if style is not None:
         markers = ['o'] * len(data.index.get_level_values(style).unique())
@@ -60,7 +61,7 @@ def lineplot(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.
     # remove the errorbars
     handles = [h[0] for h in handles]
     # use them in the legend
-    ax.legend(handles, labels, loc='best', numpoints=1)
+    ax.legend(handles, labels, loc='upper left', numpoints=1, fontsize=legend_fontsize)
 
     if fig is not None:
         return fig, ax
@@ -154,6 +155,7 @@ def multi_feature_boxplot(data: pd.DataFrame, x: str, y: str, hue: str,
     axs: Sequence[plt.Axes] = kwargs.pop('axs', kwargs.pop('ax', None))
 
     legend = kwargs.pop('legend', True)
+    legend_fontsize = kwargs.pop('legend_fontsize', None)
     rect = kwargs.pop('rect', (0, 0, 0.825, 1.0))
 
     hue_order = kwargs.pop('hue_order', None)
@@ -214,12 +216,15 @@ def multi_feature_boxplot(data: pd.DataFrame, x: str, y: str, hue: str,
                 ax.set_xlabel(xlabels[feature])
             else:
                 ax.set_xlabel(None)
-            ax.set_xticklabels(xticklabels[feature])
+            xt = xticklabels[feature]
+            if isinstance(xt, str):
+                xt = [xt]
+            ax.set_xticklabels(xt)
         h, l = ax.get_legend_handles_labels()
         ax.legend().remove()
 
     if legend:
-        fig.legend(h, l, loc='upper right', bbox_to_anchor=(1.0, 1.0))
+        fig.legend(h, l, loc='upper right', bbox_to_anchor=(1.0, 1.0), fontsize=legend_fontsize)
         fig.tight_layout(pad=0.5, rect=rect)
 
     return fig, axs
