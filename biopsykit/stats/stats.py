@@ -14,7 +14,8 @@ MAP_STAT_TESTS = {
     'mixed_anova': pg.mixed_anova,
     'kruskal': pg.kruskal,
     'pairwise_ttests': pg.pairwise_ttests,
-    'pairwise_tukey': pg.pairwise_tukey
+    'pairwise_tukey': pg.pairwise_tukey,
+    'pairwise_gameshowell': pg.pairwise_gameshowell,
 }
 
 MAP_STAT_PARAMS = {
@@ -26,7 +27,8 @@ MAP_STAT_PARAMS = {
     'mixed_anova': ['dv', 'between', 'within', 'subject'],
     'kruskal': ['dv', 'between'],
     'pairwise_ttests': ['dv', 'between', 'within', 'subject', 'effsize', 'tail', 'padjust'],
-    'pairwise_tukey': ['dv', 'between', 'effsize']
+    'pairwise_tukey': ['dv', 'between', 'effsize'],
+    'pairwise_gameshowell': ['dv', 'between', 'effsize'],
 }
 
 MAP_NAMES = {
@@ -38,7 +40,8 @@ MAP_NAMES = {
     'mixed_anova': "Mixed ANOVA",
     'kruskal': "Kruskal-Wallis H-test for independent samples",
     'pairwise_ttests': "Pairwise t-Tests",
-    'pairwise_tukey': "Pairwise Tukey's HSD (Honestly Significant Differences) Test"
+    'pairwise_tukey': "Pairwise Tukey's HSD (Honestly Significant Differences) Test",
+    'pairwise_gameshowell': "Pairwise Games-Howell post-hoc Test"
 }
 
 MAP_CATEGORIES = {
@@ -48,7 +51,8 @@ MAP_CATEGORIES = {
 }
 
 MAP_LATEX_EXPORT = {
-    'anova': ['ddof1', 'ddof2', 'F', 'p-unc', 'np2']
+    'anova': ['ddof1', 'ddof2', 'F', 'p-unc', 'np2'],
+    'welch_anova': ['ddof1', 'ddof2', 'F', 'p-unc', 'np2'],
 }
 
 MAP_LATEX = {
@@ -115,6 +119,7 @@ class StatsPipeline:
 
     def _ipython_display_(self):
         display(self._param_df().T)
+        display(self._result_df().T)
 
     def display_results(self, **kwargs):
         sig_only = kwargs.get('sig_only', {})
@@ -232,6 +237,9 @@ class StatsPipeline:
     def _param_df(self):
         return pd.DataFrame([str(s) for s in self.params.values()], index=self.params.keys(), columns=['parameter'])
 
+    def _result_df(self):
+        return pd.DataFrame([s[1] for s in self.steps], index=[s[0] for s in self.steps], columns=['parameter'])
+
     def _interaction_effect(self, stats_data: pd.DataFrame):
         return stats_data.loc[~stats_data[self.params['within']].eq('-')]
 
@@ -240,5 +248,5 @@ class StatsPipeline:
         df = self.results[step]
         df = df[MAP_LATEX_EXPORT[step]]
         df.index = df.index.droplevel(-1)
-        df = df.rename(columns=MAP_LATEX).rename(index=index_labels)
+        df = df.rename(columns=MAP_LATEX).reindex(index_labels.keys()).rename(index=index_labels)
         return df
