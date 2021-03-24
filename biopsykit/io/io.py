@@ -233,8 +233,8 @@ def write_pandas_dict_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_
 
 
 def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
-                      identifier_col: Optional[str] = "subject",
-                      index_cols: Optional[List[str]] = ["phase"],
+                      identifier_col: Optional[Union[str, Sequence[str]]] = "subject",
+                      index_cols: Optional[Sequence[str]] = None,
                       overwrite_file: Optional[bool] = False) -> None:
     """
     Saves dictionary with processing results (e.g. HR, HRV, RSA) of all subjects as csv file.
@@ -290,15 +290,20 @@ def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
 
     # TODO check if index_cols is really needed?
 
-    identifier_col = [identifier_col]
+    if isinstance(identifier_col, str):
+        identifier_col = [identifier_col]
 
     if index_cols is None:
-        index_cols = []
+        if len(result_dict) > 0:
+            index_cols = list(result_dict.values())[0].index.names
+        else:
+            index_cols = []
 
     df_result_concat = pd.concat(result_dict, names=identifier_col + index_cols)
+
     if file_path.exists() and not overwrite_file:
         # ensure that all identifier columns are read as str
         df_result_old = pd.read_csv(file_path, dtype={col: str for col in identifier_col})
         df_result_old.set_index(identifier_col + index_cols, inplace=True)
         df_result_concat = df_result_concat.combine_first(df_result_old).sort_index(level=0)
-    df_result_concat.reset_index().to_csv(file_path, index=False)
+    df_result_concat.to_csv(file_path)
