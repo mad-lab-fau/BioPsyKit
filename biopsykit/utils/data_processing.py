@@ -330,7 +330,7 @@ def param_subphases(
     if 'rsp' in param_types and dict_ecg is None:
         raise ValueError("`dict_ecg` must be passed if param_type is {}!".format(param_types))
 
-    index_name = "Subphase"
+    index_name = "subphase"
     # dict to store results. one entry per parameter and a list of dataframes per MIST phase
     # that will later be concated to one large dataframes
     dict_df_subphases = {param: list() for param in param_types}
@@ -357,7 +357,7 @@ def param_subphases(
                 if dur > 0:
                     df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
                 else:
-                    # duration of 0 seconds = Feedback Interval, don't cut slice the beginning,
+                    # duration of 0 seconds = Feedback Interval, don't cut the beginning,
                     # use all remaining data
                     df_subph_rpeaks = rpeaks
                 # ECG does not need to be sliced because rpeaks are already sliced and
@@ -373,7 +373,7 @@ def param_subphases(
 
                 # remove the currently analyzed subphase of data
                 # (so that the next subphase is first in the next iteration)
-                rpeaks = rpeaks[~rpeaks.index.isin(df_subph_rpeaks.index)]
+                rpeaks = rpeaks.drop(df_subph_rpeaks.index)
 
         for param in dict_subphases:
             # concat dataframe of all subphases to one dataframe per MIST phase and add to parameter dict
@@ -381,12 +381,25 @@ def param_subphases(
 
     # concat all dataframes together to one big result dataframes
     return pd.concat(
-        [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["Phase"]) for dict_df in dict_df_subphases.values()],
+        [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["phase"]) for dict_df in dict_df_subphases.values()],
         axis=1)
 
 
 def mean_per_subject_nested_dict(data: Dict[str, Dict[str, pd.DataFrame]], param_name: str,
                                  is_group_dict: Optional[bool] = False) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    data: nested dictionary
+    param_name : str
+        Name of the parameter to compute mean from. Corresponds to the column name of the resulting dataframe
+    is_group_dict: bool, optional
+
+    Returns
+    -------
+        dataframe
+    """
     df_result = _mean_per_subject_nested_dict(data, param_name)
 
     # name index levels correctly (depending on number of levels)
@@ -421,7 +434,7 @@ def _mean_per_subject_nested_dict(data: Dict[str, Dict[str, pd.DataFrame]], para
             # nested dictionary
             result_data[phase] = _mean_per_subject_nested_dict(data_phase, param_name)
         elif isinstance(data_phase, pd.DataFrame):
-            df = pd.DataFrame(data_phase.mean(), columns=[param_name], )
+            df = pd.DataFrame(data_phase.mean(), columns=[param_name])
             result_data[phase] = df
         else:
             raise ValueError("Invalid input!")
