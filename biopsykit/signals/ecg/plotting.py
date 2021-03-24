@@ -31,10 +31,11 @@ plt.rcParams.update(mpl_rc_params)
 # TODO add kwargs
 def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
              ecg_signal: Optional[pd.DataFrame] = None, heart_rate: Optional[pd.DataFrame] = None,
-             sampling_rate: Optional[int] = 256, title: Optional[str] = None,
+             sampling_rate: Optional[int] = 256,
+             plot_ecg_signal: Optional[bool] = True,
              plot_distribution: Optional[bool] = True,
              plot_individual_beats: Optional[bool] = True,
-             figsize: Optional[Tuple[float, float]] = None) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
+             **kwargs) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
     """
     ECG processing result plot.
 
@@ -61,12 +62,12 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
         dataframe with heart rate output. Output from `EcgProcessor.ecg_process()`
     sampling_rate : float, optional
         Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
-    title : str, optional
-        optional plot title. Default: None
     plot_distribution : bool, optional
         ``True`` to include heart rate distribution plot, ``False`` otherwise. Default: ``True``
     plot_individual_beats : bool, optional
         ``True`` to include individual heart beat plot, ``False`` otherwise. Default: ``True``
+    title : str, optional
+        optional plot title. Default: None
     figsize : tuple, optional
         Figure size
 
@@ -89,8 +90,8 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     if isinstance(ecg_signal.index, pd.DatetimeIndex):
         plt.rcParams['timezone'] = ecg_signal.index.tz.zone
 
-    if figsize is None:
-        figsize = (15, 5)
+    figsize = kwargs.get('figsize', (15, 5))
+    title = kwargs.get('title', None)
 
     # Prepare figure and set axes.
     x_axis = ecg_signal.index
@@ -99,10 +100,15 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
 
     if plot_individual_beats or plot_distribution:
         spec = gs.GridSpec(2, 2, width_ratios=[3, 1])
-        axs = {
-            'ecg': fig.add_subplot(spec[0, :-1]),
-            'hr': fig.add_subplot(spec[1, :-1])
-        }
+        if plot_ecg_signal:
+            axs = {
+                'ecg': fig.add_subplot(spec[0, :-1]),
+                'hr': fig.add_subplot(spec[1, :-1])
+            }
+        else:
+            axs = {
+                'hr': fig.add_subplot(spec[:, :-1])
+            }
         if plot_distribution and plot_individual_beats:
             axs['beats'] = fig.add_subplot(spec[0, -1])
             axs['dist'] = fig.add_subplot(spec[1, -1])
@@ -111,12 +117,18 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
         elif plot_distribution:
             axs['dist'] = fig.add_subplot(spec[:, -1])
     else:
-        axs = {
-            'ecg': fig.add_subplot(2, 1, 1),
-            'hr': fig.add_subplot(2, 1, 2)
-        }
+        if plot_ecg_signal:
+            axs = {
+                'ecg': fig.add_subplot(2, 1, 1),
+                'hr': fig.add_subplot(2, 1, 2)
+            }
+        else:
+            axs = {
+                'hr': fig.add_subplot(1, 1, 1)
+            }
 
-    axs['ecg'].get_shared_x_axes().join(axs['ecg'], axs['hr'])
+    if plot_ecg_signal:
+        axs['ecg'].get_shared_x_axes().join(axs['ecg'], axs['hr'])
 
     if title:
         fig.suptitle("Electrocardiogram (ECG) – {}".format(title), fontweight="bold")
@@ -129,38 +141,38 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     quality = ecg_signal["ECG_Quality"]
     minimum_line = np.full(len(x_axis), quality.min())
 
-    # Plot quality area first
-    axs['ecg'].fill_between(x_axis, minimum_line, quality, alpha=0.2, zorder=2,
-                            interpolate=True, facecolor=colors.fau_color('med'), label='Quality')
-
     peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
     outlier = np.array([])
     if "R_Peak_Outlier" in ecg_signal:
         outlier = np.where(ecg_signal["R_Peak_Outlier"] == 1)[0]
 
     peaks = np.setdiff1d(peaks, outlier)
-    # Plot signals
-    # axs['ecg'].plot(ecg_signals["ECG_Raw"], color=colors.fau_color('tech'), label='Raw', zorder=1, alpha=0.8)
-    axs['ecg'].plot(ecg_clean, color=colors.fau_color('fau'), label="Cleaned", zorder=1,
-                    linewidth=1.5)
-    axs['ecg'].scatter(x_axis[peaks], ecg_clean.iloc[peaks], color=colors.fau_color('nat'),
-                       label="R Peaks", zorder=2)
-    if "R_Peak_Outlier" in ecg_signal:
-        axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=colors.fau_color('phil'),
-                           label="Outlier", zorder=2)
-    axs['ecg'].set_ylabel("ECG Quality")
 
-    # Optimize legend
-    handles, labels = axs['ecg'].get_legend_handles_labels()
-    # order = [2, 0, 1, 3]
-    if "R_Peak_Outlier" in ecg_signal:
-        order = [0, 1, 2, 3]
-    else:
-        order = [0, 1, 2]
-    axs['ecg'].legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc="upper right")
+    if plot_ecg_signal:
+        # Plot quality area first
+        axs['ecg'].fill_between(x_axis, minimum_line, quality, alpha=0.2, zorder=2,
+                                interpolate=True, facecolor=colors.fau_color('med'), label='Quality')
+        # Plot signals
+        axs['ecg'].plot(ecg_clean, color=colors.fau_color('fau'), label="Cleaned", zorder=1,
+                        linewidth=1.5)
+        axs['ecg'].scatter(x_axis[peaks], ecg_clean.iloc[peaks], color=colors.fau_color('nat'),
+                           label="R Peaks", zorder=2)
+        if "R_Peak_Outlier" in ecg_signal:
+            axs['ecg'].scatter(x_axis[outlier], ecg_clean[outlier], color=colors.fau_color('phil'),
+                               label="Outlier", zorder=2)
+        axs['ecg'].set_ylabel("ECG Quality")
+
+        # Optimize legend
+        handles, labels = axs['ecg'].get_legend_handles_labels()
+        # order = [2, 0, 1, 3]
+        if "R_Peak_Outlier" in ecg_signal:
+            order = [0, 1, 2, 3]
+        else:
+            order = [0, 1, 2]
+        axs['ecg'].legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc="upper right")
 
     # Plot heart rate
-    hr_plot(heart_rate, axs['hr'])
+    hr_plot(heart_rate, axs['hr'], plot_outlier=not plot_ecg_signal, outlier=x_axis[outlier])
     axs['hr'].set_xlabel("Time")
 
     # Plot individual heart beats
@@ -171,21 +183,24 @@ def ecg_plot(ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] 
     if plot_distribution:
         hr_distribution_plot(heart_rate, axs['dist'])
 
-    axs['ecg'].tick_params(axis='x', which='both', bottom=True, labelbottom=True)
-    axs['ecg'].tick_params(axis='y', which='major', left=True)
+    if plot_ecg_signal:
+        axs['ecg'].tick_params(axis='x', which='both', bottom=True, labelbottom=True)
+        axs['ecg'].tick_params(axis='y', which='major', left=True)
 
-    if isinstance(heart_rate.index, pd.DatetimeIndex):
-        # TODO add axis style for non-Datetime axes
-        axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
-        axs['ecg'].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-        axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
+        if isinstance(heart_rate.index, pd.DatetimeIndex):
+            # TODO add axis style for non-Datetime axes
+            axs['ecg'].xaxis.set_major_locator(mdates.MinuteLocator())
+            axs['ecg'].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+            axs['ecg'].xaxis.set_minor_locator(mticks.AutoMinorLocator(6))
 
     fig.tight_layout()
     return fig, list(axs.values())
 
 
 def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
-            plot_mean: Optional[bool] = True, title: Optional[str] = None,
+            plot_mean: Optional[bool] = True, plot_outlier: Optional[bool] = True,
+            outlier: Optional[np.ndarray] = None,
+            title: Optional[str] = None,
             figsize: Optional[Tuple[float, float]] = None) -> Tuple[plt.Figure, plt.Axes]:
     """
     Plot displaying the course of heart rate (tachogram). This plot is also used as subplot in `ecg_plot`.
@@ -229,7 +244,6 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
         ax.axhline(y=rate_mean, label="Mean: {:.1f} bpm".format(rate_mean), linestyle="--",
                    color=colors.adjust_color('wiso'), linewidth=2)
         ax.margins(x=0)
-        ax.legend(loc="upper right")
 
     if isinstance(heart_rate.index, pd.DatetimeIndex):
         # TODO add axis style for non-Datetime axes
@@ -241,6 +255,14 @@ def hr_plot(heart_rate: pd.DataFrame, ax: Optional[plt.Axes] = None,
     ax.tick_params(axis='y', which='major', left=True)
     ax.yaxis.set_major_locator(mticks.MaxNLocator(5, steps=[5, 10]))
     ax.set_ylim(auto=True)
+
+    if plot_outlier and outlier is not None:
+        ax.vlines(outlier, ymin=0, ymax=1, transform=ax.get_xaxis_transform(),
+                  colors=colors.fau_color('phil'), alpha=0.5, label='ECG Outlier')
+        ax.relim()
+
+    if plot_mean or plot_outlier:
+        ax.legend(loc="upper right")
 
     if fig:
         ax.set_xlabel("Time")
