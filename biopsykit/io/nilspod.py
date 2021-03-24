@@ -76,7 +76,12 @@ def load_dataset_nilspod(file_path: Optional[path_t] = None,
         # convert to pytz object
         timezone = pytz.timezone(timezone)
 
-    if len(np.where(np.diff(dataset.counter) < 1)[0]) > 0:
+    idxs_corrupted = np.where(np.diff(dataset.counter) < 1)[0]
+
+    # check if only last sample is corrupted and cut last sample
+    if len(idxs_corrupted) == 1 and (idxs_corrupted == len(dataset.counter) - 2):
+        dataset.cut(start=0, stop=idxs_corrupted[0], inplace=True)
+    elif len(idxs_corrupted) > 1:
         if handle_counter_inconsistency == "raise":
             raise ValueError("Error loading dataset. Counter not monotonously increasing!")
         elif handle_counter_inconsistency == "warn":
