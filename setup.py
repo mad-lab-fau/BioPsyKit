@@ -1,37 +1,21 @@
-"""A setuptools based setup module.
-
-See:
-https://packaging.python.org/en/latest/distributing.html
-https://github.com/pypa/sampleproject
 """
+    Setup file for BioPsyKit.
+    Use setup.cfg to configure your project.
 
-# Always prefer setuptools over distutils
-from setuptools import setup, find_packages
-# To use a consistent encoding
-from codecs import open
-from os import path
+    This file was generated with PyScaffold 4.0.1.
+    PyScaffold helps you to put up the scaffold of your new Python project.
+    Learn more under: https://pyscaffold.org/
+"""
+from setuptools import setup
 
-here = path.abspath(path.dirname(__file__))
-
-# Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
-setup(
-    name='biopsykit',
-    version='0.2.0',
-    description='Library for analyzing ECG data.',
-
-    packages=find_packages(exclude='examples'),
-
-    install_requires=[
-        'numpy',
-        'scipy',
-        'pandas',
-        'matplotlib',
-        'pytz',
-        'seaborn',
-        'neurokit2',
-        'tqdm'
-    ],
-)
+if __name__ == "__main__":
+    try:
+        setup(use_scm_version={"version_scheme": "no-guess-dev"})
+    except:  # noqa
+        print(
+            "\n\nAn error occurred while building the project, "
+            "please ensure you have the most updated version of setuptools, "
+            "setuptools_scm and wheel with:\n"
+            "   pip install -U setuptools setuptools_scm wheel\n\n"
+        )
+        raise
