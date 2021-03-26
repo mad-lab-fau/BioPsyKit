@@ -99,18 +99,24 @@ class StatsPipeline:
                                len(key.split('__')) > 1 and step[0] in key.split('__')}
             params = {key: general_params[key] for key in MAP_STAT_PARAMS[step[1]] if key in general_params}
 
+            grouper = None
             if 'groupby' in specific_params:
                 grouper = specific_params.pop('groupby')
-                result = data.groupby(grouper).apply(
-                    lambda df: MAP_STAT_TESTS[step[1]](data=df, **specific_params, **params)
-                )
             elif 'groupby' in general_params:
                 grouper = general_params.pop('groupby')
+
+            if grouper:
                 result = data.groupby(grouper).apply(
                     lambda df: MAP_STAT_TESTS[step[1]](data=df, **specific_params, **params)
                 )
             else:
                 result = MAP_STAT_TESTS[step[1]](data=data, **params)
+
+            if step[0] == 'posthoc' and 'padjust' in general_params and 'padjust' not in params:
+                # apply p-adjustment for posthoc testing if it was specified in the pipeline
+                # but do it only manually if it's not supported by the test function
+                # (otherwise it would be in the 'params' dict)
+                result = self.multicomp(result, method=general_params['padjust'])
 
             pipeline_results[step[1]] = result
 
@@ -250,3 +256,13 @@ class StatsPipeline:
         df.index = df.index.droplevel(-1)
         df = df.rename(columns=MAP_LATEX).reindex(index_labels.keys()).rename(index=index_labels)
         return df
+
+    def multicomp(self, stats_data: pd.DataFrame, method: Optional[str] = 'bonf') -> pd.DataFrame:
+        data = stats_data
+        if stats_data.index.nlevels > 1:
+            data = stats_data.groupby(list(stats_data.index.names)[:-1])
+        return data.apply(lambda df: self._multicomp_lambda(df, method=method))
+
+    def _multicomp_lambda(self, data: pd.DataFrame, method: str) -> pd.DataFrame:
+        data['p-corr'] = pg.multicomp(list(data['pval']), method=method)[1]
+        return data
