@@ -1,38 +1,24 @@
 # BioPsyKit
 
-Add a short description here!
+Welcome to the documentation of **BioPsyKit** – your Python package for the analysis of biopsychological data.
 
-
-## Note
-
-> This is the main page of your project's [Sphinx] documentation. It is
-> formatted in [Markdown]. Add additional pages by creating md-files in
-> `docs` or rst-files (formated in [reStructuredText]) and adding links to
-> them in the `Contents` section below.
->
-> Please check [Sphinx], [recommonmark] and [autostructify] for more information
-> about how to document your project and how to configure your preferences.
-
+This documentation will help you to get up to speed quickly. Follow the [Quickstart](quickstart) guide and take a look
+at the [Examples](examples) section for a general overview of how to use **BioPsyKit**.
 
 ## Contents
 
 * [Overview](readme)
-* [License](license)
 * [Authors](authors)
-* [Changelog](changelog)
 * [Module Reference](api/modules)
 
+[comment]: <> (## Indices and tables)
 
-## Indices and tables
+[comment]: <> (```eval_rst)
 
-```eval_rst
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-```
+[comment]: <> (* :ref:`genindex`)
 
-[Sphinx]: http://www.sphinx-doc.org/
-[Markdown]: https://daringfireball.net/projects/markdown/
-[reStructuredText]: http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
-[recommonmark]: https://recommonmark.readthedocs.io/en/latest
-[autostructify]: https://recommonmark.readthedocs.io/en/latest/auto_structify.html
+[comment]: <> (* :ref:`modindex`)
+
+[comment]: <> (* :ref:`search`)
+
+[comment]: <> (```)

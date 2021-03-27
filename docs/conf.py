@@ -176,15 +176,12 @@ pygments_style = "sphinx"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {
-    "sidebar_width": "300px",
-    "page_width": "1200px"
-}
+html_theme_options = {"sidebar_width": "300px", "page_width": "1200px"}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -193,9 +190,9 @@ html_theme_options = {
 # "<project> v<release> documentation".
 from pkg_resources import get_distribution
 
-release = get_distribution('biopsykit').version
+release = get_distribution("biopsykit").version
 # for example take major/minor
-version = '.'.join(release.split('.')[:3])
+version = ".".join(release.split(".")[:3])
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None
