@@ -4,3 +4,13 @@
 # sphinx_rtd_theme
 recommonmark
 sphinx>=3.2.1
+setuptools
+pytz
+seaborn
+pandas
+numpy
+scipy
+neurokit2
+matplotlib
+tqdm
+nilspodlib
