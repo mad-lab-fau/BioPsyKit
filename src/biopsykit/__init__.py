@@ -1,22 +1,22 @@
 """
-Top level package for biopsykit.
+A Python package for the analysis of biopsychological data.
 """
 
-import biopsykit.signals
-import biopsykit.saliva
-import biopsykit.sleep
-import biopsykit.protocols
-import biopsykit.questionnaires
-import biopsykit.metadata
-import biopsykit.io
-import biopsykit.carwatch_logs
-import biopsykit.classification
-import biopsykit.plotting
-import biopsykit.stats
+import biopsykit.signals  # noqa: F401
+import biopsykit.saliva  # noqa: F401
+import biopsykit.sleep  # noqa: F401
+import biopsykit.stats  # noqa: F401
+import biopsykit.protocols  # noqa: F401
+import biopsykit.questionnaires  # noqa: F401
+import biopsykit.metadata  # noqa: F401
+import biopsykit.io  # noqa: F401
+import biopsykit.carwatch_logs  # noqa: F401
+import biopsykit.classification  # noqa: F401
+import biopsykit.plotting  # noqa: F401
 
-import biopsykit.colors
-import biopsykit.example_data
-import biopsykit.utils
+import biopsykit.colors  # noqa: F401
+import biopsykit.example_data  # noqa: F401
+import biopsykit.utils  # noqa: F401
 
 __all__ = [
     "signals",
@@ -33,10 +33,3 @@ __all__ = [
     "example_data",
     "utils",
 ]
-
-# Info
-__version__ = "0.0.1"
-
-# Maintainer info
-__author__ = "Robert Richer"
-__email__ = "robert.richer@fau.de"

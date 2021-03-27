@@ -2,12 +2,16 @@
 
 Welcome to the documentation of **BioPsyKit** – your Python package for the analysis of biopsychological data.
 
-This documentation will help you to get up to speed quickly. Follow the [Quickstart](quickstart) guide and take a look
-at the [Examples](examples) section for a general overview of how to use **BioPsyKit**.
+This documentation will help you to get up to speed quickly. Take a look at the [Readme](readme),
+the [User Guide](guides/index), and the [Examples](examples) for a guide on how
+to use **BioPsyKit**.
 
 ## Contents
 
-* [Overview](readme)
+* [Overview](index)
+* [Readme](readme)
+* [User Guide](guides/index)
+* [Examples](guides/index)
 * [Authors](authors)
 * [Module Reference](api/modules)
 
