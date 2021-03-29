@@ -1,20 +1,42 @@
+"""
+Color palettes and utilities.
+
+For most plots, BioPsyKit uses FAU's colors scheme.
+"""
 from typing import Union, Sequence, Optional
 
 import seaborn as sns
 
+__all__ = ["fau_color_dict"]
+
 fau_color_dict = {
     "fau": "#003865",
-    "tech": "#98a4ae",
     "phil": "#c99313",
+    "wiso": "#8d1429",
     "med": "#00b1eb",
     "nat": "#009b77",
-    "wiso": "#8d1429",
+    "tech": "#98a4ae",
 }
+"""
+Dictionary for FAU color codes.
+"""
 
 fau_palette = sns.color_palette(fau_color_dict.values())
+"""FAU color palette that can be used with seaborn and matplotlib."""
 
 
-def cmap_fau_blue(cmap_type: Union[str, None]) -> Sequence[str]:
+def cmapfau_blue(cmap_type: Optional[str] = None) -> Sequence[str]:
+    """
+
+
+    Parameters
+    ----------
+    cmap_type : str, optional
+
+    Returns
+    -------
+
+    """
     # generated using this link: https://noeldelgado.github.io/shadowlord
     fau_blue = sns.color_palette(
         [
