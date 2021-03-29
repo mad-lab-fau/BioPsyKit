@@ -11,10 +11,13 @@ from tqdm.notebook import tqdm
 from biopsykit.utils.time import tz, utc
 
 
-def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
-               dataset: Optional[Dataset] = None, df: Optional[pd.DataFrame] = None,
-               timezone: Optional[Union[str, pytz.timezone]] = tz,
-               include_start: Optional[bool] = False) -> Dict[str, pd.DataFrame]:
+def split_data(
+    time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
+    dataset: Optional[Dataset] = None,
+    df: Optional[pd.DataFrame] = None,
+    timezone: Optional[Union[str, pytz.timezone]] = tz,
+    include_start: Optional[bool] = False,
+) -> Dict[str, pd.DataFrame]:
     """
     Splits the data into parts based on time intervals.
 
@@ -64,7 +67,11 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
         if isinstance(timezone, str):
             # convert to pytz object
             timezone = pytz.timezone(timezone)
-        df = dataset.data_as_df("ecg", index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
+        df = (
+            dataset.data_as_df("ecg", index="utc_datetime")
+            .tz_localize(tz=utc)
+            .tz_convert(tz=timezone)
+        )
     if isinstance(time_intervals, pd.DataFrame):
         if len(time_intervals) > 1:
             raise ValueError("Only dataframes with 1 row allowed!")
@@ -74,46 +81,72 @@ def split_data(time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence
         if include_start:
             time_intervals["Start"] = df.index[0].to_pydatetime().time()
         time_intervals.sort_values(inplace=True)
-        for name, start, end in zip(time_intervals.index, np.pad(time_intervals, (0, 1)), time_intervals[1:]):
+        for name, start, end in zip(
+            time_intervals.index, np.pad(time_intervals, (0, 1)), time_intervals[1:]
+        ):
             data_dict[name] = df.between_time(start, end)
     else:
         if include_start:
-            time_intervals["Start"] = (df.index[0].to_pydatetime().time(), list(time_intervals.values())[0][0])
-        data_dict = {name: df.between_time(*start_end) for name, start_end in time_intervals.items()}
+            time_intervals["Start"] = (
+                df.index[0].to_pydatetime().time(),
+                list(time_intervals.values())[0][0],
+            )
+        data_dict = {
+            name: df.between_time(*start_end)
+            for name, start_end in time_intervals.items()
+        }
     return data_dict
 
 
-def exclude_subjects(excluded_subjects: Union[Sequence[str], Sequence[int]],
-                     **kwargs) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+def exclude_subjects(
+    excluded_subjects: Union[Sequence[str], Sequence[int]],
+    id_column: Optional[str] = "subject",
+    **kwargs
+) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     cleaned_data: Dict[str, pd.DataFrame] = {}
 
     for key, data in kwargs.items():
-        if 'subject' in data.index.names:
-            if (data.index.get_level_values('subject').dtype == np.object and all(
-                    [isinstance(s, str) for s in excluded_subjects])) or (
-                    data.index.get_level_values('subject').dtype == np.int and
-                    all([isinstance(s, int) for s in excluded_subjects])):
+        if id_column in data.index.names:
+            if (
+                data.index.get_level_values(id_column).dtype == np.object
+                and all([isinstance(s, str) for s in excluded_subjects])
+            ) or (
+                data.index.get_level_values(id_column).dtype == np.int
+                and all([isinstance(s, int) for s in excluded_subjects])
+            ):
                 # dataframe index and subjects are both strings or both integers
                 try:
                     if isinstance(data.index, pd.MultiIndex):
                         # MultiIndex => specify index level
-                        cleaned_data[key] = data.drop(index=excluded_subjects, level='subject')
+                        cleaned_data[key] = data.drop(
+                            index=excluded_subjects, level=id_column
+                        )
                     else:
                         # Regular Index
                         cleaned_data[key] = data.drop(index=excluded_subjects)
                 except KeyError:
-                    warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
+                    warnings.warn(
+                        "Not all subjects of {} exist in the dataset!".format(
+                            excluded_subjects
+                        )
+                    )
             else:
-                raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
+                raise ValueError(
+                    "{}: dtypes of index and subject ids to be excluded do not match!".format(
+                        key
+                    )
+                )
         else:
-            raise ValueError("No 'subject' level in index!")
+            raise ValueError("No '{}' level in index!".format(id_column))
     if len(cleaned_data) == 1:
         cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data
 
 
-def concat_phase_dict(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
-                      phases: Optional[Sequence[str]] = None) -> Dict[str, pd.DataFrame]:
+def concat_phase_dict(
+    dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
+    phases: Optional[Sequence[str]] = None,
+) -> Dict[str, pd.DataFrame]:
     """
     Rearranges a 'HR subject dict' (a nested dictionary containing heart rate data, see below and
     ``utils.load_hr_excel_all_subjects()`` for further information) into a 'Phase dict', i.e. a dictionary with
@@ -157,22 +190,25 @@ def concat_phase_dict(dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
     if phases is None:
         phases = list(dict_hr_subject.values())[0].keys()
 
-    dict_phase: Dict[str, pd.DataFrame] = {key: pd.DataFrame(columns=list(dict_hr_subject.keys())) for key in
-                                           phases}
+    dict_phase: Dict[str, pd.DataFrame] = {
+        key: pd.DataFrame(columns=list(dict_hr_subject.keys())) for key in phases
+    }
     for subj in dict_hr_subject:
         dict_bl = dict_hr_subject[subj]
         for phase in phases:
-            dict_phase[phase][subj] = dict_bl[phase]['ECG_Rate']
+            dict_phase[phase][subj] = dict_bl[phase]["ECG_Rate"]
 
     return dict_phase
 
 
 def split_subphases(
-        data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-        subphase_names: Sequence[str],
-        subphase_times: Sequence[Tuple[int, int]],
-        is_group_dict: Optional[bool] = False
-) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
+    data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
+    subphase_names: Sequence[str],
+    subphase_times: Sequence[Tuple[int, int]],
+    is_group_dict: Optional[bool] = False,
+) -> Union[
+    Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]
+]:
     """
     Splits a `Phase dict` (or a dict of such, in case of multiple groups, see ``bp.signals.utils.concat_phase_dict``)
     into a `Subphase dict` (see below for further explanation).
@@ -214,26 +250,33 @@ def split_subphases(
     """
     if isinstance(subphase_times[0], Number):
         times_cum = np.cumsum(np.array(subphase_times))
-        subphase_times = [(start, end) for start, end in zip(np.append([0], times_cum[:-1]), times_cum)]
+        subphase_times = [
+            (start, end)
+            for start, end in zip(np.append([0], times_cum[:-1]), times_cum)
+        ]
 
     if is_group_dict:
         # recursively call this function for each group
         return {
             group: split_subphases(
                 dict_group, subphase_names=subphase_names, subphase_times=subphase_times
-            ) for group, dict_group in data.items()
+            )
+            for group, dict_group in data.items()
         }
     else:
         phase_dict = {}
         # split data into subphases for each Phase
         for phase, df in data.items():
-            phase_dict[phase] = {subph: df[start:end] for subph, (start, end) in
-                                 zip(subphase_names, subphase_times)}
+            phase_dict[phase] = {
+                subph: df[start:end]
+                for subph, (start, end) in zip(subphase_names, subphase_times)
+            }
         return phase_dict
 
 
-def split_groups(phase_dict: Dict[str, pd.DataFrame],
-                 condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+def split_groups(
+    phase_dict: Dict[str, pd.DataFrame], condition_dict: Dict[str, Sequence[str]]
+) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     Splits 'Phase dict' into group dict, i.e. one 'Phase dict' per group.
 
@@ -252,20 +295,23 @@ def split_groups(phase_dict: Dict[str, pd.DataFrame],
 
     """
     return {
-        condition: {key: df[condition_dict[condition]] for key, df in phase_dict.items()} for condition
-        in condition_dict.keys()
+        condition: {
+            key: df[condition_dict[condition]] for key, df in phase_dict.items()
+        }
+        for condition in condition_dict.keys()
     }
 
 
 def param_subphases(
-        ecg_processor: Optional['EcgProcessor'] = None,
-        dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
-        dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
-        subphases: Optional[Sequence[str]] = None,
-        subphase_durations: Optional[Sequence[int]] = None,
-        param_types: Optional[Union[str, Sequence[str]]] = 'all',
-        sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
-        title: Optional[str] = None
+    ecg_processor: Optional["EcgProcessor"] = None,
+    dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
+    dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
+    subphases: Optional[Sequence[str]] = None,
+    subphase_durations: Optional[Sequence[int]] = None,
+    param_types: Optional[Union[str, Sequence[str]]] = "all",
+    sampling_rate: Optional[int] = 256,
+    include_total: Optional[bool] = True,
+    title: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Computes specified parameters (HRV / RSA / ...) over phases and subphases **for one subject**.
@@ -304,21 +350,31 @@ def param_subphases(
     import biopsykit.signals.ecg as ecg
 
     if ecg_processor is None and dict_rpeaks is None and dict_ecg is None:
-        raise ValueError("Either `ecg_processor` or `dict_rpeaks` and `dict_ecg` must be passed as arguments!")
+        raise ValueError(
+            "Either `ecg_processor` or `dict_rpeaks` and `dict_ecg` must be passed as arguments!"
+        )
 
     if subphases is None or subphase_durations is None:
-        raise ValueError("Both `subphases` and `subphase_durations` are required as parameter!")
+        raise ValueError(
+            "Both `subphases` and `subphase_durations` are required as parameter!"
+        )
 
     # get all desired parameter types
-    possible_param_types = {'hrv': ecg.EcgProcessor.hrv_process, 'rsp': ecg.EcgProcessor.rsp_rsa_process}
-    if param_types == 'all':
+    possible_param_types = {
+        "hrv": ecg.EcgProcessor.hrv_process,
+        "rsp": ecg.EcgProcessor.rsp_rsa_process,
+    }
+    if param_types == "all":
         param_types = possible_param_types
 
     if isinstance(param_types, str):
         param_types = {param_types: possible_param_types[param_types]}
     if not all([param in possible_param_types for param in param_types]):
         raise ValueError(
-            "`param_types` must all be of {}, not {}".format(possible_param_types.keys(), param_types.keys()))
+            "`param_types` must all be of {}, not {}".format(
+                possible_param_types.keys(), param_types.keys()
+            )
+        )
 
     param_types = {param: possible_param_types[param] for param in param_types}
 
@@ -327,8 +383,10 @@ def param_subphases(
         dict_rpeaks = ecg_processor.rpeaks
         dict_ecg = ecg_processor.ecg_result
 
-    if 'rsp' in param_types and dict_ecg is None:
-        raise ValueError("`dict_ecg` must be passed if param_type is {}!".format(param_types))
+    if "rsp" in param_types and dict_ecg is None:
+        raise ValueError(
+            "`dict_ecg` must be passed if param_type is {}!".format(param_types)
+        )
 
     index_name = "subphase"
     # dict to store results. one entry per parameter and a list of dataframes per MIST phase
@@ -336,7 +394,9 @@ def param_subphases(
     dict_df_subphases = {param: list() for param in param_types}
 
     # iterate through all phases in the data
-    for (phase, rpeaks), (ecg_phase, ecg_data) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc=title):
+    for (phase, rpeaks), (ecg_phase, ecg_data) in tqdm(
+        zip(dict_rpeaks.items(), dict_ecg.items()), desc=title
+    ):
         rpeaks = rpeaks.copy()
         ecg_data = ecg_data.copy()
 
@@ -347,15 +407,21 @@ def param_subphases(
             # compute HRV, RSP over complete phase
             for param_type, param_func in param_types.items():
                 dict_subphases[param_type].append(
-                    param_func(ecg_signal=ecg_data, rpeaks=rpeaks, index="Total", index_name=index_name,
-                               sampling_rate=sampling_rate))
+                    param_func(
+                        ecg_signal=ecg_data,
+                        rpeaks=rpeaks,
+                        index="Total",
+                        index_name=index_name,
+                        sampling_rate=sampling_rate,
+                    )
+                )
 
         if phase not in ["Part1", "Part2"]:
             # skip Part1, Part2 for subphase parameter analysis (parameters in total are computed above)
             for subph, dur in zip(subphases, subphase_durations):
                 # get the first xx seconds of data (i.e., get only the current subphase)
                 if dur > 0:
-                    df_subph_rpeaks = rpeaks.first('{}S'.format(dur))
+                    df_subph_rpeaks = rpeaks.first("{}S".format(dur))
                 else:
                     # duration of 0 seconds = Feedback Interval, don't cut the beginning,
                     # use all remaining data
@@ -367,9 +433,14 @@ def param_subphases(
                 for param_type, param_func in param_types.items():
                     # compute HRV, RSP over subphases
                     dict_subphases[param_type].append(
-                        param_func(ecg_signal=df_subph_ecg, rpeaks=df_subph_rpeaks, index=subph,
-                                   index_name=index_name,
-                                   sampling_rate=sampling_rate))
+                        param_func(
+                            ecg_signal=df_subph_ecg,
+                            rpeaks=df_subph_rpeaks,
+                            index=subph,
+                            index_name=index_name,
+                            sampling_rate=sampling_rate,
+                        )
+                    )
 
                 # remove the currently analyzed subphase of data
                 # (so that the next subphase is first in the next iteration)
@@ -381,12 +452,19 @@ def param_subphases(
 
     # concat all dataframes together to one big result dataframes
     return pd.concat(
-        [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["phase"]) for dict_df in dict_df_subphases.values()],
-        axis=1)
+        [
+            pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["phase"])
+            for dict_df in dict_df_subphases.values()
+        ],
+        axis=1,
+    )
 
 
-def mean_per_subject_nested_dict(data: Dict[str, Dict[str, pd.DataFrame]], param_name: str,
-                                 is_group_dict: Optional[bool] = False) -> pd.DataFrame:
+def mean_per_subject_nested_dict(
+    data: Dict[str, Dict[str, pd.DataFrame]],
+    param_name: str,
+    is_group_dict: Optional[bool] = False,
+) -> pd.DataFrame:
     """
 
     Parameters
@@ -407,26 +485,28 @@ def mean_per_subject_nested_dict(data: Dict[str, Dict[str, pd.DataFrame]], param
     if is_group_dict:
         nlevels -= 1
 
-    index_names = ['phase']
+    index_names = ["phase"]
     if nlevels == 3:
-        index_names = ['phase', 'subphase']
+        index_names = ["phase", "subphase"]
 
     if is_group_dict:
-        index_names = ['condition'] + index_names
+        index_names = ["condition"] + index_names
 
-    index_names = index_names + ['subject']
+    index_names = index_names + ["subject"]
     df_result.index.names = index_names
 
     # last index level is always 'subject' => reorder index levels to that 'subject' is the first
     # (except when 'condition' index is present, then this is the first, 'subject' is second)
     index_names = [index_names[-1]] + index_names[:-1]
-    if 'condition' in index_names:
-        index_names.remove('condition')
-        index_names = ['condition'] + index_names
+    if "condition" in index_names:
+        index_names.remove("condition")
+        index_names = ["condition"] + index_names
     return df_result.reorder_levels(index_names).sort_index()
 
 
-def _mean_per_subject_nested_dict(data: Dict[str, Dict[str, pd.DataFrame]], param_name: str) -> pd.DataFrame:
+def _mean_per_subject_nested_dict(
+    data: Dict[str, Dict[str, pd.DataFrame]], param_name: str
+) -> pd.DataFrame:
     result_data = {}
 
     for phase, data_phase in data.items():
@@ -443,10 +523,10 @@ def _mean_per_subject_nested_dict(data: Dict[str, Dict[str, pd.DataFrame]], para
 
 
 def mean_se_nested_dict(
-        data: Dict[str, Dict[str, pd.DataFrame]],
-        subphases: Optional[Sequence[str]] = None,
-        is_group_dict: Optional[bool] = False,
-        std_type: Optional[str] = 'se'
+    data: Dict[str, Dict[str, pd.DataFrame]],
+    subphases: Optional[Sequence[str]] = None,
+    is_group_dict: Optional[bool] = False,
+    std_type: Optional[str] = "se",
 ) -> pd.DataFrame:
     """
     Computes mean and standard error (se) or standard deviation (std) for a nested dictionary.
@@ -536,14 +616,20 @@ def mean_se_nested_dict(
 
     # TODO improve interface: automatically check for groups, phases, subphases, always return a dataframe (instead of a dict when data for different groups is passed), name index levels
 
-    if std_type not in ['std', 'se']:
-        raise ValueError("Invalid argument for 'std_type'! Must be one of {}, not {}.".format(['std', 'se'], std_type))
+    if std_type not in ["std", "se"]:
+        raise ValueError(
+            "Invalid argument for 'std_type'! Must be one of {}, not {}.".format(
+                ["std", "se"], std_type
+            )
+        )
 
     if is_group_dict:
         # return pd.concat({group: mean_se_nested_dict(dict_group, subphases, std_type=std_type) for group, dict_group in
         #                           data.items()})
-        return {group: mean_se_nested_dict(dict_group, subphases, std_type=std_type) for group, dict_group in
-                data.items()}
+        return {
+            group: mean_se_nested_dict(dict_group, subphases, std_type=std_type)
+            for group, dict_group in data.items()
+        }
     else:
         if subphases is None:
             # compute mean value per nested dictionary entry
@@ -551,13 +637,19 @@ def mean_se_nested_dict(
             for key, dict_val in data.items():
                 if isinstance(dict_val, dict):
                     # passed dict was case (c) or (e) explained in docstring
-                    dict_mean[key] = pd.DataFrame({subkey: dict_val[subkey].mean() for subkey in dict_val})
+                    dict_mean[key] = pd.DataFrame(
+                        {subkey: dict_val[subkey].mean() for subkey in dict_val}
+                    )
                 else:
                     # passed dict was case (d) explained in docstring
                     dict_mean[key] = dict_val.mean()
         else:
-            dict_mean = {key: pd.DataFrame({subph: dict_val[subph].mean() for subph in subphases})
-                         for key, dict_val in data.items()}
+            dict_mean = {
+                key: pd.DataFrame(
+                    {subph: dict_val[subph].mean() for subph in subphases}
+                )
+                for key, dict_val in data.items()
+            }
 
         if (np.array([len(df) for df in dict_mean.values()]) == 1).all():
             # Dataframes with one row => concat on this axis
@@ -569,7 +661,13 @@ def mean_se_nested_dict(
             # if resulting index is a MultiIndex drop the second index level because it's redundant
             df_mean.index = df_mean.index.droplevel(1)
 
-        if std_type == 'se':
-            return pd.concat([df_mean.mean(), df_mean.std() / np.sqrt(df_mean.shape[0])], axis=1, keys=["mean", "se"])
+        if std_type == "se":
+            return pd.concat(
+                [df_mean.mean(), df_mean.std() / np.sqrt(df_mean.shape[0])],
+                axis=1,
+                keys=["mean", "se"],
+            )
         else:
-            return pd.concat([df_mean.mean(), df_mean.std()], axis=1, keys=["mean", "std"])
+            return pd.concat(
+                [df_mean.mean(), df_mean.std()], axis=1, keys=["mean", "std"]
+            )
