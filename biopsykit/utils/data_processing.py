@@ -78,14 +78,23 @@ def split_data(
         time_intervals = time_intervals.iloc[0]
 
     if isinstance(time_intervals, pd.Series):
-        if include_start:
-            time_intervals["Start"] = df.index[0].to_pydatetime().time()
-        time_intervals.sort_values(inplace=True)
-        for name, start, end in zip(
-            time_intervals.index, np.pad(time_intervals, (0, 1)), time_intervals[1:]
-        ):
-            data_dict[name] = df.between_time(start, end)
-    else:
+        if time_intervals.index.nlevels > 1:
+            # multi-index series => second level contains start/end times of phases
+            time_intervals = time_intervals.unstack().T
+            time_intervals = {
+                key: tuple(value.values())
+                for key, value in time_intervals.to_dict().items()
+            }
+        else:
+            if include_start:
+                time_intervals["Start"] = df.index[0].to_pydatetime().time()
+            time_intervals.sort_values(inplace=True)
+            for name, start, end in zip(
+                time_intervals.index, np.pad(time_intervals, (0, 1)), time_intervals[1:]
+            ):
+                data_dict[name] = df.between_time(start, end)
+
+    if isinstance(time_intervals, dict):
         if include_start:
             time_intervals["Start"] = (
                 df.index[0].to_pydatetime().time(),
