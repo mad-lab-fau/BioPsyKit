@@ -5,8 +5,12 @@ import pandas as pd
 from biopsykit._types import path_t
 
 
-def int_from_str_idx(data: pd.DataFrame, idx_names: Union[str, Sequence[str]], regex: Union[str, Sequence[str]],
-                     func: Optional[Callable] = None) -> pd.DataFrame:
+def int_from_str_idx(
+    data: pd.DataFrame,
+    idx_names: Union[str, Sequence[str]],
+    regex: Union[str, Sequence[str]],
+    func: Optional[Callable] = None,
+) -> pd.DataFrame:
     """
     Extracts an integer from a index level containing string values.
 
@@ -23,7 +27,9 @@ def int_from_str_idx(data: pd.DataFrame, idx_names: Union[str, Sequence[str]], r
     """
 
     if type(idx_names) is not type(regex):
-        raise ValueError("`idx_names` and `regex` must both be either strings or list of strings!")
+        raise ValueError(
+            "`idx_names` and `regex` must both be either strings or list of strings!"
+        )
 
     if isinstance(idx_names, str):
         idx_names = [idx_names]
@@ -45,8 +51,9 @@ def int_from_str_idx(data: pd.DataFrame, idx_names: Union[str, Sequence[str]], r
     return data
 
 
-def int_from_str_col(data: pd.DataFrame, col_name: str, regex: str, func: Optional[Callable] = None) -> Union[
-    pd.Series]:
+def int_from_str_col(
+    data: pd.DataFrame, col_name: str, regex: str, func: Optional[Callable] = None
+) -> Union[pd.Series]:
     """
     Extracts an integer from a column containing string values.
 
@@ -84,11 +91,14 @@ def camel_to_snake(name: str):
 
     """
     import re
+
     # TODO don't convert if all in capital letters
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
-def replace_missing_data(data: pd.DataFrame, target_col: str, source_col: str, dropna: Optional[bool] = False):
+def replace_missing_data(
+    data: pd.DataFrame, target_col: str, source_col: str, dropna: Optional[bool] = False
+):
     """
     Replaces missing data in one column by data from another column.
 
@@ -111,37 +121,50 @@ def replace_missing_data(data: pd.DataFrame, target_col: str, source_col: str, d
 
 
 def convert_nan(
-        data: Union[pd.DataFrame, pd.Series],
-        inplace: Optional[bool] = False
+    data: Union[pd.DataFrame, pd.Series], inplace: Optional[bool] = False
 ) -> Union[pd.DataFrame, pd.Series, None]:
     if inplace:
         data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=True)
     else:
-        return data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=False)
+        return data.replace(
+            [-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=False
+        )
 
 
-def multi_xs(data: pd.DataFrame, keys: Sequence[str], level: str) -> pd.DataFrame:
+def multi_xs(
+    data: pd.DataFrame, keys: Union[str, Sequence[str]], level: str
+) -> pd.DataFrame:
+    if isinstance(keys, str):
+        keys = [keys]
     levels = data.index.names
     data_xs = pd.concat({key: data.xs(key, level=level) for key in keys}, names=[level])
     return data_xs.reorder_levels(levels).sort_index()
 
 
-def stack_groups_percent(data: pd.DataFrame, hue: str, stacked: str,
-                         order: Optional[Sequence[str]] = None) -> pd.DataFrame:
-    data_grouped = pd.DataFrame(data.groupby([hue] + [stacked]).size(), columns=["data"])
-    data_grouped = data_grouped.groupby(hue).apply(lambda x: 100 * (x / x.sum())).T.stack().T
+def stack_groups_percent(
+    data: pd.DataFrame, hue: str, stacked: str, order: Optional[Sequence[str]] = None
+) -> pd.DataFrame:
+    data_grouped = pd.DataFrame(
+        data.groupby([hue] + [stacked]).size(), columns=["data"]
+    )
+    data_grouped = (
+        data_grouped.groupby(hue).apply(lambda x: 100 * (x / x.sum())).T.stack().T
+    )
     if order:
         data_grouped = data_grouped.reindex(order)
     return data_grouped["data"]
 
 
-def apply_codebook(path_or_df: Union[path_t, pd.DataFrame], data: pd.DataFrame) -> pd.DataFrame:
+def apply_codebook(
+    path_or_df: Union[path_t, pd.DataFrame], data: pd.DataFrame
+) -> pd.DataFrame:
     from biopsykit.io import load_questionnaire_data
+
     if isinstance(path_or_df, pd.DataFrame):
         codebook = path_or_df
     else:
         # ensure pathlib
-        codebook = load_questionnaire_data(path_or_df, index_cols='variable')
+        codebook = load_questionnaire_data(path_or_df, index_cols="variable")
 
     for col in data.index.names:
         if col in codebook.index:
