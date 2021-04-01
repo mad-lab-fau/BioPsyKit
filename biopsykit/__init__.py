@@ -12,24 +12,26 @@ import biopsykit.io
 import biopsykit.carwatch_logs
 import biopsykit.classification
 import biopsykit.plotting
+import biopsykit.stats
 
 import biopsykit.colors
 import biopsykit.example_data
 import biopsykit.utils
 
 __all__ = [
-    'signals',
-    'saliva',
-    'sleep',
-    'protocols',
-    'questionnaires',
-    'metadata',
-    'classification',
-    'io',
-    'carwatch_logs',
-    'colors',
-    'example_data',
-    'utils'
+    "signals",
+    "saliva",
+    "sleep",
+    "stats",
+    "protocols",
+    "questionnaires",
+    "metadata",
+    "classification",
+    "io",
+    "carwatch_logs",
+    "colors",
+    "example_data",
+    "utils",
 ]
 
 # Info
