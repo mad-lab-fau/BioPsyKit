@@ -137,6 +137,9 @@ def feature_boxplot(
 
     stats_kwargs["pvalue_thresholds"] = _PVALUE_THRESHOLDS
 
+    if len(box_pairs) == 0:
+        stats_kwargs = {}
+
     sns.boxplot(data=data.reset_index(), x=x, y=y, ax=ax, **kwargs)
     if len(box_pairs) > 0:
         stats_kwargs["hue_order"] = kwargs.get("hue_order", None)
@@ -156,8 +159,9 @@ def multi_feature_boxplot(
     x: str,
     y: str,
     hue: Optional[str] = None,
-    features: Optional[Sequence[str]] = None,
-    filter_features: Optional[bool] = True,
+    features: Optional[
+        Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]]
+    ] = None,
     xticklabels: Optional[Dict[str, Sequence[str]]] = None,
     ylabels: Optional[Dict[str, str]] = None,
     stats_kwargs: Optional[Dict] = None,
@@ -172,8 +176,6 @@ def multi_feature_boxplot(
     y
     hue
     features
-    filter_features : bool, optional
-        ``True`` to filter features by name, ``False`` to match exact feature names. Default: ``True``
     xticklabels
     ylabels
     stats_kwargs
@@ -193,8 +195,12 @@ def multi_feature_boxplot(
     legend_orientation = kwargs.pop("legend_orientation", "vertical")
     rect = kwargs.pop("rect", (0, 0, 0.825, 1.0))
 
+    order = kwargs.pop("order", None)
     hue_order = kwargs.pop("hue_order", None)
     xlabels = kwargs.pop("xlabels", {})
+
+    if isinstance(features, list):
+        features = {f: f for f in features}
 
     if ylabels is None:
         ylabels = {}
@@ -213,18 +219,24 @@ def multi_feature_boxplot(
     dict_pvals = stats_kwargs.pop("pvalues", None)
 
     h, l = None, None
-    for ax, feature in zip(axs, features):
-        if filter_features:
-            data_plot = data.unstack().filter(like=feature).stack()
+    for ax, key in zip(axs, features):
+        from biopsykit.utils.dataframe_handling import multi_xs
+
+        data_plot = multi_xs(data, features[key], level=x)
+        if order is None:
+            order_list = features[key]
         else:
-            data_plot = data.unstack().loc[:, pd.IndexSlice[:, feature]].stack()
+            order_list = order[key]
+        if isinstance(order_list, str):
+            order_list = [order_list]
 
         if data_plot.empty:
-            raise ValueError("Empty dataframe for '{}'!".format(feature))
+            raise ValueError("Empty dataframe for '{}'!".format(key))
         sns.boxplot(
             data=data_plot.reset_index(),
             x=x,
             y=y,
+            order=order_list,
             hue=hue,
             hue_order=hue_order,
             ax=ax,
@@ -240,7 +252,7 @@ def multi_feature_boxplot(
         if dict_box_pairs is not None:
             # filter box pairs by feature
             stats_kwargs["box_pairs"] = [
-                dict_box_pairs[x] for x in dict_box_pairs if feature in x
+                dict_box_pairs[x] for x in dict_box_pairs if key in x
             ]
             # flatten list
             stats_kwargs["box_pairs"] = [
@@ -249,9 +261,7 @@ def multi_feature_boxplot(
 
         if dict_pvals is not None:
             # filter pvals by feature
-            stats_kwargs["pvalues"] = [
-                dict_pvals[x] for x in dict_pvals if feature in x
-            ]
+            stats_kwargs["pvalues"] = [dict_pvals[x] for x in dict_pvals if key in x]
             # flatten list
             stats_kwargs["pvalues"] = [
                 x for pairs in stats_kwargs["pvalues"] for x in pairs
@@ -266,20 +276,21 @@ def multi_feature_boxplot(
                 data=data_plot.reset_index(),
                 x=x,
                 y=y,
+                order=order_list,
                 hue=hue,
                 hue_order=hue_order,
                 **stats_kwargs
             )
 
-        if feature in ylabels:
-            ax.set_ylabel(ylabels[feature])
+        if key in ylabels:
+            ax.set_ylabel(ylabels[key])
 
-        if feature in xticklabels:
-            if feature in xlabels:
-                ax.set_xlabel(xlabels[feature])
+        if key in xticklabels:
+            if key in xlabels:
+                ax.set_xlabel(xlabels[key])
             else:
                 ax.set_xlabel(None)
-            xt = xticklabels[feature]
+            xt = xticklabels[key]
             if isinstance(xt, str):
                 xt = [xt]
             ax.set_xticklabels(xt)
