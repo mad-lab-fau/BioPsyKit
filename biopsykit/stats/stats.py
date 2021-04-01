@@ -71,7 +71,8 @@ MAP_LATEX = {
     "np2": r"$\eta^2_p$",
 }
 
-STATS_TYPE = Literal["within", "between", "mixed"]
+STATS_CATEGORY = Literal["test", "posthoc"]
+STATS_TYPE = Literal["between", "within", "interaction"]
 PLOT_TYPE = Literal["single", "multi"]
 
 _sig_cols = ["p-corr", "p-tukey", "p-unc", "pval"]
@@ -190,16 +191,36 @@ class StatsPipeline:
                             continue
                     display(df)
 
-    @staticmethod
-    def _filter_sig(df: pd.DataFrame) -> pd.DataFrame:
+    def _filter_sig(self, data: pd.DataFrame) -> pd.DataFrame:
         for col in _sig_cols:
-            if col in df.columns:
-                if df[col].isna().all():
+            if col in data.columns:
+                if data[col].isna().all():
                     # drop column if all values are NaN => most probably because we turned on p-adjust but only
                     # have two main effects
-                    df = df.drop(columns=col)
+                    data = data.drop(columns=col)
                     continue
-                return df[df[col] < 0.05]
+                return data[data[col] < 0.05]
+
+    def _filter_pcol(self, data: pd.DataFrame) -> Optional[pd.DataFrame]:
+        for col in _sig_cols:
+            if col in data.columns:
+                return data[col]
+        return None
+
+    def _filter_effect(
+        self, stats_category: STATS_CATEGORY, stats_type: STATS_TYPE
+    ) -> pd.DataFrame:
+        results = self.results_cat(stats_category)
+        if "Contrast" in results.columns:
+            if stats_type == "interaction":
+                key = "{} * {}".format(self.params["within"], self.params["between"])
+            else:
+                key = self.params[stats_type]
+
+            results = results[results["Contrast"] == key]
+            results = results.drop(columns="Contrast")
+
+        return results
 
     def export_statistics(self, file_path: path_t):
         writer = pd.ExcelWriter(file_path, engine="xlsxwriter")
@@ -215,108 +236,187 @@ class StatsPipeline:
 
     def sig_brackets(
         self,
-        stats_data: pd.DataFrame,
+        stats_category: STATS_CATEGORY,
         stats_type: STATS_TYPE,
-        plot_type: PLOT_TYPE,
-        features: Optional[Union[str, Sequence[str]]] = None,
+        plot_type: Optional[PLOT_TYPE] = "single",
+        features: Optional[
+            Union[str, Sequence[str], Dict[str, Union[str, Sequence[str]]]]
+        ] = None,
+        x: Optional[str] = None,
+        subplots: Optional[bool] = False,
     ):
-        stats_data = StatsPipeline._filter_sig(stats_data)
-
-        if features is None:
-            features = []
         if isinstance(features, str):
             features = [features]
 
-        pvals = None
-        if stats_type == "mixed":
-            stats_data = self._interaction_effect(stats_data)
-            for col in _sig_cols:
-                if col in stats_data.columns:
-                    pvals = stats_data[col]
-                    break
-            stats_data = stats_data[[self.params["within"], "A", "B"]]
-        else:
-            for col in _sig_cols:
-                if col in stats_data.columns:
-                    pvals = stats_data[col]
-                    break
-            stats_data = stats_data[["A", "B"]]
+        stats_data = self._filter_effect(stats_category, stats_type)
+        stats_data = self._filter_sig(stats_data)
 
-        if plot_type == "multi":
-            if stats_type == "mixed":
-                print(stats_data)
-                box_pairs = stats_data.groupby(level=0).apply(
-                    lambda grp: grp.apply(
-                        lambda row: [(row.iloc[0], row["A"]), (row.iloc[0], row["B"])],
-                        axis=1,
-                    )
+        if stats_type == "interaction":
+            stats_data = stats_data.set_index(self.params["within"])
+            box_pairs = stats_data.apply(
+                lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1
+            )
+        else:
+            if self.params[stats_type] in stats_data.columns:
+                stats_data = stats_data.reset_index().set_index(self.params[stats_type])
+            if features is not None:
+                stats_data = pd.concat(
+                    [stats_data.filter(like=f, axis=0) for f in features]
                 )
-                print(box_pairs)
-                box_pairs = {
-                    key: [tuple(l) for l in list(df.values)]
-                    for key, df in box_pairs.groupby(level=0)
-                }
+            if plot_type == "single":
+                box_pairs = stats_data.apply(lambda row: (row["A"], row["B"]), axis=1)
             else:
-                box_pairs = stats_data.reset_index(level=0).apply(
-                    lambda row: [(row.iloc[0], row["A"]), (row.iloc[0], row["B"])],
-                    axis=1,
-                )
-                box_pairs = list(box_pairs)
-                box_pairs = [tuple(pair) for pair in box_pairs]
-
-        elif plot_type == "single":
-            if len(features) == 0:
-                raise ValueError(
-                    "Must specify `features` when `plot_type` is '{}'!".format(
-                        plot_type
+                if x is None:
+                    raise ValueError(
+                        "`x` must be specified when `plot_type` is `multi`!"
                     )
+                stats_data = stats_data.reset_index().set_index(x)
+                box_pairs = stats_data.apply(
+                    lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1
                 )
 
-            stats_data = stats_data.groupby(level=0).filter(
-                lambda df: (df.reset_index().iloc[:, 0].isin(features)).all()
-            )
-            box_pairs = [tuple(row) for row in stats_data[["A", "B"]].values]
-            pvals = pvals.groupby(pvals.reset_index().columns[0]).filter(
-                lambda s: s.reset_index().iloc[:, 0].isin(features).all()
-            )
-        else:
-            box_pairs = None
+        if box_pairs.empty:
+            return [], []
 
-        if plot_type == "multi":
-            print(box_pairs)
-            print(pvals)
-            box_pairs, pvals = self.sig_brackets_dict(box_pairs, pvals)
-            if len(features) > 0:
-                box_pairs = [box_pairs[f] for f in features]
-                pvals = [pvals[f] for f in features]
-                box_pairs = [x for pairs in box_pairs for x in pairs]
-                pvals = [x for pval in pvals for x in pval]
-        return box_pairs, pvals
+        box_pairs = list(box_pairs)
+        pvalues = list(self._filter_pcol(stats_data))
+
+        if subplots:
+            dict_box_pairs = {}
+            dict_pvalues = {}
+            if isinstance(features, list):
+                features = {f: f for f in features}
+            for key in features:
+                features_list = features[key]
+                if isinstance(features_list, str):
+                    features_list = [features_list]
+
+                list_pairs = dict_box_pairs.setdefault(key, [])
+                list_pvalues = dict_pvalues.setdefault(key, [])
+                for i, sig_pair in enumerate(box_pairs):
+                    if sig_pair[0][0] in features_list:
+                        list_pairs.append(sig_pair)
+                        list_pvalues.append(pvalues[i])
+
+            return dict_box_pairs, dict_pvalues
+
+        return box_pairs, pvalues
+
+    # def sig_brackets(
+    #     self,
+    #     stats_data: pd.DataFrame,
+    #     stats_type: STATS_TYPE,
+    #     plot_type: PLOT_TYPE,
+    #     features: Optional[Union[str, Sequence[str]]] = None,
+    #     subplots: Optional[bool] = False,
+    # ):
+    #     stats_data = StatsPipeline._filter_sig(stats_data)
+    #
+    #     # print(stats_data)
+    #
+    #     if features is None:
+    #         features = []
+    #     if isinstance(features, str):
+    #         features = [features]
+    #
+    #     box_pairs = None
+    #     pvals = None
+    #     if stats_type == "mixed":
+    #         # mixed
+    #         stats_data = self._interaction_effect(stats_data)
+    #         for col in _sig_cols:
+    #             if col in stats_data.columns:
+    #                 pvals = stats_data[col]
+    #                 break
+    #         stats_data = stats_data[[self.params["within"], "A", "B"]]
+    #
+    #         if plot_type == "multi":
+    #             box_pairs = stats_data.apply(
+    #                 # lambda grp: grp.apply(
+    #                 lambda row: [(row.iloc[0], row["A"]), (row.iloc[0], row["B"])],
+    #                 axis=1,
+    #                 # )
+    #             )
+    #             box_pairs = [tuple(b) for b in box_pairs.values]
+    #             pvals = pvals.values
+    #
+    #         print(box_pairs)
+    #         print(pvals)
+    #
+    #     elif stats_type == "between":
+    #         # between
+    #         for col in _sig_cols:
+    #             if col in stats_data.columns:
+    #                 pvals = stats_data[col]
+    #                 break
+    #         stats_data = stats_data[["A", "B"]]
+    #
+    #         if plot_type == "multi":
+    #             box_pairs = stats_data.reset_index(level=0).apply(
+    #                 lambda row: [(row.iloc[0], row["A"]), (row.iloc[0], row["B"])],
+    #                 axis=1,
+    #             )
+    #             box_pairs = list(box_pairs)
+    #             box_pairs = [tuple(pair) for pair in box_pairs]
+    #
+    #     if plot_type == "multi":
+    #         if len(features) > 0:
+    #             box_pairs = [pair for pair in box_pairs if pair[0][0] in features]
+    #             pvals = pd.concat([pvals.filter(like=f) for f in features])
+    #
+    #         if subplots:
+    #             box_pairs, pvals = self.sig_brackets_dict(box_pairs, pvals)
+    #
+    #     elif plot_type == "single":
+    #         # single
+    #         if len(features) == 0:
+    #             raise ValueError(
+    #                 "Must specify `features` when `plot_type` is '{}'!".format(
+    #                     plot_type
+    #                 )
+    #             )
+    #
+    #         print(stats_data)
+    #         stats_data = stats_data.groupby(level=0).filter(
+    #             lambda df: (df.reset_index().iloc[:, 0].isin(features)).all()
+    #         )
+    #         print(stats_data)
+    #         box_pairs = [tuple(row) for row in stats_data[["A", "B"]].values]
+    #
+    #         pvals = pvals.groupby(pvals.reset_index().columns[0]).filter(
+    #             lambda s: s.reset_index().iloc[:, 0].isin(features).all()
+    #         )
+    #
+    #     return box_pairs, pvals
 
     def sig_brackets_dict(
         self,
-        sig_pairs: Union[
+        box_pairs: Union[
             Sequence[Tuple[Tuple[str, str], Tuple[str, str]]],
             Dict[str, Sequence[Tuple[Tuple[str, str], Tuple[str, str]]]],
         ],
-        pvals: pd.DataFrame,
+        pvalues: pd.DataFrame,
     ) -> Tuple[
         Dict[str, Sequence[Tuple[Tuple[str, str], Tuple[str, str]]]],
         Dict[str, Sequence[float]],
     ]:
-        dict_pairs = {}
-
-        if isinstance(sig_pairs, dict):
-            dict_pairs = sig_pairs
-        else:
-            for sig_pair in sig_pairs:
-                pairs = dict_pairs.setdefault(sig_pair[0][0], [])
-                pairs.append(sig_pair)
-
-        dict_pvals = {
-            key: (pvals.loc[key].values).flatten().tolist() for key in dict_pairs.keys()
-        }
-        return dict_pairs, dict_pvals
+        dict_box_pairs = {}
+        dict_pvalues = {}
+        for pair, pval in zip(box_pairs, pvalues):
+            print(pair, pval)
+        # dict_pairs = {}
+        #
+        # if isinstance(sig_pairs, dict):
+        #     dict_pairs = sig_pairs
+        # else:
+        #     for sig_pair in sig_pairs:
+        #         pairs = dict_pairs.setdefault(sig_pair[0][0], [])
+        #         pairs.append(sig_pair)
+        #
+        # dict_pvals = {
+        #     key: (pvals.loc[key].values).flatten().tolist() for key in dict_pairs.keys()
+        # }
+        # return dict_pairs, dict_pvals
 
     def _param_df(self):
         return pd.DataFrame(
@@ -331,9 +431,6 @@ class StatsPipeline:
             index=[s[0] for s in self.steps],
             columns=["parameter"],
         )
-
-    def _interaction_effect(self, stats_data: pd.DataFrame):
-        return stats_data.loc[~stats_data[self.params["within"]].eq("-")]
 
     def df_to_latex(self, step: str, index_labels: Dict[str, str]):
         # TODO continue
