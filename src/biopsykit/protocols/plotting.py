@@ -10,7 +10,7 @@ import biopsykit.colors as colors
 import matplotlib.patches as mpatch
 
 _saliva_params: Dict = {
-    "colormap": colors.cmap_fau_blue("2_lp"),
+    "colormap": colors.fau_palette_blue("line_2"),
     "line_styles": ["-", "--"],
     "markers": ["o", "P"],
     # 'background_color': "#e0e0e0",
@@ -24,7 +24,7 @@ _saliva_params: Dict = {
     "multi_x_offset": 1,
     "multi_fontsize": 10,
     "multi_legend_offset": 0.3,
-    "multi_colormap": colors.cmap_fau_phil("2_lp"),
+    "multi_colormap": colors.fau_palette_phil("line_2"),
     "xaxis_tick_locator": plt.MultipleLocator(20),
     "xaxis_label": "Time [min]",
     "yaxis_label": {
@@ -35,7 +35,7 @@ _saliva_params: Dict = {
 }
 
 _hr_mean_plot_params = {
-    "colormap": colors.cmap_fau_blue("2_lp"),
+    "colormap": colors.fau_palette_blue("line_2"),
     "line_styles": ["-", "--"],
     "markers": ["o", "P"],
     "background_color": None,

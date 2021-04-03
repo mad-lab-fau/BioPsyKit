@@ -1,17 +1,19 @@
-"""
-Color palettes and utilities.
+"""Color palettes and utilities.
 
 For most plots, BioPsyKit uses FAU's colors scheme.
 """
-from typing import Union, Sequence, Optional, Literal, TypedDict
+from typing import Union, Sequence, Optional, Dict
 
+from colorsys import rgb_to_hls, hls_to_rgb
+from matplotlib.colors import to_hex, to_rgb
 import seaborn as sns
 
-__all__ = ["fau_color_dict", "fau_palette"]
+FAU_COLORS = ["fau", "tech", "phil", "med", "nat", "wiso"]
+"""
+Available color keys.
+"""
 
-FAU_COLORS = Literal["fau", "tech", "phil", "med", "nat", "wiso"]
-
-fau_color_dict: TypedDict[FAU_COLORS, str] = {
+fau_color_dict: Dict[str, str] = {
     "fau": "#003865",
     "tech": "#98a4ae",
     "phil": "#c99313",
@@ -23,20 +25,30 @@ fau_color_dict: TypedDict[FAU_COLORS, str] = {
 Dictionary for FAU color codes.
 """
 
-fau_palette = sns.color_palette(fau_color_dict.values())
+fau_palette = sns.color_palette(fau_color_dict.values())  #: :meta hide-value:
 """FAU color palette that can be used with seaborn and matplotlib."""
 
 
-def cmap_fau_blue(cmap_type: Optional[str] = None) -> Sequence[str]:
-    """
+def fau_palette_blue(palette_type: Optional[str] = None) -> Sequence[str]:
+    """Return a seaborn palette with fau-blue color nuances.
 
+    By default, a palette with 10 color nuances is generated.
+    Using the ``palette_type`` parameter specialized palettes can be generated.
 
     Parameters
     ----------
-    cmap_type : str, optional
+    palette_type : str, optional
+        Specify specialized color palette. Available palette types:
+            * ``line_2``: For line plots with two elements
+            * ``line_3``: For line plots with three elements
+            * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
+            * ``box_2``: For boxplots with two elements
+        `Default`: ``None``
 
     Returns
     -------
+    sns.palette
+        list of tuple
 
     """
     # generated using this link: https://noeldelgado.github.io/shadowlord
@@ -55,19 +67,39 @@ def cmap_fau_blue(cmap_type: Optional[str] = None) -> Sequence[str]:
             "#e6ebf0",
         ]
     )
-    if cmap_type == "3":
+    if palette_type == "line_3":
         return [fau_blue[4], fau_blue[7], fau_blue[9]]
-    if cmap_type == "3_ens":
+    if palette_type == "ensemble_3":
         return [fau_blue[3], fau_blue[5], fau_blue[8]]
-    elif cmap_type == "2":
+    if palette_type == "box_2":
         return fau_blue[5::4]
-    elif cmap_type == "2_lp":
+    if palette_type == "line_2":
         return fau_blue[2::5]
-    else:
-        return fau_blue
+    return fau_blue
 
 
-def cmap_fau_wiso(cmap_type: Union[str, None]) -> Sequence[str]:
+def fau_palette_wiso(palette_type: Union[str, None]) -> Sequence[str]:
+    """Return a seaborn palette with fau-wiso-red color nuances.
+
+    By default, a palette with 10 color nuances is generated.
+    Using the ``palette_type`` parameter specialized palettes can be generated.
+
+    Parameters
+    ----------
+    palette_type : str, optional
+        Specify specialized color palette. Available palette types:
+            * ``line_2``: For line plots with two elements
+            * ``line_3``: For line plots with three elements
+            * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
+            * ``box_2``: For boxplots with two elements
+        `Default`: ``None``
+
+    Returns
+    -------
+    sns.palette
+        list of tuple
+
+    """
     # generated using this link: https://noeldelgado.github.io/shadowlord
     fau_wiso = sns.color_palette(
         [
@@ -84,17 +116,40 @@ def cmap_fau_wiso(cmap_type: Union[str, None]) -> Sequence[str]:
             "#e8d0d4",
         ]
     )
-    if cmap_type == "3":
-        return fau_wiso[1::3]
-    elif cmap_type == "2":
+
+    if palette_type == "line_3":
+        return [fau_wiso[4], fau_wiso[7], fau_wiso[9]]
+    if palette_type == "ensemble_3":
+        return [fau_wiso[3], fau_wiso[5], fau_wiso[8]]
+    if palette_type == "box_2":
         return fau_wiso[5::4]
-    elif cmap_type == "2_lp":
+    if palette_type == "line_2":
         return fau_wiso[2::5]
-    else:
-        return fau_wiso
+    return fau_wiso
 
 
-def cmap_fau_phil(cmap_type: Union[str, None]) -> Sequence[str]:
+def fau_palette_phil(palette_type: Union[str, None]) -> Sequence[str]:
+    """Return a seaborn palette with fau-phil-yellow color nuances.
+
+    By default, a palette with 10 color nuances is generated.
+    Using the ``palette_type`` parameter specialized palettes can be generated.
+
+    Parameters
+    ----------
+    palette_type : str, optional
+        Specify specialized color palette. Available palette types:
+            * ``line_2``: For line plots with two elements
+            * ``line_3``: For line plots with three elements
+            * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
+            * ``box_2``: For boxplots with two elements
+        `Default`: ``None``
+
+    Returns
+    -------
+    sns.palette
+        list of tuple
+
+    """
     # generated using this link: https://noeldelgado.github.io/shadowlord
     fau_phil = sns.color_palette(
         [
@@ -111,17 +166,39 @@ def cmap_fau_phil(cmap_type: Union[str, None]) -> Sequence[str]:
             "#f4e9d0",
         ]
     )
-    if cmap_type == "3":
-        return fau_phil[1::3]
-    elif cmap_type == "2":
+    if palette_type == "line_3":
+        return [fau_phil[4], fau_phil[7], fau_phil[9]]
+    if palette_type == "ensemble_3":
+        return [fau_phil[3], fau_phil[5], fau_phil[8]]
+    if palette_type == "box_2":
         return fau_phil[5::4]
-    elif cmap_type == "2_lp":
+    if palette_type == "line_2":
         return fau_phil[2::5]
-    else:
-        return fau_phil
+    return fau_phil
 
 
-def cmap_fau_med(cmap_type: Union[str, None]) -> Sequence[str]:
+def fau_palette_med(palette_type: Union[str, None]) -> Sequence[str]:
+    """Return a seaborn palette with fau-med-light-blue color nuances.
+
+    By default, a palette with 10 color nuances is generated.
+    Using the ``palette_type`` parameter specialized palettes can be generated.
+
+    Parameters
+    ----------
+    palette_type : str, optional
+        Specify specialized color palette. Available palette types:
+            * ``line_2``: For line plots with two elements
+            * ``line_3``: For line plots with three elements
+            * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
+            * ``box_2``: For boxplots with two elements
+        `Default`: ``None``
+
+    Returns
+    -------
+    sns.palette
+        list of tuple
+
+    """
     # generated using this link: https://noeldelgado.github.io/shadowlord
     fau_med = sns.color_palette(
         [
@@ -138,17 +215,39 @@ def cmap_fau_med(cmap_type: Union[str, None]) -> Sequence[str]:
             "#cceffb",
         ]
     )
-    if cmap_type == "3":
-        return fau_med[1::3]
-    elif cmap_type == "2":
+    if palette_type == "line_3":
+        return [fau_med[4], fau_med[7], fau_med[9]]
+    if palette_type == "ensemble_3":
+        return [fau_med[3], fau_med[5], fau_med[8]]
+    if palette_type == "box_2":
         return fau_med[5::4]
-    elif cmap_type == "2_lp":
+    if palette_type == "line_2":
         return fau_med[2::5]
-    else:
-        return fau_med
+    return fau_med
 
 
-def cmap_fau_nat(cmap_type: Union[str, None]) -> Sequence[str]:
+def fau_palette_nat(palette_type: Union[str, None]) -> Sequence[str]:
+    """Return a seaborn palette with fau-med-light-blue color nuances.
+
+    By default, a palette with 10 color nuances is generated.
+    Using the ``palette_type`` parameter specialized palettes can be generated.
+
+    Parameters
+    ----------
+    palette_type : str, optional
+        Specify specialized color palette. Available palette types:
+            * ``line_2``: For line plots with two elements
+            * ``line_3``: For line plots with three elements
+            * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
+            * ``box_2``: For boxplots with two elements
+        `Default`: ``None``
+
+    Returns
+    -------
+    sns.palette
+        list of tuple
+
+    """
     # generated using this link: https://noeldelgado.github.io/shadowlord
     fau_nat = sns.color_palette(
         [
@@ -165,17 +264,39 @@ def cmap_fau_nat(cmap_type: Union[str, None]) -> Sequence[str]:
             "#ccebe4",
         ]
     )
-    if cmap_type == "3":
-        return fau_nat[1::3]
-    elif cmap_type == "2":
+    if palette_type == "line_3":
+        return [fau_nat[4], fau_nat[7], fau_nat[9]]
+    if palette_type == "ensemble_3":
+        return [fau_nat[3], fau_nat[5], fau_nat[8]]
+    if palette_type == "box_2":
         return fau_nat[5::4]
-    elif cmap_type == "2_lp":
+    if palette_type == "line_2":
         return fau_nat[2::5]
-    else:
-        return fau_nat
+    return fau_nat
 
 
-def cmap_fau_tech(cmap_type: Union[str, None]) -> Sequence[str]:
+def fau_palette_tech(palette_type: Union[str, None]) -> Sequence[str]:
+    """Return a seaborn palette with fau-tech-grey color nuances.
+
+    By default, a palette with 10 color nuances is generated.
+    Using the ``palette_type`` parameter specialized palettes can be generated.
+
+    Parameters
+    ----------
+    palette_type : str, optional
+        Specify specialized color palette. Available palette types:
+            * ``line_2``: For line plots with two elements
+            * ``line_3``: For line plots with three elements
+            * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
+            * ``box_2``: For boxplots with two elements
+        `Default`: ``None``
+
+    Returns
+    -------
+    sns.palette
+        list of tuple
+
+    """
     # generated using this link: https://noeldelgado.github.io/shadowlord
     fau_tech = sns.color_palette(
         [
@@ -192,33 +313,50 @@ def cmap_fau_tech(cmap_type: Union[str, None]) -> Sequence[str]:
             "#d6dbdf",
         ]
     )
-    if cmap_type == "3":
-        return fau_tech[1::3]
-    elif cmap_type == "2":
+    if palette_type == "line_3":
+        return [fau_tech[4], fau_tech[7], fau_tech[9]]
+    if palette_type == "ensemble_3":
+        return [fau_tech[3], fau_tech[5], fau_tech[8]]
+    if palette_type == "box_2":
         return fau_tech[5::4]
-    elif cmap_type == "2_lp":
+    if palette_type == "line_2":
         return fau_tech[2::5]
-    else:
-        return fau_tech
+    return fau_tech
 
 
 def fau_color(color: str) -> str:
-    """
-    Returns the FAU color specified by `color`. Must be one of
+    """Return the color specified by ``color`` as hex string.
+
     Parameters
     ----------
-    key :
+    color : str
+        Color key. Must be one of :py:const:`biopsykit.colors.FAU_COLORS`
 
     Returns
     -------
+    str
+        color as hex string
 
     """
     return fau_color_dict[color]
 
 
 def adjust_color(key: str, amount: Optional[float] = 1.5) -> str:
-    import colorsys
-    import matplotlib.colors as mc
+    """Adjust a FAU color in its brightness.
 
-    c = colorsys.rgb_to_hls(*mc.to_rgb(fau_color(key)))
-    return mc.to_hex(colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2]))
+    Parameters
+    ----------
+    key : str
+        color string
+    amount : float, optional
+        Parameter to adjust brightness. An ``amount`` value < 1 results in a darker color,
+        an ``amount`` value > 1 results in a brighter color.
+
+    Returns
+    -------
+    str
+        adjusted color as hex code
+
+    """
+    c = rgb_to_hls(*to_rgb(fau_color(key)))
+    return to_hex(hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2]))

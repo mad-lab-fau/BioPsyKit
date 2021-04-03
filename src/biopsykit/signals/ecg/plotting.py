@@ -558,7 +558,7 @@ def rr_distribution_plot(
 
     rri = _get_rr_intervals(rpeaks, sampling_rate)
 
-    sns.set_palette(colors.cmap_fau_blue("2"))
+    sns.set_palette(colors.fau_palette_blue("box_2"))
     sns.histplot(rri, ax=ax, bins=10, kde=False, alpha=0.5, zorder=1)
     sns.rugplot(rri, ax=ax, lw=1.5, height=0.05, zorder=2)
     ax2 = ax.twinx()
@@ -649,7 +649,7 @@ def hrv_poincare_plot(
 
     area = np.pi * sd1 * sd2
 
-    sns.set_palette(colors.cmap_fau_blue("2"))
+    sns.set_palette(colors.fau_palette_blue("box_2"))
     sns.kdeplot(
         x=rri[:-1],
         y=rri[1:],

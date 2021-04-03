@@ -32,7 +32,7 @@ def sleep_imu_plot(
 
     fig: Union[plt.Figure, None] = None
     axs: Union[plt.Axes, Sequence[plt.Axes], None] = kwargs.get("ax", kwargs.get("axs", None))
-    sns.set_palette(colors.cmap_fau_blue("3"))
+    sns.set_palette(colors.fau_palette_blue("line_3"))
 
     downsample_factor = int(downsample_factor)
     if downsample_factor < 1:

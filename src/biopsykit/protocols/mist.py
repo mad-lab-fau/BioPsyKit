@@ -55,7 +55,7 @@ class MIST(base.BaseProtocol):
         """
 
         self.hr_ensemble_plot_params = {
-            "colormap": colors.cmap_fau_blue("3_ens"),
+            "colormap": colors.fau_palette_blue("ensemble_3"),
             "line_styles": ["-", "--", ":"],
             "ensemble_alpha": 0.4,
             "background_color": ["#e0e0e0", "#9e9e9e", "#757575"],
@@ -74,7 +74,7 @@ class MIST(base.BaseProtocol):
         }
 
         self.hr_mean_plot_params = {
-            "colormap": colors.cmap_fau_blue("2_lp"),
+            "colormap": colors.fau_palette_blue("line_2"),
             "line_styles": ["-", "--"],
             "markers": ["o", "P"],
             "background_color": ["#e0e0e0", "#bdbdbd", "#9e9e9e"],

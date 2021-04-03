@@ -24,7 +24,7 @@ class BaseProtocol:
         self._saliva_params = {}
 
         self.saliva_params: Dict = {
-            "colormap": colors.cmap_fau_blue("2_lp"),
+            "colormap": colors.fau_palette_blue("line_2"),
             "line_styles": ["-", "--"],
             "markers": ["o", "P"],
             # 'background.color': "#e0e0e0",
@@ -37,7 +37,7 @@ class BaseProtocol:
             "multi.x_offset": 1,
             "multi.fontsize": 10,
             "multi.legend_offset": 0.3,
-            "multi.colormap": colors.cmap_fau_phil("2_lp"),
+            "multi.colormap": colors.fau_palette_phil("line_2"),
             "xaxis.tick_locator": plt.MultipleLocator(20),
             "yaxis.label": {
                 "cortisol": "Cortisol [nmol/l]",
