@@ -11,11 +11,11 @@ __all__ = ["fau_color_dict"]
 
 fau_color_dict = {
     "fau": "#003865",
+    "tech": "#98a4ae",
     "phil": "#c99313",
-    "wiso": "#8d1429",
     "med": "#00b1eb",
     "nat": "#009b77",
-    "tech": "#98a4ae",
+    "wiso": "#8d1429",
 }
 """
 Dictionary for FAU color codes.
