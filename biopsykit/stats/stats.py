@@ -395,7 +395,8 @@ class StatsPipeline:
         data = stats_data
         if stats_data.index.nlevels > 1:
             data = stats_data.groupby(list(stats_data.index.names)[:-1])
-        return data.apply(lambda df: self._multicomp_lambda(df, method=method))
+            return data.apply(lambda df: self._multicomp_lambda(df, method=method))
+        return self._multicomp_lambda(data, method=method)
 
     def _multicomp_lambda(self, data: pd.DataFrame, method: str) -> pd.DataFrame:
         for col in list(reversed(_sig_cols[1:])):
