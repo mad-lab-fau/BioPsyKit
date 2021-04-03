@@ -723,6 +723,7 @@ def saliva_multi_feature_boxplot(
         data,
         x=x,
         y=saliva_type,
+        group="biomarker",
         hue=hue,
         features=features,
         xticklabels=xticklabels,

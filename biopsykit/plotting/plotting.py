@@ -158,6 +158,7 @@ def multi_feature_boxplot(
     data: pd.DataFrame,
     x: str,
     y: str,
+    group: str,
     hue: Optional[str] = None,
     features: Optional[
         Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]]
@@ -222,13 +223,13 @@ def multi_feature_boxplot(
     for ax, key in zip(axs, features):
         from biopsykit.utils.dataframe_handling import multi_xs
 
-        data_plot = multi_xs(data, features[key], level=x)
-        if order is None:
-            order_list = features[key]
-        else:
-            order_list = order[key]
-        if isinstance(order_list, str):
-            order_list = [order_list]
+        data_plot = multi_xs(data, features[key], level=group)
+        order_list = None
+        if order is not None:
+            if isinstance(order, dict):
+                order_list = order[key]
+            else:
+                order_list = order
 
         if data_plot.empty:
             raise ValueError("Empty dataframe for '{}'!".format(key))
