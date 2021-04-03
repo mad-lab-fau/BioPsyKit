@@ -7,19 +7,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from biopsykit.carwatch_logs import LogData
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 from biopsykit.io.carwatch_logs import load_logs_all_subjects
 
 
 class LogStatistics:
     def __init__(self, path: path_t):
         self.path: Path = Path(path)
-        self.log_dict: Dict[str, pd.DataFrame] = load_logs_all_subjects(
-            path, return_df=False
-        )
-        self.log_data: Sequence[LogData] = [
-            LogData(df) for df in self.log_dict.values()
-        ]
+        self.log_dict: Dict[str, pd.DataFrame] = load_logs_all_subjects(path, return_df=False)
+        self.log_data: Sequence[LogData] = [LogData(df) for df in self.log_dict.values()]
 
     def conditions(self) -> pd.DataFrame:
         series = pd.Series([log.condition for log in self.log_data], name="count")
@@ -45,9 +41,7 @@ class LogStatistics:
     def app_versions(self) -> pd.DataFrame:
         series = pd.Series([log.app_version for log in self.log_data], name="count")
 
-        df = (
-            series.value_counts().reset_index().rename({"index": "app_version"}, axis=1)
-        )
+        df = series.value_counts().reset_index().rename({"index": "app_version"}, axis=1)
         # df.sort_values(by=['count', 'app_version'], ascending=[False, True], inplace=True)
         return df
 
@@ -56,14 +50,8 @@ class LogStatistics:
         if skip_na:
             series = series[~series.str.contains("n/a")]
 
-        df = (
-            series.value_counts()
-            .reset_index()
-            .rename({"index": "manufacturer"}, axis=1)
-        )
-        df.sort_values(
-            by=["count", "manufacturer"], ascending=[False, True], inplace=True
-        )
+        df = series.value_counts().reset_index().rename({"index": "manufacturer"}, axis=1)
+        df.sort_values(by=["count", "manufacturer"], ascending=[False, True], inplace=True)
         return df
 
     def models(self, skip_na: Optional[bool] = True) -> pd.DataFrame:
@@ -77,27 +65,21 @@ class LogStatistics:
         return df
 
     def finished_days(self) -> pd.DataFrame:
-        series = pd.Series(
-            [log.num_finished_days for log in self.log_data], name="count"
-        )
+        series = pd.Series([log.num_finished_days for log in self.log_data], name="count")
         df = series.value_counts(sort=False)
 
         df = df.reset_index().rename({"index": "finished_days"}, axis=1)
         return df
 
     def days(self) -> pd.DataFrame:
-        series = pd.Series(
-            np.concatenate([log.log_dates for log in self.log_data]), name="count"
-        )
+        series = pd.Series(np.concatenate([log.log_dates for log in self.log_data]), name="count")
         df = series.value_counts(sort=False)
         df.sort_index(inplace=True)
 
         df = df.reset_index().rename({"index": "logging_days"}, axis=1)
         return df
 
-    def get_plot(
-        self, plot_id: str, ax: Optional[plt.Axes] = None
-    ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+    def get_plot(self, plot_id: str, ax: Optional[plt.Axes] = None) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         import seaborn as sns
 
         fig: Union[plt.Figure, None] = None

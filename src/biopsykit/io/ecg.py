@@ -4,7 +4,7 @@ from typing import Dict, Union
 import pandas as pd
 
 from biopsykit.io import write_pandas_dict_excel
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 from biopsykit.utils.time import tz
 
 
@@ -92,9 +92,7 @@ def load_combine_hr_all_subjects(
     return dict_hr_subjects
 
 
-def write_hr_subject_dict(
-    ep_or_dict: Union["EcgProcessor", Dict[str, pd.DataFrame]], file_path: path_t
-) -> None:
+def write_hr_subject_dict(ep_or_dict: Union["EcgProcessor", Dict[str, pd.DataFrame]], file_path: path_t) -> None:
     """
     Writes heart rate dictionary of one subject to an Excel file.
     Each of the phases in the dictionary will be a separate sheet in the file.

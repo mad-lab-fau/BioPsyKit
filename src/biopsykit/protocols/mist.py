@@ -181,11 +181,8 @@ class MIST(base.BaseProtocol):
         self,
         phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
         is_group_dict: Optional[bool] = False,
-        **kwargs
-    ) -> Union[
-        Dict[str, Dict[str, pd.DataFrame]],
-        Dict[str, Dict[str, Dict[str, pd.DataFrame]]],
-    ]:
+        **kwargs,
+    ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]],]:
         """
         Splits a `MIST Phase dict` (or a dict of such, in case of multiple groups,
         see ``bp.protocols.utils.concat_dict``)
@@ -210,9 +207,7 @@ class MIST(base.BaseProtocol):
             subphase_times = kwargs["subphase_times"]
             subphase_names = kwargs["subphases"]
         else:
-            subphase_times = self.get_mist_times(
-                phase_dict=phase_dict, is_group_dict=is_group_dict
-            )
+            subphase_times = self.get_mist_times(phase_dict=phase_dict, is_group_dict=is_group_dict)
             subphase_names = self.subphases
         return super().split_subphases(
             data=phase_dict,
@@ -250,9 +245,7 @@ class MIST(base.BaseProtocol):
     def get_mist_times(
         self,
         mist_dur: Optional[Sequence[int]] = None,
-        phase_dict: Optional[
-            Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]]
-        ] = None,
+        phase_dict: Optional[Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]]] = None,
         is_group_dict: Optional[bool] = False,
     ) -> Sequence[Tuple[int, int]]:
         """
@@ -287,9 +280,7 @@ class MIST(base.BaseProtocol):
         """
 
         if mist_dur is None and phase_dict is None:
-            raise ValueError(
-                "Either `mist_dur` or `phase_dict` must be supplied as parameter!"
-            )
+            raise ValueError("Either `mist_dur` or `phase_dict` must be supplied as parameter!")
 
         if mist_dur:
             # ensure numpy
@@ -297,14 +288,10 @@ class MIST(base.BaseProtocol):
         else:
             if is_group_dict:
                 # Grouped MIST Phase dict
-                mist_dur = np.array(
-                    [[len(v) for v in d.values()] for d in phase_dict.values()]
-                )
+                mist_dur = np.array([[len(v) for v in d.values()] for d in phase_dict.values()])
                 if not (mist_dur == mist_dur[0]).all():
                     # ensure that durations of all groups are equal
-                    raise ValueError(
-                        "All groups are expected to have the same durations for the single phases!"
-                    )
+                    raise ValueError("All groups are expected to have the same durations for the single phases!")
                 mist_dur = mist_dur[0]
             else:
                 # MIST Phase dict
@@ -321,10 +308,7 @@ class MIST(base.BaseProtocol):
         # cumulative times
         times_cum = np.cumsum(np.array(subph_dur))
         # compute start/end times per subphase
-        return [
-            (start, end)
-            for start, end in zip(np.append([0], times_cum[:-1]), times_cum)
-        ]
+        return [(start, end) for start, end in zip(np.append([0], times_cum[:-1]), times_cum)]
 
     def param_subphases(
         self,
@@ -405,9 +389,7 @@ class MIST(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return super()._mean_se_subphases(
-            data, subphases=self.subphases, is_group_dict=is_group_dict
-        )
+        return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
     def hr_ensemble_plot(
         self,
@@ -415,7 +397,7 @@ class MIST(base.BaseProtocol):
         plot_params: Optional[Dict] = None,
         ylims: Optional[Sequence[float]] = None,
         ax: Optional[plt.Axes] = None,
-        **kwargs
+        **kwargs,
     ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         """
         Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
@@ -574,7 +556,7 @@ class MIST(base.BaseProtocol):
         group_col: Optional[str] = None,
         plot_params: Optional[Dict] = None,
         ax: Optional[plt.Axes] = None,
-        **kwargs
+        **kwargs,
     ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
         """
         Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
@@ -622,12 +604,7 @@ class MIST(base.BaseProtocol):
         if plot_params:
             self.hr_mean_plot_params.update(plot_params)
         return plot.hr_mean_plot(
-            data=data,
-            groups=groups,
-            group_col=group_col,
-            plot_params=self.hr_mean_plot_params,
-            ax=ax,
-            **kwargs
+            data=data, groups=groups, group_col=group_col, plot_params=self.hr_mean_plot_params, ax=ax, **kwargs
         )
 
     # TODO add methods to remove phases and subphases from MIST dict

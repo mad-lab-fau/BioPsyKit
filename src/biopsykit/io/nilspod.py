@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytz
 
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 from biopsykit.utils.time import tz, utc
 
 COUNTER_INCONSISTENCY_HANDLING = Literal["raise", "warn", "ignore"]
@@ -85,9 +85,7 @@ def load_dataset_nilspod(
         dataset.cut(start=0, stop=idxs_corrupted[0], inplace=True)
     elif len(idxs_corrupted) > 1:
         if handle_counter_inconsistency == "raise":
-            raise ValueError(
-                "Error loading dataset. Counter not monotonously increasing!"
-            )
+            raise ValueError("Error loading dataset. Counter not monotonously increasing!")
         elif handle_counter_inconsistency == "warn":
             warnings.warn(
                 "Counter not monotonously increasing. This might indicate that the dataset is corrupted or "
@@ -97,11 +95,7 @@ def load_dataset_nilspod(
             )
 
     # convert dataset to dataframe and localize timestamp
-    df = (
-        dataset.data_as_df(datastreams, index="utc_datetime")
-        .tz_localize(tz=utc)
-        .tz_convert(tz=timezone)
-    )
+    df = dataset.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
     df.index.name = "time"
     return df, int(dataset.info.sampling_rate_hz)
 
@@ -125,9 +119,7 @@ def load_synced_session_nilspod(
 
     if len(np.where(np.diff(session.counter) < 1)[0]) > 0:
         if handle_counter_inconsistency == "raise":
-            raise ValueError(
-                "Error loading session. Counter not monotonously increasing!"
-            )
+            raise ValueError("Error loading session. Counter not monotonously increasing!")
         elif handle_counter_inconsistency == "warn":
             warnings.warn(
                 "Counter not monotonously increasing. This might indicate that the session is corrupted. "
@@ -183,9 +175,7 @@ def load_csv_nilspod(
 
     # infer start time from filename
     start_time = re.findall(r"NilsPodX-[^\s]{4}_(.*?).csv", str(file_path.name))[0]
-    start_time = (
-        pd.to_datetime(start_time, format="%Y%m%d_%H%M%S").to_datetime64().astype(int)
-    )
+    start_time = pd.to_datetime(start_time, format="%Y%m%d_%H%M%S").to_datetime64().astype(int)
     # sampling rate is in second column of header
     sampling_rate = int(header.iloc[0, 1])
     # convert index to nanoseconds
@@ -272,9 +262,7 @@ def load_folder_nilspod(
         phase_names = ["Part{}".format(i) for i in range(len(dataset_list))]
 
     if len(phase_names) != len(dataset_list):
-        raise ValueError(
-            "Number of phases does not match number of datasets in the folder!"
-        )
+        raise ValueError("Number of phases does not match number of datasets in the folder!")
 
     dataset_dict = {
         phase: load_dataset_nilspod(

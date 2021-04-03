@@ -5,7 +5,7 @@ import pandas as pd
 
 import ipywidgets.widgets
 
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 from biopsykit.carwatch_logs import LogData
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
@@ -32,16 +32,9 @@ def log_file_subject_dropdown(
     if input_type == "file":
         log_file_pattern = LOG_FILENAME_PATTERN + ".csv"
         log_file_list = [log_file for log_file in list(sorted(path.glob("*.csv")))]
-        subject_list = [
-            re.search(log_file_pattern, log_file.name).group(1)
-            for log_file in log_file_list
-        ]
+        subject_list = [re.search(log_file_pattern, log_file.name).group(1) for log_file in log_file_list]
     if input_type == "folder":
-        log_file_list = [
-            folder
-            for folder in path.glob("*")
-            if folder.is_dir() and not folder.name.startswith(".")
-        ]
+        log_file_list = [folder for folder in path.glob("*") if folder.is_dir() and not folder.name.startswith(".")]
         subject_list = [folder.name for folder in log_file_list]
 
     option_list = [("Select Subject", None)]
@@ -50,9 +43,7 @@ def log_file_subject_dropdown(
     if value_type in ["folder_name", "subject_id"]:
         option_list = option_list + list(zip(subject_list, subject_list))
     if value_type == "file_name":
-        option_list = option_list + list(
-            zip(subject_list, [log_file.name for log_file in log_file_list])
-        )
+        option_list = option_list + list(zip(subject_list, [log_file.name for log_file in log_file_list]))
 
     widget = ipywidgets.Dropdown(options=option_list, description="Subject ID")
     if callback:

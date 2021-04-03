@@ -7,7 +7,7 @@ from typing import Optional, Dict, Union
 import pandas as pd
 from tqdm.notebook import tqdm
 
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 from biopsykit.utils.time import utc, tz
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
@@ -40,11 +40,7 @@ def load_logs_all_subjects(
 
     dict_log_files = {}
     if has_subject_folders:
-        folder_list = [
-            p
-            for p in sorted(path.glob("*"))
-            if p.is_dir() and not p.name.startswith(".")
-        ]
+        folder_list = [p for p in sorted(path.glob("*")) if p.is_dir() and not p.name.startswith(".")]
         for folder in tqdm(folder_list):
             subject_id = folder.name
             dict_log_files[subject_id] = load_log_one_subject(folder)
@@ -109,9 +105,7 @@ def load_log_one_subject(
     if path.is_file():
         if path.suffix == ".zip":
             with zipfile.ZipFile(path, "r") as zip_ref:
-                export_folder = path.parent.joinpath(
-                    re.search(log_filename_pattern, path.name).group(1)
-                )
+                export_folder = path.parent.joinpath(re.search(log_filename_pattern, path.name).group(1))
                 export_folder.mkdir(exist_ok=True)
                 if overwrite_logs_unzip or len(list(export_folder.glob("*"))) == 0:
                     zip_ref.extractall(export_folder)
@@ -121,9 +115,7 @@ def load_log_one_subject(
                     # folder not empty => inform user and load folder
                     warnings.warn(
                         "Folder {} already contains log files which will be loaded. "
-                        "Set `overwrite_logs_unzip = True` to overwrite log files.".format(
-                            export_folder.name
-                        )
+                        "Set `overwrite_logs_unzip = True` to overwrite log files.".format(export_folder.name)
                     )
                     return log_folder_to_dataframe(export_folder)
         if path.suffix == ".csv":
@@ -132,12 +124,7 @@ def load_log_one_subject(
 
 def log_folder_to_dataframe(folder_path: path_t) -> pd.DataFrame:
     file_list = list(sorted(folder_path.glob("*.csv")))
-    df = pd.concat(
-        [
-            pd.read_csv(file, sep=";", header=None, names=["time", "action", "extras"])
-            for file in file_list
-        ]
-    )
+    df = pd.concat([pd.read_csv(file, sep=";", header=None, names=["time", "action", "extras"]) for file in file_list])
 
     df["time"] = pd.to_datetime(df["time"], unit="ms")
     df.set_index("time", inplace=True)

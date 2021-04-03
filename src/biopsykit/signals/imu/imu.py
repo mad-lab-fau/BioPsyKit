@@ -7,9 +7,7 @@ from biopsykit.utils.time import utc
 from biopsykit.utils.array_handling import sliding_window
 
 
-def convert_acc_data_to_g(
-    data: Union[pd.DataFrame], inplace: Optional[bool] = False
-) -> Union[None, pd.DataFrame]:
+def convert_acc_data_to_g(data: Union[pd.DataFrame], inplace: Optional[bool] = False) -> Union[None, pd.DataFrame]:
     acc_cols = data.filter(like="acc").columns
     if not inplace:
         data = data.copy()
@@ -55,8 +53,7 @@ def get_windows(
 
     data_window = np.transpose(data_window)
     data_window = {
-        axis: pd.DataFrame(np.transpose(data), index=index_resample)
-        for axis, data in zip(["x", "y", "z"], data_window)
+        axis: pd.DataFrame(np.transpose(data), index=index_resample) for axis, data in zip(["x", "y", "z"], data_window)
     }
     data_window = pd.concat(data_window, axis=1)
     data_window.columns.names = ["axis", "samples"]
@@ -65,7 +62,5 @@ def get_windows(
 
 def get_var_norm(data: pd.DataFrame) -> pd.DataFrame:
     var = data.groupby(axis=1, level="axis").apply(lambda x: np.var(x, axis=1))
-    norm = pd.DataFrame(
-        np.linalg.norm(var, axis=1), index=var.index, columns=["var_norm"]
-    )
+    norm = pd.DataFrame(np.linalg.norm(var, axis=1), index=var.index, columns=["var_norm"])
     return norm

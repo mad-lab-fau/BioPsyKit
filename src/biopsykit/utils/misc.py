@@ -6,7 +6,7 @@
 from pathlib import Path
 from typing import Sequence, Optional
 
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 
 
 def export_figure(

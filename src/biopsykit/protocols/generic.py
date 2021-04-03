@@ -20,13 +20,8 @@ class GenericProtocol(base.BaseProtocol):
         subphase_names: Sequence[str],
         subphase_times: Sequence[Tuple[int, int]],
         is_group_dict: Optional[bool] = False,
-    ) -> Union[
-        Dict[str, Dict[str, pd.DataFrame]],
-        Dict[str, Dict[str, Dict[str, pd.DataFrame]]],
-    ]:
-        return super().split_subphases(
-            data, subphase_names, subphase_times, is_group_dict
-        )
+    ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]],]:
+        return super().split_subphases(data, subphase_names, subphase_times, is_group_dict)
 
     def split_groups(
         self,

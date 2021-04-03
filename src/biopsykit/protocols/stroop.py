@@ -121,9 +121,7 @@ class Stroop(base.BaseProtocol):
     def stroop_times(self, stroop_times):
         self.test_times = stroop_times
 
-    def _update_stroop_params(
-        self, phases: Sequence[str], phase_durations: Sequence[int]
-    ):
+    def _update_stroop_params(self, phases: Sequence[str], phase_durations: Sequence[int]):
         if phases:
             self.phases = phases
         if phase_durations:
@@ -136,7 +134,7 @@ class Stroop(base.BaseProtocol):
         ylims: Optional[Sequence[float]] = None,
         ax: Optional[plt.Axes] = None,
         is_group_dict: Optional[bool] = False,
-        **kwargs
+        **kwargs,
     ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         """
         Plots the course of heart rate during each Stroop subphase continuously as ensemble plot (mean ± standard error).
@@ -248,9 +246,7 @@ class Stroop(base.BaseProtocol):
                         bbox=dict(facecolor="#e0e0e0", alpha=0.7, boxstyle="round"),
                         zorder=3,
                     )
-                ax.legend(
-                    loc=legend_loc, bbox_to_anchor=(0.20, 0.3), prop={"size": fontsize}
-                )
+                ax.legend(loc=legend_loc, bbox_to_anchor=(0.20, 0.3), prop={"size": fontsize})
         else:
             mist_dur = [len(v) for v in data.values()]
             for i, key in enumerate(data):
@@ -368,9 +364,7 @@ class Stroop(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return super()._mean_se_subphases(
-            data, subphases=self.subphases, is_group_dict=is_group_dict
-        )
+        return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
     def stroop_dict_to_dataframe(
         self,
@@ -406,16 +400,12 @@ class Stroop(base.BaseProtocol):
             for group, dict_data in dict_stroop.items():
                 for subject, data in dict_data.items():
                     for subphase, df in data.items():
-                        df_stroop = pd.concat(
-                            [df_stroop, df.set_index([[group], [subject], [subphase]])]
-                        )
+                        df_stroop = pd.concat([df_stroop, df.set_index([[group], [subject], [subphase]])])
             df_stroop.index.names = ["group", "subject", "subphase"]
         else:
             for subject, data in dict_stroop.items():
                 for subphase, df in data.items():
-                    df_stroop = pd.concat(
-                        [df_stroop, df.set_index([[subject], [subphase]])]
-                    )
+                    df_stroop = pd.concat([df_stroop, df.set_index([[subject], [subphase]])])
             df_stroop.index.names = ["subject", "subphase"]
 
         if columns:
@@ -423,9 +413,7 @@ class Stroop(base.BaseProtocol):
 
         return df_stroop
 
-    def stroop_mean_se(
-        self, data=pd.DataFrame, is_group_dict: Optional[bool] = False
-    ) -> pd.DataFrame:
+    def stroop_mean_se(self, data=pd.DataFrame, is_group_dict: Optional[bool] = False) -> pd.DataFrame:
         """
         Computes the mean and standard error of the stroop test data per Stroop subphase over all subjects.
 
@@ -454,9 +442,7 @@ class Stroop(base.BaseProtocol):
 
         # scale correct answers to percent
         if ("correct_mean" and "correct_std") in df_mean_se.columns:
-            df_mean_se[["correct_mean", "correct_std"]] = (
-                df_mean_se[["correct_mean", "correct_std"]] * 100
-            )
+            df_mean_se[["correct_mean", "correct_std"]] = df_mean_se[["correct_mean", "correct_std"]] * 100
 
         return df_mean_se
 
@@ -468,7 +454,7 @@ class Stroop(base.BaseProtocol):
         group_col: Optional[str] = "condition",
         ylims: Optional[Sequence[float]] = None,
         ax: Optional[plt.Axes] = None,
-        **kwargs
+        **kwargs,
     ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         """
         Plots the mean response time or correct answers during the different Stroop task (mean ± standard error per phase).
@@ -555,9 +541,7 @@ class Stroop(base.BaseProtocol):
                 marker="D",
                 capsize=3,
             )
-            plt.legend(
-                handles=[line1, line2], loc="upper right", prop={"size": fontsize}
-            )
+            plt.legend(handles=[line1, line2], loc="upper right", prop={"size": fontsize})
         else:
             ax.errorbar(
                 x,
@@ -644,10 +628,7 @@ class Stroop(base.BaseProtocol):
             group dict with one 'Stroop dict' per group
 
         """
-        return {
-            condition: {ID: dict_stroop[ID] for ID in IDs}
-            for condition, IDs in condition_dict.items()
-        }
+        return {condition: {ID: dict_stroop[ID] for ID in IDs} for condition, IDs in condition_dict.items()}
 
     def split_groups(
         cls,
@@ -681,7 +662,7 @@ class Stroop(base.BaseProtocol):
         group_col: Optional[str] = None,
         plot_params: Optional[Dict] = None,
         ax: Optional[plt.Axes] = None,
-        **kwargs
+        **kwargs,
     ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
         """
         Plots the course of heart rate during the complete Stroop test (mean ± standard error per phase).
@@ -729,12 +710,7 @@ class Stroop(base.BaseProtocol):
         if plot_params:
             self.hr_mean_plot_params.update(plot_params)
         return plot.hr_mean_plot(
-            data=data,
-            groups=groups,
-            group_col=group_col,
-            plot_params=self.hr_mean_plot_params,
-            ax=ax,
-            **kwargs
+            data=data, groups=groups, group_col=group_col, plot_params=self.hr_mean_plot_params, ax=ax, **kwargs
         )
 
     def hr_mean_se(

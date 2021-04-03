@@ -53,14 +53,7 @@ def lineplot(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.
             m_se = m_se.reindex(order, level=0)
         err_kws = kwargs.get("err_kws")
         marker = markers[i] if markers else None
-        ax.errorbar(
-            x=x_vals + 0.05 * i,
-            y=m_se["mean"],
-            yerr=m_se["se"].values,
-            marker=marker,
-            label=key,
-            **err_kws
-        )
+        ax.errorbar(x=x_vals + 0.05 * i, y=m_se["mean"], yerr=m_se["se"].values, marker=marker, label=key, **err_kws)
 
     ylabel = kwargs.get("ylabel", data[y].name)
     xlabel = kwargs.get("xlabel", data[x].name)
@@ -87,9 +80,7 @@ def lineplot(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.
         return fig, ax
 
 
-def stacked_barchart(
-    data: pd.DataFrame, **kwargs
-) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
+def stacked_barchart(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     fig = None
     ax: plt.Axes = kwargs.get("ax", None)
     if ax is None:
@@ -108,9 +99,7 @@ def stacked_barchart(
     return fig, ax
 
 
-def feature_boxplot(
-    data: pd.DataFrame, x: str, y: str, stats_kwargs: Optional[Dict] = None, **kwargs
-):
+def feature_boxplot(data: pd.DataFrame, x: str, y: str, stats_kwargs: Optional[Dict] = None, **kwargs):
     from statannot import add_stat_annotation
 
     fig = None
@@ -127,9 +116,7 @@ def feature_boxplot(
     boxplot_pvals = stats_kwargs.get("pvalues", {})
 
     if len(stats_kwargs) > 0:
-        stats_kwargs["comparisons_correction"] = stats_kwargs.get(
-            "comparisons_correction", None
-        )
+        stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction", None)
         stats_kwargs["test"] = stats_kwargs.get("test", None)
 
     if len(boxplot_pvals) > 0:
@@ -160,13 +147,11 @@ def multi_feature_boxplot(
     y: str,
     group: str,
     hue: Optional[str] = None,
-    features: Optional[
-        Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]]
-    ] = None,
+    features: Optional[Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]]] = None,
     xticklabels: Optional[Dict[str, Sequence[str]]] = None,
     ylabels: Optional[Dict[str, str]] = None,
     stats_kwargs: Optional[Dict] = None,
-    **kwargs
+    **kwargs,
 ) -> Union[None, Tuple[plt.Figure, Sequence[plt.Axes]]]:
     """
 
@@ -234,39 +219,24 @@ def multi_feature_boxplot(
         if data_plot.empty:
             raise ValueError("Empty dataframe for '{}'!".format(key))
         sns.boxplot(
-            data=data_plot.reset_index(),
-            x=x,
-            y=y,
-            order=order_list,
-            hue=hue,
-            hue_order=hue_order,
-            ax=ax,
-            **kwargs
+            data=data_plot.reset_index(), x=x, y=y, order=order_list, hue=hue, hue_order=hue_order, ax=ax, **kwargs
         )
 
         if len(stats_kwargs) > 0:
-            stats_kwargs["comparisons_correction"] = stats_kwargs.get(
-                "comparisons_correction", None
-            )
+            stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction", None)
             stats_kwargs["test"] = stats_kwargs.get("test", None)
 
         if dict_box_pairs is not None:
             # filter box pairs by feature
-            stats_kwargs["box_pairs"] = [
-                dict_box_pairs[x] for x in dict_box_pairs if key in x
-            ]
+            stats_kwargs["box_pairs"] = [dict_box_pairs[x] for x in dict_box_pairs if key in x]
             # flatten list
-            stats_kwargs["box_pairs"] = [
-                x for pairs in stats_kwargs["box_pairs"] for x in pairs
-            ]
+            stats_kwargs["box_pairs"] = [x for pairs in stats_kwargs["box_pairs"] for x in pairs]
 
         if dict_pvals is not None:
             # filter pvals by feature
             stats_kwargs["pvalues"] = [dict_pvals[x] for x in dict_pvals if key in x]
             # flatten list
-            stats_kwargs["pvalues"] = [
-                x for pairs in stats_kwargs["pvalues"] for x in pairs
-            ]
+            stats_kwargs["pvalues"] = [x for pairs in stats_kwargs["pvalues"] for x in pairs]
             stats_kwargs["perform_stat_test"] = False
 
         stats_kwargs["pvalue_thresholds"] = _PVALUE_THRESHOLDS
@@ -280,7 +250,7 @@ def multi_feature_boxplot(
                 order=order_list,
                 hue=hue,
                 hue_order=hue_order,
-                **stats_kwargs
+                **stats_kwargs,
             )
 
         if key in ylabels:

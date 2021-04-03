@@ -64,15 +64,11 @@ def cut_to_wear_block(data: pd.DataFrame, wear_block: Tuple) -> pd.DataFrame:
         return data.iloc[wear_block[0] : wear_block[-1]]
 
 
-def calculate_endpoints(
-    sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFrame
-) -> Dict:
+def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFrame) -> Dict:
     from numbers import Number
 
     # sleep/wake data during major rest period
-    sleep_wake = sleep_wake.loc[
-        major_rest_periods["start"][0] : major_rest_periods["end"][0]
-    ]
+    sleep_wake = sleep_wake.loc[major_rest_periods["start"][0] : major_rest_periods["end"][0]]
 
     # total sleep time in minutes (= length of 'sleep' predictions (value 0) in dataframe)
     sleep_time = sleep_wake[sleep_wake["sleep_wake"].eq(0)]
@@ -100,16 +96,8 @@ def calculate_endpoints(
     else:
         df_start_stop["end"] = df_start_stop["end"] + pd.Timedelta("1m")
 
-    sleep_bouts = (
-        df_start_stop[df_start_stop["sleep_wake"].eq(0)]
-        .drop(columns=["sleep_wake"])
-        .reset_index(drop=True)
-    )
-    wake_bouts = (
-        df_start_stop[df_start_stop["sleep_wake"].ne(0)]
-        .drop(columns=["sleep_wake"])
-        .reset_index(drop=True)
-    )
+    sleep_bouts = df_start_stop[df_start_stop["sleep_wake"].eq(0)].drop(columns=["sleep_wake"]).reset_index(drop=True)
+    wake_bouts = df_start_stop[df_start_stop["sleep_wake"].ne(0)].drop(columns=["sleep_wake"]).reset_index(drop=True)
     num_wake_bouts = len(wake_bouts)
     sleep_onset = sleep_time.index[0]
     wake_onset = sleep_time.index[-1]

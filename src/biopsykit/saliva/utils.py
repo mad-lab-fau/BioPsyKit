@@ -6,9 +6,7 @@ import numpy as np
 from biopsykit.utils.functions import se
 
 
-def extract_saliva_columns(
-    data: pd.DataFrame, biomarker: str, col_pattern: Optional[str] = None
-) -> pd.DataFrame:
+def extract_saliva_columns(data: pd.DataFrame, biomarker: str, col_pattern: Optional[str] = None) -> pd.DataFrame:
     """
     Extracts columns containing saliva samples from a DataFrame.
 
@@ -66,9 +64,7 @@ def get_saliva_column_suggestions(data: pd.DataFrame, biomarker: str) -> Sequenc
             data.columns,
         )
     )
-    sugg_filt = list(
-        filter(lambda s: any(str(i) in s for i in range(0, 20)), sugg_filt)
-    )
+    sugg_filt = list(filter(lambda s: any(str(i) in s for i in range(0, 20)), sugg_filt))
     sugg_filt = list(
         filter(
             lambda s: all(
@@ -90,10 +86,7 @@ def get_saliva_column_suggestions(data: pd.DataFrame, biomarker: str) -> Sequenc
         )
     )
     # replace il{} with il6 since this was removed out by the previous filter operation
-    sugg_filt = [
-        re.sub("\d", "{}", s).replace("il{}", "il6").replace("IL{}", "IL6")
-        for s in sugg_filt
-    ]
+    sugg_filt = [re.sub("\d", "{}", s).replace("il{}", "il6").replace("IL{}", "IL6") for s in sugg_filt]
     sugg_filt = sorted(list(filter(lambda s: "{}" in s, set(sugg_filt))))
 
     # build regex for column extraction
@@ -174,34 +167,22 @@ def wide_to_long(
 #     return df_long
 
 
-def saliva_times_datetime_to_minute(
-    saliva_times: Union[pd.Series, pd.DataFrame]
-) -> pd.DataFrame:
+def saliva_times_datetime_to_minute(saliva_times: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
     from datetime import time, datetime
 
     if isinstance(saliva_times.values.flatten()[0], str):
         saliva_times = pd.to_timedelta(saliva_times)
 
-    if not isinstance(
-        saliva_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64)
-    ):
-        raise ValueError(
-            "Saliva times must be instance of `datetime.datetime()`, `datetime.time()` or `pd.Timedelta`!"
-        )
+    if not isinstance(saliva_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64)):
+        raise ValueError("Saliva times must be instance of `datetime.datetime()`, `datetime.time()` or `pd.Timedelta`!")
 
     if isinstance(saliva_times, pd.Series) and "sample" in saliva_times.index.names:
         # unstack the multi-index dataframe in the 'samples' level so that time differences can be computes in minutes.
         # Then stack it back together
         if isinstance(saliva_times[0], pd.Timedelta):
-            saliva_times = (
-                pd.to_timedelta(saliva_times).unstack(level="sample").diff(axis=1)
-            )
+            saliva_times = pd.to_timedelta(saliva_times).unstack(level="sample").diff(axis=1)
         else:
-            saliva_times = (
-                pd.to_datetime(saliva_times.astype(str))
-                .unstack(level="sample")
-                .diff(axis=1)
-            )
+            saliva_times = pd.to_datetime(saliva_times.astype(str)).unstack(level="sample").diff(axis=1)
         saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
         saliva_times = saliva_times.cumsum(axis=1)
         saliva_times.iloc[:, 0].fillna(0, inplace=True)
@@ -228,9 +209,7 @@ def mean_se(
             biomarker_cols = [biomarker]
             if "time" in data:
                 biomarker_cols = ["time"] + biomarker_cols
-            dict_result[biomarker] = mean_se(
-                data[biomarker_cols], biomarker_type=biomarker, remove_s0=remove_s0
-            )
+            dict_result[biomarker] = mean_se(data[biomarker_cols], biomarker_type=biomarker, remove_s0=remove_s0)
         return dict_result
 
     if remove_s0:
@@ -262,9 +241,7 @@ def _check_saliva_times(saliva_times: np.array):
         raise ValueError("`saliva_times` must be increasing!")
 
 
-def _get_saliva_times(
-    data: pd.DataFrame, saliva_times: np.array, remove_s0: bool
-) -> np.array:
+def _get_saliva_times(data: pd.DataFrame, saliva_times: np.array, remove_s0: bool) -> np.array:
     if saliva_times is None:
         # check if dataframe has 'time' column
         if "time" in data.columns:
@@ -287,9 +264,7 @@ def _get_saliva_times(
         if saliva_times.ndim <= 2:
             saliva_times = saliva_times[..., 1:]
         else:
-            raise ValueError(
-                "`saliva_times` has invalid dimensions: {}".format(saliva_times.ndim)
-            )
+            raise ValueError("`saliva_times` has invalid dimensions: {}".format(saliva_times.ndim))
 
     return saliva_times
 

@@ -30,13 +30,11 @@ class CAR:
         saliva_type: str,
         feature: Optional[str] = None,
         stats_kwargs: Optional[Dict] = None,
-        **kwargs
+        **kwargs,
     ):
         from biopsykit.protocols.plotting import saliva_feature_boxplot
 
-        return saliva_feature_boxplot(
-            data, x, saliva_type, feature, stats_kwargs, **kwargs
-        )
+        return saliva_feature_boxplot(data, x, saliva_type, feature, stats_kwargs, **kwargs)
 
     def saliva_multi_feature_boxplot(
         self,
@@ -46,10 +44,8 @@ class CAR:
         hue: Optional[str] = None,
         xticklabels: Optional[Dict[str, str]] = None,
         stats_kwargs: Optional[Dict] = None,
-        **kwargs
+        **kwargs,
     ):
         from biopsykit.protocols.plotting import saliva_multi_feature_boxplot
 
-        return saliva_multi_feature_boxplot(
-            data, saliva_type, features, hue, xticklabels, stats_kwargs, **kwargs
-        )
+        return saliva_multi_feature_boxplot(data, saliva_type, features, hue, xticklabels, stats_kwargs, **kwargs)

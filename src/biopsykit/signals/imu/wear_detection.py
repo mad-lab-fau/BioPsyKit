@@ -47,37 +47,25 @@ class WearDetection:
             )[:, :]
             start_end = index_resample[:, [0, -1]]
             if np.isnan(start_end[-1, -1]):
-                last_idx = index_resample[
-                    -1, np.where(~np.isnan(index_resample[-1, :]))[0][-1]
-                ]
+                last_idx = index_resample[-1, np.where(~np.isnan(index_resample[-1, :]))[0][-1]]
                 start_end[-1, -1] = last_idx
 
             start_end = start_end.astype(int)
 
             if isinstance(index, pd.DatetimeIndex):
-                index_resample = pd.DataFrame(
-                    index.values[start_end], columns=["start", "end"]
-                )
+                index_resample = pd.DataFrame(index.values[start_end], columns=["start", "end"])
                 index_resample = index_resample.apply(
-                    lambda df: pd.to_datetime(df)
-                    .dt.tz_localize("UTC")
-                    .dt.tz_convert(index.tzinfo)
+                    lambda df: pd.to_datetime(df).dt.tz_localize("UTC").dt.tz_convert(index.tzinfo)
                 )
 
-        acc_std = pd.DataFrame(
-            {axis: np.nanstd(acc_sliding[axis], ddof=1, axis=1) for axis in acc_sliding}
-        )
+        acc_std = pd.DataFrame({axis: np.nanstd(acc_sliding[axis], ddof=1, axis=1) for axis in acc_sliding})
 
         acc_std[acc_std >= 0.013] = 1
         acc_std[acc_std < 0.013] = 0
         acc_std = np.nansum(acc_std, axis=1)
 
         acc_range = pd.DataFrame(
-            {
-                axis: np.nanmax(acc_sliding[axis], axis=1)
-                - np.nanmin(acc_sliding[axis], axis=1)
-                for axis in acc_sliding
-            }
+            {axis: np.nanmax(acc_sliding[axis], axis=1) - np.nanmin(acc_sliding[axis], axis=1) for axis in acc_sliding}
         )
 
         acc_range[acc_range >= 0.15] = 1
@@ -105,14 +93,10 @@ class WearDetection:
         blocks = list(data.groupby("block"))
 
         # iterate through blocks
-        for (idx_prev, prev), (idx_curr, curr), (idx_post, post) in zip(
-            blocks[0:-2], blocks[1:-1], blocks[2:]
-        ):
+        for (idx_prev, prev), (idx_curr, curr), (idx_post, post) in zip(blocks[0:-2], blocks[1:-1], blocks[2:]):
             if curr["wear"].unique():
                 # get hour lengths of the previous, current, and next blocks
-                dur_prev, dur_curr, dur_post = (
-                    len(dur) * 0.25 for dur in [prev, curr, post]
-                )
+                dur_prev, dur_curr, dur_post = (len(dur) * 0.25 for dur in [prev, curr, post])
 
                 if dur_curr < 3 and dur_curr / (dur_prev + dur_post) < 0.8:
                     # if the current block is less than 3 hours and the ratio to previous and post blocks is
@@ -129,11 +113,7 @@ class WearDetection:
     def get_major_wear_block(wear_data: pd.DataFrame) -> Tuple:
         wear_data = wear_data.copy()
         wear_data["block"] = wear_data["wear"].diff().ne(0).cumsum()
-        wear_blocks = list(
-            wear_data.groupby("block")
-            .filter(lambda x: (x["wear"] == 1.0).all())
-            .groupby("block")
-        )
+        wear_blocks = list(wear_data.groupby("block").filter(lambda x: (x["wear"] == 1.0).all()).groupby("block"))
         max_block = wear_blocks[np.argmax([len(b) for i, b in wear_blocks])][1]
         max_block = (max_block["start"].iloc[0], max_block["end"].iloc[-1])
         return max_block

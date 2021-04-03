@@ -61,15 +61,9 @@ def sanitize_input_nd(
         if 1 in ncols:
             return data
         else:
-            raise ValueError(
-                "Invalid number of columns! Expected one of {}, got 1.".format(ncols)
-            )
+            raise ValueError("Invalid number of columns! Expected one of {}, got 1.".format(ncols))
     elif data.shape[1] not in ncols:
-        raise ValueError(
-            "Invalid number of columns! Expected one of {}, got {}.".format(
-                ncols, data.shape[1]
-            )
-        )
+        raise ValueError("Invalid number of columns! Expected one of {}, got {}.".format(ncols, data.shape[1]))
     return data
 
 
@@ -145,29 +139,21 @@ def interpolate_dict_sec(
     return result_dict
 
 
-def interpolate_and_cut(
-    data_dict: Dict[str, Dict[str, pd.DataFrame]]
-) -> Dict[str, Dict[str, pd.DataFrame]]:
+def interpolate_and_cut(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
     data_dict = interpolate_dict_sec(data_dict)
 
-    durations = np.array(
-        [[len(df) for phase, df in data.items()] for data in data_dict.values()]
-    )
+    durations = np.array([[len(df) for phase, df in data.items()] for data in data_dict.values()])
     value_types = np.array([isinstance(value, dict) for value in data_dict.values()])
 
     if value_types.all():
         # all values are dictionaries
-        phase_names = np.array(
-            [np.array(list(val.keys())) for key, val in data_dict.items()]
-        )
+        phase_names = np.array([np.array(list(val.keys())) for key, val in data_dict.items()])
         if (phase_names[0] == phase_names).all():
             phase_names = phase_names[0]
         else:
             raise ValueError("Phases are not the same for all subjects!")
         # minimal duration of each Phase
-        min_dur = {
-            phase: dur for phase, dur in zip(phase_names, np.min(durations, axis=0))
-        }
+        min_dur = {phase: dur for phase, dur in zip(phase_names, np.min(durations, axis=0))}
         for key, value in data_dict.items():
             dict_cut = {}
             for phase in phase_names:
@@ -225,11 +211,7 @@ def find_extrema_in_radius(
     extrema_funcs = {"min": np.nanargmin, "max": np.nanargmax}
 
     if extrema_type not in extrema_funcs:
-        raise ValueError(
-            "`extrema_type` must be one of {}, not {}".format(
-                list(extrema_funcs.keys()), extrema_type
-            )
-        )
+        raise ValueError("`extrema_type` must be one of {}, not {}".format(list(extrema_funcs.keys()), extrema_type))
     extrema_func = extrema_funcs[extrema_type]
 
     # ensure numpy
@@ -264,14 +246,7 @@ def find_extrema_in_radius(
     windows = np.zeros(shape=(len(indices), lower_limit + upper_limit + 1))
     for i, index in enumerate(indices):
         # get windows around index
-        windows[i] = data[
-            index
-            - lower_limit
-            + start_padding : index
-            + upper_limit
-            + start_padding
-            + 1
-        ]
+        windows[i] = data[index - lower_limit + start_padding : index + upper_limit + start_padding + 1]
 
     return extrema_func(windows, axis=1) + indices - lower_limit
 
@@ -347,9 +322,7 @@ def sliding_window(
         overlap_percent=overlap_percent,
     )
 
-    return sliding_window_view(
-        data, window_length=window, overlap=overlap, nan_padding=True
-    )
+    return sliding_window_view(data, window_length=window, overlap=overlap, nan_padding=True)
 
 
 def sanitize_sliding_window_input(
@@ -367,9 +340,7 @@ def sanitize_sliding_window_input(
 
     if window_samples is None:
         if sampling_rate == 0:
-            raise ValueError(
-                "Sampling rate must be specified when `window_sec` is used!"
-            )
+            raise ValueError("Sampling rate must be specified when `window_sec` is used!")
         window = int(sampling_rate * window_sec)
     else:
         window = int(window_samples)
@@ -393,9 +364,7 @@ def downsample(
         return signal.decimate(data, int(sampling_rate / final_sampling_rate), axis=0)
     else:
         # aliasing filter
-        b, a = signal.cheby1(
-            N=8, rp=0.05, Wn=0.8 / (sampling_rate / final_sampling_rate)
-        )
+        b, a = signal.cheby1(N=8, rp=0.05, Wn=0.8 / (sampling_rate / final_sampling_rate))
         data_lp = signal.filtfilt(a=a, b=b, x=data)
         # interpolation
         x_old = np.linspace(0, len(data_lp), num=len(data_lp), endpoint=False)
@@ -409,9 +378,7 @@ def downsample(
         return interpol(x_new)
 
 
-def sliding_window_view(
-    arr: np.ndarray, window_length: int, overlap: int, nan_padding: bool = False
-) -> np.ndarray:
+def sliding_window_view(arr: np.ndarray, window_length: int, overlap: int, nan_padding: bool = False) -> np.ndarray:
     """Create a sliding window view of an input array with given window length and overlap.
 
     .. warning::
@@ -460,9 +427,7 @@ def sliding_window_view(
         raise ValueError("Invalid Input, window_length must be larger than 1!")
 
     # calculate length of necessary np.nan-padding to make sure windows and overlaps exactly fits data length
-    n_windows = np.ceil((len(arr) - window_length) / (window_length - overlap)).astype(
-        int
-    )
+    n_windows = np.ceil((len(arr) - window_length) / (window_length - overlap)).astype(int)
     pad_length = window_length + n_windows * (window_length - overlap) - len(arr)
 
     # had to handle 1D arrays separately
@@ -475,9 +440,7 @@ def sliding_window_view(
     else:
         if nan_padding:
             # np.pad always returns a copy of the input array even if pad_length is 0!
-            arr = np.pad(
-                arr.astype(float), [(0, pad_length), (0, 0)], constant_values=np.nan
-            )
+            arr = np.pad(arr.astype(float), [(0, pad_length), (0, 0)], constant_values=np.nan)
 
         shape = (window_length, arr.shape[-1])
         n = np.array(arr.shape)
@@ -486,20 +449,14 @@ def sliding_window_view(
 
     # apply stride_tricks magic
     new_strides = np.concatenate((arr.strides, arr.strides), axis=0)
-    view = np.lib.stride_tricks.as_strided(arr, new_shape, new_strides)[
-        0 :: (window_length - overlap)
-    ]
+    view = np.lib.stride_tricks.as_strided(arr, new_shape, new_strides)[0 :: (window_length - overlap)]
 
-    view = np.squeeze(
-        view
-    )  # get rid of single-dimensional entries from the shape of an array.
+    view = np.squeeze(view)  # get rid of single-dimensional entries from the shape of an array.
 
     return view
 
 
-def _bool_fill(
-    indices: np.ndarray, bool_values: np.ndarray, array: np.ndarray
-) -> np.ndarray:
+def _bool_fill(indices: np.ndarray, bool_values: np.ndarray, array: np.ndarray) -> np.ndarray:
     """Fill a preallocated array with bool_values.
 
     This method iterates over the indices and adds the values to the array at the given indices using a logical or.

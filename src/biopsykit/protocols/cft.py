@@ -149,9 +149,7 @@ class CFT:
         """
         if isinstance(data.index, pd.DatetimeIndex):
             cft_start = data.index[0] + pd.Timedelta(minutes=int(self.cft_start / 60))
-            cft_end = data.index[0] + pd.Timedelta(
-                minutes=int((self.cft_start + self.cft_duration) / 60)
-            )
+            cft_end = data.index[0] + pd.Timedelta(minutes=int((self.cft_start + self.cft_duration) / 60))
             return data.between_time(cft_start.time(), cft_end.time())
         else:
             return data.loc[self.cft_start : self.cft_start + self.cft_duration]
@@ -163,18 +161,14 @@ class CFT:
         compute_baseline: Optional[bool] = True,
         hr_bl: Optional[float] = None,
     ) -> Dict:
-        df_hr_cft, hr_bl = self._sanitize_cft_input(
-            data, is_cft_interval, compute_baseline, hr_bl
-        )
+        df_hr_cft, hr_bl = self._sanitize_cft_input(data, is_cft_interval, compute_baseline, hr_bl)
 
         # bradycardia mask (True where heart rate is below baseline, False otherwise)
         hr_brady = df_hr_cft < hr_bl
         # bradycardia borders (1 where we have a change between lower and higher heart rate)
         brady_border = np.abs(np.ediff1d(hr_brady.astype(int), to_begin=0))
         # filter out the phases where we have at least 3 heart rate values lower than baseline
-        brady_phases = hr_brady.groupby([np.cumsum(brady_border)]).filter(
-            lambda df: df.sum() >= 3
-        )
+        brady_phases = hr_brady.groupby([np.cumsum(brady_border)]).filter(lambda df: df.sum() >= 3)
         # CFT onset is the third beat
         cft_onset = brady_phases.index[2]
         cft_onset_latency = (cft_onset - df_hr_cft.index[0]).total_seconds()
@@ -199,9 +193,7 @@ class CFT:
         hr_bl: Optional[float] = None,
     ) -> Dict:
 
-        df_hr_cft, hr_bl = self._sanitize_cft_input(
-            data, is_cft_interval, compute_baseline, hr_bl
-        )
+        df_hr_cft, hr_bl = self._sanitize_cft_input(data, is_cft_interval, compute_baseline, hr_bl)
 
         peak_brady = np.squeeze(df_hr_cft.idxmin())
         peak_brady_seconds = (peak_brady - df_hr_cft.index[0]).total_seconds()
@@ -224,9 +216,7 @@ class CFT:
         hr_bl: Optional[float] = None,
     ) -> Dict:
 
-        df_hr_cft, hr_bl = self._sanitize_cft_input(
-            data, is_cft_interval, compute_baseline, hr_bl
-        )
+        df_hr_cft, hr_bl = self._sanitize_cft_input(data, is_cft_interval, compute_baseline, hr_bl)
 
         hr_mean = np.squeeze(df_hr_cft.mean())
 
@@ -244,9 +234,7 @@ class CFT:
         hr_bl: Optional[float] = None,
     ) -> Dict:
 
-        df_hr_cft, hr_bl = self._sanitize_cft_input(
-            data, is_cft_interval, compute_baseline, hr_bl
-        )
+        df_hr_cft, hr_bl = self._sanitize_cft_input(data, is_cft_interval, compute_baseline, hr_bl)
 
         # get time points in seconds
         idx_s = df_hr_cft.index.astype(int) / 1e9
@@ -262,7 +250,7 @@ class CFT:
         time_before: Optional[int] = None,
         time_after: Optional[int] = None,
         plot_datetime_index: Optional[bool] = False,
-        **kwargs
+        **kwargs,
     ) -> Union[Tuple[plt.Figure, plt.Axes], plt.Axes]:
         """
 
@@ -312,9 +300,7 @@ class CFT:
             time_after = self.cft_start
 
         fontsize = kwargs.get("fontsize", self.cft_plot_params["fontsize"])
-        bg_colors = kwargs.get(
-            "background_color", self.cft_plot_params["background_color"]
-        )
+        bg_colors = kwargs.get("background_color", self.cft_plot_params["background_color"])
         bg_alphas = self.cft_plot_params["background_alpha"]
         names = self.cft_plot_params["phase_names"]
 
@@ -343,12 +329,7 @@ class CFT:
             "cft_end": cft_end,
             "plot_end": plot_end,
         }
-        times = [
-            (start, end)
-            for start, end in zip(
-                list(times_dict.values()), list(times_dict.values())[1:]
-            )
-        ]
+        times = [(start, end) for start, end in zip(list(times_dict.values()), list(times_dict.values())[1:])]
 
         hr_plot(heart_rate=df_plot, ax=ax, plot_mean=False)
 
@@ -358,9 +339,7 @@ class CFT:
             boxstyle="round",
         )
 
-        for (start, end), bg_color, bg_alpha, name in zip(
-            times, bg_colors, bg_alphas, names
-        ):
+        for (start, end), bg_color, bg_alpha, name in zip(times, bg_colors, bg_alphas, names):
             ax.axvspan(xmin=start, xmax=end, color=bg_color, alpha=bg_alpha, lw=0)
             ax.text(
                 x=start + 0.5 * (end - start),
@@ -441,9 +420,7 @@ class CFT:
             hr_bl = self.baseline_hr(data)
         else:
             if hr_bl is None:
-                raise ValueError(
-                    "`baseline_hr` must be supplied as parameter when `compute_baseline` is set to False!"
-                )
+                raise ValueError("`baseline_hr` must be supplied as parameter when `compute_baseline` is set to False!")
 
         return df_hr_cft, hr_bl
 
@@ -712,9 +689,7 @@ class CFT:
 
         x_poly = x_poly - x_poly[0]
         y_poly = (
-            cft_params["poly_fit_a0"] * x_poly ** 2
-            + cft_params["poly_fit_a1"] * x_poly
-            + cft_params["poly_fit_a2"]
+            cft_params["poly_fit_a0"] * x_poly ** 2 + cft_params["poly_fit_a1"] * x_poly + cft_params["poly_fit_a2"]
         )
 
         ax.plot(

@@ -93,10 +93,7 @@ class BaseProtocol:
         subphase_names: Sequence[str],
         subphase_times: Sequence[Tuple[int, int]],
         is_group_dict: Optional[bool] = False,
-    ) -> Union[
-        Dict[str, Dict[str, pd.DataFrame]],
-        Dict[str, Dict[str, Dict[str, pd.DataFrame]]],
-    ]:
+    ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]],]:
         """
         Splits a `Phase dict` (or a dict of such, in case of multiple groups, see ``bp.signals.utils.concat_dicts``)
         into a `Subphase dict` (see below for further explanation).
@@ -208,9 +205,7 @@ class BaseProtocol:
         dict or pd.DataFrame
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
-        return mean_se_nested_dict(
-            data, subphases=subphases, is_group_dict=is_group_dict
-        )
+        return mean_se_nested_dict(data, subphases=subphases, is_group_dict=is_group_dict)
 
     def saliva_plot(
         self,
@@ -253,23 +248,14 @@ class BaseProtocol:
             ylims=ylims,
             ax=ax,
             figsize=figsize,
-            **self.saliva_params
+            **self.saliva_params,
         )
 
     def _saliva_plot_helper(
-        self,
-        data: pd.DataFrame,
-        biomarker: str,
-        groups: Sequence[str],
-        saliva_times: Sequence[int],
-        **kwargs
+        self, data: pd.DataFrame, biomarker: str, groups: Sequence[str], saliva_times: Sequence[int], **kwargs
     ) -> plt.Axes:
         return plot._saliva_plot_helper(
-            data=data,
-            biomarker=biomarker,
-            groups=groups,
-            saliva_times=saliva_times,
-            **kwargs
+            data=data, biomarker=biomarker, groups=groups, saliva_times=saliva_times, **kwargs
         )
 
     def saliva_plot_combine_legend(
@@ -293,6 +279,4 @@ class BaseProtocol:
         -------
 
         """
-        return plot.saliva_plot_combine_legend(
-            fig=fig, ax=ax, biomarkers=biomarkers, separate_legends=separate_legends
-        )
+        return plot.saliva_plot_combine_legend(fig=fig, ax=ax, biomarkers=biomarkers, separate_legends=separate_legends)

@@ -36,9 +36,7 @@ def static_sequence_features(
 
     static_sequences = sanitize_input_nd(static_sequences, ncols=2)
 
-    durations = np.array(
-        [get_sequence_duration(data, sequence) for sequence in static_sequences]
-    )
+    durations = np.array([get_sequence_duration(data, sequence) for sequence in static_sequences])
     durations_60 = durations[durations >= 60]
 
     loc_max_sequence = data.index[static_sequences[np.argmax(durations)][0]]
@@ -75,13 +73,9 @@ def get_sequence_duration(data: pd.DataFrame, start_end: np.array) -> float:
     return (data.index[start_end[1]] - data.index[start_end[0]]).total_seconds()
 
 
-def get_mean_orientation_in_static_sequences(
-    data: pd.DataFrame, static_sequences: pd.DataFrame
-) -> np.array:
+def get_mean_orientation_in_static_sequences(data: pd.DataFrame, static_sequences: pd.DataFrame) -> np.array:
     static_sequences = sanitize_input_nd(static_sequences, 2)
-    mean_orientations = [
-        data.iloc[start_end[0] : start_end[1]] for start_end in static_sequences
-    ]
+    mean_orientations = [data.iloc[start_end[0] : start_end[1]] for start_end in static_sequences]
     mean_orientations = {len(data): data.mean() for data in mean_orientations}
     mean_orientations = pd.DataFrame(mean_orientations).T
     # mean_orientations.rename(columns={'index': 'length'}, inplace=True)

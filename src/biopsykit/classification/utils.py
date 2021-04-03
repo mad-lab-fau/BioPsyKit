@@ -14,18 +14,14 @@ def strip_labels(data: Union[pd.DataFrame, pd.Series]) -> np.ndarray:
     return np.array(data)
 
 
-def factorize_subject_id(
-    data: Union[pd.Series, pd.DataFrame]
-) -> Tuple[np.ndarray, np.ndarray]:
+def factorize_subject_id(data: Union[pd.Series, pd.DataFrame]) -> Tuple[np.ndarray, np.ndarray]:
     if isinstance(data, pd.DataFrame):
         data = data.index.get_level_values("subject")
     groups, keys = pd.factorize(data)
     return groups, keys
 
 
-def prepare_df_sklearn(
-    data: pd.DataFrame, print_summary: Optional[bool] = False
-) -> Tuple:
+def prepare_df_sklearn(data: pd.DataFrame, print_summary: Optional[bool] = False) -> Tuple:
     X = strip_df(data)
     y = strip_labels(data)
     groups, group_keys = factorize_subject_id(data)

@@ -50,11 +50,7 @@ def max_increase(
 
     out = pd.DataFrame(
         max_inc,
-        columns=[
-            "{}_max_inc_percent".format(biomarker_type)
-            if percent
-            else "{}_max_inc".format(biomarker_type)
-        ],
+        columns=["{}_max_inc_percent".format(biomarker_type) if percent else "{}_max_inc".format(biomarker_type)],
         index=max_inc.index,
     )
     out.columns.name = "biomarker"
@@ -115,13 +111,9 @@ def auc(
             )
         if idxs_post is not None:
             data_post = data.iloc[:, idxs_post]
-            auc_data["auc_i_post"] = np.trapz(
-                data_post.sub(data_post.iloc[:, 0], axis=0), saliva_times[idxs_post]
-            )
+            auc_data["auc_i_post"] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), saliva_times[idxs_post])
 
-    out = pd.DataFrame(auc_data, index=data.index).add_prefix(
-        "{}_".format(biomarker_type)
-    )
+    out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(biomarker_type))
     out.columns.name = "biomarker"
     return out
 
@@ -140,9 +132,7 @@ def standard_features(
             biomarker_cols = [biomarker]
             if "time" in data:
                 biomarker_cols = ["time"] + biomarker_cols
-            dict_result[biomarker] = standard_features(
-                data[biomarker_cols], biomarker_type=biomarker
-            )
+            dict_result[biomarker] = standard_features(data[biomarker_cols], biomarker_type=biomarker)
         return dict_result
 
     if isinstance(group_cols, str):
@@ -197,14 +187,10 @@ def slope(
         raise ValueError("No `{}` columns in data!".format(biomarker_type))
 
     if sample_idx is None and sample_labels is None:
-        raise ValueError(
-            "Either `sample_labels` or `sample_idx` must be supplied as parameter!"
-        )
+        raise ValueError("Either `sample_labels` or `sample_idx` must be supplied as parameter!")
 
     if sample_idx is not None and sample_labels is not None:
-        raise ValueError(
-            "Either `sample_labels` or `sample_idx` must be supplied as parameter, not both!"
-        )
+        raise ValueError("Either `sample_labels` or `sample_idx` must be supplied as parameter, not both!")
 
     if isinstance(biomarker_type, list):
         dict_result = {}
@@ -222,20 +208,14 @@ def slope(
     data = data[[biomarker_type]].unstack()
 
     if sample_labels is not None:
-        sample_idx = [
-            data[biomarker_type].columns.get_loc(label) for label in sample_labels
-        ]
+        sample_idx = [data[biomarker_type].columns.get_loc(label) for label in sample_labels]
     else:
         # ensure list
         sample_idx = list(sample_idx)
         sample_labels = data[biomarker_type].columns[sample_idx]
 
     if len(sample_idx) != 2:
-        raise ValueError(
-            "Exactly 2 indices needed for computing slope. Got {} indices.".format(
-                len(sample_idx)
-            )
-        )
+        raise ValueError("Exactly 2 indices needed for computing slope. Got {} indices.".format(len(sample_idx)))
 
     # replace idx values like '-1' with the actual index
     if sample_idx[0] < 0:
@@ -246,11 +226,7 @@ def slope(
 
     # check that second index is bigger than first index
     if sample_idx[0] >= sample_idx[1]:
-        raise ValueError(
-            "`sample_idx[1]` must be bigger than `sample_idx[0]`. Got {}".format(
-                sample_idx
-            )
-        )
+        raise ValueError("`sample_idx[1]` must be bigger than `sample_idx[0]`. Got {}".format(sample_idx))
 
     if sample_idx[1] > (len(data.columns) - 1):
         raise ValueError("`sample_idx[1]` is out of bounds!")

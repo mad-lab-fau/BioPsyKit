@@ -1,12 +1,12 @@
 import datetime
 from pathlib import Path
-from typing import Optional, Union, Sequence, Dict, List
+from typing import Optional, Union, Sequence, Dict
 
 import numpy as np
 import pandas as pd
 import pytz
 
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 
 
 def load_time_log(
@@ -14,7 +14,7 @@ def load_time_log(
     index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
     phase_cols: Optional[Union[Sequence[str], Dict[str, str]]] = None,
     continuous_time: Optional[bool] = True,
-    **kwargs
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Loads a 'time log file', i.e. a file where time information about start and stop times of recordings or recording
@@ -86,12 +86,8 @@ def load_time_log(
         df_time_log.rename(columns=new_phase_cols, inplace=True)
 
     if not continuous_time:
-        start_cols = np.squeeze(
-            df_time_log.columns.str.extract(r"(\w+)_start").dropna().values
-        )
-        end_cols = np.squeeze(
-            df_time_log.columns.str.extract(r"(\w+)_end").dropna().values
-        )
+        start_cols = np.squeeze(df_time_log.columns.str.extract(r"(\w+)_start").dropna().values)
+        end_cols = np.squeeze(df_time_log.columns.str.extract(r"(\w+)_end").dropna().values)
         if not np.array_equal(start_cols, end_cols):
             raise ValueError("Not all phases have 'start' and 'end' columns!")
         # phases are not continuous, so merge every second value
@@ -151,9 +147,7 @@ def load_questionnaire_data(
     return data
 
 
-def load_stroop_inquisit_data(
-    folder_path=str, cols: Optional[Sequence[str]] = None
-) -> Dict[str, pd.DataFrame]:
+def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = None) -> Dict[str, pd.DataFrame]:
     """
     Loads the stroop test data from a folder and writes parameters like mean response time, number of correct answers,..
     into a Dictionary. The raw data needs to be as an .iqdat format in the path folder.
@@ -234,9 +228,7 @@ def convert_time_log_datetime(
         if none of `dataset`, `df` and `date` are supplied as argument
     """
     if dataset is None and date is None and df is None:
-        raise ValueError(
-            "Either `dataset`, `df` or `date` must be supplied as argument!"
-        )
+        raise ValueError("Either `dataset`, `df` or `date` must be supplied as argument!")
 
     if dataset is not None:
         date = dataset.info.utc_datetime_start.date()
@@ -249,9 +241,7 @@ def convert_time_log_datetime(
     if isinstance(date, str):
         # ensure datetime
         date = datetime.datetime(date)
-    time_log = time_log.applymap(
-        lambda x: pytz.timezone(timezone).localize(datetime.datetime.combine(date, x))
-    )
+    time_log = time_log.applymap(lambda x: pytz.timezone(timezone).localize(datetime.datetime.combine(date, x)))
     return time_log
 
 
@@ -279,9 +269,7 @@ def write_pandas_dict_excel(
     for key in data_dict:
         if isinstance(data_dict[key].index, pd.DatetimeIndex):
             # un-localize DateTimeIndex because Excel doesn't support timezone-aware dates
-            data_dict[key].tz_localize(None).to_excel(
-                writer, sheet_name=key, index=index_col
-            )
+            data_dict[key].tz_localize(None).to_excel(writer, sheet_name=key, index=index_col)
         else:
             data_dict[key].to_excel(writer, sheet_name=key, index=index_col)
     writer.save()
@@ -361,11 +349,7 @@ def write_result_dict(
 
     if file_path.exists() and not overwrite_file:
         # ensure that all identifier columns are read as str
-        df_result_old = pd.read_csv(
-            file_path, dtype={col: str for col in identifier_col}
-        )
+        df_result_old = pd.read_csv(file_path, dtype={col: str for col in identifier_col})
         df_result_old.set_index(identifier_col + index_cols, inplace=True)
-        df_result_concat = df_result_concat.combine_first(df_result_old).sort_index(
-            level=0
-        )
+        df_result_concat = df_result_concat.combine_first(df_result_old).sort_index(level=0)
     df_result_concat.to_csv(file_path)

@@ -26,14 +26,12 @@ def sleep_imu_plot(
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     sleep_endpoints: Optional[Union[Dict, pd.DataFrame]] = None,
     downsample_factor: Optional[float] = 1,
-    **kwargs
+    **kwargs,
 ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     import matplotlib.ticker as mticks
 
     fig: Union[plt.Figure, None] = None
-    axs: Union[plt.Axes, Sequence[plt.Axes], None] = kwargs.get(
-        "ax", kwargs.get("axs", None)
-    )
+    axs: Union[plt.Axes, Sequence[plt.Axes], None] = kwargs.get("ax", kwargs.get("axs", None))
     sns.set_palette(colors.cmap_fau_blue("3"))
 
     downsample_factor = int(downsample_factor)
@@ -53,9 +51,7 @@ def sleep_imu_plot(
         axs = [axs]
 
     if len(datastreams) != len(axs):
-        raise ValueError(
-            "Number of datastreams to be plotted must match number of supplied subplots!"
-        )
+        raise ValueError("Number of datastreams to be plotted must match number of supplied subplots!")
 
     if isinstance(data.index, pd.DatetimeIndex):
         plt.rcParams["timezone"] = data.index.tz.zone
@@ -158,11 +154,7 @@ def _plot_sleep_endpoints(sleep_endpoints: Dict, **kwargs):
     # if handle is not None:
     #     handles['non-wear'] = handle
 
-    ax.set_title(
-        "Sleep IMU Data: {} – {}".format(
-            date.date(), (date + pd.Timedelta("1d")).date()
-        )
-    )
+    ax.set_title("Sleep IMU Data: {} – {}".format(date.date(), (date + pd.Timedelta("1d")).date()))
 
 
 def _plot_sleep_onset(sleep_onset, **kwargs):
@@ -310,9 +302,7 @@ def _plot_mrp_end(wake_onset, mrp_end, **kwargs):
     )
 
 
-def _plot_sleep_wake_bouts(
-    sleep_bouts: pd.DataFrame, wake_bouts: pd.DataFrame, ax: plt.Axes
-) -> Dict:
+def _plot_sleep_wake_bouts(sleep_bouts: pd.DataFrame, wake_bouts: pd.DataFrame, ax: plt.Axes) -> Dict:
     handles = {}
     for (bout_name, bouts), bg_color, bg_alpha in zip(
         {"sleep": sleep_bouts, "wake": wake_bouts}.items(),
@@ -321,9 +311,7 @@ def _plot_sleep_wake_bouts(
     ):
         handle = None
         for idx, bout in bouts.iterrows():
-            handle = ax.axvspan(
-                bout["start"], bout["end"], color=bg_color, alpha=bg_alpha
-            )
+            handle = ax.axvspan(bout["start"], bout["end"], color=bg_color, alpha=bg_alpha)
 
         handles[bout_name] = handle
 

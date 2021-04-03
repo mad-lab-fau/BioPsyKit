@@ -1,11 +1,10 @@
-import warnings
 from pathlib import Path
 from typing import Optional, Sequence, Dict
 
 import pandas as pd
 import numpy as np
 
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 
 _DATA_COL_NAMES = {"cortisol": "cortisol (nmol/l)", "amylase": "amylase (U/ml)"}
 
@@ -74,9 +73,7 @@ def load_saliva_plate(
         data_col = _DATA_COL_NAMES[biomarker_type]
 
     if sheet_name is None:
-        df_saliva = pd.read_excel(
-            file_path, skiprows=2, usecols=[sample_id_col, data_col]
-        )
+        df_saliva = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col])
     else:
         df_saliva = pd.read_excel(
             file_path,
@@ -109,12 +106,7 @@ def load_saliva_plate(
             )
         elif isinstance(condition_list, Dict):
             condition_list = pd.DataFrame(condition_list)
-            condition_list = (
-                condition_list.stack()
-                .reset_index(level=1)
-                .set_index("level_1")
-                .sort_values(0)
-            )
+            condition_list = condition_list.stack().reset_index(level=1).set_index("level_1").sort_values(0)
             condition_list.index.name = "condition"
         elif isinstance(condition_list, pd.DataFrame):
             condition_list = condition_list.reset_index().set_index("subject")
@@ -175,9 +167,7 @@ def load_saliva_wide_format(
     data.set_index(index_cols, inplace=True)
 
     num_subjects = len(data)
-    data.columns = pd.MultiIndex.from_product(
-        [[biomarker_name], data.columns], names=["", "sample"]
-    )
+    data.columns = pd.MultiIndex.from_product([[biomarker_name], data.columns], names=["", "sample"])
 
     data = data.stack()
 
@@ -199,9 +189,7 @@ def _check_num_samples(num_samples: int, num_subjects: int):
         )
 
 
-def _check_saliva_times(
-    num_samples: int, num_subjects: int, saliva_times: Sequence[int]
-):
+def _check_saliva_times(num_samples: int, num_subjects: int, saliva_times: Sequence[int]):
     if not np.all(np.diff(saliva_times) > 0):
         raise ValueError("`saliva_times` must be increasing!")
     if (len(saliva_times) * num_subjects) != num_samples:

@@ -3,7 +3,7 @@ from typing import Dict, Sequence, Union, Tuple, Literal, Optional
 import pandas as pd
 import pingouin as pg
 from IPython.core.display import display, Markdown
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 
 MAP_STAT_TESTS = {
     "normality": pg.normality,
@@ -104,21 +104,13 @@ class StatsPipeline:
 
         for step in self.steps:
 
-            general_params = {
-                key: value
-                for key, value in self.params.items()
-                if len(key.split("__")) == 1
-            }
+            general_params = {key: value for key, value in self.params.items() if len(key.split("__")) == 1}
             specific_params = {
                 key.split("__")[1]: value
                 for key, value in self.params.items()
                 if len(key.split("__")) > 1 and step[0] in key.split("__")
             }
-            params = {
-                key: general_params[key]
-                for key in MAP_STAT_PARAMS[step[1]]
-                if key in general_params
-            }
+            params = {key: general_params[key] for key in MAP_STAT_PARAMS[step[1]] if key in general_params}
 
             grouper = []
             if "groupby" in specific_params:
@@ -131,24 +123,16 @@ class StatsPipeline:
                     grouper.append(general_params["within"])
                     specific_params["group"] = general_params["between"]
                 else:
-                    specific_params["group"] = general_params.get(
-                        "within", general_params.get("between")
-                    )
+                    specific_params["group"] = general_params.get("within", general_params.get("between"))
 
             if len(grouper) > 0:
                 result = data.groupby(grouper).apply(
-                    lambda df: MAP_STAT_TESTS[step[1]](
-                        data=df, **specific_params, **params
-                    )
+                    lambda df: MAP_STAT_TESTS[step[1]](data=df, **specific_params, **params)
                 )
             else:
                 result = MAP_STAT_TESTS[step[1]](data=data, **specific_params, **params)
 
-            if (
-                step[0] == "posthoc"
-                and "padjust" in general_params
-                and "padjust" not in params
-            ):
+            if step[0] == "posthoc" and "padjust" in general_params and "padjust" not in params:
                 # apply p-adjustment for posthoc testing if it was specified in the pipeline
                 # but do it only manually if it's not supported by the test function
                 # (otherwise it would be in the 'params' dict)
@@ -185,30 +169,18 @@ class StatsPipeline:
         if grouped and "groupby" in self.params:
             for key, df in self.data.groupby(self.params.get("groupby")):
                 display(Markdown("""<font size="4"><b> {} </b></font>""".format(key)))
-                self._display_results(
-                    sig_only, self.params.get("groupby"), key, **kwargs
-                )
+                self._display_results(sig_only, self.params.get("groupby"), key, **kwargs)
         else:
             self._display_results(sig_only, **kwargs)
 
     def _display_results(
-        self,
-        sig_only: Dict[str, bool],
-        groupby: Optional[str] = None,
-        group_key: Optional[str] = None,
-        **kwargs
+        self, sig_only: Dict[str, bool], groupby: Optional[str] = None, group_key: Optional[str] = None, **kwargs
     ):
         display(Markdown("""<font size="3"><b> Overview </b></font>"""))
         display(self)
         for category, steps in self.category_steps.items():
             if kwargs.get(category, True):
-                display(
-                    Markdown(
-                        """<font size="3"><b> {} </b></font>""".format(
-                            MAP_CATEGORIES[category]
-                        )
-                    )
-                )
+                display(Markdown("""<font size="3"><b> {} </b></font>""".format(MAP_CATEGORIES[category])))
                 for step in steps:
                     display(Markdown("**{}**".format(MAP_NAMES[step])))
                     df = self.results[step]
@@ -237,9 +209,7 @@ class StatsPipeline:
                 return data[col]
         return None
 
-    def _filter_effect(
-        self, stats_category: STATS_CATEGORY, stats_type: STATS_TYPE
-    ) -> pd.DataFrame:
+    def _filter_effect(self, stats_category: STATS_CATEGORY, stats_type: STATS_TYPE) -> pd.DataFrame:
         results = self.results_cat(stats_category)
         if "Contrast" in results.columns:
             if stats_type == "interaction":
@@ -269,9 +239,7 @@ class StatsPipeline:
         stats_category_or_data: Union[STATS_CATEGORY, pd.DataFrame],
         stats_type: STATS_TYPE,
         plot_type: Optional[PLOT_TYPE] = "single",
-        features: Optional[
-            Union[str, Sequence[str], Dict[str, Union[str, Sequence[str]]]]
-        ] = None,
+        features: Optional[Union[str, Sequence[str], Dict[str, Union[str, Sequence[str]]]]] = None,
         x: Optional[str] = None,
         subplots: Optional[bool] = False,
     ):
@@ -295,18 +263,14 @@ class StatsPipeline:
             index = stats_data[self.params.get("groupby", [])]
             stats_data = stats_data.set_index(self.params["within"])
 
-            box_pairs = stats_data.apply(
-                lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1
-            )
+            box_pairs = stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
             if not index.empty:
                 box_pairs.index = index
         else:
             # if self.params[stats_type] in stats_data.columns:
             #    stats_data = stats_data.reset_index().set_index(self.params[stats_type])
             if features is not None:
-                stats_data = pd.concat(
-                    [stats_data.filter(like=f, axis=0) for f in features]
-                )
+                stats_data = pd.concat([stats_data.filter(like=f, axis=0) for f in features])
 
             stats_data = stats_data.reset_index()
             if plot_type == "single":
@@ -316,13 +280,9 @@ class StatsPipeline:
                     box_pairs.index = index
             else:
                 if x is None:
-                    raise ValueError(
-                        "`x` must be specified when `plot_type` is `multi`!"
-                    )
+                    raise ValueError("`x` must be specified when `plot_type` is `multi`!")
                 stats_data = stats_data.set_index(x)
-                box_pairs = stats_data.apply(
-                    lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1
-                )
+                box_pairs = stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
 
         if box_pairs.empty:
             return [], []
@@ -339,10 +299,7 @@ class StatsPipeline:
         box_pairs: pd.Series,
         pvalues: pd.Series,
         features: Union[Sequence, Dict[str, Union[str, Sequence[str]]]],
-    ) -> Tuple[
-        Dict[str, Sequence[Tuple[Tuple[str, str], Tuple[str, str]]]],
-        Dict[str, Sequence[float]],
-    ]:
+    ) -> Tuple[Dict[str, Sequence[Tuple[Tuple[str, str], Tuple[str, str]]]], Dict[str, Sequence[float]],]:
         dict_box_pairs = {}
         dict_pvalues = {}
         if features is None:
@@ -382,16 +339,10 @@ class StatsPipeline:
         df = self.results[step]
         df = df[MAP_LATEX_EXPORT[step]]
         df.index = df.index.droplevel(-1)
-        df = (
-            df.rename(columns=MAP_LATEX)
-            .reindex(index_labels.keys())
-            .rename(index=index_labels)
-        )
+        df = df.rename(columns=MAP_LATEX).reindex(index_labels.keys()).rename(index=index_labels)
         return df
 
-    def multicomp(
-        self, stats_data: pd.DataFrame, method: Optional[str] = "bonf"
-    ) -> pd.DataFrame:
+    def multicomp(self, stats_data: pd.DataFrame, method: Optional[str] = "bonf") -> pd.DataFrame:
         data = stats_data
         if stats_data.index.nlevels > 1:
             data = stats_data.groupby(list(stats_data.index.names)[:-1])

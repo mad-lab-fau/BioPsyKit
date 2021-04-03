@@ -57,9 +57,7 @@ class TSST(base.BaseProtocol):
     def tsst_times(self, tsst_times):
         self.test_times = tsst_times
 
-    def _update_tsst_params(
-        self, phases: Sequence[str], phase_durations: Sequence[int]
-    ):
+    def _update_tsst_params(self, phases: Sequence[str], phase_durations: Sequence[int]):
         if phases:
             self.phases = phases
         if phase_durations:

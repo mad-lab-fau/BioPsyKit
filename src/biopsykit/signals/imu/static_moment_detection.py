@@ -80,9 +80,7 @@ def find_static_samples(
         raise ValueError("Invalid signal dimensions, signal must be of shape (n,3).")
 
     if metric not in _METRIC_FUNCTIONS:
-        raise ValueError(
-            "Invalid metric passed! %s as metric is not supported." % metric
-        )
+        raise ValueError("Invalid metric passed! %s as metric is not supported." % metric)
 
     # add default overlap value
     if overlap is None:
@@ -97,22 +95,14 @@ def find_static_samples(
     mfunc = _METRIC_FUNCTIONS[metric]
 
     # Create windowed view of norm
-    windowed_norm = sliding_window_view(
-        signal_norm, window_length, overlap, nan_padding=False
-    )
-    is_static = np.broadcast_to(
-        mfunc(windowed_norm, axis=1) <= inactive_signal_th, windowed_norm.shape[::-1]
-    ).T
+    windowed_norm = sliding_window_view(signal_norm, window_length, overlap, nan_padding=False)
+    is_static = np.broadcast_to(mfunc(windowed_norm, axis=1) <= inactive_signal_th, windowed_norm.shape[::-1]).T
 
     # create the list of indices for sliding windows with overlap
-    windowed_indices = sliding_window_view(
-        np.arange(0, len(signal)), window_length, overlap, nan_padding=False
-    )
+    windowed_indices = sliding_window_view(np.arange(0, len(signal)), window_length, overlap, nan_padding=False)
 
     # iterate over sliding windows
-    inactive_signal_bool_array = _bool_fill(
-        windowed_indices, is_static, inactive_signal_bool_array
-    )
+    inactive_signal_bool_array = _bool_fill(windowed_indices, is_static, inactive_signal_bool_array)
 
     return inactive_signal_bool_array.astype(bool)
 
@@ -214,9 +204,7 @@ def find_first_static_window_multi_sensor(
 
     """
     if metric not in _METRIC_FUNCTIONS:
-        raise ValueError(
-            "`metric` must be one of {}".format(list(_METRIC_FUNCTIONS.keys()))
-        )
+        raise ValueError("`metric` must be one of {}".format(list(_METRIC_FUNCTIONS.keys())))
 
     if not isinstance(signals, np.ndarray):
         # all signals should have the same shape

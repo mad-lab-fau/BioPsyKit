@@ -41,7 +41,6 @@ __pycache__/
 __pycache__/*
 .cache/*
 .*.swp
-*/.ipynb_checkpoints/*
 .DS_Store
 
 # Project files
@@ -49,7 +48,6 @@ __pycache__/*
 .project
 .pydevproject
 .settings
-.idea
 .vscode
 tags
 
@@ -81,3 +79,6 @@ MANIFEST
 # Per-project virtualenvs
 .venv*/
 .conda*/
+
+# doit
+.doit.*

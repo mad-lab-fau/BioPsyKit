@@ -38,7 +38,7 @@ def ecg_plot(
     plot_ecg_signal: Optional[bool] = True,
     plot_distribution: Optional[bool] = True,
     plot_individual_beats: Optional[bool] = True,
-    **kwargs
+    **kwargs,
 ) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
     """
     ECG processing result plot.
@@ -195,9 +195,7 @@ def ecg_plot(
         )
 
     # Plot heart rate
-    hr_plot(
-        heart_rate, axs["hr"], plot_outlier=not plot_ecg_signal, outlier=x_axis[outlier]
-    )
+    hr_plot(heart_rate, axs["hr"], plot_outlier=not plot_ecg_signal, outlier=x_axis[outlier])
     axs["hr"].set_xlabel("Time")
 
     # Plot individual heart beats
@@ -376,9 +374,7 @@ def hrv_plot(
         sampling_rate = ecg_processor.sampling_rate
 
     # perform R peak correction before computing HRV measures
-    rpeaks = EcgProcessor.correct_rpeaks(
-        ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate
-    )
+    rpeaks = EcgProcessor.correct_rpeaks(ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate)
     # keep this line to prevent PyCharm linter from complaining...
     rpeaks = pd.DataFrame(rpeaks)
 
@@ -394,9 +390,7 @@ def hrv_plot(
         spec = gs.GridSpec(ncols=2, nrows=1, width_ratios=[1, 1])
         axs = {"dist": fig.add_subplot(spec[0, :-1])}
 
-    spec_within = gs.GridSpecFromSubplotSpec(
-        4, 4, subplot_spec=spec[:, -1], wspace=0.025, hspace=0.05
-    )
+    spec_within = gs.GridSpecFromSubplotSpec(4, 4, subplot_spec=spec[:, -1], wspace=0.025, hspace=0.05)
     axs["poin"] = fig.add_subplot(spec_within[1:4, 0:3])
     axs["poin_x"] = fig.add_subplot(spec_within[0, 0:3])
     axs["poin_y"] = fig.add_subplot(spec_within[1:4, 3])
@@ -404,16 +398,12 @@ def hrv_plot(
     axs["poin"].get_shared_y_axes().join(axs["poin"], axs["poin_y"])
 
     if title:
-        fig.suptitle(
-            "Heart Rate Variability (HRV) – {}".format(title), fontweight="bold"
-        )
+        fig.suptitle("Heart Rate Variability (HRV) – {}".format(title), fontweight="bold")
     else:
         fig.suptitle("Heart Rate Variability (HRV)", fontweight="bold")
 
     rr_distribution_plot(rpeaks, sampling_rate, axs["dist"])
-    hrv_poincare_plot(
-        rpeaks, sampling_rate, [axs["poin"], axs["poin_x"], axs["poin_y"]]
-    )
+    hrv_poincare_plot(rpeaks, sampling_rate, [axs["poin"], axs["poin_x"], axs["poin_y"]])
     if plot_psd:
         hrv_frequency_plot(rpeaks, sampling_rate, axs["freq"])
 
@@ -451,9 +441,7 @@ def hr_distribution_plot(
             figsize = plt.rcParams["figure.figsize"]
         fig, ax = plt.subplots(figsize=figsize)
 
-    ax = sns.histplot(
-        heart_rate, color=colors.fau_color("tech"), ax=ax, kde=True, legend=False
-    )
+    ax = sns.histplot(heart_rate, color=colors.fau_color("tech"), ax=ax, kde=True, legend=False)
 
     ax.set_title("Heart Rate Distribution")
 
@@ -510,17 +498,13 @@ def individual_beats_plot(
 
     heartbeats = nk.ecg_segment(ecg_signal["ECG_Clean"], rpeaks, sampling_rate)
     heartbeats = nk.epochs_to_df(heartbeats)
-    heartbeats_pivoted = heartbeats.pivot(
-        index="Time", columns="Label", values="Signal"
-    )
+    heartbeats_pivoted = heartbeats.pivot(index="Time", columns="Label", values="Signal")
 
     ax.set_title("Individual Heart Beats")
     ax.margins(x=0)
 
     # Aesthetics of heart beats
-    cmap = iter(
-        plt.cm.YlOrRd(np.linspace(0, 1, num=int(heartbeats["Label"].nunique())))
-    )
+    cmap = iter(plt.cm.YlOrRd(np.linspace(0, 1, num=int(heartbeats["Label"].nunique()))))
 
     for x, color in zip(heartbeats_pivoted, cmap):
         ax.plot(heartbeats_pivoted[x], color=color)
@@ -537,9 +521,7 @@ def ecg_plot_artifacts(ecg_signals: pd.DataFrame, sampling_rate: Optional[int] =
     # TODO not implemented yet
     # Plot artifacts
     _, rpeaks = nk.ecg_peaks(ecg_signals["ECG_Clean"], sampling_rate=sampling_rate)
-    _, _ = nk.signal_fixpeaks(
-        rpeaks, sampling_rate=sampling_rate, iterative=True, show=True
-    )
+    _, _ = nk.signal_fixpeaks(rpeaks, sampling_rate=sampling_rate, iterative=True, show=True)
 
 
 def rr_distribution_plot(
@@ -677,9 +659,7 @@ def hrv_poincare_plot(
         thresh=0.05,
         alpha=0.8,
     )
-    sns.scatterplot(
-        x=rri[:-1], y=rri[1:], ax=axs[0], alpha=0.5, edgecolor=colors.fau_color("fau")
-    )
+    sns.scatterplot(x=rri[:-1], y=rri[1:], ax=axs[0], alpha=0.5, edgecolor=colors.fau_color("fau"))
     sns.histplot(x=rri[:-1], bins=int(len(rri) / 10), ax=axs[1], edgecolor="none")
     sns.histplot(y=rri[1:], bins=int(len(rri) / 10), ax=axs[2], edgecolor="none")
 
@@ -832,9 +812,7 @@ def hrv_frequency_plot(
         return fig, ax
 
 
-def _get_rr_intervals(
-    rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256
-) -> np.array:
+def _get_rr_intervals(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256) -> np.array:
     rri = (np.ediff1d(rpeaks["R_Peak_Idx"], to_begin=0) / sampling_rate) * 1000
     rri = rri[1:]
     return rri

@@ -33,17 +33,13 @@ def find_cols(
     return df_filt, cols
 
 
-def fill_col_leading_zeros(
-    df: pd.DataFrame, inplace: Optional[bool] = False
-) -> Union[pd.DataFrame, None]:
+def fill_col_leading_zeros(df: pd.DataFrame, inplace: Optional[bool] = False) -> Union[pd.DataFrame, None]:
     import re
 
     if not inplace:
         df = df.copy()
 
-    df.columns = [
-        re.sub(r"(\d+)$", lambda m: m.group(1).zfill(2), c) for c in df.columns
-    ]
+    df.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(2), c) for c in df.columns]
 
     if not inplace:
         return df
@@ -63,13 +59,9 @@ def invert(
         if isinstance(data, pd.DataFrame):
             if cols is not None:
                 if isinstance(cols[0], str):
-                    data.loc[:, cols] = (
-                        score_range[1] - data.loc[:, cols] + score_range[0]
-                    )
+                    data.loc[:, cols] = score_range[1] - data.loc[:, cols] + score_range[0]
                 else:
-                    data.iloc[:, cols] = (
-                        score_range[1] - data.iloc[:, cols] + score_range[0]
-                    )
+                    data.iloc[:, cols] = score_range[1] - data.iloc[:, cols] + score_range[0]
             else:
                 data.iloc[:, :] = score_range[1] - data.iloc[:, :] + score_range[0]
         elif isinstance(data, pd.Series):
@@ -184,21 +176,15 @@ def check_score_range(data: pd.DataFrame, score_range: Sequence[int]) -> bool:
     return np.nanmin(data) >= score_range[0] and np.nanmax(data) <= score_range[1]
 
 
-def _check_score_range_exception(
-    data: pd.DataFrame, score_range: Sequence[int]
-) -> None:
+def _check_score_range_exception(data: pd.DataFrame, score_range: Sequence[int]) -> None:
     if not check_score_range(data, score_range):
         raise ValueError(
             "This implementation expects values in the range {}! "
-            "Please consider converting to the correct range using `biopsykit.utils.convert_scale`.".format(
-                score_range
-            )
+            "Please consider converting to the correct range using `biopsykit.utils.convert_scale`.".format(score_range)
         )
 
 
-def wide_to_long(
-    data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]
-) -> pd.DataFrame:
+def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
     if isinstance(levels, str):
         levels = [levels]
 
@@ -223,9 +209,7 @@ def wide_to_long(
     return data.reorder_levels(["subject"] + levels[::-1]).sort_index()
 
 
-def compute_scores(
-    data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str], pd.Index]]
-) -> pd.DataFrame:
+def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
     from inspect import getmembers, isfunction
     from biopsykit.questionnaires import questionnaires
 

@@ -83,19 +83,11 @@ class LogDataInfo:
 
     @property
     def manufacturer(self) -> str:
-        return (
-            self.phone_metadata[log_extras.manufacturer]
-            if self.phone_metadata
-            else "n/a"
-        )
+        return self.phone_metadata[log_extras.manufacturer] if self.phone_metadata else "n/a"
 
     @property
     def android_version(self) -> int:
-        return (
-            self.phone_metadata[log_extras.version_sdk_level]
-            if self.phone_metadata
-            else 0
-        )
+        return self.phone_metadata[log_extras.version_sdk_level] if self.phone_metadata else 0
 
 
 class LogData:
@@ -184,21 +176,14 @@ class LogData:
             else:
                 condition = subject_conditions["UNDEFINED"]
         elif self.error_handling == "warn":
-            warnings.warn(
-                "Action 'Subject ID Set' not found – Log Data may be invalid!"
-            )
+            warnings.warn("Action 'Subject ID Set' not found – Log Data may be invalid!")
 
         # App Metadata
         app_dict = utils.get_extras_for_log(self, log_actions.app_metadata)
         # Phone Metadata
         phone_dict = utils.get_extras_for_log(self, log_actions.phone_metadata)
-        if (
-            log_extras.model in phone_dict
-            and phone_dict[log_extras.model] in smartphone_models
-        ):
-            phone_dict[log_extras.model] = smartphone_models[
-                phone_dict[log_extras.model]
-            ]
+        if log_extras.model in phone_dict and phone_dict[log_extras.model] in smartphone_models:
+            phone_dict[log_extras.model] = smartphone_models[phone_dict[log_extras.model]]
 
         # Log Info
         log_days = np.array([ts.date() for ts in self.df.index.normalize().unique()])
@@ -220,13 +205,7 @@ class LogData:
         display(Markdown("App Version: **{}**".format(self.app_version)))
         display(Markdown("Android Version: **{}**".format(self.android_version)))
         display(Markdown("Phone: **{}**".format(self.model)))
-        display(
-            Markdown(
-                "Logging Days: **{} – {}**".format(
-                    str(self.start_date), str(self.end_date)
-                )
-            )
-        )
+        display(Markdown("Logging Days: **{} – {}**".format(str(self.start_date), str(self.end_date))))
 
     @property
     def subject_id(self) -> str:

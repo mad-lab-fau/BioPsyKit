@@ -4,9 +4,8 @@ from typing import Optional, Union, Dict, Sequence
 
 import pytz
 import pandas as pd
-import numpy as np
 
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 from biopsykit.utils.time import tz
 
 __all__ = [
@@ -52,14 +51,10 @@ def load_withings_sleep_analyzer_raw_folder(
     # ensure pathlib
     folder_path = Path(folder_path)
     raw_files = list(sorted(folder_path.glob("raw_sleep-monitor_*.csv")))
-    data_sources = [
-        re.findall(r"raw_sleep-monitor_(\S*).csv", s.name)[0] for s in raw_files
-    ]
+    data_sources = [re.findall(r"raw_sleep-monitor_(\S*).csv", s.name)[0] for s in raw_files]
 
     list_data = [
-        load_withings_sleep_analyzer_raw_file(
-            file_path, RAW_DATA_SOURCES[data_source], timezone
-        )
+        load_withings_sleep_analyzer_raw_file(file_path, RAW_DATA_SOURCES[data_source], timezone)
         for file_path, data_source in zip(raw_files, data_sources)
         if data_source in RAW_DATA_SOURCES
     ]
@@ -77,9 +72,7 @@ def load_withings_sleep_analyzer_raw_file(
 ) -> pd.DataFrame:
     if data_source not in RAW_DATA_SOURCES.values():
         raise ValueError(
-            "Unsupported data source {}! Must be one of {}.".format(
-                data_source, list(RAW_DATA_SOURCES.values())
-            )
+            "Unsupported data source {}! Must be one of {}.".format(data_source, list(RAW_DATA_SOURCES.values()))
         )
 
     data = pd.read_csv(file_path)
@@ -94,9 +87,7 @@ def load_withings_sleep_analyzer_raw_file(
     data.index.name = "time"
     # explode data and apply timestamp explosion to groups
     data_explode = data.apply(pd.Series.explode)
-    data_explode = data_explode.groupby("time", group_keys=False).apply(
-        _explode_timestamp
-    )
+    data_explode = data_explode.groupby("time", group_keys=False).apply(_explode_timestamp)
     # convert it into the right time zone
     data_explode = data_explode.tz_localize("UTC").tz_convert(timezone)
     # rename the value column
@@ -117,9 +108,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
         data[col] = pd.to_datetime(data[col])
 
     # total duration in seconds
-    data["total_duration"] = [
-        int(td.total_seconds()) for td in (data["bis"] - data["von"])
-    ]
+    data["total_duration"] = [int(td.total_seconds()) for td in (data["bis"] - data["von"])]
     data["time"] = data["von"]
 
     data.rename(
@@ -141,21 +130,13 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
         inplace=True,
     )
 
-    data["sleep_onset"] = data["time"] + pd.to_timedelta(
-        data["sleep_onset_latency"], unit="seconds"
-    )
+    data["sleep_onset"] = data["time"] + pd.to_timedelta(data["sleep_onset_latency"], unit="seconds")
     # Wake after Sleep Onset (WASO): total time awake after sleep onset
-    data["wake_after_sleep_onset"] = (
-        data["total_time_awake"] - data["sleep_onset_latency"] - data["getup_latency"]
-    )
-    data["wake_onset"] = data["bis"] - pd.to_timedelta(
-        data["getup_latency"], unit="seconds"
-    )
+    data["wake_after_sleep_onset"] = data["total_time_awake"] - data["sleep_onset_latency"] - data["getup_latency"]
+    data["wake_onset"] = data["bis"] - pd.to_timedelta(data["getup_latency"], unit="seconds")
     # compute total sleep duration
     # = total duration - (time to fall asleep + time to get up (= time spent in bed after waking up))
-    data["total_sleep_duration"] = (
-        data["total_duration"] - data["sleep_onset_latency"] - data["getup_latency"]
-    )
+    data["total_sleep_duration"] = data["total_duration"] - data["sleep_onset_latency"] - data["getup_latency"]
 
     transform_cols = [
         "total_time_light_sleep",
@@ -168,9 +149,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
         "wake_after_sleep_onset",
         "total_sleep_duration",
     ]
-    data[transform_cols] = data[transform_cols].transform(
-        lambda column: (column / 60).astype(int)
-    )
+    data[transform_cols] = data[transform_cols].transform(lambda column: (column / 60).astype(int))
 
     data.drop(columns=["von", "bis"], inplace=True)
     data.set_index("time", inplace=True)
@@ -188,9 +167,7 @@ def save_sleep_data(file_path: path_t, data: pd.DataFrame):
     data.to_csv(file_path)
 
 
-def save_sleep_endpoints(
-    file_path: path_t, df_or_dict: Union[pd.DataFrame, Dict]
-) -> None:
+def save_sleep_endpoints(file_path: path_t, df_or_dict: Union[pd.DataFrame, Dict]) -> None:
     if isinstance(df_or_dict, pd.DataFrame):
         df_or_dict.to_csv(file_path)
     else:

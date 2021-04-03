@@ -21,9 +21,7 @@ def saliva_none():
 
 def saliva_multiindex_wrong_name():
     return pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(0, 5), range(0, 5)], names=["subject", "id"]
-        ),
+        index=pd.MultiIndex.from_product([range(0, 5), range(0, 5)], names=["subject", "id"]),
         columns=["cortisol", "time"],
     )
 
@@ -34,9 +32,7 @@ def saliva_no_multiindex():
 
 def saliva_no_time():
     data = pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(1, 9), range(0, 5)], names=["subject", "sample"]
-        ),
+        index=pd.MultiIndex.from_product([range(1, 9), range(0, 5)], names=["subject", "sample"]),
         columns=["cortisol"],
     )
     data["cortisol"] = np.concatenate(
@@ -56,9 +52,7 @@ def saliva_no_time():
 
 def saliva_wrong_time_01():
     data = pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(1, 9), range(0, 5)], names=["subject", "sample"]
-        ),
+        index=pd.MultiIndex.from_product([range(1, 9), range(0, 5)], names=["subject", "sample"]),
         columns=["cortisol", "time"],
     )
     data["cortisol"] = np.concatenate(
@@ -80,9 +74,7 @@ def saliva_wrong_time_01():
 
 def saliva_wrong_time_02():
     data = pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(1, 9), range(0, 5)], names=["subject", "sample"]
-        ),
+        index=pd.MultiIndex.from_product([range(1, 9), range(0, 5)], names=["subject", "sample"]),
         columns=["cortisol", "time"],
     )
     data["cortisol"] = np.concatenate(
@@ -104,9 +96,7 @@ def saliva_wrong_time_02():
 
 def saliva_time(biomarker_type: Optional[str] = "cortisol"):
     data = pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(1, 9), range(0, 5)], names=["subject", "sample"]
-        ),
+        index=pd.MultiIndex.from_product([range(1, 9), range(0, 5)], names=["subject", "sample"]),
         columns=[biomarker_type, "time"],
     )
     data[biomarker_type] = np.concatenate(
@@ -127,9 +117,7 @@ def saliva_time(biomarker_type: Optional[str] = "cortisol"):
 
 def saliva_time_multiple_pre():
     data = pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(1, 9), range(0, 5)], names=["subject", "sample"]
-        ),
+        index=pd.MultiIndex.from_product([range(1, 9), range(0, 5)], names=["subject", "sample"]),
         columns=["cortisol", "time"],
     )
     data["cortisol"] = np.concatenate(
@@ -150,9 +138,7 @@ def saliva_time_multiple_pre():
 
 def saliva_pruessner_2003():
     data = pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(1, 3), range(0, 5)], names=["subject", "sample"]
-        ),
+        index=pd.MultiIndex.from_product([range(1, 3), range(0, 5)], names=["subject", "sample"]),
         columns=["cortisol", "time"],
     )
     data["cortisol"] = np.concatenate([[3.5, 7, 14, 7, 10], [3.5, 7, 14, 7, 10]])
@@ -162,9 +148,7 @@ def saliva_pruessner_2003():
 
 def saliva_multi_days(biomarker_type: Optional[str] = "cortisol"):
     data = pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(1, 5), range(0, 2), range(0, 5)], names=["subject", "day", "sample"]
-        ),
+        index=pd.MultiIndex.from_product([range(1, 5), range(0, 2), range(0, 5)], names=["subject", "day", "sample"]),
         columns=["cortisol", "time"],
     )
     data["cortisol"] = np.concatenate(
@@ -373,9 +357,7 @@ class TestSaliva:
     def test_max_increase_multi_days(self, remove_s0, expected):
         out = saliva.max_increase(saliva_multi_days(), remove_s0=remove_s0)
         # set correct index to the expected output
-        expected.index = pd.MultiIndex.from_product(
-            [range(1, 5), range(0, 2)], names=["subject", "day"]
-        )
+        expected.index = pd.MultiIndex.from_product([range(1, 5), range(0, 2)], names=["subject", "day"])
         assert_frame_equal(out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
@@ -417,15 +399,11 @@ class TestSaliva:
     @pytest.mark.parametrize("remove_s0, expected", params_auc)
     def test_auc(self, remove_s0, expected):
         # check with 'time' column
-        assert_frame_equal(
-            saliva.auc(saliva_time(), remove_s0=remove_s0), expected, check_dtype=False
-        )
+        assert_frame_equal(saliva.auc(saliva_time(), remove_s0=remove_s0), expected, check_dtype=False)
 
         # check with 'saliva_time' parameter
         assert_frame_equal(
-            saliva.auc(
-                saliva_no_time(), remove_s0=remove_s0, saliva_times=[-10, 0, 10, 20, 30]
-            ),
+            saliva.auc(saliva_no_time(), remove_s0=remove_s0, saliva_times=[-10, 0, 10, 20, 30]),
             expected,
             check_dtype=False,
         )
@@ -489,9 +467,7 @@ class TestSaliva:
     def test_auc_multi_days(self, remove_s0, expected):
         out = saliva.auc(saliva_multi_days(), remove_s0=remove_s0)
         # set correct index to the expected output
-        expected.index = pd.MultiIndex.from_product(
-            [range(1, 5), range(0, 2)], names=["subject", "day"]
-        )
+        expected.index = pd.MultiIndex.from_product([range(1, 5), range(0, 2)], names=["subject", "day"])
         assert_frame_equal(out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
@@ -504,9 +480,7 @@ class TestSaliva:
     )
     def test_slope_columns_biomarker_type(self, biomarker_type, expected_columns):
         data_in = saliva_time(biomarker_type)
-        data_out = saliva.slope(
-            data_in, sample_idx=(0, 1), biomarker_type=biomarker_type
-        )
+        data_out = saliva.slope(data_in, sample_idx=(0, 1), biomarker_type=biomarker_type)
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize(
@@ -521,33 +495,23 @@ class TestSaliva:
     def test_slope_columns_sample_idx(self, sample_idx, expected_columns):
         # check with sample_idx = tuple
         data_in = saliva_time(biomarker_type="cortisol")
-        data_out = saliva.slope(
-            data_in, sample_idx=sample_idx, biomarker_type="cortisol"
-        )
+        data_out = saliva.slope(data_in, sample_idx=sample_idx, biomarker_type="cortisol")
         assert list(data_out.columns) == expected_columns
 
         # check with sample_idx = list
         sample_idx = list(sample_idx)
-        data_out = saliva.slope(
-            data_in, sample_idx=sample_idx, biomarker_type="cortisol"
-        )
+        data_out = saliva.slope(data_in, sample_idx=sample_idx, biomarker_type="cortisol")
         assert list(data_out.columns) == expected_columns
 
         # check with sample_idx = numpy array
         sample_idx = np.array(sample_idx)
-        data_out = saliva.slope(
-            data_in, sample_idx=sample_idx, biomarker_type="cortisol"
-        )
+        data_out = saliva.slope(data_in, sample_idx=sample_idx, biomarker_type="cortisol")
         assert list(data_out.columns) == expected_columns
 
-    @pytest.mark.parametrize(
-        "sample_idx", [(0, 0), (1, 1), (1, 0), (10, 6), (0, 10), (0, 1, 2), (1,)]
-    )
+    @pytest.mark.parametrize("sample_idx", [(0, 0), (1, 1), (1, 0), (10, 6), (0, 10), (0, 1, 2), (1,)])
     def test_slope_invalid_idx(self, sample_idx):
         with pytest.raises(ValueError):
-            saliva.slope(
-                saliva_time(), sample_idx=sample_idx, biomarker_type="cortisol"
-            )
+            saliva.slope(saliva_time(), sample_idx=sample_idx, biomarker_type="cortisol")
 
     @pytest.mark.parametrize("sample_idx, expected", params_slope)
     def test_slope(self, sample_idx, expected):
@@ -560,9 +524,7 @@ class TestSaliva:
     def test_slope_multi_days(self, sample_idx, expected):
         out = saliva.slope(saliva_multi_days(), sample_idx=sample_idx)
         # set correct index to the expected output
-        expected.index = pd.MultiIndex.from_product(
-            [range(1, 5), range(0, 2)], names=["subject", "day"]
-        )
+        expected.index = pd.MultiIndex.from_product([range(1, 5), range(0, 2)], names=["subject", "day"])
         assert_frame_equal(out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
@@ -591,9 +553,7 @@ class TestSaliva:
             ("il6", ["il6_argmax", "il6_mean", "il6_std", "il6_skew", "il6_kurt"]),
         ],
     )
-    def test_standard_features_columns_biomarker_type(
-        self, biomarker_type, expected_columns
-    ):
+    def test_standard_features_columns_biomarker_type(self, biomarker_type, expected_columns):
         data_in = saliva_time(biomarker_type)
         data_out = saliva.standard_features(data_in, biomarker_type=biomarker_type)
         # columns must be Index, not MultiIndex
@@ -707,7 +667,5 @@ class TestSaliva:
         )
 
         # set correct index to the expected output
-        expected.index = pd.MultiIndex.from_product(
-            [range(1, 5), range(0, 2)], names=["subject", "day"]
-        )
+        expected.index = pd.MultiIndex.from_product([range(1, 5), range(0, 2)], names=["subject", "day"])
         assert_frame_equal(out, expected, check_dtype=False)

@@ -32,9 +32,7 @@ class ActivityCounts:
         return np.linalg.norm(data, axis=1)
 
     @staticmethod
-    def _aliasing_filter(
-        data: np.ndarray, sampling_rate: Union[int, float]
-    ) -> np.ndarray:
+    def _aliasing_filter(data: np.ndarray, sampling_rate: Union[int, float]) -> np.ndarray:
         sos = signal.butter(5, [0.01, 7], "bp", fs=sampling_rate, output="sos")
         return signal.sosfiltfilt(sos, data)
 
@@ -114,14 +112,10 @@ class ActivityCounts:
     def _accumulate_minute_bins(data: np.ndarray) -> np.ndarray:
         n_samples = 10 * 60
         #  Pad data at end to "fill" last bin
-        padded_data = np.pad(
-            data, (0, n_samples - len(data) % n_samples), "constant", constant_values=0
-        )
+        padded_data = np.pad(data, (0, n_samples - len(data) % n_samples), "constant", constant_values=0)
         return padded_data.reshape((len(padded_data) // n_samples, -1)).mean(axis=1)
 
-    def calculate(
-        self, data: Union[np.ndarray, pd.DataFrame]
-    ) -> Union[np.ndarray, pd.DataFrame]:
+    def calculate(self, data: Union[np.ndarray, pd.DataFrame]) -> Union[np.ndarray, pd.DataFrame]:
 
         start_idx = None
         if isinstance(data, pd.DataFrame):
@@ -133,9 +127,7 @@ class ActivityCounts:
 
         if arr.shape[1] not in (1, 3):
             raise ValueError(
-                "{} takes only 1D or 3D accelerometer data! Got {}D data.".format(
-                    self.__class__.__name__, arr.shape[1]
-                )
+                "{} takes only 1D or 3D accelerometer data! Got {}D data.".format(self.__class__.__name__, arr.shape[1])
             )
         if arr.shape[1] != 1:
             arr = self._compute_norm(arr)
@@ -155,9 +147,7 @@ class ActivityCounts:
             if start_idx is not None:
                 # index das DateTimeIndex
                 start_idx = float(start_idx.to_datetime64()) / 1e9
-                arr.index = pd.to_datetime(
-                    (arr.index * 60 + start_idx).astype(int), utc=True, unit="s"
-                ).tz_convert(tz)
+                arr.index = pd.to_datetime((arr.index * 60 + start_idx).astype(int), utc=True, unit="s").tz_convert(tz)
                 arr.index.name = "time"
 
         return arr

@@ -83,7 +83,7 @@ def hr_mean_plot(
     groups: Optional[Sequence[str]] = None,
     group_col: Optional[str] = None,
     plot_params: Optional[Dict] = None,
-    **kwargs
+    **kwargs,
 ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     """
     Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
@@ -240,9 +240,7 @@ def hr_mean_plot(
 
     # add decorators if specified: spans and Phase labels
     if bg_colors is not None:
-        for (i, name), (x_l, x_u), color, alpha in zip(
-            enumerate(phases), span_lims, bg_colors, bg_alphas
-        ):
+        for (i, name), (x_l, x_u), color, alpha in zip(enumerate(phases), span_lims, bg_colors, bg_alphas):
             ax.axvspan(x_l, x_u, color=color, alpha=alpha, zorder=0, lw=0)
             if phase_text is not None:
                 name = phase_text.format(i + 1)
@@ -325,7 +323,7 @@ def saliva_plot(
     test_times: Sequence[int],
     groups: Optional[Sequence[str]] = None,
     group_col: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     """
     TODO: add documentation
@@ -359,12 +357,8 @@ def saliva_plot(
 
     saliva_params = _saliva_params.copy()
 
-    bg_color = kwargs.get(
-        "background_color", saliva_params.get("background_color", None)
-    )
-    bg_alpha = kwargs.get(
-        "background_alpha", saliva_params.get("background_alpha", None)
-    )
+    bg_color = kwargs.get("background_color", saliva_params.get("background_color", None))
+    bg_alpha = kwargs.get("background_alpha", saliva_params.get("background_alpha", None))
     x_padding = kwargs.get("x_padding", saliva_params.get("x_padding", None))
     ylims = kwargs.get("ylims", None)
     test_text = kwargs.get("test_text", saliva_params["test_text"])
@@ -372,9 +366,7 @@ def saliva_plot(
     test_alpha = kwargs.get("test_alpha", saliva_params["test_alpha"])
     fontsize = kwargs.get("fontsize", saliva_params["fontsize"])
     xaxis_label = kwargs.get("xaxis_label", saliva_params["xaxis_label"])
-    xaxis_tick_locator = kwargs.get(
-        "xaxis_tick_locator", saliva_params["xaxis_tick_locator"]
-    )
+    xaxis_tick_locator = kwargs.get("xaxis_tick_locator", saliva_params["xaxis_tick_locator"])
 
     if isinstance(data, dict) and biomarker in data.keys():
         # multiple biomarkers were passed => get the selected biomarker and try to get the groups from the index
@@ -393,12 +385,7 @@ def saliva_plot(
                     [d.index.get_level_values("time").unique() for d in data.values()],
                     dtype=object,
                 )
-                if not all(
-                    [
-                        len(saliva_time) == len(saliva_times[0])
-                        for saliva_time in saliva_times
-                    ]
-                ):
+                if not all([len(saliva_time) == len(saliva_times[0]) for saliva_time in saliva_times]):
                     raise ValueError(
                         "Different saliva time lengths passed! Did you pass multiple biomarkers? "
                         "For plotting multiple biomarkers, call the `saliva_plot` function on the same axis "
@@ -407,13 +394,9 @@ def saliva_plot(
                 if (saliva_times == saliva_times[0]).all():
                     saliva_times = saliva_times[0]
                 else:
-                    raise ValueError(
-                        "Saliva times inconsistent for the different groups!"
-                    )
+                    raise ValueError("Saliva times inconsistent for the different groups!")
             else:
-                raise ValueError(
-                    "Not all dataframes contain a 'time' column for saliva times!"
-                )
+                raise ValueError("Not all dataframes contain a 'time' column for saliva times!")
 
     if not groups:
         # extract groups from data if they were not supplied
@@ -426,9 +409,7 @@ def saliva_plot(
                     groups = list(data[group_col].unique())
                 else:
                     raise ValueError(
-                        "`{}`, specified as `group_col` not in columns of the dataframe!".format(
-                            group_col
-                        )
+                        "`{}`, specified as `group_col` not in columns of the dataframe!".format(group_col)
                     )
             else:
                 groups = ["Data"]
@@ -529,7 +510,7 @@ def _saliva_plot_helper(
     groups: Sequence[str],
     saliva_times: Sequence[int],
     plot_params: Optional[Dict] = None,
-    **kwargs
+    **kwargs,
 ) -> plt.Axes:
     saliva_params = _saliva_params.copy()
     if plot_params:
@@ -546,9 +527,7 @@ def _saliva_plot_helper(
     yaxis_label = saliva_params["yaxis_label"][biomarker]
     x_offsets = list(np.array(saliva_params["x_offsets"]) + x_offset_basis)
 
-    for group, x_off, line_color, marker, ls in zip(
-        groups, x_offsets, line_colors, markers, line_styles
-    ):
+    for group, x_off, line_color, marker, ls in zip(groups, x_offsets, line_colors, markers, line_styles):
         if group == "Data":
             # no condition index
             df_grp = data
@@ -625,9 +604,7 @@ def saliva_plot_combine_legend(
         )
     else:
         if separate_legends:
-            for (i, a), biomarker in zip(
-                enumerate(reversed(fig.get_axes())), reversed(biomarkers)
-            ):
+            for (i, a), biomarker in zip(enumerate(reversed(fig.get_axes())), reversed(biomarkers)):
                 handles, labels = a.get_legend_handles_labels()
                 l = ax.legend(
                     handles,
@@ -642,9 +619,7 @@ def saliva_plot_combine_legend(
             handles = [ax.get_legend_handles_labels()[0] for ax in fig.get_axes()]
             handles = [h[0] for handle in handles for h in handle]
             labels = [ax.get_legend_handles_labels()[1] for ax in fig.get_axes()]
-            labels = [
-                "{}:\n{}".format(b, " - ".join(l)) for b, l in zip(biomarkers, labels)
-            ]
+            labels = ["{}:\n{}".format(b, " - ".join(l)) for b, l in zip(biomarkers, labels)]
             ax.legend(
                 list(zip(handles[::2], handles[1::2])),
                 labels,
@@ -662,7 +637,7 @@ def saliva_feature_boxplot(
     saliva_type: str,
     feature: Optional[str] = None,
     stats_kwargs: Optional[Dict] = None,
-    **kwargs
+    **kwargs,
 ):
     from biopsykit.plotting import feature_boxplot
 
@@ -673,9 +648,7 @@ def saliva_feature_boxplot(
         ylabel = [ylabel[f] for f in feature]
         if len(set(ylabel)) == 1:
             kwargs["ylabel"] = ylabel[0]
-    return feature_boxplot(
-        data=data, x=x, y=saliva_type, stats_kwargs=stats_kwargs, **kwargs
-    )
+    return feature_boxplot(data=data, x=x, y=saliva_type, stats_kwargs=stats_kwargs, **kwargs)
 
 
 def saliva_multi_feature_boxplot(
@@ -685,7 +658,7 @@ def saliva_multi_feature_boxplot(
     hue: Optional[str] = None,
     xticklabels: Optional[Dict[str, str]] = None,
     stats_kwargs: Optional[Dict] = None,
-    **kwargs
+    **kwargs,
 ):
     """
 
@@ -728,13 +701,11 @@ def saliva_multi_feature_boxplot(
         features=features,
         xticklabels=xticklabels,
         stats_kwargs=stats_kwargs,
-        **kwargs
+        **kwargs,
     )
 
 
-def _get_xticklabels(
-    data: pd.DataFrame, features: Sequence[str]
-) -> Dict[str, Sequence[str]]:
+def _get_xticklabels(data: pd.DataFrame, features: Sequence[str]) -> Dict[str, Sequence[str]]:
     import re
 
     xlabel_dict = {}
@@ -745,9 +716,7 @@ def _get_xticklabels(
         labels = []
         for c in cols:
             if "slope" in c:
-                label = _saliva_feature_params["xticklabels"]["slope"].replace(
-                    "§", re.findall(r"slope(\w+)", c)[0]
-                )
+                label = _saliva_feature_params["xticklabels"]["slope"].replace("§", re.findall(r"slope(\w+)", c)[0])
             else:
                 label = _saliva_feature_params["xticklabels"][c]
             labels.append(label)

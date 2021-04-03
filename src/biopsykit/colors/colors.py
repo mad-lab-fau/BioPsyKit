@@ -3,13 +3,15 @@ Color palettes and utilities.
 
 For most plots, BioPsyKit uses FAU's colors scheme.
 """
-from typing import Union, Sequence, Optional
+from typing import Union, Sequence, Optional, Literal, TypedDict
 
 import seaborn as sns
 
-__all__ = ["fau_color_dict"]
+__all__ = ["fau_color_dict", "fau_palette"]
 
-fau_color_dict = {
+FAU_COLORS = Literal["fau", "tech", "phil", "med", "nat", "wiso"]
+
+fau_color_dict: TypedDict[FAU_COLORS, str] = {
     "fau": "#003865",
     "tech": "#98a4ae",
     "phil": "#c99313",
@@ -25,7 +27,7 @@ fau_palette = sns.color_palette(fau_color_dict.values())
 """FAU color palette that can be used with seaborn and matplotlib."""
 
 
-def cmapfau_blue(cmap_type: Optional[str] = None) -> Sequence[str]:
+def cmap_fau_blue(cmap_type: Optional[str] = None) -> Sequence[str]:
     """
 
 
@@ -200,8 +202,18 @@ def cmap_fau_tech(cmap_type: Union[str, None]) -> Sequence[str]:
         return fau_tech
 
 
-def fau_color(key: str) -> str:
-    return fau_color_dict[key]
+def fau_color(color: str) -> str:
+    """
+    Returns the FAU color specified by `color`. Must be one of
+    Parameters
+    ----------
+    key :
+
+    Returns
+    -------
+
+    """
+    return fau_color_dict[color]
 
 
 def adjust_color(key: str, amount: Optional[float] = 1.5) -> str:

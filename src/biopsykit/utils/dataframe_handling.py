@@ -2,7 +2,7 @@ from typing import Optional, Callable, Union, Sequence
 
 import numpy as np
 import pandas as pd
-from biopsykit._types import path_t
+from biopsykit.utils._types import path_t
 
 
 def int_from_str_idx(
@@ -27,9 +27,7 @@ def int_from_str_idx(
     """
 
     if type(idx_names) is not type(regex):
-        raise ValueError(
-            "`idx_names` and `regex` must both be either strings or list of strings!"
-        )
+        raise ValueError("`idx_names` and `regex` must both be either strings or list of strings!")
 
     if isinstance(idx_names, str):
         idx_names = [idx_names]
@@ -96,9 +94,7 @@ def camel_to_snake(name: str):
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
-def replace_missing_data(
-    data: pd.DataFrame, target_col: str, source_col: str, dropna: Optional[bool] = False
-):
+def replace_missing_data(data: pd.DataFrame, target_col: str, source_col: str, dropna: Optional[bool] = False):
     """
     Replaces missing data in one column by data from another column.
 
@@ -126,14 +122,10 @@ def convert_nan(
     if inplace:
         data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=True)
     else:
-        return data.replace(
-            [-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=False
-        )
+        return data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=False)
 
 
-def multi_xs(
-    data: pd.DataFrame, keys: Union[str, Sequence[str]], level: str
-) -> pd.DataFrame:
+def multi_xs(data: pd.DataFrame, keys: Union[str, Sequence[str]], level: str) -> pd.DataFrame:
     if isinstance(keys, str):
         keys = [keys]
     levels = data.index.names
@@ -144,20 +136,14 @@ def multi_xs(
 def stack_groups_percent(
     data: pd.DataFrame, hue: str, stacked: str, order: Optional[Sequence[str]] = None
 ) -> pd.DataFrame:
-    data_grouped = pd.DataFrame(
-        data.groupby([hue] + [stacked]).size(), columns=["data"]
-    )
-    data_grouped = (
-        data_grouped.groupby(hue).apply(lambda x: 100 * (x / x.sum())).T.stack().T
-    )
+    data_grouped = pd.DataFrame(data.groupby([hue] + [stacked]).size(), columns=["data"])
+    data_grouped = data_grouped.groupby(hue).apply(lambda x: 100 * (x / x.sum())).T.stack().T
     if order:
         data_grouped = data_grouped.reindex(order)
     return data_grouped["data"]
 
 
-def apply_codebook(
-    path_or_df: Union[path_t, pd.DataFrame], data: pd.DataFrame
-) -> pd.DataFrame:
+def apply_codebook(path_or_df: Union[path_t, pd.DataFrame], data: pd.DataFrame) -> pd.DataFrame:
     from biopsykit.io import load_questionnaire_data
 
     if isinstance(path_or_df, pd.DataFrame):

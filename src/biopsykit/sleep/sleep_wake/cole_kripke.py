@@ -30,9 +30,7 @@ class ColeKripke(_SleepWakeBase):
         """
         self.scale_factor = scale_factor
 
-    def predict(
-        self, data: Union[pd.DataFrame, np.array]
-    ) -> Union[np.array, pd.DataFrame]:
+    def predict(self, data: Union[pd.DataFrame, np.array]) -> Union[np.array, pd.DataFrame]:
         """
         Performs the sleep/wake score prediction.
 
@@ -54,10 +52,7 @@ class ColeKripke(_SleepWakeBase):
 
         # ensure numpy
         sf = np.array(self.scale_factor)
-        kernel = (
-            sf
-            * np.array([4.64, 6.87, 3.75, 5.07, 16.19, 5.84, 4.024, 0.00, 0.00])[::-1]
-        )
+        kernel = sf * np.array([4.64, 6.87, 3.75, 5.07, 16.19, 5.84, 4.024, 0.00, 0.00])[::-1]
         scores = np.convolve(data, kernel, "same")
         scores[scores >= 0.5] = 1
         scores[scores < 0.5] = 0
@@ -111,11 +106,7 @@ class ColeKripke(_SleepWakeBase):
                 else:
                     sum1 = np.sum(rescored[start_ind - wake_thres : start_ind])
                     sum2 = np.sum(rescored[t : t + wake_thres])
-                    if (
-                        0 < sleep_bin <= sleep_thres
-                        and sum1 == wake_thres
-                        and sum2 == wake_thres
-                    ):
+                    if 0 < sleep_bin <= sleep_thres and sum1 == wake_thres and sum2 == wake_thres:
                         rescored[start_ind:t] = 1.0
                 sleep_bin = 0
 

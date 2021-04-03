@@ -18,11 +18,7 @@ __all__ = [
 
 
 def list_example_data() -> Sequence[str]:
-    file_list = [
-        filename.name
-        for filename in _EXAMPLE_DATA_PATH.glob("*")
-        if filename.suffix in [".csv", ".xlsx"]
-    ]
+    file_list = [filename.name for filename in _EXAMPLE_DATA_PATH.glob("*") if filename.suffix in [".csv", ".xlsx"]]
     return file_list
 
 
@@ -104,17 +100,13 @@ def get_sleep_analyzer_raw_example(
 ) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     from biopsykit.io.sleep import load_withings_sleep_analyzer_raw_folder
 
-    return load_withings_sleep_analyzer_raw_folder(
-        _EXAMPLE_DATA_PATH.joinpath("sleep"), split_nights=split_nights
-    )
+    return load_withings_sleep_analyzer_raw_folder(_EXAMPLE_DATA_PATH.joinpath("sleep"), split_nights=split_nights)
 
 
 def get_sleep_analyzer_summary_example() -> pd.DataFrame:
     from biopsykit.io.sleep import load_withings_sleep_analyzer_summary
 
-    return load_withings_sleep_analyzer_summary(
-        _EXAMPLE_DATA_PATH.joinpath("sleep").joinpath("sleep.csv")
-    )
+    return load_withings_sleep_analyzer_summary(_EXAMPLE_DATA_PATH.joinpath("sleep").joinpath("sleep.csv"))
 
 
 def get_sleep_imu_example() -> Tuple[pd.DataFrame, int]:
@@ -122,9 +114,7 @@ def get_sleep_imu_example() -> Tuple[pd.DataFrame, int]:
 
     try:
         return load_dataset_nilspod(
-            file_path=_EXAMPLE_DATA_PATH.joinpath("sleep_imu").joinpath(
-                "sleep_imu_sample_01.bin"
-            )
+            file_path=_EXAMPLE_DATA_PATH.joinpath("sleep_imu").joinpath("sleep_imu_sample_01.bin")
         )
     except:
         raise ValueError(
@@ -143,9 +133,7 @@ def get_eeg_example() -> Tuple[pd.DataFrame, int]:
 def get_log_data_example() -> pd.DataFrame:
     from biopsykit.io.carwatch_logs import load_log_one_subject
 
-    return load_log_one_subject(
-        _EXAMPLE_DATA_PATH.joinpath("log_data").joinpath("AB12C")
-    )
+    return load_log_one_subject(_EXAMPLE_DATA_PATH.joinpath("log_data").joinpath("AB12C"))
 
 
 def get_time_log_example() -> pd.DataFrame:
@@ -155,6 +143,4 @@ def get_time_log_example() -> pd.DataFrame:
 
 
 def get_questionnaire_example() -> pd.DataFrame:
-    return pd.read_csv(
-        _EXAMPLE_DATA_PATH.joinpath("questionnaire_sample.csv"), index_col=["subject"]
-    )
+    return pd.read_csv(_EXAMPLE_DATA_PATH.joinpath("questionnaire_sample.csv"), index_col=["subject"])

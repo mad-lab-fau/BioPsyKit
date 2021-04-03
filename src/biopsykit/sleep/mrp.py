@@ -22,9 +22,7 @@ class MajorRestPeriod:
         df_acc = df_acc.rolling(int(5 * self.sampling_rate), min_periods=0).median()
 
         # get angle
-        angle = np.arctan(
-            df_acc["acc_z"] / ((df_acc["acc_x"] ** 2 + df_acc["acc_y"] ** 2) ** 0.5)
-        ) * (180.0 / np.pi)
+        angle = np.arctan(df_acc["acc_z"] / ((df_acc["acc_x"] ** 2 + df_acc["acc_y"] ** 2) ** 0.5)) * (180.0 / np.pi)
 
         window_s = 5  # 5 seconds
         overlap = 0
@@ -44,18 +42,14 @@ class MajorRestPeriod:
 
         if isinstance(df_acc.index, pd.DatetimeIndex):
             index_resample = pd.DatetimeIndex(index_resample)
-            index_resample = index_resample.tz_localize("UTC").tz_convert(
-                df_acc.index.tzinfo
-            )
+            index_resample = index_resample.tz_localize("UTC").tz_convert(df_acc.index.tzinfo)
 
         df_angle = pd.DataFrame(
             np.abs(np.diff(np.nanmean(angle_sliding, axis=1))),
             columns=["angle"],
             index=index_resample[1:],
         )
-        df_angle = df_angle.rolling(
-            60
-        ).median()  # rolling median, 60 * 5 seconds per sample = 5 minutes
+        df_angle = df_angle.rolling(60).median()  # rolling median, 60 * 5 seconds per sample = 5 minutes
 
         minimum_rest_threshold = 0.0
         maximum_rest_threshold = 1000.0
@@ -92,9 +86,7 @@ class MajorRestPeriod:
         df_angle["block"] = (df_angle["angle"].diff().ne(0)).cumsum()
         groups = list(df_angle.groupby(by="block"))
         for idx, group in groups[1:-1]:
-            if group["angle"].sum() == len(group) and len(group) < (
-                12 * allowed_rest_break
-            ):
+            if group["angle"].sum() == len(group) and len(group) < (12 * allowed_rest_break):
                 # 5 second intervals => 12x for 1min
                 df_angle.loc[group.index[0] : group.index[-1], "angle"] = 0
 
