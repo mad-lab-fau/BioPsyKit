@@ -31,8 +31,8 @@ def sanitize_input_1d(data: Union[pd.DataFrame, pd.Series, np.ndarray]) -> np.nd
 
 
 def sanitize_input_nd(
-        data: Union[pd.DataFrame, pd.Series, np.ndarray],
-        ncols: Optional[Union[int, Tuple[int, ...]]] = None
+    data: Union[pd.DataFrame, pd.Series, np.ndarray],
+    ncols: Optional[Union[int, Tuple[int, ...]]] = None,
 ) -> np.ndarray:
     """
     Converts nD array-like data (numpy array, pandas dataframe/series) to a numpy array.
@@ -61,9 +61,15 @@ def sanitize_input_nd(
         if 1 in ncols:
             return data
         else:
-            raise ValueError("Invalid number of columns! Expected one of {}, got 1.".format(ncols))
+            raise ValueError(
+                "Invalid number of columns! Expected one of {}, got 1.".format(ncols)
+            )
     elif data.shape[1] not in ncols:
-        raise ValueError("Invalid number of columns! Expected one of {}, got {}.".format(ncols, data.shape[1]))
+        raise ValueError(
+            "Invalid number of columns! Expected one of {}, got {}.".format(
+                ncols, data.shape[1]
+            )
+        )
     return data
 
 
@@ -92,6 +98,7 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     """
 
     from scipy import interpolate
+
     if isinstance(data, pd.DataFrame):
         column_name = data.columns
     elif isinstance(data, pd.Series):
@@ -110,8 +117,9 @@ def interpolate_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     return pd.DataFrame(interpol_f(x_new), index=x_new, columns=column_name)
 
 
-def interpolate_dict_sec(data_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]]) -> Dict[
-    str, Dict[str, pd.DataFrame]]:
+def interpolate_dict_sec(
+    data_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]]
+) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     Interpolates all data in the dictionary to 1Hz data (see `interpolate_sec` for further information).
 
@@ -137,25 +145,33 @@ def interpolate_dict_sec(data_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dic
     return result_dict
 
 
-def interpolate_and_cut(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+def interpolate_and_cut(
+    data_dict: Dict[str, Dict[str, pd.DataFrame]]
+) -> Dict[str, Dict[str, pd.DataFrame]]:
     data_dict = interpolate_dict_sec(data_dict)
 
-    durations = np.array([[len(df) for phase, df in data.items()] for data in data_dict.values()])
+    durations = np.array(
+        [[len(df) for phase, df in data.items()] for data in data_dict.values()]
+    )
     value_types = np.array([isinstance(value, dict) for value in data_dict.values()])
 
     if value_types.all():
         # all values are dictionaries
-        phase_names = np.array([np.array(list(val.keys())) for key, val in data_dict.items()])
+        phase_names = np.array(
+            [np.array(list(val.keys())) for key, val in data_dict.items()]
+        )
         if (phase_names[0] == phase_names).all():
             phase_names = phase_names[0]
         else:
             raise ValueError("Phases are not the same for all subjects!")
         # minimal duration of each Phase
-        min_dur = {phase: dur for phase, dur in zip(phase_names, np.min(durations, axis=0))}
+        min_dur = {
+            phase: dur for phase, dur in zip(phase_names, np.min(durations, axis=0))
+        }
         for key, value in data_dict.items():
             dict_cut = {}
             for phase in phase_names:
-                dict_cut[phase] = value[phase][0:min_dur[phase]]
+                dict_cut[phase] = value[phase][0 : min_dur[phase]]
             data_dict[key] = dict_cut
     else:
         min_dur = np.min(durations)
@@ -164,9 +180,12 @@ def interpolate_and_cut(data_dict: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[s
     return data_dict
 
 
-def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
-                           indices: Union[pd.DataFrame, pd.Series, np.ndarray], radius: Union[int, Tuple[int, int]],
-                           extrema_type: Optional[str] = "min") -> np.ndarray:
+def find_extrema_in_radius(
+    data: Union[pd.DataFrame, pd.Series, np.ndarray],
+    indices: Union[pd.DataFrame, pd.Series, np.ndarray],
+    radius: Union[int, Tuple[int, int]],
+    extrema_type: Optional[str] = "min",
+) -> np.ndarray:
     """
     Finds extrema values (min or max) within a given radius.
 
@@ -206,7 +225,11 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
     extrema_funcs = {"min": np.nanargmin, "max": np.nanargmax}
 
     if extrema_type not in extrema_funcs:
-        raise ValueError("`extrema_type` must be one of {}, not {}".format(list(extrema_funcs.keys()), extrema_type))
+        raise ValueError(
+            "`extrema_type` must be one of {}, not {}".format(
+                list(extrema_funcs.keys()), extrema_type
+            )
+        )
     extrema_func = extrema_funcs[extrema_type]
 
     # ensure numpy
@@ -241,13 +264,24 @@ def find_extrema_in_radius(data: Union[pd.DataFrame, pd.Series, np.ndarray],
     windows = np.zeros(shape=(len(indices), lower_limit + upper_limit + 1))
     for i, index in enumerate(indices):
         # get windows around index
-        windows[i] = data[index - lower_limit + start_padding:index + upper_limit + start_padding + 1]
+        windows[i] = data[
+            index
+            - lower_limit
+            + start_padding : index
+            + upper_limit
+            + start_padding
+            + 1
+        ]
 
     return extrema_func(windows, axis=1) + indices - lower_limit
 
 
-def remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x_old: Optional[np.ndarray] = None,
-                                   desired_length: Optional[int] = None) -> np.ndarray:
+def remove_outlier_and_interpolate(
+    data: np.ndarray,
+    outlier_mask: np.ndarray,
+    x_old: Optional[np.ndarray] = None,
+    desired_length: Optional[int] = None,
+) -> np.ndarray:
     """
     Sets all detected outlier to nan, imputes them by linear interpolation their neighbors and interpolates
     the resulting values to a desired length.
@@ -288,19 +322,19 @@ def remove_outlier_and_interpolate(data: np.ndarray, outlier_mask: np.ndarray, x
     # remove outlier
     data[outlier_mask] = np.nan
     # fill outlier by linear interpolation of neighbors
-    data = pd.Series(data).interpolate(limit_direction='both').values
+    data = pd.Series(data).interpolate(limit_direction="both").values
     # interpolate signal
     x_new = np.linspace(x_old[0], x_old[-1], desired_length)
-    return nk.signal_interpolate(x_old, data, x_new, method='linear')
+    return nk.signal_interpolate(x_old, data, x_new, method="linear")
 
 
 def sliding_window(
-        data: Union[np.array, pd.Series, pd.DataFrame],
-        window_samples: Optional[int] = None,
-        window_sec: Optional[int] = None,
-        sampling_rate: Optional[Union[int, float]] = 0,
-        overlap_samples: Optional[int] = None,
-        overlap_percent: Optional[float] = None
+    data: Union[np.array, pd.Series, pd.DataFrame],
+    window_samples: Optional[int] = None,
+    window_sec: Optional[int] = None,
+    sampling_rate: Optional[Union[int, float]] = 0,
+    overlap_samples: Optional[int] = None,
+    overlap_percent: Optional[float] = None,
 ):
     # check input
     data = sanitize_input_nd(data, ncols=(1, 3))
@@ -310,26 +344,32 @@ def sliding_window(
         window_sec=window_sec,
         sampling_rate=sampling_rate,
         overlap_samples=overlap_samples,
-        overlap_percent=overlap_percent
+        overlap_percent=overlap_percent,
     )
 
-    return sliding_window_view(data, window_length=window, overlap=overlap, nan_padding=True)
+    return sliding_window_view(
+        data, window_length=window, overlap=overlap, nan_padding=True
+    )
 
 
 def sanitize_sliding_window_input(
-        window_samples: Optional[int] = None,
-        window_sec: Optional[int] = None,
-        sampling_rate: Optional[Union[int, float]] = 0,
-        overlap_samples: Optional[int] = None,
-        overlap_percent: Optional[float] = None
+    window_samples: Optional[int] = None,
+    window_sec: Optional[int] = None,
+    sampling_rate: Optional[Union[int, float]] = 0,
+    overlap_samples: Optional[int] = None,
+    overlap_percent: Optional[float] = None,
 ) -> Tuple[int, int]:
     if all([x is None for x in (window_samples, window_sec)]):
-        raise ValueError("Either `window_samples` or `window_sec` in combination with "
-                         "`sampling_rate` must be supplied as parameter!")
+        raise ValueError(
+            "Either `window_samples` or `window_sec` in combination with "
+            "`sampling_rate` must be supplied as parameter!"
+        )
 
     if window_samples is None:
         if sampling_rate == 0:
-            raise ValueError("Sampling rate must be specified when `window_sec` is used!")
+            raise ValueError(
+                "Sampling rate must be specified when `window_sec` is used!"
+            )
         window = int(sampling_rate * window_sec)
     else:
         window = int(window_samples)
@@ -344,23 +384,34 @@ def sanitize_sliding_window_input(
     return window, overlap
 
 
-def downsample(data: np.ndarray, sampling_rate: Union[int, float],
-               final_sampling_rate: Union[int, float]) -> np.ndarray:
+def downsample(
+    data: np.ndarray,
+    sampling_rate: Union[int, float],
+    final_sampling_rate: Union[int, float],
+) -> np.ndarray:
     if (sampling_rate / final_sampling_rate) % 1 == 0:
         return signal.decimate(data, int(sampling_rate / final_sampling_rate), axis=0)
     else:
         # aliasing filter
-        b, a = signal.cheby1(N=8, rp=0.05, Wn=0.8 / (sampling_rate / final_sampling_rate))
+        b, a = signal.cheby1(
+            N=8, rp=0.05, Wn=0.8 / (sampling_rate / final_sampling_rate)
+        )
         data_lp = signal.filtfilt(a=a, b=b, x=data)
         # interpolation
         x_old = np.linspace(0, len(data_lp), num=len(data_lp), endpoint=False)
-        x_new = np.linspace(0, len(data_lp), num=int(len(data_lp) / (sampling_rate / final_sampling_rate)),
-                            endpoint=False)
+        x_new = np.linspace(
+            0,
+            len(data_lp),
+            num=int(len(data_lp) / (sampling_rate / final_sampling_rate)),
+            endpoint=False,
+        )
         interpol = interpolate.interp1d(x=x_old, y=data_lp)
         return interpol(x_new)
 
 
-def sliding_window_view(arr: np.ndarray, window_length: int, overlap: int, nan_padding: bool = False) -> np.ndarray:
+def sliding_window_view(
+    arr: np.ndarray, window_length: int, overlap: int, nan_padding: bool = False
+) -> np.ndarray:
     """Create a sliding window view of an input array with given window length and overlap.
 
     .. warning::
@@ -409,7 +460,9 @@ def sliding_window_view(arr: np.ndarray, window_length: int, overlap: int, nan_p
         raise ValueError("Invalid Input, window_length must be larger than 1!")
 
     # calculate length of necessary np.nan-padding to make sure windows and overlaps exactly fits data length
-    n_windows = np.ceil((len(arr) - window_length) / (window_length - overlap)).astype(int)
+    n_windows = np.ceil((len(arr) - window_length) / (window_length - overlap)).astype(
+        int
+    )
     pad_length = window_length + n_windows * (window_length - overlap) - len(arr)
 
     # had to handle 1D arrays separately
@@ -422,7 +475,9 @@ def sliding_window_view(arr: np.ndarray, window_length: int, overlap: int, nan_p
     else:
         if nan_padding:
             # np.pad always returns a copy of the input array even if pad_length is 0!
-            arr = np.pad(arr.astype(float), [(0, pad_length), (0, 0)], constant_values=np.nan)
+            arr = np.pad(
+                arr.astype(float), [(0, pad_length), (0, 0)], constant_values=np.nan
+            )
 
         shape = (window_length, arr.shape[-1])
         n = np.array(arr.shape)
@@ -431,14 +486,20 @@ def sliding_window_view(arr: np.ndarray, window_length: int, overlap: int, nan_p
 
     # apply stride_tricks magic
     new_strides = np.concatenate((arr.strides, arr.strides), axis=0)
-    view = np.lib.stride_tricks.as_strided(arr, new_shape, new_strides)[0:: (window_length - overlap)]
+    view = np.lib.stride_tricks.as_strided(arr, new_shape, new_strides)[
+        0 :: (window_length - overlap)
+    ]
 
-    view = np.squeeze(view)  # get rid of single-dimensional entries from the shape of an array.
+    view = np.squeeze(
+        view
+    )  # get rid of single-dimensional entries from the shape of an array.
 
     return view
 
 
-def _bool_fill(indices: np.ndarray, bool_values: np.ndarray, array: np.ndarray) -> np.ndarray:
+def _bool_fill(
+    indices: np.ndarray, bool_values: np.ndarray, array: np.ndarray
+) -> np.ndarray:
     """Fill a preallocated array with bool_values.
 
     This method iterates over the indices and adds the values to the array at the given indices using a logical or.

@@ -37,8 +37,9 @@ def load_hr_subject_dict(file_path: path_t) -> Dict[str, pd.DataFrame]:
     return dict_hr
 
 
-def load_combine_hr_all_subjects(base_path: path_t, subject_folder_pattern: str,
-                                 filename_pattern: str) -> Dict[str, Dict[str, pd.DataFrame]]:
+def load_combine_hr_all_subjects(
+    base_path: path_t, subject_folder_pattern: str, filename_pattern: str
+) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     Loads HR processing results (as exported by `write_hr_subject_dict`) from all subjects and combines them into one
     dictionary ('HR subject dict').
@@ -91,7 +92,9 @@ def load_combine_hr_all_subjects(base_path: path_t, subject_folder_pattern: str,
     return dict_hr_subjects
 
 
-def write_hr_subject_dict(ep_or_dict: Union['EcgProcessor', Dict[str, pd.DataFrame]], file_path: path_t) -> None:
+def write_hr_subject_dict(
+    ep_or_dict: Union["EcgProcessor", Dict[str, pd.DataFrame]], file_path: path_t
+) -> None:
     """
     Writes heart rate dictionary of one subject to an Excel file.
     Each of the phases in the dictionary will be a separate sheet in the file.

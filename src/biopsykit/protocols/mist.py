@@ -20,8 +20,13 @@ class MIST(base.BaseProtocol):
     Class representing the Montreal Imaging Stress Task (MIST).
     """
 
-    def __init__(self, name: Optional[str] = None, phases: Optional[Sequence[str]] = None,
-                 subphases: Optional[Sequence[str]] = None, subphase_durations: Optional[Sequence[int]] = None):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        phases: Optional[Sequence[str]] = None,
+        subphases: Optional[Sequence[str]] = None,
+        subphase_durations: Optional[Sequence[int]] = None,
+    ):
         if name is None:
             name = "MIST"
         super().__init__(name)
@@ -35,7 +40,7 @@ class MIST(base.BaseProtocol):
         Names of MIST phases
         """
 
-        self.subphases: Sequence[str] = ['BL', 'AT', 'FB']
+        self.subphases: Sequence[str] = ["BL", "AT", "FB"]
         """
         MIST Subphases
         
@@ -50,40 +55,40 @@ class MIST(base.BaseProtocol):
         """
 
         self.hr_ensemble_plot_params = {
-            'colormap': colors.cmap_fau_blue('3_ens'),
-            'line_styles': ['-', '--', ':'],
-            'ensemble_alpha': 0.4,
-            'background_color': ['#e0e0e0', '#9e9e9e', '#757575'],
-            'background_alpha': [0.5, 0.5, 0.5],
-            'fontsize': 14,
-            'xaxis_label': r"Time [s]",
-            'xaxis_minor_ticks': mticks.MultipleLocator(60),
-            'yaxis_label': r"$\Delta$HR [%]",
-            'legend_loc': 'lower right',
-            'legend_bbox_to_anchor': (0.99, 0.01),
-            'phase_text': "MIST Phase {}",
-            'end_phase_text': "End Phase {}",
-            'end_phase_line_color': "#e0e0e0",
-            'end_phase_line_style': 'dashed',
-            'end_phase_line_width': 2.0
+            "colormap": colors.cmap_fau_blue("3_ens"),
+            "line_styles": ["-", "--", ":"],
+            "ensemble_alpha": 0.4,
+            "background_color": ["#e0e0e0", "#9e9e9e", "#757575"],
+            "background_alpha": [0.5, 0.5, 0.5],
+            "fontsize": 14,
+            "xaxis_label": r"Time [s]",
+            "xaxis_minor_ticks": mticks.MultipleLocator(60),
+            "yaxis_label": r"$\Delta$HR [%]",
+            "legend_loc": "lower right",
+            "legend_bbox_to_anchor": (0.99, 0.01),
+            "phase_text": "MIST Phase {}",
+            "end_phase_text": "End Phase {}",
+            "end_phase_line_color": "#e0e0e0",
+            "end_phase_line_style": "dashed",
+            "end_phase_line_width": 2.0,
         }
 
         self.hr_mean_plot_params = {
-            'colormap': colors.cmap_fau_blue('2_lp'),
-            'line_styles': ['-', '--'],
-            'markers': ['o', 'P'],
-            'background_color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
-            'background_alpha': [0.5, 0.5, 0.5],
-            'x_offsets': [0, 0.05],
-            'fontsize': 14,
-            'xaxis_label': "MIST Subphases",
-            'yaxis_label': r"$\Delta$HR [%]",
-            'phase_text': "MIST Phase {}"
+            "colormap": colors.cmap_fau_blue("2_lp"),
+            "line_styles": ["-", "--"],
+            "markers": ["o", "P"],
+            "background_color": ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
+            "background_alpha": [0.5, 0.5, 0.5],
+            "x_offsets": [0, 0.05],
+            "fontsize": 14,
+            "xaxis_label": "MIST Subphases",
+            "yaxis_label": r"$\Delta$HR [%]",
+            "phase_text": "MIST Phase {}",
         }
 
         self.saliva_params = {
-            'test_text': "MIST",
-            'xaxis_label': "Time relative to MIST start [min]"
+            "test_text": "MIST",
+            "xaxis_label": "Time relative to MIST start [min]",
         }
 
         self._update_mist_params(phases, subphases, subphase_durations)
@@ -93,7 +98,9 @@ class MIST(base.BaseProtocol):
         Phases: {}
         Subphases: {}
         Subphase Durations: {}
-        """.format(self.name, self.phases, self.subphases, self.subphase_durations)
+        """.format(
+            self.name, self.phases, self.subphases, self.subphase_durations
+        )
 
     @property
     def mist_times(self):
@@ -103,7 +110,12 @@ class MIST(base.BaseProtocol):
     def mist_times(self, mist_times):
         self.test_times = mist_times
 
-    def _update_mist_params(self, phases: Sequence[str], subphases: Sequence[str], subphase_durations: Sequence[int]):
+    def _update_mist_params(
+        self,
+        phases: Sequence[str],
+        subphases: Sequence[str],
+        subphase_durations: Sequence[int],
+    ):
         if phases:
             self.phases = phases
         if subphases:
@@ -112,8 +124,7 @@ class MIST(base.BaseProtocol):
             self.subphase_durations = subphase_durations
 
     def interpolate_and_cut_feedback_interval(
-            self,
-            dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]
+        self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]]
     ) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Interpolates heart rate input to a frequency of 1 Hz and then cuts heart rate data of
@@ -136,16 +147,14 @@ class MIST(base.BaseProtocol):
         dict_hr_subject = dict_hr_subject.copy()
         # skip Part1 and Part2, extract only MIST Phases
         for subject_id, dict_subject in dict_hr_subject.items():
-            for phase in ['Part1', 'Part2']:
+            for phase in ["Part1", "Part2"]:
                 if phase in dict_subject:
                     dict_subject.pop(phase)
 
         return interpolate_and_cut(dict_hr_subject)
 
     def concat_phase_dict(
-            self,
-            dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
-            **kwargs
+        self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]], **kwargs
     ) -> Dict[str, pd.DataFrame]:
         """
         Rearranges the 'HR subject dict' (see `util s.load_hr_excel_all_subjects`) into 'MIST Phase dict'.
@@ -163,17 +172,20 @@ class MIST(base.BaseProtocol):
             'MIST dict', i.e. a dict with heart rate data of all subjects per MIST phase
 
         """
-        if 'phases' in kwargs:
-            return super().concat_phase_dict(dict_hr_subject, kwargs['phases'])
+        if "phases" in kwargs:
+            return super().concat_phase_dict(dict_hr_subject, kwargs["phases"])
         else:
             return super().concat_phase_dict(dict_hr_subject, self.phases)
 
     def split_subphases(
-            self,
-            phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-            is_group_dict: Optional[bool] = False,
-            **kwargs
-    ) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
+        self,
+        phase_dict: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
+        is_group_dict: Optional[bool] = False,
+        **kwargs
+    ) -> Union[
+        Dict[str, Dict[str, pd.DataFrame]],
+        Dict[str, Dict[str, Dict[str, pd.DataFrame]]],
+    ]:
         """
         Splits a `MIST Phase dict` (or a dict of such, in case of multiple groups,
         see ``bp.protocols.utils.concat_dict``)
@@ -194,18 +206,27 @@ class MIST(base.BaseProtocol):
             nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
 
         """
-        if 'subphase_times' in kwargs and 'subphases' in kwargs:
-            subphase_times = kwargs['subphase_times']
-            subphase_names = kwargs['subphases']
+        if "subphase_times" in kwargs and "subphases" in kwargs:
+            subphase_times = kwargs["subphase_times"]
+            subphase_names = kwargs["subphases"]
         else:
-            subphase_times = self.get_mist_times(phase_dict=phase_dict, is_group_dict=is_group_dict)
+            subphase_times = self.get_mist_times(
+                phase_dict=phase_dict, is_group_dict=is_group_dict
+            )
             subphase_names = self.subphases
-        return super().split_subphases(data=phase_dict, subphase_names=subphase_names, subphase_times=subphase_times,
-                                       is_group_dict=is_group_dict)
+        return super().split_subphases(
+            data=phase_dict,
+            subphase_names=subphase_names,
+            subphase_times=subphase_times,
+            is_group_dict=is_group_dict,
+        )
 
     @classmethod
-    def split_groups(cls, phase_dict: Dict[str, pd.DataFrame],
-                     condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+    def split_groups(
+        cls,
+        phase_dict: Dict[str, pd.DataFrame],
+        condition_dict: Dict[str, Sequence[str]],
+    ) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Splits 'MIST Phase dict' into group dict, i.e. one 'MIST Phase dict' per group.
 
@@ -227,10 +248,12 @@ class MIST(base.BaseProtocol):
         return super().split_groups(phase_dict, condition_dict)
 
     def get_mist_times(
-            self,
-            mist_dur: Optional[Sequence[int]] = None,
-            phase_dict: Optional[Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]]] = None,
-            is_group_dict: Optional[bool] = False
+        self,
+        mist_dur: Optional[Sequence[int]] = None,
+        phase_dict: Optional[
+            Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]]
+        ] = None,
+        is_group_dict: Optional[bool] = False,
     ) -> Sequence[Tuple[int, int]]:
         """
         Computes the start and end times of each MIST subphase. It is assumed that all MIST subphases,
@@ -264,7 +287,9 @@ class MIST(base.BaseProtocol):
         """
 
         if mist_dur is None and phase_dict is None:
-            raise ValueError("Either `mist_dur` or `phase_dict` must be supplied as parameter!")
+            raise ValueError(
+                "Either `mist_dur` or `phase_dict` must be supplied as parameter!"
+            )
 
         if mist_dur:
             # ensure numpy
@@ -272,10 +297,14 @@ class MIST(base.BaseProtocol):
         else:
             if is_group_dict:
                 # Grouped MIST Phase dict
-                mist_dur = np.array([[len(v) for v in d.values()] for d in phase_dict.values()])
+                mist_dur = np.array(
+                    [[len(v) for v in d.values()] for d in phase_dict.values()]
+                )
                 if not (mist_dur == mist_dur[0]).all():
                     # ensure that durations of all groups are equal
-                    raise ValueError("All groups are expected to have the same durations for the single phases!")
+                    raise ValueError(
+                        "All groups are expected to have the same durations for the single phases!"
+                    )
                 mist_dur = mist_dur[0]
             else:
                 # MIST Phase dict
@@ -292,16 +321,20 @@ class MIST(base.BaseProtocol):
         # cumulative times
         times_cum = np.cumsum(np.array(subph_dur))
         # compute start/end times per subphase
-        return [(start, end) for start, end in zip(np.append([0], times_cum[:-1]), times_cum)]
+        return [
+            (start, end)
+            for start, end in zip(np.append([0], times_cum[:-1]), times_cum)
+        ]
 
     def param_subphases(
-            self,
-            ecg_processor: Optional[ecg.EcgProcessor] = None,
-            dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
-            dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
-            param_types: Optional[Union[str, Sequence[str]]] = 'all',
-            sampling_rate: Optional[int] = 256, include_total: Optional[bool] = True,
-            title: Optional[str] = None
+        self,
+        ecg_processor: Optional[ecg.EcgProcessor] = None,
+        dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
+        dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
+        param_types: Optional[Union[str, Sequence[str]]] = "all",
+        sampling_rate: Optional[int] = 256,
+        include_total: Optional[bool] = True,
+        title: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Computes specified parameters (HRV / RSA / ...) over all MIST phases and subphases.
@@ -334,15 +367,25 @@ class MIST(base.BaseProtocol):
             dataframe with computed parameters over the single MIST subphases
         """
 
-        return param_subphases(ecg_processor=ecg_processor, dict_ecg=dict_ecg, dict_rpeaks=dict_rpeaks,
-                               subphases=self.subphases, subphase_durations=self.subphase_durations,
-                               include_total=include_total, param_types=param_types,
-                               sampling_rate=sampling_rate, title=title)
+        return param_subphases(
+            ecg_processor=ecg_processor,
+            dict_ecg=dict_ecg,
+            dict_rpeaks=dict_rpeaks,
+            subphases=self.subphases,
+            subphase_durations=self.subphase_durations,
+            include_total=include_total,
+            param_types=param_types,
+            sampling_rate=sampling_rate,
+            title=title,
+        )
 
     def hr_mean_se_subphases(
-            self,
-            data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
-            is_group_dict: Optional[bool] = False
+        self,
+        data: Union[
+            Dict[str, Dict[str, pd.DataFrame]],
+            Dict[str, Dict[str, Dict[str, pd.DataFrame]]],
+        ],
+        is_group_dict: Optional[bool] = False,
     ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
         Computes the heart rate mean and standard error per MIST subphase over all subjects.
@@ -362,15 +405,17 @@ class MIST(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
+        return super()._mean_se_subphases(
+            data, subphases=self.subphases, is_group_dict=is_group_dict
+        )
 
     def hr_ensemble_plot(
-            self,
-            data: Dict[str, pd.DataFrame],
-            plot_params: Optional[Dict] = None,
-            ylims: Optional[Sequence[float]] = None,
-            ax: Optional[plt.Axes] = None,
-            **kwargs
+        self,
+        data: Dict[str, pd.DataFrame],
+        plot_params: Optional[Dict] = None,
+        ylims: Optional[Sequence[float]] = None,
+        ax: Optional[plt.Axes] = None,
+        **kwargs
     ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         """
         Plots the course of heart rate during each MIST phase continuously as ensemble plot (mean ± standard error).
@@ -400,32 +445,32 @@ class MIST(base.BaseProtocol):
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
-            if 'figsize' in kwargs:
-                figsize = kwargs['figsize']
+            if "figsize" in kwargs:
+                figsize = kwargs["figsize"]
             else:
-                figsize = plt.rcParams['figure.figsize']
+                figsize = plt.rcParams["figure.figsize"]
             fig, ax = plt.subplots(figsize=figsize)
 
         if plot_params:
             self.hr_ensemble_plot_params.update(plot_params)
 
         # sns.despine()
-        sns.set_palette(self.hr_ensemble_plot_params['colormap'])
-        line_styles = self.hr_ensemble_plot_params['line_styles']
-        fontsize = self.hr_ensemble_plot_params['fontsize']
-        xaxis_label = self.hr_ensemble_plot_params['xaxis_label']
-        yaxis_label = self.hr_ensemble_plot_params['yaxis_label']
-        xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis_minor_ticks']
-        ensemble_alpha = self.hr_ensemble_plot_params['ensemble_alpha']
-        bg_color = self.hr_ensemble_plot_params['background_color']
-        bg_alpha = self.hr_ensemble_plot_params['background_alpha']
-        phase_text = self.hr_ensemble_plot_params['phase_text']
-        end_phase_text = self.hr_ensemble_plot_params['end_phase_text']
-        end_phase_color = self.hr_ensemble_plot_params['end_phase_line_color']
-        end_phase_line_style = self.hr_ensemble_plot_params['end_phase_line_style']
-        end_phase_line_width = self.hr_ensemble_plot_params['end_phase_line_width']
-        legend_loc = self.hr_ensemble_plot_params['legend_loc']
-        legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend_bbox_to_anchor']
+        sns.set_palette(self.hr_ensemble_plot_params["colormap"])
+        line_styles = self.hr_ensemble_plot_params["line_styles"]
+        fontsize = self.hr_ensemble_plot_params["fontsize"]
+        xaxis_label = self.hr_ensemble_plot_params["xaxis_label"]
+        yaxis_label = self.hr_ensemble_plot_params["yaxis_label"]
+        xaxis_minor_ticks = self.hr_ensemble_plot_params["xaxis_minor_ticks"]
+        ensemble_alpha = self.hr_ensemble_plot_params["ensemble_alpha"]
+        bg_color = self.hr_ensemble_plot_params["background_color"]
+        bg_alpha = self.hr_ensemble_plot_params["background_alpha"]
+        phase_text = self.hr_ensemble_plot_params["phase_text"]
+        end_phase_text = self.hr_ensemble_plot_params["end_phase_text"]
+        end_phase_color = self.hr_ensemble_plot_params["end_phase_line_color"]
+        end_phase_line_style = self.hr_ensemble_plot_params["end_phase_line_style"]
+        end_phase_line_width = self.hr_ensemble_plot_params["end_phase_line_width"]
+        legend_loc = self.hr_ensemble_plot_params["legend_loc"]
+        legend_bbox_to_anchor = self.hr_ensemble_plot_params["legend_bbox_to_anchor"]
 
         subphases = np.array(self.subphases)
         mist_dur = [len(v) for v in data.values()]
@@ -436,28 +481,62 @@ class MIST(base.BaseProtocol):
             x = hr_mist.index
             hr_mean = hr_mist.mean(axis=1)
             hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
-            ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1), linestyle=line_styles[i])
-            ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
-            ax.vlines(x=mist_dur[i] - 0.5, ymin=0, ymax=1, transform=ax.get_xaxis_transform(),
-                      ls=end_phase_line_style, lw=end_phase_line_width,
-                      colors=end_phase_color, zorder=3)
+            ax.plot(
+                x,
+                hr_mean,
+                zorder=2,
+                label=phase_text.format(i + 1),
+                linestyle=line_styles[i],
+            )
+            ax.fill_between(
+                x,
+                hr_mean - hr_stderr,
+                hr_mean + hr_stderr,
+                zorder=1,
+                alpha=ensemble_alpha,
+            )
+            ax.vlines(
+                x=mist_dur[i] - 0.5,
+                ymin=0,
+                ymax=1,
+                transform=ax.get_xaxis_transform(),
+                ls=end_phase_line_style,
+                lw=end_phase_line_width,
+                colors=end_phase_color,
+                zorder=3,
+            )
             ax.annotate(
                 text=end_phase_text.format(i + 1),
                 xy=(mist_dur[i], 0.85 - 0.05 * i),
                 xytext=(-5, 0),
                 xycoords=ax.get_xaxis_transform(),
-                textcoords='offset points',
-                ha='right',
+                textcoords="offset points",
+                ha="right",
                 fontsize=fontsize - 4,
-                bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
-                zorder=3
+                bbox=dict(facecolor="#e0e0e0", alpha=0.7, boxstyle="round"),
+                zorder=3,
             )
 
         for (start, end), subphase in zip(start_end, subphases):
-            ax.text(x=start + 0.5 * (end - start), y=0.95, transform=ax.get_xaxis_transform(),
-                    s=subphase, ha='center', va='center', fontsize=fontsize)
-        p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
-                             zorder=3, lw=0)
+            ax.text(
+                x=start + 0.5 * (end - start),
+                y=0.95,
+                transform=ax.get_xaxis_transform(),
+                s=subphase,
+                ha="center",
+                va="center",
+                fontsize=fontsize,
+            )
+        p = mpatch.Rectangle(
+            xy=(0, 0.9),
+            width=1,
+            height=0.1,
+            transform=ax.transAxes,
+            color="white",
+            alpha=0.4,
+            zorder=3,
+            lw=0,
+        )
         ax.add_patch(p)
 
         for (start, end), color, alpha in zip(start_end, bg_color, bg_alpha):
@@ -466,10 +545,10 @@ class MIST(base.BaseProtocol):
         ax.set_xlabel(xaxis_label, fontsize=fontsize)
         ax.set_xticks([start for (start, end) in start_end])
         ax.xaxis.set_minor_locator(xaxis_minor_ticks)
-        ax.tick_params(axis="x", which='both', bottom=True)
+        ax.tick_params(axis="x", which="both", bottom=True)
 
         ax.set_ylabel(yaxis_label, fontsize=fontsize)
-        ax.tick_params(axis="y", which='major', left=True)
+        ax.tick_params(axis="y", which="major", left=True)
 
         if ylims:
             ax.margins(x=0)
@@ -477,7 +556,11 @@ class MIST(base.BaseProtocol):
         else:
             ax.margins(0, 0.1)
 
-        ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor, prop={'size': fontsize})
+        ax.legend(
+            loc=legend_loc,
+            bbox_to_anchor=legend_bbox_to_anchor,
+            prop={"size": fontsize},
+        )
 
         if fig:
             fig.tight_layout()
@@ -485,13 +568,13 @@ class MIST(base.BaseProtocol):
 
     # TODO add support for groups in one dataframe (indicated by group column)
     def hr_mean_plot(
-            self,
-            data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-            groups: Optional[Sequence[str]] = None,
-            group_col: Optional[str] = None,
-            plot_params: Optional[Dict] = None,
-            ax: Optional[plt.Axes] = None,
-            **kwargs
+        self,
+        data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+        groups: Optional[Sequence[str]] = None,
+        group_col: Optional[str] = None,
+        plot_params: Optional[Dict] = None,
+        ax: Optional[plt.Axes] = None,
+        **kwargs
     ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
         """
         Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
@@ -538,7 +621,13 @@ class MIST(base.BaseProtocol):
 
         if plot_params:
             self.hr_mean_plot_params.update(plot_params)
-        return plot.hr_mean_plot(data=data, groups=groups, group_col=group_col, plot_params=self.hr_mean_plot_params,
-                                 ax=ax, **kwargs)
+        return plot.hr_mean_plot(
+            data=data,
+            groups=groups,
+            group_col=group_col,
+            plot_params=self.hr_mean_plot_params,
+            ax=ax,
+            **kwargs
+        )
 
     # TODO add methods to remove phases and subphases from MIST dict

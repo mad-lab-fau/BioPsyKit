@@ -30,7 +30,9 @@ class ColeKripke(_SleepWakeBase):
         """
         self.scale_factor = scale_factor
 
-    def predict(self, data: Union[pd.DataFrame, np.array]) -> Union[np.array, pd.DataFrame]:
+    def predict(
+        self, data: Union[pd.DataFrame, np.array]
+    ) -> Union[np.array, pd.DataFrame]:
         """
         Performs the sleep/wake score prediction.
 
@@ -52,7 +54,10 @@ class ColeKripke(_SleepWakeBase):
 
         # ensure numpy
         sf = np.array(self.scale_factor)
-        kernel = (sf * np.array([4.64, 6.87, 3.75, 5.07, 16.19, 5.84, 4.024, 0.00, 0.00])[::-1])
+        kernel = (
+            sf
+            * np.array([4.64, 6.87, 3.75, 5.07, 16.19, 5.84, 4.024, 0.00, 0.00])[::-1]
+        )
         scores = np.convolve(data, kernel, "same")
         scores[scores >= 0.5] = 1
         scores[scores < 0.5] = 0
@@ -61,7 +66,7 @@ class ColeKripke(_SleepWakeBase):
         scores = self._rescore(scores)
 
         if index is not None:
-            scores = pd.DataFrame(scores, index=index, columns=['sleep_wake'])
+            scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
         return scores
 
     @staticmethod
@@ -82,10 +87,10 @@ class ColeKripke(_SleepWakeBase):
             else:
                 if 15 <= wake_bin:
                     # rule c: at least 15 minutes of wake, next 4 minutes of sleep get rescored
-                    rescored[t: t + 4] = 1.0
+                    rescored[t : t + 4] = 1.0
                 elif 10 <= wake_bin < 15:
                     # rule b: at least 10 minutes of wake, next 3 minutes of sleep get rescored
-                    rescored[t: t + 3] = 1.0
+                    rescored[t : t + 3] = 1.0
                 elif 4 <= wake_bin < 10:
                     # rule a: at least 4 minutes of wake, next 1 minute of sleep gets rescored
                     rescored[t] = 1.0
@@ -104,9 +109,13 @@ class ColeKripke(_SleepWakeBase):
                     if sleep_bin == 1:
                         start_ind = t
                 else:
-                    sum1 = np.sum(rescored[start_ind - wake_thres: start_ind])
-                    sum2 = np.sum(rescored[t: t + wake_thres])
-                    if 0 < sleep_bin <= sleep_thres and sum1 == wake_thres and sum2 == wake_thres:
+                    sum1 = np.sum(rescored[start_ind - wake_thres : start_ind])
+                    sum2 = np.sum(rescored[t : t + wake_thres])
+                    if (
+                        0 < sleep_bin <= sleep_thres
+                        and sum1 == wake_thres
+                        and sum2 == wake_thres
+                    ):
                         rescored[start_ind:t] = 1.0
                 sleep_bin = 0
 

@@ -8,7 +8,11 @@ from tqdm.notebook import tqdm
 import pytz
 
 from biopsykit.utils.data_processing import split_data
-from biopsykit.utils.array_handling import find_extrema_in_radius, remove_outlier_and_interpolate, sanitize_input_1d
+from biopsykit.utils.array_handling import (
+    find_extrema_in_radius,
+    remove_outlier_and_interpolate,
+    sanitize_input_1d,
+)
 from biopsykit.utils.time import tz, utc, check_tz_aware
 
 
@@ -51,10 +55,15 @@ class EcgProcessor:
 
     """
 
-    def __init__(self, data_dict: Optional[Dict[str, pd.DataFrame]] = None, df: Optional[pd.DataFrame] = None,
-                 time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
-                 include_start: Optional[bool] = False,
-                 sampling_rate: Optional[float] = 256.0, timezone: Optional[Union[pytz.timezone, str]] = tz):
+    def __init__(
+        self,
+        data_dict: Optional[Dict[str, pd.DataFrame]] = None,
+        df: Optional[pd.DataFrame] = None,
+        time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
+        include_start: Optional[bool] = False,
+        sampling_rate: Optional[float] = 256.0,
+        timezone: Optional[Union[pytz.timezone, str]] = tz,
+    ):
         """
         Initializes an `EcgProcessor` instance that can be used for ECG processing.
 
@@ -113,7 +122,9 @@ class EcgProcessor:
         """
 
         if all([i is None for i in [df, data_dict]]):
-            raise ValueError("Either 'df' or 'data_dict' must be specified as parameter!")
+            raise ValueError(
+                "Either 'df' or 'data_dict' must be specified as parameter!"
+            )
 
         self.sampling_rate: int = int(sampling_rate)
 
@@ -127,11 +138,14 @@ class EcgProcessor:
 
             if time_intervals is not None:
                 # split data into subphases if time_intervals are passed
-                data_dict = split_data(time_intervals, df=df, timezone=timezone, include_start=include_start)
+                data_dict = split_data(
+                    time_intervals,
+                    df=df,
+                    timezone=timezone,
+                    include_start=include_start,
+                )
             else:
-                data_dict = {
-                    'Data': df
-                }
+                data_dict = {"Data": df}
 
         self.data_dict: Dict[str, pd.DataFrame] = data_dict
         self.ecg_result: Dict[str, pd.DataFrame] = {}
@@ -177,7 +191,7 @@ class EcgProcessor:
         dict
             Dictionary with filtered ECG signal per sub-phase.
         """
-        return {k: pd.DataFrame(v['ECG_Clean']) for k, v in self.ecg_result.items()}
+        return {k: pd.DataFrame(v["ECG_Clean"]) for k, v in self.ecg_result.items()}
 
     @property
     def hr_result(self) -> Dict[str, pd.DataFrame]:
@@ -249,9 +263,15 @@ class EcgProcessor:
         """
         return _outlier_correction_params_default
 
-    def ecg_process(self, outlier_correction: Optional[Union[str, None, Sequence[str]]] = 'all',
-                    outlier_params: Optional[Union[str, Dict[str, Union[float, Sequence[float]]]]] = 'default',
-                    title: Optional[str] = None, method: Optional[str] = "neurokit") -> None:
+    def ecg_process(
+        self,
+        outlier_correction: Optional[Union[str, None, Sequence[str]]] = "all",
+        outlier_params: Optional[
+            Union[str, Dict[str, Union[float, Sequence[float]]]]
+        ] = "default",
+        title: Optional[str] = None,
+        method: Optional[str] = "neurokit",
+    ) -> None:
         """
         Processes the ECG signal and optionally performs outlier correction (see `correct_outlier`).
 
@@ -304,19 +324,27 @@ class EcgProcessor:
 
         for name, df in tqdm(self.data_dict.items(), desc=title):
             ecg_result, rpeaks = self._ecg_process(df, method=method)
-            ecg_result, rpeaks = self.correct_outlier(ecg_signal=ecg_result, rpeaks=rpeaks,
-                                                      outlier_correction=outlier_correction,
-                                                      outlier_params=outlier_params, sampling_rate=self.sampling_rate)
-            heart_rate = pd.DataFrame({'ECG_Rate': 60 / rpeaks['RR_Interval']})
-            heart_rate_interpolated = nk.signal_interpolate(x_values=np.squeeze(rpeaks['R_Peak_Idx'].values),
-                                                            y_values=np.squeeze(heart_rate['ECG_Rate'].values),
-                                                            x_new=np.arange(0, len(ecg_result['ECG_Clean'])))
-            ecg_result['ECG_Rate'] = heart_rate_interpolated
+            ecg_result, rpeaks = self.correct_outlier(
+                ecg_signal=ecg_result,
+                rpeaks=rpeaks,
+                outlier_correction=outlier_correction,
+                outlier_params=outlier_params,
+                sampling_rate=self.sampling_rate,
+            )
+            heart_rate = pd.DataFrame({"ECG_Rate": 60 / rpeaks["RR_Interval"]})
+            heart_rate_interpolated = nk.signal_interpolate(
+                x_values=np.squeeze(rpeaks["R_Peak_Idx"].values),
+                y_values=np.squeeze(heart_rate["ECG_Rate"].values),
+                x_new=np.arange(0, len(ecg_result["ECG_Clean"])),
+            )
+            ecg_result["ECG_Rate"] = heart_rate_interpolated
             self.ecg_result[name] = ecg_result
             self.heart_rate[name] = heart_rate
             self.rpeaks[name] = rpeaks
 
-    def _ecg_process(self, data: pd.DataFrame, method: Optional[str] = "neurokit") -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def _ecg_process(
+        self, data: pd.DataFrame, method: Optional[str] = "neurokit"
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Private method to perform the actual ECG processing.
 
@@ -333,45 +361,67 @@ class EcgProcessor:
             A tuple of two dataframes: one containing the processed ECG signal, one containing the detected R peaks
         """
         # get numpy
-        ecg_signal = data['ecg'].values
+        ecg_signal = data["ecg"].values
         # clean (i.e. filter) the ECG signal using the specified method
-        ecg_cleaned = nk.ecg_clean(ecg_signal, sampling_rate=self.sampling_rate, method=method)
+        ecg_cleaned = nk.ecg_clean(
+            ecg_signal, sampling_rate=self.sampling_rate, method=method
+        )
 
         # find peaks using the specified method
         # instant_peaks: array indicating where detected R peaks are in the raw ECG signal
         # rpeak_index array containing the indices of detected R peaks
-        instant_peaks, rpeak_idx = nk.ecg_peaks(ecg_cleaned, sampling_rate=self.sampling_rate, method=method)
-        rpeak_idx = rpeak_idx['ECG_R_Peaks']
+        instant_peaks, rpeak_idx = nk.ecg_peaks(
+            ecg_cleaned, sampling_rate=self.sampling_rate, method=method
+        )
+        rpeak_idx = rpeak_idx["ECG_R_Peaks"]
         instant_peaks = np.squeeze(instant_peaks.values)
 
         # compute quality indicator
-        quality = nk.ecg_quality(ecg_cleaned, rpeaks=rpeak_idx, sampling_rate=self.sampling_rate)
+        quality = nk.ecg_quality(
+            ecg_cleaned, rpeaks=rpeak_idx, sampling_rate=self.sampling_rate
+        )
 
         # construct new dataframe
         ecg_signal_output = pd.DataFrame(
-            {"ECG_Raw": ecg_signal, "ECG_Clean": ecg_cleaned, "ECG_Quality": quality, "ECG_R_Peaks": instant_peaks,
-             'R_Peak_Outlier': np.zeros(len(data))},
-            index=data.index)
+            {
+                "ECG_Raw": ecg_signal,
+                "ECG_Clean": ecg_cleaned,
+                "ECG_Quality": quality,
+                "ECG_R_Peaks": instant_peaks,
+                "R_Peak_Outlier": np.zeros(len(data)),
+            },
+            index=data.index,
+        )
 
         # copy new dataframe consisting of R peaks indices (and their respective quality indicator)
-        rpeaks = ecg_signal_output.loc[ecg_signal_output['ECG_R_Peaks'] == 1.0, ['ECG_Quality']]
-        rpeaks.rename(columns={'ECG_Quality': 'R_Peak_Quality'}, inplace=True)
-        rpeaks.loc[:, 'R_Peak_Idx'] = rpeak_idx
+        rpeaks = ecg_signal_output.loc[
+            ecg_signal_output["ECG_R_Peaks"] == 1.0, ["ECG_Quality"]
+        ]
+        rpeaks.rename(columns={"ECG_Quality": "R_Peak_Quality"}, inplace=True)
+        rpeaks.loc[:, "R_Peak_Idx"] = rpeak_idx
         # compute RR interval
-        rpeaks['RR_Interval'] = np.ediff1d(rpeaks['R_Peak_Idx'], to_end=0) / self.sampling_rate
+        rpeaks["RR_Interval"] = (
+            np.ediff1d(rpeaks["R_Peak_Idx"], to_end=0) / self.sampling_rate
+        )
         # ensure equal length by filling the last value with the average RR interval
-        rpeaks.loc[rpeaks.index[-1], 'RR_Interval'] = rpeaks['RR_Interval'].mean()
+        rpeaks.loc[rpeaks.index[-1], "RR_Interval"] = rpeaks["RR_Interval"].mean()
 
         return ecg_signal_output, rpeaks
 
     @classmethod
-    def correct_outlier(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
-                        ecg_signal: Optional[pd.DataFrame] = None,
-                        rpeaks: Optional[pd.DataFrame] = None,
-                        outlier_correction: Optional[Union[str, None, Sequence[str]]] = 'all',
-                        outlier_params: Optional[Union[str, Dict[str, Union[float, Sequence[float]]]]] = 'default',
-                        imputation_type: Optional[str] = 'moving_average',
-                        sampling_rate: Optional[int] = 256) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def correct_outlier(
+        cls,
+        ecg_processor: Optional["EcgProcessor"] = None,
+        key: Optional[str] = None,
+        ecg_signal: Optional[pd.DataFrame] = None,
+        rpeaks: Optional[pd.DataFrame] = None,
+        outlier_correction: Optional[Union[str, None, Sequence[str]]] = "all",
+        outlier_params: Optional[
+            Union[str, Dict[str, Union[float, Sequence[float]]]]
+        ] = "default",
+        imputation_type: Optional[str] = "moving_average",
+        sampling_rate: Optional[int] = 256,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Performs outlier correction of the detected R peaks.
 
@@ -449,29 +499,42 @@ class EcgProcessor:
             rpeaks = ecg_processor.rpeaks[key]
             sampling_rate = ecg_processor.sampling_rate
 
-        if outlier_correction == 'all':
+        if outlier_correction == "all":
             outlier_correction = list(_outlier_correction_methods.keys())
-        elif outlier_correction in ['None', None]:
+        elif outlier_correction in ["None", None]:
             outlier_correction = list()
 
-        imputation_types = ['linear', 'moving_average']
+        imputation_types = ["linear", "moving_average"]
         if imputation_type not in imputation_types:
-            raise ValueError("`imputation_type` must be one of {}, not {}!".format(imputation_types, imputation_type))
+            raise ValueError(
+                "`imputation_type` must be one of {}, not {}!".format(
+                    imputation_types, imputation_type
+                )
+            )
 
         try:
-            outlier_funcs: Dict[str, Callable] = {key: _outlier_correction_methods[key] for key in outlier_correction}
+            outlier_funcs: Dict[str, Callable] = {
+                key: _outlier_correction_methods[key] for key in outlier_correction
+            }
         except KeyError:
             raise ValueError(
                 "`outlier_correction` may only contain values from {}, None or `all`, not `{}`.".format(
-                    list(_outlier_correction_methods.keys()), outlier_correction))
+                    list(_outlier_correction_methods.keys()), outlier_correction
+                )
+            )
 
-        if outlier_params in ['default', None]:
-            outlier_params = {key: _outlier_correction_params_default[key] for key in outlier_funcs}
+        if outlier_params in ["default", None]:
+            outlier_params = {
+                key: _outlier_correction_params_default[key] for key in outlier_funcs
+            }
 
         # get outlier params (values not passed as arguments will be filled with default arguments)
         outlier_params = {
-            key: outlier_params[key] if key in outlier_params else _outlier_correction_params_default[key] for key
-            in outlier_funcs}
+            key: outlier_params[key]
+            if key in outlier_params
+            else _outlier_correction_params_default[key]
+            for key in outlier_funcs
+        }
 
         # copy dataframe to mark removed beats later
         rpeaks_copy = rpeaks.copy()
@@ -480,39 +543,50 @@ class EcgProcessor:
 
         # initialize bool mask to mask outlier and add outlier column to rpeaks dataframe
         bool_mask = np.full(rpeaks.shape[0], False)
-        rpeaks['R_Peak_Outlier'] = 0.0
+        rpeaks["R_Peak_Outlier"] = 0.0
 
         # TODO add source of different outlier methods for plotting?
         for key in outlier_funcs:
-            bool_mask = outlier_funcs[key](ecg_signal, rpeaks, sampling_rate, bool_mask, outlier_params[key])
+            bool_mask = outlier_funcs[key](
+                ecg_signal, rpeaks, sampling_rate, bool_mask, outlier_params[key]
+            )
 
         # mark all removed beats as outlier in the ECG dataframe
         rpeaks[bool_mask] = None
-        removed_beats = rpeaks_copy['R_Peak_Idx'][rpeaks['R_Peak_Idx'].isna()]
+        removed_beats = rpeaks_copy["R_Peak_Idx"][rpeaks["R_Peak_Idx"].isna()]
         # mark all outlier with 1.0 in the column R_Peak_Outlier column
-        rpeaks.fillna({'R_Peak_Outlier': 1.0}, inplace=True)
+        rpeaks.fillna({"R_Peak_Outlier": 1.0}, inplace=True)
         # also mark outlier in the ECG signal dataframe
-        ecg_signal.loc[removed_beats.index, 'R_Peak_Outlier'] = 1.0
+        ecg_signal.loc[removed_beats.index, "R_Peak_Outlier"] = 1.0
 
         # interpolate the removed beats
-        rpeaks.loc[rpeaks.index[-1]] = [rpeaks['R_Peak_Quality'].mean(), last_idx['R_Peak_Idx'],
-                                        rpeaks['RR_Interval'].mean(), 0.0]
+        rpeaks.loc[rpeaks.index[-1]] = [
+            rpeaks["R_Peak_Quality"].mean(),
+            last_idx["R_Peak_Idx"],
+            rpeaks["RR_Interval"].mean(),
+            0.0,
+        ]
 
-        if imputation_type == 'moving_average':
-            rpeaks['RR_Interval'] = rpeaks['RR_Interval'].fillna(
-                rpeaks['RR_Interval'].rolling(21, center=True, min_periods=0).mean())
+        if imputation_type == "moving_average":
+            rpeaks["RR_Interval"] = rpeaks["RR_Interval"].fillna(
+                rpeaks["RR_Interval"].rolling(21, center=True, min_periods=0).mean()
+            )
 
-        rpeaks.interpolate(method='linear', limit_direction='both', inplace=True)
+        rpeaks.interpolate(method="linear", limit_direction="both", inplace=True)
         # drop duplicate R peaks (can happen during outlier correction at edge cases)
-        rpeaks.drop_duplicates(subset='R_Peak_Idx', inplace=True)
+        rpeaks.drop_duplicates(subset="R_Peak_Idx", inplace=True)
 
         return ecg_signal, rpeaks
 
     @classmethod
-    def correct_rpeaks(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
-                       ecg_signal: Optional[pd.DataFrame] = None,
-                       rpeaks: Optional[pd.DataFrame] = None,
-                       sampling_rate: Optional[int] = 256) -> pd.DataFrame:
+    def correct_rpeaks(
+        cls,
+        ecg_processor: Optional["EcgProcessor"] = None,
+        key: Optional[str] = None,
+        ecg_signal: Optional[pd.DataFrame] = None,
+        rpeaks: Optional[pd.DataFrame] = None,
+        sampling_rate: Optional[int] = 256,
+    ) -> pd.DataFrame:
         """
         Performs an R peak correction algorithms to get less noisy HRV parameters. R peak correction comes from Neurokit
         and is based on an algorithm by `Lipponen et al. (2019), Journal of medical engineering & technology`.
@@ -567,20 +641,30 @@ class EcgProcessor:
             sampling_rate = ecg_processor.sampling_rate
 
         # fill missing RR intervals with interpolated R Peak Locations
-        rpeaks_corrected = (rpeaks['RR_Interval'].cumsum() * sampling_rate).astype(int)
-        rpeaks_corrected = np.append(rpeaks['R_Peak_Idx'].iloc[0],
-                                     rpeaks_corrected.iloc[:-1] + rpeaks['R_Peak_Idx'].iloc[0])
-        artifacts, rpeaks_corrected = nk.signal_fixpeaks(rpeaks_corrected, sampling_rate, iterative=False)
+        rpeaks_corrected = (rpeaks["RR_Interval"].cumsum() * sampling_rate).astype(int)
+        rpeaks_corrected = np.append(
+            rpeaks["R_Peak_Idx"].iloc[0],
+            rpeaks_corrected.iloc[:-1] + rpeaks["R_Peak_Idx"].iloc[0],
+        )
+        artifacts, rpeaks_corrected = nk.signal_fixpeaks(
+            rpeaks_corrected, sampling_rate, iterative=False
+        )
         rpeaks_corrected = rpeaks_corrected.astype(int)
-        return pd.DataFrame(rpeaks_corrected, columns=['R_Peak_Idx'])
+        return pd.DataFrame(rpeaks_corrected, columns=["R_Peak_Idx"])
 
     @classmethod
-    def hrv_process(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
-                    ecg_signal: Optional[pd.DataFrame] = None, rpeaks: Optional[pd.DataFrame] = None,
-                    hrv_types: Optional[Sequence[str]] = ['hrv_time', 'hrv_nonlinear'],
-                    correct_rpeaks: Optional[bool] = True,
-                    index: Optional[str] = None, index_name: Optional[str] = None,
-                    sampling_rate: Optional[int] = 256) -> pd.DataFrame:
+    def hrv_process(
+        cls,
+        ecg_processor: Optional["EcgProcessor"] = None,
+        key: Optional[str] = None,
+        ecg_signal: Optional[pd.DataFrame] = None,
+        rpeaks: Optional[pd.DataFrame] = None,
+        hrv_types: Optional[Sequence[str]] = ["hrv_time", "hrv_nonlinear"],
+        correct_rpeaks: Optional[bool] = True,
+        index: Optional[str] = None,
+        index_name: Optional[str] = None,
+        sampling_rate: Optional[int] = 256,
+    ) -> pd.DataFrame:
         """
         Computes HRV features on the given data. By default it applies R peak correction
         (see `EcgProcessor.correct_rpeaks()`) before computing HRV features.
@@ -639,21 +723,28 @@ class EcgProcessor:
             sampling_rate = ecg_processor.sampling_rate
 
         if correct_rpeaks:
-            rpeaks = cls.correct_rpeaks(ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate)
+            rpeaks = cls.correct_rpeaks(
+                ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate
+            )
 
-        if hrv_types == 'all':
+        if hrv_types == "all":
             hrv_types = list(_hrv_methods.keys())
 
         # check whether all supplied hrv_types are valid
         for hrv_type in hrv_types:
             if hrv_type not in _hrv_methods:
                 raise ValueError(
-                    "`hrv_types` must be in {}, not {}".format(list(_hrv_methods.keys()), hrv_type))
+                    "`hrv_types` must be in {}, not {}".format(
+                        list(_hrv_methods.keys()), hrv_type
+                    )
+                )
         hrv_methods = {key: _hrv_methods[key] for key in hrv_types}
 
         # compute all HRV parameters
-        list_hrv: List[pd.DataFrame] = [hrv_methods[key](rpeaks['R_Peak_Idx'], sampling_rate=sampling_rate) for key in
-                                        hrv_methods]
+        list_hrv: List[pd.DataFrame] = [
+            hrv_methods[key](rpeaks["R_Peak_Idx"], sampling_rate=sampling_rate)
+            for key in hrv_methods
+        ]
         # concat dataframe list
         hrv = pd.concat(list_hrv, axis=1)
 
@@ -663,7 +754,9 @@ class EcgProcessor:
             hrv.index.name = index_name
         return hrv
 
-    def hrv_batch_process(self, hrv_types: Optional[Sequence[str]] = ['hrv_time', 'hrv_nonlinear']) -> pd.DataFrame:
+    def hrv_batch_process(
+        self, hrv_types: Optional[Sequence[str]] = ["hrv_time", "hrv_nonlinear"]
+    ) -> pd.DataFrame:
         """
         Computes HRV (using `EcgProcessor.hrv_process()`) over all phases.
 
@@ -680,13 +773,23 @@ class EcgProcessor:
             Dataframe with HRV parameters over all phases
 
         """
-        return pd.concat([self.hrv_process(self, key=key, index=key, hrv_types=hrv_types) for key in self.phases])
+        return pd.concat(
+            [
+                self.hrv_process(self, key=key, index=key, hrv_types=hrv_types)
+                for key in self.phases
+            ]
+        )
 
     @classmethod
-    def ecg_extract_edr(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
-                        ecg_signal: Optional[pd.DataFrame] = None, rpeaks: Optional[pd.DataFrame] = None,
-                        edr_type: Optional[str] = 'peak_trough_mean',
-                        sampling_rate: Optional[int] = 256) -> pd.DataFrame:
+    def ecg_extract_edr(
+        cls,
+        ecg_processor: Optional["EcgProcessor"] = None,
+        key: Optional[str] = None,
+        ecg_signal: Optional[pd.DataFrame] = None,
+        rpeaks: Optional[pd.DataFrame] = None,
+        edr_type: Optional[str] = "peak_trough_mean",
+        sampling_rate: Optional[int] = 256,
+    ) -> pd.DataFrame:
         """
         Estimate respiration signal from ECG signal (ECG-derived respiration, EDR).
 
@@ -734,28 +837,39 @@ class EcgProcessor:
 
         if edr_type not in _edr_methods:
             raise ValueError(
-                "`edr_type` must be one of {}, not {}".format(list(_edr_methods.keys()), edr_type))
+                "`edr_type` must be one of {}, not {}".format(
+                    list(_edr_methods.keys()), edr_type
+                )
+            )
         edr_func = _edr_methods[edr_type]
 
         # ensure numpy
-        peaks = np.squeeze(rpeaks['R_Peak_Idx'].values)
+        peaks = np.squeeze(rpeaks["R_Peak_Idx"].values)
 
         # find troughs (minimum 0.1s before R peak)
-        troughs = find_extrema_in_radius(ecg_signal['ECG_Clean'], peaks, radius=(int(0.1 * sampling_rate), 0))
+        troughs = find_extrema_in_radius(
+            ecg_signal["ECG_Clean"], peaks, radius=(int(0.1 * sampling_rate), 0)
+        )
         # R peak outlier should not be included into EDR estimation
-        outlier_mask = rpeaks['R_Peak_Outlier'] == 1
+        outlier_mask = rpeaks["R_Peak_Outlier"] == 1
 
         # estimate raw EDR signal
-        edr_signal_raw = edr_func(ecg_signal['ECG_Clean'], peaks, troughs)
+        edr_signal_raw = edr_func(ecg_signal["ECG_Clean"], peaks, troughs)
         # remove R peak outlier, impute missing data, and interpolate signal to length of raw ECG signal
-        edr_signal = remove_outlier_and_interpolate(edr_signal_raw, outlier_mask, peaks, len(ecg_signal))
+        edr_signal = remove_outlier_and_interpolate(
+            edr_signal_raw, outlier_mask, peaks, len(ecg_signal)
+        )
         # Preprocessing: 10-th order Butterworth bandpass filter (0.1-0.5 Hz)
-        edr_signal = nk.signal_filter(edr_signal, sampling_rate=sampling_rate, lowcut=0.1, highcut=0.5, order=10)
+        edr_signal = nk.signal_filter(
+            edr_signal, sampling_rate=sampling_rate, lowcut=0.1, highcut=0.5, order=10
+        )
 
         return pd.DataFrame(edr_signal, index=ecg_signal.index, columns=["ECG_Resp"])
 
     @classmethod
-    def rsp_compute_rate(cls, rsp_signal: pd.DataFrame, sampling_rate: Optional[int] = 256) -> float:
+    def rsp_compute_rate(
+        cls, rsp_signal: pd.DataFrame, sampling_rate: Optional[int] = 256
+    ) -> float:
         """
         Compute respiration rate for given interval from respiration signal. Based on `Karlen et al. (2013), TBME`.
 
@@ -799,21 +913,32 @@ class EcgProcessor:
         rsp_cycles_start_end = np.vstack([edr_maxima[:-1], edr_maxima[1:]]).T
 
         # check for
-        valid_resp_phases_mask = np.apply_along_axis(_check_contains_trough, 1, rsp_cycles_start_end, edr_minima)
+        valid_resp_phases_mask = np.apply_along_axis(
+            _check_contains_trough, 1, rsp_cycles_start_end, edr_minima
+        )
         rsp_cycles_start_end = rsp_cycles_start_end[valid_resp_phases_mask]
 
-        edr_signal_split: list = np.split(rsp_signal, rsp_cycles_start_end.flatten())[1::2]
+        edr_signal_split: list = np.split(rsp_signal, rsp_cycles_start_end.flatten())[
+            1::2
+        ]
         rsp_cycles_start_end = rsp_cycles_start_end.T
         rsp_peaks = rsp_cycles_start_end[0]
-        rsp_troughs = np.array(list(map(lambda arr: np.argmin(arr), edr_signal_split))) + rsp_cycles_start_end[0]
+        rsp_troughs = (
+            np.array(list(map(lambda arr: np.argmin(arr), edr_signal_split)))
+            + rsp_cycles_start_end[0]
+        )
 
         rsp_rate_peaks = _rsp_rate(rsp_peaks, sampling_rate, len(rsp_signal))
         rsp_rate_troughs = _rsp_rate(rsp_troughs, sampling_rate, len(rsp_signal))
         return np.concatenate([rsp_rate_peaks, rsp_rate_troughs]).mean()
 
     @classmethod
-    def rsa_process(cls, ecg_signal: pd.DataFrame, rsp_signal: pd.DataFrame, sampling_rate: Optional[int] = 256) -> \
-            Dict[str, float]:
+    def rsa_process(
+        cls,
+        ecg_signal: pd.DataFrame,
+        rsp_signal: pd.DataFrame,
+        sampling_rate: Optional[int] = 256,
+    ) -> Dict[str, float]:
         """
         Computes respiratory sinus arrhythmia (RSA) based on ECG and respiration signal. RSA is computed both
         using the Peak-to-Trough (P2T) method and the Porges-Bohrer method. See neurokit ('nk.hrv_rsa')
@@ -861,10 +986,17 @@ class EcgProcessor:
         return nk.hrv_rsa(ecg_signal, rsp_output, sampling_rate=sampling_rate)
 
     @classmethod
-    def rsp_rsa_process(cls, ecg_processor: Optional['EcgProcessor'] = None, key: Optional[str] = None,
-                        ecg_signal: Optional[pd.DataFrame] = None, rpeaks: Optional[pd.DataFrame] = None,
-                        return_mean: Optional[bool] = True, index: Optional[str] = None,
-                        index_name: Optional[str] = None, sampling_rate: Optional[int] = 256) -> pd.DataFrame:
+    def rsp_rsa_process(
+        cls,
+        ecg_processor: Optional["EcgProcessor"] = None,
+        key: Optional[str] = None,
+        ecg_signal: Optional[pd.DataFrame] = None,
+        rpeaks: Optional[pd.DataFrame] = None,
+        return_mean: Optional[bool] = True,
+        index: Optional[str] = None,
+        index_name: Optional[str] = None,
+        sampling_rate: Optional[int] = 256,
+    ) -> pd.DataFrame:
         """
         Computes respiration rate (RSP) and RSA metrics for the given ECG signal. Per default it estimates the
         respiration signal using all three available EDR methods and averages the results. Optionally, estimation
@@ -929,8 +1061,12 @@ class EcgProcessor:
 
         for method in _edr_methods.keys():
             # estimate respiration signal, compute respiration signal and RSA using all three methods
-            rsp_signal = cls.ecg_extract_edr(ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate,
-                                             edr_type=method)
+            rsp_signal = cls.ecg_extract_edr(
+                ecg_signal=ecg_signal,
+                rpeaks=rpeaks,
+                sampling_rate=sampling_rate,
+                edr_type=method,
+            )
             rsp_rate[method] = cls.rsp_compute_rate(rsp_signal, sampling_rate)
             rsa[method] = cls.rsa_process(ecg_signal, rsp_signal, sampling_rate)
 
@@ -939,7 +1075,7 @@ class EcgProcessor:
             mean_resp_rate = np.mean(list(rsp_rate.values()))
             rsa = list(rsa.values())
             mean_rsa = {k: np.mean([t[k] for t in rsa]) for k in rsa[0]}
-            mean_rsa['RSP_Rate'] = mean_resp_rate
+            mean_rsa["RSP_Rate"] = mean_resp_rate
             # dataframe reshaping
             if not index:
                 index = "0"
@@ -950,15 +1086,16 @@ class EcgProcessor:
         else:
             # dataframe reshaping
             df_rsa = pd.DataFrame(rsa).T
-            df_rsa['RSP_Rate'] = rsp_rate.values()
+            df_rsa["RSP_Rate"] = rsp_rate.values()
             df_rsa.index.name = "Method"
             if index:
                 return pd.concat([df_rsa], keys=[index], names=[index_name])
             return df_rsa
 
 
-def normalize_heart_rate(dict_hr_subjects: Dict[str, Dict[str, pd.DataFrame]],
-                         normalize_to: str) -> Dict[str, Dict[str, pd.DataFrame]]:
+def normalize_heart_rate(
+    dict_hr_subjects: Dict[str, Dict[str, pd.DataFrame]], normalize_to: str
+) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     Normalizes heart rate per subject to the phase specified by `normalize_to`.
 
@@ -980,13 +1117,17 @@ def normalize_heart_rate(dict_hr_subjects: Dict[str, Dict[str, pd.DataFrame]],
     dict_hr_subjects_norm = {}
     for subject_id, dict_hr in dict_hr_subjects.items():
         bl_mean = dict_hr[normalize_to].mean()
-        dict_hr_norm = {phase: (df_hr - bl_mean) / bl_mean * 100 for phase, df_hr in dict_hr.items()}
+        dict_hr_norm = {
+            phase: (df_hr - bl_mean) / bl_mean * 100 for phase, df_hr in dict_hr.items()
+        }
         dict_hr_subjects_norm[subject_id] = dict_hr_norm
 
     return dict_hr_subjects_norm
 
 
-def _edr_peak_trough_mean(ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray) -> np.array:
+def _edr_peak_trough_mean(
+    ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray
+) -> np.array:
     """
     Estimates a respiration signal from ECG based on computing the average between peaks (R peaks) and troughs
     (minima right before R peak).
@@ -1011,48 +1152,52 @@ def _edr_peak_trough_mean(ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndar
     return np.mean([peak_vals, trough_vals], axis=0)
 
 
-def _edr_peak_trough_diff(ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray) -> np.ndarray:
+def _edr_peak_trough_diff(
+    ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray
+) -> np.ndarray:
     """
-        Estimates a respiration signal from ECG based on computing the difference between peaks (R peaks)
-        and troughs (minima right before R peak).
+    Estimates a respiration signal from ECG based on computing the difference between peaks (R peaks)
+    and troughs (minima right before R peak).
 
-        Parameters
-        ----------
-        ecg : pd.DataFrame
-            dataframe with ecg signal
-        peaks : array_like
-            array with peak indices
-        troughs : array_like
-            array with trough indices
+    Parameters
+    ----------
+    ecg : pd.DataFrame
+        dataframe with ecg signal
+    peaks : array_like
+        array with peak indices
+    troughs : array_like
+        array with trough indices
 
-        Returns
-        -------
-        np.array
-            estimated raw respiration signal
-        """
+    Returns
+    -------
+    np.array
+        estimated raw respiration signal
+    """
     peak_vals = np.array(ecg.iloc[peaks])
     trough_vals = np.array(ecg.iloc[troughs])
     return peak_vals - trough_vals
 
 
-def _edr_peak_peak_interval(ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray) -> np.ndarray:
+def _edr_peak_peak_interval(
+    ecg: pd.DataFrame, peaks: np.ndarray, troughs: np.ndarray
+) -> np.ndarray:
     """
-        Estimates a respiration signal from ECG based on RR intervals.
+    Estimates a respiration signal from ECG based on RR intervals.
 
-        Parameters
-        ----------
-        ecg : pd.DataFrame
-            dataframe with ecg signal (unused but needed for consistent method signature)
-        peaks : array_like
-            array with peak indices
-        troughs : array_like
-            array with trough indices (unused but needed for consistent method signature)
+    Parameters
+    ----------
+    ecg : pd.DataFrame
+        dataframe with ecg signal (unused but needed for consistent method signature)
+    peaks : array_like
+        array with peak indices
+    troughs : array_like
+        array with trough indices (unused but needed for consistent method signature)
 
-        Returns
-        -------
-        np.array
-            estimated raw respiration signal
-        """
+    Returns
+    -------
+    np.array
+        estimated raw respiration signal
+    """
     peak_interval = np.ediff1d(peaks, to_begin=0)
     peak_interval[0] = peak_interval.mean()
     return peak_interval
@@ -1078,7 +1223,9 @@ def _check_contains_trough(start_end: np.ndarray, minima: np.ndarray) -> bool:
     return minima[(minima > start) & (minima < end)].shape[0] == 1
 
 
-def _rsp_rate(extrema: np.ndarray, sampling_rate: int, desired_length: int) -> np.ndarray:
+def _rsp_rate(
+    extrema: np.ndarray, sampling_rate: int, desired_length: int
+) -> np.ndarray:
     """
     Computes the continuous respiration rate from extrema values.
 
@@ -1100,11 +1247,16 @@ def _rsp_rate(extrema: np.ndarray, sampling_rate: int, desired_length: int) -> n
     # remove last sample
     x_old = extrema[:-1]
     x_new = np.linspace(x_old[0], x_old[-1], desired_length)
-    return nk.signal_interpolate(x_old, rsp_rate_raw, x_new, method='linear')
+    return nk.signal_interpolate(x_old, rsp_rate_raw, x_new, method="linear")
 
 
-def _correct_outlier_correlation(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
-                                 bool_mask: np.array, corr_thres: float) -> np.array:
+def _correct_outlier_correlation(
+    ecg_signal: pd.DataFrame,
+    rpeaks: pd.DataFrame,
+    sampling_rate: int,
+    bool_mask: np.array,
+    corr_thres: float,
+) -> np.array:
     """
     Outlier correction method 'correlation'.
     Computes the cross-correlation coefficient between every single beat and the average of all detected beats.
@@ -1132,29 +1284,42 @@ def _correct_outlier_correlation(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame,
     """
     # signal outlier
     # segment individual heart beats
-    heartbeats = nk.ecg_segment(ecg_signal['ECG_Clean'], rpeaks['R_Peak_Idx'], sampling_rate)
+    heartbeats = nk.ecg_segment(
+        ecg_signal["ECG_Clean"], rpeaks["R_Peak_Idx"], sampling_rate
+    )
     heartbeats = nk.epochs_to_df(heartbeats)
-    heartbeats_pivoted = heartbeats.pivot(index='Time', columns='Label', values='Signal')
-    heartbeats = heartbeats.set_index('Index')
-    heartbeats = heartbeats.loc[heartbeats.index.intersection(rpeaks['R_Peak_Idx'])].sort_values(by="Label")
+    heartbeats_pivoted = heartbeats.pivot(
+        index="Time", columns="Label", values="Signal"
+    )
+    heartbeats = heartbeats.set_index("Index")
+    heartbeats = heartbeats.loc[
+        heartbeats.index.intersection(rpeaks["R_Peak_Idx"])
+    ].sort_values(by="Label")
     heartbeats = heartbeats[~heartbeats.index.duplicated()]
     heartbeats_pivoted.columns = heartbeats.index
 
     # compute the average over all heart beats and compute the correlation coefficient between all beats and
     # the average
     mean_beat = heartbeats_pivoted.mean(axis=1)
-    heartbeats_pivoted['mean'] = mean_beat
-    corr_coeff = heartbeats_pivoted.corr()['mean'].abs().sort_values(ascending=True)
-    corr_coeff.drop('mean', inplace=True)
+    heartbeats_pivoted["mean"] = mean_beat
+    corr_coeff = heartbeats_pivoted.corr()["mean"].abs().sort_values(ascending=True)
+    corr_coeff.drop("mean", inplace=True)
     # compute RR intervals (in seconds) from R Peak Locations
-    rpeaks['RR_Interval'] = np.ediff1d(rpeaks['R_Peak_Idx'], to_end=0) / sampling_rate
+    rpeaks["RR_Interval"] = np.ediff1d(rpeaks["R_Peak_Idx"], to_end=0) / sampling_rate
 
     # signal outlier: drop all beats that are below a correlation coefficient threshold
-    return np.logical_or(bool_mask, rpeaks['R_Peak_Idx'].isin(corr_coeff[corr_coeff < corr_thres].index))
+    return np.logical_or(
+        bool_mask, rpeaks["R_Peak_Idx"].isin(corr_coeff[corr_coeff < corr_thres].index)
+    )
 
 
-def _correct_outlier_quality(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
-                             bool_mask: np.array, quality_thres: float) -> np.array:
+def _correct_outlier_quality(
+    ecg_signal: pd.DataFrame,
+    rpeaks: pd.DataFrame,
+    sampling_rate: int,
+    bool_mask: np.array,
+    quality_thres: float,
+) -> np.array:
     """
     Outlier correction method 'quality'.
 
@@ -1182,11 +1347,16 @@ def _correct_outlier_quality(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sam
         this algorithm
     """
     # signal outlier: drop all beats that are below a signal quality threshold
-    return np.logical_or(bool_mask, rpeaks['R_Peak_Quality'] < quality_thres)
+    return np.logical_or(bool_mask, rpeaks["R_Peak_Quality"] < quality_thres)
 
 
-def _correct_outlier_statistical_rr(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
-                                    bool_mask: np.array, stat_thres: float) -> np.array:
+def _correct_outlier_statistical_rr(
+    ecg_signal: pd.DataFrame,
+    rpeaks: pd.DataFrame,
+    sampling_rate: int,
+    bool_mask: np.array,
+    stat_thres: float,
+) -> np.array:
     """
     Outlier correction method 'statistical_rr'.
 
@@ -1216,14 +1386,19 @@ def _correct_outlier_statistical_rr(ecg_signal: pd.DataFrame, rpeaks: pd.DataFra
     """
     # statistical outlier: remove the x% highest and lowest RR intervals
     # (1.96 std = 5% outlier, 2.576 std = 1% outlier)
-    rri = rpeaks['RR_Interval']
+    rri = rpeaks["RR_Interval"]
     z_score = (rri - np.nanmean(rri)) / np.nanstd(rri, ddof=1)
 
     return np.logical_or(bool_mask, np.abs(z_score) > stat_thres)
 
 
-def _correct_outlier_statistical_rr_diff(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
-                                         bool_mask: np.array, stat_thres: float) -> np.array:
+def _correct_outlier_statistical_rr_diff(
+    ecg_signal: pd.DataFrame,
+    rpeaks: pd.DataFrame,
+    sampling_rate: int,
+    bool_mask: np.array,
+    stat_thres: float,
+) -> np.array:
     """
     Outlier correction method 'statistical_rr_diff'.
 
@@ -1253,14 +1428,19 @@ def _correct_outlier_statistical_rr_diff(ecg_signal: pd.DataFrame, rpeaks: pd.Da
     """
     # statistical outlier: remove the x% highest and lowest successive differences of RR intervals
     # (1.96 std = 5% outlier, 2.576 std = 1% outlier)
-    diff_rri = np.ediff1d(rpeaks['RR_Interval'], to_end=0)
+    diff_rri = np.ediff1d(rpeaks["RR_Interval"], to_end=0)
     z_score = (diff_rri - np.nanmean(diff_rri)) / np.nanstd(diff_rri, ddof=1)
 
     return np.logical_or(bool_mask, np.abs(z_score) > stat_thres)
 
 
-def _correct_outlier_artifact(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
-                              bool_mask: np.array, art_thres: float) -> np.array:
+def _correct_outlier_artifact(
+    ecg_signal: pd.DataFrame,
+    rpeaks: pd.DataFrame,
+    sampling_rate: int,
+    bool_mask: np.array,
+    art_thres: float,
+) -> np.array:
     """
     Outlier correction method 'artifact'.
 
@@ -1288,22 +1468,31 @@ def _correct_outlier_artifact(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sa
         this algorithm
     """
     from scipy.stats import iqr
+
     # note: art_thres only needed to have a uniform signature
 
     # compute artifact-detection criterion based on Berntson et al. (1990), Psychophysiology
     # QD = Quartile Deviation = IQR / 2
-    qd = iqr(rpeaks['RR_Interval'], nan_policy='omit') / 2.0
+    qd = iqr(rpeaks["RR_Interval"], nan_policy="omit") / 2.0
     # MAD = Minimal Artifact Difference
-    mad = (rpeaks['RR_Interval'].median() - 2.9 * qd) / 3.0
+    mad = (rpeaks["RR_Interval"].median() - 2.9 * qd) / 3.0
     # MED = Maximum Expected Difference
     med = 3.32 * qd
     criterion = np.mean([mad, med])
 
-    return np.logical_or(bool_mask, np.abs(rpeaks['RR_Interval'] - rpeaks['RR_Interval'].median()) > criterion)
+    return np.logical_or(
+        bool_mask,
+        np.abs(rpeaks["RR_Interval"] - rpeaks["RR_Interval"].median()) > criterion,
+    )
 
 
-def _correct_outlier_physiological(ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate: int,
-                                   bool_mask: np.array, hr_thres: Tuple[float, float]) -> np.array:
+def _correct_outlier_physiological(
+    ecg_signal: pd.DataFrame,
+    rpeaks: pd.DataFrame,
+    sampling_rate: int,
+    bool_mask: np.array,
+    hr_thres: Tuple[float, float],
+) -> np.array:
     """
     Outlier correction method 'physiological'.
 
@@ -1331,43 +1520,51 @@ def _correct_outlier_physiological(ecg_signal: pd.DataFrame, rpeaks: pd.DataFram
         this algorithm
     """
     # physiological outlier: minimum/maximum heart rate threshold
-    bool_mask = np.logical_or(bool_mask, (rpeaks['RR_Interval'] > (60 / hr_thres[0])) | (
-            rpeaks['RR_Interval'] < (60 / hr_thres[1])))
+    bool_mask = np.logical_or(
+        bool_mask,
+        (rpeaks["RR_Interval"] > (60 / hr_thres[0]))
+        | (rpeaks["RR_Interval"] < (60 / hr_thres[1])),
+    )
     return bool_mask
 
 
 _hrv_methods = {
-    'hrv_time': nk.hrv_time,
-    'hrv_nonlinear': nk.hrv_nonlinear,
-    'hrv_frequency': nk.hrv_frequency
+    "hrv_time": nk.hrv_time,
+    "hrv_nonlinear": nk.hrv_nonlinear,
+    "hrv_frequency": nk.hrv_frequency,
 }
 
 _edr_methods = {
-    'peak_trough_mean': _edr_peak_trough_mean,
-    'peak_trough_diff': _edr_peak_trough_diff,
-    'peak_peak_interval': _edr_peak_peak_interval
+    "peak_trough_mean": _edr_peak_trough_mean,
+    "peak_trough_diff": _edr_peak_trough_diff,
+    "peak_peak_interval": _edr_peak_peak_interval,
 }
 
 _outlier_correction_methods: Dict[str, Callable] = {
-    'correlation': _correct_outlier_correlation,
-    'quality': _correct_outlier_quality,
-    'artifact': _correct_outlier_artifact,
-    'physiological': _correct_outlier_physiological,
-    'statistical_rr': _correct_outlier_statistical_rr,
-    'statistical_rr_diff': _correct_outlier_statistical_rr_diff
+    "correlation": _correct_outlier_correlation,
+    "quality": _correct_outlier_quality,
+    "artifact": _correct_outlier_artifact,
+    "physiological": _correct_outlier_physiological,
+    "statistical_rr": _correct_outlier_statistical_rr,
+    "statistical_rr_diff": _correct_outlier_statistical_rr_diff,
 }
 
 _outlier_correction_params_default: Dict[str, Union[float, Sequence[float]]] = {
-    'correlation': 0.3,
-    'quality': 0.4,
-    'artifact': 0.0,
-    'physiological': (45, 200),
-    'statistical_rr': 2.576,
-    'statistical_rr_diff': 1.96
+    "correlation": 0.3,
+    "quality": 0.4,
+    "artifact": 0.0,
+    "physiological": (45, 200),
+    "statistical_rr": 2.576,
+    "statistical_rr_diff": 1.96,
 }
 
 
-def check_ecg_input(ecg_processor: 'EcgProcessor', key: str, ecg_signal: pd.DataFrame, rpeaks: pd.DataFrame) -> bool:
+def check_ecg_input(
+    ecg_processor: "EcgProcessor",
+    key: str,
+    ecg_signal: pd.DataFrame,
+    rpeaks: pd.DataFrame,
+) -> bool:
     """
     Checks valid input, i.e. if either `ecg_processor` **and** `key` are supplied as arguments *or* `ecg_signal` **and**
     `rpeaks`. Used as helper method for several functions.
@@ -1395,9 +1592,12 @@ def check_ecg_input(ecg_processor: 'EcgProcessor', key: str, ecg_signal: pd.Data
 
     if all([x is None for x in [ecg_processor, key, ecg_signal, rpeaks]]):
         raise ValueError(
-            "Either `ecg_processor` and `key` or `rpeaks` and `ecg_signal` must be passed as arguments!")
+            "Either `ecg_processor` and `key` or `rpeaks` and `ecg_signal` must be passed as arguments!"
+        )
     if ecg_processor:
         if key is None:
-            raise ValueError("`key` must be passed as argument when `ecg_processor` is passed!")
+            raise ValueError(
+                "`key` must be passed as argument when `ecg_processor` is passed!"
+            )
 
     return True

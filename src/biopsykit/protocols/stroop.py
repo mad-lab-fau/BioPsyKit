@@ -15,9 +15,10 @@ class Stroop(base.BaseProtocol):
     """
 
     def __init__(
-            self, name: Optional[str] = None,
-            phases: Optional[Sequence[str]] = None,
-            phase_durations: Optional[Sequence[int]] = None
+        self,
+        name: Optional[str] = None,
+        phases: Optional[Sequence[str]] = None,
+        phase_durations: Optional[Sequence[int]] = None,
     ):
         if name is None:
             name = "Stroop"
@@ -39,7 +40,7 @@ class Stroop(base.BaseProtocol):
         Total duration of phases in seconds
         """
 
-        self.subphases: Sequence[str] = ['Stroop', 'Feedback']
+        self.subphases: Sequence[str] = ["Stroop", "Feedback"]
         """
         Stroop Subphases
 
@@ -53,53 +54,53 @@ class Stroop(base.BaseProtocol):
         """
 
         self.hr_ensemble_plot_params = {
-            'colormap': colors.cmap_fau_blue('3_ens'),
-            'line_styles': ['-', '--', '-.'],
-            'ensemble_alpha': 0.4,
-            'background_color': ['#e0e0e0', '#9e9e9e', '#757575'],
-            'background_alpha': [0.5, 0.5, 0.5],
-            'fontsize': 14,
-            'xaxis_label': r"Time [s] ",
-            'xaxis_minor_ticks': mticks.MultipleLocator(60),
-            'yaxis_label': r"$\Delta$Mean HR [bpm]",
-            'legend_loc': 'upper right',
-            'legend_bbox_to_anchor': (0.25, 0.90),
-            'phase_text': "Stroop Phase {}",
-            'end_phase_text': "End Phase {}",
-            'end_phase_line_color': "#e0e0e0",
-            'end_phase_line_style': 'dashed',
-            'end_phase_line_width': 2.0
+            "colormap": colors.cmap_fau_blue("3_ens"),
+            "line_styles": ["-", "--", "-."],
+            "ensemble_alpha": 0.4,
+            "background_color": ["#e0e0e0", "#9e9e9e", "#757575"],
+            "background_alpha": [0.5, 0.5, 0.5],
+            "fontsize": 14,
+            "xaxis_label": r"Time [s] ",
+            "xaxis_minor_ticks": mticks.MultipleLocator(60),
+            "yaxis_label": r"$\Delta$Mean HR [bpm]",
+            "legend_loc": "upper right",
+            "legend_bbox_to_anchor": (0.25, 0.90),
+            "phase_text": "Stroop Phase {}",
+            "end_phase_text": "End Phase {}",
+            "end_phase_line_color": "#e0e0e0",
+            "end_phase_line_style": "dashed",
+            "end_phase_line_width": 2.0,
         }
         self.stroop_plot_params = {
-            'colormap': colors.cmap_fau_blue('3_ens'),
-            'line_styles': ['-', '--', '-.'],
-            'background_color': ['#e0e0e0', '#9e9e9e', '#757575'],
-            'background_alpha': [0.5, 0.5, 0.5],
-            'fontsize': 14,
-            'xaxis_label': r"Stroop phases",
-            'xaxis_minor_ticks': mticks.MultipleLocator(60),
-            'yaxis_label': r"$\Delta$Mean HR [bpm]",
-            'legend_loc': 'upper right',
-            'legend_bbox_to_anchor': (1.00, 0.90),
-            'phase_text': "Stroop Phase {}",
+            "colormap": colors.cmap_fau_blue("3_ens"),
+            "line_styles": ["-", "--", "-."],
+            "background_color": ["#e0e0e0", "#9e9e9e", "#757575"],
+            "background_alpha": [0.5, 0.5, 0.5],
+            "fontsize": 14,
+            "xaxis_label": r"Stroop phases",
+            "xaxis_minor_ticks": mticks.MultipleLocator(60),
+            "yaxis_label": r"$\Delta$Mean HR [bpm]",
+            "legend_loc": "upper right",
+            "legend_bbox_to_anchor": (1.00, 0.90),
+            "phase_text": "Stroop Phase {}",
         }
 
         self.hr_mean_plot_params = {
-            'colormap': colors.cmap_fau_blue('2_lp'),
-            'line_styles': ['-', '--'],
-            'markers': ['o', 'P'],
-            'background_color': ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
-            'background_alpha': [0.5, 0.5, 0.5],
-            'x_offsets': [0, 0.05],
-            'fontsize': 14,
-            'xaxis_label': "Stroop Subphases",
-            'yaxis_label': r"$\Delta$HR [%]",
-            'mist_phase_text': "MIST Phase {}"
+            "colormap": colors.cmap_fau_blue("2_lp"),
+            "line_styles": ["-", "--"],
+            "markers": ["o", "P"],
+            "background_color": ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
+            "background_alpha": [0.5, 0.5, 0.5],
+            "x_offsets": [0, 0.05],
+            "fontsize": 14,
+            "xaxis_label": "Stroop Subphases",
+            "yaxis_label": r"$\Delta$HR [%]",
+            "mist_phase_text": "MIST Phase {}",
         }
 
         self.saliva_params = {
-            'test_text': "Stroop",
-            'xaxis_label': "Time relative to Stroop start [min]"
+            "test_text": "Stroop",
+            "xaxis_label": "Time relative to Stroop start [min]",
         }
 
         self._update_stroop_params(phases, phase_durations)
@@ -108,7 +109,9 @@ class Stroop(base.BaseProtocol):
         return """{}
         Phases: {}
         Phase Durations: {}
-        """.format(self.name, self.phases, self.phase_durations)
+        """.format(
+            self.name, self.phases, self.phase_durations
+        )
 
     @property
     def stroop_times(self):
@@ -118,20 +121,22 @@ class Stroop(base.BaseProtocol):
     def stroop_times(self, stroop_times):
         self.test_times = stroop_times
 
-    def _update_stroop_params(self, phases: Sequence[str], phase_durations: Sequence[int]):
+    def _update_stroop_params(
+        self, phases: Sequence[str], phase_durations: Sequence[int]
+    ):
         if phases:
             self.phases = phases
         if phase_durations:
             self.phase_durations = phase_durations
 
     def hr_ensemble_plot(
-            self,
-            data: Dict[str, pd.DataFrame],
-            plot_params: Optional[Dict] = None,
-            ylims: Optional[Sequence[float]] = None,
-            ax: Optional[plt.Axes] = None,
-            is_group_dict: Optional[bool] = False,
-            **kwargs
+        self,
+        data: Dict[str, pd.DataFrame],
+        plot_params: Optional[Dict] = None,
+        ylims: Optional[Sequence[float]] = None,
+        ax: Optional[plt.Axes] = None,
+        is_group_dict: Optional[bool] = False,
+        **kwargs
     ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         """
         Plots the course of heart rate during each Stroop subphase continuously as ensemble plot (mean ± standard error).
@@ -160,37 +165,42 @@ class Stroop(base.BaseProtocol):
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
-            if 'figsize' in kwargs:
-                figsize = kwargs['figsize']
+            if "figsize" in kwargs:
+                figsize = kwargs["figsize"]
             else:
-                figsize = plt.rcParams['figure.figsize']
+                figsize = plt.rcParams["figure.figsize"]
             fig, ax = plt.subplots(figsize=figsize)
 
         if plot_params:
             self.hr_ensemble_plot_params.update(plot_params)
 
         # sns.despine()
-        sns.set_palette(self.hr_ensemble_plot_params['colormap'])
-        line_styles = self.hr_ensemble_plot_params['line_styles']
-        fontsize = self.hr_ensemble_plot_params['fontsize']
-        xaxis_label = self.hr_ensemble_plot_params['xaxis_label']
-        yaxis_label = self.hr_ensemble_plot_params['yaxis_label']
-        xaxis_minor_ticks = self.hr_ensemble_plot_params['xaxis_minor_ticks']
-        ensemble_alpha = self.hr_ensemble_plot_params['ensemble_alpha']
-        bg_color = self.hr_ensemble_plot_params['background_color']
-        bg_alpha = self.hr_ensemble_plot_params['background_alpha']
-        phase_text = self.hr_ensemble_plot_params['phase_text']
-        end_phase_text = self.hr_ensemble_plot_params['end_phase_text']
-        end_phase_color = self.hr_ensemble_plot_params['end_phase_line_color']
-        end_phase_line_style = self.hr_ensemble_plot_params['end_phase_line_style']
-        end_phase_line_width = self.hr_ensemble_plot_params['end_phase_line_width']
-        legend_loc = self.hr_ensemble_plot_params['legend_loc']
-        legend_bbox_to_anchor = self.hr_ensemble_plot_params['legend_bbox_to_anchor']
+        sns.set_palette(self.hr_ensemble_plot_params["colormap"])
+        line_styles = self.hr_ensemble_plot_params["line_styles"]
+        fontsize = self.hr_ensemble_plot_params["fontsize"]
+        xaxis_label = self.hr_ensemble_plot_params["xaxis_label"]
+        yaxis_label = self.hr_ensemble_plot_params["yaxis_label"]
+        xaxis_minor_ticks = self.hr_ensemble_plot_params["xaxis_minor_ticks"]
+        ensemble_alpha = self.hr_ensemble_plot_params["ensemble_alpha"]
+        bg_color = self.hr_ensemble_plot_params["background_color"]
+        bg_alpha = self.hr_ensemble_plot_params["background_alpha"]
+        phase_text = self.hr_ensemble_plot_params["phase_text"]
+        end_phase_text = self.hr_ensemble_plot_params["end_phase_text"]
+        end_phase_color = self.hr_ensemble_plot_params["end_phase_line_color"]
+        end_phase_line_style = self.hr_ensemble_plot_params["end_phase_line_style"]
+        end_phase_line_width = self.hr_ensemble_plot_params["end_phase_line_width"]
+        legend_loc = self.hr_ensemble_plot_params["legend_loc"]
+        legend_bbox_to_anchor = self.hr_ensemble_plot_params["legend_bbox_to_anchor"]
 
         subphases = np.array(self.subphases)
         # mist_dur = [len(v) for v in data.values()]
-        start_end = [(0, self.subphase_durations[0]),
-                     (self.subphase_durations[0], self.subphase_durations[0] + self.subphase_durations[1])]
+        start_end = [
+            (0, self.subphase_durations[0]),
+            (
+                self.subphase_durations[0],
+                self.subphase_durations[0] + self.subphase_durations[1],
+            ),
+        ]
 
         if is_group_dict:
             for j, condition in enumerate(data):
@@ -202,24 +212,45 @@ class Stroop(base.BaseProtocol):
                     x = hr_mist.index
                     hr_mean = hr_mist.mean(axis=1)
                     hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
-                    ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1) + ' - ' + condition,
-                            linestyle=line_styles[i], color=pal)
-                    ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
-                    ax.vlines(x=mist_dur[i] - 0.5, ymin=0, ymax=1, transform=ax.get_xaxis_transform(),
-                              ls=end_phase_line_style, lw=end_phase_line_width,
-                              colors=end_phase_color, zorder=3)
+                    ax.plot(
+                        x,
+                        hr_mean,
+                        zorder=2,
+                        label=phase_text.format(i + 1) + " - " + condition,
+                        linestyle=line_styles[i],
+                        color=pal,
+                    )
+                    ax.fill_between(
+                        x,
+                        hr_mean - hr_stderr,
+                        hr_mean + hr_stderr,
+                        zorder=1,
+                        alpha=ensemble_alpha,
+                    )
+                    ax.vlines(
+                        x=mist_dur[i] - 0.5,
+                        ymin=0,
+                        ymax=1,
+                        transform=ax.get_xaxis_transform(),
+                        ls=end_phase_line_style,
+                        lw=end_phase_line_width,
+                        colors=end_phase_color,
+                        zorder=3,
+                    )
                     ax.annotate(
                         text=end_phase_text.format(i + 1),
                         xy=(mist_dur[i], 0.85 - 0.05 * i),
                         xytext=(-5, 0),
                         xycoords=ax.get_xaxis_transform(),
-                        textcoords='offset points',
-                        ha='right',
+                        textcoords="offset points",
+                        ha="right",
                         fontsize=fontsize - 4,
-                        bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
-                        zorder=3
+                        bbox=dict(facecolor="#e0e0e0", alpha=0.7, boxstyle="round"),
+                        zorder=3,
                     )
-                ax.legend(loc=legend_loc, bbox_to_anchor=(0.20, 0.3), prop={'size': fontsize})
+                ax.legend(
+                    loc=legend_loc, bbox_to_anchor=(0.20, 0.3), prop={"size": fontsize}
+                )
         else:
             mist_dur = [len(v) for v in data.values()]
             for i, key in enumerate(data):
@@ -227,29 +258,67 @@ class Stroop(base.BaseProtocol):
                 x = hr_mist.index
                 hr_mean = hr_mist.mean(axis=1)
                 hr_stderr = hr_mist.std(axis=1) / np.sqrt(hr_mist.shape[1])
-                ax.plot(x, hr_mean, zorder=2, label=phase_text.format(i + 1), linestyle=line_styles[i])
-                ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
-                ax.vlines(x=mist_dur[i] - 0.5, ymin=0, ymax=1, transform=ax.get_xaxis_transform(),
-                          ls=end_phase_line_style, lw=end_phase_line_width,
-                          colors=end_phase_color, zorder=3)
+                ax.plot(
+                    x,
+                    hr_mean,
+                    zorder=2,
+                    label=phase_text.format(i + 1),
+                    linestyle=line_styles[i],
+                )
+                ax.fill_between(
+                    x,
+                    hr_mean - hr_stderr,
+                    hr_mean + hr_stderr,
+                    zorder=1,
+                    alpha=ensemble_alpha,
+                )
+                ax.vlines(
+                    x=mist_dur[i] - 0.5,
+                    ymin=0,
+                    ymax=1,
+                    transform=ax.get_xaxis_transform(),
+                    ls=end_phase_line_style,
+                    lw=end_phase_line_width,
+                    colors=end_phase_color,
+                    zorder=3,
+                )
                 ax.annotate(
                     text=end_phase_text.format(i + 1),
                     xy=(mist_dur[i], 0.85 - 0.05 * i),
                     xytext=(-5, 0),
                     xycoords=ax.get_xaxis_transform(),
-                    textcoords='offset points',
-                    ha='right',
+                    textcoords="offset points",
+                    ha="right",
                     fontsize=fontsize - 4,
-                    bbox=dict(facecolor='#e0e0e0', alpha=0.7, boxstyle='round'),
-                    zorder=3
+                    bbox=dict(facecolor="#e0e0e0", alpha=0.7, boxstyle="round"),
+                    zorder=3,
                 )
-            ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor, prop={'size': fontsize})
+            ax.legend(
+                loc=legend_loc,
+                bbox_to_anchor=legend_bbox_to_anchor,
+                prop={"size": fontsize},
+            )
 
         for (start, end), subphase in zip(start_end, subphases):
-            ax.text(x=start + 0.5 * (end - start), y=0.95, transform=ax.get_xaxis_transform(),
-                    s=subphase, ha='center', va='center', fontsize=fontsize)
-        p = mpatch.Rectangle(xy=(0, 0.9), width=1, height=0.1, transform=ax.transAxes, color='white', alpha=0.4,
-                             zorder=3, lw=0)
+            ax.text(
+                x=start + 0.5 * (end - start),
+                y=0.95,
+                transform=ax.get_xaxis_transform(),
+                s=subphase,
+                ha="center",
+                va="center",
+                fontsize=fontsize,
+            )
+        p = mpatch.Rectangle(
+            xy=(0, 0.9),
+            width=1,
+            height=0.1,
+            transform=ax.transAxes,
+            color="white",
+            alpha=0.4,
+            zorder=3,
+            lw=0,
+        )
         ax.add_patch(p)
 
         for (start, end), color, alpha in zip(start_end, bg_color, bg_alpha):
@@ -258,10 +327,10 @@ class Stroop(base.BaseProtocol):
         ax.set_xlabel(xaxis_label, fontsize=fontsize)
         ax.set_xticks([start for (start, end) in start_end])
         ax.xaxis.set_minor_locator(xaxis_minor_ticks)
-        ax.tick_params(axis="x", which='both', bottom=True)
+        ax.tick_params(axis="x", which="both", bottom=True)
 
         ax.set_ylabel(yaxis_label, fontsize=fontsize)
-        ax.tick_params(axis="y", which='major', left=True)
+        ax.tick_params(axis="y", which="major", left=True)
 
         if ylims:
             ax.margins(x=0)
@@ -274,9 +343,12 @@ class Stroop(base.BaseProtocol):
             return fig, ax
 
     def hr_mean_subphases(
-            self,
-            data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
-            is_group_dict: Optional[bool] = False
+        self,
+        data: Union[
+            Dict[str, Dict[str, pd.DataFrame]],
+            Dict[str, Dict[str, Dict[str, pd.DataFrame]]],
+        ],
+        is_group_dict: Optional[bool] = False,
     ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
         Computes the heart rate mean and standard error per Stroop phase over all subjects.
@@ -296,10 +368,16 @@ class Stroop(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
+        return super()._mean_se_subphases(
+            data, subphases=self.subphases, is_group_dict=is_group_dict
+        )
 
-    def stroop_dict_to_dataframe(self, dict_stroop=Dict[str, Dict], columns: Optional[Sequence[str]] = None,
-                                 is_group_dict: Optional[bool] = False) -> pd.DataFrame:
+    def stroop_dict_to_dataframe(
+        self,
+        dict_stroop=Dict[str, Dict],
+        columns: Optional[Sequence[str]] = None,
+        is_group_dict: Optional[bool] = False,
+    ) -> pd.DataFrame:
         """
         Converts the dictionary into one dataframe with a MultiIndex (subject, phase). The structure needs to be the same
         as derived from load_stroop_inquisit_data.
@@ -328,20 +406,26 @@ class Stroop(base.BaseProtocol):
             for group, dict_data in dict_stroop.items():
                 for subject, data in dict_data.items():
                     for subphase, df in data.items():
-                        df_stroop = pd.concat([df_stroop, df.set_index([[group], [subject], [subphase]])])
-            df_stroop.index.names = (['group', 'subject', 'subphase'])
+                        df_stroop = pd.concat(
+                            [df_stroop, df.set_index([[group], [subject], [subphase]])]
+                        )
+            df_stroop.index.names = ["group", "subject", "subphase"]
         else:
             for subject, data in dict_stroop.items():
                 for subphase, df in data.items():
-                    df_stroop = pd.concat([df_stroop, df.set_index([[subject], [subphase]])])
-            df_stroop.index.names = (['subject', 'subphase'])
+                    df_stroop = pd.concat(
+                        [df_stroop, df.set_index([[subject], [subphase]])]
+                    )
+            df_stroop.index.names = ["subject", "subphase"]
 
         if columns:
             df_stroop = df_stroop[columns]
 
         return df_stroop
 
-    def stroop_mean_se(self, data=pd.DataFrame, is_group_dict: Optional[bool] = False) -> pd.DataFrame:
+    def stroop_mean_se(
+        self, data=pd.DataFrame, is_group_dict: Optional[bool] = False
+    ) -> pd.DataFrame:
         """
         Computes the mean and standard error of the stroop test data per Stroop subphase over all subjects.
 
@@ -360,26 +444,32 @@ class Stroop(base.BaseProtocol):
             dataframe with mean and standard deviation values.
         """
         if is_group_dict:
-            index = [('group', 'subphase')]
+            index = [("group", "subphase")]
         else:
-            index = ['subphase']
+            index = ["subphase"]
 
-        mean = data.mean(level=index).add_suffix('_mean')
-        std = data.std(level=index).add_suffix('_std')
+        mean = data.mean(level=index).add_suffix("_mean")
+        std = data.std(level=index).add_suffix("_std")
         df_mean_se = mean.join(std)
 
         # scale correct answers to percent
-        if ('correct_mean' and 'correct_std') in df_mean_se.columns:
-            df_mean_se[['correct_mean', 'correct_std']] = df_mean_se[['correct_mean', 'correct_std']] * 100
+        if ("correct_mean" and "correct_std") in df_mean_se.columns:
+            df_mean_se[["correct_mean", "correct_std"]] = (
+                df_mean_se[["correct_mean", "correct_std"]] * 100
+            )
 
         return df_mean_se
 
-    def stroop_plot(self, data=pd.DataFrame, variable: Optional[str] = 'meanRT',
-                    is_group_dict: Optional[bool] = False,
-                    group_col: Optional[str] = 'condition',
-                    ylims: Optional[Sequence[float]] = None,
-                    ax: Optional[plt.Axes] = None,
-                    **kwargs) -> Union[Tuple[plt.Figure, plt.Axes], None]:
+    def stroop_plot(
+        self,
+        data=pd.DataFrame,
+        variable: Optional[str] = "meanRT",
+        is_group_dict: Optional[bool] = False,
+        group_col: Optional[str] = "condition",
+        ylims: Optional[Sequence[float]] = None,
+        ax: Optional[plt.Axes] = None,
+        **kwargs
+    ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
         """
         Plots the mean response time or correct answers during the different Stroop task (mean ± standard error per phase).
 
@@ -422,38 +512,64 @@ class Stroop(base.BaseProtocol):
 
         fig: Union[plt.Figure, None] = None
         if ax is None:
-            if 'figsize' in kwargs:
-                figsize = kwargs['figsize']
+            if "figsize" in kwargs:
+                figsize = kwargs["figsize"]
             else:
-                figsize = plt.rcParams['figure.figsize']
+                figsize = plt.rcParams["figure.figsize"]
             fig, ax = plt.subplots(figsize=figsize)
 
-        sns.set_palette(self.stroop_plot_params['colormap'])
-        line_styles = self.stroop_plot_params['line_styles']
-        fontsize = self.stroop_plot_params['fontsize']
-        xaxis_label = self.stroop_plot_params['xaxis_label']
-        xaxis_minor_ticks = self.stroop_plot_params['xaxis_minor_ticks']
-        bg_color = self.stroop_plot_params['background_color']
-        bg_alpha = self.stroop_plot_params['background_alpha']
+        sns.set_palette(self.stroop_plot_params["colormap"])
+        line_styles = self.stroop_plot_params["line_styles"]
+        fontsize = self.stroop_plot_params["fontsize"]
+        xaxis_label = self.stroop_plot_params["xaxis_label"]
+        xaxis_minor_ticks = self.stroop_plot_params["xaxis_minor_ticks"]
+        bg_color = self.stroop_plot_params["background_color"]
+        bg_alpha = self.stroop_plot_params["background_alpha"]
         x_labels = self.phases
 
         x = np.arange(len(x_labels))
         start_end = [(i - 0.5, i + 0.5) for i in x]
         if is_group_dict:
             conditions = list(set(data.index.get_level_values(group_col)))
-            line1 = ax.errorbar(x, data.xs(conditions[0], level=group_col)[variable + '_mean'],
-                                yerr=data.xs(conditions[0], level=group_col)[variable + '_std'],
-                                color=sns.color_palette()[0],
-                                label=conditions[0], lw=2, errorevery=1, ls=line_styles[0], marker="D", capsize=3)
-            line2 = ax.errorbar(x, data.xs(conditions[1], level=group_col)[variable + '_mean'],
-                                yerr=data.xs(conditions[1], level=group_col)[variable + '_std'],
-                                color=sns.color_palette()[1],
-                                label=conditions[1], lw=2, errorevery=1, ls=line_styles[1], marker="D", capsize=3)
-            plt.legend(handles=[line1, line2], loc='upper right', prop={'size': fontsize})
+            line1 = ax.errorbar(
+                x,
+                data.xs(conditions[0], level=group_col)[variable + "_mean"],
+                yerr=data.xs(conditions[0], level=group_col)[variable + "_std"],
+                color=sns.color_palette()[0],
+                label=conditions[0],
+                lw=2,
+                errorevery=1,
+                ls=line_styles[0],
+                marker="D",
+                capsize=3,
+            )
+            line2 = ax.errorbar(
+                x,
+                data.xs(conditions[1], level=group_col)[variable + "_mean"],
+                yerr=data.xs(conditions[1], level=group_col)[variable + "_std"],
+                color=sns.color_palette()[1],
+                label=conditions[1],
+                lw=2,
+                errorevery=1,
+                ls=line_styles[1],
+                marker="D",
+                capsize=3,
+            )
+            plt.legend(
+                handles=[line1, line2], loc="upper right", prop={"size": fontsize}
+            )
         else:
-            ax.errorbar(x, data[variable + '_mean'], yerr=data[variable + '_std'],
-                        color=sns.color_palette()[0], lw=2, errorevery=1, ls=line_styles[0],
-                        marker="D", capsize=3)
+            ax.errorbar(
+                x,
+                data[variable + "_mean"],
+                yerr=data[variable + "_std"],
+                color=sns.color_palette()[0],
+                lw=2,
+                errorevery=1,
+                ls=line_styles[0],
+                marker="D",
+                capsize=3,
+            )
 
         for (start, end), color, alpha in zip(start_end, bg_color, bg_alpha):
             ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
@@ -462,15 +578,15 @@ class Stroop(base.BaseProtocol):
         ax.set_xlabel(xaxis_label, fontsize=fontsize)
         ax.set_xticks([start + 0.5 for (start, end) in start_end])
         ax.xaxis.set_minor_locator(xaxis_minor_ticks)
-        ax.tick_params(axis="x", which='both', bottom=True)
+        ax.tick_params(axis="x", which="both", bottom=True)
 
-        if (variable == 'correct'):
+        if variable == "correct":
             ax.set_ylim(0, 105)
-            ax.set_ylabel(r'$\Delta$Correct answers [%]', fontsize=fontsize)
-        elif (variable == 'latency'):
-            ax.set_ylabel(r'$\Delta$Response time [ms]', fontsize=fontsize)
+            ax.set_ylabel(r"$\Delta$Correct answers [%]", fontsize=fontsize)
+        elif variable == "latency":
+            ax.set_ylabel(r"$\Delta$Response time [ms]", fontsize=fontsize)
 
-        ax.tick_params(axis="y", which='major', left=True, labelsize=fontsize)
+        ax.tick_params(axis="y", which="major", left=True, labelsize=fontsize)
 
         if ylims:
             ax.margins(x=0)
@@ -483,9 +599,7 @@ class Stroop(base.BaseProtocol):
             return fig, ax
 
     def concat_phase_dict(
-            self,
-            dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
-            **kwargs
+        self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]], **kwargs
     ) -> Dict[str, pd.DataFrame]:
         """
         Rearranges the 'HR subject dict' (see `util s.load_hr_excel_all_subjects`) into 'Stroop subphase dict'.
@@ -503,14 +617,16 @@ class Stroop(base.BaseProtocol):
             'Stroop dict', i.e. a dict with heart rate data of all subjects per Stroop subphase
 
         """
-        if 'phases' in kwargs:
-            return super().concat_phase_dict(dict_hr_subject, kwargs['phases'])
+        if "phases" in kwargs:
+            return super().concat_phase_dict(dict_hr_subject, kwargs["phases"])
         else:
             return super().concat_phase_dict(dict_hr_subject, self.phases)
 
-    def split_groups_stroop(self,
-                            dict_stroop=Dict[str, Dict[str, pd.DataFrame]],
-                            condition_dict=Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+    def split_groups_stroop(
+        self,
+        dict_stroop=Dict[str, Dict[str, pd.DataFrame]],
+        condition_dict=Dict[str, Sequence[str]],
+    ) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Splits 'Stroop dict' into group dict, i.e. one 'Stroop dict' per group.
 
@@ -529,11 +645,15 @@ class Stroop(base.BaseProtocol):
 
         """
         return {
-            condition: {ID: dict_stroop[ID] for ID in IDs} for condition, IDs in condition_dict.items()
+            condition: {ID: dict_stroop[ID] for ID in IDs}
+            for condition, IDs in condition_dict.items()
         }
 
-    def split_groups(cls, phase_dict: Dict[str, pd.DataFrame],
-                     condition_dict: Dict[str, Sequence[str]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+    def split_groups(
+        cls,
+        phase_dict: Dict[str, pd.DataFrame],
+        condition_dict: Dict[str, Sequence[str]],
+    ) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Splits 'Stroop Phase dict' into group dict, i.e. one 'Stroop Phase dict' per group.
 
@@ -555,13 +675,13 @@ class Stroop(base.BaseProtocol):
         return super().split_groups(phase_dict, condition_dict)
 
     def hr_mean_plot(
-            self,
-            data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-            groups: Optional[Sequence[str]] = None,
-            group_col: Optional[str] = None,
-            plot_params: Optional[Dict] = None,
-            ax: Optional[plt.Axes] = None,
-            **kwargs
+        self,
+        data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+        groups: Optional[Sequence[str]] = None,
+        group_col: Optional[str] = None,
+        plot_params: Optional[Dict] = None,
+        ax: Optional[plt.Axes] = None,
+        **kwargs
     ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
         """
         Plots the course of heart rate during the complete Stroop test (mean ± standard error per phase).
@@ -608,13 +728,22 @@ class Stroop(base.BaseProtocol):
 
         if plot_params:
             self.hr_mean_plot_params.update(plot_params)
-        return plot.hr_mean_plot(data=data, groups=groups, group_col=group_col, plot_params=self.hr_mean_plot_params,
-                                 ax=ax, **kwargs)
+        return plot.hr_mean_plot(
+            data=data,
+            groups=groups,
+            group_col=group_col,
+            plot_params=self.hr_mean_plot_params,
+            ax=ax,
+            **kwargs
+        )
 
     def hr_mean_se(
-            self,
-            data: Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]],
-            is_group_dict: Optional[bool] = False
+        self,
+        data: Union[
+            Dict[str, Dict[str, pd.DataFrame]],
+            Dict[str, Dict[str, Dict[str, pd.DataFrame]]],
+        ],
+        is_group_dict: Optional[bool] = False,
     ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
         Computes the heart rate mean and standard error per phase over all subjects.

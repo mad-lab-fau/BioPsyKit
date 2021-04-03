@@ -9,8 +9,13 @@ from typing import Sequence, Optional
 from biopsykit._types import path_t
 
 
-def export_figure(fig: 'plt.Figure', filename: path_t, base_dir: path_t, formats: Optional[Sequence[str]] = None,
-                  use_subfolder: Optional[bool] = True) -> None:
+def export_figure(
+    fig: "plt.Figure",
+    filename: path_t,
+    base_dir: path_t,
+    formats: Optional[Sequence[str]] = None,
+    use_subfolder: Optional[bool] = True,
+) -> None:
     """
     Exports a figure to a file.
 
@@ -54,7 +59,7 @@ def export_figure(fig: 'plt.Figure', filename: path_t, base_dir: path_t, formats
     import matplotlib.pyplot as plt
 
     if formats is None:
-        formats = ['pdf']
+        formats = ["pdf"]
 
     # ensure pathlib
     base_dir = Path(base_dir)
@@ -67,6 +72,8 @@ def export_figure(fig: 'plt.Figure', filename: path_t, base_dir: path_t, formats
             folder.mkdir(exist_ok=True, parents=True)
 
     for f, subfolder in zip(formats, subfolders):
-        fig.savefig(subfolder.joinpath(filename.name + '.' + f), transparent=(f == 'pdf'), format=f)
-
-
+        fig.savefig(
+            subfolder.joinpath(filename.name + "." + f),
+            transparent=(f == "pdf"),
+            format=f,
+        )

@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def bmi(data: pd.DataFrame) -> pd.DataFrame:
-    """ Computes the **Body Mass Index**.
+    """Computes the **Body Mass Index**.
 
     This function assumes the data passed in the following way:
 
@@ -20,7 +20,9 @@ def bmi(data: pd.DataFrame) -> pd.DataFrame:
         dataframe with body mass index
 
     """
-    return pd.DataFrame(data.iloc[:, 0] / (data.iloc[:, 1] / 100.0) ** 2, columns=["bmi"])
+    return pd.DataFrame(
+        data.iloc[:, 0] / (data.iloc[:, 1] / 100.0) ** 2, columns=["bmi"]
+    )
 
 
 def whr(score: str, df: pd.DataFrame) -> pd.DataFrame:

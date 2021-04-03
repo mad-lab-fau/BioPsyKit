@@ -10,8 +10,8 @@ def load_eeg_muse(file_path: path_t) -> Tuple[pd.DataFrame, int]:
     sampling_rate = 250
     # convert timestamps to datetime object, set as dataframe index and
     # the timestamp from UTC into the correct time zone
-    data['timestamps'] = pd.to_datetime(data['timestamps'], unit='s')
-    data.set_index('timestamps', inplace=True)
+    data["timestamps"] = pd.to_datetime(data["timestamps"], unit="s")
+    data.set_index("timestamps", inplace=True)
     data = data.tz_localize("UTC").tz_convert("Europe/Berlin")
     if "Right AUX" in data.columns:
         # drop the AUX column

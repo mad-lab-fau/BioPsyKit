@@ -7,10 +7,4 @@ from biopsykit.protocols.generic import GenericProtocol
 
 import biopsykit.protocols.base
 
-__all__ = [
-    'CFT',
-    'MIST',
-    'TSST',
-    'Stroop',
-    'GenericProtocol'
-]
+__all__ = ["CFT", "MIST", "TSST", "Stroop", "GenericProtocol"]

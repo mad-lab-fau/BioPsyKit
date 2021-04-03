@@ -9,9 +9,10 @@ class TSST(base.BaseProtocol):
     """
 
     def __init__(
-            self, name: Optional[str] = None,
-            phases: Optional[Sequence[str]] = None,
-            phase_durations: Optional[Sequence[int]] = None
+        self,
+        name: Optional[str] = None,
+        phases: Optional[Sequence[str]] = None,
+        phase_durations: Optional[Sequence[int]] = None,
     ):
         if name is None:
             name = "TSST"
@@ -34,8 +35,8 @@ class TSST(base.BaseProtocol):
         """
 
         self.saliva_params = {
-            'test_text': "TSST",
-            'xaxis_label': "Time relative to TSST start [min]"
+            "test_text": "TSST",
+            "xaxis_label": "Time relative to TSST start [min]",
         }
 
         self._update_tsst_params(phases, phase_durations)
@@ -44,7 +45,9 @@ class TSST(base.BaseProtocol):
         return """{}
         Phases: {}
         Phase Durations: {}
-        """.format(self.name, self.phases, self.phase_durations)
+        """.format(
+            self.name, self.phases, self.phase_durations
+        )
 
     @property
     def tsst_times(self):
@@ -54,7 +57,9 @@ class TSST(base.BaseProtocol):
     def tsst_times(self, tsst_times):
         self.test_times = tsst_times
 
-    def _update_tsst_params(self, phases: Sequence[str], phase_durations: Sequence[int]):
+    def _update_tsst_params(
+        self, phases: Sequence[str], phase_durations: Sequence[int]
+    ):
         if phases:
             self.phases = phases
         if phase_durations:

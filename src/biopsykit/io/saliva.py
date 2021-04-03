@@ -7,21 +7,20 @@ import numpy as np
 
 from biopsykit._types import path_t
 
-_DATA_COL_NAMES = {
-    'cortisol': 'cortisol (nmol/l)',
-    'amylase': 'amylase (U/ml)'
-}
+_DATA_COL_NAMES = {"cortisol": "cortisol (nmol/l)", "amylase": "amylase (U/ml)"}
 
 
-def load_saliva_plate(file_path: path_t,
-                      biomarker_type: str,
-                      sample_id_col: Optional[str] = 'sample ID',
-                      data_col: Optional[str] = None,
-                      data_col_names: Optional[Sequence[str]] = None,
-                      regex_str: Optional[str] = None,
-                      saliva_times: Optional[Sequence[int]] = None,
-                      condition_list: Optional[pd.Index] = None,
-                      sheet_name: Optional[str] = None) -> pd.DataFrame:
+def load_saliva_plate(
+    file_path: path_t,
+    biomarker_type: str,
+    sample_id_col: Optional[str] = "sample ID",
+    data_col: Optional[str] = None,
+    data_col_names: Optional[Sequence[str]] = None,
+    regex_str: Optional[str] = None,
+    saliva_times: Optional[Sequence[int]] = None,
+    condition_list: Optional[pd.Index] = None,
+    sheet_name: Optional[str] = None,
+) -> pd.DataFrame:
     """
     Reads saliva from an Excel sheet in 'plate' format.
 
@@ -75,9 +74,16 @@ def load_saliva_plate(file_path: path_t,
         data_col = _DATA_COL_NAMES[biomarker_type]
 
     if sheet_name is None:
-        df_saliva = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col])
+        df_saliva = pd.read_excel(
+            file_path, skiprows=2, usecols=[sample_id_col, data_col]
+        )
     else:
-        df_saliva = pd.read_excel(file_path, skiprows=2, sheet_name=sheet_name, usecols=[sample_id_col, data_col])
+        df_saliva = pd.read_excel(
+            file_path,
+            skiprows=2,
+            sheet_name=sheet_name,
+            usecols=[sample_id_col, data_col],
+        )
 
     cols = df_saliva[sample_id_col].str.extract(regex_str)
     if data_col_names is None:
@@ -89,24 +95,35 @@ def load_saliva_plate(file_path: path_t,
     df_saliva[data_col_names] = cols
     # df_saliva["sample"] = df_saliva["sample"].astype(int)
 
-    df_saliva.drop(columns=[sample_id_col], inplace=True, errors='ignore')
+    df_saliva.drop(columns=[sample_id_col], inplace=True, errors="ignore")
     df_saliva.rename(columns={data_col: biomarker_type}, inplace=True)
     df_saliva.set_index(data_col_names, inplace=True)
 
     if condition_list is not None:
         if isinstance(condition_list, Sequence):
             # Add Condition as new index level
-            condition_list = pd.DataFrame(condition_list, columns=["condition"],
-                                          index=df_saliva.index.get_level_values('subject').unique())
+            condition_list = pd.DataFrame(
+                condition_list,
+                columns=["condition"],
+                index=df_saliva.index.get_level_values("subject").unique(),
+            )
         elif isinstance(condition_list, Dict):
             condition_list = pd.DataFrame(condition_list)
-            condition_list = condition_list.stack().reset_index(level=1).set_index('level_1').sort_values(0)
-            condition_list.index.name = 'condition'
+            condition_list = (
+                condition_list.stack()
+                .reset_index(level=1)
+                .set_index("level_1")
+                .sort_values(0)
+            )
+            condition_list.index.name = "condition"
         elif isinstance(condition_list, pd.DataFrame):
             condition_list = condition_list.reset_index().set_index("subject")
 
-        df_saliva = df_saliva.join(condition_list).set_index("condition", append=True).reorder_levels(
-            ["condition", "subject", "sample"])
+        df_saliva = (
+            df_saliva.join(condition_list)
+            .set_index("condition", append=True)
+            .reorder_levels(["condition", "subject", "sample"])
+        )
 
     num_subjects = len(df_saliva.index.get_level_values("subject").unique())
 
@@ -122,31 +139,34 @@ def load_saliva_plate(file_path: path_t,
         raise ValueError(
             """Error converting  all saliva values into numbers: '{}'
             Please check your saliva values whether there is any text etc. in the column '{}' and delete the values or replace them by NaN!""".format(
-                e, data_col))
+                e, data_col
+            )
+        )
     return df_saliva
 
 
 def save_saliva(file_path: path_t, data: pd.DataFrame) -> None:
-    if 'time' in data:
+    if "time" in data:
         # drop saliva times for export
-        data.drop('time', axis=1, inplace=True)
+        data.drop("time", axis=1, inplace=True)
     data = data.unstack()
     data.columns = data.columns.droplevel(level=0)
     data.to_csv(file_path)
 
 
 def load_saliva_wide_format(
-        file_path: path_t,
-        biomarker_name: str,
-        subject_col: Optional[str] = "subject",
-        condition_col: Optional[str] = None,
-        saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
+    file_path: path_t,
+    biomarker_name: str,
+    subject_col: Optional[str] = "subject",
+    condition_col: Optional[str] = None,
+    saliva_times: Optional[Sequence[int]] = None,
+) -> pd.DataFrame:
     index_cols = [subject_col]
 
     data = pd.read_csv(file_path, dtype={subject_col: str})
 
     if condition_col is None:
-        if 'condition' in data.columns:
+        if "condition" in data.columns:
             condition_col = "condition"
 
     if condition_col is not None:
@@ -155,7 +175,9 @@ def load_saliva_wide_format(
     data.set_index(index_cols, inplace=True)
 
     num_subjects = len(data)
-    data.columns = pd.MultiIndex.from_product([[biomarker_name], data.columns], names=["", "sample"])
+    data.columns = pd.MultiIndex.from_product(
+        [[biomarker_name], data.columns], names=["", "sample"]
+    )
 
     data = data.stack()
 
@@ -163,7 +185,7 @@ def load_saliva_wide_format(
 
     if saliva_times is not None:
         _check_saliva_times(len(data), num_subjects, saliva_times)
-        data['time'] = np.array(saliva_times * num_subjects)
+        data["time"] = np.array(saliva_times * num_subjects)
 
     return data
 
@@ -172,13 +194,19 @@ def _check_num_samples(num_samples: int, num_subjects: int):
     if num_samples % num_subjects != 0:
         raise ValueError(
             "Error during import: Number of samples not equal for all subjects! Got {} samples for {} subjects.".format(
-                num_samples, num_subjects))
+                num_samples, num_subjects
+            )
+        )
 
 
-def _check_saliva_times(num_samples: int, num_subjects: int, saliva_times: Sequence[int]):
+def _check_saliva_times(
+    num_samples: int, num_subjects: int, saliva_times: Sequence[int]
+):
     if not np.all(np.diff(saliva_times) > 0):
         raise ValueError("`saliva_times` must be increasing!")
     if (len(saliva_times) * num_subjects) != num_samples:
         raise ValueError(
             "Length of `saliva_times` does not match the number of saliva samples! Expected: {}, got: {}".format(
-                int(num_samples / num_subjects), len(saliva_times)))
+                int(num_samples / num_subjects), len(saliva_times)
+            )
+        )

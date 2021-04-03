@@ -6,18 +6,27 @@ from numpy.linalg import norm
 from typing_extensions import Literal
 
 # supported metric functions
-_METRIC_FUNCTIONS = {"maximum": np.nanmax, "variance": np.nanvar, "mean": np.nanmean, "median": np.nanmedian}
+_METRIC_FUNCTIONS = {
+    "maximum": np.nanmax,
+    "variance": np.nanvar,
+    "mean": np.nanmean,
+    "median": np.nanmedian,
+}
 METRIC_FUNCTION_NAMES = Literal["maximum", "variance", "mean", "median"]
 
-from biopsykit.utils.array_handling import sliding_window_view, _bool_fill, bool_array_to_start_end_array
+from biopsykit.utils.array_handling import (
+    sliding_window_view,
+    _bool_fill,
+    bool_array_to_start_end_array,
+)
 
 
 def find_static_samples(
-        signal: np.ndarray,
-        window_length: int,
-        inactive_signal_th: float,
-        metric: METRIC_FUNCTION_NAMES = "mean",
-        overlap: int = None,
+    signal: np.ndarray,
+    window_length: int,
+    inactive_signal_th: float,
+    metric: METRIC_FUNCTION_NAMES = "mean",
+    overlap: int = None,
 ) -> np.ndarray:
     """Search for static samples within given input signal, based on windowed L2-norm thresholding.
 
@@ -71,7 +80,9 @@ def find_static_samples(
         raise ValueError("Invalid signal dimensions, signal must be of shape (n,3).")
 
     if metric not in _METRIC_FUNCTIONS:
-        raise ValueError("Invalid metric passed! %s as metric is not supported." % metric)
+        raise ValueError(
+            "Invalid metric passed! %s as metric is not supported." % metric
+        )
 
     # add default overlap value
     if overlap is None:
@@ -86,8 +97,12 @@ def find_static_samples(
     mfunc = _METRIC_FUNCTIONS[metric]
 
     # Create windowed view of norm
-    windowed_norm = sliding_window_view(signal_norm, window_length, overlap, nan_padding=False)
-    is_static = np.broadcast_to(mfunc(windowed_norm, axis=1) <= inactive_signal_th, windowed_norm.shape[::-1]).T
+    windowed_norm = sliding_window_view(
+        signal_norm, window_length, overlap, nan_padding=False
+    )
+    is_static = np.broadcast_to(
+        mfunc(windowed_norm, axis=1) <= inactive_signal_th, windowed_norm.shape[::-1]
+    ).T
 
     # create the list of indices for sliding windows with overlap
     windowed_indices = sliding_window_view(
@@ -95,17 +110,19 @@ def find_static_samples(
     )
 
     # iterate over sliding windows
-    inactive_signal_bool_array = _bool_fill(windowed_indices, is_static, inactive_signal_bool_array)
+    inactive_signal_bool_array = _bool_fill(
+        windowed_indices, is_static, inactive_signal_bool_array
+    )
 
     return inactive_signal_bool_array.astype(bool)
 
 
 def find_static_sequences(
-        signal: np.ndarray,
-        window_length: int,
-        inactive_signal_th: float,
-        metric: METRIC_FUNCTION_NAMES = "mean",
-        overlap: int = None,
+    signal: np.ndarray,
+    window_length: int,
+    inactive_signal_th: float,
+    metric: METRIC_FUNCTION_NAMES = "mean",
+    overlap: int = None,
 ) -> np.ndarray:
     """Search for static sequences within given input signal, based on windowed L2-norm thresholding.
 
@@ -165,7 +182,10 @@ def find_static_sequences(
 
 
 def find_first_static_window_multi_sensor(
-        signals: Sequence[np.ndarray], window_length: int, inactive_signal_th: float, metric: METRIC_FUNCTION_NAMES
+    signals: Sequence[np.ndarray],
+    window_length: int,
+    inactive_signal_th: float,
+    metric: METRIC_FUNCTION_NAMES,
 ) -> Tuple[int, int]:
     """Find the first time window in the signal where all provided sensors are static.
 
@@ -194,7 +214,9 @@ def find_first_static_window_multi_sensor(
 
     """
     if metric not in _METRIC_FUNCTIONS:
-        raise ValueError("`metric` must be one of {}".format(list(_METRIC_FUNCTIONS.keys())))
+        raise ValueError(
+            "`metric` must be one of {}".format(list(_METRIC_FUNCTIONS.keys()))
+        )
 
     if not isinstance(signals, np.ndarray):
         # all signals should have the same shape
