@@ -2,14 +2,20 @@ import datetime
 from pathlib import Path
 from typing import Optional, Union, Sequence, Dict, List
 
+import numpy as np
 import pandas as pd
 import pytz
 
 from biopsykit._types import path_t
 
 
-def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
-                  phase_cols: Optional[Union[Sequence[str], Dict[str, str]]] = None) -> pd.DataFrame:
+def load_time_log(
+    file_path: path_t,
+    index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
+    phase_cols: Optional[Union[Sequence[str], Dict[str, str]]] = None,
+    continuous_time: Optional[bool] = True,
+    **kwargs
+) -> pd.DataFrame:
     """
     Loads a 'time log file', i.e. a file where time information about start and stop times of recordings or recording
     phases are stored.
@@ -23,6 +29,10 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
         Default: ``None``
     phase_cols : list, optional
         list of column names that contain time log information or ``None`` to use all columns. Default: ``None``
+    continuous_time: bool, optional
+        flag indicating whether phases are continuous, i.e., whether the end of the previous phase is also the beginnng
+        of the next phase or not. Default: `True`. If continuous_time is set to `False`, the start and end columns of all
+        phases must have the suffixes '_start' and '_end', respectively
 
     Returns
     -------
@@ -46,10 +56,10 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
     """
     # ensure pathlib
     file_path = Path(file_path)
-    if file_path.suffix in ['.xls', '.xlsx']:
-        df_time_log = pd.read_excel(file_path)
-    elif file_path.suffix in ['.csv']:
-        df_time_log = pd.read_csv(file_path)
+    if file_path.suffix in [".xls", ".xlsx"]:
+        df_time_log = pd.read_excel(file_path, **kwargs)
+    elif file_path.suffix in [".csv"]:
+        df_time_log = pd.read_csv(file_path, **kwargs)
     else:
         raise ValueError("Unrecognized file format {}!".format(file_path.suffix))
 
@@ -74,12 +84,39 @@ def load_time_log(file_path: path_t, index_cols: Optional[Union[str, Sequence[st
         df_time_log = df_time_log.loc[:, phase_cols]
     if new_phase_cols:
         df_time_log.rename(columns=new_phase_cols, inplace=True)
+
+    if not continuous_time:
+        start_cols = np.squeeze(
+            df_time_log.columns.str.extract(r"(\w+)_start").dropna().values
+        )
+        end_cols = np.squeeze(
+            df_time_log.columns.str.extract(r"(\w+)_end").dropna().values
+        )
+        if not np.array_equal(start_cols, end_cols):
+            raise ValueError("Not all phases have 'start' and 'end' columns!")
+        # phases are not continuous, so merge every second value
+        df_time_log = pd.wide_to_long(
+            df_time_log.reset_index(),
+            stubnames=start_cols,
+            i=index_cols,
+            j="time",
+            sep="_",
+            suffix="(start|end)",
+        )
+        # ensure that "start" is always before "end"
+        df_time_log = df_time_log.reindex(["start", "end"], level=-1)
+        # unstack start|end level
+        df_time_log = df_time_log.unstack()
+
     return df_time_log
 
 
-def load_subject_condition_list(file_path: path_t, subject_col: Optional[str] = 'subject',
-                                condition_col: Optional[str] = 'condition',
-                                return_dict: Optional[bool] = True) -> Union[Dict, pd.DataFrame]:
+def load_subject_condition_list(
+    file_path: path_t,
+    subject_col: Optional[str] = "subject",
+    condition_col: Optional[str] = "condition",
+    return_dict: Optional[bool] = True,
+) -> Union[Dict, pd.DataFrame]:
     # enforce subject ID to be string
     df_cond = pd.read_csv(file_path, dtype={condition_col: str, subject_col: str})
     df_cond.set_index(subject_col, inplace=True)
@@ -90,28 +127,33 @@ def load_subject_condition_list(file_path: path_t, subject_col: Optional[str] = 
         return df_cond
 
 
-def load_questionnaire_data(file_path: path_t,
-                            index_cols: Optional[Union[str, Sequence[str]]] = None,
-                            remove_nan_rows: Optional[bool] = True,
-                            replace_missing_vals: Optional[bool] = True,
-                            sheet_name: Optional[Union[str, int]] = 0) -> pd.DataFrame:
+def load_questionnaire_data(
+    file_path: path_t,
+    index_cols: Optional[Union[str, Sequence[str]]] = None,
+    remove_nan_rows: Optional[bool] = True,
+    replace_missing_vals: Optional[bool] = True,
+    sheet_name: Optional[Union[str, int]] = 0,
+) -> pd.DataFrame:
     from biopsykit.utils.dataframe_handling import convert_nan
+
     # ensure pathlib
     file_path = Path(file_path)
-    if file_path.suffix == '.csv':
+    if file_path.suffix == ".csv":
         data = pd.read_csv(file_path, index_col=index_cols)
-    elif file_path.suffix in ('.xlsx', '.xls'):
+    elif file_path.suffix in (".xlsx", ".xls"):
         data = pd.read_excel(file_path, index_col=index_cols, sheet_name=sheet_name)
     else:
         raise ValueError("Invalid file type!")
     if remove_nan_rows:
-        data = data.dropna(how='all')
+        data = data.dropna(how="all")
     if replace_missing_vals:
         data = convert_nan(data)
     return data
 
 
-def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = None) -> Dict[str, pd.DataFrame]:
+def load_stroop_inquisit_data(
+    folder_path=str, cols: Optional[Sequence[str]] = None
+) -> Dict[str, pd.DataFrame]:
     """
     Loads the stroop test data from a folder and writes parameters like mean response time, number of correct answers,..
     into a Dictionary. The raw data needs to be as an .iqdat format in the path folder.
@@ -137,14 +179,14 @@ def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = N
     # iterate through data
     for data_path in dataset_list:
 
-        df_stroop = pd.read_csv(data_path, sep='\t')
+        df_stroop = pd.read_csv(data_path, sep="\t")
 
-        if (subject != df_stroop['subject'][0]):
+        if subject != df_stroop["subject"][0]:
             dict_stroop_subphase = {}
 
         # set subject, stroop phase
-        subject = df_stroop['subject'][0]
-        subphase = 'Stroop' + str(df_stroop['sessionid'][0])[-1]
+        subject = df_stroop["subject"][0]
+        subphase = "Stroop" + str(df_stroop["sessionid"][0])[-1]
         df_mean = df_stroop.mean(axis=0).to_frame().T
 
         if cols:
@@ -157,9 +199,13 @@ def load_stroop_inquisit_data(folder_path=str, cols: Optional[Sequence[str]] = N
     return dict_stroop
 
 
-def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset'] = None,
-                              df: Optional[pd.DataFrame] = None, date: Optional[Union[str, 'datetime']] = None,
-                              timezone: Optional[str] = "Europe/Berlin") -> pd.DataFrame:
+def convert_time_log_datetime(
+    time_log: pd.DataFrame,
+    dataset: Optional["Dataset"] = None,
+    df: Optional[pd.DataFrame] = None,
+    date: Optional[Union[str, "datetime"]] = None,
+    timezone: Optional[str] = "Europe/Berlin",
+) -> pd.DataFrame:
     """
     Converts the time information of a time log pandas dataframe into datetime objects, i.e. adds the recording date
     to the time. Thus, either a NilsPodLib 'Dataset' or pandas DataFrame with DateTimeIndex must be supplied from which
@@ -188,7 +234,9 @@ def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset
         if none of `dataset`, `df` and `date` are supplied as argument
     """
     if dataset is None and date is None and df is None:
-        raise ValueError("Either `dataset`, `df` or `date` must be supplied as argument!")
+        raise ValueError(
+            "Either `dataset`, `df` or `date` must be supplied as argument!"
+        )
 
     if dataset is not None:
         date = dataset.info.utc_datetime_start.date()
@@ -201,12 +249,17 @@ def convert_time_log_datetime(time_log: pd.DataFrame, dataset: Optional['Dataset
     if isinstance(date, str):
         # ensure datetime
         date = datetime.datetime(date)
-    time_log = time_log.applymap(lambda x: pytz.timezone(timezone).localize(datetime.datetime.combine(date, x)))
+    time_log = time_log.applymap(
+        lambda x: pytz.timezone(timezone).localize(datetime.datetime.combine(date, x))
+    )
     return time_log
 
 
-def write_pandas_dict_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_t,
-                            index_col: Optional[bool] = True) -> None:
+def write_pandas_dict_excel(
+    data_dict: Dict[str, pd.DataFrame],
+    file_path: path_t,
+    index_col: Optional[bool] = True,
+) -> None:
     """
     Writes a dictionary containing pandas dataframes to an Excel file.
 
@@ -222,20 +275,25 @@ def write_pandas_dict_excel(data_dict: Dict[str, pd.DataFrame], file_path: path_
     # ensure pathlib
     file_path = Path(file_path)
 
-    writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
+    writer = pd.ExcelWriter(file_path, engine="xlsxwriter")
     for key in data_dict:
         if isinstance(data_dict[key].index, pd.DatetimeIndex):
             # un-localize DateTimeIndex because Excel doesn't support timezone-aware dates
-            data_dict[key].tz_localize(None).to_excel(writer, sheet_name=key, index=index_col)
+            data_dict[key].tz_localize(None).to_excel(
+                writer, sheet_name=key, index=index_col
+            )
         else:
             data_dict[key].to_excel(writer, sheet_name=key, index=index_col)
     writer.save()
 
 
-def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
-                      identifier_col: Optional[Union[str, Sequence[str]]] = "subject",
-                      index_cols: Optional[Sequence[str]] = None,
-                      overwrite_file: Optional[bool] = False) -> None:
+def write_result_dict(
+    result_dict: Dict[str, pd.DataFrame],
+    file_path: path_t,
+    identifier_col: Optional[Union[str, Sequence[str]]] = "subject",
+    index_cols: Optional[Sequence[str]] = None,
+    overwrite_file: Optional[bool] = False,
+) -> None:
     """
     Saves dictionary with processing results (e.g. HR, HRV, RSA) of all subjects as csv file.
 
@@ -303,7 +361,11 @@ def write_result_dict(result_dict: Dict[str, pd.DataFrame], file_path: path_t,
 
     if file_path.exists() and not overwrite_file:
         # ensure that all identifier columns are read as str
-        df_result_old = pd.read_csv(file_path, dtype={col: str for col in identifier_col})
+        df_result_old = pd.read_csv(
+            file_path, dtype={col: str for col in identifier_col}
+        )
         df_result_old.set_index(identifier_col + index_cols, inplace=True)
-        df_result_concat = df_result_concat.combine_first(df_result_old).sort_index(level=0)
+        df_result_concat = df_result_concat.combine_first(df_result_old).sort_index(
+            level=0
+        )
     df_result_concat.to_csv(file_path)
