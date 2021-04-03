@@ -12,16 +12,19 @@ import sys
 import inspect
 import shutil
 
+from sphinx.ext.autosummary import Autosummary
+from sphinx.ext.autosummary import get_documenter
+from docutils.parsers.rst import directives
+from sphinx.util.inspect import safe_getattr
+
 # -- Path setup --------------------------------------------------------------
 
-__location__ = os.path.join(
-    os.getcwd(), os.path.dirname(inspect.getfile(inspect.currentframe()))
-)
+__location__ = os.path.join(os.getcwd(), os.path.dirname(inspect.getfile(inspect.currentframe())))
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.join(__location__, "../src"))
+sys.path.insert(0, os.path.join(__location__, "../src/biopsykit"))
 
 # -- Run sphinx-apidoc -------------------------------------------------------
 # This hack is necessary since RTD does not issue `sphinx-apidoc` before running
@@ -46,9 +49,8 @@ except FileNotFoundError:
 try:
     import sphinx
 
-    cmd_line_template = (
-        "sphinx-apidoc --implicit-namespaces -e -f -M -o {outputdir} {moduledir}"
-    )
+    # cmd_line_template = "sphinx-apidoc --implicit-namespaces -e -f -M -o {outputdir} {moduledir}"
+    cmd_line_template = "sphinx-apidoc --implicit-namespaces -e -M -o {outputdir} {moduledir}"
     cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
 
     args = cmd_line.split(" ")
@@ -89,6 +91,13 @@ templates_path = ["_templates"]
 autosummary_generate = True
 autosummary_generate_overwrite = True
 
+# This value selects if automatically documented members are sorted alphabetical (value 'alphabetical'),
+# by member type (value 'groupwise') or by source order (value 'bysource'). The default is alphabetical.
+autodoc_member_order = "groupwise"
+
+# This value controls how to represent typehints
+autodoc_typehints = "description"
+
 # Taken from sklearn config
 # For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
 # (useful for viewing the doc offline)
@@ -116,6 +125,44 @@ def setup(app):
     }
     app.add_config_value("recommonmark_config", params, True)
     app.add_transform(AutoStructify)
+    app.add_directive("autoautosummary", AutoAutoSummary)
+
+
+class AutoAutoSummary(Autosummary):
+    option_spec = {"methods": directives.unchanged, "attributes": directives.unchanged}
+
+    required_arguments = 1
+
+    @staticmethod
+    def get_members(obj, typ, include_public=None):
+        if not include_public:
+            include_public = []
+        items = []
+        for name in dir(obj):
+            try:
+                documenter = get_documenter(safe_getattr(obj, name), obj)
+            except AttributeError:
+                continue
+            if documenter.objtype == typ:
+                items.append(name)
+        public = [x for x in items if x in include_public or not x.startswith("_")]
+        return public, items
+
+    def run(self):
+        clazz = str(self.arguments[0])
+        try:
+            (module_name, class_name) = clazz.rsplit(".", 1)
+            m = __import__(module_name, globals(), locals(), [class_name])
+            c = getattr(m, class_name)
+            if "methods" in self.options:
+                _, methods = self.get_members(c, "method", ["__init__"])
+
+                self.content = ["~%s.%s" % (clazz, method) for method in methods if not method.startswith("_")]
+            if "attributes" in self.options:
+                _, attribs = self.get_members(c, "attribute")
+                self.content = ["~%s.%s" % (clazz, attrib) for attrib in attribs if not attrib.startswith("_")]
+        finally:
+            return super(AutoAutoSummary, self).run()
 
 
 # Enable markdown
@@ -181,7 +228,7 @@ html_theme = "pydata_sphinx_theme"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {"sidebar_width": "300px", "page_width": "1200px"}
+html_theme_options = {"sidebar_width": "300px", "page_width": "1200px", "show_toc_level": 3}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -239,7 +286,7 @@ html_static_path = ["_static"]
 # html_show_sourcelink = True
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
-# html_show_sphinx = True
+html_show_sphinx = False
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
 # html_show_copyright = True
@@ -268,9 +315,7 @@ latex_elements = {
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [
-    ("index", "user_guide.tex", "BioPsyKit Documentation", "Robert Richer", "manual")
-]
+latex_documents = [("index", "user_guide.tex", "BioPsyKit Documentation", "Robert Richer", "manual")]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.

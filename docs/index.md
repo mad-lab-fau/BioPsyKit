@@ -8,7 +8,6 @@ to use **BioPsyKit**.
 
 ## Contents
 
-* [Overview](index)
 * [Readme](readme)
 * [User Guide](guides/index)
 * [Examples](guides/index)
