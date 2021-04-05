@@ -20,7 +20,7 @@ def load_saliva_plate(
     condition_list: Optional[pd.Index] = None,
     sheet_name: Optional[str] = None,
 ) -> pd.DataFrame:
-    """
+    r"""
     Reads saliva from an Excel sheet in 'plate' format.
 
     To extract the subject ID, day ID and sample ID from the saliva sample identifier, you can pass a

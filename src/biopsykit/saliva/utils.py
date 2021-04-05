@@ -86,11 +86,11 @@ def get_saliva_column_suggestions(data: pd.DataFrame, biomarker: str) -> Sequenc
         )
     )
     # replace il{} with il6 since this was removed out by the previous filter operation
-    sugg_filt = [re.sub("\d", "{}", s).replace("il{}", "il6").replace("IL{}", "IL6") for s in sugg_filt]
+    sugg_filt = [re.sub(r"\d", "{}", s).replace("il{}", "il6").replace("IL{}", "IL6") for s in sugg_filt]
     sugg_filt = sorted(list(filter(lambda s: "{}" in s, set(sugg_filt))))
 
     # build regex for column extraction
-    sugg_filt = ["^{}$".format(s.replace("{}", "(\d)")) for s in sugg_filt]
+    sugg_filt = ["^{}$".format(s.replace("{}", r"(\d)")) for s in sugg_filt]
     return sugg_filt
 
 

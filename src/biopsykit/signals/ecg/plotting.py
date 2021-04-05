@@ -266,13 +266,13 @@ def hr_plot(
 
     ax.set_ylabel("Heart Rate [bpm]")
     ax.plot(
-        heart_rate["ECG_Rate"],
+        heart_rate["Heart_Rate"],
         color=colors.fau_color("wiso"),
         label="Heart Rate",
         linewidth=1.5,
     )
     if plot_mean:
-        rate_mean = heart_rate["ECG_Rate"].mean()
+        rate_mean = heart_rate["Heart_Rate"].mean()
         ax.axhline(
             y=rate_mean,
             label="Mean: {:.1f} bpm".format(rate_mean),

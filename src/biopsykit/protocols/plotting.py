@@ -69,8 +69,8 @@ _saliva_feature_params = {
         "auc_g": r"$AUC_G$",
         "auc_i": r"$AUC_I$",
         "slope": r"$a_{§}$",
-        "max_inc": "$\Delta c_{max}$",
-        "cmax": "$c_{max}$",
+        "max_inc": r"$\Delta c_{max}$",
+        "cmax": r"$c_{max}$",
     },
 }
 

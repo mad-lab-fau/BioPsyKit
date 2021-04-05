@@ -4,6 +4,8 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import scipy.signal as ss
+
+from biopsykit.utils.datatype_helper import HeartRateSubjectDict
 from tqdm.notebook import tqdm
 import pytz
 
@@ -36,13 +38,13 @@ class EcgProcessor:
             * ECG_Quality: Quality indicator in the range of [0,1] for ECG signal quality
             * ECG_R_Peaks: 1.0 where R peak was detected in the ECG signal, 0.0 else
             * R_Peak_Outlier: 1.0 when a detected R peak was classified as outlier, 0.0 else
-            * ECG_Rate: Computed Heart rate interpolated to signal length
+            * Heart_Rate: Computed Heart rate interpolated to signal length
 
     self.heart_rate : dict
         Dictionary with heart rate data derived from the ECG signal
 
         **Columns**:
-            * ECG_Rate: Computed heart rate for each detected R peak
+            * Heart_Rate: Computed heart rate for each detected R peak
 
     self.rpeaks : dict
         Dictionary with R peak location indices derived from the ECG signal
@@ -156,16 +158,17 @@ class EcgProcessor:
             * ECG_Quality: Quality indicator in the range of [0,1] for ECG signal quality
             * ECG_R_Peaks: 1.0 where R peak was detected in the ECG signal, 0.0 else
             * R_Peak_Outlier: 1.0 when a detected R peak was classified as outlier, 0.0 else
-            * ECG_Rate: Computed Heart rate interpolated to signal length
+            * Heart_Rate: Computed Heart rate interpolated to signal length
         """
 
-        self.heart_rate: Dict[str, pd.DataFrame] = {}
+        self.heart_rate: HeartRateSubjectDict = {}
         """
         self.heart_rate : dict
-        Dictionary with heart rate data derived from the ECG signal
+        :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDict`, a dictionary with heart rate data
+        derived from the ECG signal
 
         **Columns**:
-            * ECG_Rate: Computed heart rate for each detected R peak
+            * Heart_Rate: Computed heart rate for each detected R peak
         """
 
         self.rpeaks: Dict[str, pd.DataFrame] = {}
@@ -206,60 +209,6 @@ class EcgProcessor:
     @property
     def phases(self) -> Sequence[str]:
         return list(self.ecg_result.keys())
-
-    @classmethod
-    def outlier_corrections(cls) -> Sequence[str]:
-        """
-        Returns the keys of all possible outlier correction methods.
-
-        Currently available outlier correction methods are:
-            * `correlation`: Computes the cross-correlation coefficient between every single beat and the average of all
-              detected beats. Marks beats as outlier if cross-correlation coefficient is below a certain threshold
-            * `quality`: Uses the 'ECG_Quality' indicator from neurokit to assess signal quality. Marks beats as outlier if
-              quality indicator of beat is below a certain threshold
-            * `artifact`: Artifact detection based on work from `Berntson et al. (1990), Psychophysiology`
-            * `physiological`: Physiological outlier removal. Marks beats as outlier if their heart rate is above or below a
-              threshold that can not be achieved physiologically
-            * `statistical_rr`: Statistical outlier removal based on RR intervals.
-              Marks beats as outlier if the RR intervals are within the xx% highest or lowest values.
-              Values are removed based on the z-score (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values;
-              2.576 => 1 %, 0.5 % highest, 0.5 % lowest values)
-            * `statistical_rr_diff`: Statistical outlier removal based on successive differences of RR intervals.
-            Marks beats as outlier if the difference of successive RR intervals are within the xx% highest or
-              lowest heart rates. Values are removed based on the z-score
-              (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values; 2.576 => 1 %, 0.5 % highest, 0.5 % lowest values)
-
-        See Also
-        --------
-        EcgProcessor.correct_outlier, EcgProcessor.outlier_params_default
-
-        Returns
-        -------
-        list
-            List containing the keys of all possible outlier correction methods
-        """
-        return list(_outlier_correction_methods.keys())
-
-    @classmethod
-    def outlier_params_default(cls) -> Dict[str, Union[float, Sequence[float]]]:
-        """
-        Returns all default parameters for outlier correction methods.
-
-
-        **NOTE:** outlier correction method `artifact` has no threshold, but '0.0' is default parameter to provide
-        a homogenous interface
-
-
-        See Also
-        --------
-        EcgProcessor.correct_outlier, EcgProcessor.outlier_corrections
-
-        Returns
-        -------
-        dict
-            Dictionary containing the default parameters for the different outlier correction methods
-        """
-        return _outlier_correction_params_default
 
     def ecg_process(
         self,
@@ -327,13 +276,13 @@ class EcgProcessor:
                 outlier_params=outlier_params,
                 sampling_rate=self.sampling_rate,
             )
-            heart_rate = pd.DataFrame({"ECG_Rate": 60 / rpeaks["RR_Interval"]})
+            heart_rate = pd.DataFrame({"Heart_Rate": 60 / rpeaks["RR_Interval"]})
             heart_rate_interpolated = nk.signal_interpolate(
                 x_values=np.squeeze(rpeaks["R_Peak_Idx"].values),
-                y_values=np.squeeze(heart_rate["ECG_Rate"].values),
+                y_values=np.squeeze(heart_rate["Heart_Rate"].values),
                 x_new=np.arange(0, len(ecg_result["ECG_Clean"])),
             )
-            ecg_result["ECG_Rate"] = heart_rate_interpolated
+            ecg_result["Heart_Rate"] = heart_rate_interpolated
             self.ecg_result[name] = ecg_result
             self.heart_rate[name] = heart_rate
             self.rpeaks[name] = rpeaks
@@ -391,6 +340,60 @@ class EcgProcessor:
         rpeaks.loc[rpeaks.index[-1], "RR_Interval"] = rpeaks["RR_Interval"].mean()
 
         return ecg_signal_output, rpeaks
+
+    @classmethod
+    def outlier_corrections(cls) -> Sequence[str]:
+        """
+        Returns the keys of all possible outlier correction methods.
+
+        Currently available outlier correction methods are:
+            * `correlation`: Computes the cross-correlation coefficient between every single beat and the average of all
+              detected beats. Marks beats as outlier if cross-correlation coefficient is below a certain threshold
+            * `quality`: Uses the 'ECG_Quality' indicator from neurokit to assess signal quality. Marks beats as outlier if
+              quality indicator of beat is below a certain threshold
+            * `artifact`: Artifact detection based on work from `Berntson et al. (1990), Psychophysiology`
+            * `physiological`: Physiological outlier removal. Marks beats as outlier if their heart rate is above or below a
+              threshold that can not be achieved physiologically
+            * `statistical_rr`: Statistical outlier removal based on RR intervals.
+              Marks beats as outlier if the RR intervals are within the xx% highest or lowest values.
+              Values are removed based on the z-score (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values;
+              2.576 => 1 %, 0.5 % highest, 0.5 % lowest values)
+            * `statistical_rr_diff`: Statistical outlier removal based on successive differences of RR intervals.
+            Marks beats as outlier if the difference of successive RR intervals are within the xx% highest or
+              lowest heart rates. Values are removed based on the z-score
+              (e.g. 1.96 => 5%, 2.5% highest, 2.5% lowest values; 2.576 => 1 %, 0.5 % highest, 0.5 % lowest values)
+
+        See Also
+        --------
+        EcgProcessor.correct_outlier, EcgProcessor.outlier_params_default
+
+        Returns
+        -------
+        list
+            List containing the keys of all possible outlier correction methods
+        """
+        return list(_outlier_correction_methods.keys())
+
+    @classmethod
+    def outlier_params_default(cls) -> Dict[str, Union[float, Sequence[float]]]:
+        """
+        Returns all default parameters for outlier correction methods.
+
+
+        **NOTE:** outlier correction method `artifact` has no threshold, but '0.0' is default parameter to provide
+        a homogenous interface
+
+
+        See Also
+        --------
+        EcgProcessor.correct_outlier, EcgProcessor.outlier_corrections
+
+        Returns
+        -------
+        dict
+            Dictionary containing the default parameters for the different outlier correction methods
+        """
+        return _outlier_correction_params_default
 
     @classmethod
     def correct_outlier(

@@ -179,7 +179,7 @@ def concat_phase_dict(
     for subj in dict_hr_subject:
         dict_bl = dict_hr_subject[subj]
         for phase in phases:
-            dict_phase[phase][subj] = dict_bl[phase]["ECG_Rate"]
+            dict_phase[phase][subj] = dict_bl[phase]["Heart_Rate"]
 
     return dict_phase
 
