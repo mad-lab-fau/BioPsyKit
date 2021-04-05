@@ -4,7 +4,9 @@ For user facing type declarations, please see :py:func:`biopsykit.utils.datatype
 """
 
 from pathlib import Path
-from typing import TypeVar
+from typing import TypeVar, Union, Hashable
 
-path_t = TypeVar("path_t", str, Path)  # noqa: invalid-name
+_Hashable = Union[Hashable, str]
+
+path_t = TypeVar("path_t", str, Path)  # pylint:disable=invalid-name
 T = TypeVar("T")
