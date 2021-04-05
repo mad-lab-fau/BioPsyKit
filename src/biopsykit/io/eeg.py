@@ -1,23 +1,51 @@
+"""I/O functions for files related to EEG processing."""
 from typing import Tuple
 
 import pandas as pd
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns
 
 from biopsykit.utils._types import path_t
+from biopsykit.utils.time import utc, tz
 
 
-def load_eeg_muse(file_path: path_t) -> Tuple[pd.DataFrame, int]:
+MUSE_EEG_SAMPLING_RATE = 250.0
+
+
+def load_eeg_raw_muse(file_path: path_t) -> Tuple[pd.DataFrame, float]:
+    """Load a csv file with raw EEG data recorded by the Muse headband.
+
+    Parameters
+    ----------
+    file_path : :any:`pathlib.Path` or str
+        path to file
+
+    Returns
+    -------
+    data : :class:`~pandas.DataFrame`
+        dataframe with raw EEG data
+    fs : float
+        sampling rate
+
+    Raises
+    ------
+    FileExtensionError
+        if file specified by ``file_path`` is not a csv file
+
+    """
+    _assert_file_extension(file_path, ".csv")
+
+    fs = MUSE_EEG_SAMPLING_RATE
     data = pd.read_csv(file_path)
-    sampling_rate = 250
-    # convert timestamps to datetime object, set as dataframe index and
-    # the timestamp from UTC into the correct time zone
+
+    _assert_has_columns(
+        data,
+        [["timestamp", "TP9", "AF7", "AF8", "TP10"]],
+    )
+    # convert timestamps to datetime object, set as dataframe index
     data["timestamps"] = pd.to_datetime(data["timestamps"], unit="s")
-    data.set_index("timestamps", inplace=True)
-    data = data.tz_localize("UTC").tz_convert("Europe/Berlin")
-    if "Right AUX" in data.columns:
-        # drop the AUX column
-        data.drop(columns="Right AUX", inplace=True)
-    return data, sampling_rate
-
-
-def write_frequency_bands(data: pd.DataFrame, file_path: path_t):
-    data.to_csv(file_path)
+    data = data.set_index("timestamps")
+    # convert timestamp from UTC into the correct time zone
+    data = data.tz_localize(utc).tz_convert(tz)
+    # drop the AUX column, if present
+    data = data.drop(columns="Right AUX", errors="ignore")
+    return data, fs
