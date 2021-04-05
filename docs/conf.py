@@ -12,10 +12,10 @@ import sys
 import inspect
 import shutil
 
-from sphinx.ext.autosummary import Autosummary
-from sphinx.ext.autosummary import get_documenter
-from docutils.parsers.rst import directives
-from sphinx.util.inspect import safe_getattr
+# from sphinx.ext.autosummary import Autosummary
+# from sphinx.ext.autosummary import get_documenter
+# from docutils.parsers.rst import directives
+# from sphinx.util.inspect import safe_getattr
 
 # -- Path setup --------------------------------------------------------------
 
@@ -49,8 +49,8 @@ except FileNotFoundError:
 try:
     import sphinx
 
-    # cmd_line_template = "sphinx-apidoc --implicit-namespaces -e -f -M -o {outputdir} {moduledir}"
-    cmd_line_template = "sphinx-apidoc --implicit-namespaces -e -M -o {outputdir} {moduledir}"
+    cmd_line_template = "sphinx-apidoc --implicit-namespaces -e -f -M -o {outputdir} {moduledir}"
+    # cmd_line_template = "sphinx-apidoc --implicit-namespaces -e -M -o {outputdir} {moduledir}"
     cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
 
     args = cmd_line.split(" ")
@@ -93,7 +93,7 @@ autosummary_generate_overwrite = True
 
 # This value selects if automatically documented members are sorted alphabetical (value 'alphabetical'),
 # by member type (value 'groupwise') or by source order (value 'bysource'). The default is alphabetical.
-autodoc_member_order = "groupwise"
+autodoc_member_order = "bysource"
 
 # This value controls how to represent typehints
 autodoc_typehints = "description"
@@ -125,44 +125,44 @@ def setup(app):
     }
     app.add_config_value("recommonmark_config", params, True)
     app.add_transform(AutoStructify)
-    app.add_directive("autoautosummary", AutoAutoSummary)
+    # app.add_directive("autoautosummary", AutoAutoSummary)
 
 
-class AutoAutoSummary(Autosummary):
-    option_spec = {"methods": directives.unchanged, "attributes": directives.unchanged}
-
-    required_arguments = 1
-
-    @staticmethod
-    def get_members(obj, typ, include_public=None):
-        if not include_public:
-            include_public = []
-        items = []
-        for name in dir(obj):
-            try:
-                documenter = get_documenter(safe_getattr(obj, name), obj)
-            except AttributeError:
-                continue
-            if documenter.objtype == typ:
-                items.append(name)
-        public = [x for x in items if x in include_public or not x.startswith("_")]
-        return public, items
-
-    def run(self):
-        clazz = str(self.arguments[0])
-        try:
-            (module_name, class_name) = clazz.rsplit(".", 1)
-            m = __import__(module_name, globals(), locals(), [class_name])
-            c = getattr(m, class_name)
-            if "methods" in self.options:
-                _, methods = self.get_members(c, "method", ["__init__"])
-
-                self.content = ["~%s.%s" % (clazz, method) for method in methods if not method.startswith("_")]
-            if "attributes" in self.options:
-                _, attribs = self.get_members(c, "attribute")
-                self.content = ["~%s.%s" % (clazz, attrib) for attrib in attribs if not attrib.startswith("_")]
-        finally:
-            return super(AutoAutoSummary, self).run()
+# class AutoAutoSummary(Autosummary):
+#     option_spec = {"methods": directives.unchanged, "attributes": directives.unchanged}
+#
+#     required_arguments = 1
+#
+#     @staticmethod
+#     def get_members(obj, typ, include_public=None):
+#         if not include_public:
+#             include_public = []
+#         items = []
+#         for name in dir(obj):
+#             try:
+#                 documenter = get_documenter(safe_getattr(obj, name), obj)
+#             except AttributeError:
+#                 continue
+#             if documenter.objtype == typ:
+#                 items.append(name)
+#         public = [x for x in items if x in include_public or not x.startswith("_")]
+#         return public, items
+#
+#     def run(self):
+#         clazz = str(self.arguments[0])
+#         try:
+#             (module_name, class_name) = clazz.rsplit(".", 1)
+#             m = __import__(module_name, globals(), locals(), [class_name])
+#             c = getattr(m, class_name)
+#             if "methods" in self.options:
+#                 _, methods = self.get_members(c, "method", ["__init__"])
+#
+#                 self.content = ["~%s.%s" % (clazz, method) for method in methods if not method.startswith("_")]
+#             if "attributes" in self.options:
+#                 _, attribs = self.get_members(c, "attribute")
+#                 self.content = ["~%s.%s" % (clazz, attrib) for attrib in attribs if not attrib.startswith("_")]
+#         finally:
+#             return super(AutoAutoSummary, self).run()
 
 
 # Enable markdown
@@ -341,12 +341,13 @@ latex_documents = [("index", "user_guide.tex", "BioPsyKit Documentation", "Rober
 python_version = ".".join(map(str, sys.version_info[0:2]))
 intersphinx_mapping = {
     "sphinx": ("http://www.sphinx-doc.org/en/stable", None),
-    "python": ("https://docs.python.org/" + python_version, None),
-    "matplotlib": ("https://matplotlib.org", None),
+    "python": ("https://docs.python.org/3/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
     "numpy": ("https://docs.scipy.org/doc/numpy", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
-    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
     "pyscaffold": ("https://pyscaffold.org/en/stable", None),
     "neurokit2": ("https://neurokit2.readthedocs.io/en/latest", None),
+    "scikit-learn": ("https://scikit-learn.org/stable/", None),
 }
