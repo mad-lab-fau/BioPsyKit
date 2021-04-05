@@ -3,7 +3,7 @@ from typing import Sequence, Dict, Optional, Tuple, Union
 
 import pandas as pd
 
-_EXAMPLE_DATA_PATH = Path(__file__).parent.parent.joinpath("example_data")
+_EXAMPLE_DATA_PATH = Path(__file__).parent.parent.parent.joinpath("example_data")
 
 __all__ = [
     "list_example_data",
@@ -125,9 +125,9 @@ def get_sleep_imu_example() -> Tuple[pd.DataFrame, int]:
 
 
 def get_eeg_example() -> Tuple[pd.DataFrame, int]:
-    from biopsykit.io.eeg import load_eeg_muse
+    from biopsykit.io.eeg import load_eeg_raw_muse
 
-    return load_eeg_muse(_EXAMPLE_DATA_PATH.joinpath("eeg_muse_example.csv"))
+    return load_eeg_raw_muse(_EXAMPLE_DATA_PATH.joinpath("eeg_muse_example.csv"))
 
 
 def get_log_data_example() -> pd.DataFrame:
