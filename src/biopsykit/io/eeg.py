@@ -2,7 +2,7 @@
 from typing import Tuple
 
 import pandas as pd
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns
 
 from biopsykit.utils._types import path_t
 from biopsykit.utils.time import utc, tz
@@ -28,18 +28,18 @@ def load_eeg_raw_muse(file_path: path_t) -> Tuple[pd.DataFrame, float]:
 
     Raises
     ------
-    FileExtensionError
-        if file specified by ``file_path`` is not a csv file
+    ValidationError
+        if file specified by ``file_path`` does not contain the required `timestamp` column as well as the
+        EEG channel columns
 
     """
-    _assert_file_extension(file_path, ".csv")
 
     fs = MUSE_EEG_SAMPLING_RATE
     data = pd.read_csv(file_path)
 
     _assert_has_columns(
         data,
-        [["timestamp", "TP9", "AF7", "AF8", "TP10"]],
+        [["timestamps", "TP9", "AF7", "AF8", "TP10"]],
     )
     # convert timestamps to datetime object, set as dataframe index
     data["timestamps"] = pd.to_datetime(data["timestamps"], unit="s")
