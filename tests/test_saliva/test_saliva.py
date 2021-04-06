@@ -310,6 +310,34 @@ def saliva_multi_days_idx():
     return data
 
 
+# [0, 0, 0, 0, 0],
+# [1, 1, 1, 1, 1],
+# [0, 1, 2, 3, 4],
+# [5, 4, 3, 2, 1],
+# [10, 2, 4, 4, 6],
+# [-6, 2, 4, 4, 6],
+# [12, -6, 4, 4, 6],
+# [2, np.nan, 8, 4, 6],
+
+params_max_value = [
+    (
+        True,
+        pd.DataFrame(
+            [0, 1, 4, 4, 6, 6, 6, 8],
+            columns=pd.Index(["cortisol_max_val"], name="saliva_feature"),
+            index=pd.Index(range(1, 9), name="subject"),
+        ),
+    ),
+    (
+        False,
+        pd.DataFrame(
+            [0, 1, 4, 5, 10, 6, 12, 8],
+            columns=pd.Index(["cortisol_max_val"], name="saliva_feature"),
+            index=pd.Index(range(1, 9), name="subject"),
+        ),
+    ),
+]
+
 params_max_increase = [
     (
         True,
@@ -536,6 +564,56 @@ class TestSaliva:
             (None, pytest.raises(ValidationError)),
         ],
     )
+    def test_max_value_raises_saliva_type(self, saliva_type, expectation):
+        data = saliva_time()
+        with expectation:
+            saliva.max_value(data, saliva_type=saliva_type)
+
+    @pytest.mark.parametrize(
+        "saliva_type, expected_columns",
+        [
+            ("cortisol", ["cortisol_max_val"]),
+            ("amylase", ["amylase_max_val"]),
+            ("il6", ["il6_max_val"]),
+        ],
+    )
+    def test_max_value_columns(self, saliva_type, expected_columns):
+        data_in = saliva_time(saliva_type)
+        data_out = saliva.max_value(data_in, saliva_type=saliva_type)
+        assert list(data_out.columns) == expected_columns
+
+    @pytest.mark.parametrize("remove_s0, expected", params_max_value)
+    def test_max_value(self, remove_s0, expected):
+        out = saliva.max_value(saliva_no_time(), remove_s0=remove_s0)
+        assert_frame_equal(out, expected, check_dtype=False)
+
+    @pytest.mark.parametrize(
+        "include_time",
+        [
+            True,
+            False,
+        ],
+    )
+    def test_max_value_multi_saliva_types(self, include_time):
+        data_in = saliva_multi_types(include_time)
+        data_out = saliva.max_value(data_in, saliva_type=["cortisol", "amylase"])
+        [
+            assert_frame_equal(
+                saliva.max_value(data_in[[saliva_type]], saliva_type=saliva_type),
+                data_out[saliva_type],
+            )
+            for saliva_type in ["cortisol", "amylase"]
+        ]
+
+    @pytest.mark.parametrize(
+        "saliva_type, expectation",
+        [
+            ("cortisol", does_not_raise()),
+            ("amylase", pytest.raises(ValidationError)),
+            ("il6", pytest.raises(ValidationError)),
+            (None, pytest.raises(ValidationError)),
+        ],
+    )
     def test_max_increase_raises_saliva_type(self, saliva_type, expectation):
         data = saliva_time()
         with expectation:
@@ -551,7 +629,7 @@ class TestSaliva:
     )
     def test_max_increase_columns(self, saliva_type, expected_columns):
         data_in = saliva_time(saliva_type)
-        data_out = saliva.max_increase(data_in, saliva_type)
+        data_out = saliva.max_increase(data_in, saliva_type=saliva_type)
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize("remove_s0, expected", params_max_increase)

@@ -14,8 +14,79 @@ from biopsykit.utils.datatype_helper import (
     SalivaRawDataFrame,
     is_raw_saliva_dataframe,
     is_feature_saliva_dataframe,
+    SalivaFeatureDataFrame,
 )
 from biopsykit.utils.exceptions import DataFrameTransformationError
+
+
+def max_value(
+    data: SalivaRawDataFrame,
+    saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
+    remove_s0: Optional[bool] = False,
+):
+    """Compute maximum value.
+
+    The feature name of the variable will be ``max_val``, preceded by the name of the saliva type to allow better
+    conversion into long-format later on (if desired) (so e.g., for cortisol, it will be: ``cortisol_max_val``).
+
+    Parameters
+    ----------
+    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        saliva data in :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame` format
+    saliva_type : str or list of str
+        saliva type or list of saliva types to compute features on
+    remove_s0 : bool, optional
+        whether to remove the first saliva sample for computing maximum or not. Default: ``False``
+
+    Returns
+    -------
+    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+    or dict of :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+        :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame` containing the computed features, or a dict of
+        such if ``saliva_type`` is a list
+
+    Raises
+    ------
+    ValidationError
+        if ``data`` is not a SalivaRawDataFrame
+
+    """
+    # check input
+    is_raw_saliva_dataframe(data, saliva_type)
+
+    if isinstance(saliva_type, list):
+        dict_result = {}
+        for saliva in saliva_type:
+            saliva_col = [saliva]
+            if "time" in data:
+                saliva_col = saliva_col + ["time"]
+            dict_result[saliva] = max_value(
+                data[saliva_col],
+                saliva_type=saliva,
+                remove_s0=remove_s0,
+            )
+        return dict_result
+
+    if remove_s0:
+        # We have a S0 sample => drop it
+        data = data.drop(0, level="sample", errors="ignore")
+        data = data.drop("0", level="sample", errors="ignore")
+        data = data.drop("S0", level="sample", errors="ignore")
+
+    data = data[[saliva_type]].unstack(level="sample")
+
+    max_val = data.max(axis=1)
+
+    out = pd.DataFrame(
+        max_val,
+        columns=["{}_max_val".format(saliva_type, saliva_type[0])],
+        index=max_val.index,
+    )
+    out.columns.name = "saliva_feature"
+
+    # check output
+    is_feature_saliva_dataframe(out, saliva_type)
+    return out
 
 
 def max_increase(
@@ -23,7 +94,7 @@ def max_increase(
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     remove_s0: Optional[bool] = False,
     percent: Optional[bool] = False,
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+) -> Union[SalivaFeatureDataFrame, Dict[str, SalivaFeatureDataFrame]]:
     """Compute maximum increase between first saliva sample and all others.
 
     The maximum increase (`max_inc`) is defined as the difference between the `first` sample
@@ -34,6 +105,7 @@ def max_increase(
     Parameters
     ----------
     data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        saliva data in :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame` format
     saliva_type : str or list of str
         saliva type or list of saliva types to compute features on
     remove_s0 : bool, optional
@@ -43,7 +115,10 @@ def max_increase(
 
     Returns
     -------
-
+    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+    or dict of :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+        :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame` containing the computed features, or a dict of
+        such if ``saliva_type`` is a list
 
     Raises
     ------
@@ -51,8 +126,6 @@ def max_increase(
         if ``data`` is not a SalivaRawDataFrame
 
     """
-    # computes (absolute or relative) maximum increase between first sample and all others.
-
     # check input
     is_raw_saliva_dataframe(data, saliva_type)
 
@@ -61,7 +134,7 @@ def max_increase(
         for saliva in saliva_type:
             saliva_col = [saliva]
             if "time" in data:
-                saliva_col = ["time"] + saliva_col
+                saliva_col = saliva_col + ["time"]
             dict_result[saliva] = max_increase(
                 data[saliva_col],
                 saliva_type=saliva,
@@ -114,7 +187,7 @@ def auc(
         for saliva in saliva_type:
             saliva_col = [saliva]
             if "time" in data:
-                saliva_col = ["time"] + saliva_col
+                saliva_col = saliva_col + ["time"]
             dict_result[saliva] = auc(
                 data[saliva_col],
                 saliva_type=saliva,
@@ -173,7 +246,7 @@ def standard_features(
         for saliva in saliva_type:
             saliva_col = [saliva]
             if "time" in data:
-                saliva_col = ["time"] + saliva_col
+                saliva_col = saliva_col + ["time"]
             dict_result[saliva] = standard_features(data[saliva_col], saliva_type=saliva)
         return dict_result
 
