@@ -315,7 +315,7 @@ params_max_increase = [
         True,
         pd.DataFrame(
             [0, 0, 3, -1, 4, 4, 12, np.nan],
-            columns=pd.Index(["cortisol_max_inc"], name="saliva"),
+            columns=pd.Index(["cortisol_max_inc"], name="saliva_feature"),
             index=pd.Index(range(1, 9), name="subject"),
         ),
     ),
@@ -323,7 +323,7 @@ params_max_increase = [
         False,
         pd.DataFrame(
             [0, 0, 4, -1, -4, 12, -6, 6],
-            columns=pd.Index(["cortisol_max_inc"], name="saliva"),
+            columns=pd.Index(["cortisol_max_inc"], name="saliva_feature"),
             index=pd.Index(range(1, 9), name="subject"),
         ),
     ),
@@ -334,7 +334,7 @@ params_max_increase_percent = [
         True,
         pd.DataFrame(
             [np.nan, 0, 300.0, -25.0, 200.0, 200.0, 200.0, np.nan],
-            columns=pd.Index(["cortisol_max_inc_percent"], name="saliva"),
+            columns=pd.Index(["cortisol_max_inc_percent"], name="saliva_feature"),
             index=pd.Index(range(1, 9), name="subject"),
         ),
     ),
@@ -342,7 +342,7 @@ params_max_increase_percent = [
         False,
         pd.DataFrame(
             [np.nan, 0.0, np.inf, -20.0, -40.0, 200.0, -50.0, 300.0],
-            columns=pd.Index(["cortisol_max_inc_percent"], name="saliva"),
+            columns=pd.Index(["cortisol_max_inc_percent"], name="saliva_feature"),
             index=pd.Index(range(1, 9), name="subject"),
         ),
     ),
@@ -360,7 +360,7 @@ params_auc = [
             },
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i", "cortisol_auc_i_post"],
-                name="saliva",
+                name="saliva_feature",
             ),
             index=pd.Index(range(1, 9), name="subject"),
         ),
@@ -375,7 +375,7 @@ params_auc = [
             },
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i"],
-                name="saliva",
+                name="saliva_feature",
             ),
             index=pd.Index(range(1, 9), name="subject"),
         ),
@@ -391,7 +391,7 @@ params_auc = [
             },
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i", "cortisol_auc_i_post"],
-                name="saliva",
+                name="saliva_feature",
             ),
             index=pd.Index(range(1, 9), name="subject"),
         ),
@@ -406,7 +406,7 @@ params_auc = [
             },
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i"],
-                name="saliva",
+                name="saliva_feature",
             ),
             index=pd.Index(range(1, 9), name="subject"),
         ),
@@ -426,7 +426,7 @@ params_auc_mutiple_pre = [
             index=pd.Index(range(1, 9), name="subject"),
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i", "cortisol_auc_i_post"],
-                name="saliva",
+                name="saliva_feature",
             ),
         ),
     ),
@@ -441,7 +441,7 @@ params_auc_mutiple_pre = [
             index=pd.Index(range(1, 9), name="subject"),
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i"],
-                name="saliva",
+                name="saliva_feature",
             ),
         ),
     ),
@@ -456,7 +456,7 @@ params_auc_mutiple_pre = [
             },
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i", "cortisol_auc_i_post"],
-                name="saliva",
+                name="saliva_feature",
             ),
             index=pd.Index(range(1, 9), name="subject"),
         ),
@@ -471,7 +471,7 @@ params_auc_mutiple_pre = [
             },
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i"],
-                name="saliva",
+                name="saliva_feature",
             ),
             index=pd.Index(range(1, 9), name="subject"),
         ),
@@ -485,7 +485,7 @@ params_slope = [
         pd.DataFrame(
             {"cortisol_slopeS1S2": [0.0, 0.0, 0.1, -0.1, -0.8, 0.8, -1.8, np.nan]},
             index=pd.Index(range(1, 9), name="subject"),
-            columns=pd.Index(["cortisol_slopeS1S2"], name="saliva"),
+            columns=pd.Index(["cortisol_slopeS1S2"], name="saliva_feature"),
         ),
     ),
     (
@@ -494,7 +494,7 @@ params_slope = [
         pd.DataFrame(
             {"cortisol_slopeS2S3": [0.0, 0.0, 0.1, -0.1, 0.2, 0.2, 1.0, np.nan]},
             index=pd.Index(range(1, 9), name="subject"),
-            columns=pd.Index(["cortisol_slopeS2S3"], name="saliva"),
+            columns=pd.Index(["cortisol_slopeS2S3"], name="saliva_feature"),
         ),
     ),
     (
@@ -503,7 +503,7 @@ params_slope = [
         pd.DataFrame(
             {"cortisol_slopeS1S5": [0.0, 0.0, 0.1, -0.1, -0.1, 0.3, -0.15, 0.1]},
             index=pd.Index(range(1, 9), name="subject"),
-            columns=pd.Index(["cortisol_slopeS1S5"], name="saliva"),
+            columns=pd.Index(["cortisol_slopeS1S5"], name="saliva_feature"),
         ),
     ),
     (
@@ -512,7 +512,7 @@ params_slope = [
         pd.DataFrame(
             {"cortisol_slopeS1S5": [0.0, 0.0, 0.1, -0.1, -0.1, 0.3, -0.15, 0.1]},
             index=pd.Index(range(1, 9), name="subject"),
-            columns=pd.Index(["cortisol_slopeS1S5"], name="saliva"),
+            columns=pd.Index(["cortisol_slopeS1S5"], name="saliva_feature"),
         ),
     ),
 ]
@@ -690,7 +690,7 @@ class TestSaliva:
         """
         expected = pd.DataFrame(
             {"cortisol_auc_g": [34.75, 390], "cortisol_auc_i": [20.75, 232.50]},
-            columns=pd.Index(["cortisol_auc_g", "cortisol_auc_i"], name="saliva"),
+            columns=pd.Index(["cortisol_auc_g", "cortisol_auc_i"], name="saliva_feature"),
             index=pd.Index(range(1, 3), name="subject"),
         )
 
@@ -958,7 +958,7 @@ class TestSaliva:
                     "cortisol_skew",
                     "cortisol_kurt",
                 ],
-                name="saliva",
+                name="saliva_feature",
             ),
         )
         assert_frame_equal(data_out, expected, check_dtype=False)
@@ -972,7 +972,7 @@ class TestSaliva:
             (["subject"], True, pytest.raises(DataFrameTransformationError)),
             (None, False, does_not_raise()),
             (["subject", "day"], False, does_not_raise()),
-            (["day"], False, does_not_raise()),
+            (["day"], False, pytest.raises(ValidationError)),
             (["subject"], False, does_not_raise()),
         ],
     )
@@ -987,7 +987,6 @@ class TestSaliva:
             (["subject", "day"], True, ["subject", "day"]),
             (None, False, ["subject", "day"]),
             (["subject", "day"], False, ["subject", "day"]),
-            (["day"], False, ["day"]),
             (["subject"], False, ["subject"]),
             ("subject", False, ["subject"]),
         ],
@@ -1043,7 +1042,7 @@ class TestSaliva:
                     "cortisol_skew",
                     "cortisol_kurt",
                 ],
-                name="saliva",
+                name="saliva_feature",
             ),
         )
 

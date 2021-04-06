@@ -10,18 +10,50 @@ from biopsykit.saliva.utils import (
     _get_saliva_times,
     _get_saliva_idx_labels,
 )
-from biopsykit.utils.datatype_helper import RawSalivaDataFrame, is_raw_saliva_dataframe
+from biopsykit.utils.datatype_helper import (
+    SalivaRawDataFrame,
+    is_raw_saliva_dataframe,
+    is_feature_saliva_dataframe,
+)
 from biopsykit.utils.exceptions import DataFrameTransformationError
 
 
 def max_increase(
-    data: RawSalivaDataFrame,
+    data: SalivaRawDataFrame,
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     remove_s0: Optional[bool] = False,
     percent: Optional[bool] = False,
 ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    """Compute maximum increase between first saliva sample and all others.
+
+    The maximum increase (`max_inc`) is defined as the difference between the `first` sample
+    (or the second sample, if ``remove_s0`` is ``True``, e.g., because the first sample is just for
+    controlling for high initial saliva levels) and the maximum of the `subsequent` samples. The output is either
+    absolute increase or in percent as relative increase to the first sample (``percent`` is ``True``).
+
+    Parameters
+    ----------
+    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    saliva_type : str or list of str
+        saliva type or list of saliva types to compute features on
+    remove_s0 : bool, optional
+        whether to remove the first saliva sample for computing `max_inc` or not. Default: ``False``
+    percent :
+        whether to compute `max_inc` in percent (i.e., relative increase) or not. Default: ``False``
+
+    Returns
+    -------
+
+
+    Raises
+    ------
+    ValidationError
+        if ``data`` is not a SalivaRawDataFrame
+
+    """
     # computes (absolute or relative) maximum increase between first sample and all others.
 
+    # check input
     is_raw_saliva_dataframe(data, saliva_type)
 
     if isinstance(saliva_type, list):
@@ -55,12 +87,15 @@ def max_increase(
         columns=["{}_max_inc_percent".format(saliva_type) if percent else "{}_max_inc".format(saliva_type)],
         index=max_inc.index,
     )
-    out.columns.name = "saliva"
+    out.columns.name = "saliva_feature"
+
+    # check output
+    is_feature_saliva_dataframe(out, saliva_type)
     return out
 
 
 def auc(
-    data: RawSalivaDataFrame,
+    data: SalivaRawDataFrame,
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     remove_s0: Optional[bool] = False,
     compute_auc_post: Optional[bool] = False,
@@ -69,6 +104,7 @@ def auc(
     # TODO add documentation; IMPORTANT: saliva_time '0' is defined as "right before stress" (0 min of stress)
     # => auc_post means all saliva times after beginning of stress (>= 0)
 
+    # check input
     is_raw_saliva_dataframe(data, saliva_type)
     saliva_times = _get_saliva_times(data, saliva_times, remove_s0)
     _check_saliva_times(saliva_times)
@@ -114,7 +150,11 @@ def auc(
             auc_data["auc_i_post"] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), saliva_times[idxs_post])
 
     out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(saliva_type))
-    out.columns.name = "saliva"
+    out.columns.name = "saliva_feature"
+
+    # check output
+    is_feature_saliva_dataframe(out, saliva_type)
+
     return out
 
 
@@ -125,6 +165,7 @@ def standard_features(
     keep_index: Optional[bool] = True,
 ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
 
+    # check input
     is_raw_saliva_dataframe(data, saliva_type)
 
     if isinstance(saliva_type, list):
@@ -173,18 +214,23 @@ def standard_features(
     # the other saliva functions
     out.columns = out.columns.droplevel(0)
     out = out.add_prefix("{}_".format(saliva_type))
-    out.columns.name = "saliva"
+    out.columns.name = "saliva_feature"
+
+    # check output
+    is_feature_saliva_dataframe(out, saliva_type)
+
     return out
 
 
 def slope(
-    data: RawSalivaDataFrame,
+    data: SalivaRawDataFrame,
     sample_labels: Optional[Union[Tuple, Sequence]] = None,
     sample_idx: Optional[Union[Tuple[int, int], Sequence[int]]] = None,
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     saliva_times: Optional[Sequence[int]] = None,
 ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
 
+    # check input
     is_raw_saliva_dataframe(data, saliva_type)
 
     saliva_times = _get_saliva_times(data, saliva_times, remove_s0=False)
@@ -222,5 +268,9 @@ def slope(
         index=data.index,
         columns=["{}_slope{}{}".format(saliva_type, *sample_labels)],
     )
-    out.columns.name = "saliva"
+    out.columns.name = "saliva_feature"
+
+    # check output
+    is_feature_saliva_dataframe(out, saliva_type)
+
     return out
