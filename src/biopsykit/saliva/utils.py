@@ -1,4 +1,8 @@
-from typing import Optional, Dict, Sequence, Union
+"""Utility functions for working with saliva dataframes."""
+import re
+
+from typing import Optional, Dict, Sequence, Union, Tuple
+from datetime import time, datetime
 
 import pandas as pd
 import numpy as np
@@ -6,16 +10,15 @@ import numpy as np
 from biopsykit.utils.functions import se
 
 
-def extract_saliva_columns(data: pd.DataFrame, biomarker: str, col_pattern: Optional[str] = None) -> pd.DataFrame:
-    """
-    Extracts columns containing saliva samples from a DataFrame.
+def extract_saliva_columns(data: pd.DataFrame, saliva_type: str, col_pattern: Optional[str] = None) -> pd.DataFrame:
+    """Extract columns containing saliva samples from a DataFrame.
 
     Parameters
     ----------
     data: pd.DataFrame
         dataframe which should be extracted
-    biomarker: str
-        biomarker variable which should be used to extract columns (e.g. 'cortisol')
+    saliva_type: str
+        saliva type variable which should be used to extract columns (e.g. 'cortisol')
     col_pattern: str, optional
         string pattern to identify saliva columns. If None, it is attempted to automatically infer column names using
         `bp.saliva.utils.get_saliva_column_suggestions()`
@@ -24,43 +27,41 @@ def extract_saliva_columns(data: pd.DataFrame, biomarker: str, col_pattern: Opti
     -------
     pd.DataFrame
         dataframe containing saliva data
+
     """
     if col_pattern is None:
-        col_suggs = get_saliva_column_suggestions(data, biomarker)
+        col_suggs = get_saliva_column_suggestions(data, saliva_type)
         if len(col_suggs) > 1:
             raise KeyError(
-                "More than one possible column pattern was found! Please check manually which pattern is correct: {}".format(
-                    col_suggs
-                )
+                "More than one possible column pattern was found! "
+                "Please check manually which pattern is correct: {}".format(col_suggs)
             )
-        else:
-            col_pattern = col_suggs[0]
+        col_pattern = col_suggs[0]
     return data.filter(regex=col_pattern)
 
 
-def get_saliva_column_suggestions(data: pd.DataFrame, biomarker: str) -> Sequence[str]:
-    """
-    Extracts possible columns containing saliva data from a dataframe.
+def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: str) -> Sequence[str]:
+    """Extract possible columns containing saliva data from a dataframe.
+
     This is for example useful when one large dataframe is used to store demographic information,
-    questionnaire data and biomarker data.
+    questionnaire data and saliva data.
 
     Parameters
     ----------
     data: pd.DataFrame
         dataframe which should be extracted
-    biomarker: str
-        biomarker variable which should be used to extract columns (e.g. 'cortisol')
+    saliva_type: str
+        saliva type variable which should be used to extract columns (e.g. 'cortisol')
 
     Returns
     -------
     list
         list of suggested columns containing saliva data
-    """
-    import re
 
+    """
     sugg_filt = list(
         filter(
-            lambda col: any(k in col for k in _dict_biomarker_suggs[biomarker]),
+            lambda col: any(k in col for k in _dict_saliva_type_suggs[saliva_type]),
             data.columns,
         )
     )
@@ -96,21 +97,41 @@ def get_saliva_column_suggestions(data: pd.DataFrame, biomarker: str) -> Sequenc
 
 def wide_to_long(
     data: pd.DataFrame,
-    biomarker_name: str,
+    saliva_type: str,
     levels: Union[str, Sequence[str]],
     sep: Optional[str] = "_",
 ) -> pd.DataFrame:
+    """Convert a dataframe containing saliva data from wide-format into long-format.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject
+    saliva_type : str
+        saliva type (e.g. 'cortisol')
+    levels : str or list of str
+        index levels of the resulting long-format dataframe. In the wide-format dataframe, the level keys are expected
+        to be encoded in the column names and separated by ``sep``
+    sep : str, optional
+        character separating index levels in the column names of the wide-format dataframe
+
+    Returns
+    -------
+    :class:`pandas.DataFrame`
+        pandas DataFrame in long-format
+
+    """
     if isinstance(levels, str):
         levels = [levels]
 
-    data = data.filter(like=biomarker_name)
+    data = data.filter(like=saliva_type)
     # reverse level order because nested multi-level index will be constructed from back to front
     levels = levels[::-1]
     # iteratively build up long-format dataframe
     for i, level in enumerate(levels):
         stubnames = list(data.columns)
         # stubnames are everything except the last part separated by underscore
-        stubnames = sorted(set(["_".join(s.split("_")[:-1]) for s in stubnames]))
+        stubnames = sorted({"_".join(s.split("_")[:-1]) for s in stubnames})
         data = pd.wide_to_long(
             data.reset_index(),
             stubnames=stubnames,
@@ -124,52 +145,18 @@ def wide_to_long(
     return data.reorder_levels(["subject"] + levels[::-1]).sort_index()
 
 
-# def wide_to_long(data: pd.DataFrame, biomarker: str, col_pattern: str,
-#                  saliva_times: Optional[Sequence[int]] = None) -> pd.DataFrame:
-#     """
-#     Converts a dataframe containing saliva data from wide-format into long-format.
-#
-#     Parameters
-#     ----------
-#     data : pd.DataFrame
-#         pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject
-#     biomarker : str
-#         Biomarker type (e.g. 'cortisol')
-#     col_pattern : str
-#         Pattern of saliva column names to extract days and samples from (will be used to build the long-format index)
-#     saliva_times : list of int, optional
-#         list of saliva time points that can be expanded in the long-format dataframe or `None` to not include saliva times
-#
-#     Returns
-#     -------
-#     pd.DataFrame
-#         pandas DataFrame in long-format
-#     """
-#     data = data.copy()
-#     data.index.name = "subject"
-#     df_day_sample = data.columns.str.extract(col_pattern)
-#     df_day_sample = df_day_sample.astype(int)
-#     if len(df_day_sample.columns) > 1:
-#         # we have multi-day recordings => create MultiIndex
-#         data.columns = pd.MultiIndex.from_arrays(df_day_sample.T.values, names=["day", "sample"])
-#         var_name = ["day", "sample"]
-#     else:
-#         data.columns = df_day_sample.values
-#         var_name = "sample"
-#
-#     df_long = pd.melt(data.reset_index(), id_vars=['subject'], value_name=biomarker, var_name=var_name)
-#     df_long.set_index('subject', inplace=True)
-#     df_long.set_index(var_name, append=True, inplace=True)
-#     df_long.sort_index(inplace=True)
-#
-#     if saliva_times:
-#         df_long["time"] = np.array(saliva_times * int(len(df_long) / len(saliva_times)))
-#     return df_long
-
-
 def saliva_times_datetime_to_minute(saliva_times: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
-    from datetime import time, datetime
+    """Convert datetime objects into minute.
 
+    Parameters
+    ----------
+    saliva_times :
+
+    Returns
+    -------
+    dataframe
+
+    """
     if isinstance(saliva_times.values.flatten()[0], str):
         saliva_times = pd.to_timedelta(saliva_times)
 
@@ -188,12 +175,12 @@ def saliva_times_datetime_to_minute(saliva_times: Union[pd.Series, pd.DataFrame]
         saliva_times.iloc[:, 0].fillna(0, inplace=True)
         saliva_times = saliva_times.stack()
         return saliva_times
-    else:
-        # assume saliva times are already unstacked in the 'samples' level
-        saliva_times = saliva_times.astype(str).apply(pd.to_datetime).diff(axis=1)
-        saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
-        saliva_times.iloc[:, 0].fillna(0, inplace=True)
-        return saliva_times
+
+    # assume saliva times are already unstacked in the 'samples' level
+    saliva_times = saliva_times.astype(str).apply(pd.to_datetime).diff(axis=1)
+    saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
+    saliva_times.iloc[:, 0].fillna(0, inplace=True)
+    return saliva_times
 
 
 def mean_se(
@@ -201,8 +188,19 @@ def mean_se(
     biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     remove_s0: Optional[bool] = False,
 ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-    """Computes mean and standard error per saliva sample"""
+    """Compute mean and standard error per saliva sample.
 
+    Parameters
+    ----------
+    data :
+    biomarker_type :
+    remove_s0 :
+
+    Returns
+    -------
+    dataframe
+
+    """
     if isinstance(biomarker_type, list):
         dict_result = {}
         for biomarker in biomarker_type:
@@ -229,10 +227,10 @@ def mean_se(
 def _check_data_format(data: pd.DataFrame):
     if data is None:
         raise ValueError("`data` must not be None!")
-    if "sample" not in data.index.names or data.index.nlevels <= 1:
+    if any(s not in data.index.names for s in ["subject", "sample"]) or data.index.nlevels <= 2:
         raise ValueError(
-            "`data` is expected in long-format with subject IDs ('subject', 0-n) as 1st level and "
-            "sample IDs ('sample', 0-m) as 2nd level!"
+            "`data` is expected in long-format with subject IDs ('subject') as 1st and "
+            "sample IDs ('sample') as 2nd index level!"
         )
 
 
@@ -269,11 +267,45 @@ def _get_saliva_times(data: pd.DataFrame, saliva_times: np.array, remove_s0: boo
     return saliva_times
 
 
-_dict_biomarker_suggs: Dict[str, Sequence[str]] = {
+def _get_saliva_idx_labels(
+    columns: pd.Index,
+    sample_labels: Optional[Union[Tuple, Sequence]] = None,
+    sample_idx: Optional[Union[Tuple[int, int], Sequence[int]]] = None,
+) -> Tuple[Sequence, Sequence]:
+
+    if sample_labels is not None:
+        try:
+            sample_idx = [columns.get_loc(label) for label in sample_labels]
+        except KeyError as e:
+            raise IndexError("Invalid sample_labels `{}`".format(sample_labels)) from e
+    else:
+        try:
+            # ensure list
+            sample_idx = list(sample_idx)
+            sample_labels = columns[sample_idx]
+        except IndexError as e:
+            raise IndexError("`sample_idx[1]` is out of bounds!") from e
+
+    if len(sample_idx) != 2:
+        raise IndexError("Exactly 2 indices needed for computing slope. Got {} indices.".format(len(sample_idx)))
+
+    # replace idx values like '-1' with the actual index
+    if sample_idx[0] < 0:
+        sample_idx[0] = len(columns) + sample_idx[0]
+
+    if sample_idx[1] < 0:
+        sample_idx[1] = len(columns) + sample_idx[1]
+
+    # check that second index is bigger than first index
+    if sample_idx[0] >= sample_idx[1]:
+        raise IndexError("`sample_idx[1]` must be bigger than `sample_idx[0]`. Got {}".format(sample_idx))
+
+    return sample_labels, sample_idx
+
+
+_dict_saliva_type_suggs: Dict[str, Sequence[str]] = {
     "cortisol": ["cortisol", "cort", "Cortisol", "_c_"],
     "amylase": ["amylase", "amy", "Amylase", "sAA"],
     "il6": ["il6", "IL6", "il-6", "IL-6", "il_6", "IL_6"],
 }
-"""
-Dictionary containing possible column patterns for different biomarkers. 
-"""
+"""Dictionary containing possible column patterns for different saliva types."""
