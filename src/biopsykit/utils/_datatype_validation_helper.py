@@ -260,7 +260,7 @@ def _assert_has_column_multiindex(
     )
 
 
-def _assert_has_columns_levels(
+def _assert_has_column_levels(
     df: pd.DataFrame,
     column_levels: Iterable[_Hashable],
     match_atleast: Optional[bool] = True,
@@ -311,6 +311,10 @@ def _multiindex_level_names_helper(
     match_order: Optional[bool] = True,
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
+
+    if isinstance(level_names, str):
+        level_names = [level_names]
+
     ex_levels = list(level_names)
     if idx_or_col == "index":
         ac_levels = list(df.index.names)
@@ -379,4 +383,48 @@ def _multiindex_check_helper(
                     "But it has a MultiIndex with {2} {1} levels.".format(nlevels, idx_or_col, nlevels_act)
                 )
             return False
+    return True
+
+
+def _assert_has_column_prefix(
+    columns: Sequence[str], prefix: str, raise_exception: Optional[bool] = True
+) -> Optional[bool]:
+    """Check whether all columns start with the same prefix.
+
+    Parameters
+    ----------
+    columns : list of str
+        list of column names
+    prefix : str
+        expected prefix of all columns
+    raise_exception : bool, optional
+        Whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``columns`` all start with ``prefix``, ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and one of ``columns`` is not a string or does not start with ``prefix``
+
+    """
+    if prefix is None or len(prefix) == 0:
+        if raise_exception:
+            raise ValidationError("'prefix' is None or empty!")
+        return False
+
+    for col in columns:
+        if not _assert_is_dtype(col, str, raise_exception=False):
+            if raise_exception:
+                raise ValidationError("Column '{}' from {} is not a string!".format(col, columns))
+            return False
+        if not col.startswith(prefix):
+            if raise_exception:
+                raise ValidationError(
+                    "Column '{}' from {} are starting with the required prefix '{}'!".format(col, columns, prefix)
+                )
+            return False
+
     return True
