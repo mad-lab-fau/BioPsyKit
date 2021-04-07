@@ -6,26 +6,25 @@ from datetime import time, datetime
 
 import pandas as pd
 import numpy as np
-
-from biopsykit.utils.functions import se
+from biopsykit.utils.datatype_helper import SalivaRawDataFrame
 
 
 def extract_saliva_columns(data: pd.DataFrame, saliva_type: str, col_pattern: Optional[str] = None) -> pd.DataFrame:
-    """Extract columns containing saliva samples from a DataFrame.
+    """Extract saliva sample columns from a pandas dataframe.
 
     Parameters
     ----------
-    data: pd.DataFrame
-        dataframe which should be extracted
+    data: :class:`pandas.DataFrame`
+        dataframe to extract columns from
     saliva_type: str
         saliva type variable which should be used to extract columns (e.g. 'cortisol')
     col_pattern: str, optional
-        string pattern to identify saliva columns. If None, it is attempted to automatically infer column names using
-        `bp.saliva.utils.get_saliva_column_suggestions()`
+        string pattern to identify saliva columns. If ``None``, it is attempted to automatically infer column names
+        using :func:`get_saliva_column_suggestions()`
 
     Returns
     -------
-    pd.DataFrame
+    :class:`pandas.DataFrame`
         dataframe containing saliva data
 
     """
@@ -41,14 +40,14 @@ def extract_saliva_columns(data: pd.DataFrame, saliva_type: str, col_pattern: Op
 
 
 def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: str) -> Sequence[str]:
-    """Extract possible columns containing saliva data from a dataframe.
+    """Automatically extract possible saliva data columns from a pandas dataframe.
 
     This is for example useful when one large dataframe is used to store demographic information,
     questionnaire data and saliva data.
 
     Parameters
     ----------
-    data: pd.DataFrame
+    data: :class:`pandas.DataFrame`
         dataframe which should be extracted
     saliva_type: str
         saliva type variable which should be used to extract columns (e.g. 'cortisol')
@@ -145,83 +144,78 @@ def wide_to_long(
     return data.reorder_levels(["subject"] + levels[::-1]).sort_index()
 
 
-def saliva_times_datetime_to_minute(saliva_times: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
-    """Convert datetime objects into minute.
+def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
+    """Convert sample times from datetime or timedelta objects into minutes.
+
+    In order to compute certain saliva features (such as :func:`~biopsykit.saliva.saliva.auc` or
+    :func:`~biopsykit.saliva.saliva.slope`) the saliva sampling times are needed.
+    This function can be used to convert sampling times into minutes relative to the first saliva sample.
 
     Parameters
     ----------
-    saliva_times :
+    sample_times : :class:`pandas.Series` or :class:`pandas.DataFrame`
+        saliva sampling times in a Python datetime- or timedelta-related format.
+        If ``sample_times`` is a Series, it is assumed to be in long-format and will be unstacked into wide-format
+        along the `sample` level.
+        If ``sample_times`` is a DataFrame, it is assumed to be in wide-format already.
+        If values in ``sample_times`` are ``str``, they are assumed to be strings with time information only
+        (**not** including date), e.g., "09:00", "09:15", ...
 
     Returns
     -------
-    dataframe
+    :class:`pandas.DataFrame`
+        dataframe in wide-format with saliva sampling times in minutes relative to the first saliva sample
+
+    Raises
+    ------
+    ValueError
+        if sample times are not in a datetime- or timedelta-related format
 
     """
-    if isinstance(saliva_times.values.flatten()[0], str):
-        saliva_times = pd.to_timedelta(saliva_times)
+    if isinstance(sample_times.values.flatten()[0], str):
+        sample_times = pd.to_timedelta(sample_times)
 
-    if not isinstance(saliva_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64)):
-        raise ValueError("Saliva times must be instance of `datetime.datetime()`, `datetime.time()` or `pd.Timedelta`!")
+    if not isinstance(sample_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64)):
+        raise ValueError("Sample times must be instance of `datetime.datetime()`, `datetime.time()` or `pd.Timedelta`!")
 
-    if isinstance(saliva_times, pd.Series) and "sample" in saliva_times.index.names:
+    if isinstance(sample_times, pd.Series) and "sample" in sample_times.index.names:
         # unstack the multi-index dataframe in the 'samples' level so that time differences can be computes in minutes.
         # Then stack it back together
-        if isinstance(saliva_times[0], pd.Timedelta):
-            saliva_times = pd.to_timedelta(saliva_times).unstack(level="sample").diff(axis=1)
+        if isinstance(sample_times[0], pd.Timedelta):
+            sample_times = pd.to_timedelta(sample_times).unstack(level="sample").diff(axis=1)
         else:
-            saliva_times = pd.to_datetime(saliva_times.astype(str)).unstack(level="sample").diff(axis=1)
-        saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
-        saliva_times = saliva_times.cumsum(axis=1)
-        saliva_times.iloc[:, 0].fillna(0, inplace=True)
-        saliva_times = saliva_times.stack()
-        return saliva_times
+            sample_times = pd.to_datetime(sample_times.astype(str)).unstack(level="sample").diff(axis=1)
+        sample_times = sample_times.apply(lambda s: (s.dt.total_seconds() / 60))
+        sample_times = sample_times.cumsum(axis=1)
+        sample_times.iloc[:, 0].fillna(0, inplace=True)
+        sample_times = sample_times.stack()
+        return sample_times
 
-    # assume saliva times are already unstacked in the 'samples' level
-    saliva_times = saliva_times.astype(str).apply(pd.to_datetime).diff(axis=1)
-    saliva_times = saliva_times.apply(lambda s: (s.dt.total_seconds() / 60))
-    saliva_times.iloc[:, 0].fillna(0, inplace=True)
-    return saliva_times
+    # assume sample times are already unstacked at the 'samples' level and provided as dataframe
+    sample_times = sample_times.astype(str).apply(pd.to_datetime).diff(axis=1)
+    sample_times = sample_times.apply(lambda s: (s.dt.total_seconds() / 60))
+    sample_times.iloc[:, 0].fillna(0, inplace=True)
+    return sample_times
 
 
-def mean_se(
-    data: pd.DataFrame,
-    biomarker_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    remove_s0: Optional[bool] = False,
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-    """Compute mean and standard error per saliva sample.
+def _remove_s0(data: SalivaRawDataFrame) -> SalivaRawDataFrame:
+    """Helper function to remove first saliva sample.
 
     Parameters
     ----------
-    data :
-    biomarker_type :
-    remove_s0 :
+    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        saliva data in `SalivaRawDataFrame` format
 
     Returns
     -------
-    dataframe
+    :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        saliva data in `SalivaRawDataFrame` format without the first saliva sample
 
     """
-    if isinstance(biomarker_type, list):
-        dict_result = {}
-        for biomarker in biomarker_type:
-            biomarker_cols = [biomarker]
-            if "time" in data:
-                biomarker_cols = ["time"] + biomarker_cols
-            dict_result[biomarker] = mean_se(data[biomarker_cols], biomarker_type=biomarker, remove_s0=remove_s0)
-        return dict_result
-
-    if remove_s0:
-        data = data.drop(0, level="sample", errors="ignore")
-        data = data.drop("0", level="sample", errors="ignore")
-        data = data.drop("S0", level="sample", errors="ignore")
-
-    group_cols = list(data.index.names)
-    group_cols.remove("subject")
-
-    if "time" in data:
-        group_cols = group_cols + ["time"]
-    data_grp = data.groupby(group_cols).agg([np.mean, se])[biomarker_type]
-    return data_grp
+    data = data.drop(0, level="sample", errors="ignore")
+    data = data.drop("0", level="sample", errors="ignore")
+    data = data.drop("S0", level="sample", errors="ignore")
+    return data
 
 
 def _check_sample_times(sample_times: np.array):

@@ -555,6 +555,62 @@ params_slope = [
     ),
 ]
 
+# [0, 0, 0, 0, 0],
+# [1, 1, 1, 1, 1],
+# [0, 1, 2, 3, 4],
+# [5, 4, 3, 2, 1],
+# [10, 2, 4, 4, 6],
+# [-6, 2, 4, 4, 6],
+# [12, -6, 4, 4, 6],
+# [2, np.nan, 8, 4, 6],
+
+params_mean_se = [
+    (
+        saliva_no_time("cortisol"),
+        False,
+        pd.DataFrame(
+            {
+                "mean": [3.0, 0.57142857, 3.25, 2.75, 3.75],
+                "se": [2.06155281, 1.1153688264639723, 0.86085506, 0.55901699, 0.94017476],
+            },
+            index=pd.Index(list(range(0, 5)), name="sample"),
+        ),
+    ),
+    (
+        saliva_no_time("cortisol"),
+        True,
+        pd.DataFrame(
+            {
+                "mean": [0.57142857, 3.25, 2.75, 3.75],
+                "se": [1.1153688264639723, 0.86085506, 0.55901699, 0.94017476],
+            },
+            index=pd.Index(list(range(1, 5)), name="sample"),
+        ),
+    ),
+    (
+        saliva_time("cortisol"),
+        False,
+        pd.DataFrame(
+            {
+                "mean": [3.0, 0.57142857, 3.25, 2.75, 3.75],
+                "se": [2.06155281, 1.1153688264639723, 0.86085506, 0.55901699, 0.94017476],
+            },
+            index=pd.Index([(i, k) for i, k in enumerate([-10, 0, 10, 20, 30])], names=["sample", "time"]),
+        ),
+    ),
+    (
+        saliva_time("cortisol"),
+        True,
+        pd.DataFrame(
+            {
+                "mean": [0.57142857, 3.25, 2.75, 3.75],
+                "se": [1.1153688264639723, 0.86085506, 0.55901699, 0.94017476],
+            },
+            index=pd.Index([(i, k) for i, k in zip(range(1, 5), [0, 10, 20, 30])], names=["sample", "time"]),
+        ),
+    ),
+]
+
 
 class TestSaliva:
     @pytest.mark.parametrize(
@@ -1108,10 +1164,14 @@ class TestSaliva:
             (["subject", "day"], True, does_not_raise()),
             (["day"], True, pytest.raises(DataFrameTransformationError)),
             (["subject"], True, pytest.raises(DataFrameTransformationError)),
+            (["sample"], True, pytest.raises(DataFrameTransformationError)),
             (None, False, does_not_raise()),
             (["subject", "day"], False, does_not_raise()),
             (["day"], False, pytest.raises(ValidationError)),
             (["subject"], False, does_not_raise()),
+            (["sample"], False, pytest.raises(ValidationError)),
+            (["condition"], True, pytest.raises(ValueError)),
+            (["condition"], False, pytest.raises(ValueError)),
         ],
     )
     def test_standard_features_group_col_raise(self, group_cols, keep_index, expected):
@@ -1205,10 +1265,14 @@ class TestSaliva:
             )
 
     @pytest.mark.parametrize(
-        "include_condition, include_day",
-        [(True, True), (True, False), (False, True)],
+        "include_condition, include_day, expected_index_levels",
+        [
+            (True, True, ["subject", "condition", "day"]),
+            (True, False, ["subject", "condition"]),
+            (False, True, ["subject", "day"]),
+        ],
     )
-    def test_standard_features_group_col(self, include_condition, include_day):
+    def test_standard_features_group_col(self, include_condition, include_day, expected_index_levels):
         data_in = saliva_group_col(include_condition, include_day)
         group_cols = ["subject"]
         if include_condition:
@@ -1216,3 +1280,104 @@ class TestSaliva:
         if include_day:
             group_cols.append("day")
         data_out = saliva.standard_features(data_in, group_cols=group_cols)
+        assert list(data_out.index.names) == expected_index_levels
+
+    @pytest.mark.parametrize(
+        "data_func, saliva_type, expected_columns, expected_index",
+        [
+            (saliva_no_time, "cortisol", ["mean", "se"], list(range(0, 5))),
+            (saliva_no_time, "amylase", ["mean", "se"], list(range(0, 5))),
+            (saliva_no_time, "il6", ["mean", "se"], list(range(0, 5))),
+            (saliva_time, "cortisol", ["mean", "se"], [(i, k) for i, k in enumerate([-10, 0, 10, 20, 30])]),
+            (saliva_time, "amylase", ["mean", "se"], [(i, k) for i, k in enumerate([-10, 0, 10, 20, 30])]),
+            (saliva_time, "il6", ["mean", "se"], [(i, k) for i, k in enumerate([-10, 0, 10, 20, 30])]),
+            (
+                saliva_idx,
+                "cortisol",
+                ["mean", "se"],
+                [("S{}".format(i), k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
+            ),
+            (
+                saliva_idx,
+                "amylase",
+                ["mean", "se"],
+                [("S{}".format(i), k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
+            ),
+            (
+                saliva_idx,
+                "il6",
+                ["mean", "se"],
+                [("S{}".format(i), k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
+            ),
+        ],
+    )
+    def test_mean_se_columns_saliva_type(self, data_func, saliva_type, expected_columns, expected_index):
+        data_in = data_func(saliva_type)
+        data_out = saliva.mean_se(data_in, saliva_type=saliva_type)
+        # columns must be Index, not MultiIndex
+        assert isinstance(data_out.columns, pd.Index)
+        assert not isinstance(data_out.columns, pd.MultiIndex)
+        # check index names
+        assert list(data_out.index) == expected_index
+        # check column names
+        assert list(data_out.columns) == expected_columns
+
+    @pytest.mark.parametrize("data_in, remove_s0, expected", params_mean_se)
+    def test_mean_se(self, data_in, remove_s0, expected):
+        data_out = saliva.mean_se(data_in, remove_s0=remove_s0)
+        assert_frame_equal(data_out, expected, check_dtype=False)
+
+    @pytest.mark.parametrize(
+        "data_in, group_cols, expected",
+        [
+            (saliva_no_time(), None, does_not_raise()),
+            (saliva_no_time(), ["subject"], pytest.raises(DataFrameTransformationError)),
+            (saliva_no_time(), ["day"], pytest.raises(ValueError)),
+            (saliva_multi_days(), None, does_not_raise()),
+            (saliva_multi_days(), ["subject", "day"], pytest.raises(DataFrameTransformationError)),
+            (saliva_multi_days(), ["day"], does_not_raise()),
+            (saliva_multi_days(), ["subject"], does_not_raise()),
+        ],
+    )
+    def test_mean_se_group_col_raise(self, data_in, group_cols, expected):
+        with expected:
+            saliva.mean_se(data_in, group_cols=group_cols)
+
+    @pytest.mark.parametrize(
+        "data_in, group_cols, expected",
+        [
+            (saliva_no_time(), None, ["sample"]),
+            (saliva_time(), None, ["sample", "time"]),
+            (saliva_multi_days(), None, ["day", "sample", "time"]),
+            (saliva_no_time(), ["sample"], ["sample"]),
+            (saliva_no_time(), "sample", ["sample"]),
+            (saliva_time(), ["sample"], ["sample", "time"]),
+            (saliva_multi_days(), ["sample"], ["sample", "time"]),
+            (saliva_time(), ["sample", "time"], ["sample", "time"]),
+            (saliva_multi_days(), ["sample", "time"], ["sample", "time"]),
+            (saliva_multi_days(), ["sample", "time", "day"], ["sample", "time", "day"]),
+        ],
+    )
+    def test_mean_se_group_col_index(self, data_in, group_cols, expected):
+        out = saliva.mean_se(data_in, group_cols=group_cols)
+        assert list(out.index.names) == list(expected)
+
+    @pytest.mark.parametrize(
+        "include_time",
+        [
+            True,
+            False,
+        ],
+    )
+    def test_mean_se_multi_saliva_types(self, include_time):
+        data_in = saliva_multi_types(include_time)
+        data_out = saliva.mean_se(data_in, saliva_type=["cortisol", "amylase"])
+        for saliva_type in ["cortisol", "amylase"]:
+            if include_time:
+                data_test = data_in[[saliva_type, "time"]]
+            else:
+                data_test = data_in[[saliva_type]]
+            assert_frame_equal(
+                saliva.mean_se(data_test, saliva_type=saliva_type),
+                data_out[saliva_type],
+            )
