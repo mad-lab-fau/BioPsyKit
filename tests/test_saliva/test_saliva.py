@@ -310,15 +310,6 @@ def saliva_multi_days_idx():
     return data
 
 
-# [0, 0, 0, 0, 0],
-# [1, 1, 1, 1, 1],
-# [0, 1, 2, 3, 4],
-# [5, 4, 3, 2, 1],
-# [10, 2, 4, 4, 6],
-# [-6, 2, 4, 4, 6],
-# [12, -6, 4, 4, 6],
-# [2, np.nan, 8, 4, 6],
-
 params_max_value = [
     (
         True,
@@ -333,6 +324,25 @@ params_max_value = [
         pd.DataFrame(
             [0, 1, 4, 5, 10, 6, 12, 8],
             columns=pd.Index(["cortisol_max_val"], name="saliva_feature"),
+            index=pd.Index(range(1, 9), name="subject"),
+        ),
+    ),
+]
+
+params_initial_value = [
+    (
+        True,
+        pd.DataFrame(
+            [0, 1, 1, 4, 2, 2, -6, np.nan],
+            columns=pd.Index(["cortisol_ini_val"], name="saliva_feature"),
+            index=pd.Index(range(1, 9), name="subject"),
+        ),
+    ),
+    (
+        False,
+        pd.DataFrame(
+            [0, 1, 0, 5, 10, -6, 12, 2],
+            columns=pd.Index(["cortisol_ini_val"], name="saliva_feature"),
             index=pd.Index(range(1, 9), name="subject"),
         ),
     ),
@@ -614,6 +624,56 @@ class TestSaliva:
             (None, pytest.raises(ValidationError)),
         ],
     )
+    def test_initial_value_raises_saliva_type(self, saliva_type, expectation):
+        data = saliva_time()
+        with expectation:
+            saliva.initial_value(data, saliva_type=saliva_type)
+
+    @pytest.mark.parametrize(
+        "saliva_type, expected_columns",
+        [
+            ("cortisol", ["cortisol_ini_val"]),
+            ("amylase", ["amylase_ini_val"]),
+            ("il6", ["il6_ini_val"]),
+        ],
+    )
+    def test_initial_value_columns(self, saliva_type, expected_columns):
+        data_in = saliva_time(saliva_type)
+        data_out = saliva.initial_value(data_in, saliva_type=saliva_type)
+        assert list(data_out.columns) == expected_columns
+
+    @pytest.mark.parametrize("remove_s0, expected", params_initial_value)
+    def test_initial_value(self, remove_s0, expected):
+        out = saliva.initial_value(saliva_no_time(), remove_s0=remove_s0)
+        assert_frame_equal(out, expected, check_dtype=False)
+
+    @pytest.mark.parametrize(
+        "include_time",
+        [
+            True,
+            False,
+        ],
+    )
+    def test_initial_value_multi_saliva_types(self, include_time):
+        data_in = saliva_multi_types(include_time)
+        data_out = saliva.initial_value(data_in, saliva_type=["cortisol", "amylase"])
+        [
+            assert_frame_equal(
+                saliva.initial_value(data_in[[saliva_type]], saliva_type=saliva_type),
+                data_out[saliva_type],
+            )
+            for saliva_type in ["cortisol", "amylase"]
+        ]
+
+    @pytest.mark.parametrize(
+        "saliva_type, expectation",
+        [
+            ("cortisol", does_not_raise()),
+            ("amylase", pytest.raises(ValidationError)),
+            ("il6", pytest.raises(ValidationError)),
+            (None, pytest.raises(ValidationError)),
+        ],
+    )
     def test_max_increase_raises_saliva_type(self, saliva_type, expectation):
         data = saliva_time()
         with expectation:
@@ -721,7 +781,7 @@ class TestSaliva:
                 saliva_no_time(),
                 remove_s0=remove_s0,
                 compute_auc_post=compute_auc_post,
-                saliva_times=[-10, 0, 10, 20, 30],
+                sample_times=[-10, 0, 10, 20, 30],
             ),
             expected,
             check_dtype=False,
@@ -731,7 +791,7 @@ class TestSaliva:
         data = saliva_time()
         data["time"] = 0
         assert_frame_equal(
-            saliva.auc(data, remove_s0=remove_s0, compute_auc_post=compute_auc_post, saliva_times=[-10, 0, 10, 20, 30]),
+            saliva.auc(data, remove_s0=remove_s0, compute_auc_post=compute_auc_post, sample_times=[-10, 0, 10, 20, 30]),
             expected,
             check_dtype=False,
         )
@@ -750,7 +810,7 @@ class TestSaliva:
                 saliva_time_multiple_pre(),
                 remove_s0=remove_s0,
                 compute_auc_post=compute_auc_post,
-                saliva_times=[-20, -10, 0, 10, 20],
+                sample_times=[-20, -10, 0, 10, 20],
             ),
             expected,
             check_dtype=False,
@@ -800,14 +860,14 @@ class TestSaliva:
     )
     def test_auc_multi_saliva_types(self, include_time, saliva_times):
         data_in = saliva_multi_types(include_time)
-        data_out = saliva.auc(data_in, saliva_type=["cortisol", "amylase"], saliva_times=saliva_times)
+        data_out = saliva.auc(data_in, saliva_type=["cortisol", "amylase"], sample_times=saliva_times)
         for saliva_type in ["cortisol", "amylase"]:
             if include_time:
                 cols = [saliva_type, "time"]
             else:
                 cols = [saliva_type]
             assert_frame_equal(
-                saliva.auc(data_in[cols], saliva_type=saliva_type, saliva_times=saliva_times),
+                saliva.auc(data_in[cols], saliva_type=saliva_type, sample_times=saliva_times),
                 data_out[saliva_type],
             )
 

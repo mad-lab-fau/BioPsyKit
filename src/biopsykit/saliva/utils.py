@@ -224,47 +224,35 @@ def mean_se(
     return data_grp
 
 
-def _check_data_format(data: pd.DataFrame):
-    if data is None:
-        raise ValueError("`data` must not be None!")
-    if any(s not in data.index.names for s in ["subject", "sample"]) or data.index.nlevels <= 2:
-        raise ValueError(
-            "`data` is expected in long-format with subject IDs ('subject') as 1st and "
-            "sample IDs ('sample') as 2nd index level!"
-        )
+def _check_sample_times(sample_times: np.array):
+    if np.any(np.diff(sample_times) <= 0):
+        raise ValueError("`sample_times` must be increasing!")
 
 
-def _check_saliva_times(saliva_times: np.array):
-    if np.any(np.diff(saliva_times) <= 0):
-        raise ValueError("`saliva_times` must be increasing!")
-
-
-def _get_saliva_times(data: pd.DataFrame, saliva_times: np.array, remove_s0: bool) -> np.array:
-    if saliva_times is None:
+def _get_sample_times(
+    data: pd.DataFrame, sample_times: Union[np.array, Sequence[int]], remove_s0: Optional[bool] = False
+) -> np.array:
+    if sample_times is None:
         # check if dataframe has 'time' column
         if "time" in data.columns:
-            saliva_times = np.array(data.unstack()["time"])
-            if np.all((saliva_times == saliva_times[0])):
+            sample_times = np.array(data.unstack()["time"])
+            if np.all((sample_times == sample_times[0])):
                 # all subjects have the same saliva times
-                saliva_times = saliva_times[0]
+                sample_times = sample_times[0]
         else:
-            raise ValueError("No saliva times specified!")
-
-    if isinstance(saliva_times, str):
-        saliva_times = data[saliva_times]
-        saliva_times = saliva_times.unstack(level="sample")
+            raise ValueError("No sample times specified!")
 
     # ensure numpy
-    saliva_times = np.array(saliva_times)
+    sample_times = np.array(sample_times)
 
     if remove_s0:
         # check whether we have the same saliva times for all subjects (1d array) or not (2d array)
-        if saliva_times.ndim <= 2:
-            saliva_times = saliva_times[..., 1:]
+        if sample_times.ndim <= 2:
+            sample_times = sample_times[..., 1:]
         else:
-            raise ValueError("`saliva_times` has invalid dimensions: {}".format(saliva_times.ndim))
+            raise ValueError("`sample_times` has invalid dimensions: {}".format(sample_times.ndim))
 
-    return saliva_times
+    return sample_times
 
 
 def _get_saliva_idx_labels(
