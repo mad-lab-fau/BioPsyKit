@@ -10,6 +10,7 @@ from biopsykit.saliva.utils import (
     _get_sample_times,
     _get_saliva_idx_labels,
     _remove_s0,
+    _get_group_cols,
 )
 from biopsykit.utils.datatype_helper import (
     SalivaRawDataFrame,
@@ -142,8 +143,6 @@ def initial_value(
     data = data[[saliva_type]].unstack(level="sample")
 
     ini_val = data.iloc[:, 0]
-
-    print(ini_val)
 
     out = pd.DataFrame(
         ini_val.values,
@@ -312,8 +311,6 @@ def auc(
     """
     # check input
     is_raw_saliva_dataframe(data, saliva_type)
-    sample_times = _get_sample_times(data, sample_times, remove_s0)
-    _check_sample_times(sample_times)
 
     if isinstance(saliva_type, list):
         dict_result = {}
@@ -328,6 +325,9 @@ def auc(
                 sample_times=sample_times,
             )
         return dict_result
+
+    sample_times = _get_sample_times(data, saliva_type, sample_times, remove_s0)
+    _check_sample_times(sample_times)
 
     if remove_s0:
         # We have a S0 sample => drop it
@@ -416,9 +416,6 @@ def slope(
     # check input
     is_raw_saliva_dataframe(data, saliva_type)
 
-    sample_times = _get_sample_times(data, sample_times)
-    _check_sample_times(sample_times)
-
     if sample_idx is None and sample_labels is None:
         raise IndexError("Either `sample_labels` or `sample_idx` must be supplied as parameter!")
 
@@ -439,6 +436,9 @@ def slope(
                 sample_times=sample_times,
             )
         return dict_result
+
+    sample_times = _get_sample_times(data, saliva_type, sample_times)
+    _check_sample_times(sample_times)
 
     data = data[[saliva_type]].unstack()
 
@@ -522,20 +522,7 @@ def standard_features(
             dict_result[saliva] = standard_features(data[saliva_col], saliva_type=saliva)
         return dict_result
 
-    if isinstance(group_cols, str):
-        # ensure list
-        group_cols = [group_cols]
-
-    if group_cols is None:
-        # group by all available index levels
-        group_cols = list(data.index.names)
-        group_cols.remove("sample")
-
-    if any(col not in list(data.index.names) + list(data.columns) for col in group_cols):
-        # check for valid groupers
-        raise ValueError(
-            "Computing mean_se failed: Not all of '{}' are valid index levels or column names!".format(group_cols)
-        )
+    group_cols = _get_group_cols(data, group_cols, "sample", "standard_features")
 
     out = (
         data[[saliva_type]]
@@ -621,24 +608,7 @@ def mean_se(
         # We have a S0 sample => drop it
         data = _remove_s0(data)
 
-    if isinstance(group_cols, str):
-        # ensure list
-        group_cols = [group_cols]
-
-    if group_cols is None:
-        # group by all available index levels
-        group_cols = list(data.index.names)
-        group_cols.remove("subject")
-
-    if "sample" not in group_cols:
-        # always add sample to group cols because we always want to compute mean/se by sample here
-        group_cols.append("sample")
-
-    if any(col not in list(data.index.names) + list(data.columns) for col in group_cols):
-        # check for valid groupers
-        raise ValueError(
-            "Computing mean_se failed: Not all of '{}' are valid index levels or column names!".format(group_cols)
-        )
+    group_cols = _get_group_cols(data, group_cols, "subject", "mean_se")
 
     if group_cols == list(data.index.names):
         # if data should be grouped by *all* index levels we can not compute an aggregation
@@ -648,9 +618,8 @@ def mean_se(
         )
 
     if "time" in data.columns and "time" not in group_cols:
-        # add 'time' column to grouper if it's in the data and wasn't added yet
+        # add 'time' column to grouper if it's in the data and wasn't added yet because otherwise
+        # we would loose this column
         group_cols = group_cols + ["time"]
 
-    data_grp = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
-
-    return data_grp
+    return data.groupby(group_cols).agg([np.mean, se])[saliva_type]

@@ -6,40 +6,11 @@ from datetime import time, datetime
 
 import pandas as pd
 import numpy as np
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_index_levels
 from biopsykit.utils.datatype_helper import SalivaRawDataFrame
 
 
-def extract_saliva_columns(data: pd.DataFrame, saliva_type: str, col_pattern: Optional[str] = None) -> pd.DataFrame:
-    """Extract saliva sample columns from a pandas dataframe.
-
-    Parameters
-    ----------
-    data: :class:`pandas.DataFrame`
-        dataframe to extract columns from
-    saliva_type: str
-        saliva type variable which should be used to extract columns (e.g. 'cortisol')
-    col_pattern: str, optional
-        string pattern to identify saliva columns. If ``None``, it is attempted to automatically infer column names
-        using :func:`get_saliva_column_suggestions()`
-
-    Returns
-    -------
-    :class:`pandas.DataFrame`
-        dataframe containing saliva data
-
-    """
-    if col_pattern is None:
-        col_suggs = get_saliva_column_suggestions(data, saliva_type)
-        if len(col_suggs) > 1:
-            raise KeyError(
-                "More than one possible column pattern was found! "
-                "Please check manually which pattern is correct: {}".format(col_suggs)
-            )
-        col_pattern = col_suggs[0]
-    return data.filter(regex=col_pattern)
-
-
-def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: str) -> Sequence[str]:
+def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Sequence[str]]) -> Sequence[str]:
     """Automatically extract possible saliva data columns from a pandas dataframe.
 
     This is for example useful when one large dataframe is used to store demographic information,
@@ -49,15 +20,29 @@ def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: str) -> Seque
     ----------
     data: :class:`pandas.DataFrame`
         dataframe which should be extracted
-    saliva_type: str
-        saliva type variable which should be used to extract columns (e.g. 'cortisol')
+    saliva_type: str or list of str
+        saliva type variable which or list of saliva types should be used to extract columns (e.g. 'cortisol')
 
     Returns
     -------
-    list
-        list of suggested columns containing saliva data
+    list or dict
+        list of suggested columns containing saliva data or dict of such if ``saliva_type`` is a list
 
     """
+    # check if input is dataframe
+    _assert_is_dtype(data, pd.DataFrame)
+
+    if isinstance(saliva_type, list):
+        dict_result = {}
+        for saliva in saliva_type:
+            dict_result[saliva] = get_saliva_column_suggestions(data=data, saliva_type=saliva)
+        return dict_result
+
+    if saliva_type not in _dict_saliva_type_suggs:
+        raise ValueError(
+            "Invalid saliva type '{}'! Must be one of {}.".format(saliva_type, list(_dict_saliva_type_suggs.keys()))
+        )
+
     sugg_filt = list(
         filter(
             lambda col: any(k in col for k in _dict_saliva_type_suggs[saliva_type]),
@@ -94,57 +79,55 @@ def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: str) -> Seque
     return sugg_filt
 
 
-def wide_to_long(
-    data: pd.DataFrame,
-    saliva_type: str,
-    levels: Union[str, Sequence[str]],
-    sep: Optional[str] = "_",
-) -> pd.DataFrame:
-    """Convert a dataframe containing saliva data from wide-format into long-format.
+def extract_saliva_columns(
+    data: pd.DataFrame, saliva_type: Union[str, Sequence[str]], col_pattern: Optional[Union[str, Sequence[str]]] = None
+) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    """Extract saliva sample columns from a pandas dataframe.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
-        pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject
-    saliva_type : str
-        saliva type (e.g. 'cortisol')
-    levels : str or list of str
-        index levels of the resulting long-format dataframe. In the wide-format dataframe, the level keys are expected
-        to be encoded in the column names and separated by ``sep``
-    sep : str, optional
-        character separating index levels in the column names of the wide-format dataframe
+    data: :class:`pandas.DataFrame`
+        dataframe to extract columns from
+    saliva_type: str or list of str
+        saliva type variable or list of saliva types which should be used to extract columns (e.g. 'cortisol')
+    col_pattern: str, optional
+        string pattern or list of string patterns to identify saliva columns.
+        If ``None``, it is attempted to automatically infer column names using :func:`get_saliva_column_suggestions()`
+        If ``col_pattern`` is a list, it must be the same length like ``saliva_type``
+
+    Returns
+    -------
+    :class:`pandas.DataFrame` or dict
+        pandas dataframe with extracted columns or dict of such if ``saliva_type`` is a list
 
     Returns
     -------
     :class:`pandas.DataFrame`
-        pandas DataFrame in long-format
+        dataframe containing saliva data
 
     """
-    if isinstance(levels, str):
-        levels = [levels]
+    if isinstance(saliva_type, list):
+        if isinstance(col_pattern, list) and len(saliva_type) is not len(col_pattern):
+            raise ValueError("'saliva_type' and 'col_pattern' must have same length!")
+        dict_result = {}
+        if col_pattern is None:
+            col_pattern = [None] * len(saliva_type)
+        for saliva, col_p in zip(saliva_type, col_pattern):
+            dict_result[saliva] = extract_saliva_columns(data=data, saliva_type=saliva, col_pattern=col_p)
+        return dict_result
 
-    data = data.filter(like=saliva_type)
-    # reverse level order because nested multi-level index will be constructed from back to front
-    levels = levels[::-1]
-    # iteratively build up long-format dataframe
-    for i, level in enumerate(levels):
-        stubnames = list(data.columns)
-        # stubnames are everything except the last part separated by underscore
-        stubnames = sorted({"_".join(s.split("_")[:-1]) for s in stubnames})
-        data = pd.wide_to_long(
-            data.reset_index(),
-            stubnames=stubnames,
-            i=["subject"] + levels[0:i],
-            j=level,
-            sep=sep,
-            suffix=r"\w+",
-        )
-
-    # reorder levels and sort
-    return data.reorder_levels(["subject"] + levels[::-1]).sort_index()
+    if col_pattern is None:
+        col_suggs = get_saliva_column_suggestions(data, saliva_type)
+        if len(col_suggs) > 1:
+            raise ValueError(
+                "More than one possible column pattern was found! "
+                "Please check manually which pattern is correct: {}".format(col_suggs)
+            )
+        col_pattern = col_suggs[0]
+    return data.filter(regex=col_pattern)
 
 
-def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
+def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]) -> Union[pd.Series, pd.DataFrame]:
     """Convert sample times from datetime or timedelta objects into minutes.
 
     In order to compute certain saliva features (such as :func:`~biopsykit.saliva.saliva.auc` or
@@ -173,33 +156,39 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
 
     """
     if isinstance(sample_times.values.flatten()[0], str):
-        sample_times = pd.to_timedelta(sample_times)
-
-    if not isinstance(sample_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64)):
-        raise ValueError("Sample times must be instance of `datetime.datetime()`, `datetime.time()` or `pd.Timedelta`!")
-
-    if isinstance(sample_times, pd.Series) and "sample" in sample_times.index.names:
-        # unstack the multi-index dataframe in the 'samples' level so that time differences can be computes in minutes.
-        # Then stack it back together
-        if isinstance(sample_times[0], pd.Timedelta):
-            sample_times = pd.to_timedelta(sample_times).unstack(level="sample").diff(axis=1)
+        if isinstance(sample_times, pd.DataFrame):
+            sample_times = pd.to_timedelta(sample_times.stack()).unstack("sample")
         else:
-            sample_times = pd.to_datetime(sample_times.astype(str)).unstack(level="sample").diff(axis=1)
-        sample_times = sample_times.apply(lambda s: (s.dt.total_seconds() / 60))
-        sample_times = sample_times.cumsum(axis=1)
-        sample_times.iloc[:, 0].fillna(0, inplace=True)
-        sample_times = sample_times.stack()
-        return sample_times
+            sample_times = pd.to_timedelta(sample_times)
 
-    # assume sample times are already unstacked at the 'samples' level and provided as dataframe
-    sample_times = sample_times.astype(str).apply(pd.to_datetime).diff(axis=1)
-    sample_times = sample_times.apply(lambda s: (s.dt.total_seconds() / 60))
+    if not isinstance(sample_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64, np.datetime64)):
+        raise ValueError(
+            "Sample times must be instance of `datetime.datetime()`, `datetime.time()`,"
+            " `np.datetime64`, `np.timedelta64`, or `pd.Timedelta`!"
+        )
+
+    is_series = isinstance(sample_times, pd.Series)
+    if is_series:
+        _assert_has_index_levels(sample_times, index_levels=["sample"], match_atleast=True)
+        # unstack the multi-index dataframe in the 'samples' level so that time differences can be computed in minutes.
+        # Then stack it back together
+        sample_times = sample_times.unstack(level="sample")
+
+    if isinstance(sample_times.values.flatten()[0], (pd.Timedelta, np.timedelta64)):
+        sample_times = sample_times.apply(pd.to_timedelta)
+    else:
+        sample_times = sample_times.astype(str).apply(pd.to_datetime)
+
+    sample_times = sample_times.diff(axis=1).apply(lambda s: (s.dt.total_seconds() / 60))
+    sample_times = sample_times.cumsum(axis=1)
     sample_times.iloc[:, 0].fillna(0, inplace=True)
+    if is_series:
+        sample_times = sample_times.stack()
     return sample_times
 
 
 def _remove_s0(data: SalivaRawDataFrame) -> SalivaRawDataFrame:
-    """Helper function to remove first saliva sample.
+    """Remove first saliva sample.
 
     Parameters
     ----------
@@ -218,18 +207,34 @@ def _remove_s0(data: SalivaRawDataFrame) -> SalivaRawDataFrame:
     return data
 
 
-def _check_sample_times(sample_times: np.array):
+def _check_sample_times(sample_times: np.array) -> None:
+    """Check that all sample times are monotonously increasing.
+
+    Parameters
+    ----------
+    sample_times : array-like
+        list of sample times
+
+    Raises
+    ------
+    ValueError
+        if values in ``sample_times`` are not monotonously increasing
+
+    """
     if np.any(np.diff(sample_times) <= 0):
         raise ValueError("`sample_times` must be increasing!")
 
 
 def _get_sample_times(
-    data: pd.DataFrame, sample_times: Union[np.array, Sequence[int]], remove_s0: Optional[bool] = False
+    data: pd.DataFrame,
+    saliva_type: str,
+    sample_times: Union[np.array, Sequence[int]],
+    remove_s0: Optional[bool] = False,
 ) -> np.array:
     if sample_times is None:
         # check if dataframe has 'time' column
         if "time" in data.columns:
-            sample_times = np.array(data.unstack()["time"])
+            sample_times = np.array(data.unstack(level="sample")["time"])
             if np.all((sample_times == sample_times[0])):
                 # all subjects have the same saliva times
                 sample_times = sample_times[0]
@@ -237,14 +242,34 @@ def _get_sample_times(
             raise ValueError("No sample times specified!")
 
     # ensure numpy
-    sample_times = np.array(sample_times)
+    sample_times = np.squeeze(sample_times)
+
+    # check whether we have the same saliva times for all subjects (1d array) or not (2d array)
+    # and whether the input format is correct
+    if sample_times.ndim == 1:
+        exp_shape = data.unstack(level="sample")[saliva_type].shape[1]
+        act_shape = sample_times.shape[0]
+        # saliva times equal for all subjects
+        # => number of sample times must correspond to 2nd dimension of wide-format data
+        if act_shape != exp_shape:
+            raise ValueError(
+                "'sample_times' does not correspond to the number of saliva samples in 'data'! "
+                "Expected {}, got {}.".format(exp_shape, act_shape)
+            )
+    elif sample_times.ndim == 2:
+        # saliva time different for all subjects
+        exp_shape = data.unstack(level="sample")[saliva_type].shape
+        act_shape = sample_times.shape
+        if act_shape != exp_shape:
+            raise ValueError(
+                "Dimensions of 'sample_times' does not correspond to dimensions of 'data'! "
+                "Expected {}, got {}.".format(exp_shape, act_shape)
+            )
+    else:
+        raise ValueError("'sample_times' has invalid dimensions! Expected 1 or 2, got {}".format(sample_times.ndim))
 
     if remove_s0:
-        # check whether we have the same saliva times for all subjects (1d array) or not (2d array)
-        if sample_times.ndim <= 2:
-            sample_times = sample_times[..., 1:]
-        else:
-            raise ValueError("`sample_times` has invalid dimensions: {}".format(sample_times.ndim))
+        sample_times = sample_times[..., 1:]
 
     return sample_times
 
@@ -254,7 +279,25 @@ def _get_saliva_idx_labels(
     sample_labels: Optional[Union[Tuple, Sequence]] = None,
     sample_idx: Optional[Union[Tuple[int, int], Sequence[int]]] = None,
 ) -> Tuple[Sequence, Sequence]:
+    """Get sample labels and indices from data, if only one of both was specified.
 
+    Parameters
+    ----------
+    columns : :class:`pandas.Index`
+        dataframe columns
+    sample_labels : list, optional
+        list of sample labels
+    sample_idx : list, optional
+        list of sample indices
+
+    Returns
+    -------
+    sample_labels:
+        list of sample labels
+    sample_idx:
+        list of sample indices
+
+    """
     if sample_labels is not None:
         try:
             sample_idx = [columns.get_loc(label) for label in sample_labels]
@@ -283,6 +326,47 @@ def _get_saliva_idx_labels(
         raise IndexError("`sample_idx[1]` must be bigger than `sample_idx[0]`. Got {}".format(sample_idx))
 
     return sample_labels, sample_idx
+
+
+def _get_group_cols(
+    data: SalivaRawDataFrame, group_cols: Union[str, Sequence[str]], group_type: str, function_name: str
+) -> Sequence[str]:
+    """Get appropriate columns for grouping.
+
+    Parameters
+    ----------
+    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        saliva data in `SalivaRawDataFrame` format
+    group_cols : str or list of str
+        list of index levels and column names to group by
+    group_type : str
+        which index level should be grouped by: 'subject' (for computing features per subject, along 'sample' axis)
+        or 'sample' (for computing values per sample, along 'subject' axis)
+    function_name : str
+        function name for error message: 'standard_features' or 'mean_se'
+
+    Returns
+    -------
+    list of str
+        list of group by columns
+
+    """
+    if isinstance(group_cols, str):
+        # ensure list
+        group_cols = [group_cols]
+    elif group_cols is None:
+        # group by all available index levels
+        group_cols = list(data.index.names)
+        group_cols.remove(group_type)
+
+    if any(col not in list(data.index.names) + list(data.columns) for col in group_cols):
+        # check for valid groupers
+        raise ValueError(
+            "Computing {} failed: Not all of '{}' are valid index levels or column names!".format(
+                function_name, group_cols
+            )
+        )
+    return group_cols
 
 
 _dict_saliva_type_suggs: Dict[str, Sequence[str]] = {

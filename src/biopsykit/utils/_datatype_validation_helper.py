@@ -128,7 +128,7 @@ def _assert_has_index_levels(
     df: pd.DataFrame,
     index_levels: Iterable[_Hashable],
     match_atleast: Optional[bool] = False,
-    match_order: Optional[bool] = True,
+    match_order: Optional[bool] = False,
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
     """Check if the dataframe has all index level names.
@@ -263,8 +263,8 @@ def _assert_has_column_multiindex(
 def _assert_has_column_levels(
     df: pd.DataFrame,
     column_levels: Iterable[_Hashable],
-    match_atleast: Optional[bool] = True,
-    match_order: Optional[bool] = True,
+    match_atleast: Optional[bool] = False,
+    match_order: Optional[bool] = False,
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
     """Check if the dataframe has all column level names of a MultiIndex column.
@@ -307,8 +307,8 @@ def _multiindex_level_names_helper(
     df: pd.DataFrame,
     level_names: Iterable[_Hashable],
     idx_or_col: str,
-    match_atleast: Optional[bool] = True,
-    match_order: Optional[bool] = True,
+    match_atleast: Optional[bool] = False,
+    match_order: Optional[bool] = False,
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
 

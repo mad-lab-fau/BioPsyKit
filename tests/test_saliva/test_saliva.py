@@ -116,6 +116,38 @@ def saliva_time(saliva_type: Optional[str] = "cortisol"):
     return data
 
 
+def saliva_time_individual(saliva_type: Optional[str] = "cortisol"):
+    data = pd.DataFrame(
+        index=pd.MultiIndex.from_product([range(1, 9), range(0, 5)], names=["subject", "sample"]),
+        columns=[saliva_type, "time"],
+    )
+    data[saliva_type] = np.concatenate(
+        [
+            [12, -6, 4, 4, 6],
+            [12, -6, 4, 4, 6],
+            [12, -6, 4, 4, 6],
+            [12, -6, 4, 4, 6],
+            [12, -6, 4, 4, 6],
+            [12, -6, 4, 4, 6],
+            [12, -6, 4, 4, 6],
+            [12, -6, 4, 4, 6],
+        ]
+    )
+    data["time"] = np.concatenate(
+        [
+            [-10, 0, 10, 20, 30],
+            [-11, 1, 10, 21, 29],
+            [-10, -1, 11, 20, 30],
+            [-9, 2, 12, 22, 33],
+            [-10, 0, 10, 19, 29],
+            [-8, -2, 10, 20, 30],
+            [-10, 0, 11, 20, 29],
+            [-10, 0, 11, 20, 29],
+        ]
+    )
+    return data
+
+
 def saliva_idx(saliva_type: Optional[str] = "cortisol"):
     data = pd.DataFrame(
         index=pd.MultiIndex.from_product(
@@ -800,13 +832,111 @@ class TestSaliva:
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize(
-        "data",
-        [saliva_no_time(), saliva_wrong_time_01(), saliva_wrong_time_02()],
-        ids=["notime", "sametime", "descreasingtime"],
+        "data, sample_times, expected",
+        [
+            (saliva_no_time(), None, pytest.raises(ValueError)),
+            (saliva_wrong_time_01(), None, pytest.raises(ValueError)),
+            (saliva_wrong_time_02(), None, pytest.raises(ValueError)),
+            (
+                saliva_no_time(),
+                [[-10, 0, 10, 20]],
+                pytest.raises(ValueError),
+            ),
+            (
+                saliva_no_time(),
+                [[-10, 0, 10, 20, 30, 40]],
+                pytest.raises(ValueError),
+            ),
+            (saliva_no_time(), [[-10, 0, 10, 20, 30], [-10, 0, 10, 20, 30]], pytest.raises(ValueError)),
+            (
+                saliva_no_time(),
+                [
+                    [-10, 0, 10, 20, 30, 40],
+                    [-10, 0, 10, 20, 30, 40],
+                    [-10, 0, 10, 20, 30, 40],
+                    [-10, 0, 10, 20, 30, 40],
+                    [-10, 0, 10, 20, 30, 40],
+                    [-10, 0, 10, 20, 30, 40],
+                    [-10, 0, 10, 20, 30, 40],
+                    [-10, 0, 10, 20, 30, 40],
+                ],
+                pytest.raises(ValueError),
+            ),
+            (
+                saliva_no_time(),
+                [
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                ],
+                pytest.raises(ValueError),
+            ),
+            (
+                saliva_no_time(),
+                [
+                    [[-10, 0], [0, 10], [10, 20], [20, 30], [30, 40]],
+                    [[-10, 0], [0, 10], [10, 20], [20, 30], [30, 40]],
+                    [[-10, 0], [0, 10], [10, 20], [20, 30], [30, 40]],
+                    [[-10, 0], [0, 10], [10, 20], [20, 30], [30, 40]],
+                    [[-10, 0], [0, 10], [10, 20], [20, 30], [30, 40]],
+                    [[-10, 0], [0, 10], [10, 20], [20, 30], [30, 40]],
+                    [[-10, 0], [0, 10], [10, 20], [20, 30], [30, 40]],
+                    [[-10, 0], [0, 10], [10, 20], [20, 30], [30, 40]],
+                ],
+                pytest.raises(ValueError),
+            ),
+            (
+                saliva_no_time(),
+                [
+                    [[-10], [0], [10], [20], [30]],
+                    [[-10], [0], [10], [20], [30]],
+                    [[-10], [0], [10], [20], [30]],
+                    [[-10], [0], [10], [20], [30]],
+                    [[-10], [0], [10], [20], [30]],
+                    [[-10], [0], [10], [20], [30]],
+                    [[-10], [0], [10], [20], [30]],
+                    [[-10], [0], [10], [20], [30]],
+                ],
+                does_not_raise(),
+            ),
+            (
+                saliva_no_time(),
+                [
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                    [-10, 0, 10, 20, 30],
+                ],
+                does_not_raise(),
+            ),
+        ],
+        ids=[
+            "no_time",
+            "same_time",
+            "decreasing_time",
+            "wrong_shape01",
+            "wrong_shape02",
+            "wrong_shape03",
+            "wrong_shape04",
+            "wrong_shape05",
+            "wrong_shape06",
+            "wrong_shape_but_correct_after_squeeze",
+            "correct_shape",
+        ],
     )
-    def test_auc_raises_saliva_times(self, data):
-        with pytest.raises(ValueError):
-            saliva.auc(data)
+    def test_auc_raises_saliva_times(self, data, sample_times, expected):
+        with expected:
+            saliva.auc(data, sample_times=sample_times)
 
     @pytest.mark.parametrize(
         "saliva_type, expectation",
@@ -851,6 +981,20 @@ class TestSaliva:
             expected,
             check_dtype=False,
         )
+
+    def test_auc_individual_time(self):
+        # check with 'time' column
+        data_out = saliva.auc(saliva_time_individual())
+        print(data_out)
+        # only two AUC values should be the same
+        assert len(data_out["cortisol_auc_g"]) - 1 == len(data_out["cortisol_auc_g"].unique())
+        assert len(data_out["cortisol_auc_i"]) - 1 == len(data_out["cortisol_auc_i"].unique())
+        # these two values should be the same
+        assert data_out["cortisol_auc_g"].iloc[-1] == data_out["cortisol_auc_g"].iloc[-2]
+        assert data_out["cortisol_auc_i"].iloc[-1] == data_out["cortisol_auc_i"].iloc[-2]
+        # these two, for example, not
+        assert data_out["cortisol_auc_g"].iloc[0] != data_out["cortisol_auc_g"].iloc[1]
+        assert data_out["cortisol_auc_i"].iloc[0] != data_out["cortisol_auc_i"].iloc[1]
 
     @pytest.mark.parametrize("remove_s0, compute_auc_post, expected", params_auc_mutiple_pre)
     def test_auc_multiple_pre(self, remove_s0, compute_auc_post, expected):
