@@ -29,7 +29,7 @@ def _assert_file_extension(
 
     Raises
     ------
-    FileExtensionError
+    :class:`~biopsykit.exceptions.FileExtensionError`
         if ``raise_exception`` is ``True`` and ``file_name`` does not end with any of the specified
         ``expected_extension``
 
