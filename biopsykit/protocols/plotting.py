@@ -57,16 +57,34 @@ def saliva_plot(
         **kwargs
 ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
     """
-    TODO: add documentation
+    Plots the saliva data during the different phases (mean ± standard error per phase).
+
+    In case of only one group a pandas dataframe can be passed.
+
+    In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
+    to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
+
+    Regardless of the kind of input the dataframes need to be in the format of a 'mean dataframe', as returned
+    by ``saliva.utils.mean_se`` (see ``saliva.utils.mean_se`` for further information).
 
     Parameters
     ----------
-    data
-    biomarker
-    saliva_times
-    test_times
-    groups
-    group_col
+    data : dataframe or dict
+        Mean saliva data to plot. It has to be one dataframe which is in the kind of format as
+        returned by `saliva.utils.mean_se`
+    biomarker : str
+        Name of the biomarker. Default : 'cortisol'
+    saliva_times : str
+        Times at which saliva samples were taken.
+    test_times : str
+        Times of the passed test.
+    groups : list, optional:
+         List of group names. If ``None`` is passed, the groups and their order are inferred from the
+         dictionary keys or from the unique values in `group_col`. If list is supplied the groups are
+         plotted in that order.
+         Default: ``None``
+    group_col : str, optional
+        Name of group column in the dataframe in case of multiple groups in one dataframe, Default: ``None``
     kwargs: dict, optional
             optional parameters to be passed to the plot, such as:
                 * ax: Axes object to plot on
@@ -76,8 +94,10 @@ def saliva_plot(
 
     Returns
     -------
-
+    tuple or none
+        Tuple of Figure and Axes or None if Axes object was passed
     """
+
 
     fig: Union[plt.Figure, None] = None
     ax: Union[plt.Axes, None] = kwargs.get('ax', None)
