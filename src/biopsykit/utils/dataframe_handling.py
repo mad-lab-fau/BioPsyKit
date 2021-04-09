@@ -157,3 +157,85 @@ def apply_codebook(path_or_df: Union[path_t, pd.DataFrame], data: pd.DataFrame) 
             data.rename(index=codebook.loc[col], level=col, inplace=True)
 
     return data
+
+
+def wide_to_long(
+    data: pd.DataFrame,
+    stubname: str,
+    levels: Union[str, Sequence[str]],
+    sep: Optional[str] = "_",
+) -> pd.DataFrame:
+    """Convert a dataframe wide-format into long-format.
+
+    In the wide-format dataframe, the index levels to be converted into long-format are expected to be encoded in the
+    column names and separated by ``sep``. If multiple levels should be converted into long-format, e.g., for a
+    questionnaire with subscales (level `subscale`) that was assessed pre and post (level `time`), then the different
+    levels are all encoded into the string. The level order is specified by ``levels``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject
+    stubname : str
+        common name for each column to be converted into long-format. Usually, this is either the name of the
+        questionnaire (e.g., "PSS") or the saliva type (e.g., "cortisol")
+    levels : str or list of str
+        index levels of the resulting long-format dataframe.
+    sep : str, optional
+        character separating index levels in the column names of the wide-format dataframe
+
+    Returns
+    -------
+    :class:`pandas.DataFrame`
+        pandas DataFrame in long-format
+
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from biopsykit.utils.dataframe_handling import wide_to_long
+    >>> data = pd.DataFrame(
+    >>>     columns=[
+    >>>         "MDBF_GoodBad_pre", "MDBF_AwakeTired_pre", "MDBF_CalmNervous_pre",
+    >>>         "MDBF_GoodBad_post", "MDBF_AwakeTired_post",  "MDBF_CalmNervous_post"
+    >>>     ],
+    >>>     index=pd.Index(range(0, 5), name="subject")
+    >>> )
+    >>> data_long = wide_to_long(data, stubname="MDBF", levels=["subscale", "time"], sep="_")
+    >>> print(data_long.index.names)
+    ['subject', 'subscale', 'time']
+    >>> print(data_long.index)
+    MultiIndex([(0,  'AwakeTired', 'post'),
+            (0,  'AwakeTired',  'pre'),
+            (0, 'CalmNervous', 'post'),
+            (0, 'CalmNervous',  'pre'),
+            (0,     'GoodBad', 'post'),
+            (0,     'GoodBad',  'pre'),
+            (1,  'AwakeTired', 'post'),
+            ...
+
+
+
+    """
+    if isinstance(levels, str):
+        levels = [levels]
+
+    data = data.filter(like=stubname)
+    # reverse level order because nested multi-level index will be constructed from back to front
+    levels = levels[::-1]
+    # iteratively build up long-format dataframe
+    for i, level in enumerate(levels):
+        stubnames = list(data.columns)
+        # stubnames are everything except the last part separated by underscore
+        stubnames = sorted({"_".join(s.split("_")[:-1]) for s in stubnames})
+        data = pd.wide_to_long(
+            data.reset_index(),
+            stubnames=stubnames,
+            i=["subject"] + levels[0:i],
+            j=level,
+            sep=sep,
+            suffix=r"\w+",
+        )
+
+    # reorder levels and sort
+    return data.reorder_levels(["subject"] + levels[::-1]).sort_index()
