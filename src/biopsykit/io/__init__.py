@@ -7,7 +7,7 @@ from biopsykit.io.io import (
     load_subject_condition_list,
     convert_time_log_datetime,
 )
-from biopsykit.io import ecg, eeg, nilspod, saliva, sleep
+from biopsykit.io import ecg, eeg, nilspod, saliva, sleep, sleep_analyzer
 
 __all__ = [
     "load_time_log",
@@ -21,4 +21,5 @@ __all__ = [
     "nilspod",
     "saliva",
     "sleep",
+    "sleep_analyzer",
 ]
