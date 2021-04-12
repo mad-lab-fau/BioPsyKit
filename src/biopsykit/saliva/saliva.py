@@ -48,7 +48,7 @@ def max_value(
 
     Raises
     ------
-    ValidationError
+    :exc:`biopsykit.exceptions.ValidationError`
         if ``data`` is not a SalivaRawDataFrame
 
     """
@@ -116,7 +116,7 @@ def initial_value(
 
     Raises
     ------
-    ValidationError
+    :exc:`biopsykit.exceptions.ValidationError`
         if ``data`` is not a SalivaRawDataFrame
 
     """
@@ -194,7 +194,7 @@ def max_increase(
 
     Raises
     ------
-    ValidationError
+    :exc:`biopsykit.exceptions.ValidationError`
         if ``data`` is not a SalivaRawDataFrame
 
     """
@@ -298,7 +298,7 @@ def auc(
 
     Raises
     ------
-    ValidationError
+    :exc:`biopsykit.exceptions.ValidationError`
         if ``data`` is not a SalivaRawDataFrame
 
     References
@@ -409,7 +409,7 @@ def slope(
     ------
     IndexError
         if invalid `sample_labels` or `sample_idx` is provided
-    ValidationError
+    :exc:`biopsykit.exceptions.ValidationError`
         if ``data`` is not a SalivaRawDataFrame
 
     """
@@ -506,7 +506,7 @@ def standard_features(
     ------
     ValidationError
         if ``data`` is not a SalivaRawDataFrame
-    DataFrameTransformationError
+    :exc:`biopsykit.exceptions.DataFrameTransformationError`
         if ``keep_index`` is ``True``, but applying the old index fails
 
     """
@@ -588,7 +588,7 @@ def mean_se(
 
     Raises
     ------
-    ValidationError
+    :exc:`biopsykit.exceptions.ValidationError`
         if ``data`` is not a SalivaRawDataFrame
 
     """

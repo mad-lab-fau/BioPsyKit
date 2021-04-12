@@ -7,6 +7,7 @@ from typing import Dict, Optional
 import pandas as pd
 
 from biopsykit.io import write_pandas_dict_excel
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t
 from biopsykit.utils.datatype_helper import HeartRateSubjectDict, is_hr_subject_dict
 from biopsykit.utils.file_handling import is_excel_file, get_subject_dirs
@@ -39,6 +40,8 @@ def load_hr_subject_dict(file_path: path_t, assert_format: Optional[bool] = True
     :class:`~biopsykit.exceptions.ValidationError`
         if file in ``file_path`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDict`
         (if ``assert_format`` is ``True``)
+    :class:`~biopsykit.exceptions.FileExtensionError`
+        if file is no Excel file (.xls or .xlsx)
 
     See Also
     --------
@@ -48,6 +51,7 @@ def load_hr_subject_dict(file_path: path_t, assert_format: Optional[bool] = True
     """
     # ensure pathlib
     file_path = Path(file_path)
+    _assert_file_extension(file_path, (".xls", ".xlsx"))
 
     # assure that the file is an Excel file
     is_excel_file(file_path)
