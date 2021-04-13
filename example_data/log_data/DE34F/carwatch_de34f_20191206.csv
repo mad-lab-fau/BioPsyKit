@@ -1,0 +1,10 @@
+1575669191157;evening_salivette;{"id":815}
+1575669195200;barcode_scan_init;{}
+1575669202198;barcode_scanned;{"id":815,"saliva_id":5,"barcode_value":"0690005"}
+1575669207417;service_started;{}
+1575669237433;evening_salivette;{"id":815}
+1575669442595;lights_out;{}
+1575669447946;lights_out;{}
+1575669456988;screen_off;{}
+1575669673570;user_present;{}
+1575669673666;screen_on;{}

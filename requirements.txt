@@ -1,0 +1,10 @@
+setuptools
+pytz
+seaborn
+pandas
+numpy
+scipy
+neurokit2
+matplotlib
+tqdm
+nilspodlib
