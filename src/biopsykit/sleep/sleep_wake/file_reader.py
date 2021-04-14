@@ -1,23 +1,33 @@
-# This is a sample Python script.
-
-# Press Umschalt+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+"""
+Read in the files of the mesa sleep-wake dataset. The filetypes are PSG, Actigraphy and R-points.
+"""
 import pandas as pd
 import xml.etree.ElementTree as ET
 import numpy as np
 import time
 from biopsykit.sleep.sleep_wake.base import _SleepWakeBase
 
-"""
-Read int the files of the mesa sleep-wake dataset. The filetypes are PSG, Actigraphy and R-points.
-"""
+
 
 
 def read_psg(file_path):
+    """
+    Read in the XML-files from the mesa-dataset
+
+    Parameters
+    ----------
+    file_path: str
+        file path to the mesa folder with your XML-files. Important: not the filename itself!
+
+    Returns
+    -------
+    :dict: dict that contains a pandas.DataFrame for every subject
+    """
+
     psg = {}
     for i in range(20):  # try only with 20 datasets to lower memory consumption
 
-        try:
+        try: #look if a dataset exists
             psg[i] = xml_reader(file_path + '\mesa-sleep-' + "{:04d}".format(i) + '-nsrr.xml')
         except:
             pass
@@ -30,7 +40,7 @@ def read_actigraphy(file_path):
     actigraphy = {}
     for i in range(20):  # try only with 20 datasets to lower memory consumption
         try:
-            actigraphy[i] = pd.read_csv(file_path + "{:04d}".format(i) + '.csv')
+            actigraphy[i] = pd.read_csv(file_path + '\mesa-sleep-'+ "{:04d}".format(i) + '.csv')
         except:
             pass
 
@@ -41,7 +51,7 @@ def read_r_point(file_path):
     r_point = {}
     for i in range(20):  # try only with 20 datasets to lower memory consumption
         try:
-            r_point[i] = pd.read_csv(file_path + "{:04d}".format(i) + '-rpoint.csv')
+            r_point[i] = pd.read_csv(file_path + '\mesa-sleep-'+ "{:04d}".format(i) + '-rpoint.csv')
         except:
             pass
 
@@ -73,19 +83,4 @@ def xml_reader(file_path):
     return df
 
 
-if __name__ == '__main__':
-    time_1 = time.perf_counter()
-    psg = read_psg('D:\Studium\Master\Masterarbeit\mesa\polysomnography/annotations-events-nsrr')
 
-    time_2 = time.perf_counter()
-    actigraphy = read_actigraphy()
-
-    time_3 = time.perf_counter()
-    r_point = read_r_point()
-
-    time_4 = time.perf_counter()
-
-    # time consumption (for all datasets --> about 2000; numbered from 0000 to 7000)
-    print(time_2 - time_1)  # time for psg: 38.733s
-    print(time_3 - time_2)  # time for actigraphy: 222.542s
-    print(time_4 - time_3)  # time for r_point: 283.863s
