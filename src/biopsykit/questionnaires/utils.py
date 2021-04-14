@@ -189,6 +189,7 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
         levels = [levels]
 
     data = data.filter(like=quest_name)
+    index_cols = list(data.index.names)
     # reverse level order because nested multi-level index will be constructed from back to front
     levels = levels[::-1]
     # iteratively build up long-format dataframe
@@ -199,14 +200,14 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
         data = pd.wide_to_long(
             data.reset_index(),
             stubnames=stubnames,
-            i=["subject"] + levels[0:i],
+            i=index_cols + levels[0:i],
             j=level,
             sep="_",
             suffix=r"\w+",
         )
 
     # reorder levels and sort
-    return data.reorder_levels(["subject"] + levels[::-1]).sort_index()
+    return data.reorder_levels(index_cols + levels[::-1]).sort_index()
 
 
 def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
