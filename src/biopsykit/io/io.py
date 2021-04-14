@@ -434,6 +434,6 @@ def _apply_index_cols(
     if index_cols:
         data = data.set_index(index_cols)
     if new_index_cols:
-        data.index = data.index.rename(new_index_cols)
+        data.index = data.index.set_names(new_index_cols)
 
     return data
