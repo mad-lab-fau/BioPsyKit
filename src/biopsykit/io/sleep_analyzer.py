@@ -154,23 +154,23 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
     comparable with the output with the format of other sleep analysis algorithms.
     All time information are reported in minutes.
     The resulting dataframe has the following columns:
-    * ``total_duration``: Total recording time
-    * ``total_time_light_sleep``: Total time of light sleep
-    * ``total_time_deep_sleep``: Total time of deep sleep
-    * ``total_time_rem_sleep``: Total time of REM sleep
-    * ``total_time_awake``: Total time of being awake
-    * ``num_wake_bouts``: Total number of wake bouts
-    * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep
-    * ``getup_onset_latency``: Get Up Latency, i.e., time in bed after awakening until getting up
-    * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
-    * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
-    * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep
-    * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onsetvg
-    * ``count_snoring_episodes``: Total number of snoring episodes
-    * ``total_time_snoring``: Total time of snoring
-    * ``heart_rate_avg``: Average heart rate during recording in bpm
-    * ``heart_rate_min``: Minimum heart rate during recording in bpm
-    * ``heart_rate_max``: Maximum heart rate during recording in bpm
+        * ``total_duration``: Total recording time
+        * ``total_time_light_sleep``: Total time of light sleep
+        * ``total_time_deep_sleep``: Total time of deep sleep
+        * ``total_time_rem_sleep``: Total time of REM sleep
+        * ``total_time_awake``: Total time of being awake
+        * ``num_wake_bouts``: Total number of wake bouts
+        * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep
+        * ``getup_onset_latency``: Get Up Latency, i.e., time in bed after awakening until getting up
+        * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
+        * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
+        * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep
+        * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset
+        * ``count_snoring_episodes``: Total number of snoring episodes
+        * ``total_time_snoring``: Total time of snoring
+        * ``heart_rate_avg``: Average heart rate during recording in bpm
+        * ``heart_rate_min``: Minimum heart rate during recording in bpm
+        * ``heart_rate_max``: Maximum heart rate during recording in bpm
 
     Parameters
     ----------
