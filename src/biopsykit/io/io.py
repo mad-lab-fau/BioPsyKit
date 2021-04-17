@@ -8,13 +8,14 @@ import pytz
 
 import numpy as np
 import pandas as pd
-
 from nilspodlib import Dataset
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
-from biopsykit.utils.dataframe_handling import convert_nan
 
-from biopsykit.utils._types import path_t
+from biopsykit.utils.exceptions import ValidationError
+from biopsykit.utils.dataframe_handling import convert_nan
 from biopsykit.utils.time import tz
+
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dtype
+from biopsykit.utils._types import path_t
 
 
 def load_time_log(
@@ -59,8 +60,9 @@ def load_time_log(
     ------
     :class:`~biopsykit.exceptions.FileExtensionError`
         if file format is none of [.xls, .xlsx, .csv]
-    ValueError
-        if ``continuous_time`` is ``False``, but 'start' and 'end' time columns of each phase do not match
+    :class:`~biopsykit.exceptions.ValidationError`
+        if ``continuous_time`` is ``False``, but 'start' and 'end' time columns of each phase do not match or
+        none of these columns were found in the dataframe
 
     Examples
     --------
@@ -94,7 +96,9 @@ def load_time_log(
 
     _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
     if file_path.suffix in [".xls", ".xlsx"]:
-        data = pd.read_excel(file_path, **kwargs)
+        # assert times in the excel sheet are imported as strings,
+        # not to be automatically converted into datetime objects
+        data = pd.read_excel(file_path, dtype=str, **kwargs)
     else:
         data = pd.read_csv(file_path, **kwargs)
 
@@ -106,6 +110,7 @@ def load_time_log(
         phase_cols = list(phase_cols.keys())
 
     if phase_cols:
+        _assert_has_columns(data, [phase_cols])
         data = data.loc[:, phase_cols]
     if new_phase_cols:
         data = data.rename(columns=new_phase_cols)
@@ -113,8 +118,18 @@ def load_time_log(
     if not continuous_time:
         start_cols = np.squeeze(data.columns.str.extract(r"(\w+)_start").dropna().values)
         end_cols = np.squeeze(data.columns.str.extract(r"(\w+)_end").dropna().values)
+        if start_cols.size == 0:
+            raise ValidationError(
+                "No 'start' and 'end' columns were found. "
+                "Make sure that each phase has columns with 'start' and 'end' suffixes!"
+            )
         if not np.array_equal(start_cols, end_cols):
-            raise ValueError("Not all phases have 'start' and 'end' columns!")
+            raise ValidationError("Not all phases have 'start' and 'end' columns!")
+
+        if index_cols is None:
+            index_cols = [s for s in ["subject", "condition"] if s in data.columns]
+            data = data.set_index(index_cols)
+
         data = pd.wide_to_long(
             data.reset_index(),
             stubnames=start_cols,
@@ -123,10 +138,17 @@ def load_time_log(
             sep="_",
             suffix="(start|end)",
         )
+        print(data)
+
         # ensure that "start" is always before "end"
         data = data.reindex(["start", "end"], level=-1)
         # unstack start|end level
         data = data.unstack()
+
+    print(data)
+    print(data.values.flatten())
+    for val in data.values.flatten():
+        _assert_is_dtype(val, str)
 
     return data
 
@@ -431,8 +453,11 @@ def _apply_index_cols(
     elif isinstance(index_cols, dict):
         new_index_cols = list(index_cols.values())
         index_cols = list(index_cols.keys())
+
     if index_cols:
+        _assert_has_columns(data, [index_cols])
         data = data.set_index(index_cols)
+
     if new_index_cols:
         data.index = data.index.set_names(new_index_cols)
 
