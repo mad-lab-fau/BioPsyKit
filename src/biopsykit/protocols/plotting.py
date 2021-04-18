@@ -20,7 +20,6 @@ _saliva_params: Dict = {
     "test_color": "#9e9e9e",
     "test_alpha": 0.5,
     "x_offsets": [0, 0.5],
-    "fontsize": 14,
     "multi_x_offset": 1,
     "multi_fontsize": 10,
     "multi_legend_offset": 0.3,
@@ -29,7 +28,7 @@ _saliva_params: Dict = {
     "xaxis_label": "Time [min]",
     "yaxis_label": {
         "cortisol": "Cortisol [nmol/l]",
-        "amylase": "Amylase [U/l]",
+        "amylase": "sAA [U/l]",
         "il6": "IL-6 [pg/ml]",
     },
 }
@@ -41,7 +40,6 @@ _hr_mean_plot_params = {
     "background_color": None,
     "background_alpha": None,
     "x_offsets": [0, 0.05],
-    "fontsize": 14,
     "xaxis_label": "Phases",
     "yaxis_label": "Value",
 }
@@ -152,7 +150,6 @@ def hr_mean_plot(
     bg_colors = kwargs.get("background_color", hr_mean_plot_params["background_color"])
     bg_alphas = kwargs.get("background_alpha", hr_mean_plot_params["background_alpha"])
     x_offsets = hr_mean_plot_params["x_offsets"]
-    fontsize = kwargs.get("fontsize", hr_mean_plot_params["fontsize"])
     xaxis_label = kwargs.get("xlabel", hr_mean_plot_params["xaxis_label"])
     yaxis_label = kwargs.get("ylabel", hr_mean_plot_params["yaxis_label"])
     phase_text = hr_mean_plot_params.get("phase_text", None)
@@ -252,7 +249,6 @@ def hr_mean_plot(
                 transform=ax.get_xaxis_transform(),
                 horizontalalignment="center",
                 verticalalignment="center",
-                fontsize=fontsize,
             )
 
         p = mpatch.Rectangle(
@@ -278,7 +274,7 @@ def hr_mean_plot(
 
     xlims = kwargs.get("xlims", [span_lims[0][0], span_lims[-1][-1]])
     ax.set_xlim(xlims)
-    ax.set_xlabel(xaxis_label, fontsize=fontsize)
+    ax.set_xlabel(xaxis_label)
 
     # customize y axis
     ax.tick_params(axis="y", which="major", left=True)
@@ -290,10 +286,7 @@ def hr_mean_plot(
             ymargin = ylims
         ax.margins(x=0, y=ymargin)
 
-    ax.set_ylabel(yaxis_label, fontsize=fontsize)
-
-    # axis tick label fontsize
-    ax.tick_params(labelsize=fontsize)
+    ax.set_ylabel(yaxis_label)
 
     # customize legend
     if groups:
@@ -308,7 +301,6 @@ def hr_mean_plot(
             loc="upper left",
             bbox_to_anchor=(0.01, 0.90),
             numpoints=1,
-            prop={"size": fontsize},
         )
 
     if fig:
@@ -364,7 +356,6 @@ def saliva_plot(
     test_text = kwargs.get("test_text", saliva_params["test_text"])
     test_color = kwargs.get("test_color", saliva_params["test_color"])
     test_alpha = kwargs.get("test_alpha", saliva_params["test_alpha"])
-    fontsize = kwargs.get("fontsize", saliva_params["fontsize"])
     xaxis_label = kwargs.get("xaxis_label", saliva_params["xaxis_label"])
     xaxis_tick_locator = kwargs.get("xaxis_tick_locator", saliva_params["xaxis_tick_locator"])
 
@@ -428,7 +419,6 @@ def saliva_plot(
             groups,
             saliva_times,
             ylims=ylims,
-            fontsize=fontsize,
             ax=ax,
             line_colors=line_colors,
         )
@@ -440,7 +430,6 @@ def saliva_plot(
             s=test_text,
             horizontalalignment="center",
             verticalalignment="top",
-            fontsize=fontsize,
         )
 
         ax.axvspan(*test_times, color=test_color, alpha=test_alpha, zorder=1, lw=0)
@@ -467,7 +456,7 @@ def saliva_plot(
             ax.set_xlim(saliva_times[0] - x_padding, saliva_times[-1] + x_padding)
 
         ax.xaxis.set_major_locator(xaxis_tick_locator)
-        ax.set_xlabel(xaxis_label, fontsize=fontsize)
+        ax.set_xlabel(xaxis_label)
     else:
         # the was already something drawn into the axis => we are using the same axis to add another feature
         ax_twin = ax.twinx()
@@ -478,7 +467,6 @@ def saliva_plot(
             groups,
             saliva_times,
             ylims=ylims,
-            fontsize=fontsize,
             ax=ax_twin,
             x_offset_basis=saliva_params["multi_x_offset"],
             line_colors=line_colors,
@@ -496,7 +484,6 @@ def saliva_plot(
             loc="upper right",
             bbox_to_anchor=(0.99, 0.99),
             numpoints=1,
-            prop={"size": fontsize},
         )
 
     if fig:
@@ -519,7 +506,6 @@ def _saliva_plot_helper(
     ax: Union[plt.Axes, None] = kwargs.get("ax", None)
     # get all plot parameter
     ylims = kwargs.get("ylims", None)
-    fontsize = kwargs.get("fontsize", saliva_params["fontsize"])
     line_colors = kwargs.get("line_colors", saliva_params["colormap"])
     x_offset_basis = kwargs.get("x_offset_basis", 0)
     line_styles = saliva_params["line_styles"]
@@ -544,7 +530,7 @@ def _saliva_plot_helper(
             ls=ls,
         )
 
-    ax.set_ylabel(yaxis_label, fontsize=fontsize)
+    ax.set_ylabel(yaxis_label)
 
     if isinstance(ylims, (tuple, list)):
         ax.set_ylim(ylims)
@@ -554,7 +540,7 @@ def _saliva_plot_helper(
             ymargin = ylims
         ax.margins(x=0.05, y=ymargin)
 
-    ax.tick_params(axis="both", which="major", labelsize=fontsize)
+    ax.tick_params(axis="both", which="major")
     return ax
 
 
