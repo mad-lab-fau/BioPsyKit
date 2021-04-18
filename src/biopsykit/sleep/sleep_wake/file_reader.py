@@ -21,7 +21,8 @@ def read_psg(file_path):
 
     Returns
     -------
-    :dict: dict that contains a pandas.DataFrame for every subject
+    :dict:
+        dict that contains a pandas.DataFrame for every subject
     """
     psg = {}
     for i in range(20):  # try only with 20 datasets to lower memory consumption
@@ -46,7 +47,8 @@ def read_actigraphy(file_path):
 
     Returns
     -------
-    :dict: dict that contains a pandas.DataFrame for every subject
+    dict:
+        dict that contains a pandas.DataFrame for every subject
 
     """
     actigraphy = {}
@@ -70,7 +72,8 @@ def read_r_point(file_path):
 
     Returns
     -------
-    :dict: dict that contains a pandas.DataFrame for every subject
+    dict:
+        dict that contains a pandas.DataFrame for every subject
 
     """
     r_point = {}
