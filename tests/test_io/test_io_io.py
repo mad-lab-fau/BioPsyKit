@@ -1,9 +1,12 @@
 from contextlib import contextmanager
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
-from biopsykit.utils.exceptions import ValidationError, FileExtensionError
+
+from biopsykit.io import load_subject_condition_list
+from biopsykit.utils.exceptions import ValidationError
 
 from biopsykit.io.io import load_time_log
 from pandas._testing import assert_frame_equal, assert_index_equal
@@ -41,6 +44,18 @@ def time_log_not_continuous_correct():
         ),
     )
     return df
+
+
+def subject_condition_list_correct():
+    return pd.DataFrame(
+        ["Intervention", "Control", "Control", "Intervention"],
+        columns=["condition"],
+        index=pd.Index(["Vp01", "Vp02", "Vp03", "Vp04"], name="subject"),
+    )
+
+
+def subject_condition_list_correct_dict():
+    return {"Control": ["Vp02", "Vp03"], "Intervention": ["Vp01", "Vp04"]}
 
 
 class TestIoIo:
@@ -133,3 +148,52 @@ class TestIoIo:
         )
         assert_index_equal(data_out.index, expected.index)
         assert_index_equal(data_out.columns, expected.columns)
+
+    @pytest.mark.parametrize(
+        "file_path, subject_col, condition_col, expected",
+        [
+            ("condition_list.csv", None, None, does_not_raise()),
+            ("condition_list.csv", "subject", "condition", does_not_raise()),
+            ("condition_list.csv", None, "condition", does_not_raise()),
+            ("condition_list.csv", "subject", None, does_not_raise()),
+            ("condition_list.csv", "ID", "Group", pytest.raises(ValidationError)),
+            ("condition_list_other_column_names.csv", None, None, pytest.raises(ValidationError)),
+            ("condition_list_other_column_names.csv", "subject", "condition", pytest.raises(ValidationError)),
+            ("condition_list_other_column_names.csv", "ID", "Group", does_not_raise()),
+        ],
+    )
+    def test_load_subject_condition_list_raises(self, file_path, subject_col, condition_col, expected):
+        with expected:
+            load_subject_condition_list(
+                TEST_FILE_PATH.joinpath(file_path), subject_col=subject_col, condition_col=condition_col
+            )
+
+    @pytest.mark.parametrize(
+        "file_path, return_dict, expected",
+        [
+            ("condition_list.xlsx", False, subject_condition_list_correct()),
+            ("condition_list.csv", False, subject_condition_list_correct()),
+            ("condition_list.xlsx", True, subject_condition_list_correct_dict()),
+            ("condition_list.csv", True, subject_condition_list_correct_dict()),
+        ],
+    )
+    def test_load_subject_condition_list(self, file_path, return_dict, expected):
+        data_out = load_subject_condition_list(TEST_FILE_PATH.joinpath(file_path), return_dict=return_dict)
+        if isinstance(data_out, pd.DataFrame):
+            assert_frame_equal(data_out, expected)
+        else:
+            assert data_out.keys() == expected.keys()
+            for k1, k2 in zip(data_out, expected):
+                assert np.array_equal(data_out[k1], expected[k2])
+
+    @pytest.mark.parametrize(
+        "file_path, subject_col, condition_col, expected",
+        [
+            ("condition_list_other_column_names.csv", "ID", "Group", subject_condition_list_correct()),
+        ],
+    )
+    def test_load_subject_condition_list_other_columns(self, file_path, subject_col, condition_col, expected):
+        data_out = load_subject_condition_list(
+            TEST_FILE_PATH.joinpath(file_path), subject_col=subject_col, condition_col=condition_col
+        )
+        assert_frame_equal(data_out, expected)

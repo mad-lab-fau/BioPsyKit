@@ -1,6 +1,7 @@
 """A couple of helper functions that easy the use of the typical biopsykit data formats."""
 from typing import Dict, Optional, Union, List
 
+import numpy as np
 import pandas as pd
 from biopsykit.utils._datatype_validation_helper import (
     _assert_is_dtype,
@@ -14,13 +15,33 @@ from biopsykit.utils._datatype_validation_helper import (
 from biopsykit.utils.exceptions import ValidationError
 
 __all__ = [
+    "SubjectConditionDataFrame",
+    "SubjectConditionDict",
     "HeartRateSubjectDict",
     "SalivaRawDataFrame",
     "SalivaFeatureDataFrame",
+    "is_subject_condition_dataframe",
+    "is_subject_condition_dict",
     "is_hr_subject_dict",
     "is_raw_saliva_dataframe",
     "is_feature_saliva_dataframe",
 ]
+
+SubjectConditionDataFrame = pd.DataFrame
+""":class:`pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
+
+A `SubjectConditionDataFrame` has an index with subject IDs named ``subject`` and a column with the condition 
+assignment named ``condition``.  
+
+"""
+
+SubjectConditionDict = Dict[str, np.ndarray]
+"""Dictionary containing subject IDs and condition assignment in a standardized format.
+
+A `SubjectConditionDict` contains conditions as dictionary keys and a collection of subject IDs 
+(list, numpy array, pandas Index= as dictionary values.
+
+"""
 
 HeartRateSubjectDict = Dict[str, pd.DataFrame]
 """Dictionary containing time-series data of `one` subject, split into different phases.
@@ -58,6 +79,89 @@ the saliva marker type (e.g. "cortisol"), followed by the feature name, separate
 Additionally, the name of the column index needs to be `saliva_feature`.
 
 """
+
+
+def is_subject_condition_dataframe(
+    data: SubjectConditionDataFrame, raise_exception: Optional[bool] = True
+) -> Optional[bool]:
+    """Check whether dataframe is a `SubjectConditionDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a `SubjectConditionDataFrame`
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a `SubjectConditionDataFrame`, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a `SubjectConditionDataFrame`
+
+    See Also
+    --------
+    `SubjectConditionDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_multiindex(data, expected=False)
+        _assert_has_index_levels(data, index_levels=["subject"], match_atleast=False, match_order=True)
+        _assert_has_columns(data, [["condition"]])
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a SubjectConditionDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a `SubjectConditionDict`.
+
+    Parameters
+    ----------
+    data : dict
+        dict to check if it is a `SubjectConditionDict`
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a `SubjectConditionDict`, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a `SubjectConditionDict`
+
+    See Also
+    --------
+    `SubjectConditionDict`
+        dictionary format
+
+    """
+    try:
+        _assert_is_dtype(data, dict)
+        for val in data.values():
+            _assert_is_dtype(val, (np.ndarray, list, pd.Index))
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a SubjectConditionDict. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
 
 
 def is_hr_subject_dict(data: HeartRateSubjectDict, raise_exception: Optional[bool] = True) -> Optional[bool]:

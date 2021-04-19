@@ -8,11 +8,19 @@ import pytz
 
 import numpy as np
 import pandas as pd
+
 from nilspodlib import Dataset
 
 from biopsykit.utils.exceptions import ValidationError
 from biopsykit.utils.dataframe_handling import convert_nan
 from biopsykit.utils.time import tz
+
+from biopsykit.utils.datatype_helper import (
+    SubjectConditionDataFrame,
+    SubjectConditionDict,
+    is_subject_condition_dict,
+    is_subject_condition_dataframe,
+)
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dtype
 from biopsykit.utils._types import path_t
@@ -155,10 +163,11 @@ def load_time_log(
 
 def load_subject_condition_list(
     file_path: path_t,
-    subject_col: Optional[Union[str, Dict[str, str]]] = "subject",
-    condition_col: Optional[Union[str, Dict[str, str]]] = "condition",
+    subject_col: Optional[str] = None,
+    condition_col: Optional[str] = None,
     return_dict: Optional[bool] = False,
-) -> Union[Dict, pd.DataFrame]:
+    **kwargs,
+) -> Union[SubjectConditionDataFrame, SubjectConditionDict]:
     """Load subject condition assignment from file.
 
     This function can be used to load a file that contains the assignment of subject IDs to study conditions.
@@ -167,17 +176,21 @@ def load_subject_condition_list(
     ----------
     file_path : :any:`pathlib.path` or str
         path to time log file. Must either be an Excel or csv file
-    subject_col : str or dict, optional
-        name of column containing subject IDs, which will be the new index of the dataframe. If the name of the
-        index level in the dataframe should have a different name than the column in the file, a dict specifying the
-        mapping (column_name : new_index_name) can be passed.
-        Default: ``subject``
-    condition_col : str or dict, optional
-        name of column containing condition assignments. If the name of the condition column in the dataframe should
-        have a different name than the column in the file, a dict specifying the mapping
-        (column_name : new_column_name) can be passed. Default: ``condition``
+    subject_col : str, optional
+        name of column containing subject IDs. According to BioPsyKit's convention,
+        the subject ID column is expected to have the name ``subject``.
+        If the column name differs in the file has another name, the column will be renamed in the dataframe
+        returned by this function.
+    condition_col : str, optional
+        name of column containing condition assignments. According to BioPsyKit's convention,
+        the condition column is expected to have the name ``condition``.
+        If the column name differs in the file has another name, the column will be renamed in the dataframe
+        returned by this function.
     return_dict : bool, optional
-        whether to return a dict with subject IDs per condition (``True``) or a dataframe (``False``)
+        whether to return a dict with subject IDs per condition (``True``) or a dataframe (``False``).
+        Default: ``False``
+    **kwargs
+        Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
 
     Returns
     -------
@@ -188,23 +201,47 @@ def load_subject_condition_list(
     Raises
     ------
     :class:`~biopsykit.exceptions.FileExtensionError`
-        if file is not a csv file
+        if file is not a csv or Excel file
+    :class:`~biopsykit.exceptions.ValidationError`
+        if result is not a :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` or a
+        :class:`~biopsykit.datatype_helper.SubjectConditionDict`
 
     """
-    # enforce subject ID to be string
-    _assert_file_extension(file_path, expected_extension=".csv")
+    # ensure pathlib
+    file_path = Path(file_path)
 
-    data = pd.read_csv(file_path)
-    if isinstance(subject_col, dict):
+    _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
+    if file_path.suffix in [".xls", ".xlsx"]:
+        data = pd.read_excel(file_path, **kwargs)
+    else:
+        data = pd.read_csv(file_path, **kwargs)
+
+    if subject_col is None:
+        subject_col = "subject"
+
+    if condition_col is None:
+        condition_col = "condition"
+
+    _assert_has_columns(data, [[subject_col, condition_col]])
+
+    if subject_col != "subject":
+        # rename column
+        subject_col = {subject_col: "subject"}
         data = data.rename(columns=subject_col)
-        subject_col = list(subject_col.values())
-    if isinstance(condition_col, dict):
-        data = data.rename(columns=condition_col)
+        subject_col = "subject"
 
+    if condition_col != "condition":
+        # rename column
+        condition_col = {condition_col: "condition"}
+        data = data.rename(columns=condition_col)
+        condition_col = "condition"
     data = data.set_index(subject_col)
 
     if return_dict:
-        return data.groupby(condition_col).groups
+        data = data.groupby(condition_col).groups
+        is_subject_condition_dict(data)
+        return data
+    is_subject_condition_dataframe(data)
     return data
 
 
