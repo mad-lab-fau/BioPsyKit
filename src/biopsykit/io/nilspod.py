@@ -24,7 +24,7 @@ def load_dataset_nilspod(
     datastreams: Optional[Sequence[str]] = None,
     handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
     legacy_support: Optional[str] = "resolve",
-    timezone: Optional[Union[pytz.timezone, str]] = tz,
+    timezone: Optional[Union[pytz.timezone, str]] = None,
 ) -> Tuple[pd.DataFrame, float]:
     """Load NilsPod recording and convert into dataframe.
 
@@ -102,6 +102,9 @@ def load_dataset_nilspod(
     if file_path:
         _assert_file_extension(file_path, ".bin")
         dataset = Dataset.from_bin_file(file_path, legacy_support=legacy_support)
+
+    if timezone is None:
+        timezone = tz
     if isinstance(timezone, str):
         # convert to pytz object
         timezone = pytz.timezone(timezone)
