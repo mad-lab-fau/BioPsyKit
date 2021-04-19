@@ -8,7 +8,7 @@ from biopsykit.utils.exceptions import ValidationError, FileExtensionError
 from biopsykit.io.ecg import load_hr_subject_dict, write_hr_subject_dict, load_hr_subject_dict_folder
 from biopsykit.utils.datatype_helper import is_hr_subject_dict
 
-TEST_FILE_PATH = Path("../data/test_files")
+TEST_FILE_PATH = Path(__file__).parent.joinpath("../data/test_files")
 
 
 @contextmanager
@@ -19,6 +19,19 @@ def does_not_raise():
 def hr_subject_dict_correct():
     phases = ["phase1", "phase2", "phase3"]
     df = pd.DataFrame(columns=["Heart_Rate"], index=pd.Index(range(0, 5), name="time"))
+    hr_subject_dict = {key: df for key in phases}
+    return hr_subject_dict
+
+
+def hr_subject_dict_datetimeindex_correct():
+    phases = ["phase1", "phase2", "phase3"]
+    df = pd.DataFrame(
+        columns=["Heart_Rate"],
+        index=pd.DatetimeIndex(
+            pd.to_datetime(["00:01 12.02.2021", "00:02 12.02.2021", "00:03 12.02.2021", "00:04 12.02.2021"]),
+            name="time",
+        ),
+    )
     hr_subject_dict = {key: df for key in phases}
     return hr_subject_dict
 
@@ -180,6 +193,7 @@ class TestIoEcg:
         "data, filename, expected",
         [
             (hr_subject_dict_correct(), "test.xlsx", does_not_raise()),
+            (hr_subject_dict_datetimeindex_correct(), "test.xlsx", does_not_raise()),
             (hr_subject_dict_wrong_index_levels(), "test.xlsx", pytest.raises(ValidationError)),
             (hr_subject_dict_wrong_index_levels(), "", pytest.raises(FileExtensionError)),
             (hr_subject_dict_correct(), "test.csv", pytest.raises(FileExtensionError)),

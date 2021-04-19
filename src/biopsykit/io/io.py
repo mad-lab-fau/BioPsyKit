@@ -486,7 +486,7 @@ def write_pandas_dict_excel(
             data_dict[key].tz_localize(None).to_excel(writer, sheet_name=key, index=index_col)
         else:
             data_dict[key].to_excel(writer, sheet_name=key, index=index_col)
-    writer.save()
+    writer.close()
 
 
 def write_result_dict(
@@ -530,8 +530,14 @@ def write_result_dict(
     """
     # ensure pathlib
     file_path = Path(file_path)
-    df_result_concat = pd.concat(result_dict, names=index_name)
-    df_result_concat.to_csv(file_path)
+    _assert_file_extension(file_path, [".csv", ".xls", ".xlsx"])
+    df_result_concat = pd.concat(result_dict, names=[index_name])
+    if file_path.suffix in [".csv"]:
+        df_result_concat.to_csv(file_path)
+    else:
+        writer = pd.ExcelWriter(file_path, engine="xlsxwriter")  # pylint:disable=abstract-class-instantiated
+        df_result_concat.to_excel(writer)
+        writer.close()
 
 
 def _apply_index_cols(

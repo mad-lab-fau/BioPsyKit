@@ -1475,10 +1475,10 @@ class TestSaliva:
         "data_in, group_cols, expected",
         [
             (saliva_no_time(), None, does_not_raise()),
-            (saliva_no_time(), ["subject"], pytest.raises(DataFrameTransformationError)),
+            (saliva_no_time(), ["subject"], does_not_raise()),
             (saliva_no_time(), ["day"], pytest.raises(ValueError)),
             (saliva_multi_days(), None, does_not_raise()),
-            (saliva_multi_days(), ["subject", "day"], pytest.raises(DataFrameTransformationError)),
+            (saliva_multi_days(), ["subject", "day"], does_not_raise()),
             (saliva_multi_days(), ["day"], does_not_raise()),
             (saliva_multi_days(), ["subject"], does_not_raise()),
         ],

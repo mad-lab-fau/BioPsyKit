@@ -5,16 +5,20 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from biopsykit.io import load_subject_condition_list, load_questionnaire_data, convert_time_log_datetime
-from biopsykit.io.nilspod import load_dataset_nilspod
-from biopsykit.utils.exceptions import ValidationError
+from biopsykit.io import (
+    load_subject_condition_list,
+    load_questionnaire_data,
+    convert_time_log_datetime,
+    write_result_dict,
+)
+from biopsykit.utils.exceptions import ValidationError, FileExtensionError
 
 from biopsykit.io.io import load_time_log
 from nilspodlib import Dataset
 from pandas._testing import assert_frame_equal, assert_index_equal
 from pytz import UnknownTimeZoneError
 
-TEST_FILE_PATH = Path("../data/test_files")
+TEST_FILE_PATH = Path(__file__).parent.joinpath("../data/test_files")
 
 
 @contextmanager
@@ -128,6 +132,14 @@ def questionnaire_data_replace_missing_remove_nan():
             names=["subject", "condition", "time"],
         ),
     )
+
+
+def result_dict_correct():
+    return {
+        "Vp01": pd.DataFrame(columns=["data"], index=pd.Index(range(0, 2), name="time")),
+        "Vp02": pd.DataFrame(columns=["data"], index=pd.Index(range(0, 2), name="time")),
+        "Vp03": pd.DataFrame(columns=["data"], index=pd.Index(range(0, 2), name="time")),
+    }
 
 
 class TestIoIo:
@@ -352,3 +364,15 @@ class TestIoIo:
     def test_convert_time_log_datetime_raises(self, time_log, dataset, df, date, timezone, expected):
         with expected:
             convert_time_log_datetime(time_log=time_log, dataset=dataset, df=df, date=date, timezone=timezone)
+
+    @pytest.mark.parametrize(
+        "data, filename, expected",
+        [
+            (result_dict_correct(), "test.csv", does_not_raise()),
+            (result_dict_correct(), "test.xlsx", does_not_raise()),
+            (result_dict_correct(), "test.txt", pytest.raises(FileExtensionError)),
+        ],
+    )
+    def test_write_result_dict(self, data, filename, expected, tmp_path):
+        with expected:
+            write_result_dict(data, tmp_path.joinpath(filename))
