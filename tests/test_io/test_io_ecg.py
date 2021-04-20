@@ -8,7 +8,7 @@ from biopsykit.utils.exceptions import ValidationError, FileExtensionError
 from biopsykit.io.ecg import load_hr_subject_dict, write_hr_subject_dict, load_hr_subject_dict_folder
 from biopsykit.utils.datatype_helper import is_hr_subject_dict
 
-TEST_FILE_PATH = Path(__file__).parent.joinpath("../data/test_files")
+TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")
 
 
 @contextmanager

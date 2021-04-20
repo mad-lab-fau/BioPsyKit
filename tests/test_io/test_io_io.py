@@ -18,7 +18,7 @@ from nilspodlib import Dataset
 from pandas._testing import assert_frame_equal, assert_index_equal
 from pytz import UnknownTimeZoneError
 
-TEST_FILE_PATH = Path(__file__).parent.joinpath("../data/test_files")
+TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")
 
 
 @contextmanager

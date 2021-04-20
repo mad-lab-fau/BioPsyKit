@@ -14,12 +14,12 @@ def does_not_raise():
 
 class TestIoEeg:
     @pytest.mark.parametrize(
-        "input_data, expected",
+        "file_path, expected",
         [
-            (_EXAMPLE_DATA_PATH.joinpath("eeg_muse_example.csv"), does_not_raise()),
-            (_EXAMPLE_DATA_PATH.joinpath("cortisol_sample.csv"), pytest.raises(ValidationError)),
+            ("eeg_muse_example.csv", does_not_raise()),
+            ("cortisol_sample.csv", pytest.raises(ValidationError)),
         ],
     )
-    def test_load_eeg_raw_muse(self, input_data, expected):
+    def test_load_eeg_raw_muse(self, file_path, expected):
         with expected:
-            load_eeg_raw_muse(input_data)
+            load_eeg_raw_muse(_EXAMPLE_DATA_PATH.joinpath(file_path))
