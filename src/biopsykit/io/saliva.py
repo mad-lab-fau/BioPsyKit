@@ -14,13 +14,13 @@ _DATA_COL_NAMES = {"cortisol": "cortisol (nmol/l)", "amylase": "amylase (U/ml)"}
 def load_saliva_plate(
     file_path: path_t,
     saliva_type: str,
-    sample_id_col: Optional[str] = "sample ID",
+    sample_id_col: Optional[str] = None,
     data_col: Optional[str] = None,
     id_col_names: Optional[Sequence[str]] = None,
     regex_str: Optional[str] = None,
     sample_times: Optional[Sequence[int]] = None,
     condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
-    sheet_name: Optional[Union[str, int]] = 0,
+    **kwargs,
 ) -> SalivaRawDataFrame:
     r"""Read saliva from an Excel sheet in 'plate' format.
 
@@ -36,7 +36,7 @@ def load_saliva_plate(
         * "Vp01 T1 S1" ... "Vp01 T1 S5" (only *numeric* characters in day/sample)
             => ``r"(Vp\d+) (T\d) (S\d)"``
             => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
-            (unless column names are explicitely specified in ``data_col_names``)
+            (unless column names are explicitly specified in ``data_col_names``)
         * "Vp01 T1 S1" ... "Vp01 T1 SA" (also *letter* characters in day/sample)
             => ``r"(Vp\d+) (T\w) (S\w)"``
             => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
@@ -68,8 +68,8 @@ def load_saliva_plate(
         times at which saliva samples were collected
     condition_list: 1d-array, optional
         list of conditions which subjects were assigned to
-    sheet_name: str, optional
-        name or index of the Excel sheet. Default: ``0`` to use the first sheet in the file
+    **kwargs
+        Additional parameters that are passed to :func:`pandas.read_excel`
 
     Returns
     -------
@@ -86,44 +86,32 @@ def load_saliva_plate(
         if imported data can not be parsed to a SalivaRawDataFrame
 
     """
-    # TODO add remove_nan option (all or any)
-    if regex_str is None:
-        regex_str = r"(Vp\d+) (S\w)"
-
     # ensure pathlib
     file_path = Path(file_path)
     _assert_file_extension(file_path, (".xls", ".xlsx"))
 
+    # TODO add remove_nan option (all or any)
+    if regex_str is None:
+        regex_str = r"(Vp\d+) (S\w)"
+
+    if sample_id_col is None:
+        sample_id_col = "sample ID"
+
     if data_col is None:
         data_col = _DATA_COL_NAMES[saliva_type]
 
-    df_saliva = pd.read_excel(
-        file_path,
-        skiprows=2,
-        sheet_name=sheet_name,
-        usecols=[sample_id_col, data_col],
-    )
-
+    df_saliva = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col], **kwargs)
     cols = df_saliva[sample_id_col].str.extract(regex_str)
-    if id_col_names is None:
-        id_col_names = ["subject", "sample"]
-        if len(cols.columns) == 3:
-            id_col_names = ["subject", "day", "sample"]
+    id_col_names = _get_id_columns(id_col_names, cols)
 
     df_saliva[id_col_names] = cols
 
-    df_saliva.drop(columns=[sample_id_col], inplace=True, errors="ignore")
-    df_saliva.rename(columns={data_col: saliva_type}, inplace=True)
-    df_saliva.set_index(id_col_names, inplace=True)
+    df_saliva = df_saliva.drop(columns=[sample_id_col], errors="ignore")
+    df_saliva = df_saliva.rename(columns={data_col: saliva_type})
+    df_saliva = df_saliva.set_index(id_col_names)
 
     if condition_list is not None:
-        condition_list = _parse_condition_list(df_saliva, condition_list)
-
-        df_saliva = (
-            df_saliva.join(condition_list)
-            .set_index("condition", append=True)
-            .reorder_levels(["condition", "subject", "sample"])
-        )
+        df_saliva = _apply_condition_list(df_saliva, condition_list)
 
     num_subjects = len(df_saliva.index.get_level_values("subject").unique())
 
@@ -306,3 +294,31 @@ def _parse_condition_list(
     elif isinstance(condition_list, pd.DataFrame):
         condition_list = condition_list.reset_index().set_index("subject")
     return condition_list
+
+
+def _apply_condition_list(
+    data: pd.DataFrame,
+    condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
+):
+    condition_list = _parse_condition_list(data, condition_list)
+
+    data = (
+        data.join(condition_list).set_index("condition", append=True).reorder_levels(["condition", "subject", "sample"])
+    )
+    return data
+
+
+def _get_id_columns(id_col_names: Sequence[str], extracted_cols: pd.DataFrame):
+    if id_col_names is None:
+        id_col_names = ["subject", "sample"]
+        if len(extracted_cols.columns) == 3:
+            id_col_names = ["subject", "day", "sample"]
+    else:
+        if len(id_col_names) != len(extracted_cols.columns):
+            raise ValueError(
+                "Number of 'id_col_names' must match length of extracted index columns! Expected {}, got {}.".format(
+                    len(extracted_cols), len(id_col_names)
+                )
+            )
+
+    return id_col_names
