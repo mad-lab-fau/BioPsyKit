@@ -168,7 +168,7 @@ def load_subject_condition_list(
     """Load subject condition assignment from file.
 
     This function can be used to load a file that contains the assignment of subject IDs to study conditions.
-    It will return a dataframe or a dictionary that complies with BioPsyKit's naming convention. i.e.,
+    It will return a dataframe or a dictionary that complies with BioPsyKit's naming convention, i.e.,
     the subject ID index will be named ``subject`` and the condition column will be named ``condition``.
 
     Parameters
@@ -176,14 +176,14 @@ def load_subject_condition_list(
     file_path : :any:`pathlib.path` or str
         path to time log file. Must either be an Excel or csv file
     subject_col : str, optional
-        name of column containing subject IDs. According to BioPsyKit's convention,
-        the subject ID column is expected to have the name ``subject``.
-        If the column name differs in the file has another name, the column will be renamed in the dataframe
+        name of column containing subject IDs or ``None`` to use default column name ``subject``.
+        According to BioPsyKit's convention, the subject ID column is expected to have the name ``subject``.
+        If the subject ID column in the file has another name, the column will be renamed in the dataframe
         returned by this function.
     condition_col : str, optional
-        name of column containing condition assignments. According to BioPsyKit's convention,
-        the condition column is expected to have the name ``condition``.
-        If the column name differs in the file has another name, the column will be renamed in the dataframe
+        name of column containing condition assignments or ``None`` to use default column name ``condition``.
+        According to BioPsyKit's convention, the condition column is expected to have the name ``condition``.
+        If the condition column in the file has another name, the column will be renamed in the dataframe
         returned by this function.
     return_dict : bool, optional
         whether to return a dict with subject IDs per condition (``True``) or a dataframe (``False``).
@@ -249,7 +249,7 @@ def load_questionnaire_data(
     file_path: path_t,
     subject_col: Optional[str] = None,
     condition_col: Optional[str] = None,
-    additional_index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
+    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
     replace_missing_vals: Optional[bool] = True,
     remove_nan_rows: Optional[bool] = True,
     sheet_name: Optional[Union[str, int]] = 0,
@@ -265,14 +265,14 @@ def load_questionnaire_data(
     file_path : :any:`pathlib.path` or str
         path to time log file. Must either be an Excel or csv file
     subject_col : str, optional
-        name of column containing subject IDs. According to BioPsyKit's convention,
-        the subject ID column is expected to have the name ``subject``.
-        If the column name differs in the file has another name, the column will be renamed in the dataframe
+        name of column containing subject IDs or ``None`` to use default column name ``subject``.
+        According to BioPsyKit's convention, the subject ID column is expected to have the name ``subject``.
+        If the subject ID column in the file has another name, the column will be renamed in the dataframe
         returned by this function.
     condition_col : str, optional
-        name of column containing condition assignments (if present). According to BioPsyKit's convention,
-        the condition column is expected to have the name ``condition``.
-        If the column name differs in the file has another name, the column will be renamed in the dataframe
+        name of column containing condition assignments or ``None`` to use default column name ``condition``.
+        According to BioPsyKit's convention, the condition column is expected to have the name ``condition``.
+        If the condition column in the file has another name, the column will be renamed in the dataframe
         returned by this function.
     additional_index_cols : str, list of str, optional
         additional index levels to be added to the dataframe.
@@ -314,16 +314,14 @@ def load_questionnaire_data(
     _assert_has_columns(data, [[subject_col]])
 
     if subject_col != "subject":
-        subject_col = {subject_col: "subject"}
-        data = data.rename(columns=subject_col)
+        data = data.rename(columns={subject_col: "subject"})
         subject_col = "subject"
 
     index_cols = [subject_col]
 
     if condition_col is not None:
         _assert_has_columns(data, [[condition_col]])
-        condition_col = {condition_col: "condition"}
-        data = data.rename(columns=condition_col)
+        data = data.rename(columns={condition_col: "condition"})
         condition_col = "condition"
         index_cols.append(condition_col)
 
@@ -475,9 +473,15 @@ def write_pandas_dict_excel(
     index_col : bool, optional
         ``True`` to include dataframe index in Excel export, ``False`` otherwise. Default: ``True``
 
+    Raises
+    ------
+    :exc:`biopsykit.exceptions.FileExtensionError`
+        if ``file_path`` is not an Excel file
+
     """
     # ensure pathlib
     file_path = Path(file_path)
+    _assert_file_extension(file_path, [".xls", ".xlsx"])
 
     writer = pd.ExcelWriter(file_path, engine="xlsxwriter")  # pylint:disable=abstract-class-instantiated
     for key in data_dict:
@@ -511,6 +515,11 @@ def write_result_dict(
         path to file
     index_name : str, optional
         name of the index resulting from concatenting dataframes. Default: ``subject``
+
+    Raises
+    ------
+    :exc:`biopsykit.exceptions.FileExtensionError`
+        if ``file_path`` is not a csv or Excel file
 
     Examples
     --------

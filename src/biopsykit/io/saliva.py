@@ -1,12 +1,18 @@
 """Module containing different I/O functions for saliva data."""
 from pathlib import Path
-from typing import Optional, Sequence, Union, Dict
+from typing import Optional, Sequence, Union, Dict, Tuple
 
 import numpy as np
 import pandas as pd
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.io.io import _apply_index_cols
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns
 from biopsykit.utils._types import path_t
-from biopsykit.utils.datatype_helper import SalivaRawDataFrame, is_raw_saliva_dataframe
+from biopsykit.utils.datatype_helper import (
+    SalivaRawDataFrame,
+    is_raw_saliva_dataframe,
+    is_subject_condition_dataframe,
+    SubjectConditionDataFrame,
+)
 
 _DATA_COL_NAMES = {"cortisol": "cortisol (nmol/l)", "amylase": "amylase (U/ml)"}
 
@@ -143,7 +149,7 @@ def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Option
     Parameters
     ----------
     file_path: :any:`pathlib.Path` or str
-        file path to export
+        file path to export. Must be a csv or an Excel file
     data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str
@@ -153,38 +159,65 @@ def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Option
     ------
     :exc:`biopsykit.exceptions.ValidationError`
         if ``data`` is not a SalivaRawDataFrame
+    :exc:`biopsykit.exceptions.FileExtensionError`
+        if ``file_path`` is not a csv or Excel file
 
     """
+    # ensure pathlib
+    file_path = Path(file_path)
+    _assert_file_extension(file_path, [".csv", ".xls", ".xlsx"])
+
     is_raw_saliva_dataframe(data, saliva_type)
     data = data[saliva_type]
-    if "time" in data:
-        # drop saliva times for export
-        data.drop("time", axis=1, inplace=True)
-    data = data.unstack()
-    data.to_csv(file_path)
+    data = data.unstack(level="sample")
+    if file_path.suffix in [".csv"]:
+        data.to_csv(file_path)
+    else:
+        writer = pd.ExcelWriter(file_path, engine="xlsxwriter")  # pylint:disable=abstract-class-instantiated
+        data.to_excel(writer)
+        writer.close()
 
 
 def load_saliva_wide_format(
     file_path: path_t,
     saliva_type: str,
-    subject_col: Optional[str] = "subject",
+    subject_col: Optional[str] = None,
     condition_col: Optional[str] = None,
+    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
     sample_times: Optional[Sequence[int]] = None,
+    **kwargs,
 ) -> SalivaRawDataFrame:
     """Load saliva data that is in wide-format from csv file.
+
+    It will return a `SalivaRawDataFrame`, a long-format dataframe that complies with BioPsyKit's naming convention,
+    i.e., the subject ID index will be named ``subject``, the sample index will be names ``sample``,
+    and the value column will be named after the saliva biomarker type.
 
     Parameters
     ----------
     file_path: :any:`pathlib.Path` or str
         path to file
     saliva_type: str
-        saliva type to load from file
+        saliva type to load from file. Example: ``cortisol``
     subject_col: str, optional
-        name of the column containing subject IDs. Default: "sample ID"
+        name of column containing subject IDs or ``None`` to use the default column name ``subject``.
+        According to BioPsyKit's convention, the subject ID column is expected to have the name ``subject``.
+        If the subject ID column in the file has another name, the column will be renamed in the dataframe
+        returned by this function. Default: ``None``
     condition_col : str, optional
-        name of the column containing condition assignments or ``None`` if no conditions are present. Default: ``None``
+        name of the column containing condition assignments or ``None`` if no conditions are present.
+        According to BioPsyKit's convention, the condition column is expected to have the name ``condition``.
+        If the condition column in the file has another name, the column will be renamed in the dataframe
+        returned by this function. Default: ``None``
+    additional_index_cols : str or list of str, optional
+        additional index levels to be added to the dataframe, e.g., "day" index. Can either be a string or a list
+        strings to indicate column name(s) that should be used as index level(s),
+        or ``None`` for no additional index levels. Default: ``None``
     sample_times: list of int, optional
-        times at which saliva samples were collected
+        times at which saliva samples were collected or ``None`` if no sample times should be specified.
+        Default: ``None``
+    **kwargs
+        Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
 
     Returns
     -------
@@ -194,25 +227,44 @@ def load_saliva_wide_format(
     Raises
     ------
     :class:`~biopsykit.exceptions.FileExtensionError`
-        if file is no csv file
+        if file is no csv or Excel file
 
     """
+    # ensure pathlib
+    file_path = Path(file_path)
+    _assert_file_extension(file_path, [".csv", ".xls", ".xlsx"])
+    if file_path.suffix in [".csv"]:
+        data = pd.read_csv(file_path, **kwargs)
+    else:
+        data = pd.read_excel(file_path, **kwargs)
+
+    if subject_col is None:
+        subject_col = "subject"
+
+    _assert_has_columns(data, [[subject_col]])
+
+    if subject_col != "subject":
+        # rename column
+        data = data.rename(columns={subject_col: "subject"})
+        subject_col = "subject"
+
     index_cols = [subject_col]
 
-    _assert_file_extension(file_path, ".csv")
-    data = pd.read_csv(file_path, dtype={subject_col: str})
-
-    if condition_col is None and "condition" in data.columns:
-        condition_col = "condition"
+    data, condition_col = _get_condition_col(data, condition_col)
 
     if condition_col is not None:
         index_cols = [condition_col] + index_cols
 
-    data.set_index(index_cols, inplace=True)
+    if additional_index_cols is None:
+        additional_index_cols = []
+    if isinstance(additional_index_cols, str):
+        additional_index_cols = [additional_index_cols]
+
+    index_cols = index_cols + additional_index_cols
+    data = _apply_index_cols(data, index_cols=index_cols)
 
     num_subjects = len(data)
-    data.columns = pd.MultiIndex.from_product([[saliva_type], data.columns], names=["", "sample"])
-
+    data.columns = pd.MultiIndex.from_product([[saliva_type], data.columns], names=[None, "sample"])
     data = data.stack()
 
     _check_num_samples(len(data), num_subjects)
@@ -220,6 +272,8 @@ def load_saliva_wide_format(
     if sample_times is not None:
         _check_sample_times(len(data), num_subjects, sample_times)
         data["time"] = np.array(sample_times * num_subjects)
+
+    is_raw_saliva_dataframe(data, saliva_type)
 
     return data
 
@@ -279,7 +333,7 @@ def _check_sample_times(num_samples: int, num_subjects: int, sample_times: Seque
 
 def _parse_condition_list(
     data: pd.DataFrame, condition_list: Union[Sequence, Dict[str, Sequence], pd.Index]
-) -> pd.DataFrame:
+) -> SubjectConditionDataFrame:
     if isinstance(condition_list, (list, np.ndarray)):
         # Add Condition as new index level
         condition_list = pd.DataFrame(
@@ -288,11 +342,13 @@ def _parse_condition_list(
             index=data.index.get_level_values("subject").unique(),
         )
     elif isinstance(condition_list, dict):
-        condition_list = pd.DataFrame(condition_list)
-        condition_list = condition_list.stack().reset_index(level=1).set_index("level_1").sort_values(0)
-        condition_list.index.name = "condition"
+        condition_list = [(subject, cond) for cond in condition_list for subject in condition_list[cond]]
+        condition_list = pd.DataFrame(condition_list, columns=["subject", "condition"])
+        condition_list = condition_list.set_index("subject")
     elif isinstance(condition_list, pd.DataFrame):
         condition_list = condition_list.reset_index().set_index("subject")
+
+    is_subject_condition_dataframe(condition_list)
     return condition_list
 
 
@@ -322,3 +378,16 @@ def _get_id_columns(id_col_names: Sequence[str], extracted_cols: pd.DataFrame):
             )
 
     return id_col_names
+
+
+def _get_condition_col(data: pd.DataFrame, condition_col: str) -> Tuple[pd.DataFrame, str]:
+    if condition_col is None:
+        if "condition" in data.columns:
+            condition_col = "condition"
+    else:
+        _assert_has_columns(data, [[condition_col]])
+        if condition_col != "condition":
+            # rename column
+            data = data.rename(columns={condition_col: "condition"})
+            condition_col = "condition"
+    return data, condition_col
