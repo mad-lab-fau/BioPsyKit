@@ -3,9 +3,10 @@ from pathlib import Path
 from typing import Union, Tuple, Sequence, List, Iterable, Optional
 
 import pandas as pd
+import numpy as np
 
 from biopsykit.utils._types import _Hashable, path_t
-from biopsykit.utils.exceptions import ValidationError, FileExtensionError
+from biopsykit.utils.exceptions import ValidationError, FileExtensionError, ValueRangeError
 
 
 def _assert_is_dir(path: path_t, raise_exception: Optional[bool] = True):
@@ -59,7 +60,7 @@ def _assert_file_extension(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.exceptions.FileExtensionError`
         if ``raise_exception`` is ``True`` and ``file_name`` does not end with any of the specified
         ``expected_extension``
 
@@ -98,7 +99,7 @@ def _assert_is_dtype(
 
     Raises
     ------
-    ValidationError
+    :exc:`~biopsykit.exceptions.ValidationError`
         if ``raise_exception`` is ``True`` and ``obj`` is none of the expected data types
 
     """
@@ -140,7 +141,7 @@ def _assert_has_multiindex(
 
     Raises
     ------
-    ValidationError
+    :exc:`~biopsykit.exceptions.ValidationError`
         if ``raise_exception`` is ``True`` and ``df`` does not meet the expected index format
 
     """
@@ -183,7 +184,7 @@ def _assert_has_index_levels(
 
     Raises
     ------
-    ValidationError
+    :exc:`~biopsykit.exceptions.ValidationError`
         if ``raise_exception`` is ``True`` and ``df`` does not have the expected index level names
 
     """
@@ -217,7 +218,7 @@ def _assert_has_columns(
 
     Raises
     ------
-    ValidationError
+    :exc:`~biopsykit.exceptions.ValidationError`
         if ``raise_exception`` is ``True`` and ``df`` does not have the expected index level names
 
     Examples
@@ -276,7 +277,7 @@ def _assert_has_column_multiindex(
 
     Raises
     ------
-    ValidationError
+    :exc:`~biopsykit.exceptions.ValidationError`
         if ``raise_exception` is ``True`` and ``df`` does not meet the expected column index format
 
     """
@@ -319,7 +320,7 @@ def _assert_has_column_levels(
 
     Raises
     ------
-    ValidationError
+    :exc:`~biopsykit.exceptions.ValidationError`
         if ``raise_exception`` is ``True`` and ``df`` does not have the expected index level names
 
     """
@@ -331,6 +332,46 @@ def _assert_has_column_levels(
         match_order=match_order,
         raise_exception=raise_exception,
     )
+
+
+def _assert_value_range(
+    data: pd.DataFrame, value_range: Sequence[Union[int, float]], raise_exception: Optional[bool] = True
+) -> Optional[bool]:
+    """Check if all values are within the specified range.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check values
+    value_range : tuple of numbers
+        value range in the format [min_val, max_val]
+    raise_exception : bool, optional
+        Whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if all values in ``data`` are within ``value_range``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    :exc:`~biopsykit.exceptions.ValueRangeError`
+        if ``raise_exception`` is ``True`` and any value of ``data`` is not within ``value_range``
+
+    """
+    max_val = np.nanmax(data)
+    min_val = np.nanmin(data)
+    if not (min_val >= value_range[0] and max_val <= value_range[1]):
+        if raise_exception:
+            raise ValueRangeError(
+                "Some of the values are out of the expected range. "
+                "Expected were values in the range {}, got values in the range {}. "
+                "If values are part of questionnaire scores, "
+                "you can convert questionnaire items into the correct range by calling "
+                "`biopsykit.questionnaire.utils.convert_scale()`.".format(value_range, [min_val, max_val])
+            )
+        return False
+    return True
 
 
 def _multiindex_level_names_helper(
