@@ -6,11 +6,31 @@ import pandas as pd
 
 
 class Sadeh(_SleepWakeBase):
+    """
+    Runs sleep wake detection on epoch level activity data. Epochs are 1 minute long and activity is represented
+    by an activity index.
+    """
 
     def __init__(self):
+        """
+        Create an instance of the Sadeh Algorithm class for sleep/wake detection.
+        """
         pass
 
     def predict(self, data: Union[pd.DataFrame, np.array]) -> Union[np.array, pd.DataFrame]:
+        """
+        Perform the sleep/wake score prediction.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            pandas dataframe of activity index values.
+
+        Returns
+        -------
+        np.array
+            predictions
+        """
         window_past = 6
         window_mean = 11
         window_center = 11
@@ -29,6 +49,13 @@ class Sadeh(_SleepWakeBase):
 
     @staticmethod
     def _rolling_window(array, window, overlap):
+        """
+        Usage of numpy stride tricks to develop a rolling window method.
+
+        :param array: array of activity index values
+        :param window: window size of rolling window
+        :param overlap overlap of rolling window
+        """
         window_step = window - overlap
         new_shape = array.shape[:-1] + ((array.shape[-1] - overlap) // window_step, window)
         new_strides = (array.strides[:-1] + (window_step * array.strides[-1],) + array.strides[-1:])
