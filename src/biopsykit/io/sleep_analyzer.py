@@ -8,8 +8,9 @@ import re
 import pandas as pd
 import pytz
 from biopsykit.sleep.utils import split_nights
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dir
 from biopsykit.utils._types import path_t
+from biopsykit.utils.datatype_helper import is_sleep_endpoint_dataframe, SleepEndpointDataFrame
 from biopsykit.utils.time import tz
 
 
@@ -31,7 +32,7 @@ WITHINGS_RAW_DATA_SOURCES = {
 
 def load_withings_sleep_analyzer_raw_folder(
     folder_path: path_t,
-    timezone: Optional[Union[pytz.timezone, str]] = tz,
+    timezone: Optional[Union[pytz.timezone, str]] = None,
     split_into_nights: Optional[bool] = True,
 ) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     """Load folder with raw data from a Withings Sleep Analyzer recording session and convert into time-series data.
@@ -44,9 +45,11 @@ def load_withings_sleep_analyzer_raw_folder(
         * ``sleep_state``: current sleep state: 0 = awake, 1 = light sleep, 2 = deep sleep, 3 = rem sleep
         * ``snoring``: flag whether snoring was detected: 0 = no snoring, 100 = snoring
 
-    .. warn::
-    If data is not split into single nights (``split_into_nights`` is ``False``)
-    data in the dataframe will **not** be resampled.
+    The files are all expected to have the following name pattern: ``raw-sleep-monitor_<datasource>.csv``.
+
+    .. warning::
+        If data is not split into single nights (``split_into_nights`` is ``False``)
+        data in the dataframe will **not** be resampled.
 
     Parameters
     ----------
@@ -67,31 +70,52 @@ def load_withings_sleep_analyzer_raw_folder(
     Returns
     -------
     :class:`~pandas.DataFrame` or list of such
-        dataframe with Sleep Analyzer date
+        dataframe (or list of dataframes, if ``split_into_nights`` is ``True``) with Sleep Analyzer data
+
+    Raises
+    ------
+    ValueError
+        if ``folder_path`` is not a directory
+        if no Sleep Analyzer Raw files are in directory specified by ``folder_path``
 
     """
     # ensure pathlib
     folder_path = Path(folder_path)
+
+    _assert_is_dir(folder_path)
+
     raw_files = list(sorted(folder_path.glob("raw_sleep-monitor_*.csv")))
+    if len(raw_files) == 0:
+        raise ValueError("No sleep analyzer raw files found in {}!".format(folder_path))
     data_sources = [re.findall(r"raw_sleep-monitor_(\S*).csv", s.name)[0] for s in raw_files]
 
     list_data = [
-        load_withings_sleep_analyzer_raw_file(file_path, WITHINGS_RAW_DATA_SOURCES[data_source], timezone)
+        load_withings_sleep_analyzer_raw_file(
+            file_path,
+            data_source=WITHINGS_RAW_DATA_SOURCES[data_source],
+            timezone=timezone,
+            split_into_nights=split_into_nights,
+        )
         for file_path, data_source in zip(raw_files, data_sources)
         if data_source in WITHINGS_RAW_DATA_SOURCES
     ]
-    data = pd.concat(list_data, axis=1)
     if split_into_nights:
-        data = split_nights(data)
-        data = [d.resample("1min").interpolate() for d in data]
+        # "transpose" nested list.
+        # before: outer lists = data source, inner lists = nights.
+        # after: outer lists = nights, inner lists = data source
+        list_data = list(map(list, zip(*list_data)))
+        data = [pd.concat(list_nights, axis=1) for list_nights in list_data]
+    else:
+        data = pd.concat(list_data, axis=1)
     return data
 
 
 def load_withings_sleep_analyzer_raw_file(
     file_path: path_t,
     data_source: str,
-    timezone: Optional[Union[pytz.timezone, str]] = tz,
-) -> pd.DataFrame:
+    timezone: Optional[Union[pytz.timezone, str]] = None,
+    split_into_nights: Optional[bool] = True,
+) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     """Load single Withings Sleep Analyzer raw data file and convert into time-series data.
 
     Parameters
@@ -101,18 +125,25 @@ def load_withings_sleep_analyzer_raw_file(
     data_source : str
         data source of file specified by ``file_path``
     timezone : str or pytz.timezone, optional
-        timezone of the acquired data, either as string of as pytz object.
+        timezone of recorded data, either as string or as pytz object.
         Default: 'Europe/Berlin'
+    split_into_nights : bool, optional
+        whether to split the dataframe into the different recording nights (and return a list of dataframes) or not.
+        Default: ``True``
 
     Returns
     -------
-    :class:`pandas.DataFrame`
-        dataframe with Sleep Analyzer raw data
+    :class:`~pandas.DataFrame` or list of such
+        dataframe (or list of dataframes, if ``split_into_nights`` is ``True``) with Sleep Analyzer data
 
     Raises
     ------
     ValueError
         if unsupported data source was passed
+    `~biopsykit.exceptions.FileExtensionError`
+        if ``file_path`` is not a csv file
+    `~biopsykit.exceptions.ValidationError`
+        if file does not have the required columns ``start``, ``duration``, ``value``
 
     """
     if data_source not in WITHINGS_RAW_DATA_SOURCES.values():
@@ -122,7 +153,16 @@ def load_withings_sleep_analyzer_raw_file(
             )
         )
 
+    file_path = Path(file_path)
+    _assert_file_extension(file_path, ".csv")
+
     data = pd.read_csv(file_path)
+
+    _assert_has_columns(data, [["start", "duration", "value"]])
+
+    if timezone is None:
+        timezone = tz
+
     # convert string timestamps to datetime
     data["start"] = pd.to_datetime(data["start"])
     # convert strings of arrays to arrays
@@ -144,10 +184,14 @@ def load_withings_sleep_analyzer_raw_file(
     # sort index and drop duplicate index values
     data_explode = data_explode.sort_index()
     data_explode = data_explode[~data_explode.index.duplicated()]
+
+    if split_into_nights:
+        data_explode = split_nights(data_explode)
+        data_explode = [d.resample("1min").interpolate() for d in data_explode]
     return data_explode
 
 
-def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
+def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[str] = None) -> SleepEndpointDataFrame:
     """Load Sleep Analyzer summary file.
 
     This function additionally computes several other sleep endpoints from the Sleep Analyzer summary data to be
@@ -159,13 +203,13 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
         * ``total_time_deep_sleep``: Total time of deep sleep
         * ``total_time_rem_sleep``: Total time of REM sleep
         * ``total_time_awake``: Total time of being awake
+        * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset
         * ``num_wake_bouts``: Total number of wake bouts
         * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep
         * ``getup_onset_latency``: Get Up Latency, i.e., time in bed after awakening until getting up
         * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
         * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
         * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep
-        * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset
         * ``count_snoring_episodes``: Total number of snoring episodes
         * ``total_time_snoring``: Total time of snoring
         * ``heart_rate_avg``: Average heart rate during recording in bpm
@@ -176,11 +220,14 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
     ----------
     file_path : :any:`pathlib.Path` or str
         path to file
+    timezone : str or pytz.timezone, optional
+        timezone of recorded data, either as string or as pytz object.
+        Default: 'Europe/Berlin'
 
     Returns
     -------
-    :class:`pandas.DataFrame`
-        dataframe with Sleep Analyzer summary data
+    :class:`~biopsykit.datatype_helper.SleepEndpointDataFrame`
+        dataframe with Sleep Analyzer summary data, i.e., sleep endpoints
 
     """
     # ensure pathlib
@@ -189,16 +236,26 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
 
     data = pd.read_csv(file_path)
 
+    _assert_has_columns(data, [["von", "bis"]])
+
+    if timezone is None:
+        timezone = tz
+
     for col in ["von", "bis"]:
         # convert into date time
-        data[col] = pd.to_datetime(data[col])
+        data[col] = pd.to_datetime(data[col]).dt.tz_convert(timezone)
 
     # total duration in seconds
     data["total_duration"] = [int(td.total_seconds()) for td in data["bis"] - data["von"]]
-    data["time"] = data["von"]
+    data["date"] = data["von"]
+    data["date"] = data["date"].apply(
+        lambda date: ((date - pd.Timedelta("1d")) if date.hour < 12 else date).normalize()
+    )
 
     data.rename(
         {
+            "von": "recording_start",
+            "bis": "recording_end",
             "leicht (s)": "total_time_light_sleep",
             "tief (s)": "total_time_deep_sleep",
             "rem (s)": "total_time_rem_sleep",
@@ -216,13 +273,16 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
         inplace=True,
     )
 
-    data["sleep_onset"] = data["time"] + pd.to_timedelta(data["sleep_onset_latency"], unit="seconds")
+    data["sleep_onset"] = data["recording_start"] + pd.to_timedelta(data["sleep_onset_latency"], unit="seconds")
     # Wake after Sleep Onset (WASO): total time awake after sleep onset
     data["wake_after_sleep_onset"] = data["total_time_awake"] - data["sleep_onset_latency"] - data["getup_latency"]
-    data["wake_onset"] = data["bis"] - pd.to_timedelta(data["getup_latency"], unit="seconds")
+    data["wake_onset"] = data["recording_end"] - pd.to_timedelta(data["getup_latency"], unit="seconds")
     # compute total sleep duration
     # = total duration - (time to fall asleep + time to get up (= time spent in bed after waking up))
     data["total_sleep_duration"] = data["total_duration"] - data["sleep_onset_latency"] - data["getup_latency"]
+
+    # compute net sleep duration (time spent actually sleeping) = total sleep duration - wake after sleep onset
+    data["net_sleep_duration"] = data["total_sleep_duration"] - data["wake_after_sleep_onset"]
 
     transform_cols = [
         "total_time_light_sleep",
@@ -234,11 +294,11 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
         "total_time_snoring",
         "wake_after_sleep_onset",
         "total_sleep_duration",
+        "net_sleep_duration",
     ]
     data[transform_cols] = data[transform_cols].transform(lambda column: (column / 60).astype(int))
 
-    data.drop(columns=["von", "bis"], inplace=True)
-    data.set_index("time", inplace=True)
+    data = data.set_index("date")
 
     # reindex column order
     new_cols = list(data.columns)
@@ -246,6 +306,10 @@ def load_withings_sleep_analyzer_summary(file_path: path_t) -> pd.DataFrame:
     for d in sowo:
         new_cols.remove(d)
     data = data[sowo + new_cols]
+
+    # assert output is in the correct format
+    is_sleep_endpoint_dataframe(data)
+
     return data
 
 

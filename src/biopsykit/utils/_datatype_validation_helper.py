@@ -8,6 +8,36 @@ from biopsykit.utils._types import _Hashable, path_t
 from biopsykit.utils.exceptions import ValidationError, FileExtensionError
 
 
+def _assert_is_dir(path: path_t, raise_exception: Optional[bool] = True):
+    """Check if a path is a directory.
+
+    Parameters
+    ----------
+    path : path or str
+        path to check if it's a directory
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``path`` is a directory, ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValueError
+        if ``raise_exception`` is ``True`` and ``path`` is not a directory
+
+    """
+    # ensure pathlib
+    file_name = Path(path)
+    if not file_name.is_dir():
+        if raise_exception:
+            raise ValueError("The path '{}' is expected to be a directory, but it's not!".format(path))
+        return False
+
+    return True
+
+
 def _assert_file_extension(
     file_name: path_t, expected_extension: Union[str, Sequence[str]], raise_exception: Optional[bool] = True
 ) -> Optional[bool]:

@@ -67,18 +67,20 @@ def cut_to_wear_block(data: pd.DataFrame, wear_block: Tuple) -> pd.DataFrame:
 def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFrame) -> Dict:
     from numbers import Number
 
-    # sleep/wake data during major rest period
+    # cut sleep data = data between sleep onset and wake onset during major rest period
     sleep_wake = sleep_wake.loc[major_rest_periods["start"][0] : major_rest_periods["end"][0]]
+    # total sleep duration = length of sleep data
+    tsd = len(sleep_wake)
 
-    # total sleep time in minutes (= length of 'sleep' predictions (value 0) in dataframe)
-    sleep_time = sleep_wake[sleep_wake["sleep_wake"].eq(0)]
-    tst = len(sleep_time)
-    if sleep_time.empty:
+    # net sleep duration in minutes = length of 'sleep' predictions (value 0) in sleep data
+    net_sleep_time = sleep_wake[sleep_wake["sleep_wake"].eq(0)]
+    nsd = len(net_sleep_time)
+    if net_sleep_time.empty:
         return {}
-    df_sw_sleep = sleep_wake[sleep_time.index[0] : sleep_time.index[-1]].copy()
+    df_sw_sleep = sleep_wake[net_sleep_time.index[0] : net_sleep_time.index[-1]].copy()
 
     # get percent of total time asleep
-    se = 100.0 * (len(sleep_time) / len(sleep_wake))
+    se = 100.0 * (len(net_sleep_time) / len(sleep_wake))
     # wake after sleep onset = duration of wake during first and last 'sleep' sample
     waso = int(df_sw_sleep.sum()[0])
 
@@ -99,17 +101,17 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
     sleep_bouts = df_start_stop[df_start_stop["sleep_wake"].eq(0)].drop(columns=["sleep_wake"]).reset_index(drop=True)
     wake_bouts = df_start_stop[df_start_stop["sleep_wake"].ne(0)].drop(columns=["sleep_wake"]).reset_index(drop=True)
     num_wake_bouts = len(wake_bouts)
-    sleep_onset = sleep_time.index[0]
-    wake_onset = sleep_time.index[-1]
+    sleep_onset = net_sleep_time.index[0]
+    wake_onset = net_sleep_time.index[-1]
 
     # start and end of major rest period
     mrp_start = major_rest_periods["start"][0]
     mrp_end = major_rest_periods["end"][0]
 
     # sleep onset latency = duration between major rest period start and sleep onset
-    sol = len(sleep_wake[sleep_wake.index[0] : sleep_time.index[0]])
-    # getup latency = duration between last 'sleep' sample and major rest period end
-    gup = len(sleep_wake[sleep_time.index[-1] : sleep_wake.index[-1]])
+    sol = len(sleep_wake[sleep_wake.index[0] : sleep_onset])
+    # getup latency = duration between wake onset (last 'sleep' sample) and major rest period end
+    gup = len(sleep_wake[wake_onset : sleep_wake.index[-1]])
 
     if isinstance(mrp_start, Number):
         date = 0
@@ -127,7 +129,8 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
         "date": date,
         "sleep_onset": sleep_onset,
         "wake_onset": wake_onset,
-        "total_sleep_time": tst,
+        "total_sleep_duration": tsd,
+        "net_sleep_duration": nsd,
         "major_rest_period_start": mrp_start,
         "major_rest_period_end": mrp_end,
         "sleep_efficiency": se,

@@ -1,5 +1,5 @@
 """A couple of helper functions that easy the use of the typical biopsykit data formats."""
-from typing import Dict, Optional, Union, List
+from typing import Dict, Optional, Union, List, Any
 
 import numpy as np
 import pandas as pd
@@ -77,6 +77,73 @@ SalivaFeatureDataFrame = pd.DataFrame
 The resulting dataframe must at least have a `subject` index level and all column names need to begin with 
 the saliva marker type (e.g. "cortisol"), followed by the feature name, separated by underscore '_'
 Additionally, the name of the column index needs to be `saliva_feature`.
+
+"""
+
+SleepEndpointDict = Dict[str, Any]
+"""Dictionary containing sleep endpoints in a standardized format.
+
+The dict entries represent the sleep endpoints and should follow a standardized naming convention,
+regardless of the origin (IMU sensor, sleep mattress, polysomnography, etc.).
+
+Required are the entries:
+    * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
+    * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
+    * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset, in minutes
+
+The following entries are common, but not required:
+    * ``total_duration``: Total recording time, in minutes
+    * ``net_sleep_duration``: Net duration spent sleeping, in minutes
+    * ``num_wake_bouts``: Total number of wake bouts
+    * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
+    * ``getup_onset_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
+    * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in minutes
+
+The following entries are, for instance, further possible:
+    * ``total_time_light_sleep``: Total time of light sleep, in minutes
+    * ``total_time_deep_sleep``: Total time of deep sleep, in minutes
+    * ``total_time_rem_sleep``: Total time of REM sleep, in minutes
+    * ``total_time_awake``: Total time of being awake, in minutes
+    * ``count_snoring_episodes``: Total number of snoring episodes
+    * ``total_time_snoring``: Total time of snoring, in minutes
+    * ``heart_rate_avg``: Average heart rate during recording, in bpm
+    * ``heart_rate_min``: Minimum heart rate during recording, in bpm
+    * ``heart_rate_max``: Maximum heart rate during recording, in bpm
+
+"""
+
+SleepEndpointDataFrame = pd.DataFrame
+""":class:`pandas.DataFrame` containing sleep endpoints in a standardized format.
+
+The resulting dataframe must at least have a `date` index level, 
+and, optionally, further index levels like `night`.
+
+The columns defining the sleep endpoints should follow a standardized naming convention, regardless of the origin
+(IMU sensor, sleep mattress, polysomnography, etc.).
+
+Required are the columns:
+    * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
+    * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
+    * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset, in minutes
+
+The following columns are common, but not required:
+    * ``total_duration``: Total recording time, in minutes
+    * ``net_sleep_duration``: Net duration spent sleeping, in minutes
+    * ``num_wake_bouts``: Total number of wake bouts
+    * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
+    * ``getup_onset_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
+    * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in minutes
+
+The following columns are further possible:
+    * ``total_time_light_sleep``: Total time of light sleep, in minutes
+    * ``total_time_deep_sleep``: Total time of deep sleep, in minutes
+    * ``total_time_rem_sleep``: Total time of REM sleep, in minutes
+    * ``total_time_awake``: Total time of being awake, in minutes
+    * ``count_snoring_episodes``: Total number of snoring episodes
+    * ``total_time_snoring``: Total time of snoring, in minutes
+    * ``heart_rate_avg``: Average heart rate during recording, in bpm
+    * ``heart_rate_min``: Minimum heart rate during recording, in bpm
+    * ``heart_rate_max``: Maximum heart rate during recording, in bpm 
 
 """
 
@@ -285,7 +352,7 @@ def is_feature_saliva_dataframe(
 
     See Also
     --------
-    `SalivaFeatureDataFrame+`
+    `SalivaFeatureDataFrame`
         dataframe format
 
     """
@@ -300,6 +367,88 @@ def is_feature_saliva_dataframe(
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SalivaFeatureDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a `SleepEndpointDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a `SleepEndpointDataFrame`
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a `SleepEndpointDataFrame`, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a `SleepEndpointDataFrame`
+
+    See Also
+    --------
+    `SleepEndpointDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_is_dtype(data.index, pd.DatetimeIndex)
+        _assert_has_index_levels(data, index_levels="date", match_atleast=True, match_order=False)
+        _assert_has_columns(data, columns_sets=[["sleep_onset", "wake_onset", "total_sleep_duration"]])
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a SleepEndpointDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dictionary is a `SleepEndpointDict`.
+
+    Parameters
+    ----------
+    data : dict
+        data to check if it is a `SleepEndpointDict`
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a `SleepEndpointDict`, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a `SleepEndpointDict`
+
+    See Also
+    --------
+    `SleepEndpointDict`
+        dictionary format
+
+    """
+    try:
+        _assert_is_dtype(data, dict)
+        expected_keys = ["date", "sleep_onset", "wake_onset", "total_sleep_duration"]
+        if any(col not in list(data.keys()) for col in expected_keys):
+            raise ValidationError("Not all of {} are in the dictionary!".format(expected_keys))
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a SleepEndpointDict. "
                 "The validation failed with the following error:\n\n{}".format(str(e))
             ) from e
         return False
