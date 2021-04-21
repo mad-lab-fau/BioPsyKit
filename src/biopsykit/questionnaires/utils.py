@@ -172,18 +172,6 @@ def bin_scale(
                 return c
 
 
-def check_score_range(data: pd.DataFrame, score_range: Sequence[int]) -> bool:
-    return np.nanmin(data) >= score_range[0] and np.nanmax(data) <= score_range[1]
-
-
-def _check_score_range_exception(data: pd.DataFrame, score_range: Sequence[int]) -> None:
-    if not check_score_range(data, score_range):
-        raise ValueError(
-            "This implementation expects values in the range {}! "
-            "Please consider converting to the correct range using `biopsykit.utils.convert_scale`.".format(score_range)
-        )
-
-
 def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
     if isinstance(levels, str):
         levels = [levels]
