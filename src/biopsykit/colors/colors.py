@@ -8,6 +8,20 @@ from colorsys import rgb_to_hls, hls_to_rgb
 from matplotlib.colors import to_hex, to_rgb
 import seaborn as sns
 
+__all__ = [
+    "FAU_COLORS",
+    "fau_color_dict",
+    "fau_palette",
+    "fau_palette_blue",
+    "fau_palette_wiso",
+    "fau_palette_phil",
+    "fau_palette_tech",
+    "fau_palette_nat",
+    "fau_palette_med",
+    "fau_color",
+    "adjust_color",
+]
+
 FAU_COLORS = ["fau", "tech", "phil", "med", "nat", "wiso"]
 """
 Available color keys.

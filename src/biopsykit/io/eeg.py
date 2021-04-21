@@ -8,6 +8,8 @@ from biopsykit.utils._types import path_t
 from biopsykit.utils.time import utc, tz
 
 
+__all__ = ["load_eeg_raw_muse"]
+
 MUSE_EEG_SAMPLING_RATE = 250.0
 
 
