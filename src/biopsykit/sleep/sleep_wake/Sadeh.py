@@ -31,6 +31,11 @@ class Sadeh(_SleepWakeBase):
         np.array
             predictions
         """
+        index = None
+        if isinstance(data, pd.DataFrame):
+            index = data.index
+            data = sanitize_input_1d(data)
+
         window_past = 6
         window_mean = 11
         window_center = 11
@@ -44,6 +49,9 @@ class Sadeh(_SleepWakeBase):
         score = 7.601 - 0.065 * mean - 0.056 * std - 0.0703 * locAct - 1.08 * nat
 
         classification = (score > 0)
+
+        if index is not None:
+            classification = pd.DataFrame(classification, index=index, columns=["sleep_wake"])
 
         return classification
 
