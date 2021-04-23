@@ -1,3 +1,4 @@
+"""Base class for psychological protocols"""
 from typing import Dict, Sequence, Union, Tuple, Optional
 
 import pandas as pd
@@ -30,8 +31,8 @@ class BaseProtocol:
             # 'background.color': "#e0e0e0",
             # 'background.alpha': 0.5,
             # 'x_padding': 0.1,
-            "test.color": "#9e9e9e",
-            "test.alpha": 0.5,
+            "test_color": "#9e9e9e",
+            "test_alpha": 0.5,
             "x_offsets": [0, 0.5],
             "fontsize": 14,
             "multi.x_offset": 1,

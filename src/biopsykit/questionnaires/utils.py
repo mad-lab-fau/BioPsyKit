@@ -3,6 +3,18 @@ from typing import Optional, Union, Sequence, Tuple, Dict
 import numpy as np
 import pandas as pd
 
+__all__ = [
+    "bin_scale",
+    "compute_scores",
+    "crop_scale",
+    "convert_scale",
+    "find_cols",
+    "fill_col_leading_zeros",
+    "invert",
+    "to_idx",
+    "wide_to_long",
+]
+
 
 def find_cols(
     df: pd.DataFrame,
