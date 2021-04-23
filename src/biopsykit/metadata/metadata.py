@@ -1,4 +1,12 @@
-"""Module for computing metadata parameter."""
+"""Module containing implementations to compute various metadata parameter.
+
+Each function at least expects a dataframe containing the required columns in a specified order
+(see function documentations for specifics) to be passed to the ``data`` argument.
+
+If ``data`` is a dataframe that contains more than the required two columns, e.g., if the complete dataframe
+is passed, the required columns can be sliced by specifying them in the ``columns`` parameter.
+
+"""
 from typing import Optional, Union, Sequence
 
 import pandas as pd
