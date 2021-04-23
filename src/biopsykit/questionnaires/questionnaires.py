@@ -1,3 +1,22 @@
+"""Module containing implementations for various psychological questionnaires.
+
+Each function at least expects a dataframe containing the required columns in a specified order
+(see function documentations for specifics) to be passed to the ``data`` argument.
+
+If ``data`` is a dataframe that contains more than the required two columns, e.g., if the complete questionnaire
+dataframe is passed, the required columns can be sliced by specifying them in the ``columns`` parameter.
+Also, if the columns in the dataframe dataframe columns are not in the correct order, the order can be specified
+using the ``columns`` parameter.
+
+Some questionnaire functions also allow the possibility to only compute certain subscales. To do this, a dictionary
+with subscale names as keys and the corresponding column names (as list of str) or column indices
+(as list of ints) can be passed to the ``subscales`` parameter.
+
+.. warning::
+    Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+    questionnaire item columns, which typically also start with index 1!
+
+"""
 from typing import Optional, Sequence, Union, Dict
 
 import numpy as np
@@ -8,8 +27,9 @@ from biopsykit.questionnaires.utils import (
     find_cols,
     bin_scale,
     to_idx,
+    _compute_questionnaire_subscales,
 )
-from biopsykit.utils._datatype_validation_helper import _assert_value_range
+from biopsykit.utils._datatype_validation_helper import _assert_value_range, _assert_num_columns
 
 
 def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
@@ -72,38 +92,49 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """
-    **Maastricht Vital Exhaustion Scale (MVES)**
+    """Compute the **Maastricht Vital Exhaustion Scale (MVES)**.
 
     The MVES uses 23 items to assess the concept of Vital Exhaustion (VE), which is characterized by feelings of
-    excessive fatigue, lack of energy, irritability, and feelings of demoralization.
+    excessive fatigue, lack of energy, irritability, and feelings of demoralization. Higher scores indicate greater
+    vital exhaustion.
 
-    NOTE: This implementation assumes a score range of [0, 2]. Use ``bp.questionnaires.utils.convert_scale()`` to
-    convert the items into the correct range.
+    .. note::
+        This implementation assumes a score range of [0, 2].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
 
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if `columns` parameter is supplied
-    columns : list of string, optional
-        list with column names to use for computing this score if a complete dataframe is supplied.
-        See ``bp.questionnaires.utils.convert_scale()``
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
 
     Returns
     -------
-    pd.DataFrame
+    :class:`~pandas.DataFrame`
         MVES score
 
 
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
     References
-    ------------
+    ----------
     Appels, A., Höppener, P., & Mulder, P. (1987). A questionnaire to assess premonitory symptoms of myocardial
     infarction. *International Journal of Cardiology*, 17(1), 15–24. https://doi.org/10.1016/0167-5273(87)90029-5
 
     """
-
     score_name = "MVES"
     score_range = [0, 2]
 
@@ -111,6 +142,7 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 23)
     _assert_value_range(data, score_range)
 
     # Reverse scores 9, 14
@@ -121,64 +153,80 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 def tics_s(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
-    """
-    **Trier Inventory for Chronic Stress (Short Version) (TICS-S)**
+    """Compute the **Trier Inventory for Chronic Stress (Short Version) (TICS-S)**.
 
     The TICS assesses frequency of various types of stressful experiences in the past 3 months.
 
-    It consists of several subscales:
+    It consists of the subscales (the name in the brackets indicate the name in the returned dataframe),
+    with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Work Overload (``WorkOverload``): [1, 3, 21]
+        * Social Overload (``SocialOverload``): [11, 18, 28]
+        * Excessive Demands at Work (``DemandsWork``): [12, 16, 27]
+        * Lack of Social Recognition (``LackSocialRec``): [2, 20, 23]
+        * Work Discontent (``WorkDiscontent``): [8, 13, 24]
+        * Social Tension (``SocialTension``): [4, 9, 26]
+        * Performance Pressure at Work (``PressureToPerform``): [5, 14, 29]
+        * Performance Pressure in Social Interactions (``PressureSocial``): [6, 15, 22]
+        * Social Isolation (``SocialIsolation``): [19, 25, 30]
+        * Worry Propensity (``ChronicWorry``): [7, 10, 17]
 
-    * Work Overload (`WorkOverload`)
-    * Social Overload (`SocialOverload`)
-    * Excessive Demands at Work (`DemandsWork`)
-    * Lack of Social Recognition (`LackSocialRec`)
-    * Work Discontent (`WorkDiscontent`)
-    * Social Tension (`SocialTension`)
-    * Performance Pressure at Work (`PressureToPerform`)
-    * Performance Pressure in Social Interactions (`PressureSocial`)
-    * Social Isolation (`SocialIsolation`)
-    * Worry Propensity (`ChronicWorry`)
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
 
-
-    NOTE: This implementation assumes a score range of [0, 4]. Use ``bp.questionnaires.utils.convert_scale()`` to
-    convert the items into the correct range.
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
 
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if `columns` parameter is supplied
-    columns : list of string, optional
-        list with column names to use for computing this score if a complete dataframe is supplied.
-        See ``bp.questionnaires.utils.convert_scale()``
-    idxs : dict, optional
-        dictionary with subscales as keys and the indices of the subscale items as values
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
 
     Returns
     -------
-    pd.DataFrame
+    :class:`~pandas.DataFrame`
         TICS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
 
 
     Examples
     --------
     >>> from biopsykit.questionnaires import tics_s
-    >>> # custom indices
-    >>> idxs = {
+    >>> # compute only a subset of subscales; questionnaire items additionally have custom indices
+    >>> subscales = {
     >>>     'WorkOverload': [1, 2, 3],
     >>>     'SocialOverload': [4, 5, 6],
-    >>>     # ...
     >>> }
-    >>> tics_s_result = tics_s(data, idxs=idxs)
+    >>> tics_s_result = tics_s(data, subscales=subscales)
 
     References
-    ------------
+    ----------
     Schulz, P., Schlotz, W., & Becker, P. (2004). Trierer Inventar zum chronischen Stress: TICS. *Hogrefe*.
-    """
 
+    """
     score_name = "TICS_S"
     score_range = [0, 4]
 
@@ -188,8 +236,8 @@ def tics_s(
 
     _assert_value_range(data, score_range)
 
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        subscales = {
             "WorkOverload": [1, 3, 21],
             "SocialOverload": [11, 18, 28],
             "PressureToPerform": [5, 14, 29],
@@ -202,9 +250,11 @@ def tics_s(
             "ChronicWorry": [7, 10, 17],
         }
 
-    tics = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
+    tics = _compute_questionnaire_subscales(data, score_name, subscales)
 
-    tics[score_name] = data.sum(axis=1)
+    if len(data.columns) == 30:
+        # compute total score if all columns are present
+        tics[score_name] = data.sum(axis=1)
 
     return pd.DataFrame(tics, index=data.index)
 
@@ -212,53 +262,80 @@ def tics_s(
 def tics_l(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
-    """
-    **Trier Inventory for Chronic Stress (Long Version) (TICS-L)**
+    """Compute the **Trier Inventory for Chronic Stress (Long Version) (TICS-L)**.
 
     The TICS assesses frequency of various types of stressful experiences in the past 3 months.
 
-    It consists of several subscales:
+    It consists of the subscales (the name in the brackets indicate the name in the returned dataframe),
+    with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Work Overload (``WorkOverload``): [50, 38, 44, 54, 17, 4, 27, 1]
+        * Social Overload (``SocialOverload``): [39, 28, 49, 19, 7, 57]
+        * Excessive Demands at Work (``DemandsWork``): [55, 24, 20, 35, 47, 3]
+        * Lack of Social Recognition (``LackSocialRec``): [31, 18, 46, 2]
+        * Work Discontent (``WorkDiscontent``): [21, 53, 10, 48, 41, 13, 37, 5]
+        * Social Tension (``SocialTension``): [26, 15, 45, 52, 6, 33]
+        * Performance Pressure at Work (``PressureToPerform``): [23, 43, 32, 22, 12, 14, 8, 40, 30]
+        * Performance Pressure in Social Interactions (``PressureSocial``): [6, 15, 22]
+        * Social Isolation (``SocialIsolation``): [42, 51, 34, 56, 11, 29]
+        * Worry Propensity (``ChronicWorry``): [36, 25, 16, 9]
 
-    * Work Overload (`WorkOverload`)
-    * Social Overload (`SocialOverload`)
-    * Excessive Demands at Work (`DemandsWork`)
-    * Lack of Social Recognition (`LackSocialRec`)
-    * Work Discontent (`WorkDiscontent`)
-    * Social Tension (`SocialTension`)
-    * Performance Pressure at Work (`PressureToPerform`)
-    * Performance Pressure in Social Interactions (`PressureSocial`)
-    * Social Isolation (`SocialIsolation`)
-    * Worry Propensity (`ChronicWorry`)
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
 
-
-    NOTE: This implementation assumes a score range of [0, 4]. Use ``bp.questionnaires.utils.convert_scale()`` to
-    convert the items into the correct range.
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
 
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if `columns` parameter is supplied
-    columns : list of string, optional
-        list with column names to use for computing this score if a complete dataframe is supplied.
-        See ``bp.questionnaires.utils.convert_scale()``
-    idxs : dict, optional
-        dictionary with subscales as keys and the indices of the subscale items as values
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
 
     Returns
     -------
-    pd.DataFrame
+    :class:`~pandas.DataFrame`
         TICS score
 
 
-    References
-    ------------
-    Schulz, P., Schlotz, W., & Becker, P. (2004). Trierer Inventar zum chronischen Stress: TICS. *Hogrefe*.
-    """
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
 
+
+    Examples
+    --------
+    >>> from biopsykit.questionnaires import tics_s
+    >>> # compute only a subset of subscales; questionnaire items additionally have custom indices
+    >>> subscales = {
+    >>>     'WorkOverload': [1, 2, 3],
+    >>>     'SocialOverload': [4, 5, 6],
+    >>> }
+    >>> tics_s_result = tics_s(data, subscales=subscales)
+
+    References
+    ----------
+    Schulz, P., Schlotz, W., & Becker, P. (2004). Trierer Inventar zum chronischen Stress: TICS. *Hogrefe*.
+
+    """
     score_name = "TICS_L"
     score_range = [0, 4]
 
@@ -268,8 +345,8 @@ def tics_l(
 
     _assert_value_range(data, score_range)
 
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        subscales = {
             "WorkOverload": [50, 38, 44, 54, 17, 4, 27, 1],  # Arbeitsüberlastung
             "SocialOverload": [39, 28, 49, 19, 7, 57],  # Soziale Überlastung
             "PressureToPerform": [23, 43, 32, 22, 12, 14, 8, 40, 30],  # Erfolgsdruck
@@ -290,44 +367,57 @@ def tics_l(
             "ChronicWorry": [36, 25, 16, 9],  # Chronische Besorgnis
         }
 
-    tics = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
+    tics = _compute_questionnaire_subscales(data, score_name, subscales)
+
+    if len(data.columns) == 57:
+        # compute total score if all columns are present
+        tics[score_name] = data.sum(axis=1)
 
     return pd.DataFrame(tics, index=data.index)
 
 
 def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """
-    **Perceived Stress Scale (PSS)**
+    """Compute the **Perceived Stress Scale (PSS)**.
 
     The PSS is a widely used self-report questionnaire with adequate reliability and validity asking
     about how stressful a person has found his/her life during the previous month.
 
-
-    NOTE: This implementation assumes a score range of [0, 4]. Use ``bp.questionnaires.utils.convert_scale()`` to
-    convert the items into the correct range.
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
 
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if `columns` parameter is supplied
-    columns : list of string, optional
-        list with column names to use for computing this score if a complete dataframe is supplied.
-        See ``bp.questionnaires.utils.convert_scale()``
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
 
     Returns
     -------
-    pd.DataFrame
+    :class:`~pandas.DataFrame`
         PSS score
+
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
 
 
     References
     ------------
     Cohen, S., Kamarck, T., & Mermelstein, R. (1983). A Global Measure of Perceived Stress.
     *Journal of Health and Social Behavior*, 24(4), 385. https://doi.org/10.2307/2136404
-    """
 
+    """
     score_name = "PSS"
     score_range = [0, 4]
 
@@ -335,6 +425,7 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 10)
     _assert_value_range(data, score_range)
 
     # Reverse scores 4, 5, 7, 8
@@ -344,24 +435,27 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
 
 def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """
-    **Center for Epidemiological Studies Depression Scale (CES-D)**
+    """Compute the **Center for Epidemiological Studies Depression Scale (CES-D)**.
 
     The CES-D asks about depressive symptoms experienced over the past week.
+    Higher scores indicate greater depressive symptoms.
 
-
-    NOTE: This implementation assumes a score range of [0, 3]. Use ``bp.questionnaires.utils.convert_scale()`` to
-    convert the items into the correct range.
+    .. note::
+        This implementation assumes a score range of [0, 3].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
 
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if `columns` parameter is supplied
-    columns : list of string, optional
-        list with column names to use for computing this score if a complete dataframe is supplied.
-        See ``bp.questionnaires.utils.convert_scale()``
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
 
     Returns
     -------
@@ -369,12 +463,20 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
         CES-D score
 
 
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
     References
     ------------
     Radloff, L. S. (1977). The CES-D Scale: A Self-Report Depression Scale for Research in the General Population.
     Applied Psychological Measurement, 1(3), 385–401. https://doi.org/10.1177/014662167700100306
-    """
 
+    """
     score_name = "CESD"
     score_range = [0, 3]
 
@@ -390,8 +492,7 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """
-    **General Health Questionnaire (GHQ)**
+    """Compute the **General Health Questionnaire (GHQ)**.
 
     The GHQ-12 is a widely used tool for detecting psychological and mental health and as a screening tool for
     excluding psychological and psychiatric morbidity.
