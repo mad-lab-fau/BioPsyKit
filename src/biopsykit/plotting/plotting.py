@@ -1,3 +1,4 @@
+"""Module containing several advanced plotting functions."""
 from typing import Union, Tuple, Sequence, Optional, Dict
 
 import numpy as np
@@ -5,58 +6,132 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from statannot import add_stat_annotation
+
 from biopsykit.utils.functions import se
+from biopsykit.utils.dataframe_handling import multi_xs
 
 _PVALUE_THRESHOLDS = [[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]
 
 
-def lineplot(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
-    markers = None
-    style = kwargs.get("style", None)
-    ax: plt.Axes = kwargs.get("ax", None)
-    hue = kwargs.get("hue")
-    x = kwargs.get("x")
-    y = kwargs.get("y")
+def lineplot(
+    data: pd.DataFrame, x: str, y: str, hue: Optional[str] = None, style: Optional[str] = None, **kwargs
+) -> Tuple[plt.Figure, plt.Axes]:
+    """Draw a line plot with error bars with the possibility of several semantic groupings.
+
+    This is an extension to seaborn's lineplot function (:func:`~seaborn.lineplot`).
+    It offers the same interface, but several improvements:
+        * Data points are not only connected as line, but are also drawn with markers
+        * Lines can have an offset along the categorical (x) axis for better visualization
+        (seaborn equivalent: ``dodge``, which is only available for :func:`seaborn.pointplot`,
+        not for :func:`seaborn.lineplot`)
+        * Further plot parameters (axis labels, ticks, etc.) are inferred from the dataframe
+
+    Equivalent to seaborn, the relationship between ``x`` and ``y`` can be shown for different subsets of the
+    data using the ``hue`` and ``style`` parameters. If both parameters are assigned two different grouping variables
+    can be represented.
+
+    Error bars are displayed as standard error.
+
+    See the seaborn documentation for further information.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to plot
+    x : str
+        column of x axis in ``data``
+    y : str
+        column of y axis in ``data``
+    hue : str, optional
+        column name of grouping variable that will produce lines with different colors.
+        Can be either categorical or numeric. If ``None`` then data will not be grouped.
+    style : str, optional
+        column name of grouping variable that will produce lines with different dashes and/or markers.
+        If ``None`` then lines will not have different styles.
+    kwargs
+        additional parameters to configure the plot. Parameters include:
+            * ``markers``: string or list of strings to specify marker style.
+            If ``markers`` is a string, then markers of each line will have the same style.
+            If ``markers`` is a list, then markers of each line will have a different style.
+            * ``x_offset``: offset value to move different groups along the x axis for better visualization.
+            Default: 0.05
+            * ``xlabel``: Label for x axis. If not specified it is inferred from the ``x`` column name
+            * ``ylabel``: Label for y axis. If not specified it is inferred from the ``y`` column name
+            * ``xticklabels``: List of labels for ticks of x axis. If not specified ``order`` is taken as tick labels.
+            If ``order`` is not specified tick labels are inferred from x values.
+            * ``ylim``: y-axis limits
+            * ``order``: list specifying the order of categorical values along the x axis.
+            * ``hue_order``: list specifying the order of processing and plotting for categorical levels
+            of the ``hue`` semantic.
+            * ``legend_fontsize``: font size of legend
+            * ``legend_loc``: location of legend in Axes
+            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+            * ``err_kws``: additional parameters to control the aesthetics of the error bars.
+            The ``err_kws`` are passed down to :func:`~matplotlib.axes.Axes.errorbar` or
+            :func:`~matplotlib.axes.Axes.fill_between`, depending on ``err_style``. Parameters include:
+                * ``capsize``: length of error bar caps in points
+
+    Returns
+    -------
+    fig : :class:`matplotlib.figure.Figure`
+        figure object
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+
+    See Also
+    --------
+    :func:`seaborn.lineplot`
+        line plot function of Seaborn
+
+    """
+    x_offset = kwargs.get("x_offset", 0.05)
     order = kwargs.get("order")
+    markers = kwargs.get("markers", None)
     hue_order = kwargs.get("hue_order")
     legend_fontsize = kwargs.get("legend_fontsize", None)
-
-    if style is not None:
-        markers = ["o"] * len(data.index.get_level_values(style).unique())
-
-    fig = None
-    if ax is None:
-        fig, ax = plt.subplots()
-
-    kwargs.update(
-        {
-            "dashes": False,
-            "err_style": "bars",
-            "markers": markers,
-            "ci": 68,
-            "ax": ax,
-            "err_kws": {"capsize": 5},
-        }
-    )
+    legend_loc = kwargs.get("legend_loc", "upper left")
+    ax: plt.Axes = kwargs.get("ax", None)
 
     data = data.reset_index()
-    grouped = {key: val for key, val in data.groupby(hue)}
+
+    markers = _get_markers(data, style, hue, markers)
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    kwargs.setdefault("ax", ax)
+    kwargs.setdefault("err_kws", {"capsize": 5})
+
+    if hue is not None:
+        grouped = {key: val for key, val in data.groupby(hue)}  # pylint:disable=unnecessary-comprehension
+    else:
+        grouped = {y: data}
 
     if hue_order is not None:
         # reorder group dictionary
         grouped = {key: grouped[key] for key in hue_order}
 
+    # generate x axis
     x_vals = np.arange(0, len(data[x].unique()))
+    # iterate through groups
     for i, (key, df) in enumerate(grouped.items()):
-        m_se = df.groupby([x, hue]).agg([np.mean, se])[y]
+        if hue is None:
+            m_se = df.groupby([x]).agg([np.mean, se])[y]
+        else:
+            m_se = df.groupby([x, hue]).agg([np.mean, se])[y]
         if order:
             m_se = m_se.reindex(order, level=0)
-        err_kws = kwargs.get("err_kws")
-        marker = markers[i] if markers else None
-        ax.errorbar(x=x_vals + 0.05 * i, y=m_se["mean"], yerr=m_se["se"].values, marker=marker, label=key, **err_kws)
+        err_kws = kwargs.get("err_kws", {})
+        marker = markers[i] if markers is not None else None
+        ax.errorbar(
+            x=x_vals + x_offset * i, y=m_se["mean"], yerr=m_se["se"].values, marker=marker, label=key, **err_kws
+        )
 
-    ylabel = kwargs.get("ylabel", data[y].name)
     xlabel = kwargs.get("xlabel", data[x].name)
+    ylabel = kwargs.get("ylabel", data[y].name)
     if order is not None:
         xticklabels = kwargs.get("xticklabels", order)
     else:
@@ -74,17 +149,50 @@ def lineplot(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.
     # remove the errorbars
     handles = [h[0] for h in handles]
     # use them in the legend
-    ax.legend(handles, labels, loc="upper left", numpoints=1, fontsize=legend_fontsize)
+    ax.legend(handles, labels, loc=legend_loc, numpoints=1, fontsize=legend_fontsize)
 
-    if fig is not None:
-        return fig, ax
+    return fig, ax
 
 
 def stacked_barchart(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
-    fig = None
+    """Draw a stacked bar chart.
+
+    A stacked bar chart has multiple bar charts along a categorical axis (``x`` axis) where values are
+    stacked along the value axis (``y`` axis). The categorical axis corresponds to the columns in the dataframe
+    whereas the value axis corresponds to the rows.
+
+    This is an extension to the already existing function provided by pandas
+    (``pandas.DataFrame.plot(kind='bar', stacked=True)``).
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to plot
+    kwargs
+        additional parameters to plotting function. For example, this can be:
+            * ``order``: order of items along the categorical axis
+            * ``ylabel``: label of y axis
+            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+
+    Returns
+    -------
+    fig : :class:`matplotlib.figure.Figure`
+        figure object
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+
+    See Also
+    --------
+    :func:`~biopsykit.dataframe_handling.stack_groups_percent`
+        function to rearrange dataframe to be plotted as stacked bar chart
+
+    """
     ax: plt.Axes = kwargs.get("ax", None)
     if ax is None:
         fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
 
     ylabel = kwargs.get("ylabel", None)
     order = kwargs.get("order", None)
@@ -99,13 +207,85 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figu
     return fig, ax
 
 
-def feature_boxplot(data: pd.DataFrame, x: str, y: str, stats_kwargs: Optional[Dict] = None, **kwargs):
-    from statannot import add_stat_annotation
+def feature_boxplot(
+    data: pd.DataFrame,
+    x: str,
+    y: str,
+    order: Optional[Sequence[str]] = None,
+    hue: Optional[str] = None,
+    hue_order: Optional[Sequence[str]] = None,
+    stats_kwargs: Optional[Dict] = None,
+    **kwargs,
+):
+    """Draw a boxplot with significance brackets.
 
-    fig = None
+    This is a wrapper of seaborn's boxplot function (:func:`~seaborn.boxplot`) that allows to add significance
+    brackets that indicate statistical significance.
+
+
+    Statistical annotations are plotted using ``statannot`` (https://github.com/webermarcolivier/statannot).
+    This library can either use existing statistical results or perform statistical tests internally.
+    To plot significance brackets a list of box pairs where annotations should be added are required.
+    The p values can be provided as well, or, alternatively, be computed by ``statannot```
+    If :class:`~biopsykit.stats.StatsPipeline` was used for statistical analysis the list of box pairs and p values
+    can be generated using :func:`~biopsykit.stats.StatsPipeline.sig_brackets` and passed in the ``stats_kws``
+    parameter. Otherwise, see the ``statannot`` documentation  for a tutorial on how to specify significance brackets.
+
+    .. note::
+        The input data is assumed to be in long-format.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to plot
+    x : str
+        column of x axis in ``data``
+    y : str
+        column of y axis in ``data``
+    order : list str, optional
+        order to plot the categorical levels along the x axis
+    hue : str, optional
+        column name of grouping variable. Default: ``None``
+    hue_order : list of str, optional
+        order to plot the grouping variable specified by ``hue`` in
+    stats_kwargs : dict, optional
+        dictionary with arguments for significance brackets. If annotations should be added,
+        the following parameter is required:
+            * ``box_pairs``: list of box pairs that should be annotated
+        If already existing box pairs and p values should be used the following parameter is additionally required:
+            * ``pvalues``: list of p values corresponding to ``box_pairs``
+        If statistical tests should be computed by ``statsannot``, the following parameters are required:
+            * ``test``: type of statistical test to be computed
+            * ``comparisons_correction`` (optional): Whether (and which) type of multi-comparison correction should be
+            applied.
+            ``None`` to not apply any multi-comparison (default)
+        The following parameters are optional:
+            * ``pvalue_thresholds``: list of p value thresholds for statistical annotations. The default annotation is:
+            *: 0.01 <= p < 0.05, **: 0.001 <= p < 0.01, ***: p < 0.001 (``[[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]``)
+    kwargs : additional arguments that are passed down to :func:`~seaborn.boxplot`, for example:
+        * ``ylabel``: label of y axis
+        * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+
+    Returns
+    -------
+    fig : :class:`matplotlib.figure.Figure`
+        figure object
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+
+    See Also
+    --------
+    `~seaborn.boxplot`
+        seaborn function to create boxplots
+    `~biopsykit.stats.StatsPipeline`
+        class to create statistical analysis pipelines
+
+    """
     ax: plt.Axes = kwargs.pop("ax", None)
     if ax is None:
         fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
 
     if stats_kwargs is None:
         stats_kwargs = {}
@@ -122,79 +302,117 @@ def feature_boxplot(data: pd.DataFrame, x: str, y: str, stats_kwargs: Optional[D
     if len(boxplot_pvals) > 0:
         stats_kwargs["perform_stat_test"] = False
 
-    stats_kwargs["pvalue_thresholds"] = _PVALUE_THRESHOLDS
+    stats_kwargs.setdefault("pvalue_thresholds", _PVALUE_THRESHOLDS)
 
     if len(box_pairs) == 0:
         stats_kwargs = {}
 
-    sns.boxplot(data=data.reset_index(), x=x, y=y, ax=ax, **kwargs)
+    sns.boxplot(data=data.reset_index(), x=x, y=y, ax=ax, order=order, hue=hue, hue_order=hue_order, **kwargs)
     if len(box_pairs) > 0:
-        stats_kwargs["hue_order"] = kwargs.get("hue_order", None)
-        stats_kwargs["order"] = kwargs.get("order", None)
-        stats_kwargs["hue"] = kwargs.get("hue", None)
-        add_stat_annotation(data=data.reset_index(), ax=ax, x=x, y=y, **stats_kwargs)
+        add_stat_annotation(
+            data=data.reset_index(), ax=ax, x=x, y=y, order=order, hue=hue, hue_order=hue_order, **stats_kwargs
+        )
 
     if ylabel is not None:
         ax.set_ylabel(ylabel)
 
-    if fig is not None:
-        return fig, ax
+    return fig, ax
 
 
 def multi_feature_boxplot(
     data: pd.DataFrame,
     x: str,
     y: str,
+    features: Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]],
     group: str,
+    order: Optional[Sequence[str]] = None,
     hue: Optional[str] = None,
-    features: Optional[Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]]] = None,
-    xticklabels: Optional[Dict[str, Sequence[str]]] = None,
-    ylabels: Optional[Dict[str, str]] = None,
+    hue_order: Optional[Sequence[str]] = None,
     stats_kwargs: Optional[Dict] = None,
     **kwargs,
-) -> Union[None, Tuple[plt.Figure, Sequence[plt.Axes]]]:
-    """
+) -> Optional[Tuple[plt.Figure, Sequence[plt.Axes]]]:
+    """Plot multiple feature boxplots into subplots.
+
+    For each feature, a new subplot will be created. Similarly to `feature_boxplot` subplots can be annotated
+    with statistical significance brackets (can be specified via ``stats_kwargs`` parameter). For further information,
+    see the :func:`~biopsykit.plotting.feature_boxplot` documentation.
+
+    .. note::
+        The input data is assumed to be in long-format.
 
     Parameters
     ----------
-    data
-    x
-    y
-    hue
-    features
-    xticklabels
-    ylabels
-    stats_kwargs
-    kwargs
+    data : :class:`pandas.DataFrame`
+        data to plot
+    x : str
+        column of x axis in ``data``
+    y : str
+        column of y axis in ``data``
+    features : list of str or dict of str
+        features to plot. If ``features`` is a list, each entry must correspond to one feature category in the
+        index level specified by ``group``. A separate subplot will be created for each feature.
+        If similar features (i.e., different `slope` or `AUC` parameters) should be combined into one subplot,
+        ``features`` can be provided as dictionary.
+        Then, the dict keys specify the feature category (a separate subplot will be created for each category)
+        and the dict values specify the feature (or list of features) that are combined into the subplots.
+    group : str
+        name of index level with feature names. Corresponds to the subplots that are created.
+    order : list str, optional
+        order to plot the categorical levels along the x axis
+    hue : str, optional
+        column name of grouping variable. Default: ``None``
+    hue_order : list of str, optional
+        order to plot the grouping variable specified by ``hue`` in
+    stats_kwargs : dict, optional
+        nested dictionary with arguments for significance brackets. The behavior and expected parameters are similar
+        to the ``stats_kwargs`` parameter in :func:`~biopsykit.plotting.feature_boxplot`. However, the ``box_pairs``
+        and ``pvalues`` arguments are expected not to be lists, but dictionaries with keys corresponding to the list
+        entries (or the dict keys) in ``features`` and box pair / p-value lists are the dict values.
+    kwargs : additional arguments that are passed down to :func:`~seaborn.boxplot`. For example:
+        * ``order``: specifies x axis order for subplots. Can be a list if order is the same for all subplots or a
+        dict if order should be individual for subplots
+        * ``xticklabels``: dictionary to set tick labels of x axis in subplots. Keys correspond to the list entries
+            (or the dict keys) in ``features``. Default: ``None``
+        * ``ylabels``: dictionary to set y axis labels in subplots. Keys correspond to the list entries
+            (or the dict keys) in ``features``. Default: ``None``
+        * ``axs``: list of pre-existing axes for the plot. Otherwise, a new figure and axes object is created and
+        returned.
 
     Returns
     -------
+    fig : :class:`matplotlib.figure.Figure`
+        figure object
+    axs : list of :class:`matplotlib.axes.Axes`
+        list of subplot axes objects
+
+    See Also
+    --------
+    `~seaborn.boxplot`
+        seaborn function to create boxplots
+    `~biopsykit.stats.StatsPipeline`
+        class to create statistical analysis pipelines
+    `~biopsykit.plotting.feature_boxplot`
+        plot single feature boxplot
 
     """
-    from statannot import add_stat_annotation
-
     axs: Sequence[plt.Axes] = kwargs.pop("axs", kwargs.pop("ax", None))
 
-    legend = kwargs.pop("legend", True)
+    show_legend = kwargs.pop("legend", True)
     legend_fontsize = kwargs.pop("legend_fontsize", None)
     legend_loc = kwargs.pop("legend_loc", "upper right")
     legend_orientation = kwargs.pop("legend_orientation", "vertical")
+    figsize = kwargs.pop("figsize", (15, 5))
     rect = kwargs.pop("rect", (0, 0, 0.825, 1.0))
 
-    order = kwargs.pop("order", None)
-    hue_order = kwargs.pop("hue_order", None)
     xlabels = kwargs.pop("xlabels", {})
+    ylabels = kwargs.get("ylabels", {})
+    xticklabels = kwargs.get("xticklabels", {})
 
     if isinstance(features, list):
         features = {f: f for f in features}
 
-    if ylabels is None:
-        ylabels = {}
-    if xticklabels is None:
-        xticklabels = {}
-
     if axs is None:
-        fig, axs = plt.subplots(figsize=(15, 5), ncols=len(features))
+        fig, axs = plt.subplots(figsize=figsize, ncols=len(features))
     else:
         fig = axs[0].get_figure()
 
@@ -204,10 +422,9 @@ def multi_feature_boxplot(
     dict_box_pairs = stats_kwargs.pop("box_pairs", None)
     dict_pvals = stats_kwargs.pop("pvalues", None)
 
-    h, l = None, None
+    handles = None
+    labels = None
     for ax, key in zip(axs, features):
-        from biopsykit.utils.dataframe_handling import multi_xs
-
         data_plot = multi_xs(data, features[key], level=group)
         order_list = None
         if order is not None:
@@ -222,67 +439,121 @@ def multi_feature_boxplot(
             data=data_plot.reset_index(), x=x, y=y, order=order_list, hue=hue, hue_order=hue_order, ax=ax, **kwargs
         )
 
-        if len(stats_kwargs) > 0:
-            stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction", None)
-            stats_kwargs["test"] = stats_kwargs.get("test", None)
+        _add_stat_annot_multi_feature_boxplot(
+            data_plot, x, y, order_list, hue, hue_order, stats_kwargs, dict_box_pairs, dict_pvals, key, ax
+        )
 
-        if dict_box_pairs is not None:
-            # filter box pairs by feature
-            stats_kwargs["box_pairs"] = [dict_box_pairs[x] for x in dict_box_pairs if key in x]
-            # flatten list
-            stats_kwargs["box_pairs"] = [x for pairs in stats_kwargs["box_pairs"] for x in pairs]
+        ax.set_ylabel(ylabels.get(key, ax.get_ylabel()))
+        _style_xaxis_multi_feature_boxplot(ax, xlabels, xticklabels, key)
 
-        if dict_pvals is not None:
-            # filter pvals by feature
-            stats_kwargs["pvalues"] = [dict_pvals[x] for x in dict_pvals if key in x]
-            # flatten list
-            stats_kwargs["pvalues"] = [x for pairs in stats_kwargs["pvalues"] for x in pairs]
-            stats_kwargs["perform_stat_test"] = False
-
-        stats_kwargs["pvalue_thresholds"] = _PVALUE_THRESHOLDS
-
-        if "box_pairs" in stats_kwargs and len(stats_kwargs["box_pairs"]) > 0:
-            add_stat_annotation(
-                ax=ax,
-                data=data_plot.reset_index(),
-                x=x,
-                y=y,
-                order=order_list,
-                hue=hue,
-                hue_order=hue_order,
-                **stats_kwargs,
-            )
-
-        if key in ylabels:
-            ax.set_ylabel(ylabels[key])
-
-        if key in xticklabels:
-            if key in xlabels:
-                ax.set_xlabel(xlabels[key])
-            else:
-                ax.set_xlabel(None)
-            xt = xticklabels[key]
-            if isinstance(xt, str):
-                xt = [xt]
-            ax.set_xticklabels(xt)
         if hue is not None:
-            h, l = ax.get_legend_handles_labels()
+            handles, labels = ax.get_legend_handles_labels()
             ax.legend().remove()
 
-    if legend:
+    _add_legend_multi_feature_boxplot(
+        fig, show_legend, hue, handles, labels, legend_orientation, legend_loc, legend_fontsize, rect
+    )
+
+    return fig, axs
+
+
+def _get_markers(data: pd.DataFrame, style: str, hue: str, markers: Optional[str, Sequence[str]] = None):
+    num_cats = None
+    if style is not None:
+        num_cats = len(data[style].unique())
+        if markers is None:
+            markers = "o"
+        if isinstance(markers, str):
+            markers = [markers] * num_cats
+    else:
+        if hue is not None and markers is not None:
+            num_cats = len(data[hue].unique())
+            if isinstance(markers, str):
+                markers = [markers] * num_cats
+
+    if num_cats is not None:
+        if len(markers) != num_cats:
+            raise ValueError("If a list of 'markers' is provided it must the number of 'style' categories!")
+
+    return markers
+
+
+def _add_stat_annot_multi_feature_boxplot(
+    data: pd.DataFrame,
+    x: str,
+    y: str,
+    order: Sequence[str],
+    hue: str,
+    hue_order: Sequence[str],
+    stats_kwargs: Dict,
+    dict_box_pairs: Dict,
+    dict_pvals: Dict,
+    key: str,
+    ax: plt.Axes,
+):
+    if len(stats_kwargs) > 0:
+        stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction", None)
+        stats_kwargs["test"] = stats_kwargs.get("test", None)
+
+    if dict_box_pairs is not None:
+        # filter box pairs by feature
+        stats_kwargs["box_pairs"] = [dict_box_pairs[x] for x in dict_box_pairs if key in x]
+        # flatten list
+        stats_kwargs["box_pairs"] = [x for pairs in stats_kwargs["box_pairs"] for x in pairs]
+
+    if dict_pvals is not None:
+        # filter pvals by feature
+        stats_kwargs["pvalues"] = [dict_pvals[x] for x in dict_pvals if key in x]
+        # flatten list
+        stats_kwargs["pvalues"] = [x for pairs in stats_kwargs["pvalues"] for x in pairs]
+        stats_kwargs["perform_stat_test"] = False
+
+    stats_kwargs["pvalue_thresholds"] = _PVALUE_THRESHOLDS
+
+    if "box_pairs" in stats_kwargs and len(stats_kwargs["box_pairs"]) > 0:
+        add_stat_annotation(
+            ax=ax,
+            data=data.reset_index(),
+            x=x,
+            y=y,
+            order=order,
+            hue=hue,
+            hue_order=hue_order,
+            **stats_kwargs,
+        )
+
+
+def _add_legend_multi_feature_boxplot(
+    fig: plt.Figure,
+    show_legend: bool,
+    hue: str,
+    handles: Sequence,
+    labels: Sequence,
+    legend_orientation: str,
+    legend_loc: str,
+    legend_fontsize: float,
+    rect: Tuple[float, ...],
+):
+    if show_legend:
         if hue is not None:
-            if legend_orientation == "horizontal":
-                ncol = len(h)
-            else:
-                ncol = 1
+            ncol = len(handles) if legend_orientation == "horizontal" else 1
 
             fig.legend(
-                h,
-                l,
+                handles,
+                labels,
                 loc=legend_loc,
                 ncol=ncol,
                 fontsize=legend_fontsize,
             )
         fig.tight_layout(pad=0.5, rect=rect)
 
-    return fig, axs
+
+def _style_xaxis_multi_feature_boxplot(
+    ax: plt.Axes, xlabels: Dict[str, str], xticklabels: Dict[str, Union[str, Sequence[str]]], key: str
+):
+    if key in xticklabels:
+        ax.set_xlabel(xlabels.get(key, None))
+        xt = xticklabels[key]
+        if isinstance(xt, str):
+            xt = [xt]
+        ax.set_xticklabels(xt)

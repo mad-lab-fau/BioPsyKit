@@ -136,9 +136,43 @@ def multi_xs(data: pd.DataFrame, keys: Union[str, Sequence[str]], level: str) ->
 def stack_groups_percent(
     data: pd.DataFrame, hue: str, stacked: str, order: Optional[Sequence[str]] = None
 ) -> pd.DataFrame:
+    """Create dataframe with stacked groups.
+
+    To create a stacked bar chart, i.e. a plot with different bar charts along a categorical axis,
+    where the variables of each bar chart are stacked along the value axis, the data needs to be rearranged and
+    normalized in percent.
+
+    The columns of the resulting dataframe be the categorical values specified by ``hue``,
+    the index items will be the variables specified by ``stacked``.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to compute stacked group in percent
+    hue : str
+        column name of grouping categorical variable. This typically corresponds to the ``x`` axis
+        in a stacked bar chart.
+    stacked : str
+        column name of variable that is stacked along the ``y`` axis
+    order : str
+        order of categorical variable specified by ``hue``
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        dataframe in a format that can be used to create a stacked bar chart
+
+    See Also
+    --------
+    :func:`~biopsykit.plotting.stacked_barchart`
+        function to create a stacked bar chart
+
+    """
     data_grouped = pd.DataFrame(data.groupby([hue] + [stacked]).size(), columns=["data"])
     data_grouped = data_grouped.groupby(hue).apply(lambda x: 100 * (x / x.sum())).T.stack().T
-    if order:
+    if order is not None:
         data_grouped = data_grouped.reindex(order)
     return data_grouped["data"]
 
