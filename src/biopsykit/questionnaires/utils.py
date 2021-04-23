@@ -1,6 +1,6 @@
 """Module containing utility functions for manipulating and processing questionnaire data."""
 import warnings
-from typing import Optional, Union, Sequence, Tuple, Dict
+from typing import Optional, Union, Sequence, Tuple, Dict, Literal
 
 import numpy as np
 import pandas as pd
@@ -233,16 +233,25 @@ def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str]
 
 
 def _compute_questionnaire_subscales(
-    data: pd.DataFrame, score_name: str, subscales: Dict[str, Sequence[Union[str, int]]]
+    data: pd.DataFrame,
+    score_name: str,
+    subscales: Dict[str, Sequence[Union[str, int]]],
+    agg_type: Optional[Literal["sum", "mean"]] = "sum",
 ) -> Dict[str, pd.Series]:
     out = {}
     for key, items in subscales.items():
         if all(isinstance(i, int) for i in items):
             # assume column indices, starting at 1 (-> convert to 0-indexed indices first)
-            score = data.iloc[:, to_idx(items)].sum(axis=1)
+            if agg_type is "sum":
+                score = data.iloc[:, to_idx(items)].sum(axis=1)
+            else:
+                score = data.iloc[:, to_idx(items)].mean(axis=1)
         elif all(isinstance(i, int) for i in items):
             # assume column names
-            score = data.loc[:, items].sum(axis=1)
+            if agg_type is "sum":
+                score = data.loc[:, items].sum(axis=1)
+            else:
+                score = data.loc[:, items].mean(axis=1)
         else:
             raise ValueError(
                 "Subscale columns are either expected as column names (list of strings) or "

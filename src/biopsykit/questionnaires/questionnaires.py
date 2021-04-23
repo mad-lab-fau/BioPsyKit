@@ -63,6 +63,9 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "PSQI"
     score_range = [0, 3]
 
+    # create copy of data
+    data = data.copy()
+
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
@@ -163,6 +166,9 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "MVES"
     score_range = [0, 2]
 
+    # create copy of data
+    data = data.copy()
+
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
@@ -254,6 +260,9 @@ def tics_s(
     """
     score_name = "TICS_S"
     score_range = [0, 4]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -365,6 +374,9 @@ def tics_l(
     score_name = "TICS_L"
     score_range = [0, 4]
 
+    # create copy of data
+    data = data.copy()
+
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
@@ -448,6 +460,9 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     score_name = "PSS"
     score_range = [0, 4]
 
+    # create copy of data
+    data = data.copy()
+
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
@@ -507,6 +522,9 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     score_name = "CESD"
     score_range = [0, 3]
 
+    # create copy of data
+    data = data.copy()
+
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
@@ -548,13 +566,24 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         GHQ score
 
 
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
     References
-    ------------
+    ----------
     Goldberg, D. P. (1972). The detection of psychiatric illness by questionnaire. *Maudsley monograph*, 21.
 
     """
     score_name = "GHQ"
     score_range = [0, 3]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -578,6 +607,11 @@ def hads(
     The HADS is a brief and widely used instrument to measure psychological distress in patients
     and in the general population. It has two subscales: anxiety and depression.
     Higher scores indicate greater distress.
+
+    It consists of the subscales (the name in the brackets indicate the name in the returned dataframe),
+    with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Anxiety (``Anxiety``): [1, 3, 5, 7, 9, 11, 13]
+        * Depression (``Depression``): [2, 4, 6, 8, 10, 12, 14]
 
     .. note::
         This implementation assumes a score range of [0, 3].
@@ -612,9 +646,17 @@ def hads(
     `biopsykit.exceptions.ValueRangeError`
         if values are not within the required score range
 
+    References
+    ----------
+    Zigmond, A. S., & Snaith, R. P. (1983). The hospital anxiety and depression scale.
+    *Acta psychiatrica scandinavica*, 67(6), 361-370.
+
     """
     score_name = "HADS"
     score_range = [0, 3]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -645,12 +687,68 @@ def hads(
 def type_d_scale(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Type D Personality Scale"""
+    """Compute **Type D Personality Scale**.
 
+    Type D personality is a personality trait characterized by negative affectivity (NA) and social
+    inhibition (SI). Individuals who are high in both NA and SI have a *distressed* or Type D personality.
+
+    It consists of the subscales (the name in the brackets indicate the name in the returned dataframe),
+    with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Negative Affect (``NegativeAffect``): [2, 4, 5, 7, 9, 12, 13]
+        * Social Inhibition (``SocialInhibition``): [1, 3, 6, 8, 10, 11, 14]
+
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        DS Type-D score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Denollet, J. (2005). DS14: standard assessment of negative affectivity, social inhibition, and Type D personality.
+    *Psychosomatic medicine*, 67(1), 89-97.
+
+    """
     score_name = "DS"
     score_range = [0, 4]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -658,30 +756,78 @@ def type_d_scale(
 
     _assert_value_range(data, score_range)
 
-    # Reverse scores 1, 3
-    data = invert(data, cols=to_idx([1, 3]), score_range=score_range)
-
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 14)
+        subscales = {
             "NegativeAffect": [2, 4, 5, 7, 9, 12, 13],
             "SocialInhibition": [1, 3, 6, 8, 10, 11, 14],
         }
 
-    ds = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
-    ds[score_name] = data.sum(axis=1)
-    return pd.DataFrame(ds, index=data.index)
+    # Reverse scores 1, 3
+    data = _invert_subscales(data, subscales=subscales, idx_dict={"SocialInhibition": [1, 3]}, score_range=score_range)
+
+    ds_data = _compute_questionnaire_subscales(data, score_name, subscales)
+
+    if len(data.columns) == 14:
+        # compute total score if all columns are present
+        ds_data[score_name] = data.sum(axis=1)
+
+    return pd.DataFrame(ds_data, index=data.index)
 
 
 def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Rosenberg Self-Esteem Inventory"""
+    """Compute **Rosenberg Self-Esteem Inventory**.
 
+    The RSE is the most frequently used measure of global self-esteem. Higher scores indicate greater self-esteem.
+
+    .. note::
+        This implementation assumes a score range of [0, 3].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        RSE score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Rosenberg, M. (1965). Society and the Adolescent Self-Image. *Princeton University Press*, Princeton, NJ.
+
+    """
     score_name = "RSE"
     score_range = [0, 3]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 10)
     _assert_value_range(data, score_range)
 
     # Reverse scores 2, 5, 6, 8, 9
