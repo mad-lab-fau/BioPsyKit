@@ -374,6 +374,42 @@ def _assert_value_range(
     return True
 
 
+def _assert_num_columns(
+    data: pd.DataFrame, num_cols: Union[int, Sequence[int]], raise_exception: Optional[bool] = True
+):
+    """Check if dataframe has (any of) the required number of columns.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check
+    num_cols : int or list of int
+        the required number of columns (or any of the required number of columns in case ``num_cols`` is a list)
+    raise_exception : bool, optional
+        Whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` has the required number of columns, ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    :exc:`~biopsykit.exceptions.ValueRangeError`
+        if ``raise_exception`` is ``True`` and ``data`` does not have the required number of columns
+
+    """
+    if isinstance(num_cols, int):
+        num_cols = [num_cols]
+    if not any(len(data.columns) in num for num in num_cols):
+        if raise_exception:
+            raise ValueRangeError(
+                "The dataframe does not have the required number of columns. "
+                "Expected were any of {} columns, but has {} columns.".format(num_cols, len(data.columns))
+            )
+        return False
+    return True
+
+
 def _multiindex_level_names_helper(
     df: pd.DataFrame,
     level_names: Iterable[_Hashable],
