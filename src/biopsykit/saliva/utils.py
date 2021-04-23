@@ -9,6 +9,8 @@ import numpy as np
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_index_levels
 from biopsykit.utils.datatype_helper import SalivaRawDataFrame
 
+__all__ = ["get_saliva_column_suggestions", "extract_saliva_columns", "sample_times_datetime_to_minute"]
+
 
 def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Sequence[str]]) -> Sequence[str]:
     """Automatically extract possible saliva data columns from a pandas dataframe.
