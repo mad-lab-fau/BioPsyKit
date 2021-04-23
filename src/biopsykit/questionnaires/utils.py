@@ -1,3 +1,5 @@
+"""Module containing utility functions for manipulating and processing questionnaire data."""
+import warnings
 from typing import Optional, Union, Sequence, Tuple, Dict
 
 import numpy as np
@@ -14,6 +16,10 @@ __all__ = [
     "to_idx",
     "wide_to_long",
 ]
+
+from biopsykit.utils.dataframe_handling import wide_to_long as wide_to_long_utils
+from inspect import getmembers, isfunction
+from biopsykit.questionnaires import questionnaires
 
 
 def find_cols(
@@ -185,35 +191,15 @@ def bin_scale(
 
 
 def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
-    if isinstance(levels, str):
-        levels = [levels]
-
-    data = data.filter(like=quest_name)
-    index_cols = list(data.index.names)
-    # reverse level order because nested multi-level index will be constructed from back to front
-    levels = levels[::-1]
-    # iteratively build up long-format dataframe
-    for i, level in enumerate(levels):
-        stubnames = list(data.columns)
-        # stubnames are everything except the last part separated by underscore
-        stubnames = set(["_".join(s.split("_")[:-1]) for s in stubnames])
-        data = pd.wide_to_long(
-            data.reset_index(),
-            stubnames=stubnames,
-            i=index_cols + levels[0:i],
-            j=level,
-            sep="_",
-            suffix=r"\w+",
-        )
-
-    # reorder levels and sort
-    return data.reorder_levels(index_cols + levels[::-1]).sort_index()
+    warnings.warn(
+        "'biopsykit.questionnaires.utils.wide_to_long()' is deprecated! "
+        "Please update your code to use 'biopsykit.utils.dataframe_handling.wide_to_long()' in the future.",
+        category=DeprecationWarning,
+    )
+    return wide_to_long_utils(data=data, stubname=quest_name, levels=levels)
 
 
 def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
-    from inspect import getmembers, isfunction
-    from biopsykit.questionnaires import questionnaires
-
     df_scores = pd.DataFrame(index=data.index)
 
     quest_funcs = dict(getmembers(questionnaires, isfunction))
@@ -231,3 +217,25 @@ def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str]
         df_scores = df_scores.join(df)
 
     return df_scores
+
+
+def _compute_questionnaire_subscales(
+    data: pd.DataFrame, score_name: str, subscales: Dict[str, Sequence[Union[str, int]]]
+) -> Dict[str, pd.Series]:
+    out = {}
+    for key, items in subscales.items():
+        if all(isinstance(i, int) for i in items):
+            # assume column indices, starting at 1 (-> convert to 0-indexed indices first)
+            score = data.iloc[:, to_idx(items)].sum(axis=1)
+        elif all(isinstance(i, int) for i in items):
+            # assume column names
+            score = data.loc[:, items].sum(axis=1)
+        else:
+            raise ValueError(
+                "Subscale columns are either expected as column names (list of strings) or "
+                "column indices (list of integers)!"
+            )
+
+        out["{}_{}".format(score_name, key)] = score
+
+    return out
