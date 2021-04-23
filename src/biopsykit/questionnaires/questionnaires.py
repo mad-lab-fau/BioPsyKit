@@ -28,13 +28,38 @@ from biopsykit.questionnaires.utils import (
     bin_scale,
     to_idx,
     _compute_questionnaire_subscales,
+    _invert_subscales,
 )
 from biopsykit.utils._datatype_validation_helper import _assert_value_range, _assert_num_columns
 
 
 def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Pittsburgh Sleep Quality Index"""
+    """Compute the **Pittsburgh Sleep Quality Index (PSQI)**.
 
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        PSQI score
+
+
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns do not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    """
     score_name = "PSQI"
     score_range = [0, 3]
 
@@ -124,7 +149,7 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     Raises
     ------
     `biopsykit.exceptions.ValidationError`
-        if number of columns does not match
+        if number of columns do not match
     `biopsykit.exceptions.ValueRangeError`
         if values are not within the required score range
 
@@ -207,7 +232,7 @@ def tics_s(
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
     `biopsykit.exceptions.ValidationError`
-        if number of columns does not match
+        if number of columns do not match
     `biopsykit.exceptions.ValueRangeError`
         if values are not within the required score range
 
@@ -237,6 +262,7 @@ def tics_s(
     _assert_value_range(data, score_range)
 
     if subscales is None:
+        _assert_num_columns(data, 30)
         subscales = {
             "WorkOverload": [1, 3, 21],
             "SocialOverload": [11, 18, 28],
@@ -250,13 +276,13 @@ def tics_s(
             "ChronicWorry": [7, 10, 17],
         }
 
-    tics = _compute_questionnaire_subscales(data, score_name, subscales)
+    tics_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     if len(data.columns) == 30:
         # compute total score if all columns are present
-        tics[score_name] = data.sum(axis=1)
+        tics_data[score_name] = data.sum(axis=1)
 
-    return pd.DataFrame(tics, index=data.index)
+    return pd.DataFrame(tics_data, index=data.index)
 
 
 def tics_l(
@@ -316,7 +342,7 @@ def tics_l(
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
     `biopsykit.exceptions.ValidationError`
-        if number of columns does not match
+        if number of columns do not match
     `biopsykit.exceptions.ValueRangeError`
         if values are not within the required score range
 
@@ -346,6 +372,7 @@ def tics_l(
     _assert_value_range(data, score_range)
 
     if subscales is None:
+        _assert_num_columns(data, 57)
         subscales = {
             "WorkOverload": [50, 38, 44, 54, 17, 4, 27, 1],  # Arbeitsüberlastung
             "SocialOverload": [39, 28, 49, 19, 7, 57],  # Soziale Überlastung
@@ -367,13 +394,13 @@ def tics_l(
             "ChronicWorry": [36, 25, 16, 9],  # Chronische Besorgnis
         }
 
-    tics = _compute_questionnaire_subscales(data, score_name, subscales)
+    tics_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     if len(data.columns) == 57:
         # compute total score if all columns are present
-        tics[score_name] = data.sum(axis=1)
+        tics_data[score_name] = data.sum(axis=1)
 
-    return pd.DataFrame(tics, index=data.index)
+    return pd.DataFrame(tics_data, index=data.index)
 
 
 def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
@@ -407,13 +434,13 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     Raises
     ------
     `biopsykit.exceptions.ValidationError`
-        if number of columns does not match
+        if number of columns do not match
     `biopsykit.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
     References
-    ------------
+    ----------
     Cohen, S., Kamarck, T., & Mermelstein, R. (1983). A Global Measure of Perceived Stress.
     *Journal of Health and Social Behavior*, 24(4), 385. https://doi.org/10.2307/2136404
 
@@ -459,20 +486,20 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     Returns
     -------
-    pd.DataFrame
+    :class:`~pandas.DataFrame`
         CES-D score
 
 
     Raises
     ------
     `biopsykit.exceptions.ValidationError`
-        if number of columns does not match
+        if number of columns do not match
     `biopsykit.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
     References
-    ------------
+    ----------
     Radloff, L. S. (1977). The CES-D Scale: A Self-Report Depression Scale for Research in the General Population.
     Applied Psychological Measurement, 1(3), 385–401. https://doi.org/10.1177/014662167700100306
 
@@ -484,6 +511,7 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 20)
     _assert_value_range(data, score_range)
 
     # Reverse scores 4, 8, 12, 16
@@ -495,31 +523,35 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     """Compute the **General Health Questionnaire (GHQ)**.
 
     The GHQ-12 is a widely used tool for detecting psychological and mental health and as a screening tool for
-    excluding psychological and psychiatric morbidity.
+    excluding psychological and psychiatric morbidity. Higher scores indicate *lower* health.
+    A summed score above 4 is considered an indicator of psychological morbidity.
 
-
-    NOTE: This implementation assumes a score range of [0, 3]. Use ``bp.questionnaires.utils.convert_scale()`` to
-    convert the items into the correct range.
+    .. note::
+        This implementation assumes a score range of [0, 3].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
 
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if `columns` parameter is supplied
-    columns : list of string, optional
-        list with column names to use for computing this score if a complete dataframe is supplied.
-        See ``bp.questionnaires.utils.convert_scale()``
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
 
     Returns
     -------
-    pd.DataFrame
-        CES-D score
+    :class:`~pandas.DataFrame`
+        GHQ score
 
 
     References
     ------------
     Goldberg, D. P. (1972). The detection of psychiatric illness by questionnaire. *Maudsley monograph*, 21.
+
     """
     score_name = "GHQ"
     score_range = [0, 3]
@@ -528,6 +560,7 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 12)
     _assert_value_range(data, score_range)
 
     # Reverse scores 1, 3, 4, 7, 8, 12
@@ -535,9 +568,51 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
-def hads(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Hospital Anxiety and Depression Scale"""
+def hads(
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+) -> pd.DataFrame:
+    """Compute the **Hospital Anxiety and Depression Scale (HADS)**.
 
+    The HADS is a brief and widely used instrument to measure psychological distress in patients
+    and in the general population. It has two subscales: anxiety and depression.
+    Higher scores indicate greater distress.
+
+    .. note::
+        This implementation assumes a score range of [0, 3].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        HADS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns do not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    """
     score_name = "HADS"
     score_range = [0, 3]
 
@@ -547,14 +622,23 @@ def hads(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     _assert_value_range(data, score_range)
 
-    # Reverse scores 2, 4, 6, 7, 12, 14
-    data = invert(data, cols=to_idx([2, 4, 6, 7, 12, 14]), score_range=score_range)
+    if subscales is None:
+        _assert_num_columns(data, 14)
+        subscales = {
+            "Anxiety": [1, 3, 5, 7, 9, 11, 13],
+            "Depression": [2, 4, 6, 8, 10, 12, 14],
+        }
 
-    hads_data = {
-        score_name: data.sum(axis=1),
-        score_name + "_Anxiety": data.iloc[:, np.arange(1, len(data.columns) + 1, 2) - 1].sum(axis=1),
-        score_name + "_Depression": data.iloc[:, np.arange(2, len(data.columns) + 1, 2) - 1].sum(axis=1),
-    }
+    # Reverse scores 2, 4, 6, 7, 12, 14
+    data = _invert_subscales(
+        data, subscales=subscales, idx_dict={"Anxiety": [7], "Depression": [2, 4, 6, 12, 14]}, score_range=score_range
+    )
+
+    hads_data = _compute_questionnaire_subscales(data, score_name, subscales)
+
+    if len(data.columns) == 14:
+        # compute total score if all columns are present
+        hads_data[score_name] = data.sum(axis=1)
     return pd.DataFrame(hads_data, index=data.index)
 
 

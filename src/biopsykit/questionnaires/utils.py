@@ -90,6 +90,19 @@ def invert(
         return score_range[1] - data + score_range[0]
 
 
+def _invert_subscales(
+    data: Union[pd.DataFrame, pd.Series],
+    subscales: Union[Sequence[str], Dict[str, Sequence[str]]],
+    idx_dict: Dict[str, Sequence[int]],
+    score_range: Sequence[int],
+):
+    for subscale, idxs in idx_dict:
+        if subscale in subscales:
+            data = invert(data, cols=to_idx(idxs), score_range=score_range)
+
+    return data
+
+
 def convert_scale(
     data: Union[pd.DataFrame, pd.Series],
     offset: int,
