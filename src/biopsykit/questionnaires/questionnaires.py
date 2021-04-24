@@ -24,7 +24,6 @@ import pandas as pd
 
 from biopsykit.questionnaires.utils import (
     invert,
-    find_cols,
     bin_scale,
     to_idx,
     _compute_questionnaire_subscales,
@@ -192,16 +191,16 @@ def tics_s(
 
     It consists of the subscales (the name in the brackets indicate the name in the returned dataframe),
     with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Work Overload (``WorkOverload``): [1, 3, 21]
-        * Social Overload (``SocialOverload``): [11, 18, 28]
-        * Excessive Demands at Work (``DemandsWork``): [12, 16, 27]
-        * Lack of Social Recognition (``LackSocialRec``): [2, 20, 23]
-        * Work Discontent (``WorkDiscontent``): [8, 13, 24]
-        * Social Tension (``SocialTension``): [4, 9, 26]
-        * Performance Pressure at Work (``PressureToPerform``): [5, 14, 29]
-        * Performance Pressure in Social Interactions (``PressureSocial``): [6, 15, 22]
-        * Social Isolation (``SocialIsolation``): [19, 25, 30]
-        * Worry Propensity (``ChronicWorry``): [7, 10, 17]
+        * ``Work Overload``: [1, 3, 21]
+        * ``Social Overload``: [11, 18, 28]
+        * ``Excessive Demands at Work``: [12, 16, 27]
+        * ``Lack of Social Recognition``: [2, 20, 23]
+        * ``Work Discontent``: [8, 13, 24]
+        * ``Social Tension``: [4, 9, 26]
+        * ``Performance Pressure at Work``: [5, 14, 29]
+        * ``Performance Pressure in Social Interactions``: [6, 15, 22]
+        * ``Social Isolation``: [19, 25, 30]
+        * ``Worry Propensity``: [7, 10, 17]
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -303,18 +302,17 @@ def tics_l(
 
     The TICS assesses frequency of various types of stressful experiences in the past 3 months.
 
-    It consists of the subscales (the name in the brackets indicate the name in the returned dataframe),
-    with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Work Overload (``WorkOverload``): [50, 38, 44, 54, 17, 4, 27, 1]
-        * Social Overload (``SocialOverload``): [39, 28, 49, 19, 7, 57]
-        * Excessive Demands at Work (``DemandsWork``): [55, 24, 20, 35, 47, 3]
-        * Lack of Social Recognition (``LackSocialRec``): [31, 18, 46, 2]
-        * Work Discontent (``WorkDiscontent``): [21, 53, 10, 48, 41, 13, 37, 5]
-        * Social Tension (``SocialTension``): [26, 15, 45, 52, 6, 33]
-        * Performance Pressure at Work (``PressureToPerform``): [23, 43, 32, 22, 12, 14, 8, 40, 30]
-        * Performance Pressure in Social Interactions (``PressureSocial``): [6, 15, 22]
-        * Social Isolation (``SocialIsolation``): [42, 51, 34, 56, 11, 29]
-        * Worry Propensity (``ChronicWorry``): [36, 25, 16, 9]
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Work Overload: [50, 38, 44, 54, 17, 4, 27, 1]
+        * Social Overload: [39, 28, 49, 19, 7, 57]
+        * Excessive Demands at Work: [55, 24, 20, 35, 47, 3]
+        * Lack of Social Recognition: [31, 18, 46, 2]
+        * Work Discontent: [21, 53, 10, 48, 41, 13, 37, 5]
+        * Social Tension: [26, 15, 45, 52, 6, 33]
+        * Performance Pressure at Work: [23, 43, 32, 22, 12, 14, 8, 40, 30]
+        * Performance Pressure in Social Interactions: [6, 15, 22]
+        * Social Isolation: [42, 51, 34, 56, 11, 29]
+        * Worry Propensity: [36, 25, 16, 9]
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -608,10 +606,9 @@ def hads(
     and in the general population. It has two subscales: anxiety and depression.
     Higher scores indicate greater distress.
 
-    It consists of the subscales (the name in the brackets indicate the name in the returned dataframe),
-    with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Anxiety (``Anxiety``): [1, 3, 5, 7, 9, 11, 13]
-        * Depression (``Depression``): [2, 4, 6, 8, 10, 12, 14]
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``Anxiety``: [1, 3, 5, 7, 9, 11, 13]
+        * ``Depression``: [2, 4, 6, 8, 10, 12, 14]
 
     .. note::
         This implementation assumes a score range of [0, 3].
@@ -630,6 +627,7 @@ def hads(
     subscales : dict, optional
         A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
         if only specific subscales should be computed.
+
 
     Returns
     -------
@@ -694,10 +692,10 @@ def type_d_scale(
     Type D personality is a personality trait characterized by negative affectivity (NA) and social
     inhibition (SI). Individuals who are high in both NA and SI have a *distressed* or Type D personality.
 
-    It consists of the subscales (the name in the brackets indicate the name in the returned dataframe),
-    with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Negative Affect (``NegativeAffect``): [2, 4, 5, 7, 9, 12, 13]
-        * Social Inhibition (``SocialInhibition``): [1, 3, 6, 8, 10, 11, 14]
+    It consists of the subscales, with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``Negative Affect``: [2, 4, 5, 7, 9, 12, 13]
+        * ``Social Inhibition``: [1, 3, 6, 8, 10, 11, 14]
+
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -838,14 +836,74 @@ def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 def scs(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Self-Compassion Scale
-    https://www.academia.edu/2040459
-    """
+    """Compute **Self-Compassion Scale (SCS)**.
 
+    The Self-Compassion Scale measures the tendency to be compassionate rather than critical
+    toward the self in difficult times. It is typically assessed as a composite but can be broken down
+    into subscales. Higher scores indicate greater self-compassion.
+
+    It consists of the subscales, with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``SelfKindness``: [5, 12, 19, 23, 26]
+        * ``SelfJudgment``: [1, 8, 11, 16, 21]
+        * ``CommonHumanity``: [3, 7, 10, 15]
+        * ``Isolation``: [4, 13, 18, 25]
+        * ``Mindfulness``: [9, 14, 17, 22]
+        * ``OverIdentified`` [2, 6, 20, 24]
+
+    .. note::
+        This implementation assumes a score range of [1, 5].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        SCS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Neff, K. D. (2003). The development and validation of a scale to measure self-compassion.
+    *Self and identity*, 2(3), 223-250.
+    https://www.academia.edu/2040459
+
+    """
     score_name = "SCS"
     score_range = [1, 5]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -853,15 +911,9 @@ def scs(
 
     _assert_value_range(data, score_range)
 
-    # Reverse scores 1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25
-    data = invert(
-        data,
-        cols=to_idx([1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25]),
-        score_range=score_range,
-    )
-
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 26)
+        subscales = {
             "SelfKindness": [5, 12, 19, 23, 26],
             "SelfJudgment": [1, 8, 11, 16, 21],
             "CommonHumanity": [3, 7, 10, 15],
@@ -869,43 +921,78 @@ def scs(
             "Mindfulness": [9, 14, 17, 22],
             "OverIdentified": [2, 6, 20, 24],
         }
+    # Reverse scores 1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25
+    data = _invert_subscales(
+        data,
+        subscales=subscales,
+        idx_dict={"SelfJudgment": [1, 8, 11, 16, 21], "Isolation": [4, 13, 18, 25], "OverIdentified": [2, 6, 20, 24]},
+        score_range=score_range,
+    )
 
     # SCS is a mean, not a sum score!
-    scs_data = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs}
-    scs_data[score_name] = data.mean(axis=1)
+    scs_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
+
+    if len(data.columns) == 26:
+        # compute total score if all columns are present
+        scs_data[score_name] = data.mean(axis=1)
 
     return pd.DataFrame(scs_data, index=data.index)
 
 
-def rfis(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Romantic and Friendship Intimacy Scales"""
-
-    score_name = "RFIS"
-    score_range = [1, 5]
-
-    if columns is not None:
-        # if columns parameter is supplied: slice columns from dataframe
-        data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
-
-    # Reverse scores 2, 6, 10, 14
-    data = invert(data, cols=to_idx([2, 6, 10, 14]), score_range=score_range)
-
-    # SCS is a mean, not a sum score!
-    return pd.DataFrame(data.mean(axis=1), columns=[score_name])
-
-
 def midi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Midlife Development Inventory (MIDI) Sense of Control Scale"""
+    """Compute **Midlife Development Inventory (MIDI) Sense of Control Scale**.
 
+    The Midlife Development Inventory (MIDI) sense of control scale assesses perceived control,
+    that is, how much an individual perceives to be in control of his or her environment. Higher scores indicate
+    greater sense of control.
+
+    .. note::
+        This implementation assumes a score range of [1, 7].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        MIDI score
+
+
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Lachman, M. E., & Weaver, S. L. (1998). The sense of control as a moderator of social class differences in
+    health and well-being. *Journal of personality and social psychology*, 74(3), 763.
+
+    """
     score_name = "MIDI"
     score_range = [1, 7]
 
+    # create copy of data
+    data = data.copy()
+
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 12)
     _assert_value_range(data, score_range)
 
     # Reverse scores 1, 2, 4, 5, 7, 9, 10, 11
@@ -918,10 +1005,65 @@ def midi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 def tsgs(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
-    """Trait Shame and Guilt Scale"""
+    """Compute **Trait Shame and Guilt Scale**.
 
+    The TSGS assesses the experience of shame, guilt, and pride over the past few months with three separate subscales.
+    Shame and guilt are considered distinct emotions, with shame being a global negative feeling about the self,
+    and guilt being a negative feeling about a specific event rather than the self. Higher scores on each subscale
+    indicate higher shame, guilt, or pride.
+
+    It consists of the subscales,
+    with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``Shame``: [2, 5, 8, 11, 14]
+        * ``Guilt``: [3, 6, 9, 12, 15]
+        * ``Pride``: [1, 4, 7, 10, 13]
+
+    .. note::
+        This implementation assumes a score range of [1, 5].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        TSGS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Rohleder, N., Chen, E., Wolf, J. M., & Miller, G. E. (2008). The psychobiology of trait shame in young women:
+    Extending the social self preservation theory. *Health Psychology*, 27(5), 523.
+
+    """
     score_name = "TSGS"
     score_range = [1, 5]
 
@@ -931,26 +1073,83 @@ def tsgs(
 
     _assert_value_range(data, score_range)
 
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 15)
+        subscales = {
             "Shame": [2, 5, 8, 11, 14],
             "Guilt": [3, 6, 9, 12, 15],
             "Pride": [1, 4, 7, 10, 13],
         }
 
-    tsgs_data = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
-
+    tsgs_data = _compute_questionnaire_subscales(data, score_name, subscales)
     return pd.DataFrame(tsgs_data, index=data.index)
 
 
-def rmidips(
+def rmidi(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
-    """Revised Midlife Development Inventory (MIDI) Personality Scale"""
+    """Compute **Revised Midlife Development Inventory (MIDI) Personality Scale**.
 
-    score_name = "RMIDIPS"
+    The Midlife Development Inventory (MIDI) includes 6 personality trait scales: Neuroticism,
+    Extraversion, Openness to Experience, Conscientiousness, Agreeableness, and Agency.  Higher scores
+    indicate higher endorsement of each personality trait.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``Neuroticism``: [3, 8, 13, 19]
+        * ``Extraversion``: [1, 6, 11, 23, 27]
+        * ``Openness``: [14, 17, 21, 22, 25, 28, 29]
+        * ``Conscientiousness``: [4, 9, 16, 24, 31]
+        * ``Agreeableness``: [2, 7, 12, 18, 26]
+        * ``Agency``: [5, 10, 15, 20, 30]
+
+    .. note::
+        This implementation assumes a score range of [1, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        RMIDI score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Prenda, K. M., & Lachman, M. E. (2001). Planning for the future: a life management strategy for increasing control
+    and life satisfaction in adulthood. *Psychology and aging*, 16(2), 206.
+
+    """
+    score_name = "RMIDI"
     score_range = [1, 4]
 
     if columns is not None:
@@ -962,11 +1161,9 @@ def rmidips(
     # "most items need to be reverse scored before subscales are computed => reverse all"
     data = invert(data, score_range=score_range)
 
-    # re-reverse scores 19, 24
-    data = invert(data, cols=to_idx([19, 24]), score_range=score_range)
-
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 31)
+        subscales = {
             "Neuroticism": [3, 8, 13, 19],
             "Extraversion": [1, 6, 11, 23, 27],
             "Openness": [14, 17, 21, 22, 25, 28, 29],
@@ -975,18 +1172,70 @@ def rmidips(
             "Agency": [5, 10, 15, 20, 30],
         }
 
-    # RMIDIPS is a mean, not a sum score!
-    rmidips_data = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs}
+    # Re-reverse scores 19, 24
+    data = _invert_subscales(
+        data, subscales=subscales, idx_dict={"Neuroticism": [19], "Conscientiousness": [24]}, score_range=score_range
+    )
+    rmidi_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
-    return pd.DataFrame(rmidips_data, index=data.index)
+    return pd.DataFrame(rmidi_data, index=data.index)
 
 
-def lsq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Life Stress Questionnaire
-    0 = No Stress
-    1 = Stress
+def lsq(
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Sequence[str]] = None,
+) -> pd.DataFrame:
+    """Compute **Life Stress Questionnaire**.
+
+    The LSQ asks participants about stressful life events that they and their close relatives have experienced
+    throughout their entire life, what age they were when the event occurred, and how much it impacted them.
+    Higher scores indicate more stress.
+
+    It consists of the subscales:
+        * ``PartnerStress``: columns with suffix ``_Partner``
+        * ``ParentStress``: columns with suffix ``_Parent``
+        * ``ChildStress``: columns with suffix ``_Child``
+
+    .. note::
+        This implementation assumes a score range of [0, 1].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : list of str, optional
+        List of subscales (``Partner``, ``Parent``, ``Child``) to compute or ``None`` to compute all subscales.
+        Default: ``None``
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        LSQ score
+
+
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Prenda, K. M., & Lachman, M. E. (2001). Planning for the future: a life management strategy for increasing control
+    and life satisfaction in adulthood. *Psychology and aging*, 16(2), 206.
+
     """
-
     score_name = "LSQ"
     score_range = [0, 1]
 
@@ -996,11 +1245,11 @@ def lsq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     _assert_value_range(data, score_range)
 
-    lsq_data = {
-        score_name + "_Partner": find_cols(data, contains="Partner")[0].sum(axis=1),
-        score_name + "_Parent": find_cols(data, contains="Parent")[0].sum(axis=1),
-        score_name + "_Child": find_cols(data, contains="Child")[0].sum(axis=1),
-    }
+    if subscales is None:
+        _assert_num_columns(data, 30)
+        subscales = ["Partner", "Parent", "Child"]
+
+    lsq_data = {"{}_{}".format(score_name, subscale): data.filter(like=subscale).sum(axis=1) for subscale in subscales}
 
     return pd.DataFrame(lsq_data, index=data.index)
 
