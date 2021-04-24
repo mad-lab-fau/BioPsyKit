@@ -1067,6 +1067,9 @@ def tsgs(
     score_name = "TSGS"
     score_range = [1, 5]
 
+    # create copy of data
+    data = data.copy()
+
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
@@ -1151,6 +1154,9 @@ def rmidi(
     """
     score_name = "RMIDI"
     score_range = [1, 4]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -1239,6 +1245,9 @@ def lsq(
     score_name = "LSQ"
     score_range = [0, 1]
 
+    # create copy of data
+    data = data.copy()
+
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
@@ -1257,12 +1266,72 @@ def lsq(
 def ctq(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Childhood Trauma Questionnaire"""
+    """Compute **Childhood Trauma Questionnaire (CTQ)**.
 
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``PhysicalAbuse``: [9, 11, 12, 15, 17]
+        * ``SexualAbuse``: [20, 21, 23, 24, 27]
+        * ``EmotionalNeglect``: [5, 7, 13, 19, 28]
+        * ``PhysicalNeglect``: [1, 2, 4, 6, 26]
+        * ``EmotionalAbuse``: [3, 8, 14, 18, 25]
+
+    Additionally, three items assess the validity of the responses (high scores on these items could be grounds for
+    exclusion of a given participants’ responses):
+        * ``Validity``: [10, 16, 22]
+
+    .. note::
+        This implementation assumes a score range of [1, 5].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        CTQ score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Bernstein, D. P., Fink, L., Handelsman, L., Foote, J., Lovejoy, M., Wenzel, K., ... & Ruggiero, J. (1994).
+    Initial reliability and validity of a new retrospective measure of child abuse and neglect.
+    *The American journal of psychiatry*.
+
+    """
     score_name = "CTQ"
     score_range = [1, 5]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -1270,11 +1339,9 @@ def ctq(
 
     _assert_value_range(data, score_range)
 
-    # reverse scores 2, 5, 7, 13, 19, 26, 28
-    data = invert(data, cols=to_idx([2, 5, 7, 13, 19, 26, 28]), score_range=score_range)
-
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 28)
+        subscales = {
             "PhysicalAbuse": [9, 11, 12, 15, 17],
             "SexualAbuse": [20, 21, 23, 24, 27],
             "EmotionalNeglect": [5, 7, 13, 19, 28],
@@ -1283,36 +1350,127 @@ def ctq(
             "Validity": [10, 16, 22],
         }
 
-    ctq_data = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
+    # reverse scores 2, 5, 7, 13, 19, 26, 28
+    data = _invert_subscales(
+        data,
+        subscales=subscales,
+        idx_dict={
+            "PhysicalNeglect": [2, 26],
+            "EmotionalNeglect": [5, 7, 13, 19, 28],
+        },
+        score_range=score_range,
+    )
+    ctq_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     return pd.DataFrame(ctq_data, index=data.index)
 
 
 def peat(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Pittsburgh Enjoyable Activities Test"""
+    """Compute **Pittsburgh Enjoyable Activities Test (PEAT)**.
 
+    The PEAT is a self-report measure of engagement in leisure activities. It asks participants to report how often
+    over the last month they have engaged in each of the activities. Higher scores indicate more time spent in
+    leisure activities.
+
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        PEAT score
+
+
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Pressman, S. D., Matthews, K. A., Cohen, S., Martire, L. M., Scheier, M., Baum, A., & Schulz, R. (2009).
+    Association of enjoyable leisure activities with psychological and physical well-being.
+    *Psychosomatic medicine*, 71(7), 725.
+
+    """
     score_name = "PEAT"
     score_range = [0, 4]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 10)
     _assert_value_range(data, score_range)
 
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
 def purpose_life(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Purpose in Life"""
+    """Compute **Purpose in Life** questionnaire.
 
+    Purpose in life refers to the psychological tendency to derive meaning from life’s experiences
+    and to possess a sense of intentionality and goal directedness that guides behavior.
+    Higher scores indicate greater purpose in life.
+
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        TICS score
+
+    References
+    ----------
+    Boyle, P. A., Barnes, L. L., Buchman, A. S., & Bennett, D. A. (2009). Purpose in life is associated with
+    mortality among community-dwelling older persons. *Psychosomatic medicine*, 71(5), 574.
+
+    """
     score_name = "PurposeLife"
     score_range = [1, 5]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 10)
     _assert_value_range(data, score_range)
 
     # reverse scores 2, 3, 5, 6, 10
@@ -1323,13 +1481,44 @@ def purpose_life(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
 
 
 def trait_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Trait Rumination
-    0 = False (no rumination),
-    1 = True (rumination)
-    """
+    """Compute **Trait Rumination**.
 
+    Higher scores indicate greater rumination.
+
+    .. note::
+        This implementation assumes a score range of [0, 1], where 0 = no rumination, 1 = rumination.
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        TraitRumination score
+
+
+    References
+    ----------
+    Nolen-Hoeksema, S., Morrow, J., & Fredrickson, B. L. (1993). Response styles and the duration of episodes of
+    depressed mood. *Journal of abnormal psychology*, 102(1), 20.
+
+    """
     score_name = "TraitRumination"
     score_range = [0, 1]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -1340,15 +1529,64 @@ def trait_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
-def body_esteem(
+def besaa(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[int, str]]]] = None,
 ) -> pd.DataFrame:
-    """Body-Esteem Scale for Adolescents and Adults"""
+    """Compute **Body-Esteem Scale for Adolescents and Adults (BESAA)**.
 
-    score_name = "BodyEsteem"
+    Body Esteem refers to self-evaluations of one’s body or appearance. The BESAA is based on
+    the idea that feelings about one’s weight can be differentiated from feelings about one’s general appearance,
+    and that one’s own opinions may be differentiated from the opinions attributed to others.
+    Higher scores indicate higher body esteem.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``Appearance``: [1, 6, 9, 7, 11, 13, 15, 17, 21, 23]
+        * ``Weight``: [3, 4, 8, 10, 16, 18, 19, 22]
+        * ``Attribution``: [2, 5, 12, 14, 20]
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        BESAA score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Mendelson, B. K., Mendelson, M. J., & White, D. R. (2001). Body-esteem scale for adolescents and adults.
+    *Journal of personality assessment*, 76(1), 90-106.
+
+    """
+    score_name = "BESAA"
     score_range = [0, 4]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -1356,21 +1594,26 @@ def body_esteem(
 
     _assert_value_range(data, score_range)
 
-    # reverse scores 4, 7, 9, 11, 13, 17, 18, 19, 21
-    data = invert(data, cols=to_idx([4, 7, 9, 11, 13, 17, 18, 19, 21]), score_range=score_range)
-
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 23)
+        subscales = {
             "Appearance": [1, 6, 9, 7, 11, 13, 15, 17, 21, 23],
             "Weight": [3, 4, 8, 10, 16, 18, 19, 22],
             "Attribution": [2, 5, 12, 14, 20],
         }
 
-    # BE is a mean, not a sum score!
-    be = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs}
-    be[score_name] = data.mean(axis=1)
+    # reverse scores 4, 7, 9, 11, 13, 17, 18, 19, 21
+    data = _invert_subscales(
+        data,
+        subscales=subscales,
+        idx_dict={"Appearance": [7, 17, 21], "Weight": [4, 18, 19], "Attribution": [9, 11, 13]},
+        score_range=score_range,
+    )
 
-    return pd.DataFrame(be, index=data.index)
+    # BESAA is a mean, not a sum score!
+    besaa_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
+
+    return pd.DataFrame(besaa_data, index=data.index)
 
 
 def fscr(

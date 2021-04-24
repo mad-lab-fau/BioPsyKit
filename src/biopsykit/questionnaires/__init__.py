@@ -6,7 +6,7 @@ __all__ = [
     "asq",
     "bfi_k",
     "bidr",
-    "body_esteem",
+    "besaa",
     "brief_cope",
     "ceca",
     "cesd",
