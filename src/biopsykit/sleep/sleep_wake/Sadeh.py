@@ -1,6 +1,8 @@
 from typing import Union
 from biopsykit.sleep.sleep_wake.base import _SleepWakeBase
 from numpy.lib.stride_tricks import as_strided
+from biopsykit.utils.array_handling import sanitize_input_1d
+from biopsykit.utils.array_handling import sliding_window
 import numpy as np
 import pandas as pd
 
@@ -40,33 +42,36 @@ class Sadeh(_SleepWakeBase):
         window_mean = 11
         window_center = 11
 
-        mean = (self._rolling_window(data, window_mean, window_mean - 1)).mean(1)
-        nat = self._rolling_window(data, window_center, window_center - 1)
+        #mean = (self._rolling_window(data, window_mean, window_mean - 1)).mean(1)
+        mean = sliding_window(data,window_samples=window_mean,overlap_samples=window_mean-1).mean(1)
+        #nat = self._rolling_window(data, window_center, window_center - 1)
+        nat = sliding_window(data,window_samples=window_center,overlap_samples=window_center-1)
         nat = np.logical_and(nat < 100, nat > 50)
         nat = np.sum(nat, axis=1)
-        std = (self._rolling_window(data, window_past, window_past - 1)).std(1)[:-5]
+        #std = (self._rolling_window(data, window_past, window_past - 1)).std(1)[:-5]
+        std = sliding_window(data,window_samples=window_past,overlap_samples=window_past-1).std(1)[:-5]
         locAct = np.log(data + 1)[5:-5]
         score = 7.601 - 0.065 * mean - 0.056 * std - 0.0703 * locAct - 1.08 * nat
 
-        classification = (score > 0)
+        classification = score > 0
 
         if index is not None:
             classification = pd.DataFrame(classification, index=index, columns=["sleep_wake"])
 
         return classification
 
-    @staticmethod
-    def _rolling_window(array, window, overlap):
-        """
-        Usage of numpy stride tricks to develop a rolling window method.
-
-        :param array: array of activity index values
-        :param window: window size of rolling window
-        :param overlap overlap of rolling window
-        """
-        window_step = window - overlap
-        new_shape = array.shape[:-1] + ((array.shape[-1] - overlap) // window_step, window)
-        new_strides = (array.strides[:-1] + (window_step * array.strides[-1],) + array.strides[-1:])
-        overlap_matrix = as_strided(array, shape=new_shape, strides=new_strides)
-
-        return overlap_matrix
+    # @staticmethod
+    # def _rolling_window(array, window, overlap):
+    #     """
+    #     Usage of numpy stride tricks to develop a rolling window method.
+    #
+    #     :param array: array of activity index values
+    #     :param window: window size of rolling window
+    #     :param overlap overlap of rolling window
+    #     """
+    #     window_step = window - overlap
+    #     new_shape = array.shape[:-1] + ((array.shape[-1] - overlap) // window_step, window)
+    #     new_strides = array.strides[:-1] + (window_step * array.strides[-1],) + array.strides[-1:]
+    #     overlap_matrix = as_strided(array, shape=new_shape, strides=new_strides)
+    #
+    #     return overlap_matrix
