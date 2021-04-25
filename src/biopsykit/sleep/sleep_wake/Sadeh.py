@@ -1,6 +1,6 @@
 from typing import Union
 from biopsykit.sleep.sleep_wake.base import _SleepWakeBase
-from numpy.lib.stride_tricks import as_strided
+#from numpy.lib.stride_tricks import as_strided
 from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.array_handling import sliding_window
 import numpy as np
@@ -17,7 +17,6 @@ class Sadeh(_SleepWakeBase):
         """
         Create an instance of the Sadeh Algorithm class for sleep/wake detection.
         """
-        pass
 
     def predict(self, data: Union[pd.DataFrame, np.array]) -> Union[np.array, pd.DataFrame]:
         """

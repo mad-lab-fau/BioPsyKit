@@ -10,7 +10,7 @@ from biopsykit.sleep.sleep_wake.base import _SleepWakeBase
 
 
 
-def read_psg(file_path):
+def read_all_psg(file_path):
     """
     Read in all the XML-files from the mesa-dataset
 
@@ -28,7 +28,7 @@ def read_psg(file_path):
     for i in range(20):  # try only with 20 datasets to lower memory consumption
 
         try: #look if a dataset exists
-            psg[i] = xml_reader(file_path + '\mesa-sleep-' + "{:04d}".format(i) + '-nsrr.xml')
+            psg[i] = xml_reader(file_path + '\polysomnography/annotations-events-nsrr\mesa-sleep-' + "{:04d}".format(i) + '-nsrr.xml')
         except:
             pass
             # print("{:04d}".format(i) + "not available")
@@ -36,7 +36,31 @@ def read_psg(file_path):
     return psg
 
 
-def read_actigraphy(file_path):
+
+def read_single_psg(file_path, number):
+    """
+    Read in all the XML-files from the mesa-dataset
+
+    Parameters
+    ----------
+    file_path: str
+        file path to the mesa folder with your XML-files. Important: not the filename itself!
+
+    Returns
+    -------
+    :dict:
+        dict that contains a pandas.DataFrame for every subject
+    """
+
+    try: #look if a dataset exists
+        psg = xml_reader(file_path + '\polysomnography/annotations-events-nsrr\mesa-sleep-' + "{:04d}".format(number) + '-nsrr.xml')
+    except:
+        raise ImportError("Dataset don't exist")
+
+    return psg
+
+
+def read_all_actigraphy(file_path):
     """
     Read in all the csv-files from the actigraphy mesa-dataset.
 
@@ -54,14 +78,43 @@ def read_actigraphy(file_path):
     actigraphy = {}
     for i in range(20):  # try only with 20 datasets to lower memory consumption
         try:
-            actigraphy[i] = pd.read_csv(file_path + '\mesa-sleep-'+ "{:04d}".format(i) + '.csv')
+            actigraphy[i] = pd.read_csv(file_path + '/actigraphy\mesa-sleep-'+ "{:04d}".format(i) + '.csv')
         except:
             pass
 
     return actigraphy
 
 
-def read_r_point(file_path):
+
+def read_single_actigraphy(file_path,number):
+    """
+    Read in all the csv-files from the actigraphy mesa-dataset.
+
+    Parameters
+    ----------
+    file_path: str
+        file path to the mesa folder with your actigraphy csv-files. Important: not the filename itself!
+
+    Returns
+    -------
+    dict:
+        dict that contains a pandas.DataFrame for every subject
+
+    """
+
+    try:
+        actigraphy = pd.read_csv(file_path + '/actigraphy\mesa-sleep-'+ "{:04d}".format(number) + '.csv')
+    except:
+        raise ImportError("Dataset don't exist")
+
+
+    return actigraphy
+
+
+
+
+
+def read_all_r_point(file_path):
     """
     Read in all the csv-files from the r-roint mesa-dataset.
 
@@ -79,7 +132,7 @@ def read_r_point(file_path):
     r_point = {}
     for i in range(20):  # try only with 20 datasets to lower memory consumption
         try:
-            r_point[i] = pd.read_csv(file_path + '\mesa-sleep-'+ "{:04d}".format(i) + '-rpoint.csv')
+            r_point[i] = pd.read_csv(file_path + '\polysomnography/annotations-rpoints\mesa-sleep-'+ "{:04d}".format(i) + '-rpoint.csv')
         except:
             pass
 
