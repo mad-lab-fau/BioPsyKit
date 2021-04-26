@@ -13,7 +13,7 @@ __all__ = [
     "ctq",
     "fee",
     "fkk",
-    "fscr",
+    "fscrs",
     "ghq",
     "hads",
     "kkg",

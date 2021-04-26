@@ -17,7 +17,7 @@ with subscale names as keys and the corresponding column names (as list of str) 
     questionnaire item columns, which typically also start with index 1!
 
 """
-from typing import Optional, Sequence, Union, Dict
+from typing import Optional, Sequence, Union, Dict, Literal
 
 import numpy as np
 import pandas as pd
@@ -1616,15 +1616,78 @@ def besaa(
     return pd.DataFrame(besaa_data, index=data.index)
 
 
-def fscr(
+def fscrs(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Forms of Self-Criticizing/Attacking and Self-Reassuring Scale"""
+    """Compute **Forms of Self-Criticizing/Attacking and Self-Reassuring Scale (FSCRS)**.
 
-    score_name = "FSCR"
+    Self-criticism describes the internal relationship with the self in which part of the self shames
+    and puts down, while the other part of the self responds and submits to such attacks.
+    Self-reassurance refers to the opposing idea that many individuals focus on positive aspects of self and defend
+    against self-criticism. The FSCRS exemplifies some of the self-statements made by either those who are
+    self-critical or by those who self-reassure.
+    The scale measures these two traits on a continuum with self-criticism at one end and
+    self-reassurance at the other. Higher scores on each subscale indicate higher self-criticizing ("Inadequate Self"),
+    self-attacking ("Hated Self"), and self-reassuring "Reassuring Self", respectively.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``InadequateSelf``: [1, 2, 4, 6, 7, 14, 17, 18, 20]
+        * ``HatedSelf``: [9, 10, 12, 15, 22]
+        * ``ReassuringSelf``: [3, 5, 8, 11, 13, 16, 19, 21]
+
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        FSCRS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Gilbert, P., Clarke, M., Hempel, S., Miles, J. N., & Irons, C. (2004). Criticizing and reassuring oneself:
+    An exploration of forms, styles and reasons in female students. *British Journal of Clinical Psychology*,
+    43(1), 31-50.
+
+    """
+    score_name = "FSCRS"
     score_range = [0, 4]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -1632,27 +1695,87 @@ def fscr(
 
     _assert_value_range(data, score_range)
 
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 22)
+        subscales = {
             "InadequateSelf": [1, 2, 4, 6, 7, 14, 17, 18, 20],
             "HatedSelf": [9, 10, 12, 15, 22],
             "ReassuringSelf": [3, 5, 8, 11, 13, 16, 19, 21],
         }
 
-    fscr_data = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
+    fscrs_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
-    return pd.DataFrame(fscr_data, index=data.index)
+    return pd.DataFrame(fscrs_data, index=data.index)
 
 
 def pasa(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Primary Appraisal Secondary Appraisal Scale"""
+    """Compute the **Primary Appraisal Secondary Appraisal Scale (PASA)**.
 
+    The PASA assesses each of the four cognitive appraisal processes relevant for acute stress protocols,
+    such as the TSST: primary stress appraisal (threat and challenge) and secondary stress appraisal
+    (self-concept of own abilities and control expectancy). Higher scores indicate greater appraisals for each sub-type.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``Threat``: [1, 9, 5, 13]
+        * ``Challenge``: [6, 10, 2, 14]
+        * ``SelfConcept``: [7, 3, 11, 15]
+        * ``ControlExp``: [4, 8, 12, 16]
+
+    .. note::
+        This implementation assumes a score range of [1, 6].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        PASA score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Gaab, J., Rohleder, N., Nater, U. M., & Ehlert, U. (2005). Psychological determinants of the cortisol stress
+    response: the role of anticipatory cognitive appraisal. *Psychoneuroendocrinology*, 30(6), 599-610.
+
+    """
     score_name = "PASA"
     score_range = [1, 6]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -1660,26 +1783,36 @@ def pasa(
 
     _assert_value_range(data, score_range)
 
-    # reverse scores 1, 6, 7, 9, 10
     data = invert(data, cols=to_idx([1, 6, 7, 9, 10]), score_range=score_range)
 
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 16)
+        subscales = {
             "Threat": [1, 9, 5, 13],
             "Challenge": [6, 10, 2, 14],
             "SelfConcept": [7, 3, 11, 15],
             "ControlExp": [4, 8, 12, 16],
         }
 
-    pasa_data = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
+    # reverse scores 1, 6, 7, 9, 10
+    data = _invert_subscales(
+        data,
+        subscales=subscales,
+        idx_dict={"Threat": [1, 9], "Challenge": [6, 10], "SelfConcept": [7]},
+        score_range=score_range,
+    )
 
-    if "Threat" in idxs and "Challenge" in idxs:
+    pasa_data = _compute_questionnaire_subscales(data, score_name, subscales)
+
+    if all(s in subscales for s in ["Threat", "Challenge"]):
         pasa_data[score_name + "_Primary"] = pasa_data[score_name + "_Threat"] + pasa_data[score_name + "_Challenge"]
-    if "SelfConcept" in idxs and "ControlExp" in idxs:
+
+    if all(s in subscales for s in ["SelfConcept", "ControlExp"]):
         pasa_data[score_name + "_Secondary"] = (
             pasa_data[score_name + "_SelfConcept"] + pasa_data[score_name + "_ControlExp"]
         )
-    if "PASA_Primary" in pasa_data and "PASA_Secondary" in pasa_data:
+
+    if all(s in subscales for s in ["PASA_Primary", "PASA_Secondary"]):
         pasa_data[score_name + "_StressComposite"] = (
             pasa_data[score_name + "_Primary"] - pasa_data[score_name + "_Secondary"]
         )
@@ -1690,12 +1823,74 @@ def pasa(
 def ssgs(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """State Shame and Guilt Scale"""
+    """Compute the **State Shame and Guilt Scale (SSGS)**.
 
+    The SSGS assesses the experience of shame, guilt, and pride experienced during an acute stress protocol with three
+    separate subscales. Shame and guilt are considered distinct emotions, with shame being a global negative feeling
+    about the self, and guilt being a negative feeling about a specific event rather than the self.
+    This scale is a modified version from the State Shame and Guilt scale by Marschall et al. (1994).
+    Higher scores on each subscale indicate higher shame, guilt, or pride.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``Pride``: [1, 4, 7, 10, 13]
+        * ``Shame``: [2, 5, 8, 11, 14]
+        * ``Guilt``: [3, 6, 9, 12, 15]
+
+    .. note::
+        This implementation assumes a score range of [1, 5].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        SSGS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Rohleder, N., Chen, E., Wolf, J. M., & Miller, G. E. (2008). The psychobiology of trait shame in young women:
+    Extending the social self preservation theory. *Health Psychology*, 27(5), 523.
+
+    Marschall, D., Sanftner, J., & Tangney, J. P. (1994). The state shame and guilt scale.
+    *Fairfax, VA: George Mason University*.
+
+    """
     score_name = "SSGS"
     score_range = [1, 5]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -1703,14 +1898,15 @@ def ssgs(
 
     _assert_value_range(data, score_range)
 
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 15)
+        subscales = {
             "Pride": [1, 4, 7, 10, 13],
             "Shame": [2, 5, 8, 11, 14],
             "Guilt": [3, 6, 9, 12, 15],
         }
 
-    ssgs_data = {"{}_State{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
+    ssgs_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     return pd.DataFrame(ssgs_data, index=data.index)
 
@@ -1718,26 +1914,66 @@ def ssgs(
 def panas(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    questionnaire_version: Optional[str] = "german",
+    questionnaire_version: Optional[Literal["english", "german"]] = "english",
 ) -> pd.DataFrame:
-    """
-    Positive and Negative Affect Schedule
+    """Compute the **Positive and Negative Affect Schedule (PANAS)**.
 
-    NOTE: This implementation expects scores in the range [1, 5].
+    The PANAS assesses *positive affect* (interested, excited, strong, enthusiastic, proud, alert, inspired,
+    determined, attentive, and active) and *negative affect* (distressed, upset, guilty, scared, hostile, irritable,
+    ashamed, nervous, jittery, and afraid).
+    Higher scores on each subscale indicate greater positive or negative affect.
+
+    .. note::
+        This implementation assumes a score range of [1, 5].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
 
     Parameters
     ----------
-    data
-    columns
-    questionnaire_version
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    questionnaire_version : "english" or "german", optional
+        Language of the questionnaire used since index items differ between the german and the english version.
+        Default: ``english``
+
 
     Returns
     -------
+    :class:`~pandas.DataFrame`
+        PANAS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Watson, D., Clark, L. A., & Tellegen, A. (1988). Development and validation of brief measures of positive and
+    negative affect: the PANAS scales. *Journal of personality and social psychology*, 54(6), 1063.
 
     """
     score_name = "PANAS"
     score_range = [1, 5]
     supported_versions = ["english", "german"]
+
+    # create copy of data
+    data = data.copy()
 
     if questionnaire_version not in supported_versions:
         raise AttributeError(
@@ -1748,36 +1984,78 @@ def panas(
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 20)
     _assert_value_range(data, score_range)
 
-    if questionnaire_version == "english":
-        idx_panas = [2, 4, 6, 7, 8, 11, 13, 15, 18, 20]
-    elif questionnaire_version == "german":
+    if questionnaire_version == "german":
         # German Version has other item indices
-        idx_panas = [2, 5, 7, 8, 9, 12, 14, 16, 19, 20]
+        neg_affect = [2, 5, 7, 8, 9, 12, 14, 16, 19, 20]
     else:
-        idx_panas = []
+        neg_affect = [2, 4, 6, 7, 8, 11, 13, 15, 18, 20]
 
-    df_panas = {score_name + "_NegativeAffect": data.iloc[:, to_idx(idx_panas)].sum(axis=1)}
-    df_panas[score_name + "_PositiveAffect"] = data.sum(axis=1) - df_panas[score_name + "_NegativeAffect"]
-    df_panas[score_name + "_Total"] = df_panas[score_name + "_PositiveAffect"] + invert(
-        data.iloc[:, to_idx(idx_panas)], score_range=score_range, inplace=False
+    panas_data = {score_name + "_NegativeAffect": data.iloc[:, to_idx(neg_affect)].sum(axis=1)}
+    panas_data[score_name + "_PositiveAffect"] = data.sum(axis=1) - panas_data[score_name + "_NegativeAffect"]
+    panas_data[score_name + "_Total"] = panas_data[score_name + "_PositiveAffect"] + invert(
+        data.iloc[:, to_idx(neg_affect)], score_range=score_range
     ).sum(axis=1)
 
-    return pd.DataFrame(df_panas, index=data.index)
+    return pd.DataFrame(panas_data, index=data.index)
 
 
 def state_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """State Rumination"""
+    """Compute the **State Rumination** scale.
 
+    Rumination is the tendency to dwell on negative thoughts and emotions.
+    Higher scores indicate greater rumination.
+
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        State Rumination score
+
+
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Roger, D., & Najarian, B. (1998). The relationship between emotional rumination and cortisol secretion
+    under stress. *Personality and Individual Differences*, 24(4), 531-538.
+
+    """
     score_name = "StateRumination"
     score_range = [0, 4]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
+    _assert_num_columns(data, 27)
 
     # reverse scores 1, 6, 9, 12, 15, 17, 18, 20, 27
     data = invert(data, cols=to_idx([1, 6, 9, 12, 15, 17, 18, 20, 27]), score_range=score_range)
