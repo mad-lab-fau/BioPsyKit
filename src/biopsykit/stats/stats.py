@@ -267,14 +267,18 @@ class StatsPipeline:
             if not index.empty:
                 box_pairs.index = index
         else:
-            # if self.params[stats_type] in stats_data.columns:
-            #    stats_data = stats_data.reset_index().set_index(self.params[stats_type])
             if features is not None:
                 stats_data = pd.concat([stats_data.filter(like=f, axis=0) for f in features])
 
             stats_data = stats_data.reset_index()
             if plot_type == "single":
-                box_pairs = stats_data.apply(lambda row: (row["A"], row["B"]), axis=1)
+                try:
+                    box_pairs = stats_data.apply(lambda row: (row["A"], row["B"]), axis=1)
+                except KeyError as e:
+                    raise ValueError(
+                        "Generating significance brackets failed. If you used ANOVA (or such) as "
+                        "test, you need to generate significance brackets from post-hoc tests."
+                    ) from e
                 index = stats_data[self.params.get("groupby", [])]
                 if not index.empty:
                     box_pairs.index = index
