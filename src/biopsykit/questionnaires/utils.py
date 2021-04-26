@@ -96,7 +96,7 @@ def _invert_subscales(
     idx_dict: Dict[str, Sequence[int]],
     score_range: Sequence[int],
 ):
-    for subscale, idxs in idx_dict:
+    for subscale, idxs in idx_dict.items():
         if subscale in subscales:
             data = invert(data, cols=to_idx(idxs), score_range=score_range)
 
@@ -242,13 +242,13 @@ def _compute_questionnaire_subscales(
     for key, items in subscales.items():
         if all(isinstance(i, int) for i in items):
             # assume column indices, starting at 1 (-> convert to 0-indexed indices first)
-            if agg_type is "sum":
+            if agg_type == "sum":
                 score = data.iloc[:, to_idx(items)].sum(axis=1)
             else:
                 score = data.iloc[:, to_idx(items)].mean(axis=1)
         elif all(isinstance(i, int) for i in items):
             # assume column names
-            if agg_type is "sum":
+            if agg_type == "sum":
                 score = data.loc[:, items].sum(axis=1)
             else:
                 score = data.loc[:, items].mean(axis=1)

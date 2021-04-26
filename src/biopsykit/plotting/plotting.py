@@ -457,7 +457,7 @@ def multi_feature_boxplot(
     return fig, axs
 
 
-def _get_markers(data: pd.DataFrame, style: str, hue: str, markers: Optional[str, Sequence[str]] = None):
+def _get_markers(data: pd.DataFrame, style: str, hue: str, markers: Optional[Union[str, Sequence[str]]] = None):
     num_cats = None
     if style is not None:
         num_cats = len(data[style].unique())

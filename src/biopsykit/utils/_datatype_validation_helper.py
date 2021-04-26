@@ -400,7 +400,8 @@ def _assert_num_columns(
     """
     if isinstance(num_cols, int):
         num_cols = [num_cols]
-    if not any(len(data.columns) in num for num in num_cols):
+
+    if not any(len(data.columns) == num for num in num_cols):
         if raise_exception:
             raise ValueRangeError(
                 "The dataframe does not have the required number of columns. "

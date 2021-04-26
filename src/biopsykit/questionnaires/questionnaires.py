@@ -1783,8 +1783,6 @@ def pasa(
 
     _assert_value_range(data, score_range)
 
-    data = invert(data, cols=to_idx([1, 6, 7, 9, 10]), score_range=score_range)
-
     if subscales is None:
         _assert_num_columns(data, 16)
         subscales = {
@@ -1805,12 +1803,14 @@ def pasa(
     pasa_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     if all(s in subscales for s in ["Threat", "Challenge"]):
-        pasa_data[score_name + "_Primary"] = pasa_data[score_name + "_Threat"] + pasa_data[score_name + "_Challenge"]
+        pasa_data[score_name + "_Primary"] = (
+            pasa_data[score_name + "_Threat"] + pasa_data[score_name + "_Challenge"]
+        ) / 2
 
     if all(s in subscales for s in ["SelfConcept", "ControlExp"]):
         pasa_data[score_name + "_Secondary"] = (
             pasa_data[score_name + "_SelfConcept"] + pasa_data[score_name + "_ControlExp"]
-        )
+        ) / 2
 
     if all(s in subscales for s in ["PASA_Primary", "PASA_Secondary"]):
         pasa_data[score_name + "_StressComposite"] = (
