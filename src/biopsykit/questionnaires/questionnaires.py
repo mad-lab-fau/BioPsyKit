@@ -2069,8 +2069,46 @@ def state_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
 
 
 def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Angstbewältigungsinventar"""
+    """Compute the **Angstbewältigungsinventar (ABI)**.
 
+    Das ABI erfasst zwei zentrale Persönlichkeitskonstrukte im Bereich der Stress- bzw. Angstbewältigung:
+    *Vigilanz (VIG)* und *kognitive Vermeidung (KOV)*.
+    *VIG* wird definiert als eine Klasse von Bewältigungsstrategien, deren Einsatz das Ziel verfolgt,
+    in bedrohlichen Situationen Unsicherheit zu reduzieren.
+    *KOV* bezeichnet demgegenüber Strategien, die darauf abzielen, den Organismus gegen erregungsinduzierende Reize
+    abzuschirmen.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        ABI score
+
+
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Krohne, H. W., Egloff, B., Das, A. I., Angstbewältigung, B. D. S. B., & VIG, V. (1999).
+    Das Angstbewältigungs-Inventar (ABI). *Frankfurt am Main*.
+
+    """
     score_name = "ABI"
     score_range = [1, 2]
 
@@ -2118,9 +2156,86 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     return pd.DataFrame(abi_data, index=data.index)
 
 
-def stadi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """State-Trait-Angst-Depressions-Inventar"""
+def stadi(
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    stadi_type: Optional[Literal["state", "trait", "state-trait"]] = "state-trait",
+) -> pd.DataFrame:
+    """Compute **State-Trait Anxiety-Depression Inventory (STADI)**.
 
+    With the STADI, anxiety and depression can be recorded both as state and as trait.
+    Two self-report questionnaires with 20 items each are available for this purpose.
+    The state part measures the degree of anxiety and depression currently experienced by a person, which varies
+    depending on internal or external influences. It can be used in a variety of situations of different types.
+    This includes not only the whole spectrum of highly heterogeneous stressful situations, but also situations of
+    neutral or positive ("euthymic") character.  The trait part is used to record trait expressions, i.e. the
+    enduring tendency to experience anxiety and depression.
+
+    The STADI can either be computed only for state, only for trait, or for state and trait.
+
+    The state and trait scales both consist of the subscales with the item indices
+    (count-by-one, i.e., the first question has the index 1!):
+        * Aufgeregtheit (affektive Komponente): [1, 5, 9, 13, 17]
+        * Besorgnis (kognitive Komponente): [2, 6, 10, 14, 18]
+        * Euthymie (positive Stimmung): [3, 7, 11, 15, 19]
+        * Dysthymie (depressive Stimmung): [4, 8, 12, 16, 20]
+
+    .. note::
+        This implementation assumes a score range of [1, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. note::
+        If both state and trait score are present it is assumed that all *state* items are first,
+        followed by all *trait* items. If all subscales are present this adds up to 20 state items and 20 trait items.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+    stadi_type : any of ``state``, ``trait``, or ``state-trait``
+        which type of STADI subscale should be computed. Default: ``state-trait``
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        STADI score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Laux, L., Hock, M., Bergner-Köther, R., Hodapp, V., & Renner, K. H. (2013).
+    Das State-Trait-Angst-Depressions-Inventar: STADI; Manual.
+
+    Renner, K. H., Hock, M., Bergner-Köther, R., & Laux, L. (2018). Differentiating anxiety and depression:
+    the state-trait anxiety-depression inventory. *Cognition and Emotion*, 32(7), 1409-1423.
+
+    """
     score_name = "STADI"
     score_range = [1, 4]
 
@@ -2130,78 +2245,150 @@ def stadi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] 
 
     _assert_value_range(data, score_range)
 
-    if len(data.columns) == 10:
-        # only STADI-State-Anxiety
-        stadi_data = dict()
-        for subsc, idx in zip(["AU", "BE"], [[1, 3, 5, 7, 9], [2, 4, 6, 9, 10]]):
-            stadi_data["{}_State_{}".format(score_name, subsc)] = data.iloc[:, to_idx(idx)].sum(axis=1)
-        df_stadi = pd.DataFrame(stadi_data, index=data.index)
-        df_stadi["{}_State_Anxiety".format(score_name)] = (
-            stadi_data["{}_State_AU".format(score_name)] + stadi_data["{}_State_BE".format(score_name)]
-        )
-        return df_stadi
-    elif len(data.columns) == 20:
-        st = ["State"]
+    if stadi_type == "state_trait":
+        stadi_type = ["State", "Trait"]
+    elif stadi_type == "state":
+        stadi_type = ["State"]
     else:
-        st = ["State", "Trait"]
+        stadi_type = ["Trait"]
+
+    # split into n subitems (either "State", "Trait" or "State and Trait")
+    items = np.split(data, len(stadi_type), axis=1)
+    data = pd.concat(items, keys=stadi_type, axis=1)
+
+    if subscales is None:
+        _assert_num_columns(data, 20 * len(stadi_type))
+        subscales = {
+            "AU": [1, 5, 9, 13, 17],
+            "BE": [2, 6, 10, 14, 18],
+            "EU": [3, 7, 11, 15, 19],
+            "DY": [4, 8, 12, 16, 20],
+        }
 
     # split into n subitems (either State or State and Trait)
-    items = np.split(data, len(st), axis=1)
-    data = pd.concat(items, keys=st, axis=1)
+    items = np.split(data, len(stadi_type), axis=1)
+    data = pd.concat(items, keys=stadi_type, axis=1)
 
-    idx_stadi = {
-        "AU": [1, 5, 9, 13, 17],
-        "BE": [2, 6, 10, 14, 18],
-        "EU": [3, 7, 11, 15, 19],
-        "DY": [4, 8, 12, 16, 20],
-    }
-
-    stadi_data = dict()
-    for s in st:
-        for key in idx_stadi:
-            stadi_data["{}_{}_{}".format(score_name, s, key)] = data[s].iloc[:, to_idx(idx_stadi[key])].sum(axis=1)
+    stadi_data = {}
+    for st in stadi_type:
+        stadi_data.update(_compute_questionnaire_subscales(data, "{}_{}".format(score_name, st), subscales))
 
     df_stadi = pd.DataFrame(stadi_data, index=data.index)
 
-    dict_meta = {
-        "{}_{}_Anxiety".format(score_name, sub): stadi_data["{}_{}_AU".format(score_name, sub)]
-        + stadi_data["{}_{}_BE".format(score_name, sub)]
-        for sub in st
-    }
+    dict_meta = {}
+    if all(len(df_stadi.filter(like=st).columns) > 0 for st in ["AU", "BE"]):
+        dict_meta = {
+            "{}_{}_Anxiety".format(score_name, sub): stadi_data["{}_{}_AU".format(score_name, sub)]
+            + stadi_data["{}_{}_BE".format(score_name, sub)]
+            for sub in stadi_type
+        }
 
-    dep = {
-        "{}_{}_Depression".format(score_name, sub): stadi_data["{}_{}_EU".format(score_name, sub)]
-        + stadi_data["{}_{}_DY".format(score_name, sub)]
-        for sub in st
-    }
-    dict_meta.update(dep)
-
-    total = {
-        "{}_{}_Total".format(score_name, sub): dict_meta["{}_{}_Anxiety".format(score_name, sub)]
-        + dict_meta["{}_{}_Depression".format(score_name, sub)]
-        for sub in st
-    }
-    dict_meta.update(total)
+    if all(len(df_stadi.filter(like=st).columns) > 0 for st in ["EU", "DY"]):
+        dep = {
+            "{}_{}_Depression".format(score_name, sub): stadi_data["{}_{}_EU".format(score_name, sub)]
+            + stadi_data["{}_{}_DY".format(score_name, sub)]
+            for sub in stadi_type
+        }
+        dict_meta.update(dep)
 
     df_meta = pd.DataFrame(dict_meta, index=data.index)
     df_meta = df_meta.reindex(sorted(df_meta.columns), axis="columns")
 
-    # join dataframe of subscores and meta scores
-    return df_stadi.join(df_meta)
+    total = {}
+    if all(len(df_meta.filter(like=st).columns) > 0 for st in ["Anxiety", "Depression"]):
+        total = {
+            "{}_{}_Total".format(score_name, sub): dict_meta["{}_{}_Anxiety".format(score_name, sub)]
+            + dict_meta["{}_{}_Depression".format(score_name, sub)]
+            for sub in stadi_type
+        }
+    df_total = pd.DataFrame(total, index=data.index)
+
+    if len(total) == 0:
+        # join dataframe of subscores and meta score(s)
+        return df_stadi.join(df_meta)
+    # join dataframe of subscores, meta scores, and total score
+    return df_stadi.join(df_meta).join(df_total)
 
 
 def svf_120(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Stressverarbeitungsfragebogen - 120 items
+    """Compute **Stressverarbeitungsfragebogen - 120 item version (SVF120)**.
 
-    NOTE: This implementation expects a score range of [1, 5].
+    The stress processing questionnaire enables the assessment of coping or processing measures in stressful
+    situations.  The SVF is not a singular test instrument, but rather an inventory of methods that relate to various
+    aspects of stress processing and coping and from which individual procedures can be selected depending on
+    the study objective/question.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Bagatellisierung (``Bag``): [10, 31, 50, 67, 88, 106]
+        * Herunterspielen (``Her``): [17, 38, 52, 77, 97, 113]
+        * Schuldabwehr (``Schab``): [5, 30, 43, 65, 104, 119]
+        * Ablenkung (``Abl``): [1, 20, 45, 86, 101, 111]
+        * Ersatzbefriedigung (``Ers``): [22, 36, 64, 74, 80, 103]
+        * Selbstbestätigung (``Sebest``): [34, 47, 59, 78, 95, 115]
+        * Entspannung (``Entsp``): [12, 28, 58, 81, 99, 114]
+        * Situationskontrolle (``Sitkon``): [11, 18, 39, 66, 91, 116]
+        * Reaktionskontrolle (``Rekon``): [2, 26, 54, 68, 85, 109]
+        * Positive Selbstinstruktion (``Posi``): [15, 37, 56, 71, 83, 96]
+        * Soziales Unterstützungsbedürfnis (``Sozube``): [3, 21, 42, 63, 84, 102]
+        * Vermeidung (``Verm``): [8, 29, 48, 69, 98, 118]
+        * Flucht (``Flu``): [14, 24, 40, 62, 73, 120]
+        * Soziale Abkapselung (``Soza``): [6, 27, 49, 76, 92, 107]
+        * Gedankliche Weiterbeschäftigung (``Gedw``): [16, 23, 55, 72, 100, 110]
+        * Resignation (``Res``): [4, 32, 46, 60, 89, 105]
+        * Selbstbemitleidung (``Selmit``): [13, 41, 51, 79, 94, 117]
+        * Selbstbeschuldigung (``Sesch``): [9, 25, 35, 57, 75, 87]
+        * Aggression (``Agg``): [33, 44, 61, 82, 93, 112]
+        * Pharmakaeinnahme (``Pha``): [7, 19, 53, 70, 90, 108]
+
+    .. note::
+        This implementation assumes a score range of [1, 5].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        SFV120 score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
     """
-
     score_name = "SVF120"
     score_range = [1, 5]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -2209,8 +2396,9 @@ def svf_120(
 
     _assert_value_range(data, score_range)
 
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 120)
+        subscales = {
             "Bag": [10, 31, 50, 67, 88, 106],  # Bagatellisierung
             "Her": [17, 38, 52, 77, 97, 113],  # Herunterspielen
             "Schab": [5, 30, 43, 65, 104, 119],  # Schuldabwehr
@@ -2232,16 +2420,15 @@ def svf_120(
             "Agg": [33, 44, 61, 82, 93, 112],  # Aggression
             "Pha": [7, 19, 53, 70, 90, 108],  # Pharmakaeinnahme
         }
-    svf = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
 
-    svf = pd.DataFrame(svf, index=data.index)
+    svf_data = _compute_questionnaire_subscales(data, score_name, subscales)
+    svf = pd.DataFrame(svf_data, index=data.index)
 
-    names = ["Pos1", "Pos2", "Pos3", "Pos_Gesamt", "Neg_Gesamt"]
-    subscales = [
-        ("Bag", "Her", "Schab"),
-        ("Abl", "Ers", "Sebest", "Entsp"),
-        ("Sitkon", "Rekon", "Posi"),
-        (
+    meta_scales = {
+        "Pos1": ("Bag", "Her", "Schab"),
+        "Pos2": ("Abl", "Ers", "Sebest", "Entsp"),
+        "Pos3": ("Sitkon", "Rekon", "Posi"),
+        "Pos_Gesamt": (
             "Bag",
             "Her",
             "Schab",
@@ -2253,11 +2440,14 @@ def svf_120(
             "Rekon",
             "Posi",
         ),
-        ("Flu", "Soza", "Gedw", "Res", "Selmit", "Sesch"),
-    ]
+        "Neg_Gesamt": ("Flu", "Soza", "Gedw", "Res", "Selmit", "Sesch"),
+    }
 
-    for n, subsc in zip(names, subscales):
-        svf["{}_{}".format(score_name, n)] = svf[["{}_{}".format(score_name, s) for s in subsc]].mean(axis=1)
+    for name, scale_items in meta_scales.items():
+        if all(scale in subscales.keys() for scale in scale_items):
+            svf["{}_{}".format(score_name, name)] = svf[["{}_{}".format(score_name, s) for s in scale_items]].mean(
+                axis=1
+            )
 
     return svf
 
@@ -2265,12 +2455,83 @@ def svf_120(
 def svf_42(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Stressverarbeitungsfragebogen - 42 items"""
+    """Compute **Stressverarbeitungsfragebogen - 42 item version (SVF42)**.
 
+    The stress processing questionnaire enables the assessment of coping or processing measures in stressful
+    situations.  The SVF is not a singular test instrument, but rather an inventory of methods that relate to various
+    aspects of stress processing and coping and from which individual procedures can be selected depending on
+    the study objective/question.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Bagatellisierung (``Bag``): [7, 22]
+        * Herunterspielen (``Her``): [11, 35]
+        * Schuldabwehr (``Schab``): [2, 34]
+        * Ablenkung (``Abl``): [1, 32]
+        * Ersatzbefriedigung (``Ers``): [12, 42]
+        * Selbstbestätigung (``Sebest``): [19, 37]
+        * Entspannung (``Entsp``): [13, 26]
+        * Situationskontrolle (``Sitkon``): [4, 23]
+        * Reaktionskontrolle (``Rekon``): [17, 33]
+        * Positive Selbstinstruktion (``Posi``): [9, 24]
+        * Soziales Unterstützungsbedürfnis (``Sozube``): [14, 27]
+        * Vermeidung (``Verm``): [6, 30]
+        * Flucht (``Flu``): [16, 40]
+        * Soziale Abkapselung (``Soza``): [20, 29]
+        * Gedankliche Weiterbeschäftigung (``Gedw``): [10, 25]
+        * Resignation (``Res``): [38, 15]
+        * Hilflosigkeit (``Hilf``): [18, 28]
+        * Selbstbemitleidung (``Selmit``): [8, 31]
+        * Selbstbeschuldigung (``Sesch``): [21, 36]
+        * Aggression (``Agg``): [3, 39]
+        * Pharmakaeinnahme (``Pha``): [5, 41]
+
+    .. note::
+        This implementation assumes a score range of [1, 5].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        SFV120 score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    """
     score_name = "SVF42"
     score_range = [1, 5]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -2278,8 +2539,9 @@ def svf_42(
 
     _assert_value_range(data, score_range)
 
-    if idxs is None:
-        idxs = {
+    if subscales is None:
+        _assert_num_columns(data, 42)
+        subscales = {
             "Bag": [7, 22],  # Bagatellisierung
             "Her": [11, 35],  # Herunterspielen
             "Schab": [2, 34],  # Schuldabwehr
@@ -2302,32 +2564,107 @@ def svf_42(
             "Agg": [3, 39],  # Aggression
             "Pha": [5, 41],  # Pharmakaeinnahme
         }
-    svf = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
 
-    svf = pd.DataFrame(svf, index=data.index)
+    svf_data = _compute_questionnaire_subscales(data, score_name, subscales)
+    svf_data = pd.DataFrame(svf_data, index=data.index)
 
-    names = ["Denial", "Distraction", "Stressordevaluation"]
-    subscales = [
-        ("Flu", "Verm", "Soza"),
-        ("Ers", "Entsp", "Sozube"),
-        ("Bag", "Her", "Posi"),
-    ]
+    meta_scales = {
+        "Denial": ["Flu", "Verm", "Soza"],
+        "Distraction": ["Ers", "Entsp", "Sozube"],
+        "Stressordevaluation": ["Bag", "Her", "Posi"],
+    }
 
-    for n, subsc in zip(names, subscales):
-        svf["{}_{}".format(score_name, n)] = svf[["{}_{}".format(score_name, s) for s in subsc]].mean(axis=1)
+    for name, scale_items in meta_scales.items():
+        if all(scale in subscales.keys() for scale in scale_items):
+            svf_data["{}_{}".format(score_name, name)] = svf_data[
+                ["{}_{}".format(score_name, s) for s in scale_items]
+            ].mean(axis=1)
 
-    return svf
+    return svf_data
 
 
 def brief_cope(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Brief-COPE - 28 items"""
+    """Compute **Brief-COPE (28 items)**.
 
+    The Brief-COPE is a 28 item self-report questionnaire designed to measure effective and ineffective ways to cope
+    with a stressful life event. "Coping" is defined broadly as an effort used to minimize distress associated with
+    negative life experiences. The scale is often used in health-care settings to ascertain how patients are
+    responding to a serious diagnosis. It can be used to measure how someone is coping with a wide range of
+    adversity, including cancer diagnosis, heart failure, injuries, assaults, natural disasters and financial stress.
+    The scale can determine someone’s primary coping styles as either Approach Coping, or Avoidant Coping.
+    Higher scores indicate better coping capabilities.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``SelfDistraction``: [1, 19]
+        * ``ActiveCoping``: [2, 7]
+        * ``Denial``: [3, 8]
+        * ``SubstanceUse``: [4, 11]
+        * ``EmotionalSupport``: [5, 15]
+        * ``InstrumentalSupport``: [10, 23]
+        * ``BehavioralDisengagement``: [6, 16]
+        * ``Venting``: [9, 21]
+        * ``PosReframing``: [12, 17]
+        * ``Planning``: [14, 25]
+        * ``Humor``: [18, 28]
+        * ``Acceptance``: [20, 24]
+        * ``Religion``: [22, 27]
+        * ``SelfBlame``: [13, 26]
+
+    .. note::
+        This implementation assumes a score range of [1, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        Brief-COPE score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Carver, C. S. (1997). You want to measure coping but your protocol’too long: Consider the brief cope.
+    *International journal of behavioral medicine*, 4(1), 92-100.
+
+    """
     score_name = "BriefCope"
     score_range = [1, 4]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -2335,37 +2672,97 @@ def brief_cope(
 
     _assert_value_range(data, score_range)
 
-    if idxs is None:
-        idxs = {
-            "Self_Distraction": [1, 19],  # Ablenkung
-            "Active_Coping": [2, 7],  # Aktive Bewältigung
+    if subscales is None:
+        _assert_num_columns(data, 28)
+        subscales = {
+            "SelfDistraction": [1, 19],  # Ablenkung
+            "ActiveCoping": [2, 7],  # Aktive Bewältigung
             "Denial": [3, 8],  # Verleugnung
-            "Substance_Use": [4, 11],  # Alkohol/Drogen
-            "Emotional_Support": [5, 15],  # Emotionale Unterstützung
-            "Instrumental_Support": [10, 23],  # Instrumentelle Unterstützung
-            "Behavioral_Disengagement": [6, 16],  # Verhaltensrückzug
+            "SubstanceUse": [4, 11],  # Alkohol/Drogen
+            "EmotionalSupport": [5, 15],  # Emotionale Unterstützung
+            "InstrumentalSupport": [10, 23],  # Instrumentelle Unterstützung
+            "BehavioralDisengagement": [6, 16],  # Verhaltensrückzug
             "Venting": [9, 21],  # Ausleben von Emotionen
-            "Pos_Reframing": [12, 17],  # Positive Umdeutung
+            "PosReframing": [12, 17],  # Positive Umdeutung
             "Planning": [14, 25],  # Planung
             "Humor": [18, 28],  # Humor
             "Acceptance": [20, 24],  # Akzeptanz
             "Religion": [22, 27],  # Religion
-            "Self_Blame": [13, 26],  # Selbstbeschuldigung
+            "SelfBlame": [13, 26],  # Selbstbeschuldigung
         }
-    cope = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
 
-    return pd.DataFrame(cope, index=data.index)
+    cope_data = _compute_questionnaire_subscales(data, score_name, subscales)
+
+    return pd.DataFrame(cope_data, index=data.index)
 
 
 def bfi_k(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Big Five Inventory - Kurzversion"""
+    """Compute **Big Five Inventory (short version) (BFI-K)**.
 
-    score_name = "BFI-K"
+    The BFI measures an individual on the Big Five Factors (dimensions) of personality (Goldberg, 1993).
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``Extraversion`` (**E**): [1, 6, 11, 16]
+        * ``Agreeableness`` (**A**): [2, 7, 12, 17]
+        * ``Conscientiousness`` (**C**): [3, 8, 13, 18]
+        * ``Neuroticism`` (**N**): [4, 9, 14, 19]
+        * ``Openness`` (**O**): [5, 10, 15, 20, 21]
+
+
+    .. note::
+        This implementation assumes a score range of [1, 5].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        BFI_K score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Rammstedt, B., & John, O. P. (2005). Kurzversion des big five inventory (BFI-K). *Diagnostica*, 51(4), 195-206.
+
+    """
+    score_name = "BFI_K"
     score_range = [1, 5]
+
+    # create copy of data
+    data = data.copy()
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -2373,30 +2770,93 @@ def bfi_k(
 
     _assert_value_range(data, score_range)
 
-    # invert items 1, 2, 8, 9, 11, 12, 17, 21
-    data = invert(data, cols=to_idx([1, 2, 8, 9, 11, 12, 17, 21]), score_range=score_range)
-
-    if idxs is None:
-        idxs = {
-            "E": [1, 6, 11, 16],  # Extraversion
-            "V": [2, 7, 12, 17],  # Verträglichkeit
-            "G": [3, 8, 13, 18],  # Gewissenhaftigkeit
-            "N": [4, 9, 14, 19],  # Neurotizismus
-            "O": [5, 10, 15, 20, 21],  # Offenheit für neue Erfahrungen
+    if subscales is None:
+        _assert_num_columns(data, 21)
+        subscales = {
+            "E": [1, 6, 11, 16],  # Extraversion (Extraversion vs. introversion)
+            "A": [2, 7, 12, 17],  # Verträglichkeit (Agreeableness vs. antagonism)
+            "C": [3, 8, 13, 18],  # Gewissenhaftigkeit (Conscientiousness vs. lack of direction)
+            "N": [4, 9, 14, 19],  # Neurotizismus (Neuroticism vs. emotional stability)
+            "O": [5, 10, 15, 20, 21],  # Offenheit für neue Erfahrungen (Openness vs. closedness to experience)
         }
 
-    bfik = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs}
+    # Reverse scores 1, 2, 8, 9, 11, 12, 17, 21
+    data = _invert_subscales(
+        data,
+        subscales=subscales,
+        idx_dict={"E": [1, 11], "A": [2, 12, 17], "C": [8], "N": [9], "O": [21]},
+        score_range=score_range,
+    )
 
-    return pd.DataFrame(bfik, index=data.index)
+    # BFI is a mean score, not a sum score!
+    bfi_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
+
+    return pd.DataFrame(bfi_data, index=data.index)
 
 
 def rsq(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Response Styles Questionnaire"""
+    """Compute **Response Styles Questionnaire (RSQ)**.
 
+    The RSQ is a questionnaire that measures cognitive and behavioral coping styles in dealing with depressed or
+    dysphoric mood and was developed based on Susan Nolen-Hoeksema's Response Styles Theory.
+    The theory postulates that rumination about symptoms and negative aspects of self (rumination) prolongs or
+    exacerbates depressed moods, whereas cognitive and behavioral distraction (distraction) shortens or
+    attenuates them.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * ``SymptomRumination``: [2, 3, 4, 8, 11, 12, 13, 25]
+        * ``SelfRumination``: [1, 19, 26, 28, 30, 31, 32]
+        * ``Distraction``: [5, 6, 7, 9, 14, 16, 18, 20]
+
+    .. note::
+        This implementation assumes a score range of [1, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        RSQ score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+    Nolen-Hoeksema, S., Morrow, J., & Fredrickson, B. L. (1993). Response styles and the duration of episodes of
+    depressed mood. *Journal of abnormal psychology*, 102(1), 20.
+
+    """
     score_name = "RSQ"
     score_range = [1, 4]
 
@@ -2406,29 +2866,83 @@ def rsq(
 
     _assert_value_range(data, score_range)
 
-    if idxs is None:
-        idxs = {
-            "SympRum": [2, 3, 4, 8, 11, 12, 13, 25],  # Symptomfokussierte Rumination
-            "SelbstRum": [1, 19, 26, 28, 30, 31, 32],  # Selbstfokussierte Rumination
-            "Distract": [5, 6, 7, 9, 14, 16, 18, 20],  # Distraktion
+    if subscales is None:
+        _assert_num_columns(data, 32)
+        subscales = {
+            "SymptomRumination": [2, 3, 4, 8, 11, 12, 13, 25],  # Symptombezogene Rumination
+            "SelfRumination": [1, 19, 26, 28, 30, 31, 32],  # Selbstfokussierte Rumination
+            "Distraction": [5, 6, 7, 9, 14, 16, 18, 20],  # Distraktion
         }
 
-    rsq_data = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].mean(axis=1) for key in idxs}
+    # RSQ is a mean score, not a sum score!
+    rsq_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
     rsq_data = pd.DataFrame(rsq_data, index=data.index)
 
-    # invert items 5, 6, 7, 9, 14, 16, 18, 20 to add "Distract" subscale to total score
-    rsq_data["{}_{}".format(score_name, "Distract")] = (
-        invert(data, cols=to_idx(idxs["Distract"]), score_range=score_range, inplace=False)
-        .iloc[:, to_idx(idxs["Distract"])]
-        .mean(axis=1)
-    )
-    rsq_data[score_name] = pd.DataFrame(rsq_data, index=data.index).mean(axis=1)
+    if len(data.columns) == 32:
+        # compute total score if all columns are present
+        # invert "Distraction" subscale and then add it to total score
+        rsq_data["{}_{}".format(score_name, "Total")] = (
+            (score_range[1] - rsq_data["{}_{}".format(score_name, "Distraction")] + score_range[0])
+            + rsq_data["{}_{}".format(score_name, "SymptomRumination")]
+            + rsq_data["{}_{}".format(score_name, "SelfRumination")]
+        ).mean(axis=1)
+
     return rsq_data
 
 
-def sss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Subjektiver Sozialer Status"""
+def sss(
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+) -> pd.DataFrame:
+    """Compute **Subjective Social Status (SSS)**.
 
+    The MacArthur Scale of Subjective Social Status (MacArthur SSS Scale) is a single-item measure that assesses a
+    person's perceived rank relative to others in their group.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Socioeconomic Status Ladder (``SocioeconomicStatus``): [1]
+        * Community Ladder (``Community``): [2]
+
+    .. note::
+        This implementation assumes a score range of [0, 10].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        SSS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+    """
     score_name = "SSS"
     score_range = [1, 10]
 
@@ -2438,16 +2952,91 @@ def sss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     _assert_value_range(data, score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    if subscales is None:
+        _assert_num_columns(data, 2)
+        subscales = {
+            "SocioeconomicStatus": [1],
+            "Community": [2],
+        }
+
+    sss_data = _compute_questionnaire_subscales(data, score_name, subscales)
+
+    return pd.DataFrame(sss_data, columns=[score_name], index=data.index)
 
 
 def fkk(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    idxs: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Fragebogen zur Kompetenz- und Kontrollüberzeugungen"""
+    """Compute **Fragebogen zur Kompetenz- und Kontrollüberzeugungen (FKK)**.
 
+    The questionnaire on competence and control beliefs can be used to assess
+        (1) the generalized self-concept of own abilities,
+        (2) internality in generalized control beliefs,
+        (3) socially conditioned externality, and
+        (4) fatalistic externality in adolescents and adults.
+    In addition to profile evaluations according to these four primary scales, evaluations according to secondary and
+    tertiary scales are possible (generalized self-efficacy; generalized externality;
+    internality versus externality in control beliefs).
+
+    It consists of the primary subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Selbstkonzept eigener Fähigkeiten (``SK``): [4, 8, 12, 24, 16, 20, 28, 32]
+        * Internalität (``I``): [1, 5, 6, 11, 23, 25, 27, 30]
+        * Sozial bedingte Externalität (``P``) (P = powerful others control orientation):
+            [3, 10, 14, 17, 19, 22, 26, 29]
+        * Fatalistische Externalität (``C``) (C = chance control orientation): [2, 7, 9, 13, 15, 18, 21, 31]
+
+    Further, the following secondary subscales can be computed:
+        * Selbstwirksamkeit / generalisierte Selbstwirksamkeitsüberzeugung (``SKI``): ``SK`` + ``I``
+        * Generalisierte Externalität in Kontrollüberzeugungen (``PC``): ``P`` + ``C``
+
+    Further, the following tertiary subscale can be computed:
+        * Generalisierte Internalität vs. Externalität in Kontrollüberzeugungen (``SKI_PC``): ``SKI`` - ``PC``
+
+    .. note::
+        This implementation assumes a score range of [1, 6].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        TICS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns does not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    References
+    ----------
+
+    """
     score_name = "FKK"
     score_range = [1, 6]
 
@@ -2457,25 +3046,38 @@ def fkk(
 
     _assert_value_range(data, score_range)
 
-    # invert items 4, 8, 12, 24
-    data = invert(data, cols=to_idx([4, 8, 12, 24]), score_range=score_range)
-
-    if idxs is None:
+    if subscales is None:
+        _assert_num_columns(data, 32)
         # Primärskalenwerte
-        idxs = {
+        subscales = {
             "SK": [4, 8, 12, 24, 16, 20, 28, 32],
             "I": [1, 5, 6, 11, 23, 25, 27, 30],
             "P": [3, 10, 14, 17, 19, 22, 26, 29],
             "C": [2, 7, 9, 13, 15, 18, 21, 31],
         }
-    fkk_data = {"{}_{}".format(score_name, key): data.iloc[:, to_idx(idxs[key])].sum(axis=1) for key in idxs}
+
+    # Reverse scores 4, 8, 12, 24
+    data = _invert_subscales(data, subscales=subscales, idx_dict={"SK": [4, 8, 12, 24]}, score_range=score_range)
+
+    fkk_data = _compute_questionnaire_subscales(data, score_name, subscales)
     fkk_data = pd.DataFrame(fkk_data, index=data.index)
 
     # Sekundärskalenwerte
-    fkk_data[score_name + "_SKI"] = fkk_data[score_name + "_SK"] + fkk_data[score_name + "_I"]
-    fkk_data[score_name + "_PC"] = fkk_data[score_name + "_P"] + fkk_data[score_name + "_C"]
+    if all("{}_{}".format(score_name, s) in fkk_data.columns for s in ["SK", "I"]):
+        fkk_data["{}_{}".format(score_name, "SKI")] = (
+            fkk_data["{}_{}".format(score_name, "SK")] + fkk_data["{}_{}".format(score_name, "I")]
+        )
+
+    if all("{}_{}".format(score_name, s) in fkk_data.columns for s in ["P", "C"]):
+        fkk_data["{}_{}".format(score_name, "PC")] = (
+            fkk_data["{}_{}".format(score_name, "P")] + fkk_data["{}_{}".format(score_name, "C")]
+        )
+
     # Tertiärskalenwerte
-    fkk_data[score_name + "_SKI_PC"] = fkk_data[score_name + "_SKI"] - fkk_data[score_name + "_PC"]
+    if all("{}_{}".format(score_name, s) in fkk_data.columns for s in ["SKI", "PC"]):
+        fkk_data["{}_{}".format(score_name, "SKI_PC")] = (
+            fkk_data["{}_{}".format(score_name, "SKI")] - fkk_data["{}_{}".format(score_name, "PC")]
+        )
 
     return fkk_data
 
