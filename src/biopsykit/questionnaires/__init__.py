@@ -41,7 +41,6 @@ __all__ = [
     "state_rumination",
     "svf_42",
     "svf_120",
-    "thoughts_questionnaire",
     "tics_l",
     "tics_s",
     "trait_rumination",
