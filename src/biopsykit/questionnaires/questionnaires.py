@@ -670,8 +670,10 @@ def hads(
         }
 
     # Reverse scores 2, 4, 6, 7, 12, 14
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
     data = _invert_subscales(
-        data, subscales=subscales, idx_dict={"Anxiety": [7], "Depression": [2, 4, 6, 12, 14]}, score_range=score_range
+        data, subscales=subscales, idx_dict={"Anxiety": [3], "Depression": [0, 1, 2, 5, 6]}, score_range=score_range
     )
 
     hads_data = _compute_questionnaire_subscales(data, score_name, subscales)
@@ -762,7 +764,9 @@ def type_d_scale(
         }
 
     # Reverse scores 1, 3
-    data = _invert_subscales(data, subscales=subscales, idx_dict={"SocialInhibition": [1, 3]}, score_range=score_range)
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
+    data = _invert_subscales(data, subscales=subscales, idx_dict={"SocialInhibition": [0, 1]}, score_range=score_range)
 
     ds_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
@@ -922,10 +926,12 @@ def scs(
             "OverIdentified": [2, 6, 20, 24],
         }
     # Reverse scores 1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
     data = _invert_subscales(
         data,
         subscales=subscales,
-        idx_dict={"SelfJudgment": [1, 8, 11, 16, 21], "Isolation": [4, 13, 18, 25], "OverIdentified": [2, 6, 20, 24]},
+        idx_dict={"SelfJudgment": [0, 1, 2, 3, 4], "Isolation": [0, 1, 2, 3], "OverIdentified": [0, 1, 2, 3]},
         score_range=score_range,
     )
 
@@ -1179,8 +1185,10 @@ def rmidi(
         }
 
     # Re-reverse scores 19, 24
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
     data = _invert_subscales(
-        data, subscales=subscales, idx_dict={"Neuroticism": [19], "Conscientiousness": [24]}, score_range=score_range
+        data, subscales=subscales, idx_dict={"Neuroticism": [3], "Conscientiousness": [3]}, score_range=score_range
     )
     rmidi_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
@@ -1351,12 +1359,14 @@ def ctq(
         }
 
     # reverse scores 2, 5, 7, 13, 19, 26, 28
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
     data = _invert_subscales(
         data,
         subscales=subscales,
         idx_dict={
-            "PhysicalNeglect": [2, 26],
-            "EmotionalNeglect": [5, 7, 13, 19, 28],
+            "PhysicalNeglect": [1, 4],
+            "EmotionalNeglect": [0, 1, 2, 3, 4],
         },
         score_range=score_range,
     )
@@ -1597,16 +1607,18 @@ def besaa(
     if subscales is None:
         _assert_num_columns(data, 23)
         subscales = {
-            "Appearance": [1, 6, 9, 7, 11, 13, 15, 17, 21, 23],
+            "Appearance": [1, 6, 7, 9, 11, 13, 15, 17, 21, 23],
             "Weight": [3, 4, 8, 10, 16, 18, 19, 22],
             "Attribution": [2, 5, 12, 14, 20],
         }
 
     # reverse scores 4, 7, 9, 11, 13, 17, 18, 19, 21
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
     data = _invert_subscales(
         data,
         subscales=subscales,
-        idx_dict={"Appearance": [7, 17, 21], "Weight": [4, 18, 19], "Attribution": [9, 11, 13]},
+        idx_dict={"Appearance": [2, 3, 4, 5, 7, 8], "Weight": [1, 5, 6]},
         score_range=score_range,
     )
 
@@ -1793,10 +1805,12 @@ def pasa(
         }
 
     # reverse scores 1, 6, 7, 9, 10
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
     data = _invert_subscales(
         data,
         subscales=subscales,
-        idx_dict={"Threat": [1, 9], "Challenge": [6, 10], "SelfConcept": [7]},
+        idx_dict={"Threat": [0, 1], "Challenge": [0, 1], "SelfConcept": [0]},
         score_range=score_range,
     )
 
@@ -2779,10 +2793,12 @@ def bfi_k(
         }
 
     # Reverse scores 1, 2, 8, 9, 11, 12, 17, 21
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
     data = _invert_subscales(
         data,
         subscales=subscales,
-        idx_dict={"E": [1, 11], "A": [2, 12, 17], "C": [8], "N": [9], "O": [21]},
+        idx_dict={"E": [0, 2], "A": [0, 2, 3], "C": [1], "N": [1], "O": [4]},
         score_range=score_range,
     )
 
@@ -3054,14 +3070,16 @@ def fkk(
         _assert_num_columns(data, 32)
         # Primärskalenwerte
         subscales = {
-            "SK": [4, 8, 12, 24, 16, 20, 28, 32],
+            "SK": [4, 8, 12, 16, 20, 24, 28, 32],
             "I": [1, 5, 6, 11, 23, 25, 27, 30],
             "P": [3, 10, 14, 17, 19, 22, 26, 29],
             "C": [2, 7, 9, 13, 15, 18, 21, 31],
         }
 
     # Reverse scores 4, 8, 12, 24
-    data = _invert_subscales(data, subscales=subscales, idx_dict={"SK": [4, 8, 12, 24]}, score_range=score_range)
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
+    data = _invert_subscales(data, subscales=subscales, idx_dict={"SK": [0, 1, 2, 5]}, score_range=score_range)
 
     fkk_data = _compute_questionnaire_subscales(data, score_name, subscales)
     fkk_data = pd.DataFrame(fkk_data, index=data.index)
@@ -3169,9 +3187,11 @@ def bidr(
         }
 
     # invert items 2, 4, 5, 7, 9, 10, 11, 12, 14, 15, 17, 18, 20 => invert all and re-invert the others
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
     data = invert(data, score_range=score_range)
     data = _invert_subscales(
-        data, subscales=subscales, idx_dict={"ST": [1, 3, 6, 8], "FT": [13, 16, 19]}, score_range=score_range
+        data, subscales=subscales, idx_dict={"ST": [0, 2, 3, 5], "FT": [2, 5, 8]}, score_range=score_range
     )
     bidr_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
@@ -3629,7 +3649,9 @@ def mlq(
         }
 
     # Reverse scores 9
-    data = _invert_subscales(data, subscales=subscales, idx_dict={"PresenceMeaning": [9]}, score_range=score_range)
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
+    data = _invert_subscales(data, subscales=subscales, idx_dict={"PresenceMeaning": [4]}, score_range=score_range)
 
     # MLQ is a mean score, not a sum score!
     mlq_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
@@ -3776,7 +3798,9 @@ def pfb(
         }
 
     # invert item 19
-    data = _invert_subscales(data, subscales=subscales, idx_dict={"Streitverhalten": [19]}, score_range=score_range)
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
+    data = _invert_subscales(data, subscales=subscales, idx_dict={"Streitverhalten": [5]}, score_range=score_range)
 
     pfb_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
@@ -3914,13 +3938,15 @@ def mdbf(
         }
 
     # Reverse scores 3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
     data = _invert_subscales(
         data,
         subscales=subscales,
         idx_dict={
-            "GoodBad": [4, 11, 16, 18],
-            "AwakeTired": [5, 7, 13, 23],
-            "CalmNervous": [3, 9, 19, 22],
+            "GoodBad": [1, 3, 5, 6],
+            "AwakeTired": [1, 2, 4, 7],
+            "CalmNervous": [0, 2, 5, 6],
         },
         score_range=score_range,
     )

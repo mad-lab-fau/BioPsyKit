@@ -96,9 +96,9 @@ def _invert_subscales(
     idx_dict: Dict[str, Sequence[int]],
     score_range: Sequence[int],
 ):
-    for subscale, idxs in idx_dict.items():
-        if subscale in subscales:
-            data = invert(data, cols=to_idx(idxs), score_range=score_range)
+    for scale_name, idxs in idx_dict.items():
+        if scale_name in subscales:
+            data = invert(data, cols=np.array(subscales[scale_name])[idxs], score_range=score_range)
 
     return data
 
