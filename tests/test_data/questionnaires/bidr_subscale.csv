@@ -1,0 +1,7 @@
+﻿subject,condition,BIDR_11,BIDR_12,BIDR_13,BIDR_14,BIDR_15,BIDR_16,BIDR_17,BIDR_18,BIDR_19,BIDR_20
+Vp01,Control,5,3,1,3,5,4,7,7,5,7
+Vp02,Intervention,6,5,1,2,4,5,6,6,3,6
+Vp03,Control,6,3,2,3,6,2,7,6,4,7
+Vp04,Intervention,5,2,1,1,4,7,6,5,6,6
+Vp05,Control,3,2,5,2,1,6,6,6,6,5
+Vp06,Intervention,7,5,2,4,5,4,6,7,6,7
