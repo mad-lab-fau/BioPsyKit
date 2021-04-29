@@ -199,7 +199,9 @@ def _assert_has_index_levels(
 
 
 def _assert_has_columns(
-    df: pd.DataFrame, columns_sets: Sequence[Union[List[_Hashable], List[str]]], raise_exception: Optional[bool] = True
+    df: pd.DataFrame,
+    columns_sets: Sequence[Union[List[_Hashable], List[str], pd.Index]],
+    raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
     """Check if the dataframe has at least all columns sets.
 
@@ -394,7 +396,7 @@ def _assert_num_columns(
 
     Raises
     ------
-    :exc:`~biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.exceptions.ValidationError`
         if ``raise_exception`` is ``True`` and ``data`` does not have the required number of columns
 
     """
@@ -403,7 +405,7 @@ def _assert_num_columns(
 
     if not any(len(data.columns) == num for num in num_cols):
         if raise_exception:
-            raise ValueRangeError(
+            raise ValidationError(
                 "The dataframe does not have the required number of columns. "
                 "Expected were any of {} columns, but has {} columns.".format(num_cols, len(data.columns))
             )

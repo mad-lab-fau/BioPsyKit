@@ -29,7 +29,7 @@ from biopsykit.questionnaires.utils import (
     _compute_questionnaire_subscales,
     _invert_subscales,
 )
-from biopsykit.utils._datatype_validation_helper import _assert_value_range, _assert_num_columns
+from biopsykit.utils._datatype_validation_helper import _assert_value_range, _assert_num_columns, _assert_has_columns
 
 
 def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
@@ -463,6 +463,7 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 10)
@@ -525,6 +526,7 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 20)
@@ -1602,8 +1604,6 @@ def besaa(
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 23)
         subscales = {
@@ -1611,6 +1611,8 @@ def besaa(
             "Weight": [3, 4, 8, 10, 16, 18, 19, 22],
             "Attribution": [2, 5, 12, 14, 20],
         }
+
+    _assert_value_range(data, score_range)
 
     # reverse scores 4, 7, 9, 11, 13, 17, 18, 19, 21
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -1624,7 +1626,6 @@ def besaa(
 
     # BESAA is a mean, not a sum score!
     besaa_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
-
     return pd.DataFrame(besaa_data, index=data.index)
 
 
@@ -2126,24 +2127,26 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 80)
     _assert_value_range(data, score_range)
 
     # split into 8 subitems, consisting of 10 questions each
     items = np.split(data, 8, axis=1)
-    abi_raw = pd.concat(items, keys=np.arange(1, len(items) + 1), axis=1)
+    abi_raw = pd.concat(items, keys=[str(i) for i in range(1, len(items) + 1)], axis=1)
     idx_kov = {
         # ABI-P
-        2: [2, 3, 7, 8, 9],
-        4: [1, 4, 5, 8, 10],
-        6: [2, 3, 5, 6, 7],
-        8: [2, 4, 6, 8, 10],
+        "2": [2, 3, 7, 8, 9],
+        "4": [1, 4, 5, 8, 10],
+        "6": [2, 3, 5, 6, 7],
+        "8": [2, 4, 6, 8, 10],
         # ABI-E
-        1: [2, 3, 6, 8, 10],
-        3: [2, 4, 5, 7, 9],
-        5: [3, 4, 5, 9, 10],
-        7: [1, 5, 6, 7, 9],
+        "1": [2, 3, 6, 8, 10],
+        "3": [2, 4, 5, 7, 9],
+        "5": [3, 4, 5, 9, 10],
+        "7": [1, 5, 6, 7, 9],
     }
     idx_kov = {key: np.array(idx_kov[key]) for key in idx_kov}
     idx_vig = {key: np.setdiff1d(np.arange(1, 11), np.array(idx_kov[key]), assume_unique=True) for key in idx_kov}
@@ -2151,18 +2154,18 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         pd.concat(
             [abi_raw.loc[:, key].iloc[:, idx[key] - 1] for key in idx],
             axis=1,
-            keys=abi_raw.columns.unique(level=0),
+            keys=idx_kov.keys(),
         )
         for idx in [idx_kov, idx_vig]
     ]
 
     abi_data = {
-        score_name + "_KOV-T": abi_kov.sum(axis=1),
-        score_name + "_VIG-T": abi_vig.sum(axis=1),
-        score_name + "_KOV-P": abi_kov.loc[:, [2, 4, 6, 8]].sum(axis=1),
-        score_name + "_VIG-P": abi_vig.loc[:, [2, 4, 6, 8]].sum(axis=1),
-        score_name + "_KOV-E": abi_kov.loc[:, [1, 3, 5, 7]].sum(axis=1),
-        score_name + "_VIG-E": abi_vig.loc[:, [1, 3, 5, 7]].sum(axis=1),
+        score_name + "_KOV_T": abi_kov.sum(axis=1),
+        score_name + "_VIG_T": abi_vig.sum(axis=1),
+        score_name + "_KOV_P": abi_kov.loc[:, ["2", "4", "6", "8"]].sum(axis=1),
+        score_name + "_VIG_P": abi_vig.loc[:, ["2", "4", "6", "8"]].sum(axis=1),
+        score_name + "_KOV_E": abi_kov.loc[:, ["1", "3", "5", "7"]].sum(axis=1),
+        score_name + "_VIG_E": abi_vig.loc[:, ["1", "3", "5", "7"]].sum(axis=1),
     }
 
     return pd.DataFrame(abi_data, index=data.index)
@@ -2253,6 +2256,7 @@ def stadi(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -2404,6 +2408,7 @@ def svf_120(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -2547,6 +2552,7 @@ def svf_42(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -2600,7 +2606,7 @@ def brief_cope(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Brief-COPE (28 items) Questionnaire**.
+    """Compute the **Brief-COPE (28 items) Questionnaire (Brief_COPE)**.
 
     The Brief-COPE is a 28 item self-report questionnaire designed to measure effective and ineffective ways to cope
     with a stressful life event. "Coping" is defined broadly as an effort used to minimize distress associated with
@@ -2653,7 +2659,7 @@ def brief_cope(
     Returns
     -------
     :class:`~pandas.DataFrame`
-        Brief-COPE score
+        Brief_COPE score
 
 
     Raises
@@ -2672,7 +2678,7 @@ def brief_cope(
     *International journal of behavioral medicine*, 4(1), 92-100.
 
     """
-    score_name = "BriefCope"
+    score_name = "Brief_COPE"
     score_range = [1, 4]
 
     # create copy of data
@@ -2680,9 +2686,8 @@ def brief_cope(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 28)
@@ -2702,6 +2707,8 @@ def brief_cope(
             "Religion": [22, 27],  # Religion
             "SelfBlame": [13, 26],  # Selbstbeschuldigung
         }
+
+    _assert_value_range(data, score_range)
 
     cope_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
@@ -2778,9 +2785,8 @@ def bfi_k(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 21)
@@ -2791,6 +2797,8 @@ def bfi_k(
             "N": [4, 9, 14, 19],  # Neurotizismus (Neuroticism vs. emotional stability)
             "O": [5, 10, 15, 20, 21],  # Offenheit für neue Erfahrungen (Openness vs. closedness to experience)
         }
+
+    _assert_value_range(data, score_range)
 
     # Reverse scores 1, 2, 8, 9, 11, 12, 17, 21
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -2879,6 +2887,7 @@ def rsq(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -2966,6 +2975,7 @@ def sss(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -3062,6 +3072,7 @@ def fkk(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -3175,23 +3186,26 @@ def bidr(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 20)
         subscales = {
-            "ST": np.arange(1, 11),  # Selbsttäuschung
-            "FT": np.arange(11, 21),  # Fremdtäuschung
+            "ST": list(range(1, 11)),  # Selbsttäuschung
+            "FT": list(range(11, 21)),  # Fremdtäuschung
         }
 
-    # invert items 2, 4, 5, 7, 9, 10, 11, 12, 14, 15, 17, 18, 20 => invert all and re-invert the others
+    _assert_value_range(data, score_range)
+
+    # invert items 2, 4, 5, 7, 9, 10, 11, 12, 14, 15, 17, 18, 20
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
     # by the subscale dict)
-    data = invert(data, score_range=score_range)
     data = _invert_subscales(
-        data, subscales=subscales, idx_dict={"ST": [0, 2, 3, 5], "FT": [2, 5, 8]}, score_range=score_range
+        data,
+        subscales=subscales,
+        idx_dict={"ST": [1, 3, 4, 6, 8, 9], "FT": [0, 1, 3, 4, 6, 7, 9]},
+        score_range=score_range,
     )
     bidr_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
@@ -3265,6 +3279,7 @@ def kkg(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -3361,6 +3376,7 @@ def fee(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -3455,6 +3471,7 @@ def mbi_gs(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -3550,6 +3567,7 @@ def mbi_gss(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -3637,6 +3655,7 @@ def mlq(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -3712,6 +3731,7 @@ def ceca(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     ceca_data = [
@@ -3784,6 +3804,7 @@ def pfb(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -3846,6 +3867,7 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 10)
@@ -3925,6 +3947,7 @@ def mdbf(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -4016,6 +4039,7 @@ def meq(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     # some columns have scores from 1-5 => check them separately

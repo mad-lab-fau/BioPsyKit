@@ -72,22 +72,25 @@ def invert(
     score_range: Sequence[int],
     cols: Optional[Union[Sequence[int], Sequence[str]]] = None,
     inplace: Optional[bool] = False,
-) -> Union[pd.DataFrame, pd.Series, None]:
-    if inplace:
-        if isinstance(data, pd.DataFrame):
-            if cols is not None:
-                if isinstance(cols[0], str):
-                    data.loc[:, cols] = score_range[1] - data.loc[:, cols] + score_range[0]
-                else:
-                    data.iloc[:, cols] = score_range[1] - data.iloc[:, cols] + score_range[0]
+) -> Optional[Union[pd.DataFrame, pd.Series]]:
+    if not inplace:
+        data = data.copy()
+
+    if isinstance(data, pd.DataFrame):
+        if cols is not None:
+            if isinstance(cols[0], str):
+                data.loc[:, cols] = score_range[1] - data.loc[:, cols] + score_range[0]
             else:
-                data.iloc[:, :] = score_range[1] - data.iloc[:, :] + score_range[0]
-        elif isinstance(data, pd.Series):
-            data.iloc[:] = score_range[1] - data.iloc[:] + score_range[0]
+                data.iloc[:, cols] = score_range[1] - data.iloc[:, cols] + score_range[0]
         else:
-            raise ValueError("Only pd.DataFrame and pd.Series supported!")
+            data.iloc[:, :] = score_range[1] - data.iloc[:, :] + score_range[0]
+    elif isinstance(data, pd.Series):
+        data.iloc[:] = score_range[1] - data.iloc[:] + score_range[0]
     else:
-        return score_range[1] - data + score_range[0]
+        raise ValueError("Only pd.DataFrame and pd.Series supported!")
+
+    if not inplace:
+        return data
 
 
 def _invert_subscales(
@@ -98,7 +101,7 @@ def _invert_subscales(
 ):
     for scale_name, idxs in idx_dict.items():
         if scale_name in subscales:
-            data = invert(data, cols=np.array(subscales[scale_name])[idxs], score_range=score_range)
+            data = invert(data, cols=to_idx(np.array(subscales[scale_name])[idxs]), score_range=score_range)
 
     return data
 
@@ -240,13 +243,13 @@ def _compute_questionnaire_subscales(
 ) -> Dict[str, pd.Series]:
     out = {}
     for key, items in subscales.items():
-        if all(isinstance(i, int) for i in items):
+        if all(np.issubdtype(type(i), np.integer) for i in items):
             # assume column indices, starting at 1 (-> convert to 0-indexed indices first)
             if agg_type == "sum":
                 score = data.iloc[:, to_idx(items)].sum(axis=1)
             else:
                 score = data.iloc[:, to_idx(items)].mean(axis=1)
-        elif all(isinstance(i, int) for i in items):
+        elif all(isinstance(i, str) for i in items):
             # assume column names
             if agg_type == "sum":
                 score = data.loc[:, items].sum(axis=1)
