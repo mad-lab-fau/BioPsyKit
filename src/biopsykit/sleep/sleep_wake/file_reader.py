@@ -37,7 +37,7 @@ def read_all_psg(file_path):
 
 
 
-def read_single_psg(file_path, number):
+def read_single_psg(file_path, mesaid):
     """
     Read in all the XML-files from the mesa-dataset
 
@@ -53,7 +53,7 @@ def read_single_psg(file_path, number):
     """
 
     try: #look if a dataset exists
-        psg = xml_reader(file_path + '\polysomnography/annotations-events-nsrr\mesa-sleep-' + "{:04d}".format(number) + '-nsrr.xml')
+        psg = xml_reader(file_path + '\polysomnography/annotations-events-nsrr\mesa-sleep-' + "{:04d}".format(mesaid) + '-nsrr.xml')
     except:
         raise ImportError("Dataset don't exist")
 
@@ -86,7 +86,7 @@ def read_all_actigraphy(file_path):
 
 
 
-def read_single_actigraphy(file_path,number):
+def read_single_actigraphy(file_path,mesaid):
     """
     Read in all the csv-files from the actigraphy mesa-dataset.
 
@@ -103,7 +103,7 @@ def read_single_actigraphy(file_path,number):
     """
 
     try:
-        actigraphy = pd.read_csv(file_path + '/actigraphy\mesa-sleep-'+ "{:04d}".format(number) + '.csv')
+        actigraphy = pd.read_csv(file_path + '/actigraphy\mesa-sleep-'+ "{:04d}".format(mesaid) + '.csv')
     except:
         raise ImportError("Dataset don't exist")
 

@@ -18,6 +18,11 @@ class Sadeh(_SleepWakeBase):
         Create an instance of the Sadeh Algorithm class for sleep/wake detection.
         """
 
+
+    def fit(self):
+        pass
+
+
     def predict(self, data: Union[pd.DataFrame, np.array]) -> Union[np.array, pd.DataFrame]:
         """
         Perform the sleep/wake score prediction.
@@ -30,7 +35,7 @@ class Sadeh(_SleepWakeBase):
         Returns
         -------
         np.array
-            predictions
+            predictions with sleep = True and wake = False
         """
         index = None
         if isinstance(data, pd.DataFrame):
@@ -52,25 +57,14 @@ class Sadeh(_SleepWakeBase):
         locAct = np.log(data + 1)[5:-5]
         score = 7.601 - 0.065 * mean - 0.056 * std - 0.0703 * locAct - 1.08 * nat
 
-        classification = score > 0
+        score[score >= 0] = 1
+        score[score < 0] = 0
+
+
 
         if index is not None:
-            classification = pd.DataFrame(classification, index=index, columns=["sleep_wake"])
+            score = pd.DataFrame(classification, index=index, columns=["sleep_wake"])
 
-        return classification
+        return score
 
-    # @staticmethod
-    # def _rolling_window(array, window, overlap):
-    #     """
-    #     Usage of numpy stride tricks to develop a rolling window method.
-    #
-    #     :param array: array of activity index values
-    #     :param window: window size of rolling window
-    #     :param overlap overlap of rolling window
-    #     """
-    #     window_step = window - overlap
-    #     new_shape = array.shape[:-1] + ((array.shape[-1] - overlap) // window_step, window)
-    #     new_strides = array.strides[:-1] + (window_step * array.strides[-1],) + array.strides[-1:]
-    #     overlap_matrix = as_strided(array, shape=new_shape, strides=new_strides)
-    #
-    #     return overlap_matrix
+
