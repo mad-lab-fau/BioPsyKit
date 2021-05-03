@@ -182,12 +182,124 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
+def tics_l(
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+) -> pd.DataFrame:
+    """Compute the **Trier Inventory for Chronic Stress (Long Version) (TICS_L)**.
+
+    The TICS assesses frequency of various types of stressful experiences in the past 3 months.
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+        * Work Overload: [50, 38, 44, 54, 17, 4, 27, 1]
+        * Social Overload: [39, 28, 49, 19, 7, 57]
+        * Excessive Demands at Work: [55, 24, 20, 35, 47, 3]
+        * Lack of Social Recognition: [31, 18, 46, 2]
+        * Work Discontent: [21, 53, 10, 48, 41, 13, 37, 5]
+        * Social Tension: [26, 15, 45, 52, 6, 33]
+        * Performance Pressure at Work: [23, 43, 32, 22, 12, 14, 8, 40, 30]
+        * Performance Pressure in Social Interactions: [6, 15, 22]
+        * Social Isolation: [42, 51, 34, 56, 11, 29]
+        * Worry Propensity: [36, 25, 16, 9]
+
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        TICS_L score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    `biopsykit.exceptions.ValidationError`
+        if number of columns do not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    Examples
+    --------
+    >>> from biopsykit.questionnaires import tics_s
+    >>> # compute only a subset of subscales; questionnaire items additionally have custom indices
+    >>> subscales = {
+    >>>     'WorkOverload': [1, 2, 3],
+    >>>     'SocialOverload': [4, 5, 6],
+    >>> }
+    >>> tics_s_result = tics_s(data, subscales=subscales)
+
+    References
+    ----------
+    Schulz, P., Schlotz, W., & Becker, P. (2004). Trierer Inventar zum chronischen Stress: TICS. *Hogrefe*.
+
+    """
+    score_name = "TICS_L"
+    score_range = [0, 4]
+
+    # create copy of data
+    data = data.copy()
+
+    if columns is not None:
+        # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
+        data = data.loc[:, columns]
+
+    if subscales is None:
+        _assert_num_columns(data, 57)
+        subscales = {
+            "WorkOverload": [1, 4, 17, 27, 38, 44, 50, 54],  # Arbeitsüberlastung
+            "SocialOverload": [7, 19, 28, 39, 49, 57],  # Soziale Überlastung
+            "PressureToPerform": [8, 12, 14, 22, 23, 30, 32, 40, 43],  # Erfolgsdruck
+            "WorkDiscontent": [5, 10, 13, 21, 37, 41, 48, 53],  # Unzufriedenheit mit der Arbeit
+            "DemandsWork": [3, 20, 24, 35, 47, 55],  # Überforderung bei der Arbeit
+            "LackSocialRec": [2, 18, 31, 46],  # Mangel an sozialer Anerkennung
+            "SocialTension": [6, 15, 26, 33, 45, 52],  # Soziale Spannungen
+            "SocialIsolation": [11, 29, 34, 42, 51, 56],  # Soziale Isolation
+            "ChronicWorry": [9, 16, 25, 36],  # Chronische Besorgnis
+        }
+
+    _assert_value_range(data, score_range)
+
+    tics_data = _compute_questionnaire_subscales(data, score_name, subscales)
+
+    if len(data.columns) == 57:
+        # compute total score if all columns are present
+        tics_data[score_name] = data.sum(axis=1)
+
+    return pd.DataFrame(tics_data, index=data.index)
+
+
 def tics_s(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Trier Inventory for Chronic Stress (Short Version) (TICS-S)**.
+    """Compute the **Trier Inventory for Chronic Stress (Short Version) (TICS_S)**.
 
     The TICS assesses frequency of various types of stressful experiences in the past 3 months.
 
@@ -231,7 +343,7 @@ def tics_s(
     Returns
     -------
     :class:`~pandas.DataFrame`
-        TICS score
+        TICS_S score
 
 
     Raises
@@ -267,9 +379,8 @@ def tics_s(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 30)
@@ -286,129 +397,11 @@ def tics_s(
             "ChronicWorry": [7, 10, 17],
         }
 
+    _assert_value_range(data, score_range)
+
     tics_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     if len(data.columns) == 30:
-        # compute total score if all columns are present
-        tics_data[score_name] = data.sum(axis=1)
-
-    return pd.DataFrame(tics_data, index=data.index)
-
-
-def tics_l(
-    data: pd.DataFrame,
-    columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
-) -> pd.DataFrame:
-    """Compute the **Trier Inventory for Chronic Stress (Long Version) (TICS-L)**.
-
-    The TICS assesses frequency of various types of stressful experiences in the past 3 months.
-
-    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Work Overload: [50, 38, 44, 54, 17, 4, 27, 1]
-        * Social Overload: [39, 28, 49, 19, 7, 57]
-        * Excessive Demands at Work: [55, 24, 20, 35, 47, 3]
-        * Lack of Social Recognition: [31, 18, 46, 2]
-        * Work Discontent: [21, 53, 10, 48, 41, 13, 37, 5]
-        * Social Tension: [26, 15, 45, 52, 6, 33]
-        * Performance Pressure at Work: [23, 43, 32, 22, 12, 14, 8, 40, 30]
-        * Performance Pressure in Social Interactions: [6, 15, 22]
-        * Social Isolation: [42, 51, 34, 56, 11, 29]
-        * Worry Propensity: [36, 25, 16, 9]
-
-    .. note::
-        This implementation assumes a score range of [0, 4].
-        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
-        beforehand.
-
-    .. warning::
-        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
-        questionnaire item columns, which typically also start with index 1!
-
-
-    Parameters
-    ----------
-    data : :class:`~pandas.DataFrame`
-        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
-    columns : list of str or :class:`pandas.Index`, optional
-        list with column names in correct order.
-        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
-        passed as ``data``.
-    subscales : dict, optional
-        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
-        if only specific subscales should be computed.
-
-
-    Returns
-    -------
-    :class:`~pandas.DataFrame`
-        TICS score
-
-
-    Raises
-    ------
-    ValueError
-        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
-        if number of columns do not match
-    `biopsykit.exceptions.ValueRangeError`
-        if values are not within the required score range
-
-
-    Examples
-    --------
-    >>> from biopsykit.questionnaires import tics_s
-    >>> # compute only a subset of subscales; questionnaire items additionally have custom indices
-    >>> subscales = {
-    >>>     'WorkOverload': [1, 2, 3],
-    >>>     'SocialOverload': [4, 5, 6],
-    >>> }
-    >>> tics_s_result = tics_s(data, subscales=subscales)
-
-    References
-    ----------
-    Schulz, P., Schlotz, W., & Becker, P. (2004). Trierer Inventar zum chronischen Stress: TICS. *Hogrefe*.
-
-    """
-    score_name = "TICS_L"
-    score_range = [0, 4]
-
-    # create copy of data
-    data = data.copy()
-
-    if columns is not None:
-        # if columns parameter is supplied: slice columns from dataframe
-        data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
-
-    if subscales is None:
-        _assert_num_columns(data, 57)
-        subscales = {
-            "WorkOverload": [50, 38, 44, 54, 17, 4, 27, 1],  # Arbeitsüberlastung
-            "SocialOverload": [39, 28, 49, 19, 7, 57],  # Soziale Überlastung
-            "PressureToPerform": [23, 43, 32, 22, 12, 14, 8, 40, 30],  # Erfolgsdruck
-            "WorkDiscontent": [
-                21,
-                53,
-                10,
-                48,
-                41,
-                13,
-                37,
-                5,
-            ],  # Unzufriedenheit mit der Arbeit
-            "DemandsWork": [55, 24, 20, 35, 47, 3],  # Überforderung bei der Arbeit
-            "LackSocialRec": [31, 18, 46, 2],  # Mangel an sozialer Anerkennung
-            "SocialTension": [26, 15, 45, 52, 6, 33],  # Soziale Spannungen
-            "SocialIsolation": [42, 51, 34, 56, 11, 29],  # Soziale Isolation
-            "ChronicWorry": [36, 25, 16, 9],  # Chronische Besorgnis
-        }
-
-    tics_data = _compute_questionnaire_subscales(data, score_name, subscales)
-
-    if len(data.columns) == 57:
         # compute total score if all columns are present
         tics_data[score_name] = data.sum(axis=1)
 
@@ -690,7 +683,7 @@ def hads(
     return pd.DataFrame(hads_data, index=data.index)
 
 
-def type_d_scale(
+def type_d(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
@@ -731,7 +724,7 @@ def type_d_scale(
     Returns
     -------
     :class:`~pandas.DataFrame`
-        DS Type-D score
+        TypeD score
 
 
     Raises
@@ -750,7 +743,7 @@ def type_d_scale(
     *Psychosomatic medicine*, 67(1), 89-97.
 
     """
-    score_name = "DS"
+    score_name = "Type_D"
     score_range = [0, 4]
 
     # create copy of data
@@ -758,9 +751,8 @@ def type_d_scale(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 14)
@@ -768,6 +760,8 @@ def type_d_scale(
             "NegativeAffect": [2, 4, 5, 7, 9, 12, 13],
             "SocialInhibition": [1, 3, 6, 8, 10, 11, 14],
         }
+
+    _assert_value_range(data, score_range)
 
     # Reverse scores 1, 3
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -833,6 +827,7 @@ def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 10)
@@ -917,9 +912,8 @@ def scs(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 26)
@@ -931,6 +925,9 @@ def scs(
             "Mindfulness": [9, 14, 17, 22],
             "OverIdentified": [2, 6, 20, 24],
         }
+
+    _assert_value_range(data, score_range)
+
     # Reverse scores 1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 21, 24, 25
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
     # by the subscale dict)
@@ -1085,17 +1082,18 @@ def tsgs(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 15)
         subscales = {
+            "Pride": [1, 4, 7, 10, 13],
             "Shame": [2, 5, 8, 11, 14],
             "Guilt": [3, 6, 9, 12, 15],
-            "Pride": [1, 4, 7, 10, 13],
         }
+
+    _assert_value_range(data, score_range)
 
     tsgs_data = _compute_questionnaire_subscales(data, score_name, subscales)
     return pd.DataFrame(tsgs_data, index=data.index)
@@ -1176,8 +1174,6 @@ def rmidi(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     # "most items need to be reverse scored before subscales are computed => reverse all"
     data = invert(data, score_range=score_range)
 
@@ -1192,13 +1188,16 @@ def rmidi(
             "Agency": [5, 10, 15, 20, 30],
         }
 
+    _assert_value_range(data, score_range)
+
     # Re-reverse scores 19, 24
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
     # by the subscale dict)
     data = _invert_subscales(
         data, subscales=subscales, idx_dict={"Neuroticism": [3], "Conscientiousness": [3]}, score_range=score_range
     )
-    rmidi_data = _compute_questionnaire_subscales(data, score_name, subscales)
+    # RMIDI is a mean, not a sum score!
+    rmidi_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
 
     return pd.DataFrame(rmidi_data, index=data.index)
 
@@ -1440,6 +1439,7 @@ def peat(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 10)
@@ -1491,6 +1491,7 @@ def purpose_life(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 10)
@@ -1545,8 +1546,10 @@ def trait_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 14)
     _assert_value_range(data, score_range)
 
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
@@ -1923,9 +1926,8 @@ def ssgs(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 15)
@@ -1934,6 +1936,8 @@ def ssgs(
             "Shame": [2, 5, 8, 11, 14],
             "Guilt": [3, 6, 9, 12, 15],
         }
+
+    _assert_value_range(data, score_range)
 
     ssgs_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
@@ -2091,17 +2095,16 @@ def state_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
     _assert_num_columns(data, 27)
+    _assert_value_range(data, score_range)
 
     # reverse scores 1, 6, 9, 12, 15, 17, 18, 20, 27
     data = invert(data, cols=to_idx([1, 6, 9, 12, 15, 17, 18, 20, 27]), score_range=score_range)
 
-    state_rum = {score_name: data.sum(axis=1)}
-
-    return pd.DataFrame(state_rum, index=data.index)
+    return pd.DataFrame(data.sum(axis=1), columns=[score_name], index=data.index)
 
 
 # HABIT DATASET
@@ -2201,7 +2204,7 @@ def stadi(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
-    stadi_type: Optional[Literal["state", "trait", "state-trait"]] = "state-trait",
+    stadi_type: Optional[Literal["state", "trait", "state_trait"]] = None,
 ) -> pd.DataFrame:
     """Compute the **State-Trait Anxiety-Depression Inventory (STADI)**.
 
@@ -2248,8 +2251,8 @@ def stadi(
     subscales : dict, optional
         A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
         if only specific subscales should be computed.
-    stadi_type : any of ``state``, ``trait``, or ``state-trait``
-        which type of STADI subscale should be computed. Default: ``state-trait``
+    stadi_type : any of ``state``, ``trait``, or ``state_trait``
+        which type of STADI subscale should be computed. Default: ``state_trait``
 
 
     Returns
@@ -2262,6 +2265,7 @@ def stadi(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+        if invalid parameter was passed to ``stadi_type``
     `biopsykit.exceptions.ValidationError`
         if number of columns does not match
     `biopsykit.exceptions.ValueRangeError`
@@ -2285,18 +2289,18 @@ def stadi(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
-    if stadi_type == "state_trait":
+    if stadi_type is None:
+        stadi_type = ["State", "Trait"]
+    elif stadi_type == "state_trait":
         stadi_type = ["State", "Trait"]
     elif stadi_type == "state":
         stadi_type = ["State"]
-    else:
+    elif stadi_type == "trait":
         stadi_type = ["Trait"]
-
-    # split into n subitems (either "State", "Trait" or "State and Trait")
-    items = np.split(data, len(stadi_type), axis=1)
-    data = pd.concat(items, keys=stadi_type, axis=1)
+    else:
+        raise ValueError(
+            "Invalid 'stadi_type'! Must be one of 'state_trait', 'state', or 'trait', not {}.".format(stadi_type)
+        )
 
     if subscales is None:
         _assert_num_columns(data, 20 * len(stadi_type))
@@ -2307,49 +2311,44 @@ def stadi(
             "DY": [4, 8, 12, 16, 20],
         }
 
-    # split into n subitems (either State or State and Trait)
+    _assert_value_range(data, score_range)
+
+    # split into n subitems (either "State", "Trait" or "State and Trait")
     items = np.split(data, len(stadi_type), axis=1)
     data = pd.concat(items, keys=stadi_type, axis=1)
 
     stadi_data = {}
     for st in stadi_type:
-        stadi_data.update(_compute_questionnaire_subscales(data, "{}_{}".format(score_name, st), subscales))
+        stadi_data.update(_compute_questionnaire_subscales(data[st], "{}_{}".format(score_name, st), subscales))
+        if all("{}_{}_{}".format(score_name, st, subtype) in stadi_data for subtype in ["AU", "BE"]):
+            stadi_data.update(
+                {
+                    "{}_{}_Anxiety".format(score_name, st): stadi_data["{}_{}_AU".format(score_name, st)]
+                    + stadi_data["{}_{}_BE".format(score_name, st)]
+                }
+            )
+
+        if all("{}_{}_{}".format(score_name, st, subtype) in stadi_data for subtype in ["EU", "DY"]):
+            stadi_data.update(
+                {
+                    "{}_{}_Depression".format(score_name, st): stadi_data["{}_{}_EU".format(score_name, st)]
+                    + stadi_data["{}_{}_DY".format(score_name, st)]
+                }
+            )
+
+        if all("{}_{}_{}".format(score_name, st, subtype) in stadi_data for subtype in ["Anxiety", "Depression"]):
+            stadi_data.update(
+                {
+                    "{}_{}_Total".format(score_name, st): stadi_data["{}_{}_Anxiety".format(score_name, st)]
+                    + stadi_data["{}_{}_Depression".format(score_name, st)]
+                }
+            )
+
+    print(data)
+    print(stadi_data)
 
     df_stadi = pd.DataFrame(stadi_data, index=data.index)
-
-    dict_meta = {}
-    if all(len(df_stadi.filter(like=st).columns) > 0 for st in ["AU", "BE"]):
-        dict_meta = {
-            "{}_{}_Anxiety".format(score_name, sub): stadi_data["{}_{}_AU".format(score_name, sub)]
-            + stadi_data["{}_{}_BE".format(score_name, sub)]
-            for sub in stadi_type
-        }
-
-    if all(len(df_stadi.filter(like=st).columns) > 0 for st in ["EU", "DY"]):
-        dep = {
-            "{}_{}_Depression".format(score_name, sub): stadi_data["{}_{}_EU".format(score_name, sub)]
-            + stadi_data["{}_{}_DY".format(score_name, sub)]
-            for sub in stadi_type
-        }
-        dict_meta.update(dep)
-
-    df_meta = pd.DataFrame(dict_meta, index=data.index)
-    df_meta = df_meta.reindex(sorted(df_meta.columns), axis="columns")
-
-    total = {}
-    if all(len(df_meta.filter(like=st).columns) > 0 for st in ["Anxiety", "Depression"]):
-        total = {
-            "{}_{}_Total".format(score_name, sub): dict_meta["{}_{}_Anxiety".format(score_name, sub)]
-            + dict_meta["{}_{}_Depression".format(score_name, sub)]
-            for sub in stadi_type
-        }
-    df_total = pd.DataFrame(total, index=data.index)
-
-    if len(total) == 0:
-        # join dataframe of subscores and meta score(s)
-        return df_stadi.join(df_meta)
-    # join dataframe of subscores, meta scores, and total score
-    return df_stadi.join(df_meta).join(df_total)
+    return df_stadi
 
 
 def svf_120(
@@ -2437,8 +2436,6 @@ def svf_120(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 120)
         subscales = {
@@ -2464,8 +2461,10 @@ def svf_120(
             "Pha": [7, 19, 53, 70, 90, 108],  # Pharmakaeinnahme
         }
 
+    _assert_value_range(data, score_range)
+
     svf_data = _compute_questionnaire_subscales(data, score_name, subscales)
-    svf = pd.DataFrame(svf_data, index=data.index)
+    svf_data = pd.DataFrame(svf_data, index=data.index)
 
     meta_scales = {
         "Pos1": ("Bag", "Her", "Schab"),
@@ -2487,12 +2486,12 @@ def svf_120(
     }
 
     for name, scale_items in meta_scales.items():
-        if all(scale in subscales.keys() for scale in scale_items):
-            svf["{}_{}".format(score_name, name)] = svf[["{}_{}".format(score_name, s) for s in scale_items]].mean(
-                axis=1
-            )
+        if all(scale in subscales for scale in scale_items):
+            svf_data["{}_{}".format(score_name, name)] = svf_data[
+                ["{}_{}".format(score_name, s) for s in scale_items]
+            ].mean(axis=1)
 
-    return svf
+    return svf_data
 
 
 def svf_42(
@@ -2581,8 +2580,6 @@ def svf_42(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 42)
         subscales = {
@@ -2601,7 +2598,7 @@ def svf_42(
             "Flu": [16, 40],  # Flucht
             "Soza": [20, 29],  # Soziale Abkapselung
             "Gedw": [10, 25],  # Gedankliche Weiterbeschäftigung
-            "Res": [38, 15],  # Resignation
+            "Res": [15, 38],  # Resignation
             "Hilf": [18, 28],  # Hilflosigkeit
             "Selmit": [8, 31],  # Selbstbemitleidung
             "Sesch": [21, 36],  # Selbstbeschuldigung
@@ -2609,11 +2606,13 @@ def svf_42(
             "Pha": [5, 41],  # Pharmakaeinnahme
         }
 
+    _assert_value_range(data, score_range)
+
     svf_data = _compute_questionnaire_subscales(data, score_name, subscales)
     svf_data = pd.DataFrame(svf_data, index=data.index)
 
     meta_scales = {
-        "Denial": ["Flu", "Verm", "Soza"],
+        "Denial": ["Verm", "Flu", "Soza"],
         "Distraction": ["Ers", "Entsp", "Sozube"],
         "Stressordevaluation": ["Bag", "Her", "Posi"],
     }
@@ -2916,27 +2915,30 @@ def rsq(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 32)
         subscales = {
             "SymptomRumination": [2, 3, 4, 8, 11, 12, 13, 25],  # Symptombezogene Rumination
-            "SelfRumination": [1, 19, 26, 28, 30, 31, 32],  # Selbstfokussierte Rumination
+            "SelfRumination": [1, 10, 19, 26, 28, 30, 31, 32],  # Selbstfokussierte Rumination
             "Distraction": [5, 6, 7, 9, 14, 16, 18, 20],  # Distraktion
         }
+
+    _assert_value_range(data, score_range)
 
     # RSQ is a mean score, not a sum score!
     rsq_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
     rsq_data = pd.DataFrame(rsq_data, index=data.index)
 
-    if len(data.columns) == 32:
-        # compute total score if all columns are present
+    if all(s in subscales for s in ["SymptomRumination", "SelfRumination", "Distraction"]):
+        # compute total score if all subscales are present
         # invert "Distraction" subscale and then add it to total score
-        rsq_data["{}_{}".format(score_name, "Total")] = (
-            (score_range[1] - rsq_data["{}_{}".format(score_name, "Distraction")] + score_range[0])
-            + rsq_data["{}_{}".format(score_name, "SymptomRumination")]
-            + rsq_data["{}_{}".format(score_name, "SelfRumination")]
+        rsq_data["{}_{}".format(score_name, "Total")] = pd.concat(
+            [
+                (score_range[1] - rsq_data["{}_{}".format(score_name, "Distraction")] + score_range[0]),
+                rsq_data["{}_{}".format(score_name, "SymptomRumination")],
+                rsq_data["{}_{}".format(score_name, "SelfRumination")],
+            ],
+            axis=1,
         ).mean(axis=1)
 
     return rsq_data
@@ -3004,8 +3006,6 @@ def sss(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 2)
         subscales = {
@@ -3013,9 +3013,11 @@ def sss(
             "Community": [2],
         }
 
+    _assert_value_range(data, score_range)
+
     sss_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
-    return pd.DataFrame(sss_data, columns=[score_name], index=data.index)
+    return pd.DataFrame(sss_data, index=data.index)
 
 
 def fkk(
@@ -3778,7 +3780,8 @@ def pfb(
     """Compute the **Partnerschaftsfragebogen (PFB)**.
 
     .. note::
-        This implementation assumes a score range of [1, 4].
+        This implementation assumes a score range of [1, 4], except for the ``Glueck`` column, which has a score range
+        of [1, 6]
         Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
         beforehand.
 
@@ -3830,8 +3833,6 @@ def pfb(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 31)
         subscales = {
@@ -3840,6 +3841,24 @@ def pfb(
             "Gemeinsamkeit": [4, 7, 10, 11, 12, 15, 20, 25, 29, 30],
             "Glueck": [31],
         }
+
+    try:
+        for subscale in subscales:
+            # the " Glueck" column has a different score range => check separately
+            if subscale == "Glueck":
+                _assert_value_range(data.iloc[:, to_idx(subscales[subscale])], [1, 6])
+            else:
+                _assert_value_range(data.iloc[:, to_idx(subscales[subscale])], score_range)
+    except ValueRangeError as e:
+        if "Glueck" in subscales:
+            raise ValueRangeError(
+                "This implementation of PFB expects all values in the range {}, except the column 'Glueck' ({}), "
+                "which is expected to be in the range {}! "
+                "Please consider converting to the correct range using "
+                "`biopsykit.questionnaire.utils.convert_scale()`.".format(score_range, subscales["Glueck"], [1, 6])
+            )
+        else:
+            raise e
 
     # invert item 19
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -4072,14 +4091,14 @@ def meq(
     try:
         _assert_value_range(data.iloc[:, col_idx], [1, 5])
         col_mask = np.arange(0, len(data.columns))
-        col_mask = col_mask[~np.isin(col_mask, to_idx([1, 2, 10, 17, 18]))]
+        col_mask = col_mask[~np.isin(col_mask, col_idx)]
         _assert_value_range(data.iloc[:, col_mask], score_range)
     except ValueRangeError:
         raise ValueRangeError(
             "This implementation of MEQ expects all values in the range {}, except the columns {}, "
             "which are expected to be in the range {}! "
             "Please consider converting to the correct range using "
-            "`biopsykit.questionnaire.utils.convert_scale`.".format(score_range, col_idx, [1, 5])
+            "`biopsykit.questionnaire.utils.convert_scale()`.".format(score_range, col_idx, [1, 5])
         )
 
     # invert items 1, 2, 10, 17, 18 (score range [1, 5])

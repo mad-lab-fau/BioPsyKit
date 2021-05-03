@@ -82,35 +82,7 @@ def panas_results_german():
 
 class TestQuestionnaires:
     @pytest.mark.parametrize(
-        "data, columns, expected",
-        [
-            (data_complete_correct(), None, pytest.raises(ValidationError)),
-            (data_filtered_wrong_range("PSS"), None, pytest.raises(ValueRangeError)),
-            (data_complete_correct(), ["PSS{}".format(i) for i in range(1, 11)], pytest.raises(ValidationError)),
-            (convert_scale(data_filtered_wrong_range("PSS"), -1), None, does_not_raise()),
-            (data_filtered_correct("PSS"), None, does_not_raise()),
-            (data_filtered_correct("PSS"), ["PSS_{}".format(i) for i in range(1, 11)], does_not_raise()),
-            (data_complete_correct(), ["PSS_{}".format(i) for i in range(1, 11)], does_not_raise()),
-        ],
-    )
-    def test_pss_raises(self, data, columns, expected):
-        with expected:
-            pss(data, columns)
-
-    @pytest.mark.parametrize(
-        "data, columns, result",
-        [
-            (data_filtered_correct("PSS"), None, result_filtered("PSS")),
-            (data_complete_correct(), ["PSS_{}".format(i) for i in range(1, 11)], result_filtered("PSS")),
-            (convert_scale(data_filtered_wrong_range("PSS"), -1), None, result_filtered("PSS")),
-        ],
-    )
-    def test_pss(self, data, columns, result):
-        data_out = pss(data, columns)
-        assert_frame_equal(data_out, result)
-
-    @pytest.mark.parametrize(
-        "data, columns, expected",
+        "data, coklumns, expected",
         [
             (data_complete_correct(), None, pytest.raises(ValidationError)),
             (data_filtered_wrong_range(regex=r"ABI\d"), None, pytest.raises(ValueRangeError)),
@@ -964,25 +936,25 @@ class TestQuestionnaires:
             (data_filtered_correct("LSQ"), None, None, does_not_raise()),
             (
                 data_filtered_correct("LSQ"),
-                ["LSQ_{}_{}".format(p, i) for p, i in product(["Partner", "Parents", "Child"], range(1, 11))],
+                ["LSQ_{}_{}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
                 None,
                 pytest.raises(ValidationError),
             ),
             (
                 data_filtered_correct("LSQ"),
-                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parents", "Child"], range(1, 5))],
+                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 5))],
                 None,
                 pytest.raises(ValidationError),
             ),
             (
                 data_filtered_correct("LSQ"),
-                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parents", "Child"], range(1, 11))],
+                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
                 None,
                 does_not_raise(),
             ),
             (
                 data_filtered_correct("LSQ"),
-                ["LSQ_{}{}".format(p, i) for p, i in product(["Partner", "Parents", "Child"], range(1, 11))],
+                ["LSQ_{}{}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
                 None,
                 pytest.raises(ValidationError),
             ),
@@ -994,8 +966,8 @@ class TestQuestionnaires:
             ),
             (
                 data_filtered_correct("LSQ"),
-                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parents", "Child"], range(1, 11))],
-                ["Partner", "Parents"],
+                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
+                ["Partner", "Parent"],
                 does_not_raise(),
             ),
             (
@@ -1605,5 +1577,1382 @@ class TestQuestionnaires:
     )
     def test_pasa(self, data, columns, subscales, result):
         data_out = pasa(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("PEAT"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("PEAT"), -1), None, does_not_raise()),
+            (data_filtered_correct("PEAT"), None, does_not_raise()),
+            (
+                data_filtered_correct("PEAT"),
+                ["PEAT{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("PEAT"),
+                ["PEAT{:02d}".format(i) for i in range(1, 11)],
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("PEAT"),
+                ["PEAT_{}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
+            ),
+        ],
+    )
+    def test_peat_raises(self, data, columns, expected):
+        with expected:
+            peat(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("PEAT"), None, result_filtered("PEAT")),
+            (
+                data_filtered_correct("PEAT"),
+                ["PEAT{:02d}".format(i) for i in range(1, 11)],
+                result_filtered("PEAT"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("PEAT"), -1),
+                None,
+                result_filtered("PEAT"),
+            ),
+        ],
+    )
+    def test_peat(self, data, columns, result):
+        data_out = peat(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("PFB"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("PFB"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("PFB"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("PFB"),
+                ["PFB{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("PFB"),
+                ["PFB{:02d}".format(i) for i in range(1, 32)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("PFB"),
+                ["PFB_{}".format(i) for i in range(1, 32)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_wrong_range("PFB"),
+                None,
+                {
+                    "Zaertlichkeit": [2, 3, 5, 9, 13, 14, 16, 23, 27, 28],
+                },
+                pytest.raises(ValueRangeError),
+            ),
+            (
+                data_filtered_correct("PFB"),
+                None,
+                {
+                    "Zaertlichkeit": [2, 3, 5, 9, 13, 14, 16, 23, 27, 28],
+                },
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("PFB"),
+                None,
+                {
+                    "Streitverhalten": [1, 6, 8, 17, 18],
+                },
+                pytest.raises(IndexError),
+            ),
+        ],
+    )
+    def test_pfb_raises(self, data, columns, subscales, expected):
+        with expected:
+            pfb(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("PFB"), None, None, result_filtered("PFB")),
+            (
+                data_filtered_correct("PFB"),
+                ["PFB{:02d}".format(i) for i in range(1, 32)],
+                None,
+                result_filtered("PFB"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("PFB"), 1),
+                None,
+                None,
+                result_filtered("PFB"),
+            ),
+            (
+                data_subscale("pfb"),
+                None,
+                {"Streitverhalten": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+                result_filtered("PFB_Streitverhalten"),
+            ),
+        ],
+    )
+    def test_pfb(self, data, columns, subscales, result):
+        data_out = pfb(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("PSS"), None, pytest.raises(ValueRangeError)),
+            (data_complete_correct(), ["PSS{}".format(i) for i in range(1, 11)], pytest.raises(ValidationError)),
+            (convert_scale(data_filtered_wrong_range("PSS"), -1), None, does_not_raise()),
+            (data_filtered_correct("PSS"), None, does_not_raise()),
+            (data_filtered_correct("PSS"), ["PSS_{}".format(i) for i in range(1, 11)], does_not_raise()),
+            (data_complete_correct(), ["PSS_{}".format(i) for i in range(1, 11)], does_not_raise()),
+        ],
+    )
+    def test_pss_raises(self, data, columns, expected):
+        with expected:
+            pss(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("PSS"), None, result_filtered("PSS")),
+            (data_complete_correct(), ["PSS_{}".format(i) for i in range(1, 11)], result_filtered("PSS")),
+            (convert_scale(data_filtered_wrong_range("PSS"), -1), None, result_filtered("PSS")),
+        ],
+    )
+    def test_pss(self, data, columns, result):
+        data_out = pss(data, columns)
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("PL"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("PL"), 1), None, does_not_raise()),
+            (data_filtered_correct("PL"), None, does_not_raise()),
+            (
+                data_filtered_correct("PL"),
+                ["PL{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("PL"),
+                ["PL{:02d}".format(i) for i in range(1, 11)],
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("PL"),
+                ["PL_{}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
+            ),
+        ],
+    )
+    def test_purpose_life_raises(self, data, columns, expected):
+        with expected:
+            purpose_life(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("PL"), None, result_filtered("PurposeLife")),
+            (
+                data_filtered_correct("PL"),
+                ["PL{:02d}".format(i) for i in range(1, 11)],
+                result_filtered("PurposeLife"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("PL"), 1),
+                None,
+                result_filtered("PurposeLife"),
+            ),
+        ],
+    )
+    def test_purpose_life(self, data, columns, result):
+        data_out = purpose_life(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("RMIDI"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("RMIDI"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("RMIDI"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("RMIDI"),
+                ["RMIDIPS{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("RMIDI"),
+                ["RMIDIPS{:02d}".format(i) for i in range(1, 32)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("RMIDI"),
+                ["RMIDIPS_{}".format(i) for i in range(1, 32)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("RMIDI"),
+                None,
+                {
+                    "Conscientiousness": [4, 9, 16, 24, 31],
+                },
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("RMIDI"),
+                None,
+                {
+                    "Conscientiousness": [4, 9, 16],
+                },
+                pytest.raises(IndexError),
+            ),
+        ],
+    )
+    def test_rmidi_raises(self, data, columns, subscales, expected):
+        with expected:
+            rmidi(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("RMIDI"), None, None, result_filtered("RMIDI")),
+            (
+                data_filtered_correct("RMIDI"),
+                ["RMIDIPS{:02d}".format(i) for i in range(1, 32)],
+                None,
+                result_filtered("RMIDI"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("RMIDI"), 1),
+                None,
+                None,
+                result_filtered("RMIDI"),
+            ),
+            (
+                data_subscale("rmidi"),
+                None,
+                {"Conscientiousness": [1, 2, 3, 4, 5]},
+                result_filtered("RMIDI_Conscientiousness"),
+            ),
+        ],
+    )
+    def test_rmidi(self, data, columns, subscales, result):
+        data_out = rmidi(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("RSE"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("RSE"), -1), None, does_not_raise()),
+            (data_filtered_correct("RSE"), None, does_not_raise()),
+            (
+                data_filtered_correct("RSE"),
+                ["RSE{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("RSE"),
+                ["RSE{:02d}".format(i) for i in range(1, 11)],
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("RSE"),
+                ["RSE_{}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
+            ),
+        ],
+    )
+    def test_rse_raises(self, data, columns, expected):
+        with expected:
+            rse(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("RSE"), None, result_filtered("RSE")),
+            (
+                data_filtered_correct("RSE"),
+                ["RSE{:02d}".format(i) for i in range(1, 11)],
+                result_filtered("RSE"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("RSE"), -1),
+                None,
+                result_filtered("RSE"),
+            ),
+        ],
+    )
+    def test_rse(self, data, columns, result):
+        data_out = rse(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("RSQ"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("RSQ"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("RSQ"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("RSQ"),
+                ["RSQ_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("RSQ"),
+                ["RSQ{:02d}".format(i) for i in range(1, 33)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("RSQ"),
+                ["RSQ_{}".format(i) for i in range(1, 33)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("RSQ"),
+                None,
+                {
+                    "SymptomRumination": [2, 3, 4, 8, 11, 12, 13, 25],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_rsq_raises(self, data, columns, subscales, expected):
+        with expected:
+            rsq(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("RSQ"), None, None, result_filtered("RSQ")),
+            (
+                data_filtered_correct("RSQ"),
+                ["RSQ_{}".format(i) for i in range(1, 33)],
+                None,
+                result_filtered("RSQ"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("RSQ"), 1),
+                None,
+                None,
+                result_filtered("RSQ"),
+            ),
+            (
+                data_subscale("rsq"),
+                None,
+                {"SymptomRumination": [1, 2, 3, 4, 5, 6, 7, 8]},
+                result_filtered("RSQ_SymptomRumination"),
+            ),
+        ],
+    )
+    def test_rsq(self, data, columns, subscales, result):
+        data_out = rsq(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SCS"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SCS"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("SCS"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("SCS"),
+                ["SCS{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("SCS"), ["SCS{:02d}".format(i) for i in range(1, 27)], None, does_not_raise()),
+            (
+                data_filtered_correct("SCS"),
+                ["SCS_{}".format(i) for i in range(1, 27)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SCS"),
+                None,
+                {
+                    "SelfJudgment": [1, 8, 11, 16, 21],
+                },
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("SCS"),
+                None,
+                {
+                    "SelfJudgment": [1, 8, 11, 16],
+                },
+                pytest.raises(IndexError),
+            ),
+        ],
+    )
+    def test_scs_raises(self, data, columns, subscales, expected):
+        with expected:
+            scs(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("SCS"), None, None, result_filtered("SCS")),
+            (
+                data_filtered_correct("SCS"),
+                ["SCS{:02d}".format(i) for i in range(1, 27)],
+                None,
+                result_filtered("SCS"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("SCS"), 1),
+                None,
+                None,
+                result_filtered("SCS"),
+            ),
+            (
+                data_subscale("scs"),
+                None,
+                {"SelfKindness": [1, 2, 3, 4, 5]},
+                result_filtered("SCS_SelfKindness"),
+            ),
+        ],
+    )
+    def test_scs(self, data, columns, subscales, result):
+        data_out = scs(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SSGS"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SSGS"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("SSGS"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("SSGS"),
+                ["SSGS{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("SSGS"), ["SSGS{:02d}".format(i) for i in range(1, 16)], None, does_not_raise()),
+            (
+                data_filtered_correct("SSGS"),
+                ["SSGS_{}".format(i) for i in range(1, 16)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SSGS"),
+                None,
+                {
+                    "Pride": [1, 4, 7, 10, 13],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_ssgs_raises(self, data, columns, subscales, expected):
+        with expected:
+            ssgs(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("SSGS"), None, None, result_filtered("SSGS")),
+            (
+                data_filtered_correct("SSGS"),
+                ["SSGS{:02d}".format(i) for i in range(1, 16)],
+                None,
+                result_filtered("SSGS"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("SSGS"), 1),
+                None,
+                None,
+                result_filtered("SSGS"),
+            ),
+            (
+                data_subscale("ssgs"),
+                None,
+                {"Pride": [1, 2, 3, 4, 5]},
+                result_filtered("SSGS_Pride"),
+            ),
+        ],
+    )
+    def test_ssgs(self, data, columns, subscales, result):
+        data_out = ssgs(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SSS"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SSS"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("SSS"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("SSS"),
+                ["SSS_U_{}".format(i) for i in range(1, 2)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("SSS"), ["SSS_U_{}".format(i) for i in range(1, 3)], None, does_not_raise()),
+            (
+                data_filtered_correct("SSS"),
+                ["SSS_U{:02d}".format(i) for i in range(1, 3)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SSS"),
+                None,
+                {
+                    "SocioeconomicStatus": [1],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_sss_raises(self, data, columns, subscales, expected):
+        with expected:
+            sss(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("SSS"), None, None, result_filtered("SSS")),
+            (
+                data_filtered_correct("SSS"),
+                ["SSS_U_{}".format(i) for i in range(1, 3)],
+                None,
+                result_filtered("SSS"),
+            ),
+            (
+                data_subscale("sss"),
+                None,
+                {"Community": [1]},
+                result_filtered("SSS_Community"),
+            ),
+        ],
+    )
+    def test_sss(self, data, columns, subscales, result):
+        data_out = sss(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, stadi_type, expected",
+        [
+            (data_complete_correct(), None, None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("STADI"), None, None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("STADI"), 1), None, None, None, does_not_raise()),
+            (data_filtered_correct("STADI"), None, None, None, does_not_raise()),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 10))],
+                None,
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI{:02d}".format(i) for i in range(1, 21)],
+                None,
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
+                None,
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
+                None,
+                "state_trait",
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI_S_{}".format(i) for i in range(1, 21)],
+                None,
+                "state",
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI_T_{}".format(i) for i in range(1, 21)],
+                None,
+                "trait",
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
+                None,
+                "trate",
+                pytest.raises(ValueError),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                None,
+                {
+                    "AU": [1, 5, 9, 13, 17],
+                },
+                None,
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_stadi_raises(self, data, columns, subscales, stadi_type, expected):
+        with expected:
+            stadi(data, columns, subscales, stadi_type)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, stadi_type, result",
+        [
+            (data_filtered_correct("STADI"), None, None, None, result_filtered("STADI")),
+            (data_filtered_correct("STADI"), None, None, "state_trait", result_filtered("STADI")),
+            (data_filtered_correct("STADI_S"), None, None, "state", result_filtered("STADI_State")),
+            (data_filtered_correct("STADI_T"), None, None, "trait", result_filtered("STADI_Trait")),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
+                None,
+                None,
+                result_filtered("STADI"),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI_S_{}".format(i) for i in range(1, 21)],
+                None,
+                "state",
+                result_filtered("STADI_State"),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                ["STADI_T_{}".format(i) for i in range(1, 21)],
+                None,
+                "trait",
+                result_filtered("STADI_Trait"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("STADI"), 1),
+                None,
+                None,
+                None,
+                result_filtered("STADI"),
+            ),
+            (
+                data_subscale("stadi"),
+                None,
+                {"AU": [1, 2, 3, 4, 5]},
+                None,
+                result_filtered(regex="STADI_(State|Trait)_AU"),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                None,
+                {"AU": [1, 5, 9, 13, 17], "BE": [2, 6, 10, 14, 18]},
+                None,
+                result_filtered(regex="STADI_(State|Trait)_(AU|BE|Anxiety)"),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                None,
+                {
+                    "EU": [3, 7, 11, 15, 19],
+                    "DY": [4, 8, 12, 16, 20],
+                },
+                None,
+                result_filtered(regex="STADI_(State|Trait)_(EU|DY|Depression)"),
+            ),
+            (
+                data_filtered_correct("STADI"),
+                None,
+                {
+                    "AU": [1, 5, 9, 13, 17],
+                    "EU": [3, 7, 11, 15, 19],
+                },
+                None,
+                result_filtered(regex="STADI_(State|Trait)_(AU|EU)"),
+            ),
+            (
+                data_filtered_correct("STADI_T"),
+                None,
+                {"AU": [1, 5, 9, 13, 17], "BE": [2, 6, 10, 14, 18]},
+                "trait",
+                result_filtered(regex="STADI_Trait_(AU|BE|Anxiety)"),
+            ),
+        ],
+    )
+    def test_stadi(self, data, columns, subscales, stadi_type, result):
+        data_out = stadi(data, columns, subscales, stadi_type)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("StateRumination"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("StateRumination"), -1), None, does_not_raise()),
+            (data_filtered_correct("StateRumination"), None, does_not_raise()),
+            (
+                data_filtered_correct("StateRumination"),
+                ["StateRumination{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("StateRumination"),
+                ["StateRumination{:02d}".format(i) for i in range(1, 28)],
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("StateRumination"),
+                ["StateRumination_{}".format(i) for i in range(1, 28)],
+                pytest.raises(ValidationError),
+            ),
+        ],
+    )
+    def test_state_rumination_raises(self, data, columns, expected):
+        with expected:
+            state_rumination(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("StateRumination"), None, result_filtered("StateRumination")),
+            (
+                data_filtered_correct("StateRumination"),
+                ["StateRumination{:02d}".format(i) for i in range(1, 28)],
+                result_filtered("StateRumination"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("StateRumination"), -1),
+                None,
+                result_filtered("StateRumination"),
+            ),
+        ],
+    )
+    def test_state_rumination(self, data, columns, result):
+        data_out = state_rumination(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SVF120"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SVF120"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("SVF120"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("SVF120"),
+                ["SVF120_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SVF120"),
+                ["SVF120{:03d}".format(i) for i in range(1, 121)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SVF120"),
+                ["SVF120_{}".format(i) for i in range(1, 121)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("SVF120"),
+                None,
+                {"Bag": [10, 31, 50, 67, 88, 106]},
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_svf_120_raises(self, data, columns, subscales, expected):
+        with expected:
+            svf_120(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("SVF120"), None, None, result_filtered("SVF120")),
+            (
+                data_filtered_correct("SVF120"),
+                ["SVF120_{}".format(i) for i in range(1, 121)],
+                None,
+                result_filtered("SVF120"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("SVF120"), 1),
+                None,
+                None,
+                result_filtered("SVF120"),
+            ),
+            (
+                data_subscale("svf_120"),
+                None,
+                {
+                    "Bag": [1, 3, 5, 7, 9, 11],
+                    "Her": [2, 4, 6, 8, 10, 12],
+                },
+                result_filtered(regex="SVF120_(Bag|Her)"),
+            ),
+            (
+                data_filtered_correct("SVF120"),
+                None,
+                {
+                    "Bag": [10, 31, 50, 67, 88, 106],
+                    "Her": [17, 38, 52, 77, 97, 113],
+                    "Schab": [5, 30, 43, 65, 104, 119],
+                },
+                result_filtered(regex="SVF120_(Bag|Her|Schab|Pos1)"),
+            ),
+            (
+                data_filtered_correct("SVF120"),
+                None,
+                {
+                    "Bag": [10, 31, 50, 67, 88, 106],  # Bagatellisierung
+                    "Her": [17, 38, 52, 77, 97, 113],  # Herunterspielen
+                    "Schab": [5, 30, 43, 65, 104, 119],  # Schuldabwehr
+                    "Abl": [1, 20, 45, 86, 101, 111],  # Ablenkung
+                    "Ers": [22, 36, 64, 74, 80, 103],  # Ersatzbefriedigung
+                    "Sebest": [34, 47, 59, 78, 95, 115],  # Selbstbestätigung
+                    "Entsp": [12, 28, 58, 81, 99, 114],  # Entspannung
+                    "Sitkon": [11, 18, 39, 66, 91, 116],  # Situationskontrolle
+                    "Rekon": [2, 26, 54, 68, 85, 109],  # Reaktionskontrolle
+                    "Posi": [15, 37, 56, 71, 83, 96],  # Positive Selbstinstruktion
+                },
+                result_filtered(
+                    regex="SVF120_(Bag|Her|Schab|Abl|Ers|Sebest|Entsp|Sitkon|Rekon|Posi|Pos1|Pos2|Pos3|Pos_Gesamt)"
+                ),
+            ),
+            (
+                data_filtered_correct("SVF120"),
+                None,
+                {
+                    "Bag": [10, 31, 50, 67, 88, 106],  # Bagatellisierung
+                    "Her": [17, 38, 52, 77, 97, 113],  # Herunterspielen
+                    "Schab": [5, 30, 43, 65, 104, 119],  # Schuldabwehr
+                    "Abl": [1, 20, 45, 86, 101, 111],  # Ablenkung
+                    "Ers": [22, 36, 64, 74, 80, 103],  # Ersatzbefriedigung
+                    "Sebest": [34, 47, 59, 78, 95, 115],  # Selbstbestätigung
+                    "Entsp": [12, 28, 58, 81, 99, 114],  # Entspannung
+                    "Sitkon": [11, 18, 39, 66, 91, 116],  # Situationskontrolle
+                    "Rekon": [2, 26, 54, 68, 85, 109],  # Reaktionskontrolle
+                },
+                result_filtered(regex="SVF120_(Bag|Her|Schab|Abl|Ers|Sebest|Entsp|Sitkon|Rekon|Pos1|Pos2)"),
+            ),
+        ],
+    )
+    def test_svf_120(self, data, columns, subscales, result):
+        data_out = svf_120(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SVF42"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SVF42"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("SVF42"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("SVF42"),
+                ["SVF42_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SVF42"),
+                ["SVF42{:03d}".format(i) for i in range(1, 43)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SVF42"),
+                ["SVF42_{}".format(i) for i in range(1, 43)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("SVF42"),
+                None,
+                {"Bag": [7, 22]},
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_svf_42_raises(self, data, columns, subscales, expected):
+        with expected:
+            svf_42(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("SVF42"), None, None, result_filtered("SVF42")),
+            (
+                data_filtered_correct("SVF42"),
+                ["SVF42_{}".format(i) for i in range(1, 43)],
+                None,
+                result_filtered("SVF42"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("SVF42"), 1),
+                None,
+                None,
+                result_filtered("SVF42"),
+            ),
+            (
+                data_subscale("svf_42"),
+                None,
+                {
+                    "Bag": [1, 3],  # Bagatellisierung
+                    "Her": [2, 4],  # Herunterspielen
+                },
+                result_filtered(regex="SVF42_(Bag|Her)"),
+            ),
+            (
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Bag": [7, 22],  # Bagatellisierung
+                    "Her": [11, 35],  # Herunterspielen
+                    "Schab": [2, 34],  # Schuldabwehr
+                },
+                result_filtered(regex="SVF42_(Bag|Her|Schab)"),
+            ),
+            (
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Verm": [6, 30],  # Vermeidung
+                    "Flu": [16, 40],  # Flucht
+                    "Soza": [20, 29],  # Soziale Abkapselung
+                },
+                result_filtered(regex="SVF42_(Verm|Flu|Soza|Denial)"),
+            ),
+            (
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Ers": [12, 42],  # Ersatzbefriedigung
+                    "Entsp": [13, 26],  # Entspannung
+                    "Sozube": [14, 27],  # Soziales Unterstützungsbedürfnis
+                },
+                result_filtered(regex="SVF42_(Ers|Entsp|Sozube|Distraction)"),
+            ),
+            (
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Bag": [7, 22],  # Bagatellisierung
+                    "Her": [11, 35],  # Herunterspielen
+                    "Posi": [9, 24],  # Positive Selbstinstruktion
+                },
+                result_filtered(regex="SVF42_(Bag|Her|Posi|Stressordevaluation)"),
+            ),
+            (
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Verm": [6, 30],  # Vermeidung
+                    "Flu": [16, 40],  # Flucht
+                },
+                result_filtered(regex="SVF42_(Verm|Flu)"),
+            ),
+        ],
+    )
+    def test_svf_42(self, data, columns, subscales, result):
+        data_out = svf_42(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("TICS_L"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("TICS_L"), -1), None, None, does_not_raise()),
+            (data_filtered_correct("TICS_L"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("TICS_L"),
+                ["TICS_L_{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("TICS_L"),
+                ["TICS_L_{}".format(i) for i in range(1, 58)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("TICS_L"),
+                ["TICS_L_{:02d}".format(i) for i in range(1, 58)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("TICS_L"),
+                None,
+                {"WorkOverload": [50, 38, 44, 54, 17, 4, 27, 1]},
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_tics_l_raises(self, data, columns, subscales, expected):
+        with expected:
+            tics_l(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("TICS_L"), None, None, result_filtered("TICS_L")),
+            (
+                data_filtered_correct("TICS_L"),
+                ["TICS_L_{:02d}".format(i) for i in range(1, 58)],
+                None,
+                result_filtered("TICS_L"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("TICS_L"), -1),
+                None,
+                None,
+                result_filtered("TICS_L"),
+            ),
+            (
+                data_filtered_correct("TICS_L"),
+                None,
+                {
+                    "WorkOverload": [1, 4, 17, 27, 38, 44, 50, 54],  # Arbeitsüberlastung
+                    "SocialOverload": [7, 19, 28, 39, 49, 57],  # Soziale Überlastung
+                    "PressureToPerform": [8, 12, 14, 22, 23, 30, 32, 43, 40],  # Erfolgsdruck
+                    "WorkDiscontent": [5, 10, 13, 21, 37, 41, 48, 53],  # Unzufriedenheit mit der Arbeit
+                    "DemandsWork": [3, 20, 24, 35, 47, 55],  # Überforderung bei der Arbeit
+                    "LackSocialRec": [2, 18, 31, 46],  # Mangel an sozialer Anerkennung
+                    "SocialTension": [6, 15, 26, 33, 45, 52],  # Soziale Spannungen
+                    "SocialIsolation": [11, 29, 34, 42, 51, 56],  # Soziale Isolation
+                    "ChronicWorry": [9, 16, 25, 36],  # Chronische Besorgnis
+                },
+                result_filtered(regex="TICS_L"),
+            ),
+            (
+                data_subscale("tics_l"),
+                None,
+                {"WorkOverload": [1, 2, 3, 4, 5, 6, 7, 8]},
+                result_filtered(regex="TICS_L_WorkOverload"),
+            ),
+        ],
+    )
+    def test_tics_l(self, data, columns, subscales, result):
+        data_out = tics_l(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("TICS_S"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("TICS_S"), -1), None, None, does_not_raise()),
+            (data_filtered_correct("TICS_S"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("TICS_S"),
+                ["TICS_S_{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("TICS_S"),
+                ["TICS_S_{}".format(i) for i in range(1, 31)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("TICS_S"),
+                ["TICS_S_{:02d}".format(i) for i in range(1, 31)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("TICS_S"),
+                None,
+                {"WorkOverload": [1, 3, 21]},
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_tics_s_raises(self, data, columns, subscales, expected):
+        with expected:
+            tics_s(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("TICS_S"), None, None, result_filtered("TICS_S")),
+            (
+                data_filtered_correct("TICS_S"),
+                ["TICS_S_{:02d}".format(i) for i in range(1, 31)],
+                None,
+                result_filtered("TICS_S"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("TICS_S"), -1),
+                None,
+                None,
+                result_filtered("TICS_S"),
+            ),
+            (
+                data_filtered_correct("TICS_S"),
+                None,
+                {
+                    "WorkOverload": [1, 3, 21],
+                    "SocialOverload": [11, 18, 28],
+                    "PressureToPerform": [5, 14, 29],
+                    "WorkDiscontent": [8, 13, 24],
+                    "DemandsWork": [12, 16, 27],
+                    "PressureSocial": [6, 15, 22],
+                    "LackSocialRec": [2, 20, 23],
+                    "SocialTension": [4, 9, 26],
+                    "SocialIsolation": [19, 25, 30],
+                    "ChronicWorry": [7, 10, 17],
+                },
+                result_filtered(regex="TICS_S"),
+            ),
+            (
+                data_subscale("tics_s"),
+                None,
+                {"WorkOverload": [1, 2, 3]},
+                result_filtered(regex="TICS_S_WorkOverload"),
+            ),
+        ],
+    )
+    def test_tics_s(self, data, columns, subscales, result):
+        data_out = tics_s(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("TraitRumination"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("TraitRumination"), -1), None, does_not_raise()),
+            (data_filtered_correct("TraitRumination"), None, does_not_raise()),
+            (
+                data_filtered_correct("TraitRumination"),
+                ["TraitRumination{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("TraitRumination"),
+                ["TraitRumination{:02d}".format(i) for i in range(1, 15)],
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("TraitRumination"),
+                ["TraitRumination_{}".format(i) for i in range(1, 15)],
+                pytest.raises(ValidationError),
+            ),
+        ],
+    )
+    def test_trait_rumination_raises(self, data, columns, expected):
+        with expected:
+            trait_rumination(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("TraitRumination"), None, result_filtered("TraitRumination")),
+            (
+                data_filtered_correct("TraitRumination"),
+                ["TraitRumination{:02d}".format(i) for i in range(1, 15)],
+                result_filtered("TraitRumination"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("TraitRumination"), -1),
+                None,
+                result_filtered("TraitRumination"),
+            ),
+        ],
+    )
+    def test_trait_rumination(self, data, columns, result):
+        data_out = trait_rumination(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("TSGS"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("TSGS"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("TSGS"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("TSGS"),
+                ["TSGS{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("TSGS"), ["TSGS{:02d}".format(i) for i in range(1, 16)], None, does_not_raise()),
+            (
+                data_filtered_correct("TSGS"),
+                ["TSGS_{}".format(i) for i in range(1, 16)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("TSGS"),
+                None,
+                {
+                    "Pride": [1, 4, 7, 10, 13],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_tsgs_raises(self, data, columns, subscales, expected):
+        with expected:
+            tsgs(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("TSGS"), None, None, result_filtered("TSGS")),
+            (
+                data_filtered_correct("TSGS"),
+                ["TSGS{:02d}".format(i) for i in range(1, 16)],
+                None,
+                result_filtered("TSGS"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("TSGS"), 1),
+                None,
+                None,
+                result_filtered("TSGS"),
+            ),
+            (
+                data_subscale("tsgs"),
+                None,
+                {"Pride": [1, 2, 3, 4, 5]},
+                result_filtered("TSGS_Pride"),
+            ),
+        ],
+    )
+    def test_tsgs(self, data, columns, subscales, result):
+        data_out = tsgs(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("Type_D"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("Type_D"), -1), None, None, does_not_raise()),
+            (data_filtered_correct("Type_D"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("Type_D"),
+                ["Type_D{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("Type_D"), ["Type_D{:02d}".format(i) for i in range(1, 15)], None, does_not_raise()),
+            (
+                data_filtered_correct("Type_D"),
+                ["Type_D_{}".format(i) for i in range(1, 15)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("Type_D"),
+                None,
+                {
+                    "SocialInhibition": [1, 3, 6, 8, 10, 11, 14],
+                },
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("Type_D"),
+                None,
+                {
+                    "SocialInhibition": [1],
+                },
+                pytest.raises(IndexError),
+            ),
+        ],
+    )
+    def test_type_d_scale_raises(self, data, columns, subscales, expected):
+        with expected:
+            type_d(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("Type_D"), None, None, result_filtered("Type_D")),
+            (
+                data_filtered_correct("Type_D"),
+                ["Type_D{:02d}".format(i) for i in range(1, 15)],
+                None,
+                result_filtered("Type_D"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("Type_D"), -1),
+                None,
+                None,
+                result_filtered("Type_D"),
+            ),
+            (
+                data_subscale("type_d"),
+                None,
+                {"SocialInhibition": [1, 2, 3, 4, 5, 6, 7]},
+                result_filtered("Type_D_SocialInhibition"),
+            ),
+        ],
+    )
+    def test_type_d_scale(self, data, columns, subscales, result):
+        data_out = type_d(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)

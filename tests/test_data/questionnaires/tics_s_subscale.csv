@@ -1,0 +1,7 @@
+﻿subject,condition,TICS_S_01,TICS_S_03,TICS_S_21
+Vp01,Control,1,1,1
+Vp02,Intervention,1,0,1
+Vp03,Control,3,2,2
+Vp04,Intervention,2,1,2
+Vp05,Control,1,1,1
+Vp06,Intervention,3,3,4

@@ -46,6 +46,6 @@ __all__ = [
     "tics_s",
     "trait_rumination",
     "tsgs",
-    "type_d_scale",
+    "type_d",
     "utils",
 ]
