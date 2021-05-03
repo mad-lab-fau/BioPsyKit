@@ -1,3 +1,2 @@
 *.ipynb filter=nbstripout
 *.ipynb diff=ipynb
-example_data/sleep_imu/sleep_imu_sample_01.bin filter=lfs diff=lfs merge=lfs -text
