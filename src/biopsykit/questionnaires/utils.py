@@ -1,9 +1,17 @@
 """Module containing utility functions for manipulating and processing questionnaire data."""
 import warnings
+import re
+
 from typing import Optional, Union, Sequence, Tuple, Dict, Literal
+
+from inspect import getmembers, isfunction
 
 import numpy as np
 import pandas as pd
+
+from biopsykit.utils.dataframe_handling import wide_to_long as wide_to_long_utils
+from biopsykit.questionnaires import questionnaires
+
 
 __all__ = [
     "bin_scale",
@@ -16,10 +24,6 @@ __all__ = [
     "to_idx",
     "wide_to_long",
 ]
-
-from biopsykit.utils.dataframe_handling import wide_to_long as wide_to_long_utils
-from inspect import getmembers, isfunction
-from biopsykit.questionnaires import questionnaires
 
 
 def find_cols(
@@ -51,16 +55,15 @@ def find_cols(
     return df_filt, cols
 
 
-def fill_col_leading_zeros(df: pd.DataFrame, inplace: Optional[bool] = False) -> Union[pd.DataFrame, None]:
-    import re
-
+def fill_col_leading_zeros(df: pd.DataFrame, inplace: Optional[bool] = False) -> Optional[pd.DataFrame]:
     if not inplace:
         df = df.copy()
 
     df.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(2), c) for c in df.columns]
 
-    if not inplace:
-        return df
+    if inplace:
+        return None
+    return df
 
 
 def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
@@ -89,8 +92,9 @@ def invert(
     else:
         raise ValueError("Only pd.DataFrame and pd.Series supported!")
 
-    if not inplace:
-        return data
+    if inplace:
+        return None
+    return data
 
 
 def _invert_subscales(
@@ -111,27 +115,26 @@ def convert_scale(
     offset: int,
     cols: Optional[Union[pd.DataFrame, pd.Series]] = None,
     inplace: Optional[bool] = False,
-) -> Union[pd.DataFrame, pd.Series, None]:
-    if inplace:
-        if isinstance(data, pd.DataFrame):
-            if cols is None:
-                data.iloc[:, :] = data.iloc[:, :] + offset
-            else:
-                if isinstance(cols[0], int):
-                    data.iloc[:, cols] = data.iloc[:, cols] + offset
-                elif isinstance(cols[0], str):
-                    data.loc[:, cols] = data.loc[:, cols] + offset
-        elif isinstance(data, pd.Series):
-            data.iloc[:] = data.iloc[:] + offset
-        else:
-            raise ValueError("Only pd.DataFrame and pd.Series supported!")
-    else:
+) -> Optional[Union[pd.DataFrame, pd.Series]]:
+    if not inplace:
         data = data.copy()
-        if cols is not None:
-            data[cols] = data[cols] + offset
-            return data
+
+    if isinstance(data, pd.DataFrame):
+        if cols is None:
+            data.iloc[:, :] = data.iloc[:, :] + offset
         else:
-            return data + offset
+            if isinstance(cols[0], int):
+                data.iloc[:, cols] = data.iloc[:, cols] + offset
+            elif isinstance(cols[0], str):
+                data.loc[:, cols] = data.loc[:, cols] + offset
+    elif isinstance(data, pd.Series):
+        data.iloc[:] = data.iloc[:] + offset
+    else:
+        raise ValueError("Only pd.DataFrame and pd.Series supported!")
+
+    if inplace:
+        return None
+    return data
 
 
 def crop_scale(
@@ -139,19 +142,18 @@ def crop_scale(
     score_scale: Sequence[int],
     inplace: Optional[bool] = True,
     set_nan: Optional[bool] = True,
-) -> Union[pd.DataFrame, pd.Series, None]:
+) -> Optional[Union[pd.DataFrame, pd.Series]]:
+    if not inplace:
+        data = data.copy()
     if set_nan:
-        if inplace:
-            data.mask((data < score_scale[0]) | (data > score_scale[1]), inplace=True)
-        else:
-            return data.mask((data < score_scale[0]) | (data > score_scale[1]))
+        data = data.mask((data < score_scale[0]) | (data > score_scale[1]))
     else:
-        if inplace:
-            data.mask((data < score_scale[0]), other=score_scale[0], inplace=True)
-            data.mask((data > score_scale[1]), other=score_scale[1], inplace=True)
-        else:
-            tmp = data.mask((data < score_scale[0]), other=score_scale[0])
-            return tmp.mask((tmp > score_scale[1]), other=score_scale[1])
+        data = data.mask((data < score_scale[0]), other=score_scale[0])
+        data = data.mask((data > score_scale[1]), other=score_scale[1])
+
+    if inplace:
+        return None
+    return data
 
 
 def bin_scale(
@@ -161,7 +163,7 @@ def bin_scale(
     last_max: Optional[bool] = False,
     inplace: Optional[bool] = False,
     right: Optional[bool] = True,
-) -> Union[pd.Series, None]:
+) -> Optional[Union[pd.Series, pd.DataFrame]]:
     if last_max:
         if isinstance(col, int):
             max_val = data.iloc[:, col].max()
@@ -170,40 +172,38 @@ def bin_scale(
         else:
             max_val = data.max()
 
+        # ensure list
+        bins = list(bins)
         if max_val > max(bins):
             bins = bins + [max_val + 1]
 
+    if not inplace:
+        data = data.copy()
+
     if isinstance(data, pd.Series):
         c = pd.cut(data.iloc[:], bins=bins, labels=False, right=right)
-        if inplace:
-            data.iloc[:] = c
-        else:
-            return c
-
+        data.iloc[:] = c
     elif isinstance(data, pd.DataFrame):
         if col is None:
             if len(data.columns) > 1:
                 raise ValueError("Column must be specified when passing dataframe!")
-            else:
-                c = pd.cut(data.iloc[:, 0], bins=bins, labels=False, right=right)
-                if inplace:
-                    data.iloc[:, 0] = c
-                else:
-                    return c
+            c = pd.cut(data.iloc[:, 0], bins=bins, labels=False, right=right)
+            data.iloc[:, 0] = c
 
         if isinstance(col, int):
             c = pd.cut(data.iloc[:, col], bins=bins, labels=False, right=right)
-            if inplace:
-                data.iloc[:, col] = c
-            else:
-                return c
-
-        if isinstance(col, str):
+            data.iloc[:, col] = c
+        elif isinstance(col, str):
             c = pd.cut(data.loc[:, col], bins=bins, labels=False, right=right)
-            if inplace:
-                data.loc[:, col] = c
-            else:
-                return c
+            data.loc[:, col] = c
+        else:
+            raise ValueError("'col' must either be column name or index!")
+    else:
+        raise ValueError("'data' must either be pd.DataFrame or pd.Series!")
+
+    if inplace:
+        return None
+    return data
 
 
 def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:

@@ -30,7 +30,7 @@ from biopsykit.questionnaires.utils import (
     _invert_subscales,
 )
 from biopsykit.utils._datatype_validation_helper import _assert_value_range, _assert_num_columns, _assert_has_columns
-from biopsykit.utils.exceptions import ValidationError, ValueRangeError
+from biopsykit.utils.exceptions import ValueRangeError
 
 
 def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
@@ -2289,18 +2289,7 @@ def stadi(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    if stadi_type is None:
-        stadi_type = ["State", "Trait"]
-    elif stadi_type == "state_trait":
-        stadi_type = ["State", "Trait"]
-    elif stadi_type == "state":
-        stadi_type = ["State"]
-    elif stadi_type == "trait":
-        stadi_type = ["Trait"]
-    else:
-        raise ValueError(
-            "Invalid 'stadi_type'! Must be one of 'state_trait', 'state', or 'trait', not {}.".format(stadi_type)
-        )
+    stadi_type = _get_stadi_type(stadi_type)
 
     if subscales is None:
         _assert_num_columns(data, 20 * len(stadi_type))
@@ -2344,11 +2333,24 @@ def stadi(
                 }
             )
 
-    print(data)
-    print(stadi_data)
-
     df_stadi = pd.DataFrame(stadi_data, index=data.index)
     return df_stadi
+
+
+def _get_stadi_type(stadi_type: str) -> Sequence[str]:
+    if stadi_type is None:
+        stadi_type = ["State", "Trait"]
+    elif stadi_type == "state_trait":
+        stadi_type = ["State", "Trait"]
+    elif stadi_type == "state":
+        stadi_type = ["State"]
+    elif stadi_type == "trait":
+        stadi_type = ["Trait"]
+    else:
+        raise ValueError(
+            "Invalid 'stadi_type'! Must be one of 'state_trait', 'state', or 'trait', not {}.".format(stadi_type)
+        )
+    return stadi_type
 
 
 def svf_120(
@@ -3857,8 +3859,7 @@ def pfb(
                 "Please consider converting to the correct range using "
                 "`biopsykit.questionnaire.utils.convert_scale()`.".format(score_range, subscales["Glueck"], [1, 6])
             )
-        else:
-            raise e
+        raise e
 
     # invert item 19
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
