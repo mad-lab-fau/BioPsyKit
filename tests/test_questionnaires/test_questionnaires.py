@@ -82,7 +82,7 @@ def panas_results_german():
 
 class TestQuestionnaires:
     @pytest.mark.parametrize(
-        "data, coklumns, expected",
+        "data, columns, expected",
         [
             (data_complete_correct(), None, pytest.raises(ValidationError)),
             (data_filtered_wrong_range(regex=r"ABI\d"), None, pytest.raises(ValueRangeError)),
@@ -123,6 +123,55 @@ class TestQuestionnaires:
     )
     def test_abi(self, data, columns, result):
         data_out = abi(data, columns)
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("ASQ"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("ASQ"), -1), None, does_not_raise()),
+            (data_filtered_correct("ASQ"), None, does_not_raise()),
+            (
+                data_filtered_correct("ASQ"),
+                ["ASQ{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ASQ"),
+                ["ASQ{:02d}".format(i) for i in range(1, 11)],
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("ASQ"),
+                ["ASQ_{}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
+            ),
+        ],
+    )
+    def test_asq_raises(self, data, columns, expected):
+        with expected:
+            asq(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("ASQ"), None, result_filtered("ASQ")),
+            (
+                data_filtered_correct("ASQ"),
+                ["ASQ{:02d}".format(i) for i in range(1, 11)],
+                result_filtered("ASQ"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("ASQ"), -1),
+                None,
+                result_filtered("ASQ"),
+            ),
+        ],
+    )
+    def test_asq(self, data, columns, result):
+        data_out = asq(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
 
     @pytest.mark.parametrize(

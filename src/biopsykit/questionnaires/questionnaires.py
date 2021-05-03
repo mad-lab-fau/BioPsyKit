@@ -3703,73 +3703,73 @@ def mlq(
     return pd.DataFrame(mlq_data, index=data.index)
 
 
-def ceca(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Childhood Experiences of Care and Abuse Questionnaire (CECA)**.
-
-    The CECA is a measure of childhood and adolescent experience of neglect and abuse. Its original use was to
-    investigate lifetime risk factors for psychological disorder.
-
-    .. note::
-        This implementation assumes a score range of [0, 4].
-        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
-        beforehand.
-
-    .. warning::
-        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
-        questionnaire item columns, which typically also start with index 1!
-
-
-    Parameters
-    ----------
-    data : :class:`~pandas.DataFrame`
-        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
-    columns : list of str or :class:`pandas.Index`, optional
-        list with column names in correct order.
-        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
-        passed as ``data``.
-
-
-    Returns
-    -------
-    :class:`~pandas.DataFrame`
-        CECA score
-
-
-    Raises
-    ------
-    `biopsykit.exceptions.ValidationError`
-        if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
-        if values are not within the required score range
-
-    References
-    ----------
-    Bifulco, A., Brown, G. W., & Harris, T. O. (1994). Childhood Experience of Care and Abuse (CECA): a retrospective
-    interview measure. *Journal of Child Psychology and Psychiatry*, 35(8), 1419-1435.
-
-    """
-    score_name = "CECA"
-
-    # create copy of data
-    data = data.copy()
-
-    if columns is not None:
-        # if columns parameter is supplied: slice columns from dataframe
-        _assert_has_columns(data, [columns])
-        data = data.loc[:, columns]
-
-    ceca_data = [
-        data.filter(like="Q3_05"),
-        data.filter(like="Q3_07"),
-        data.filter(like="Q3_09"),
-        data.filter(like="Q3_12").iloc[:, to_idx([5, 6])],
-        data.filter(like="Q3_13"),
-        data.filter(like="Q3_16").iloc[:, to_idx([5, 6])],
-    ]
-
-    ceca_data = pd.concat(ceca_data, axis=1).sum(axis=1)
-    return pd.DataFrame(ceca_data, index=data.index, columns=[score_name])
+# def ceca(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+#     """Compute the **Childhood Experiences of Care and Abuse Questionnaire (CECA)**.
+#
+#     The CECA is a measure of childhood and adolescent experience of neglect and abuse. Its original use was to
+#     investigate lifetime risk factors for psychological disorder.
+#
+#     .. note::
+#         This implementation assumes a score range of [0, 4].
+#         Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+#         beforehand.
+#
+#     .. warning::
+#         Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+#         questionnaire item columns, which typically also start with index 1!
+#
+#
+#     Parameters
+#     ----------
+#     data : :class:`~pandas.DataFrame`
+#         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+#         a complete dataframe if ``columns`` parameter is supplied
+#     columns : list of str or :class:`pandas.Index`, optional
+#         list with column names in correct order.
+#         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+#         passed as ``data``.
+#
+#
+#     Returns
+#     -------
+#     :class:`~pandas.DataFrame`
+#         CECA score
+#
+#
+#     Raises
+#     ------
+#     `biopsykit.exceptions.ValidationError`
+#         if number of columns does not match
+#     `biopsykit.exceptions.ValueRangeError`
+#         if values are not within the required score range
+#
+#     References
+#     ----------
+#     Bifulco, A., Brown, G. W., & Harris, T. O. (1994). Childhood Experience of Care and Abuse (CECA): a retrospective
+#     interview measure. *Journal of Child Psychology and Psychiatry*, 35(8), 1419-1435.
+#
+#     """
+#     score_name = "CECA"
+#
+#     # create copy of data
+#     data = data.copy()
+#
+#     if columns is not None:
+#         # if columns parameter is supplied: slice columns from dataframe
+#         _assert_has_columns(data, [columns])
+#         data = data.loc[:, columns]
+#
+#     ceca_data = [
+#         data.filter(like="Q3_05"),
+#         data.filter(like="Q3_07"),
+#         data.filter(like="Q3_09"),
+#         data.filter(like="Q3_12").iloc[:, to_idx([5, 6])],
+#         data.filter(like="Q3_13"),
+#         data.filter(like="Q3_16").iloc[:, to_idx([5, 6])],
+#     ]
+#
+#     ceca_data = pd.concat(ceca_data, axis=1).sum(axis=1)
+#     return pd.DataFrame(ceca_data, index=data.index, columns=[score_name])
 
 
 def pfb(
@@ -3918,6 +3918,7 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     # Reverse scores items 2, 3
     data = invert(data, cols=to_idx([2, 3]), score_range=score_range)
 
+    # ASQ is a mean, not a sum score!
     return pd.DataFrame(data.mean(axis=1), columns=[score_name])
 
 

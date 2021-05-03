@@ -8,7 +8,7 @@ __all__ = [
     "bidr",
     "besaa",
     "brief_cope",
-    "ceca",
+    # "ceca",
     "cesd",
     "ctq",
     "fee",
