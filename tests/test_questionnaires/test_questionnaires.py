@@ -1574,8 +1574,32 @@ class TestQuestionnaires:
             (
                 data_subscale("pasa"),
                 None,
-                {"Threat": [1, 9, 5, 13]},
+                {"Threat": [1, 2, 3, 4]},
                 result_filtered("PASA_Threat"),
+            ),
+            (
+                data_filtered_correct("PASA"),
+                None,
+                {"Threat": [1, 5, 9, 13], "Challenge": [2, 6, 10, 14]},
+                result_filtered(regex="PASA_(Threat|Challenge|Primary)"),
+            ),
+            (
+                data_filtered_correct("PASA"),
+                None,
+                {
+                    "Threat": [1, 5, 9, 13],
+                    "SelfConcept": [3, 7, 11, 15],
+                },
+                result_filtered(regex="PASA_(Threat|SelfConcept)"),
+            ),
+            (
+                data_filtered_correct("PASA"),
+                None,
+                {
+                    "SelfConcept": [3, 7, 11, 15],
+                    "ControlExp": [4, 8, 12, 16],
+                },
+                result_filtered(regex="PASA_(SelfConcept|ControlExp|Secondary)"),
             ),
         ],
     )

@@ -1841,7 +1841,7 @@ def pasa(
             pasa_data[score_name + "_SelfConcept"] + pasa_data[score_name + "_ControlExp"]
         ) / 2
 
-    if all(s in subscales for s in ["PASA_Primary", "PASA_Secondary"]):
+    if all("{}_{}".format(score_name, s) in pasa_data.keys() for s in ["Primary", "Secondary"]):
         pasa_data[score_name + "_StressComposite"] = (
             pasa_data[score_name + "_Primary"] - pasa_data[score_name + "_Secondary"]
         )
