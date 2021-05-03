@@ -1,0 +1,7 @@
+﻿subject,condition,MDBF_01,MDBF_04,MDBF_08,MDBF_11,MDBF_14,MDBF_16,MDBF_18,MDBF_21
+Vp01,Control,4,1,4,2,3,1,1,4
+Vp02,Intervention,5,2,4,1,4,1,1,4
+Vp03,Control,5,1,4,2,4,1,1,5
+Vp04,Intervention,5,1,5,1,5,1,1,5
+Vp05,Control,5,1,5,1,5,1,1,4
+Vp06,Intervention,4,1,4,2,3,1,1,3

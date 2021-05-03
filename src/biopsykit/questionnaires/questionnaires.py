@@ -30,6 +30,7 @@ from biopsykit.questionnaires.utils import (
     _invert_subscales,
 )
 from biopsykit.utils._datatype_validation_helper import _assert_value_range, _assert_num_columns, _assert_has_columns
+from biopsykit.utils.exceptions import ValidationError, ValueRangeError
 
 
 def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
@@ -170,6 +171,7 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 23)
@@ -587,6 +589,7 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 12)
@@ -660,9 +663,8 @@ def hads(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 14)
@@ -670,6 +672,8 @@ def hads(
             "Anxiety": [1, 3, 5, 7, 9, 11, 13],
             "Depression": [2, 4, 6, 8, 10, 12, 14],
         }
+
+    _assert_value_range(data, score_range)
 
     # Reverse scores 2, 4, 6, 7, 12, 14
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -998,6 +1002,7 @@ def midi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 12)
@@ -1168,6 +1173,7 @@ def rmidi(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_value_range(data, score_range)
@@ -1260,13 +1266,17 @@ def lsq(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 30)
         subscales = ["Partner", "Parent", "Child"]
+
+    if isinstance(subscales, str):
+        subscales = [subscales]
+
+    _assert_value_range(data, score_range)
 
     lsq_data = {"{}_{}".format(score_name, subscale): data.filter(like=subscale).sum(axis=1) for subscale in subscales}
 
@@ -1344,10 +1354,9 @@ def ctq(
     data = data.copy()
 
     if columns is not None:
+        _assert_has_columns(data, [columns])
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 28)
@@ -1359,6 +1368,8 @@ def ctq(
             "EmotionalAbuse": [3, 8, 14, 18, 25],
             "Validity": [10, 16, 22],
         }
+
+    _assert_value_range(data, score_range)
 
     # reverse scores 2, 5, 7, 13, 19, 26, 28
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -1602,6 +1613,7 @@ def besaa(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     if subscales is None:
@@ -1704,9 +1716,8 @@ def fscrs(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 22)
@@ -1715,6 +1726,8 @@ def fscrs(
             "HatedSelf": [9, 10, 12, 15, 22],
             "ReassuringSelf": [3, 5, 8, 11, 13, 16, 19, 21],
         }
+
+    _assert_value_range(data, score_range)
 
     fscrs_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
@@ -1792,18 +1805,19 @@ def pasa(
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
-
-    _assert_value_range(data, score_range)
 
     if subscales is None:
         _assert_num_columns(data, 16)
         subscales = {
-            "Threat": [1, 9, 5, 13],
-            "Challenge": [6, 10, 2, 14],
-            "SelfConcept": [7, 3, 11, 15],
+            "Threat": [1, 5, 9, 13],
+            "Challenge": [2, 6, 10, 14],
+            "SelfConcept": [3, 7, 11, 15],
             "ControlExp": [4, 8, 12, 16],
         }
+
+    _assert_value_range(data, score_range)
 
     # reverse scores 1, 6, 7, 9, 10
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -1811,7 +1825,7 @@ def pasa(
     data = _invert_subscales(
         data,
         subscales=subscales,
-        idx_dict={"Threat": [0, 1], "Challenge": [0, 1], "SelfConcept": [0]},
+        idx_dict={"Threat": [0, 2], "Challenge": [1, 2], "SelfConcept": [1]},
         score_range=score_range,
     )
 
@@ -1929,7 +1943,7 @@ def ssgs(
 def panas(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    language: Optional[Literal["english", "german"]] = "english",
+    language: Optional[Literal["english", "german"]] = None,
 ) -> pd.DataFrame:
     """Compute the **Positive and Negative Affect Schedule (PANAS)**.
 
@@ -1990,11 +2004,15 @@ def panas(
     # create copy of data
     data = data.copy()
 
+    if language is None:
+        language = "english"
+
     if language not in supported_versions:
-        raise AttributeError("questionnaire_version must be one of {}, not {}.".format(supported_versions, language))
+        raise ValueError("questionnaire_version must be one of {}, not {}.".format(supported_versions, language))
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
     _assert_num_columns(data, 20)
@@ -2002,15 +2020,23 @@ def panas(
 
     if language == "german":
         # German Version has other item indices
-        neg_affect = [2, 5, 7, 8, 9, 12, 14, 16, 19, 20]
+        subscales = {
+            "NegativeAffect": [2, 5, 7, 8, 9, 12, 14, 16, 19, 20],
+            "PositiveAffect": [1, 3, 4, 6, 10, 11, 13, 15, 17, 18],
+        }
     else:
-        neg_affect = [2, 4, 6, 7, 8, 11, 13, 15, 18, 20]
+        subscales = {
+            "NegativeAffect": [2, 4, 6, 7, 8, 11, 13, 15, 18, 20],
+            "PositiveAffect": [1, 3, 5, 9, 10, 12, 14, 16, 17, 19],
+        }
 
-    panas_data = {score_name + "_NegativeAffect": data.iloc[:, to_idx(neg_affect)].sum(axis=1)}
-    panas_data[score_name + "_PositiveAffect"] = data.sum(axis=1) - panas_data[score_name + "_NegativeAffect"]
-    panas_data[score_name + "_Total"] = panas_data[score_name + "_PositiveAffect"] + invert(
-        data.iloc[:, to_idx(neg_affect)], score_range=score_range
-    ).sum(axis=1)
+    # PANAS is a mean, not a sum score!
+    panas_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
+    data = _invert_subscales(
+        data, subscales, {"NegativeAffect": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}, score_range=score_range
+    )
+
+    panas_data[score_name + "_Total"] = data.mean(axis=1)
 
     return pd.DataFrame(panas_data, index=data.index)
 
@@ -3075,8 +3101,6 @@ def fkk(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 32)
         # Primärskalenwerte
@@ -3086,6 +3110,8 @@ def fkk(
             "P": [3, 10, 14, 17, 19, 22, 26, 29],
             "C": [2, 7, 9, 13, 15, 18, 21, 31],
         }
+
+    _assert_value_range(data, score_range)
 
     # Reverse scores 4, 8, 12, 24
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -3282,8 +3308,6 @@ def kkg(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 21)
         subscales = {
@@ -3291,6 +3315,8 @@ def kkg(
             "P": [2, 4, 6, 10, 12, 14, 20],
             "C": [3, 7, 9, 11, 13, 15, 19],
         }
+
+    _assert_value_range(data, score_range)
 
     kkg_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
@@ -3301,7 +3327,7 @@ def fee(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
-    language: Optional[Literal["german", "english"]] = "english",
+    language: Optional[Literal["german", "english"]] = None,
 ) -> pd.DataFrame:
     """Compute the **Fragebogen zum erinnerten elterlichen Erziehungsverhalten (FEE)**.
 
@@ -3356,6 +3382,7 @@ def fee(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+        if ``language`` is not supported
     `biopsykit.exceptions.ValidationError`
         if number of columns does not match
     `biopsykit.exceptions.ValueRangeError`
@@ -3369,24 +3396,27 @@ def fee(
     """
     score_name = "FEE"
     score_range = [1, 4]
-    supported_versions = ["english", "german"]
 
+    if language is None:
+        language = "english"
+
+    supported_versions = ["english", "german"]
     if language not in supported_versions:
-        raise AttributeError("questionnaire_version must be one of {}, not {}.".format(supported_versions, language))
+        raise ValueError("questionnaire_version must be one of {}, not {}.".format(supported_versions, language))
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if language == "german":
-        df_mother = data.filter(like="Mutter").copy()
-        df_father = data.filter(like="Vater").copy()
+        mother = "Mutter"
+        father = "Vater"
     else:
-        df_mother = data.filter(like="Mother").copy()
-        df_father = data.filter(like="Father").copy()
+        mother = "Mother"
+        father = "Father"
+    df_mother = data.filter(like=mother).copy()
+    df_father = data.filter(like=father).copy()
 
     if subscales is None:
         _assert_num_columns(df_father, 24)
@@ -3397,9 +3427,13 @@ def fee(
             "ControlOverprotection": [4, 5, 10, 11, 13, 19, 21, 23],
         }
 
+    _assert_value_range(data, score_range)
+
     # FEE is a mean score, not a sum score!
     fee_mother = _compute_questionnaire_subscales(df_mother, score_name, subscales, agg_type="mean")
+    fee_mother = {"{}_{}".format(key, mother): val for key, val in fee_mother.items()}
     fee_father = _compute_questionnaire_subscales(df_father, score_name, subscales, agg_type="mean")
+    fee_father = {"{}_{}".format(key, father): val for key, val in fee_father.items()}
     fee_mother.update(fee_father)
 
     return pd.DataFrame(fee_mother, index=data.index)
@@ -3424,7 +3458,7 @@ def mbi_gs(
         * Depersonalization / Cynicism (``DC``): [9, 10, 13, 14, 15]
 
     .. note::
-        This implementation assumes a score range of [1, 6].
+        This implementation assumes a score range of [0, 6].
         Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
         beforehand.
 
@@ -3464,7 +3498,7 @@ def mbi_gs(
 
     """
     score_name = "MBI_GS"
-    score_range = [1, 6]
+    score_range = [0, 6]
 
     # create copy of data
     data = data.copy()
@@ -3474,26 +3508,15 @@ def mbi_gs(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
-    # mbi_type = data.iloc[:, 0] - 1
-    # mbi_type.name = "{}_Type".format(score_name)
-    # data.drop(axis=1, labels=data.columns[0], inplace=True)
-    # # MBI in HABIT was assessed in the regular and Student form,
-    # # depending on the subject => 2 questionnaires, split into 2 dataframes
-    # items = np.split(data, 2, axis=1)
-    # for i in [0, 1]:
-    #     items[i] = items[i][mbi_type == i]
-    #     items[i].columns = items[0].columns
-    # data = pd.concat(items).sort_index()
-
     if subscales is None:
         _assert_num_columns(data, 16)
         subscales = {
-            "EE": [1, 2, 3, 4, 5],
-            "PA": [6, 7, 8, 11, 12, 16],
-            "DC": [9, 10, 13, 14, 15],
+            "EE": [1, 2, 3, 4, 5],  # Emotional Exhaustion
+            "PA": [6, 7, 8, 11, 12, 16],  # Personal Accomplishment
+            "DC": [9, 10, 13, 14, 15],  # Depersonalization / Cynicism
         }
+
+    _assert_value_range(data, score_range)
 
     # MBI is a mean score, not a sum score!
     mbi_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
@@ -3520,7 +3543,7 @@ def mbi_gss(
         * Depersonalization / Cynicism (``DC``): [9, 10, 13, 14, 15]
 
     .. note::
-        This implementation assumes a score range of [1, 6].
+        This implementation assumes a score range of [0, 6].
         Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
         beforehand.
 
@@ -3560,7 +3583,7 @@ def mbi_gss(
 
     """
     score_name = "MBI_GSS"
-    score_range = [1, 6]
+    score_range = [0, 6]
 
     # create copy of data
     data = data.copy()
@@ -3570,8 +3593,6 @@ def mbi_gss(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 16)
         subscales = {
@@ -3579,6 +3600,8 @@ def mbi_gss(
             "PA": [6, 7, 8, 11, 12, 16],
             "DC": [9, 10, 13, 14, 15],
         }
+
+    _assert_value_range(data, score_range)
 
     # MBI is a mean score, not a sum score!
     mbi_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
@@ -3658,14 +3681,14 @@ def mlq(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 10)
         subscales = {
             "PresenceMeaning": [1, 4, 5, 6, 9],
             "SearchMeaning": [2, 3, 7, 8, 10],
         }
+
+    _assert_value_range(data, score_range)
 
     # Reverse scores 9
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -3950,8 +3973,6 @@ def mdbf(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-
     if subscales is None:
         _assert_num_columns(data, 24)
         subscales = {
@@ -3959,6 +3980,8 @@ def mdbf(
             "AwakeTired": [2, 5, 7, 10, 13, 17, 20, 23],
             "CalmNervous": [3, 6, 9, 12, 15, 19, 22, 24],
         }
+
+    _assert_value_range(data, score_range)
 
     # Reverse scores 3, 4, 5, 7, 9, 11, 13, 16, 18, 19, 22, 23
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
@@ -4042,6 +4065,8 @@ def meq(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
+    _assert_num_columns(data, 19)
+
     # some columns have scores from 1-5 => check them separately
     col_idx = to_idx([1, 2, 10, 17, 18])
     try:
@@ -4049,22 +4074,21 @@ def meq(
         col_mask = np.arange(0, len(data.columns))
         col_mask = col_mask[~np.isin(col_mask, to_idx([1, 2, 10, 17, 18]))]
         _assert_value_range(data.iloc[:, col_mask], score_range)
-    except ValueError:
-        raise ValueError(
-            "Attention! This implementation of MEQ expects all values in the range {}, except the columns {}, "
+    except ValueRangeError:
+        raise ValueRangeError(
+            "This implementation of MEQ expects all values in the range {}, except the columns {}, "
             "which are expected to be in the range {}! "
             "Please consider converting to the correct range using "
             "`biopsykit.questionnaire.utils.convert_scale`.".format(score_range, col_idx, [1, 5])
         )
 
     # invert items 1, 2, 10, 17, 18 (score range [1, 5])
-    invert(data, cols=to_idx([1, 2, 10, 17, 18]), score_range=[1, 5], inplace=True)
+    data = invert(data, cols=to_idx([1, 2, 10, 17, 18]), score_range=[1, 5])
     # invert items 3, 8, 9, 10, 11, 13, 15, 19 (score range [1, 4])
-    invert(
+    data = invert(
         data,
         cols=to_idx([3, 8, 9, 11, 13, 15, 19]),
         score_range=score_range,
-        inplace=True,
     )
 
     # recode items 11, 12, 19
@@ -4072,7 +4096,8 @@ def meq(
     data.iloc[:, to_idx(12)].replace({1: 0, 2: 2, 3: 3, 4: 5}, inplace=True)
     data.iloc[:, to_idx(19)].replace({1: 0, 2: 2, 3: 4, 4: 6}, inplace=True)
 
-    meq_data = pd.DataFrame(np.sum(data, axis=1), columns=[score_name])
+    meq_data = pd.DataFrame(data.sum(axis=1), columns=[score_name])
+
     meq_data["Chronotype_Fine"] = bin_scale(meq_data[score_name], bins=[0, 30, 41, 58, 69, 86])
     meq_data["Chronotype_Coarse"] = bin_scale(meq_data[score_name], bins=[0, 41, 58, 86])
 
