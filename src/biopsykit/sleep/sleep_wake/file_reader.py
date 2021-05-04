@@ -176,19 +176,27 @@ def xml_reader(file_path):
     return df
 
 
-def read_cleaned_data(file_path):
+def read_cleaned_actigraph(file_path):
     actigraphy = {}
-    psg = {}
     for i in range(6812):
         try:
             actigraphy[i] = pd.read_csv(file_path + '/actigraphy\clean_actigraphy' + "{:04d}".format(i) + '.csv')
-            psg[i] = pd.read_csv(file_path + '/psg\clean_psg' + "{:04d}".format(i) + '.csv')
-            print('file ' + str(i) + ' readed in!')
+            #print('file ' + str(i) + ' readed in!')
 
         except:
             pass
 
-    return actigraphy, psg
+    return actigraphy
 
 
+def read_cleaned_psg(file_path):
+    psg = {}
+    for i in range(6812):
+        try:
+            psg[i] = pd.read_csv(file_path + '/psg\clean_psg' + "{:04d}".format(i) + '.csv')
+            #print('file ' + str(i) + ' readed in!')
 
+        except:
+            pass
+
+    return psg
