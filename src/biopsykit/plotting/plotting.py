@@ -405,7 +405,7 @@ def multi_feature_boxplot(
     rect = kwargs.pop("rect", (0, 0, 0.825, 1.0))
 
     xlabels = kwargs.pop("xlabels", {})
-    ylabels = kwargs.get("ylabels", {})
+    ylabels = kwargs.pop("ylabels", {})
     xticklabels = kwargs.get("xticklabels", {})
 
     if isinstance(features, list):
