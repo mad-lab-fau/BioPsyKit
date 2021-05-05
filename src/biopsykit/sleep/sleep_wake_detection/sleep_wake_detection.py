@@ -3,10 +3,10 @@ from typing import Optional, Union
 import pandas as pd
 import numpy as np
 
-from biopsykit.sleep.sleep_wake.cole_kripke import ColeKripke
+from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke
 
 
-class SleepWake:
+class SleepWakeDetection:
     sleep_wake_algo = None
 
     def __init__(self, algorithm_type: Optional[str] = "default", **kw_args):

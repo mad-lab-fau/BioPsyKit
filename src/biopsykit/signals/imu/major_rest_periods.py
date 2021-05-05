@@ -6,7 +6,7 @@ import numpy as np
 from biopsykit.utils.array_handling import sliding_window
 
 
-class MajorRestPeriod:
+class MajorRestPeriods:
     sampling_rate: int
 
     def __init__(self, sampling_rate: int):

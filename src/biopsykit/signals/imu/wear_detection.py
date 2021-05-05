@@ -117,3 +117,10 @@ class WearDetection:
         max_block = wear_blocks[np.argmax([len(b) for i, b in wear_blocks])][1]
         max_block = (max_block["start"].iloc[0], max_block["end"].iloc[-1])
         return max_block
+
+    @staticmethod
+    def cut_to_wear_block(data: pd.DataFrame, wear_block: Tuple) -> pd.DataFrame:
+        if isinstance(data.index, pd.DatetimeIndex):
+            return data.loc[wear_block[0] : wear_block[-1]]
+        else:
+            return data.iloc[wear_block[0] : wear_block[-1]]

@@ -1,88 +1,30 @@
-from typing import Dict, Union, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union, Sequence
 
 import pandas as pd
 import numpy as np
 
-from biopsykit.sleep.sleep_wake.sleep_wake import SleepWake
-from biopsykit.sleep.mrp import MajorRestPeriod
-from biopsykit.signals.imu.wear_detection import WearDetection
-from biopsykit.signals.imu.activity_counts import ActivityCounts
 
-from biopsykit.signals.imu import convert_acc_data_to_g
-
-
-def predict_pipeline(
-    data: Union[pd.DataFrame, np.array],
-    sampling_rate: int,
-    sleep_wake_scale_factor: Optional[float] = None,
-    convert_to_g: Optional[bool] = True,
+def compute_sleep_endpoints(
+    sleep_wake: pd.DataFrame, bed_interval: Sequence[Union[str, int, np.datetime64], ...]
 ) -> Dict:
-    ac = ActivityCounts(sampling_rate)
-    if sleep_wake_scale_factor is None:
-        sw = SleepWake("cole_kripke")
-    else:
-        sw = SleepWake("cole_kripke", scale_factor=sleep_wake_scale_factor)
-    wd = WearDetection(sampling_rate=sampling_rate)
-    mrp = MajorRestPeriod(sampling_rate=sampling_rate)
-
-    if convert_to_g:
-        data = convert_acc_data_to_g(data, inplace=False)
-
-    df_wear = wd.predict(data)
-    major_wear_block = wd.get_major_wear_block(df_wear)
-
-    # cut data to major wear block
-    data = cut_to_wear_block(data, major_wear_block)
-
-    if len(data) == 0:
-        return {}
-
-    df_ac = ac.calculate(data)
-    df_sw = sw.predict(df_ac)
-    df_mrp = mrp.predict(data)
-    sleep_endpoints = calculate_endpoints(df_sw, df_mrp)
-    if not sleep_endpoints:
-        return {}
-
-    major_wear_block = [str(d) for d in major_wear_block]
-
-    dict_result = {
-        "wear_detection": df_wear,
-        "activity_counts": df_ac,
-        "sleep_wake_prediction": df_sw,
-        "major_wear_block": major_wear_block,
-        "major_rest_period": df_mrp,
-        "sleep_endpoints": sleep_endpoints,
-    }
-    return dict_result
-
-
-def cut_to_wear_block(data: pd.DataFrame, wear_block: Tuple) -> pd.DataFrame:
-    if isinstance(data.index, pd.DatetimeIndex):
-        return data.loc[wear_block[0] : wear_block[-1]]
-    else:
-        return data.iloc[wear_block[0] : wear_block[-1]]
-
-
-def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFrame) -> Dict:
     from numbers import Number
 
     # cut sleep data = data between sleep onset and wake onset during major rest period
-    sleep_wake = sleep_wake.loc[major_rest_periods["start"][0] : major_rest_periods["end"][0]]
+    sleep_wake = sleep_wake.loc[bed_interval[0] : bed_interval[1]]
     # total sleep duration = length of sleep data
-    tsd = len(sleep_wake)
+    total_sleep_duration = len(sleep_wake)
 
     # net sleep duration in minutes = length of 'sleep' predictions (value 0) in sleep data
     net_sleep_time = sleep_wake[sleep_wake["sleep_wake"].eq(0)]
-    nsd = len(net_sleep_time)
+    net_sleep_duration = len(net_sleep_time)
     if net_sleep_time.empty:
         return {}
     df_sw_sleep = sleep_wake[net_sleep_time.index[0] : net_sleep_time.index[-1]].copy()
 
     # get percent of total time asleep
-    se = 100.0 * (len(net_sleep_time) / len(sleep_wake))
+    sleep_efficiency = 100.0 * (len(net_sleep_time) / len(sleep_wake))
     # wake after sleep onset = duration of wake during first and last 'sleep' sample
-    waso = int(df_sw_sleep.sum()[0])
+    wake_after_sleep_onset = int(df_sw_sleep.sum()[0])
 
     df_sw_sleep["block"] = df_sw_sleep["sleep_wake"].diff().ne(0).cumsum()
     df_sw_sleep.reset_index(inplace=True)
@@ -105,13 +47,13 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
     wake_onset = net_sleep_time.index[-1]
 
     # start and end of major rest period
-    mrp_start = major_rest_periods["start"][0]
-    mrp_end = major_rest_periods["end"][0]
+    mrp_start = bed_interval[0]
+    mrp_end = bed_interval[1]
 
     # sleep onset latency = duration between major rest period start and sleep onset
-    sol = len(sleep_wake[sleep_wake.index[0] : sleep_onset])
+    sleep_onset_latency = len(sleep_wake[sleep_wake.index[0] : sleep_onset])
     # getup latency = duration between wake onset (last 'sleep' sample) and major rest period end
-    gup = len(sleep_wake[wake_onset : sleep_wake.index[-1]])
+    getup_latency = len(sleep_wake[wake_onset : sleep_wake.index[-1]])
 
     if isinstance(mrp_start, Number):
         date = 0
@@ -129,14 +71,14 @@ def calculate_endpoints(sleep_wake: pd.DataFrame, major_rest_periods: pd.DataFra
         "date": date,
         "sleep_onset": sleep_onset,
         "wake_onset": wake_onset,
-        "total_sleep_duration": tsd,
-        "net_sleep_duration": nsd,
+        "total_sleep_duration": total_sleep_duration,
+        "net_sleep_duration": net_sleep_duration,
         "major_rest_period_start": mrp_start,
         "major_rest_period_end": mrp_end,
-        "sleep_efficiency": se,
-        "sleep_onset_latency": sol,
-        "getup_latency": gup,
-        "wake_after_sleep_onset": waso,
+        "sleep_efficiency": sleep_efficiency,
+        "sleep_onset_latency": sleep_onset_latency,
+        "getup_latency": getup_latency,
+        "wake_after_sleep_onset": wake_after_sleep_onset,
         "sleep_bouts": sleep_bouts,
         "wake_bouts": wake_bouts,
         "number_wake_bouts": num_wake_bouts,

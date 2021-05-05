@@ -42,8 +42,7 @@ def static_sequence_features(
     loc_max_sequence = data.index[static_sequences[np.argmax(durations)][0]]
     loc_max_sequence_relative = (loc_max_sequence - start) / total_time
 
-    feature_dict = {}
-    feature_dict["ss_max_position"] = loc_max_sequence_relative
+    feature_dict = {"ss_max_position": loc_max_sequence_relative}
     # feature_dict['sleep_bouts_number'.format(index)] = len(sleep_bouts)
     # feature_dict['wake_bouts_number'] = len(wake_bouts)
 

@@ -84,7 +84,7 @@ SleepEndpointDict = Dict[str, Any]
 """Dictionary containing sleep endpoints in a standardized format.
 
 The dict entries represent the sleep endpoints and should follow a standardized naming convention,
-regardless of the origin (IMU sensor, sleep mattress, polysomnography, etc.).
+regardless of the origin (IMU sensor, sleep mattress, psg, etc.).
 
 Required are the entries:
     * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
@@ -119,7 +119,7 @@ The resulting dataframe must at least have a `date` index level,
 and, optionally, further index levels like `night`.
 
 The columns defining the sleep endpoints should follow a standardized naming convention, regardless of the origin
-(IMU sensor, sleep mattress, polysomnography, etc.).
+(IMU sensor, sleep mattress, psg, etc.).
 
 Required are the columns:
     * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time

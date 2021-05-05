@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.sleep.sleep_wake.base import _SleepWakeBase
+from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 
 
 class ColeKripke(_SleepWakeBase):
