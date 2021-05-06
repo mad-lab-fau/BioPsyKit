@@ -1,7 +1,6 @@
 """Module for importing data recorded by NilsPod sensors."""
 from pathlib import Path
-from typing import Optional, Sequence, Union, Tuple, Dict
-from typing_extensions import Literal
+from typing import Optional, Sequence, Union, Tuple, Dict, Literal
 
 import re
 import warnings

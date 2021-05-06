@@ -1,6 +1,5 @@
-from typing import Dict, Sequence, Union, Tuple, Optional
+from typing import Dict, Sequence, Union, Tuple, Literal, Optional
 
-from typing_extensions import Literal
 import pandas as pd
 import pingouin as pg
 from IPython.core.display import display, Markdown
