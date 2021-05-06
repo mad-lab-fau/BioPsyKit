@@ -4,9 +4,7 @@ import pandas as pd
 import numpy as np
 
 
-def compute_sleep_endpoints(
-    sleep_wake: pd.DataFrame, bed_interval: Sequence[Union[str, int, np.datetime64], ...]
-) -> Dict:
+def compute_sleep_endpoints(sleep_wake: pd.DataFrame, bed_interval: Sequence[Union[str, int, np.datetime64]]) -> Dict:
     from numbers import Number
 
     # cut sleep data = data between sleep onset and wake onset during major rest period
