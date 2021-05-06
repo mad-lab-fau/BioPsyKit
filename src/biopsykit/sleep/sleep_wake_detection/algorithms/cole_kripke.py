@@ -13,9 +13,9 @@ class ColeKripke(_SleepWakeBase):
     by an activity index.
     """
 
-    scale_factor: float
+    scale_factor: float = 0.193125
 
-    def __init__(self, scale_factor: Optional[float] = 0.193125):
+    def __init__(self, **kwargs):
         """
         Creates a new instance of the Cole/Kripke Algorithm class for sleep/wake detection.
 
@@ -28,9 +28,9 @@ class ColeKripke(_SleepWakeBase):
             desired, and possibly the population being observed.
 
         """
-        self.scale_factor = scale_factor
+        self.scale_factor = kwargs.get("scale_factor", self.scale_factor)
 
-    def predict(self, data: Union[pd.DataFrame, np.array]) -> Union[np.array, pd.DataFrame]:
+    def predict(self, data: Union[pd.DataFrame, np.array], **kwargs) -> Union[np.array, pd.DataFrame]:
         """
         Performs the sleep/wake score prediction.
 
