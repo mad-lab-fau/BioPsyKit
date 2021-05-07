@@ -6,17 +6,18 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import time
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
+import re
+from pathlib import Path
 
 
 
-
-def read_all_psg(file_path):
+def read_all_psg(folder_path):
     """
     Read in all the XML-files from the mesa-dataset
 
     Parameters
     ----------
-    file_path: str
+    folder_path: str
         file path to the mesa folder with your XML-files. Important: not the filename itself!
 
     Returns
@@ -26,15 +27,14 @@ def read_all_psg(file_path):
     """
     print("start reading psg-data")
     psg = {}
-    for i in range(6812 ):
+    path_list = list(Path(folder_path).glob('*.xml'))
+    #mesa_list = re.findall("(\d{4})", ''.join(str(p))) -->if mesa_id_list wanted
+    for data_name in path_list:
+        i = re.findall("(\d{4})",data_name.name)[0]
+        #i = re.search("(\d{4})",path.name).__getitem__(0)
+        psg[i] = xml_reader(folder_path + data_name.name)
+        print('file '+str(i)+' readed in!')
 
-        try: #look if a dataset exists
-            psg[i] = xml_reader(file_path + '\polysomnography/annotations-events-nsrr\mesa-sleep-' + "{:04d}".format(i) + '-nsrr.xml')
-            print('file '+str(i)+' readed in!')
-
-        except:
-            pass
-            # print("{:04d}".format(i) + "not available")
     print('Reading psg-data finished')
     return psg
 
@@ -63,13 +63,13 @@ def read_single_psg(file_path, mesaid):
     return psg
 
 
-def read_all_actigraphy(file_path):
+def read_all_actigraphy(folder_path):
     """
     Read in all the csv-files from the actigraphy mesa-dataset.
 
     Parameters
     ----------
-    file_path: str
+    folder_path: str
         file path to the mesa folder with your actigraphy csv-files. Important: not the filename itself!
 
     Returns
@@ -80,13 +80,12 @@ def read_all_actigraphy(file_path):
     """
     print("Start reading Actigraphy-data!")
     actigraphy = {}
-    for i in range(6812):
-        try:
-            actigraphy[i] = pd.read_csv(file_path + '/actigraphy\mesa-sleep-'+ "{:04d}".format(i) + '.csv')
-            print('file ' + str(i) + ' readed in!')
-
-        except:
-            pass
+    path_list = list(Path(folder_path).glob('*.csv'))
+    
+    for data_name in path_list:
+        i = re.findall("(\d{4})",data_name.name)[0]
+        actigraphy[i] = pd.read_csv(folder_path + data_name.name)
+        print('file ' + str(i) + ' readed in!')
 
     print("Reading Actigraphy data finished!")
     return actigraphy
@@ -122,13 +121,13 @@ def read_single_actigraphy(file_path,mesaid):
 
 
 
-def read_all_r_point(file_path):
+def read_all_r_point(folder_path):
     """
     Read in all the csv-files from the r-roint mesa-dataset.
 
     Parameters
     ----------
-    file_path: str
+    folder_path: str
         file path to the mesa folder with your r-point csv-files. Important: not the filename itself!
 
     Returns
@@ -139,12 +138,15 @@ def read_all_r_point(file_path):
     """
     print("Start reading r-point-data!")
     r_point = {}
-    for i in range(6812):
-        try:
-            r_point[i] = pd.read_csv(file_path + '\polysomnography/annotations-rpoints\mesa-sleep-'+ "{:04d}".format(i) + '-rpoint.csv')
-            print('file ' + str(i) + ' readed in!')
-        except:
-            pass
+
+    path_list = list(Path(folder_path).glob('*.csv'))
+    # mesa_list = re.findall("(\d{4})", ''.join(str(p))) -->if mesa_id_list wanted
+    for data_name in path_list:
+        i = re.findall("(\d{4})", data_name.name)[0]
+        # i = re.search("(\d{4})",path.name).__getitem__(0)
+        r_point[i] = pd.read_csv(folder_path + data_name.name)
+        print('file ' + str(i) + ' readed in!')
+
 
     print("Reading r-point-data finished!")
     return r_point
