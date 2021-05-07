@@ -140,10 +140,8 @@ def read_all_r_point(folder_path):
     r_point = {}
 
     path_list = list(Path(folder_path).glob('*.csv'))
-    # mesa_list = re.findall("(\d{4})", ''.join(str(p))) -->if mesa_id_list wanted
     for data_name in path_list:
         i = re.findall("(\d{4})", data_name.name)[0]
-        # i = re.search("(\d{4})",path.name).__getitem__(0)
         r_point[i] = pd.read_csv(folder_path + data_name.name)
         print('file ' + str(i) + ' readed in!')
 
@@ -178,27 +176,25 @@ def xml_reader(file_path):
     return df
 
 
-def read_cleaned_actigraph(file_path):
+def read_cleaned_actigraph(folder_path):
     actigraphy = {}
-    for i in range(6812):
-        try:
-            actigraphy[i] = pd.read_csv(file_path + '/actigraphy\clean_actigraphy' + "{:04d}".format(i) + '.csv')
-            #print('file ' + str(i) + ' readed in!')
 
-        except:
-            pass
+    path_list = list(Path(folder_path).glob('*.csv'))
+    for data_name in path_list:
+        i = re.findall("(\d{4})", data_name.name)[0]
+        actigraphy[i] = pd.read_csv(folder_path + data_name.name)
+
 
     return actigraphy
 
 
-def read_cleaned_psg(file_path):
+def read_cleaned_psg(folder_path):
     psg = {}
-    for i in range(6812):
-        try:
-            psg[i] = pd.read_csv(file_path + '/psg\clean_psg' + "{:04d}".format(i) + '.csv')
-            #print('file ' + str(i) + ' readed in!')
 
-        except:
-            pass
+    path_list = list(Path(folder_path).glob('*.csv'))
+    for data_name in path_list:
+        i = re.findall("(\d{4})", data_name.name)[0]
+        psg[i] = pd.read_csv(folder_path + data_name.name)
+
 
     return psg
