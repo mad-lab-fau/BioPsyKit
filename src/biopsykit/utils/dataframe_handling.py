@@ -216,7 +216,7 @@ def wide_to_long(
     levels : str or list of str
         index levels of the resulting long-format dataframe.
     sep : str, optional
-        character separating index levels in the column names of the wide-format dataframe
+        character separating index levels in the column names of the wide-format dataframe. Default: ``_``
 
     Returns
     -------

@@ -337,7 +337,9 @@ def _assert_has_column_levels(
 
 
 def _assert_value_range(
-    data: pd.DataFrame, value_range: Sequence[Union[int, float]], raise_exception: Optional[bool] = True
+    data: Union[pd.DataFrame, pd.Series],
+    value_range: Sequence[Union[int, float]],
+    raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
     """Check if all values are within the specified range.
 
@@ -408,6 +410,39 @@ def _assert_num_columns(
             raise ValidationError(
                 "The dataframe does not have the required number of columns. "
                 "Expected were any of {} columns, but has {} columns.".format(num_cols, len(data.columns))
+            )
+        return False
+    return True
+
+
+def _assert_len_list(data: Sequence, length: int, raise_exception: Optional[bool] = True):
+    """Check if a list has the required length.
+
+    Parameters
+    ----------
+    data : list
+        list to check
+    length : int
+        the required length or the list
+    raise_exception : bool, optional
+        Whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` has the required length, ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    :exc:`~biopsykit.exceptions.ValidationError`
+        if ``raise_exception`` is ``True`` and ``data`` does not have the required length
+
+    """
+
+    if len(data) != length:
+        if raise_exception:
+            raise ValidationError(
+                "The list does not have the required length. "
+                "Expected was length {}, but it has length {}.".format(length, len(data))
             )
         return False
     return True
