@@ -1,4 +1,4 @@
-"""Functions to compute established features (area-under-the-curve, slope, maximum increase, ...) from saliva data."""
+"""Functions for processing saliva data and computing established features (AUC, slope, maximum increase, ...)."""
 import warnings
 from typing import Optional, Sequence, Tuple, Union, Dict
 
