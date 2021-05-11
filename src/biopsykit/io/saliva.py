@@ -9,7 +9,7 @@ from biopsykit.utils._datatype_validation_helper import _assert_file_extension, 
 from biopsykit.utils._types import path_t
 from biopsykit.utils.datatype_helper import (
     SalivaRawDataFrame,
-    is_raw_saliva_dataframe,
+    is_saliva_raw_dataframe,
     is_subject_condition_dataframe,
     SubjectConditionDataFrame,
 )
@@ -140,7 +140,7 @@ def load_saliva_plate(
             )
         )
 
-    is_raw_saliva_dataframe(df_saliva, saliva_type)
+    is_saliva_raw_dataframe(df_saliva, saliva_type)
 
     return df_saliva
 
@@ -169,7 +169,7 @@ def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Option
     file_path = Path(file_path)
     _assert_file_extension(file_path, [".csv", ".xls", ".xlsx"])
 
-    is_raw_saliva_dataframe(data, saliva_type)
+    is_saliva_raw_dataframe(data, saliva_type)
     data = data[saliva_type]
     data = data.unstack(level="sample")
     if file_path.suffix in [".csv"]:
@@ -275,7 +275,7 @@ def load_saliva_wide_format(
         _check_sample_times(len(data), num_subjects, sample_times)
         data["time"] = np.array(sample_times * num_subjects)
 
-    is_raw_saliva_dataframe(data, saliva_type)
+    is_saliva_raw_dataframe(data, saliva_type)
 
     return data
 

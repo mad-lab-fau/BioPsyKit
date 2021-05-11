@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Sequence, Dict, Optional, Tuple, Union
 
 import pandas as pd
+from biopsykit.utils.datatype_helper import is_saliva_mean_se_dataframe
 
 _EXAMPLE_DATA_PATH = Path(__file__).parent.parent.parent.joinpath("example_data")
 
@@ -64,11 +65,14 @@ def get_saliva_example_stroop(
 
 
 def get_saliva_mean_se_example() -> Dict[str, pd.DataFrame]:
-    return pd.read_excel(
+    data = pd.read_excel(
         _EXAMPLE_DATA_PATH.joinpath("saliva_sample_mean_se.xlsx"),
         sheet_name=None,
-        index_col="time",
     )
+    for key in data:
+        data[key] = data[key].set_index(["sample", "time"])
+        is_saliva_mean_se_dataframe(data[key])
+    return data
 
 
 def get_mist_hr_example() -> Dict[str, pd.DataFrame]:

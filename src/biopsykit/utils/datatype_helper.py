@@ -20,17 +20,19 @@ __all__ = [
     "HeartRateSubjectDict",
     "SalivaRawDataFrame",
     "SalivaFeatureDataFrame",
+    "SalivaMeanSeDataFrame",
     "is_subject_condition_dataframe",
     "is_subject_condition_dict",
     "is_hr_subject_dict",
-    "is_raw_saliva_dataframe",
-    "is_feature_saliva_dataframe",
+    "is_saliva_raw_dataframe",
+    "is_saliva_feature_dataframe",
+    "is_saliva_mean_se_dataframe",
 ]
 
 SubjectConditionDataFrame = pd.DataFrame
 """:class:`pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
 
-A `SubjectConditionDataFrame` has an index with subject IDs named ``subject`` and a column with the condition 
+A ``SubjectConditionDataFrame`` has an index with subject IDs named ``subject`` and a column with the condition 
 assignment named ``condition``.  
 
 """
@@ -38,21 +40,21 @@ assignment named ``condition``.
 SubjectConditionDict = Dict[str, np.ndarray]
 """Dictionary containing subject IDs and condition assignment in a standardized format.
 
-A `SubjectConditionDict` contains conditions as dictionary keys and a collection of subject IDs 
-(list, numpy array, pandas Index= as dictionary values.
+A ``SubjectConditionDict`` contains conditions as dictionary keys and a collection of subject IDs 
+(list, numpy array, pandas Index) as dictionary values.
 
 """
 
 HeartRateSubjectDict = Dict[str, pd.DataFrame]
 """Dictionary containing time-series data of `one` subject, split into different phases.
 
-A `HeartRateSubjectDict` is a dictionary with the have the following format:
+A ``HeartRateSubjectDict`` is a dictionary with the have the following format:
 
 { phase_1 : hr_dataframe, phase_2 : hr_dataframe, ... }
 
 Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * `time` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
-    * `Heart_Rate` Column: heart rate values
+    * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
+    * ``Heart_Rate`` Column: heart rate values
 
 """
 
@@ -60,13 +62,13 @@ SalivaRawDataFrame = pd.DataFrame
 """:class:`pandas.DataFrame` containing raw saliva data in a standardized format.
 
 Data needs to be in long-format and **must** have a :class:`pandas.MultiIndex` with index level names:
-    * `subject`: subject ID; can be number or string
-    * `sample`: saliva sample ID; can be number or string
+    * ``subject``: subject ID; can be number or string
+    * ``sample``: saliva sample ID; can be number or string
 
 Additionally, the following index levels can be added to identify saliva values, such as:
-    * `condition`: subject condition during the study (e.g., "Control" vs. "Condition")
-    * `day`: day ID, if saliva samples were collected over multiple days
-    * `night`: night ID, if saliva samples were collected over multiple night
+    * ``condition``: subject condition during the study (e.g., "Control" vs. "Condition")
+    * ``day``: day ID, if saliva samples were collected over multiple days
+    * ``night``: night ID, if saliva samples were collected over multiple night
     * ...
 
 """
@@ -74,9 +76,17 @@ Additionally, the following index levels can be added to identify saliva values,
 SalivaFeatureDataFrame = pd.DataFrame
 """:class:`pandas.DataFrame` containing feature computed from saliva data in a standardized format.
 
-The resulting dataframe must at least have a `subject` index level and all column names need to begin with 
+The resulting dataframe must at least have a ``subject`` index level and all column names need to begin with 
 the saliva marker type (e.g. "cortisol"), followed by the feature name, separated by underscore '_'
 Additionally, the name of the column index needs to be `saliva_feature`.
+
+"""
+
+SalivaMeanSeDataFrame = pd.DataFrame
+""":class:`pandas.DataFrame` containing mean and standard error of saliva samples in a standardized format.
+
+The resulting dataframe must at least have a ``sample`` index level and the two columns ``mean`` and ``se``. 
+It can have additional index levels, such as ``condition`` or ``time``.
 
 """
 
@@ -115,8 +125,8 @@ The following entries are, for instance, further possible:
 SleepEndpointDataFrame = pd.DataFrame
 """:class:`pandas.DataFrame` containing sleep endpoints in a standardized format.
 
-The resulting dataframe must at least have a `date` index level, 
-and, optionally, further index levels like `night`.
+The resulting dataframe must at least have a ``date`` index level, 
+and, optionally, further index levels like ``night``.
 
 The columns defining the sleep endpoints should follow a standardized naming convention, regardless of the origin
 (IMU sensor, sleep mattress, psg, etc.).
@@ -151,24 +161,24 @@ The following columns are further possible:
 def is_subject_condition_dataframe(
     data: SubjectConditionDataFrame, raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a `SubjectConditionDataFrame`.
+    """Check whether dataframe is a ``SubjectConditionDataFrame``.
 
     Parameters
     ----------
     data : :class:`pandas.DataFrame`
-        data to check if it is a `SubjectConditionDataFrame`
+        data to check if it is a ``SubjectConditionDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a `SubjectConditionDataFrame`, ``False`` otherwise
+    ``True`` if ``data`` is a ``SubjectConditionDataFrame``, ``False`` otherwise
     (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a `SubjectConditionDataFrame`
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SubjectConditionDataFrame``
 
     See Also
     --------
@@ -192,24 +202,24 @@ def is_subject_condition_dataframe(
 
 
 def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a `SubjectConditionDict`.
+    """Check whether dataframe is a ``SubjectConditionDict``.
 
     Parameters
     ----------
     data : dict
-        dict to check if it is a `SubjectConditionDict`
+        dict to check if it is a ``SubjectConditionDict``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a `SubjectConditionDict`, ``False`` otherwise
+    ``True`` if ``data`` is a ``SubjectConditionDict``, ``False`` otherwise
     (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a `SubjectConditionDict`
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SubjectConditionDict``
 
     See Also
     --------
@@ -232,7 +242,7 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
 
 
 def is_hr_subject_dict(data: HeartRateSubjectDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a `HeartRateSubjectDict`.
+    """Check whether a dict is a ``HeartRateSubjectDict``.
 
     Parameters
     ----------
@@ -243,13 +253,13 @@ def is_hr_subject_dict(data: HeartRateSubjectDict, raise_exception: Optional[boo
 
     Returns
     -------
-    ``True`` if ``data`` is a `HeartRateSubjectDict`, ``False`` otherwise
+    ``True`` if ``data`` is a ``HeartRateSubjectDict``, ``False`` otherwise
     (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a `HeartRateSubjectDict`
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``HeartRateSubjectDict``
 
     See Also
     --------
@@ -277,15 +287,15 @@ def is_hr_subject_dict(data: HeartRateSubjectDict, raise_exception: Optional[boo
     return True
 
 
-def is_raw_saliva_dataframe(
+def is_saliva_raw_dataframe(
     data: SalivaRawDataFrame, saliva_type: Union[str, List[str]], raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a `SalivaRawDataFrame`.
+    """Check whether dataframe is a ``SalivaRawDataFrame``.
 
     Parameters
     ----------
     data : :class:`pandas.DataFrame`
-        data to check if it is a `SalivaRawDataFrame`
+        data to check if it is a ``SalivaRawDataFrame``
     saliva_type : str or list of str
         type of saliva data (or list of saliva types) in the dataframe, e.g., "cortisol" or "amylase"
     raise_exception : bool, optional
@@ -293,13 +303,13 @@ def is_raw_saliva_dataframe(
 
     Returns
     -------
-    ``True`` if ``data`` is a `SalivaRawDataFrame`, ``False`` otherwise
+    ``True`` if ``data`` is a ``SalivaRawDataFrame``, ``False`` otherwise
     (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a `SalivaRawDataFrame`
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SalivaRawDataFrame``
 
     See Also
     --------
@@ -326,15 +336,15 @@ def is_raw_saliva_dataframe(
     return True
 
 
-def is_feature_saliva_dataframe(
+def is_saliva_feature_dataframe(
     data: SalivaFeatureDataFrame, saliva_type: str, raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a `SalivaFeatureDataFrame`.
+    """Check whether dataframe is a ``SalivaFeatureDataFrame``.
 
     Parameters
     ----------
     data : :class:`pandas.DataFrame`
-        data to check if it is a `SalivaFeatureDataFrame`
+        data to check if it is a ``SalivaFeatureDataFrame``
     saliva_type : str or list of str
         type of saliva data in the dataframe, e.g., "cortisol" or "amylase"
     raise_exception : bool, optional
@@ -342,13 +352,13 @@ def is_feature_saliva_dataframe(
 
     Returns
     -------
-    ``True`` if ``data`` is a `SalivaFeatureDataFrame`, ``False`` otherwise
+    ``True`` if ``data`` is a ``SalivaFeatureDataFrame``, ``False`` otherwise
     (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a `SalivaFeatureDataFrame`
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SalivaFeatureDataFrame``
 
     See Also
     --------
@@ -373,25 +383,67 @@ def is_feature_saliva_dataframe(
     return True
 
 
-def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a `SleepEndpointDataFrame`.
+def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``SalivaMeanSeDataFrame``.
 
     Parameters
     ----------
     data : :class:`pandas.DataFrame`
-        data to check if it is a `SleepEndpointDataFrame`
+        data to check if it is a ``SalivaMeanSeDataFrame``
+    saliva_type : str or list of str
+        type of saliva data in the dataframe, e.g., "cortisol" or "amylase"
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a `SleepEndpointDataFrame`, ``False`` otherwise
+    ``True`` if ``data`` is a ``SalivaMeanSeDataFrame``, ``False`` otherwise
     (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a `SleepEndpointDataFrame`
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SalivaMeanSeDataFrame``
+
+    See Also
+    --------
+    `SalivaMeanSeDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_index_levels(data, index_levels="sample", match_atleast=True, match_order=False)
+        _assert_has_columns(data, [["mean", "se"]])
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a SalivaMeanSeDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``SleepEndpointDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``SleepEndpointDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``SleepEndpointDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SleepEndpointDataFrame``
 
     See Also
     --------
@@ -415,24 +467,24 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
 
 
 def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dictionary is a `SleepEndpointDict`.
+    """Check whether dictionary is a ``SleepEndpointDict``.
 
     Parameters
     ----------
     data : dict
-        data to check if it is a `SleepEndpointDict`
+        data to check if it is a ``SleepEndpointDict``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a `SleepEndpointDict`, ``False`` otherwise
+    ``True`` if ``data`` is a ``SleepEndpointDict``, ``False`` otherwise
     (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a `SleepEndpointDict`
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SleepEndpointDict``
 
     See Also
     --------

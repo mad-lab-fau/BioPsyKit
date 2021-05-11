@@ -14,9 +14,11 @@ from biopsykit.saliva.utils import (
 )
 from biopsykit.utils.datatype_helper import (
     SalivaRawDataFrame,
-    is_raw_saliva_dataframe,
-    is_feature_saliva_dataframe,
+    is_saliva_raw_dataframe,
+    is_saliva_feature_dataframe,
     SalivaFeatureDataFrame,
+    is_saliva_mean_se_dataframe,
+    SalivaMeanSeDataFrame,
 )
 from biopsykit.utils.exceptions import DataFrameTransformationError
 from biopsykit.utils.functions import se
@@ -53,7 +55,7 @@ def max_value(
 
     """
     # check input
-    is_raw_saliva_dataframe(data, saliva_type)
+    is_saliva_raw_dataframe(data, saliva_type)
 
     if isinstance(saliva_type, list):
         dict_result = {}
@@ -86,7 +88,7 @@ def max_value(
     out.columns.name = "saliva_feature"
 
     # check output
-    is_feature_saliva_dataframe(out, saliva_type)
+    is_saliva_feature_dataframe(out, saliva_type)
     return out
 
 
@@ -121,7 +123,7 @@ def initial_value(
 
     """
     # check input
-    is_raw_saliva_dataframe(data, saliva_type)
+    is_saliva_raw_dataframe(data, saliva_type)
 
     if isinstance(saliva_type, list):
         dict_result = {}
@@ -152,7 +154,7 @@ def initial_value(
     out.columns.name = "saliva_feature"
 
     # check output
-    is_feature_saliva_dataframe(out, saliva_type)
+    is_saliva_feature_dataframe(out, saliva_type)
     return out
 
 
@@ -199,7 +201,7 @@ def max_increase(
 
     """
     # check input
-    is_raw_saliva_dataframe(data, saliva_type)
+    is_saliva_raw_dataframe(data, saliva_type)
 
     if isinstance(saliva_type, list):
         dict_result = {}
@@ -233,7 +235,7 @@ def max_increase(
     out.columns.name = "saliva_feature"
 
     # check output
-    is_feature_saliva_dataframe(out, saliva_type)
+    is_saliva_feature_dataframe(out, saliva_type)
     return out
 
 
@@ -262,9 +264,9 @@ def auc(
     only for the saliva values *after* the stressor by setting ``compute_auc_post`` to ``True``.
 
     .. note::
-        For a *pre/post* stress scenario *post*-stress saliva samples are indicated by time points :math:`t > 0`,
-        saliva sampled collected *before* start of the stressor are indicated by time points :math:`t \leq 0`.
-        This means that a saliva sample collected at time :math:`t = 0` is defined as *right before stressor*.
+        For a *pre/post* stress scenario *post*-stress saliva samples are indicated by time points :math:`t \geq 0`,
+        saliva sampled collected *before* start of the stressor are indicated by time points :math:`t < 0`.
+        This means that a saliva sample collected at time :math:`t = 0` is defined as *right after stressor*.
 
     The feature names will be ``auc_g``, ``auc_i`` (and ``auc_i_post`` if ``compute_auc_post`` is ``True``),
     preceded by the name of the saliva type to allow better conversion into long-format later on (if desired).
@@ -310,7 +312,7 @@ def auc(
 
     """
     # check input
-    is_raw_saliva_dataframe(data, saliva_type)
+    is_saliva_raw_dataframe(data, saliva_type)
 
     if isinstance(saliva_type, list):
         dict_result = {}
@@ -343,7 +345,7 @@ def auc(
     if compute_auc_post:
         idxs_post = None
         if sample_times.ndim == 1:
-            idxs_post = np.where(sample_times > 0)[0]
+            idxs_post = np.where(sample_times >= 0)[0]
         elif sample_times.ndim == 2:
             warnings.warn(
                 "Not computing `auc_i_post` values because this is only implemented if `saliva_times` "
@@ -357,7 +359,7 @@ def auc(
     out.columns.name = "saliva_feature"
 
     # check output
-    is_feature_saliva_dataframe(out, saliva_type)
+    is_saliva_feature_dataframe(out, saliva_type)
 
     return out
 
@@ -414,7 +416,7 @@ def slope(
 
     """
     # check input
-    is_raw_saliva_dataframe(data, saliva_type)
+    is_saliva_raw_dataframe(data, saliva_type)
 
     if sample_idx is None and sample_labels is None:
         raise IndexError("Either `sample_labels` or `sample_idx` must be supplied as parameter!")
@@ -454,7 +456,7 @@ def slope(
     out.columns.name = "saliva_feature"
 
     # check output
-    is_feature_saliva_dataframe(out, saliva_type)
+    is_saliva_feature_dataframe(out, saliva_type)
 
     return out
 
@@ -511,7 +513,7 @@ def standard_features(
 
     """
     # check input
-    is_raw_saliva_dataframe(data, saliva_type)
+    is_saliva_raw_dataframe(data, saliva_type)
 
     if isinstance(saliva_type, list):
         dict_result = {}
@@ -555,7 +557,7 @@ def standard_features(
     out.columns.name = "saliva_feature"
 
     # check output
-    is_feature_saliva_dataframe(out, saliva_type)
+    is_saliva_feature_dataframe(out, saliva_type)
 
     return out
 
@@ -565,7 +567,7 @@ def mean_se(
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     group_cols: Optional[Union[str, Sequence[str]]] = None,
     remove_s0: Optional[bool] = False,
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+) -> Union[SalivaMeanSeDataFrame, Dict[str, SalivaMeanSeDataFrame]]:
     """Compute mean and standard error per saliva sample.
 
     Parameters
@@ -583,7 +585,7 @@ def mean_se(
 
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`
         dataframe with mean and standard error per saliva sample or a dict of such if ``saliva_type`` is a list
 
     Raises
@@ -593,7 +595,7 @@ def mean_se(
 
     """
     # check input
-    is_raw_saliva_dataframe(data, saliva_type)
+    is_saliva_raw_dataframe(data, saliva_type)
 
     if isinstance(saliva_type, list):
         dict_result = {}
@@ -616,10 +618,16 @@ def mean_se(
             "Cannot compute mean and standard error on data because *all* index "
             "columns were selected as group columns, so each sample value would be one group of its own!"
         )
+    if "sample" not in group_cols:
+        raise DataFrameTransformationError(
+            "Error computing mean and standard error on data: 'sample' index level needs to be added as group column!"
+        )
 
     if "time" in data.columns and "time" not in group_cols:
         # add 'time' column to grouper if it's in the data and wasn't added yet because otherwise
         # we would loose this column
         group_cols = group_cols + ["time"]
 
-    return data.groupby(group_cols).agg([np.mean, se])[saliva_type]
+    data_mean_se = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
+    is_saliva_mean_se_dataframe(data_mean_se)
+    return data_mean_se
