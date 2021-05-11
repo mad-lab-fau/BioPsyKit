@@ -176,25 +176,14 @@ def xml_reader(file_path):
     return df
 
 
-def read_cleaned_actigraph(folder_path):
-    actigraphy = {}
 
+
+def read_clean_data(folder_path):
+    data = {}
     path_list = list(Path(folder_path).glob('*.csv'))
     for data_name in path_list:
         i = re.findall("(\d{4})", data_name.name)[0]
-        actigraphy[i] = pd.read_csv(folder_path + data_name.name)
+        data[i] = pd.read_csv(folder_path + data_name.name)
 
+    return data
 
-    return actigraphy
-
-
-def read_cleaned_psg(folder_path):
-    psg = {}
-
-    path_list = list(Path(folder_path).glob('*.csv'))
-    for data_name in path_list:
-        i = re.findall("(\d{4})", data_name.name)[0]
-        psg[i] = pd.read_csv(folder_path + data_name.name)
-
-
-    return psg
