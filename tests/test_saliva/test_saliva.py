@@ -426,7 +426,7 @@ params_auc = [
             {
                 "cortisol_auc_g": [0, 40, 80, 120, 180, 100, 110, np.nan],
                 "cortisol_auc_i": [0, 0, 80, -80, -220, 340, -370, np.nan],
-                "cortisol_auc_i_post": [0, 0, 20, -20, 10, 10, 10, -50],
+                "cortisol_auc_i_post": [0, 0, 45.0, -45.0, 60.0, 60.0, 260.0, np.nan],
             },
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i", "cortisol_auc_i_post"],
@@ -457,7 +457,7 @@ params_auc = [
             {
                 "cortisol_auc_g": [0, 30, 75, 75, 120, 120, 80, np.nan],
                 "cortisol_auc_i": [0, 0, 45, -45, 60, 60, 260, np.nan],
-                "cortisol_auc_i_post": [0, 0, 20, -20, 10, 10, 10, -50],
+                "cortisol_auc_i_post": [0, 0, 45.0, -45.0, 60.0, 60.0, 260.0, np.nan],
             },
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i", "cortisol_auc_i_post"],
@@ -491,7 +491,7 @@ params_auc_mutiple_pre = [
             {
                 "cortisol_auc_g": [0, 40, 80, 120, 180, 100, 110, np.nan],
                 "cortisol_auc_i": [0, 0, 80, -80, -220, 340, -370, np.nan],
-                "cortisol_auc_i_post": [0, 0, 5, -5, 10, 10, 10, 10],
+                "cortisol_auc_i_post": [0, 0, 20.0, -20.0, 10.0, 10.0, 10.0, -50.0],
             },
             index=pd.Index(range(1, 9), name="subject"),
             columns=pd.Index(
@@ -522,7 +522,7 @@ params_auc_mutiple_pre = [
             {
                 "cortisol_auc_g": [0, 30, 75, 75, 120, 120, 80, np.nan],
                 "cortisol_auc_i": [0, 0, 45, -45, 60, 60, 260, np.nan],
-                "cortisol_auc_i_post": [0, 0, 5, -5, 10, 10, 10, 10],
+                "cortisol_auc_i_post": [0, 0, 20, -20, 10, 10, 10, -50],
             },
             columns=pd.Index(
                 ["cortisol_auc_g", "cortisol_auc_i", "cortisol_auc_i_post"],
@@ -985,7 +985,6 @@ class TestSaliva:
     def test_auc_individual_time(self):
         # check with 'time' column
         data_out = saliva.auc(saliva_time_individual())
-        print(data_out)
         # only two AUC values should be the same
         assert len(data_out["cortisol_auc_g"]) - 1 == len(data_out["cortisol_auc_g"].unique())
         assert len(data_out["cortisol_auc_i"]) - 1 == len(data_out["cortisol_auc_i"].unique())
@@ -1475,12 +1474,13 @@ class TestSaliva:
         "data_in, group_cols, expected",
         [
             (saliva_no_time(), None, does_not_raise()),
-            (saliva_no_time(), ["subject"], does_not_raise()),
+            (saliva_no_time(), ["subject"], pytest.raises(DataFrameTransformationError)),
+            (saliva_no_time(), ["subject", "sample"], pytest.raises(DataFrameTransformationError)),
             (saliva_no_time(), ["day"], pytest.raises(ValueError)),
             (saliva_multi_days(), None, does_not_raise()),
-            (saliva_multi_days(), ["subject", "day"], does_not_raise()),
-            (saliva_multi_days(), ["day"], does_not_raise()),
-            (saliva_multi_days(), ["subject"], does_not_raise()),
+            (saliva_multi_days(), ["subject", "day"], pytest.raises(DataFrameTransformationError)),
+            (saliva_multi_days(), ["day"], pytest.raises(DataFrameTransformationError)),
+            (saliva_multi_days(), ["subject"], pytest.raises(DataFrameTransformationError)),
         ],
     )
     def test_mean_se_group_col_raise(self, data_in, group_cols, expected):
