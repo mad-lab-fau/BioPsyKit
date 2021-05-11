@@ -467,7 +467,7 @@ def pss(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     # Reverse scores 4, 5, 7, 8
     data = invert(data, cols=to_idx([4, 5, 7, 8]), score_range=score_range)
 
-    return pd.DataFrame(data.sum(axis=1, skipna=False), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
 def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
