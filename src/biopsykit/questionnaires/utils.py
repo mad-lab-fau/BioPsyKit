@@ -242,7 +242,6 @@ def invert(
 
     """
     _assert_is_dtype(data, (pd.DataFrame, pd.Series))
-    _assert_value_range(data, score_range)
     _assert_len_list(score_range, 2)
 
     if not inplace:
@@ -251,12 +250,16 @@ def invert(
     if isinstance(data, pd.DataFrame):
         if cols is not None:
             if isinstance(cols[0], str):
+                _assert_value_range(data[cols], score_range)
                 data.loc[:, cols] = score_range[1] - data.loc[:, cols] + score_range[0]
             else:
+                _assert_value_range(data.iloc[:, cols], score_range)
                 data.iloc[:, cols] = score_range[1] - data.iloc[:, cols] + score_range[0]
         else:
+            _assert_value_range(data, score_range)
             data.iloc[:, :] = score_range[1] - data.iloc[:, :] + score_range[0]
     else:
+        _assert_value_range(data, score_range)
         data.iloc[:] = score_range[1] - data.iloc[:] + score_range[0]
 
     if inplace:

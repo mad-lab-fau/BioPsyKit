@@ -1174,9 +1174,6 @@ def rmidi(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    # "most items need to be reverse scored before subscales are computed => reverse all"
-    data = invert(data, score_range=score_range)
-
     if subscales is None:
         _assert_num_columns(data, 31)
         subscales = {
@@ -1189,6 +1186,8 @@ def rmidi(
         }
 
     _assert_value_range(data, score_range)
+    # "most items need to be reverse scored before subscales are computed => reverse all"
+    data = invert(data, score_range=score_range)
 
     # Re-reverse scores 19, 24
     # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
