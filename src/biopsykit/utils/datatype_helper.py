@@ -21,12 +21,18 @@ __all__ = [
     "SalivaRawDataFrame",
     "SalivaFeatureDataFrame",
     "SalivaMeanSeDataFrame",
+    "SleepEndpointDataFrame",
+    "SleepEndpointDict",
+    "EcgRawDataFrame",
     "is_subject_condition_dataframe",
     "is_subject_condition_dict",
     "is_hr_subject_dict",
     "is_saliva_raw_dataframe",
     "is_saliva_feature_dataframe",
     "is_saliva_mean_se_dataframe",
+    "is_sleep_endpoint_dataframe",
+    "is_sleep_endpoint_dict",
+    "is_ecg_raw_dataframe",
 ]
 
 SubjectConditionDataFrame = pd.DataFrame
@@ -158,6 +164,15 @@ The following columns are further possible:
 """
 
 
+EcgRawDataFrame = pd.DataFrame
+""":class:`~pandas.DataFrame` containing raw ECG data as time-series of `one` subject.
+
+The dataframe is expected to have the following format:
+    * ``ecg`` column: raw ECG samples
+
+"""
+
+
 def is_subject_condition_dataframe(
     data: SubjectConditionDataFrame, raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
@@ -182,7 +197,7 @@ def is_subject_condition_dataframe(
 
     See Also
     --------
-    `SubjectConditionDataFrame`
+    ``SubjectConditionDataFrame``
         dataframe format
 
     """
@@ -223,7 +238,7 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
 
     See Also
     --------
-    `SubjectConditionDict`
+    ``SubjectConditionDict``
         dictionary format
 
     """
@@ -263,7 +278,7 @@ def is_hr_subject_dict(data: HeartRateSubjectDict, raise_exception: Optional[boo
 
     See Also
     --------
-    `HeartRateSubjectDict`
+    ``HeartRateSubjectDict``
         dictionary format
 
     """
@@ -313,7 +328,7 @@ def is_saliva_raw_dataframe(
 
     See Also
     --------
-    `SalivaRawDataFrame`
+    ``SalivaRawDataFrame``
         dataframe format
 
     """
@@ -362,7 +377,7 @@ def is_saliva_feature_dataframe(
 
     See Also
     --------
-    `SalivaFeatureDataFrame`
+    ``SalivaFeatureDataFrame``
         dataframe format
 
     """
@@ -390,8 +405,6 @@ def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: O
     ----------
     data : :class:`pandas.DataFrame`
         data to check if it is a ``SalivaMeanSeDataFrame``
-    saliva_type : str or list of str
-        type of saliva data in the dataframe, e.g., "cortisol" or "amylase"
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
@@ -407,7 +420,7 @@ def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: O
 
     See Also
     --------
-    `SalivaMeanSeDataFrame`
+    ``SalivaMeanSeDataFrame``
         dataframe format
 
     """
@@ -447,7 +460,7 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
 
     See Also
     --------
-    `SleepEndpointDataFrame`
+    ``SleepEndpointDataFrame``
         dataframe format
 
     """
@@ -488,7 +501,7 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
 
     See Also
     --------
-    `SleepEndpointDict`
+    ``SleepEndpointDict``
         dictionary format
 
     """
@@ -501,6 +514,45 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SleepEndpointDict. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``EcgRawDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``EcgRawDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``EcgRawDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``EcgRawDataFrame``
+
+    See Also
+    --------
+    ``EcgRawDataFrame``
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(data, columns_sets=[["ecg"]])
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a EcgRawDataFrame. "
                 "The validation failed with the following error:\n\n{}".format(str(e))
             ) from e
         return False
