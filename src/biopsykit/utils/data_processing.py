@@ -4,24 +4,18 @@ from typing import Sequence, Union, Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import pytz
 from biopsykit.utils.datatype_helper import (
     SubjectConditionDict,
     SubjectConditionDataFrame,
     is_subject_condition_dataframe,
     is_subject_condition_dict,
 )
-from nilspodlib import Dataset
 from tqdm.notebook import tqdm
-
-from biopsykit.utils.time import tz, utc
 
 
 def split_data(
+    data: pd.DataFrame,
     time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
-    dataset: Optional[Dataset] = None,
-    data: Optional[pd.DataFrame] = None,
-    timezone: Optional[Union[str, pytz.timezone]] = tz,
     include_start: Optional[bool] = False,
 ) -> Dict[str, pd.DataFrame]:
     """
@@ -35,12 +29,8 @@ def split_data(
         (the names of the phases are then derived from the index in case of a Series or column names in case of a
         Dataframe) or a dictionary with tuples indicating start and end times of the phases
         (the names of the phases are then derived from the dict keys)
-    dataset : Dataset, optional
-        NilsPodLib dataset object to be split
     data : pd.DataFrame, optional
         data to be split
-    timezone : str or pytz.timezone, optional
-        timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
     include_start: bool, optional
         ``True`` to include the data from the beginning of the recording to the first time interval as the
         first interval, ``False`` otherwise. Default: ``False``
@@ -67,13 +57,6 @@ def split_data(
     >>> print(data_dict['Part2'])
     """
     data_dict: Dict[str, pd.DataFrame] = {}
-    if dataset is None and data is None:
-        raise ValueError("Either 'dataset' or 'df' must be specified as parameter!")
-    if dataset:
-        if isinstance(timezone, str):
-            # convert to pytz object
-            timezone = pytz.timezone(timezone)
-        data = dataset.data_as_df("ecg", index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
     if isinstance(time_intervals, pd.DataFrame):
         if len(time_intervals) > 1:
             raise ValueError("Only dataframes with 1 row allowed!")
