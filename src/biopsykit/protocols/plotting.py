@@ -21,9 +21,8 @@ _saliva_params: Dict = {
     "test_alpha": 0.5,
     "x_offsets": [0, 0.5],
     "multi_x_offset": 1,
-    "multi_fontsize": 10,
     "multi_legend_offset": 0.3,
-    "multi_colormap": colors.fau_palette_phil("line_2"),
+    "multi_colormap": colors.fau_palette_tech("line_2"),
     "xaxis_tick_locator": plt.MultipleLocator(20),
     "xaxis_label": "Time [min]",
     "yaxis_label": {
@@ -428,6 +427,7 @@ def saliva_plot(
             y=0.95,
             transform=ax.get_xaxis_transform(),
             s=test_text,
+            fontsize="small",
             horizontalalignment="center",
             verticalalignment="top",
         )
@@ -572,7 +572,6 @@ def saliva_plot_combine_legend(
     if plot_params:
         saliva_params.update(plot_params)
 
-    fontsize = saliva_params["multi_fontsize"]
     legend_offset = saliva_params["multi_legend_offset"]
 
     labels = [ax.get_legend_handles_labels()[1] for ax in fig.get_axes()]
@@ -586,7 +585,7 @@ def saliva_plot_combine_legend(
             labels,
             loc="upper right",
             bbox_to_anchor=(0.99, 0.99),
-            prop={"size": fontsize},
+            prop={"size": "small"},
         )
     else:
         if separate_legends:
@@ -598,7 +597,7 @@ def saliva_plot_combine_legend(
                     title=biomarker,
                     loc="upper right",
                     bbox_to_anchor=(0.99 - legend_offset * i, 0.99),
-                    prop={"size": fontsize},
+                    prop={"size": "small"},
                 )
                 ax.add_artist(l)
         else:
@@ -613,7 +612,7 @@ def saliva_plot_combine_legend(
                 bbox_to_anchor=(0.99, 0.99),
                 numpoints=1,
                 handler_map={tuple: HandlerTuple(ndivide=None)},
-                prop={"size": fontsize},
+                prop={"size": "small"},
             )
 
 

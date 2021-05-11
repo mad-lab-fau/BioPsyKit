@@ -8,7 +8,7 @@ import matplotlib.ticker as mticks
 
 import biopsykit.signals.ecg as ecg
 import biopsykit.colors as colors
-import biopsykit.protocols.base as base
+import biopsykit.protocols._base as base
 import biopsykit.protocols.plotting as plot
 
 from biopsykit.utils.array_handling import interpolate_and_cut
@@ -30,8 +30,7 @@ class MIST(base.BaseProtocol):
         if name is None:
             name = "MIST"
         super().__init__(name)
-
-        self.mist_times: Sequence[int] = [0, 30]
+        self.test_times = [0, 30]
 
         self.phases: Sequence[str] = ["MIST1", "MIST2", "MIST3"]
         """
@@ -102,14 +101,6 @@ class MIST(base.BaseProtocol):
             self.name, self.phases, self.subphases, self.subphase_durations
         )
 
-    @property
-    def mist_times(self):
-        return self.test_times
-
-    @mist_times.setter
-    def mist_times(self, mist_times):
-        self.test_times = mist_times
-
     def _update_mist_params(
         self,
         phases: Sequence[str],
@@ -172,10 +163,7 @@ class MIST(base.BaseProtocol):
             'MIST dict', i.e. a dict with heart rate data of all subjects per MIST phase
 
         """
-        if "phases" in kwargs:
-            return super().concat_phase_dict(dict_hr_subject, kwargs["phases"])
-        else:
-            return super().concat_phase_dict(dict_hr_subject, self.phases)
+        return super().concat_phase_dict(dict_hr_subject, kwargs.get("phases", self.phases))
 
     def split_subphases(
         self,
@@ -203,44 +191,16 @@ class MIST(base.BaseProtocol):
             nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
 
         """
-        if "subphase_times" in kwargs and "subphases" in kwargs:
-            subphase_times = kwargs["subphase_times"]
-            subphase_names = kwargs["subphases"]
-        else:
-            subphase_times = self.get_mist_times(phase_dict=phase_dict, is_group_dict=is_group_dict)
-            subphase_names = self.subphases
+        subphase_times = kwargs.get(
+            "subphase_times", self.get_mist_times(phase_dict=phase_dict, is_group_dict=is_group_dict)
+        )
+        subphase_names = kwargs.get("subphases", self.subphases)
         return super().split_subphases(
             data=phase_dict,
             subphase_names=subphase_names,
             subphase_times=subphase_times,
             is_group_dict=is_group_dict,
         )
-
-    @classmethod
-    def split_groups(
-        cls,
-        phase_dict: Dict[str, pd.DataFrame],
-        condition_dict: Dict[str, Sequence[str]],
-    ) -> Dict[str, Dict[str, pd.DataFrame]]:
-        """
-        Splits 'MIST Phase dict' into group dict, i.e. one 'MIST Phase dict' per group.
-
-        Parameters
-        ----------
-        phase_dict : dict
-            'MIST Phase dict' to be split in groups. See ``bp.protocols.utils.concat_phase_dict``
-            for further information
-        condition_dict : dict
-            dictionary of group membership. Keys are the different groups, values are lists of subject IDs that
-            belong to the respective group
-
-        Returns
-        -------
-        dict
-            nested group dict with one 'MIST Phase dict' per group
-        """
-
-        return super().split_groups(phase_dict, condition_dict)
 
     def get_mist_times(
         self,
@@ -389,7 +349,7 @@ class MIST(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
+        return super().mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
     def hr_ensemble_plot(
         self,

@@ -1,5 +1,5 @@
 from typing import Dict, Tuple, Union, Optional, Sequence
-from biopsykit.protocols import base
+from biopsykit.protocols import _base
 import biopsykit.colors as colors
 import pandas as pd
 import numpy as np
@@ -9,7 +9,7 @@ import matplotlib.ticker as mticks
 import seaborn as sns
 
 
-class Stroop(base.BaseProtocol):
+class Stroop(_base.BaseProtocol):
     """
     Class representing the Stroop test.
     """
@@ -364,7 +364,7 @@ class Stroop(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return super()._mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
+        return super().mean_se_subphases(data, subphases=self.subphases, is_group_dict=is_group_dict)
 
     def stroop_dict_to_dataframe(
         self,
@@ -633,7 +633,7 @@ class Stroop(base.BaseProtocol):
     def split_groups(
         cls,
         phase_dict: Dict[str, pd.DataFrame],
-        condition_dict: Dict[str, Sequence[str]],
+        condition_list: Dict[str, Sequence[str]],
     ) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Splits 'Stroop Phase dict' into group dict, i.e. one 'Stroop Phase dict' per group.
@@ -643,7 +643,7 @@ class Stroop(base.BaseProtocol):
         phase_dict : dict
             'Stroop Phase dict' to be split in groups. See ``bp.protocols.utils.concat_phase_dict``
             for further information
-        condition_dict : dict
+        condition_list : dict
             dictionary of group membership. Keys are the different groups, values are lists of subject IDs that
             belong to the respective group
 
@@ -653,7 +653,7 @@ class Stroop(base.BaseProtocol):
             nested group dict with one 'Stroop Phase dict' per group
         """
 
-        return super().split_groups(phase_dict, condition_dict)
+        return super().split_groups(phase_dict, condition_list)
 
     def hr_mean_plot(
         self,
@@ -739,4 +739,4 @@ class Stroop(base.BaseProtocol):
             'mse dataframe' or dict of 'mse dataframes', one dataframe per group, if `group_dict` is ``True``.
         """
 
-        return super()._mean_se_subphases(data, is_group_dict=is_group_dict)
+        return super().mean_se_subphases(data, is_group_dict=is_group_dict)

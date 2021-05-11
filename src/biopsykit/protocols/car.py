@@ -2,6 +2,9 @@ from typing import Sequence, Optional, Dict, Union
 
 import pandas as pd
 
+from biopsykit.protocols.plotting import saliva_feature_boxplot as feature_boxplot
+from biopsykit.protocols.plotting import saliva_multi_feature_boxplot as multi_feature_boxplot
+
 
 class CAR:
     """Class representing the cortisol awakening response (CAR)."""
@@ -32,9 +35,7 @@ class CAR:
         stats_kwargs: Optional[Dict] = None,
         **kwargs,
     ):
-        from biopsykit.protocols.plotting import saliva_feature_boxplot
-
-        return saliva_feature_boxplot(data, x, saliva_type, feature, stats_kwargs, **kwargs)
+        return feature_boxplot(data, x, saliva_type, feature, stats_kwargs, **kwargs)
 
     def saliva_multi_feature_boxplot(
         self,
@@ -46,6 +47,4 @@ class CAR:
         stats_kwargs: Optional[Dict] = None,
         **kwargs,
     ):
-        from biopsykit.protocols.plotting import saliva_multi_feature_boxplot
-
-        return saliva_multi_feature_boxplot(data, saliva_type, features, hue, xticklabels, stats_kwargs, **kwargs)
+        return multi_feature_boxplot(data, saliva_type, features, hue, xticklabels, stats_kwargs, **kwargs)

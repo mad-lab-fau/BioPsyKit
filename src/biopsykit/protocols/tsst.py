@@ -1,12 +1,10 @@
 from typing import Optional, Sequence
 
-from biopsykit.protocols import base
+from biopsykit.protocols import _base
 
 
-class TSST(base.BaseProtocol):
-    """
-    Class representing the Trier Social Stress Test (TSST).
-    """
+class TSST(_base.BaseProtocol):
+    """Class representing the Trier Social Stress Test (TSST)."""
 
     def __init__(
         self,
@@ -17,17 +15,21 @@ class TSST(base.BaseProtocol):
         if name is None:
             name = "TSST"
         super().__init__(name)
+        self.test_times = [0, 20]
 
-        self.tsst_times: Sequence[int] = [0, 20]
+        if phases is None:
+            phases = ["Prep", "Talk", "Arith"]
+        if phase_durations is None:
+            phase_durations = [5 * 60, 5 * 60, 5 * 60]
 
-        self.phases: Sequence[str] = ["Prep", "Talk", "Arith"]
+        self.phases: Sequence[str] = phases
         """
         TSST Phases
 
         Names of TSST phases
         """
 
-        self.phase_durations: Sequence[int] = [5 * 60, 5 * 60, 5 * 60]
+        self.phase_durations: Sequence[int] = phase_durations
         """
         TSST Phase Durations
 
@@ -39,26 +41,19 @@ class TSST(base.BaseProtocol):
             "xaxis_label": "Time relative to TSST start [min]",
         }
 
-        self._update_tsst_params(phases, phase_durations)
-
     def __str__(self) -> str:
-        return """{}
-        Phases: {}
-        Phase Durations: {}
-        """.format(
-            self.name, self.phases, self.phase_durations
-        )
-
-    @property
-    def tsst_times(self):
-        return self.test_times
-
-    @tsst_times.setter
-    def tsst_times(self, tsst_times):
-        self.test_times = tsst_times
-
-    def _update_tsst_params(self, phases: Sequence[str], phase_durations: Sequence[int]):
-        if phases:
-            self.phases = phases
-        if phase_durations:
-            self.phase_durations = phase_durations
+        if len(self.saliva_data) > 0:
+            return """{}
+            Saliva Type(s): {}
+            Saliva Sample Times: {}
+            Phases: {}
+            Phase Durations: {}
+            """.format(
+                self.name, self.saliva_type, self.sample_times, self.phases, self.phase_durations
+            )
+        else:
+            return """{}
+            Phases: {}
+            Phase Durations: {}""".format(
+                self.name, self.phases, self.phase_durations
+            )

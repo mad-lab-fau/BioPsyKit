@@ -2,30 +2,45 @@
 from typing import Dict, Sequence, Union, Tuple, Optional
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
-import biopsykit.colors as colors
+from biopsykit.colors import fau_palette_tech, fau_palette_blue
 import biopsykit.protocols.plotting as plot
+from biopsykit.protocols.utils import _check_sample_times_match, _get_sample_times
 from biopsykit.utils.data_processing import (
     concat_phase_dict,
     split_subphases,
     split_groups,
     mean_se_nested_dict,
 )
+from biopsykit.utils.datatype_helper import (
+    SalivaMeanSeDataFrame,
+    is_saliva_mean_se_dataframe,
+    SubjectConditionDict,
+    SubjectConditionDataFrame,
+)
+from biopsykit.utils.exceptions import ValidationError
 
 
 class BaseProtocol:
-    def __init__(self, name: str):
+    def __init__(
+        self,
+        name: str,
+    ):
         self.name: str = name
         """
         Study name
         """
 
+        self.saliva_type: Sequence[str] = []
+        self.test_times: Sequence[int] = [0, 0]
+        self.sample_times: Dict[str, Sequence[int]] = {}
+        self.saliva_data: Dict[str, SalivaMeanSeDataFrame] = {}
+
         self._saliva_params = {}
 
         self.saliva_params: Dict = {
-            "colormap": colors.fau_palette_blue("line_2"),
+            "colormap": fau_palette_blue("line_2"),
             "line_styles": ["-", "--"],
             "markers": ["o", "P"],
             # 'background.color': "#e0e0e0",
@@ -34,11 +49,9 @@ class BaseProtocol:
             "test_color": "#9e9e9e",
             "test_alpha": 0.5,
             "x_offsets": [0, 0.5],
-            "fontsize": 14,
             "multi.x_offset": 1,
-            "multi.fontsize": 10,
             "multi.legend_offset": 0.3,
-            "multi.colormap": colors.fau_palette_phil("line_2"),
+            "multi.colormap": fau_palette_tech("line_2"),
             "xaxis.tick_locator": plt.MultipleLocator(20),
             "yaxis.label": {
                 "cortisol": "Cortisol [nmol/l]",
@@ -46,8 +59,6 @@ class BaseProtocol:
                 "il6": "IL-6 [pg/ml]",
             },
         }
-
-        self.test_times: Sequence[int] = []
 
     def __repr__(self):
         return self.__str__()
@@ -59,6 +70,53 @@ class BaseProtocol:
     @saliva_params.setter
     def saliva_params(self, saliva_params: Dict):
         self._saliva_params.update(saliva_params)
+
+    def add_saliva_data(
+        self,
+        saliva_type: Union[str, Sequence[str]],
+        saliva_data: Union[SalivaMeanSeDataFrame, Dict[str, SalivaMeanSeDataFrame]],
+        sample_times: Optional[Union[Sequence[int], Dict[str, Sequence[int]]]] = None,
+        test_times: Optional[Sequence[int]] = None,
+    ):
+        if isinstance(saliva_type, str):
+            saliva_type = [saliva_type]
+        self.saliva_type = saliva_type
+
+        if test_times is not None:
+            self.test_times = test_times
+
+        if saliva_data is not None:
+            if not isinstance(sample_times, dict):
+                sample_times = {key: sample_times for key in self.saliva_type}
+
+            if not isinstance(saliva_data, dict):
+                saliva_data = {key: saliva_data for key in self.saliva_type}
+
+            self.sample_times = _get_sample_times(saliva_data, sample_times, self.test_times)
+            self.saliva_data.update(self._add_saliva_data(saliva_data, self.saliva_type, self.sample_times))
+
+    def _add_saliva_data(
+        self,
+        data: Union[SalivaMeanSeDataFrame, Dict[str, SalivaMeanSeDataFrame]],
+        saliva_type: Union[str, Sequence[str]],
+        sample_times: Union[Sequence[int], Dict[str, Sequence[int]]],
+    ):
+        saliva_data = {}
+        try:
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    saliva_data[key] = self._add_saliva_data(value, key, sample_times[key])
+            else:
+                is_saliva_mean_se_dataframe(data)
+                _check_sample_times_match(data, sample_times)
+                saliva_data[saliva_type] = data
+        except ValidationError as e:
+            raise ValidationError(
+                "'data' is not a 'SalivaMeanSeDataFrame' (or a dict of such). "
+                "Before setting saliva data you need to compute mean and standard error of per sample using "
+                "`biopsykit.saliva.mean_se`. The validation raised the following error:\n\n{}".format(str(e))
+            ) from e
+        return saliva_data
 
     def concat_phase_dict(
         self, dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]], phases: Sequence[str]
@@ -145,7 +203,7 @@ class BaseProtocol:
     def split_groups(
         cls,
         phase_dict: Dict[str, pd.DataFrame],
-        condition_dict: Dict[str, Sequence[str]],
+        condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame],
     ) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         Splits 'Phase dict' into group dict, i.e. one 'Phase dict' per group.
@@ -154,7 +212,7 @@ class BaseProtocol:
         ----------
         phase_dict : dict
             'Phase dict' to be split in groups. See ``utils.concat_phase_dict`` for further information
-        condition_dict : dict
+        condition_list : dict
             dictionary of group membership. Keys are the different groups, values are lists of subject IDs that belong
             to the respective group
 
@@ -164,9 +222,9 @@ class BaseProtocol:
             nested group dict with one 'Phase dict' per group
 
         """
-        return split_groups(phase_dict=phase_dict, condition_dict=condition_dict)
+        return split_groups(phase_dict=phase_dict, condition_list=condition_list)
 
-    def _mean_se_subphases(
+    def mean_se_subphases(
         self,
         data: Union[
             Dict[str, Dict[str, pd.DataFrame]],
@@ -210,46 +268,37 @@ class BaseProtocol:
 
     def saliva_plot(
         self,
-        data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-        biomarker: Optional[str] = "cortisol",
-        saliva_times: Optional[Sequence[int]] = None,
+        saliva_type: Optional[str] = "cortisol",
         groups: Optional[Sequence[str]] = None,
         group_col: Optional[str] = None,
-        ylims: Optional[Sequence[float]] = None,
-        ax: Optional[plt.Axes] = None,
-        figsize: Optional[Tuple[float, float]] = None,
-    ) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
+        **kwargs,
+    ) -> Optional[Tuple[plt.Figure, plt.Axes]]:
         """
         TODO: add documentation
 
         Parameters
         ----------
-        data
-        biomarker
-        saliva_times
+        saliva_type
         groups
         group_col
-        plot_params
-        ylims
-        ax
-        figsize
+        **kwargs
 
         Returns
         -------
 
         """
+        if len(self.saliva_type) == 0:
+            raise ValueError("No saliva data to plot!")
 
+        kwargs.update(self.saliva_params)
         return plot.saliva_plot(
-            data=data,
-            biomarker=biomarker,
-            saliva_times=saliva_times,
+            data=self.saliva_data[saliva_type],
+            biomarker=saliva_type,
+            saliva_times=self.sample_times[saliva_type],
             test_times=self.test_times,
             groups=groups,
             group_col=group_col,
-            ylims=ylims,
-            ax=ax,
-            figsize=figsize,
-            **self.saliva_params,
+            **kwargs,
         )
 
     def _saliva_plot_helper(
