@@ -140,7 +140,7 @@ class EcgProcessor:
                 # split data into subphases if time_intervals are passed
                 data_dict = split_data(
                     time_intervals,
-                    df=df,
+                    data=df,
                     timezone=timezone,
                     include_start=include_start,
                 )

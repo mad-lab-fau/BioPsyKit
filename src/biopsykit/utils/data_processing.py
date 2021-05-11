@@ -5,6 +5,12 @@ from typing import Sequence, Union, Dict, Optional, Tuple
 import numpy as np
 import pandas as pd
 import pytz
+from biopsykit.utils.datatype_helper import (
+    SubjectConditionDict,
+    SubjectConditionDataFrame,
+    is_subject_condition_dataframe,
+    is_subject_condition_dict,
+)
 from nilspodlib import Dataset
 from tqdm.notebook import tqdm
 
@@ -14,7 +20,7 @@ from biopsykit.utils.time import tz, utc
 def split_data(
     time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
     dataset: Optional[Dataset] = None,
-    df: Optional[pd.DataFrame] = None,
+    data: Optional[pd.DataFrame] = None,
     timezone: Optional[Union[str, pytz.timezone]] = tz,
     include_start: Optional[bool] = False,
 ) -> Dict[str, pd.DataFrame]:
@@ -31,7 +37,7 @@ def split_data(
         (the names of the phases are then derived from the dict keys)
     dataset : Dataset, optional
         NilsPodLib dataset object to be split
-    df : pd.DataFrame, optional
+    data : pd.DataFrame, optional
         data to be split
     timezone : str or pytz.timezone, optional
         timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
@@ -55,19 +61,19 @@ def split_data(
     >>>
     >>> # read pandas dataframe from csv file and split data based on time interval dictionary
     >>> df = pd.read_csv(path_to_file)
-    >>> data_dict = split_data(time_intervals, df=df)
+    >>> data_dict = split_data(time_intervals, data=data)
     >>>
     >>> # Example: Get Part 2 of data_dict
     >>> print(data_dict['Part2'])
     """
     data_dict: Dict[str, pd.DataFrame] = {}
-    if dataset is None and df is None:
+    if dataset is None and data is None:
         raise ValueError("Either 'dataset' or 'df' must be specified as parameter!")
     if dataset:
         if isinstance(timezone, str):
             # convert to pytz object
             timezone = pytz.timezone(timezone)
-        df = dataset.data_as_df("ecg", index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
+        data = dataset.data_as_df("ecg", index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
     if isinstance(time_intervals, pd.DataFrame):
         if len(time_intervals) > 1:
             raise ValueError("Only dataframes with 1 row allowed!")
@@ -80,18 +86,18 @@ def split_data(
             time_intervals = {key: tuple(value.values()) for key, value in time_intervals.to_dict().items()}
         else:
             if include_start:
-                time_intervals["Start"] = df.index[0].to_pydatetime().time()
+                time_intervals["Start"] = data.index[0].to_pydatetime().time()
             time_intervals.sort_values(inplace=True)
             for name, start, end in zip(time_intervals.index, np.pad(time_intervals, (0, 1)), time_intervals[1:]):
-                data_dict[name] = df.between_time(start, end)
+                data_dict[name] = data.between_time(start, end)
 
     if isinstance(time_intervals, dict):
         if include_start:
             time_intervals["Start"] = (
-                df.index[0].to_pydatetime().time(),
+                data.index[0].to_pydatetime().time(),
                 list(time_intervals.values())[0][0],
             )
-        data_dict = {name: df.between_time(*start_end) for name, start_end in time_intervals.items()}
+        data_dict = {name: data.between_time(*start_end) for name, start_end in time_intervals.items()}
     return data_dict
 
 
@@ -248,7 +254,7 @@ def split_subphases(
 
 
 def split_groups(
-    phase_dict: Dict[str, pd.DataFrame], condition_dict: Dict[str, Sequence[str]]
+    phase_dict: Dict[str, pd.DataFrame], condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
 ) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     Splits 'Phase dict' into group dict, i.e. one 'Phase dict' per group.
@@ -257,9 +263,9 @@ def split_groups(
     ----------
     phase_dict : dict
         'Phase dict' to be split in groups. See ``bp.signals.utils.concat_phase_dict`` for further information
-    condition_dict : dict
-        dictionary of group membership. Keys are the different groups, values are lists of subject IDs that belong
-        to the respective group
+    condition_list : :class:`~biopsykit.datatype_helper.SubjectConditionDict` or
+    :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame`
+        dataframe or dictionary of group membership in standardized format
 
     Returns
     -------
@@ -267,9 +273,12 @@ def split_groups(
         nested group dict with one 'Phase dict' per group
 
     """
+    if is_subject_condition_dataframe(condition_list, raise_exception=False):
+        condition_list = condition_list.groupby("condition").groups
+    is_subject_condition_dict(condition_list)
     return {
-        condition: {key: df[condition_dict[condition]] for key, df in phase_dict.items()}
-        for condition in condition_dict.keys()
+        condition: {key: df[condition_list[condition]] for key, df in phase_dict.items()}
+        for condition in condition_list.keys()
     }
 
 
