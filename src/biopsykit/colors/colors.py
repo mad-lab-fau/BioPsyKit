@@ -332,9 +332,9 @@ def fau_palette_tech(palette_type: Union[str, None]) -> Sequence[str]:
     if palette_type == "ensemble_3":
         return [fau_tech[3], fau_tech[5], fau_tech[8]]
     if palette_type == "box_2":
-        return fau_tech[5::4]
+        return fau_tech[4::4]
     if palette_type == "line_2":
-        return fau_tech[2::5]
+        return fau_tech[3::4][::-1]
     return fau_tech
 
 
