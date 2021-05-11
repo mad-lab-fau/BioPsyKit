@@ -1,4 +1,4 @@
-"""Base class for psychological protocols"""
+"""Base class for representing psychological protocols."""
 from typing import Dict, Sequence, Union, Tuple, Optional
 
 import pandas as pd
