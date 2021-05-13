@@ -54,5 +54,22 @@ def predict_pipeline_accel(
     return dict_result
 
 
-def predict_pipeline_actigraph():
-    raise NotImplementedError("Not implemented yet!")
+def predict_pipeline_actigraph(data: Union[pd.DataFrame, np.array], algorithm: str, bed_interval_index, **kwargs) -> Dict:
+
+
+
+    sw = SleepWakeDetection(algorithm_type=algorithm, **kwargs)
+    df_sw = sw.predict(data['activity'])
+
+    df_sw = pd.DataFrame([df_sw]).transpose().rename(columns={0: "sleep_wake"})
+
+    sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval_index)
+
+    dict_result = {
+        "sleep_wake_prediction": df_sw,
+        "sleep_endpoints": sleep_endpoints
+    }
+
+
+    return dict_result
+
