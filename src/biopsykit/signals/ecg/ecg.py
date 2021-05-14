@@ -563,7 +563,7 @@ class EcgProcessor(_BaseProcessor):
         ecg_signal: Optional[EcgResultDataFrame] = None,
         rpeaks: Optional[RPeakDataFrame] = None,
         sampling_rate: Optional[float] = 256.0,
-    ) -> RPeakDataFrame:
+    ) -> pd.DataFrame:
         """Perform R peak correction algorithms to get less noisy HRV parameters.
 
         R peak correction comes from ``neurokit`` and is based on an algorithm by `Lipponen et al. (2019)`.
@@ -634,7 +634,6 @@ class EcgProcessor(_BaseProcessor):
         _, rpeaks_corrected = nk.signal_fixpeaks(rpeaks_corrected, int(sampling_rate), iterative=False)
         rpeaks_corrected = rpeaks_corrected.astype(int)
         rpeaks_result = pd.DataFrame(rpeaks_corrected, columns=["R_Peak_Idx"])
-        is_r_peak_dataframe(rpeaks_result)
         return rpeaks_result
 
     @classmethod
