@@ -9,6 +9,9 @@ from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.array_handling import sanitize_input_1d
 
 
+__all__ = ["RspProcessor"]
+
+
 class RspProcessor(_BaseProcessor):
     """Class for processing respiration data."""
 
@@ -30,7 +33,7 @@ class RspProcessor(_BaseProcessor):
         Parameters
         ----------
         rsp_signal : pd.DataFrame
-            raw respiration signal (1D). Can be a 'true' respiration signal (e.g. from bioimpedance or Radar)
+            Raw respiration signal (1D). Can be a 'true' respiration signal (e.g. from bioimpedance or Radar)
             or an 'estimated' respiration signal (e.g. from ECG-derived respiration)
         sampling_rate : float, optional
             Sampling rate of recorded data
@@ -59,8 +62,8 @@ class RspProcessor(_BaseProcessor):
         >>> rsp_signal = ecg_processor.ecg_estimate_rsp(ecg_processor, key="Data", edr_type='peak_trough_diff')
         >>> # Compute respiration rate from respiration signal
         >>> rsp_rate = ecg_processor.rsp_compute_rate(rsp_signal)
-        """
 
+        """
         # find peaks: minimal distance between peaks: 1 seconds
         rsp_signal = sanitize_input_1d(rsp_signal)
         edr_maxima = ss.find_peaks(rsp_signal, height=0, distance=sampling_rate)[0]
@@ -80,7 +83,7 @@ class RspProcessor(_BaseProcessor):
         edr_signal_split: list = np.split(rsp_signal, rsp_cycles_start_end.flatten())[1::2]
         rsp_cycles_start_end = rsp_cycles_start_end.T
         rsp_peaks = rsp_cycles_start_end[0]
-        rsp_troughs = np.array(list(map(lambda arr: np.argmin(arr), edr_signal_split))) + rsp_cycles_start_end[0]
+        rsp_troughs = np.array(list(map(np.argmin, edr_signal_split))) + rsp_cycles_start_end[0]
 
         rsp_rate_peaks = cls._rsp_rate(rsp_peaks, int(sampling_rate), len(rsp_signal))
         rsp_rate_troughs = cls._rsp_rate(rsp_troughs, int(sampling_rate), len(rsp_signal))
@@ -88,42 +91,44 @@ class RspProcessor(_BaseProcessor):
 
     @classmethod
     def _check_contains_trough(cls, start_end: np.ndarray, minima: np.ndarray) -> bool:
-        """
-        Helper method to check whether exactly one minima is in the interval given by the array `start_end`: [start, end].
+        """Check whether exactly one minima is in the interval given by the array ``start_end``: [start, end].
 
         Parameters
         ----------
-        start_end : array_like
-            array with start and end index
-        minima : array_like
-            array containing minima to be checked
+        start_end : :class:`numpy.array`
+            Array with start and end index
+        minima : :class:`numpy.array`
+            Array containing minima to be checked
+
 
         Returns
         -------
         bool
-            True if exactly one minima is in the [start, end] interval, False otherwise
+            ``True`` if exactly one minima is in the ``[start, end]`` interval, ``False`` otherwise
+
         """
         start, end = start_end
         return minima[(minima > start) & (minima < end)].shape[0] == 1
 
     @classmethod
-    def _rsp_rate(cls, extrema: np.ndarray, sampling_rate: int, desired_length: int) -> np.array:
-        """
-        Computes the continuous respiration rate from extrema values.
+    def _rsp_rate(cls, extrema: np.array, sampling_rate: int, desired_length: int) -> np.array:
+        """Compute continuous respiration rate from extrema values.
 
         Parameters
         ----------
-        extrema: array_like
-            list of respiration extrema (peaks or troughs)
+        extrema: :class:`numpy.array`
+            List of respiration extrema (peaks or troughs)
         sampling_rate : float
             Sampling rate of recorded data
         desired_length : int
-            desired length of the output signal
+            Desired length of the output signal
+
 
         Returns
         -------
-        array_like
-            respiration rate array interpolated to desired length
+        :class:`numpy.array`
+            Respiration rate array interpolated to desired length
+
         """
         rsp_rate_raw = (sampling_rate * 60) / np.ediff1d(extrema)
         # remove last sample
