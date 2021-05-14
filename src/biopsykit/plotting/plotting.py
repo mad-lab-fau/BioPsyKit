@@ -52,25 +52,25 @@ def lineplot(
     kwargs
         additional parameters to configure the plot. Parameters include:
             * ``markers``: string or list of strings to specify marker style.
-            If ``markers`` is a string, then markers of each line will have the same style.
-            If ``markers`` is a list, then markers of each line will have a different style.
+              If ``markers`` is a string, then markers of each line will have the same style.
+              If ``markers`` is a list, then markers of each line will have a different style.
             * ``x_offset``: offset value to move different groups along the x axis for better visualization.
-            Default: 0.05
+              Default: 0.05
             * ``xlabel``: Label for x axis. If not specified it is inferred from the ``x`` column name
             * ``ylabel``: Label for y axis. If not specified it is inferred from the ``y`` column name
             * ``xticklabels``: List of labels for ticks of x axis. If not specified ``order`` is taken as tick labels.
-            If ``order`` is not specified tick labels are inferred from x values.
+              If ``order`` is not specified tick labels are inferred from x values.
             * ``ylim``: y-axis limits
             * ``order``: list specifying the order of categorical values along the x axis.
             * ``hue_order``: list specifying the order of processing and plotting for categorical levels
-            of the ``hue`` semantic.
+              of the ``hue`` semantic.
             * ``legend_fontsize``: font size of legend
             * ``legend_loc``: location of legend in Axes
             * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
             * ``err_kws``: additional parameters to control the aesthetics of the error bars.
-            The ``err_kws`` are passed down to :func:`~matplotlib.axes.Axes.errorbar` or
-            :func:`~matplotlib.axes.Axes.fill_between`, depending on ``err_style``. Parameters include:
-                * ``capsize``: length of error bar caps in points
+              The ``err_kws`` are passed down to :func:`~matplotlib.axes.Axes.errorbar` or
+              :func:`~matplotlib.axes.Axes.fill_between`, depending on ``err_style``. Parameters include:
+                  * ``capsize``: length of error bar caps in points
 
     Returns
     -------
@@ -151,6 +151,7 @@ def lineplot(
     # use them in the legend
     ax.legend(handles, labels, loc=legend_loc, numpoints=1, fontsize=legend_fontsize)
 
+    fig.tight_layout()
     return fig, ax
 
 
@@ -204,6 +205,7 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Union[None, Tuple[plt.Figu
     if ylabel:
         ax.set_ylabel(ylabel)
 
+    fig.tight_layout()
     return fig, ax
 
 
@@ -249,22 +251,28 @@ def feature_boxplot(
     hue_order : list of str, optional
         order to plot the grouping variable specified by ``hue`` in
     stats_kwargs : dict, optional
-        dictionary with arguments for significance brackets. If annotations should be added,
-        the following parameter is required:
+        dictionary with arguments for significance brackets.
+
+        If annotations should be added, the following parameter is required:
             * ``box_pairs``: list of box pairs that should be annotated
+
         If already existing box pairs and p values should be used the following parameter is additionally required:
             * ``pvalues``: list of p values corresponding to ``box_pairs``
+
         If statistical tests should be computed by ``statsannot``, the following parameters are required:
             * ``test``: type of statistical test to be computed
             * ``comparisons_correction`` (optional): Whether (and which) type of multi-comparison correction should be
-            applied.
-            ``None`` to not apply any multi-comparison (default)
+              applied.
+            * ``None`` to not apply any multi-comparison (default)
+
         The following parameters are optional:
             * ``pvalue_thresholds``: list of p value thresholds for statistical annotations. The default annotation is:
-            *: 0.01 <= p < 0.05, **: 0.001 <= p < 0.01, ***: p < 0.001 (``[[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]``)
-    kwargs : additional arguments that are passed down to :func:`~seaborn.boxplot`, for example:
-        * ``ylabel``: label of y axis
-        * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+              '*': 0.01 <= p < 0.05, '**': 0.001 <= p < 0.01, '***': p < 0.001
+              (``[[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]``)
+    kwargs
+        additional arguments that are passed down to :func:`~seaborn.boxplot`, for example:
+            * ``ylabel``: label of y axis
+            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
 
     Returns
     -------
@@ -316,6 +324,7 @@ def feature_boxplot(
     if ylabel is not None:
         ax.set_ylabel(ylabel)
 
+    fig.tight_layout()
     return fig, ax
 
 
@@ -338,7 +347,7 @@ def multi_feature_boxplot(
     see the :func:`~biopsykit.plotting.feature_boxplot` documentation.
 
     .. note::
-        The input data is assumed to be in long-format.
+        The input data is assumed to be in *long*-format.
 
     Parameters
     ----------
@@ -370,13 +379,13 @@ def multi_feature_boxplot(
         entries (or the dict keys) in ``features`` and box pair / p-value lists are the dict values.
     kwargs : additional arguments that are passed down to :func:`~seaborn.boxplot`. For example:
         * ``order``: specifies x axis order for subplots. Can be a list if order is the same for all subplots or a
-        dict if order should be individual for subplots
+          dict if order should be individual for subplots
         * ``xticklabels``: dictionary to set tick labels of x axis in subplots. Keys correspond to the list entries
-            (or the dict keys) in ``features``. Default: ``None``
+          (or the dict keys) in ``features``. Default: ``None``
         * ``ylabels``: dictionary to set y axis labels in subplots. Keys correspond to the list entries
-            (or the dict keys) in ``features``. Default: ``None``
+          (or the dict keys) in ``features``. Default: ``None``
         * ``axs``: list of pre-existing axes for the plot. Otherwise, a new figure and axes object is created and
-        returned.
+          returned.
 
     Returns
     -------
@@ -454,6 +463,7 @@ def multi_feature_boxplot(
         fig, show_legend, hue, handles, labels, legend_orientation, legend_loc, legend_fontsize, rect
     )
 
+    fig.tight_layout()
     return fig, axs
 
 
