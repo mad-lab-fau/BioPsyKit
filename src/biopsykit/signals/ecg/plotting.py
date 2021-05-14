@@ -7,9 +7,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from biopsykit.signals.ecg import check_ecg_input, sanitize_input_1d
-import biopsykit.colors as colors
+from biopsykit.signals.ecg.ecg import _assert_ecg_input
+from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.signals.ecg import EcgProcessor
+import biopsykit.colors as colors
 
 sns.set(context="paper", style="white")
 
@@ -84,7 +85,7 @@ def ecg_plot(
     import matplotlib.dates as mdates
     import matplotlib.ticker as mticks
 
-    check_ecg_input(ecg_processor, key, ecg_signal, heart_rate)
+    _assert_ecg_input(ecg_processor, key, ecg_signal, heart_rate)
     if ecg_processor:
         ecg_signal = ecg_processor.ecg_result[key]
         heart_rate = ecg_processor.heart_rate[key]
@@ -367,7 +368,7 @@ def hrv_plot(
     if figsize is None:
         figsize = (14, 7)
 
-    check_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
+    _assert_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
     if ecg_processor:
         ecg_signal = ecg_processor.ecg_result[key]
         rpeaks = ecg_processor.rpeaks[key]

@@ -24,6 +24,8 @@ __all__ = [
     "SleepEndpointDataFrame",
     "SleepEndpointDict",
     "EcgRawDataFrame",
+    "EcgResultDataFrame",
+    "RPeakDataFrame",
     "is_subject_condition_dataframe",
     "is_subject_condition_dict",
     "is_hr_subject_dict",
@@ -33,6 +35,8 @@ __all__ = [
     "is_sleep_endpoint_dataframe",
     "is_sleep_endpoint_dict",
     "is_ecg_raw_dataframe",
+    "is_ecg_result_dataframe",
+    "is_r_peak_dataframe",
 ]
 
 SubjectConditionDataFrame = pd.DataFrame
@@ -52,9 +56,9 @@ A ``SubjectConditionDict`` contains conditions as dictionary keys and a collecti
 """
 
 HeartRateSubjectDict = Dict[str, pd.DataFrame]
-"""Dictionary containing time-series data of `one` subject, split into different phases.
+"""Dictionary containing time-series heart rate data of `one` subject, split into different phases.
 
-A ``HeartRateSubjectDict`` is a dictionary with the have the following format:
+A ``HeartRateSubjectDict`` is a dictionary with the following format:
 
 { phase_1 : hr_dataframe, phase_2 : hr_dataframe, ... }
 
@@ -165,10 +169,34 @@ The following columns are further possible:
 
 
 EcgRawDataFrame = pd.DataFrame
-""":class:`~pandas.DataFrame` containing raw ECG data as time-series of `one` subject.
+""":class:`~pandas.DataFrame` containing raw ECG data of `one` subject.
 
-The dataframe is expected to have the following format:
-    * ``ecg`` column: raw ECG samples
+The dataframe is expected to have the following columns:
+    * ``ecg``: Raw ECG signal
+
+"""
+
+EcgResultDataFrame = pd.DataFrame
+""":class:`~pandas.DataFrame` containing processed ECG data of `one` subject.
+
+The dataframe is expected to have the following columns:
+    * ``ECG_Raw``: Raw ECG signal
+    * ``ECG_Clean``: Cleaned (filtered) ECG signal
+    * ``ECG_Quality``: ECG signal quality indicator in the range of [0, 1]
+    * ``ECG_R_Peaks``: 1.0 where R peak was detected in the ECG signal, 0.0 else
+    * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
+    * ``Heart_Rate``: Computed Heart rate interpolated to signal length
+
+"""
+
+RPeakDataFrame = pd.DataFrame
+""":class:`~pandas.DataFrame` containing R-peak locations of `one` subject extracted from ECG data.
+
+The dataframe is expected to have the following columns:
+    * ``R_Peak_Quality``: Signal quality indicator (of the raw ECG signal) in the range of [0, 1]
+    * ``R_Peak_Idx``: Array index of detected R peak in the raw ECG signal
+    * ``RR_Interval``: Interval between the current and the successive R peak in seconds
+    * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
 
 """
 
@@ -553,6 +581,96 @@ def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] 
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a EcgRawDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``EcgResultDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``EcgResultDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``EcgResultDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``EcgResultDataFrame``
+
+    See Also
+    --------
+    ``EcgResultDataFrame``
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(
+            data,
+            columns_sets=[
+                ["ECG_Raw", "ECG_Clean", "ECG_Quality", "ECG_R_Peaks", "R_Peak_Outlier"],
+                ["ECG_Raw", "ECG_Clean", "ECG_Quality", "ECG_R_Peaks", "R_Peak_Outlier", "Heart_Rate"],
+            ],
+        )
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a EcgResultDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``RPeakDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``RPeakDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``RPeakDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``RPeakDataFrame``
+
+    See Also
+    --------
+    ``RPeakDataFrame``
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(
+            data,
+            columns_sets=[
+                ["R_Peak_Quality", "R_Peak_Idx", "RR_Interval"],
+                ["R_Peak_Quality", "R_Peak_Idx", "RR_Interval", "R_Peak_Outlier"],
+            ],
+        )
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a RPeakDataFrame. "
                 "The validation failed with the following error:\n\n{}".format(str(e))
             ) from e
         return False

@@ -1,4 +1,6 @@
-import biopsykit.signals.ecg
-import biopsykit.signals.eeg
-import biopsykit.signals.imu
-import biopsykit.signals.imu.static_moment_detection
+import biopsykit.signals.ecg as ecg
+import biopsykit.signals.eeg as eeg
+import biopsykit.signals.imu as imu
+import biopsykit.signals.rsp as rsp
+
+__all__ = ["ecg", "eeg", "imu", "rsp"]
