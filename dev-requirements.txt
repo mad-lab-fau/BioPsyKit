@@ -10,4 +10,5 @@ prospector >=1.2.0
 coverage >= 4.5.4
 doit >= 0.32.0
 mypy >= 0.790
+pre-commit >= 2.12
 
