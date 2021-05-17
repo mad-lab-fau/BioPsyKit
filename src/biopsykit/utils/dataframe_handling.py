@@ -256,6 +256,13 @@ def wide_to_long(
 
     data = data.filter(like=stubname)
     index_cols = list(data.index.names)
+
+    if any(col is None for col in index_cols):
+        raise ValueError(
+            "All index levels of the dataframe need to have names! Please assign names using "
+            "'pandas.Index.set_names()' before using this function!"
+        )
+
     # reverse level order because nested multi-level index will be constructed from back to front
     levels = levels[::-1]
     # iteratively build up long-format dataframe
