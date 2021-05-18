@@ -403,9 +403,9 @@ def hrv_plot(
     Parameters
     ----------
     ecg_processor : EcgProcessor, optional
-        `EcgProcessor` object. If this argument is passed, the `key` argument needs to be supplied as well
+        `EcgProcessor` object. If this argument is passed, the ``key`` argument needs to be supplied as well
     key : str, optional
-        Dictionary key of the sub-phase to process. Needed when `ecg_processor` is passed as argument
+        Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
     ecg_signal : pd.DataFrame, optional
         dataframe with processed ECG signal. Output from `EcgProcessor.ecg_process()`
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
@@ -546,6 +546,7 @@ def rr_distribution_plot(
     """Plot distribution of RR intervals (histogram) with boxplot and rugplot.
 
     This plot is also used as subplot in :func:`~biopsykit.signals.ecg.plotting.hrv_plot`.
+
 
     Parameters
     ----------
@@ -880,12 +881,14 @@ def hrv_frequency_plot(
             * ``figsize``: Figure size
             * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
+
     Returns
     -------
     fig : :class:`matplotlib.figure.Figure`
         figure object
     ax : :class:`matplotlib.axes.Axes`
         axes object
+
 
     See Also
     --------
