@@ -66,9 +66,9 @@ class EcgProcessor(_BaseProcessor):
     ):
         """Initialize an ``EcgProcessor`` instance.
 
-        You can either pass a data dictionary 'data_dict' containing ECG data, a Dataset object directly from
-        NilsPodLib or a dataframe containing ECG data. For the latter both, you can additionally supply time
-        information via ``time_intervals`` parameter to automatically split the data into subphases.
+        You can either pass a data dictionary 'data_dict' containing ECG data or dataframe containing ECG data.
+        For the latter, you can additionally supply time information via ``time_intervals`` parameter to automatically
+        split the data into single phases.
 
 
         Parameters
