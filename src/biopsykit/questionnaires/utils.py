@@ -2,7 +2,7 @@
 import warnings
 import re
 
-from typing import Optional, Union, Sequence, Tuple, Dict, Literal
+from typing import Optional, Union, Sequence, Tuple, Dict, Literal, Any
 
 from inspect import getmembers, isfunction
 
@@ -556,7 +556,11 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
     return wide_to_long_utils(data=data, stubname=quest_name, levels=levels)
 
 
-def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
+def compute_scores(
+    data: pd.DataFrame,
+    quest_dict: Dict[str, Union[Sequence[str], pd.Index]],
+    quest_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> pd.DataFrame:
     """Compute questionnaire scores from dataframe.
 
     This function can be used if multiple questionnaires from a dataframe should be computed at once. If the same
@@ -574,6 +578,9 @@ def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str]
         dataframe containing questionnaire data
     quest_dict : dict
         dictionary with questionnaire names to be computed (keys) and columns of the questionnaires (values)
+    quest_kwargs : dict
+        dictionary with optional arguments to be passed to questionnaire functions. The dictionary is expected
+        consist of questionnaire names (keys) and **kwargs dictionaries (values) with arguments per questionnaire
 
     Returns
     -------
@@ -595,20 +602,64 @@ def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str]
 
     df_scores = pd.DataFrame(index=data.index)
     quest_funcs = dict(getmembers(questionnaires, isfunction))
+    if quest_kwargs is None:
+        quest_kwargs = {}
 
     for score, columns in quest_dict.items():
+        score_orig = score
         score = score.lower()
         suffix = None
         if "-" in score:
             score_split = score.split("-")
             score = score_split[0]
             suffix = score_split[1]
-        df = quest_funcs[score](data[columns])
+
+        if score not in quest_funcs:
+            raise ValueError(
+                "Unknown questionnaire '{}'! Call "
+                "'biopsykit.questionnaires.utils.get_supported_questionnaires()' "
+                "to get a list of all supported questionnaires.".format(score)
+            )
+        kwargs = quest_kwargs.get(score_orig, None)
+        if kwargs is None:
+            df = quest_funcs[score](data[columns])
+        else:
+            try:
+                df = quest_funcs[score](data[columns], **kwargs)
+            except TypeError as e:
+                raise TypeError(
+                    "Error computing questionnaire '{}'. The computation failed with the following "
+                    "error: \n\n{}.".format(score, str(e))
+                ) from e
+
         if suffix is not None:
             df.columns = ["{}_{}".format(col, suffix) for col in df.columns]
         df_scores = df_scores.join(df)
 
     return df_scores
+
+
+def get_supported_questionnaires() -> Dict[str, str]:
+    """List all supported (i.e., implemented) questionnaires.
+
+    Returns
+    -------
+    dict
+        dictionary with questionnaire names (keys) and description (values)
+
+    """
+    funcs = dict(getmembers(questionnaires, isfunction))
+    quests = {}
+    for key, value in funcs.items():
+        if key.startswith("_"):
+            continue
+        summary = value.__doc__.split("\n")[0]
+        summary = re.findall(r"\*\*(.*)\*\*.", summary)
+        if len(summary) == 0:
+            continue
+        quests[key] = summary[0]
+
+    return quests
 
 
 def _compute_questionnaire_subscales(
