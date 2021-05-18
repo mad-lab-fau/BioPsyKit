@@ -52,7 +52,7 @@ def load_time_log(
     file_path : :any:`pathlib.path` or str
         path to time log file. Must either be an Excel or csv file
     index_cols : str, list of str or dict, optional
-        specifies dataframe index. Can either be a string or a list strings to indicate column name(s) from the
+        specifies dataframe index. Can either be a string or a list of strings to indicate column name(s) from the
         dataframe that should be used as index level(s), or ``None`` for no index.
         If the index levels of the time log dataframe should have different names than the columns in the file,
         a dict specifying the mapping (column_name : new_index_name) can be passed. Default: ``None``
@@ -146,6 +146,8 @@ def load_time_log(
         if index_cols is None:
             index_cols = [s for s in ["subject", "condition"] if s in data.columns]
             data = data.set_index(index_cols)
+        if isinstance(index_cols, dict):
+            index_cols = data.index.names
 
         data = pd.wide_to_long(
             data.reset_index(),
