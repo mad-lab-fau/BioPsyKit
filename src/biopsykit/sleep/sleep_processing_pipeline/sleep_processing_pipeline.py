@@ -59,9 +59,9 @@ def predict_pipeline_actigraph(data: Union[pd.DataFrame, np.array], algorithm: s
 
 
     sw = SleepWakeDetection(algorithm_type=algorithm, **kwargs)
-    df_sw = sw.predict(data['activity'])
+    df_sw = sw.predict(data[['activity']])
 
-    df_sw = pd.DataFrame([df_sw]).transpose().rename(columns={0: "sleep_wake"})
+    #df_sw = pd.DataFrame({'sleep_wake':df_sw})
 
     sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval_index)
 

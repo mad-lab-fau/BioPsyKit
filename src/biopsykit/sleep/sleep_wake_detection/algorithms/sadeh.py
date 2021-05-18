@@ -64,7 +64,7 @@ class Sadeh(_SleepWakeBase):
         score = self._rescore(score)
 
         if index is not None:
-            score = pd.DataFrame(classification, index=index, columns=["sleep_wake"])
+            score = pd.DataFrame(score, index=index[5:-5], columns=["sleep_wake"])
 
         return score
 
