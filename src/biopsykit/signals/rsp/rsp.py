@@ -13,7 +13,7 @@ __all__ = ["RspProcessor"]
 
 
 class RspProcessor(_BaseProcessor):
-    """Class for processing respiration data."""
+    """Class for processing Respiration data."""
 
     def __init__(
         self,
@@ -22,6 +22,29 @@ class RspProcessor(_BaseProcessor):
         time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
         include_start: Optional[bool] = False,
     ):
+        """Initialize an ``RspProcessor`` instance.
+
+        You can either pass a data dictionary 'data_dict' containing Respiration data or dataframe containing
+        Respiration data. For the latter, you can additionally supply time information via ``time_intervals`` parameter
+        to automatically split the data into single phases.
+
+
+        Parameters
+        ----------
+        data : :class:`~pandas.DataFrame` or dict
+            dataframe (or dict of such) with Respiration data
+        sampling_rate : float, optional
+            sampling rate of recorded data
+        time_intervals : dict or :class:`~pandas.Series`, optional
+            time intervals indicating how ``data`` should be split.
+            Can either be a :class:`~pandas.Series` with the `start` times of the single phases
+            (the phase names are then derived from the index) or a dictionary with tuples indicating
+            `start` and `end` times of phases (the phase names are then derived from the dict keys).
+            Default: ``None`` (data is not split further)
+        include_start : bool, optional
+            ``True`` to include the data from the beginning of the recording to the first time interval as the
+            first phase (then named ``Start``), ``False`` otherwise. Default: ``False``
+        """
         super().__init__(
             data=data, sampling_rate=sampling_rate, time_intervals=time_intervals, include_start=include_start
         )
