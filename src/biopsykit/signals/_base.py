@@ -1,3 +1,4 @@
+"""Base class for implementing signal processing pipelines."""
 from typing import Optional, Union, Dict, Sequence
 
 import pandas as pd
@@ -5,6 +6,8 @@ from biopsykit.utils.data_processing import split_data
 
 
 class _BaseProcessor:
+    """Base class for implementing signal processing pipelines in BioPsyKit."""
+
     def __init__(
         self,
         data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
