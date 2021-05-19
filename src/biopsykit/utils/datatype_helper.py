@@ -17,7 +17,8 @@ from biopsykit.utils.exceptions import ValidationError
 __all__ = [
     "SubjectConditionDataFrame",
     "SubjectConditionDict",
-    "HeartRateSubjectDict",
+    "HeartRatePhaseDict",
+    "HeartRateSubjectsDict",
     "SalivaRawDataFrame",
     "SalivaFeatureDataFrame",
     "SalivaMeanSeDataFrame",
@@ -28,7 +29,7 @@ __all__ = [
     "RPeakDataFrame",
     "is_subject_condition_dataframe",
     "is_subject_condition_dict",
-    "is_hr_subject_dict",
+    "is_hr_phase_dict",
     "is_saliva_raw_dataframe",
     "is_saliva_feature_dataframe",
     "is_saliva_mean_se_dataframe",
@@ -55,16 +56,33 @@ A ``SubjectConditionDict`` contains conditions as dictionary keys and a collecti
 
 """
 
-HeartRateSubjectDict = Dict[str, pd.DataFrame]
-"""Dictionary containing time-series heart rate data of `one` subject, split into different phases.
+HeartRatePhaseDict = Dict[str, pd.DataFrame]
+"""Dictionary containing time-series heart rate data of **one single subject** split into **different phases**.
 
-A ``HeartRateSubjectDict`` is a dictionary with the following format:
+A ``HeartRatePhaseDict`` is a dictionary with the following format:
 
-{ phase_1 : hr_dataframe, phase_2 : hr_dataframe, ... }
+{ "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... }
 
 Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
     * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
     * ``Heart_Rate`` Column: heart rate values
+
+"""
+
+HeartRateSubjectsDict = Dict[str, HeartRatePhaseDict]
+"""Dictionary representing time-series heart rate data of **multiple subjects**, typically collected during one study.
+
+A ``HeartRateSubjectsDict`` is a nested dictionary that contains a
+:obj:`biopsykit.utils.datatype_helper.HeartRatePhaseDict` for each subject, resulting in the following format:
+
+{
+    "subject1" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+    "subject2" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+    ...
+}
+
+This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.HeartRateStudySubjectDict`,
+where the top-level keys are the different study phases, not the individual subjects.
 
 """
 
@@ -284,8 +302,8 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
     return True
 
 
-def is_hr_subject_dict(data: HeartRateSubjectDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a ``HeartRateSubjectDict``.
+def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether a dict is a ``HeartRatePhaseDict``.
 
     Parameters
     ----------
@@ -296,17 +314,17 @@ def is_hr_subject_dict(data: HeartRateSubjectDict, raise_exception: Optional[boo
 
     Returns
     -------
-    ``True`` if ``data`` is a ``HeartRateSubjectDict``, ``False`` otherwise
+    ``True`` if ``data`` is a ``HeartRatePhaseDict``, ``False`` otherwise
     (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a ``HeartRateSubjectDict``
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``HeartRatePhaseDict``
 
     See Also
     --------
-    ``HeartRateSubjectDict``
+    ``HeartRatePhaseDict``
         dictionary format
 
     """
@@ -321,10 +339,50 @@ def is_hr_subject_dict(data: HeartRateSubjectDict, raise_exception: Optional[boo
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(
-                "The passed object does not seem to be a HeartRateSubjectDict. "
+                "The passed object does not seem to be a HeartRatePhaseDict. "
                 "The validation failed with the following error:\n\n{}\n"
-                "HeartRateSubjectDict's in an old format can be converted into the new format using "
-                "`biopsykit.utils.legacy.legacy_convert_hr_subject_dict()`".format(str(e))
+                "HeartRatePhaseDicts in an old format can be converted into the new format using "
+                "`biopsykit.utils.legacy_helper.legacy_convert_hr_phase_dict()`".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_hr_subjects_dict(data: HeartRateSubjectsDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether a dict is a ``HeartRateSubjectsDict``.
+
+    Parameters
+    ----------
+    data : dict
+        dict to check
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``HeartRateSubjectsDict``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``HeartRateSubjectsDict``
+
+    See Also
+    --------
+    ``HeartRateSubjectsDict``
+        dictionary format
+
+    """
+    try:
+        _assert_is_dtype(data, dict)
+        for hr_subject_dict in data.values():
+            is_hr_phase_dict(hr_subject_dict)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a HeartRateSubjectsDict. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
             ) from e
         return False
     return True

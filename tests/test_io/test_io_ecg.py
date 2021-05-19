@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from biopsykit.utils.exceptions import ValidationError, FileExtensionError
 
-from biopsykit.io.ecg import load_hr_subject_dict, write_hr_subject_dict, load_hr_subject_dict_folder
+from biopsykit.io.ecg import load_hr_phase_dict, write_hr_phase_dict, load_hr_phase_dict_folder
 from biopsykit.utils.datatype_helper import is_hr_subject_dict
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")
@@ -139,7 +139,7 @@ class TestIoEcg:
     )
     def test_load_hr_subject_dict(self, filename, expected):
         with expected:
-            load_hr_subject_dict(TEST_FILE_PATH.joinpath(filename))
+            load_hr_phase_dict(TEST_FILE_PATH.joinpath(filename))
 
     @pytest.mark.parametrize(
         "base_path, filename, expected",
@@ -151,7 +151,7 @@ class TestIoEcg:
     )
     def test_load_hr_subject_dict_folder(self, base_path, filename, expected):
         with expected:
-            dict_hr = load_hr_subject_dict_folder(TEST_FILE_PATH.joinpath(base_path), filename)
+            dict_hr = load_hr_phase_dict_folder(TEST_FILE_PATH.joinpath(base_path), filename)
             assert len(dict_hr) == 2
             assert list(dict_hr.keys()) == ["Vp01", "Vp02"]
             assert all([is_hr_subject_dict(dict_subject, raise_exception=False) for dict_subject in dict_hr.values()])
@@ -166,7 +166,7 @@ class TestIoEcg:
     )
     def test_load_hr_subject_dict_folder_subfolder(self, base_path, filename, subfolder, expected):
         with expected:
-            dict_hr = load_hr_subject_dict_folder(
+            dict_hr = load_hr_phase_dict_folder(
                 TEST_FILE_PATH.joinpath(base_path), filename, subfolder_pattern=subfolder
             )
             assert len(dict_hr) == 2
@@ -181,7 +181,7 @@ class TestIoEcg:
     )
     def test_load_hr_subject_dict_folder_subfolder_multiple_filed(self, base_path, filename, subfolder):
         with pytest.warns(UserWarning):
-            dict_hr = load_hr_subject_dict_folder(
+            dict_hr = load_hr_phase_dict_folder(
                 TEST_FILE_PATH.joinpath(base_path), filename, subfolder_pattern=subfolder
             )
             assert len(dict_hr) == 2
@@ -201,4 +201,4 @@ class TestIoEcg:
     )
     def test_write_hr_subject_dict(self, data, filename, expected, tmp_path):
         with expected:
-            write_hr_subject_dict(data, tmp_path.joinpath(filename))
+            write_hr_phase_dict(data, tmp_path.joinpath(filename))

@@ -10,13 +10,14 @@ from tqdm.notebook import tqdm
 
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.datatype_helper import (
-    HeartRateSubjectDict,
+    HeartRatePhaseDict,
     EcgRawDataFrame,
     EcgResultDataFrame,
     RPeakDataFrame,
     is_ecg_raw_dataframe,
     is_ecg_result_dataframe,
     is_r_peak_dataframe,
+    HeartRateSubjectsDict,
 )
 from biopsykit.utils.array_handling import (
     find_extrema_in_radius,
@@ -128,12 +129,12 @@ class EcgProcessor(_BaseProcessor):
 
         """
 
-        self.heart_rate: HeartRateSubjectDict = {}
+        self.heart_rate: HeartRatePhaseDict = {}
         """Dictionary with time-series heart rate data, split into different phases.
 
         See Also
         --------
-        :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDict`
+        :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
             dictionary format
 
         """
@@ -161,8 +162,8 @@ class EcgProcessor(_BaseProcessor):
         return {k: pd.DataFrame(v["ECG_Clean"]) for k, v in self.ecg_result.items()}
 
     @property
-    def hr_result(self) -> HeartRateSubjectDict:
-        """Return Heart rate result from ECG processing, split into different phases.
+    def hr_result(self) -> HeartRatePhaseDict:
+        """Return heart rate result from ECG processing, split into different phases.
 
         Returns
         -------
@@ -1008,19 +1009,19 @@ class EcgProcessor(_BaseProcessor):
     #         return df_rsa
 
 
-def normalize_heart_rate(
-    dict_hr_subjects: Dict[str, HeartRateSubjectDict], normalize_to: str
-) -> Dict[str, Dict[str, HeartRateSubjectDict]]:
+def normalize_heart_rate(dict_hr_subjects: HeartRateSubjectsDict, normalize_to: str) -> HeartRateSubjectsDict:
     """Normalize heart rate per subject to the phase specified by ``normalize_to``.
 
     The result is the relative change of heart rate compared to the mean heart rate in the ``normalize_to`` phase.
 
     Parameters
     ----------
-    dict_hr_subjects : dict
-        dictionary with :class:`~biopsykit.utils.datatype_helper.HeartRateSubjectDict` per subject
+    dict_hr_subjects : :class:`~biopsykit.utils.datatype_helper.HeartRateSubjectsDict`
+        ``HeartRateSubjectsDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        per subject
     normalize_to : str
-        phase (i.e., dict key) of data all other data should be normalized to
+        phase name (i.e., dict key present in ``HeartRatePhaseDict`` of all subjects) data of all other phases
+        should be normalized to
 
     Returns
     -------
