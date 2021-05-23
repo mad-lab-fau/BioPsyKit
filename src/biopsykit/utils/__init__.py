@@ -9,6 +9,7 @@ from biopsykit.utils import (
     datatype_helper,
     exceptions,
     legacy_helper,
+    rescore,
 )
 from biopsykit.utils.misc import export_figure
 
@@ -23,4 +24,5 @@ __all__ = [
     "exceptions",
     "data_processing",
     "legacy_helper",
+    "rescore"
 ]
