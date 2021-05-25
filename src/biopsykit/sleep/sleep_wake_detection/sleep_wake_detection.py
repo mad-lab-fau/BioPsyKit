@@ -6,13 +6,16 @@ import numpy as np
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke
 from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke_alternative import ColeKripkeAlternative
+from biopsykit.sleep.sleep_wake_detection.algorithms.webster import Webster
+from biopsykit.sleep.sleep_wake_detection.algorithms.scripps_clinic import ScrippsClinic
 
 
 class SleepWakeDetection:
     sleep_wake_algo = None
 
     def __init__(self, algorithm_type: Optional[str] = "default", **kw_args):
-        available_sleep_wake_algorithms = {"cole_kripke": ColeKripke, "sadeh": Sadeh, "cole_kripke_alternative": ColeKripkeAlternative}
+        available_sleep_wake_algorithms = {"cole_kripke": ColeKripke, "sadeh": Sadeh, "cole_kripke_alternative": ColeKripkeAlternative,
+                                           "webster": Webster, "scripps_clinic": ScrippsClinic}
 
         if algorithm_type == "default":
             algorithm_type = "cole_kripke"
@@ -31,9 +34,23 @@ class SleepWakeDetection:
                 self.sleep_wake_algo = sleep_wake_cls(kw_args["scale_factor"])
             else:
                 self.sleep_wake_algo = sleep_wake_cls()
+
         elif sleep_wake_cls is Sadeh:
             self.sleep_wake_algo = sleep_wake_cls()
+
         elif sleep_wake_cls is ColeKripkeAlternative:
+            if "scale_factor" in kw_args:
+                self.sleep_wake_algo = sleep_wake_cls(kw_args["scale_factor"])
+            else:
+                self.sleep_wake_algo = sleep_wake_cls()
+
+        elif sleep_wake_cls is Webster:
+            if "scale_factor" in kw_args:
+                self.sleep_wake_algo = sleep_wake_cls(kw_args["scale_factor"])
+            else:
+                self.sleep_wake_algo = sleep_wake_cls()
+        
+        elif sleep_wake_cls is ScrippsClinic:
             if "scale_factor" in kw_args:
                 self.sleep_wake_algo = sleep_wake_cls(kw_args["scale_factor"])
             else:
