@@ -8,6 +8,7 @@ from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke_alternative import ColeKripkeAlternative
 from biopsykit.sleep.sleep_wake_detection.algorithms.webster import Webster
 from biopsykit.sleep.sleep_wake_detection.algorithms.scripps_clinic import ScrippsClinic
+from biopsykit.sleep.sleep_wake_detection.algorithms.perez_pozuelo import PerezPozuelo
 
 
 class SleepWakeDetection:
@@ -15,7 +16,7 @@ class SleepWakeDetection:
 
     def __init__(self, algorithm_type: Optional[str] = "default", **kw_args):
         available_sleep_wake_algorithms = {"cole_kripke": ColeKripke, "sadeh": Sadeh, "cole_kripke_alternative": ColeKripkeAlternative,
-                                           "webster": Webster, "scripps_clinic": ScrippsClinic}
+                                           "webster": Webster, "scripps_clinic": ScrippsClinic, "perez_pozuelo": PerezPozuelo}
 
         if algorithm_type == "default":
             algorithm_type = "cole_kripke"
@@ -38,6 +39,9 @@ class SleepWakeDetection:
         elif sleep_wake_cls is Sadeh:
             self.sleep_wake_algo = sleep_wake_cls()
 
+        elif sleep_wake_cls is PerezPozuelo:
+            self.sleep_wake_algo = sleep_wake_cls()
+
         elif sleep_wake_cls is ColeKripkeAlternative:
             if "scale_factor" in kw_args:
                 self.sleep_wake_algo = sleep_wake_cls(kw_args["scale_factor"])
@@ -49,7 +53,7 @@ class SleepWakeDetection:
                 self.sleep_wake_algo = sleep_wake_cls(kw_args["scale_factor"])
             else:
                 self.sleep_wake_algo = sleep_wake_cls()
-        
+
         elif sleep_wake_cls is ScrippsClinic:
             if "scale_factor" in kw_args:
                 self.sleep_wake_algo = sleep_wake_cls(kw_args["scale_factor"])

@@ -180,7 +180,7 @@ def xml_reader(file_path):
 
 def read_clean_data(folder_path):
     data = {}
-    path_list = list(Path(folder_path).glob('*.csv'))
+    path_list = list(Path(folder_path +"clean_data/").glob('*.csv'))
     for data_name in path_list:
         i = re.findall("(\d{4})", data_name.name)[0]
         subj_data = pd.read_csv(folder_path + data_name.name)
