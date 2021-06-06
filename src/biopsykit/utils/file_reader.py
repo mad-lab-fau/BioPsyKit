@@ -183,7 +183,7 @@ def read_clean_data(folder_path):
     path_list = list(Path(folder_path +"clean_data/").glob('*.csv'))
     for data_name in path_list:
         i = re.findall("(\d{4})", data_name.name)[0]
-        subj_data = pd.read_csv(folder_path + data_name.name)
+        subj_data = pd.read_csv(folder_path +"clean_data/" + data_name.name)
         subj_data['linetime'] = pd.to_datetime(subj_data['linetime'], format = "%H:%M:%S").dt.time
         data[i] = subj_data
 

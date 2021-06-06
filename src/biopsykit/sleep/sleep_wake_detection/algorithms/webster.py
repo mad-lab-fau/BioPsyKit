@@ -55,8 +55,8 @@ class Webster(_SleepWakeBase):
         sf = np.array(self.scale_factor)
         kernel = sf * np.array([0.15, 0.15, 0.15, 0.08, 0.21, 0.12, 0.13, 0 ,0])
         scores = np.convolve(data, kernel, "same")
-        scores[scores >= 0.5] = 1
-        scores[scores < 0.5] = 0
+        scores[scores >= 1] = 1     #wake
+        scores[scores < 1] = 0      #sleep
 
 
 

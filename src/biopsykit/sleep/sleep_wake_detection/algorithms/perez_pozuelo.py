@@ -46,9 +46,11 @@ class PerezPozuelo(_SleepWakeBase):
 
         preprocessed = sliding_window(preprocessed,window_samples=10,overlap_samples=9)
 
-        i=0
 
 
 
         if index is not None:
             scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
+
+
+        return scores
