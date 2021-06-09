@@ -204,7 +204,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
         * ``total_time_rem_sleep``: Total time of REM sleep
         * ``total_time_awake``: Total time of being awake
         * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset
-        * ``num_wake_bouts``: Total number of wake bouts
+        * ``number_wake_bouts``: Total number of wake bouts
         * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep
         * ``getup_onset_latency``: Get Up Latency, i.e., time in bed after awakening until getting up
         * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
@@ -216,6 +216,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
         * ``heart_rate_min``: Minimum heart rate during recording in bpm
         * ``heart_rate_max``: Maximum heart rate during recording in bpm
 
+
     Parameters
     ----------
     file_path : :any:`pathlib.Path` or str
@@ -223,6 +224,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
     timezone : str or pytz.timezone, optional
         timezone of recorded data, either as string or as pytz object.
         Default: 'Europe/Berlin'
+
 
     Returns
     -------
@@ -260,7 +262,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
             "tief (s)": "total_time_deep_sleep",
             "rem (s)": "total_time_rem_sleep",
             "wach (s)": "total_time_awake",
-            "Aufwachen": "num_wake_bouts",
+            "Aufwachen": "number_wake_bouts",
             "Duration to sleep (s)": "sleep_onset_latency",
             "Duration to wake up (s)": "getup_latency",
             "Snoring episodes": "count_snoring_episodes",

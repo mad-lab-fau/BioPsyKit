@@ -1,4 +1,4 @@
-"""Module containing various utility functions (time, dataframe, array, file, ... handling)."""
+"""Module containing various utility functions (time, dataframe, array, file handling, ...)."""
 from biopsykit.utils import (
     time,
     functions,
@@ -10,7 +10,6 @@ from biopsykit.utils import (
     exceptions,
     legacy_helper,
 )
-from biopsykit.utils.misc import export_figure
 
 __all__ = [
     "time",
@@ -19,7 +18,6 @@ __all__ = [
     "datatype_helper",
     "array_handling",
     "dataframe_handling",
-    "export_figure",
     "exceptions",
     "data_processing",
     "legacy_helper",

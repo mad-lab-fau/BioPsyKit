@@ -44,6 +44,7 @@ class RspProcessor(_BaseProcessor):
         include_start : bool, optional
             ``True`` to include the data from the beginning of the recording to the first time interval as the
             first phase (then named ``Start``), ``False`` otherwise. Default: ``False``
+
         """
         super().__init__(
             data=data, sampling_rate=sampling_rate, time_intervals=time_intervals, include_start=include_start

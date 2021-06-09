@@ -1,23 +1,28 @@
+"""Module representing the Stroop Test protocol."""
 from typing import Dict, Tuple, Union, Optional, Sequence
-from biopsykit.protocols import _base
-import biopsykit.colors as colors
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import biopsykit.protocols.plotting as plot
 import matplotlib.ticker as mticks
 import seaborn as sns
 
+import biopsykit.colors as colors
+import biopsykit.protocols.plotting as plot
+from biopsykit.protocols import BaseProtocol
 
-class Stroop(_base.BaseProtocol):
-    """
-    Class representing the Stroop test.
+
+class Stroop(BaseProtocol):
+    """Class representing the Stroop Test and data collected while conducting the Stroop test.
+
+    # TODO add further documentation
+
     """
 
     def __init__(
         self,
         name: Optional[str] = None,
-        phases: Optional[Sequence[str]] = None,
+        structure: Optional[Sequence[str]] = None,
         phase_durations: Optional[Sequence[int]] = None,
     ):
         if name is None:
@@ -27,31 +32,15 @@ class Stroop(_base.BaseProtocol):
         self.stroop_times: Sequence[int] = [0, 10]
 
         self.phases: Sequence[str] = ["Stroop1", "Stroop2", "Stroop3"]
-        """
-        Stroop Phases
-
-        Names of Stroop phases
-        """
+        """Stroop Phases"""
 
         self.phase_durations: Sequence[int] = [3 * 60, 3 * 60, 3 * 60]
-        """
-        Stroop Phase Durations
-        
-        Total duration of phases in seconds
-        """
+        """Stroop Phase Durations"""
 
         self.subphases: Sequence[str] = ["Stroop", "Feedback"]
-        """
-        Stroop Subphases
-
-        Names of Stroop subphases
-        """
+        """Stroop Subphases"""
         self.subphase_durations: Sequence[int] = [70, 60]
-        """
-        Stroop Subphase Durations
-
-        Total duration of subphases in seconds
-        """
+        """Stroop Subphase Durations"""
 
         self.hr_ensemble_plot_params = {
             "colormap": colors.fau_palette_blue("ensemble_3"),
@@ -103,7 +92,7 @@ class Stroop(_base.BaseProtocol):
             "xaxis_label": "Time relative to Stroop start [min]",
         }
 
-        self._update_stroop_params(phases, phase_durations)
+        self._update_stroop_params(structure, phase_durations)
 
     def __str__(self) -> str:
         return """{}

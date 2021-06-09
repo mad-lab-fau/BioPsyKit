@@ -20,6 +20,8 @@ from biopsykit.utils.datatype_helper import (
     SubjectConditionDict,
     is_subject_condition_dict,
     is_subject_condition_dataframe,
+    CodebookDataFrame,
+    is_codebook_dataframe,
 )
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dtype
@@ -133,39 +135,46 @@ def load_time_log(
         data = data.rename(columns=new_phase_cols)
 
     if not continuous_time:
-        start_cols = np.squeeze(data.columns.str.extract(r"(\w+)_start").dropna().values)
-        end_cols = np.squeeze(data.columns.str.extract(r"(\w+)_end").dropna().values)
-        if start_cols.size == 0:
-            raise ValidationError(
-                "No 'start' and 'end' columns were found. "
-                "Make sure that each phase has columns with 'start' and 'end' suffixes!"
-            )
-        if not np.array_equal(start_cols, end_cols):
-            raise ValidationError("Not all phases have 'start' and 'end' columns!")
-
-        if index_cols is None:
-            index_cols = [s for s in ["subject", "condition"] if s in data.columns]
-            data = data.set_index(index_cols)
-        if isinstance(index_cols, dict):
-            index_cols = data.index.names
-
-        data = pd.wide_to_long(
-            data.reset_index(),
-            stubnames=start_cols,
-            i=index_cols,
-            j="time",
-            sep="_",
-            suffix="(start|end)",
-        )
-
-        # ensure that "start" is always before "end"
-        data = data.reindex(["start", "end"], level=-1)
-        # unstack start|end level
-        data = data.unstack()
+        data = _parse_time_log_not_continuous(data, index_cols)
 
     for val in data.values.flatten():
         _assert_is_dtype(val, str)
 
+    return data
+
+
+def _parse_time_log_not_continuous(
+    data: pd.DataFrame, index_cols: Union[str, Sequence[str], Dict[str, str]]
+) -> pd.DataFrame:
+    start_cols = np.squeeze(data.columns.str.extract(r"(\w+)_start").dropna().values)
+    end_cols = np.squeeze(data.columns.str.extract(r"(\w+)_end").dropna().values)
+    if start_cols.size == 0:
+        raise ValidationError(
+            "No 'start' and 'end' columns were found. "
+            "Make sure that each phase has columns with 'start' and 'end' suffixes!"
+        )
+    if not np.array_equal(start_cols, end_cols):
+        raise ValidationError("Not all phases have 'start' and 'end' columns!")
+
+    if index_cols is None:
+        index_cols = [s for s in ["subject", "condition"] if s in data.columns]
+        data = data.set_index(index_cols)
+    if isinstance(index_cols, dict):
+        index_cols = data.index.names
+
+    data = pd.wide_to_long(
+        data.reset_index(),
+        stubnames=start_cols,
+        i=index_cols,
+        j="time",
+        sep="_",
+        suffix="(start|end)",
+    )
+
+    # ensure that "start" is always before "end"
+    data = data.reindex(["start", "end"], level=-1)
+    # unstack start|end level
+    data = data.unstack()
     return data
 
 
@@ -348,6 +357,49 @@ def load_questionnaire_data(
         data = convert_nan(data)
     if remove_nan_rows:
         data = data.dropna(how="all")
+    return data
+
+
+def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
+    """Load codebook from file.
+
+    A codebook is used to convert numerical values from a dataframe (e.g., from questionnaire data)
+    to categorical values.
+
+
+    Parameters
+    ----------
+    file_path : :class:`~pathlib.Path` or str
+        file path to codebook
+    **kwargs
+        additional arguments to pass to :func:`~pandas.read_csv` or :func:`~pandas.read_excel`
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        :obj:`biopsykit.utils.datatype_helper.CodebookDataFrame`, a dataframe in a standardized format
+
+
+    See Also
+    --------
+    :func:`~biopsykit.utils.dataframe_handling.apply_codebook`
+        apply codebook to data
+
+    """
+    # ensure pathlib
+    file_path = Path(file_path)
+
+    _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
+    if file_path.suffix in [".xls", ".xlsx"]:
+        data = pd.read_excel(file_path, **kwargs)
+    else:
+        data = pd.read_csv(file_path, **kwargs)
+
+    _assert_has_columns(data, [["variable"]])
+    data = data.set_index("variable")
+    is_codebook_dataframe(data)
+
     return data
 
 

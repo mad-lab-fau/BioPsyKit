@@ -73,7 +73,8 @@ def ecg_plot(
     heart_rate : :class:`~pandas.DataFrame`, optional
         Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
     sampling_rate : float, optional
-        Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256
+        Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
+        Default: 256
     plot_ecg_signal : bool, optional
         Whether to plot the cleaned ECG signal in a subplot or not. Default: ``True``
     plot_distribution : bool, optional
@@ -267,7 +268,7 @@ def _ecg_plot(
 def hr_plot(
     heart_rate: pd.DataFrame,
     plot_mean: Optional[bool] = True,
-    plot_outlier: Optional[bool] = True,
+    plot_outlier: Optional[bool] = False,
     outlier: Optional[np.ndarray] = None,
     **kwargs,
 ) -> Tuple[plt.Figure, plt.Axes]:
@@ -283,7 +284,7 @@ def hr_plot(
     plot_mean : bool, optional
         Whether to plot the mean heart rate as horizontal line or not. Default: ``True``
     plot_outlier : bool, optional
-        Whether to plot ECG signal outlier as vertical outlier or not. Default: ``True``
+        Whether to plot ECG signal outlier as vertical outlier or not. Default: ``False``
     outlier : :class:`numpy.array`, optional
         List of outlier indices. Only needed if ``plot_outlier`` is ``True``. Default: ``None``
     kwargs
@@ -411,7 +412,8 @@ def hrv_plot(
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
         Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
     sampling_rate : float, optional
-        Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
+        Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
+        Default: 256
     plot_psd : bool, optional
         Whether to plot power spectral density (PDF) from frequency-based HRV analysis in a subplot or not.
         Default: ``True``
@@ -448,12 +450,11 @@ def hrv_plot(
     plt.rcParams["mathtext.default"] = "regular"
 
     if ecg_processor is not None:
-        ecg_signal = ecg_processor.ecg_result[key]
         rpeaks = ecg_processor.rpeaks[key]
         sampling_rate = ecg_processor.sampling_rate
 
     # perform R peak correction before computing HRV measures
-    rpeaks = EcgProcessor.correct_rpeaks(ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate)
+    rpeaks = EcgProcessor.correct_rpeaks(rpeaks=rpeaks, sampling_rate=sampling_rate)
 
     fig = plt.figure(constrained_layout=False, figsize=figsize)
 
@@ -553,7 +554,7 @@ def rr_distribution_plot(
     rpeaks : pd.DataFrame, optional
         dataframe with R peaks. Output of `EcgProcessor.ecg_process()`
     sampling_rate : float, optional
-        Sampling rate of recorded data. Default: 256 Hz
+        Sampling rate of recorded data in Hz. Default: 256
     kwargs
         Additional parameters to configure the plot. Parameters include:
             * ``figsize``: Figure size
@@ -635,7 +636,7 @@ def individual_beats_plot(
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
         Dataframe with detected R peaks or ``None`` to infer R peaks from ``ecg_signal``. Default: ``None``
     sampling_rate : float, optional
-        Sampling rate of recorded data. Default: 256
+        Sampling rate of recorded data in Hz. Default: 256
     kwargs
         Additional parameters to configure the plot. Parameters include:
             * ``figsize``: Figure size
@@ -708,7 +709,7 @@ def hrv_poincare_plot(
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
     sampling_rate : float, optional
-        Sampling rate of recorded data. Default: 256 Hz
+        Sampling rate of recorded data in Hz. Default: 256
     kwargs
         Additional parameters to configure the plot. Parameters include:
             * ``figsize``: Figure size
@@ -875,7 +876,7 @@ def hrv_frequency_plot(
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
     sampling_rate : float, optional
-        Sampling rate of recorded data. Default: 256 Hz
+        Sampling rate of recorded data in Hz. Default: 256
     kwargs
         Additional parameters to configure the plot. Parameters include:
             * ``figsize``: Figure size

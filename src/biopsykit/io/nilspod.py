@@ -258,7 +258,8 @@ def load_csv_nilspod(
 
     By default, this function expects the file name to have the following pattern:
     "NilsPodX-XXXX_YYYYMMDD_hhmmss.csv". The time information in the file name is used
-    to infer the start time of the recording and add absolute time information to return a dataframe with a :class:`~pandas.DatetimeIndex`.
+    to infer the start time of the recording and add absolute time information to return
+    a dataframe with a :class:`~pandas.DatetimeIndex`.
 
     If no start time can be extracted the index of the resulting
     dataframe is a :class:`~pandas.TimedeltaIndex`, not a :class:`~pandas.DatetimeIndex`.

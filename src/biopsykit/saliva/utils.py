@@ -230,7 +230,7 @@ def _check_sample_times(sample_times: np.array) -> None:
 def _get_sample_times(
     data: pd.DataFrame,
     saliva_type: str,
-    sample_times: Union[np.array, Sequence[int]],
+    sample_times: Optional[Union[np.array, Sequence[int]]] = None,
     remove_s0: Optional[bool] = False,
 ) -> np.array:
     if sample_times is None:

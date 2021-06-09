@@ -83,8 +83,8 @@ def fau_palette_blue(palette_type: Optional[str] = None) -> Sequence[str]:
     )
     if palette_type == "line_3":
         return [fau_blue[4], fau_blue[7], fau_blue[9]]
-    if palette_type == "ensemble_3":
-        return [fau_blue[3], fau_blue[5], fau_blue[8]]
+    if palette_type == "ensemble":
+        return fau_blue[1::2]
     if palette_type == "box_2":
         return fau_blue[5::4]
     if palette_type == "line_2":

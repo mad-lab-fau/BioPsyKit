@@ -2,14 +2,13 @@
 import re
 import warnings
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import pandas as pd
-
 from biopsykit.io import write_pandas_dict_excel
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t
-from biopsykit.utils.datatype_helper import HeartRatePhaseDict, is_hr_phase_dict, HeartRateSubjectsDict
+from biopsykit.utils.datatype_helper import HeartRatePhaseDict, is_hr_phase_dict, HeartRateSubjectDataDict
 from biopsykit.utils.file_handling import is_excel_file, get_subject_dirs
 from biopsykit.utils.time import tz
 
@@ -70,7 +69,7 @@ def load_hr_phase_dict_folder(
     base_path: path_t,
     filename_pattern: str,
     subfolder_pattern: Optional[str] = None,
-) -> HeartRateSubjectsDict:
+) -> HeartRateSubjectDataDict:
     r"""Load a folder with multiple ``HeartRatePhaseDict``s and concatenate them into a ``HeartRateSubjectDict``.
 
     This functions looks for all files that match the ``file_pattern`` in the folder specified by ``base_path``

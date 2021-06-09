@@ -1,4 +1,4 @@
-"""A couple of helper functions that easy the use of the typical biopsykit data formats."""
+"""A couple of helper functions that ease the use of the typical biopsykit data formats."""
 from typing import Dict, Optional, Union, List, Any
 
 import numpy as np
@@ -17,8 +17,14 @@ from biopsykit.utils.exceptions import ValidationError
 __all__ = [
     "SubjectConditionDataFrame",
     "SubjectConditionDict",
+    "CodebookDataFrame",
+    "MeanSeDataFrame",
+    "PhaseDict",
+    "SubjectDataDict",
     "HeartRatePhaseDict",
-    "HeartRateSubjectsDict",
+    "HeartRateSubjectDataDict",
+    "StudyDataDict",
+    "MergedStudyDataDict",
     "SalivaRawDataFrame",
     "SalivaFeatureDataFrame",
     "SalivaMeanSeDataFrame",
@@ -27,9 +33,20 @@ __all__ = [
     "EcgRawDataFrame",
     "EcgResultDataFrame",
     "RPeakDataFrame",
+    "AccDataFrame",
+    "GyrDataFrame",
+    "ImuDataFrame",
+    "SleepWakeDataFrame",
     "is_subject_condition_dataframe",
     "is_subject_condition_dict",
+    "is_codebook_dataframe",
+    "is_mean_se_dataframe",
+    "is_phase_dict",
     "is_hr_phase_dict",
+    "is_subject_data_dict",
+    "is_hr_subject_data_dict",
+    "is_study_data_dict",
+    "is_merged_study_data_dict",
     "is_saliva_raw_dataframe",
     "is_saliva_feature_dataframe",
     "is_saliva_mean_se_dataframe",
@@ -38,21 +55,50 @@ __all__ = [
     "is_ecg_raw_dataframe",
     "is_ecg_result_dataframe",
     "is_r_peak_dataframe",
+    "is_acc_dataframe",
+    "is_gyr_dataframe",
+    "is_imu_dataframe",
+    "is_sleep_wake_dataframe",
 ]
 
 SubjectConditionDataFrame = pd.DataFrame
 """:class:`pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
 
-A ``SubjectConditionDataFrame`` has an index with subject IDs named ``subject`` and a column with the condition 
-assignment named ``condition``.  
-
+A ``SubjectConditionDataFrame`` has an index with subject IDs named ``subject`` and a column with the condition
+assignment named ``condition``.
 """
 
 SubjectConditionDict = Dict[str, np.ndarray]
 """Dictionary containing subject IDs and condition assignment in a standardized format.
 
-A ``SubjectConditionDict`` contains conditions as dictionary keys and a collection of subject IDs 
+A ``SubjectConditionDict`` contains conditions as dictionary keys and a collection of subject IDs
 (list, numpy array, pandas Index) as dictionary values.
+"""
+
+CodebookDataFrame = pd.DataFrame
+""":class:`pandas.DataFrame` representing a codebook which encodes numerical and categorical values
+in a standardized format.
+
+A ``CodebookDataFrame`` has an index level named ``variable``. The column names are the numerical values (0, 1, ...),
+the dataframe entries then represent the mapping of numerical value to categorical value for the variable.
+"""
+
+MeanSeDataFrame = pd.DataFrame
+""":class:`pandas.DataFrame` containing mean and standard error of time-series data in a standardized format.
+
+The resulting dataframe must at least have a ``phase`` index level and the two columns ``mean`` and ``se``.
+It can have additional index levels, such as ``subphase`` or ``condition``.
+"""
+
+PhaseDict = Dict[str, pd.DataFrame]
+"""Dictionary containing general time-series data of **one single subject** split into **different phases**.
+
+A ``PhaseDict`` is a dictionary with the following format:
+
+{ "phase_1" : dataframe, "phase_2" : dataframe, ... }
+
+Each ``dataframe`` is a :class:`pandas.DataFrame` with the following format:
+    * Index: :class:`pandas.DatetimeIndex` with timestamps, name of index level: ``time``
 
 """
 
@@ -69,21 +115,96 @@ Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
 
 """
 
-HeartRateSubjectsDict = Dict[str, HeartRatePhaseDict]
-"""Dictionary representing time-series heart rate data of **multiple subjects**, typically collected during one study.
+SubjectDataDict = Dict[str, PhaseDict]
+"""Dictionary representing time-series data from **multiple subjects** collected during a psychological protocol.
 
-A ``HeartRateSubjectsDict`` is a nested dictionary that contains a
-:obj:`biopsykit.utils.datatype_helper.HeartRatePhaseDict` for each subject, resulting in the following format:
+A ``SubjectDataDict`` is a nested dictionary with time-series data from multiple subjects, each containing data
+from different phases. It is expected to have the level order `subject`, `phase`:
+    {
+        "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+        "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+        ...
+    }
+
+This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.StudyDataDict`,
+where the level order is reversed: `phase`, `subject`.
+"""
+
+HeartRateSubjectDataDict = Union[Dict[str, HeartRatePhaseDict], Dict[str, Dict[str, HeartRatePhaseDict]]]
+"""Dictionary with time-series heart rate data from **multiple subjects** collected during a psychological protocol.
+
+A ``HeartRateSubjectDataDict`` is a nested dictionary with time-series heart rate data from multiple subjects,
+each containing data from different phases. It is expected to have the level order `subject`, `phase`:
+  {
+      "subject1" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+      "subject2" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+      ...
+  }
+
+Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
+    * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
+    * ``Heart_Rate`` Column: heart rate values
+
+This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.HeartRateStudyDataDict`,
+where the level order is reversed: `phase`, `subject`.
+"""
+
+StudyDataDict = Dict[str, Dict[str, pd.DataFrame]]
+"""Dictionary with data from **multiple phases** collected during a psychological protocol.
+
+A ``StudyDataDict`` is a nested dictionary with time-series data from multiple phases, each phase containing data
+from different subjects. It is expected to have the level order `phase`, `subject`:
+  {
+      "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+      "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+      ...
+  }
+
+This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.SubjectDataDict` by calling
+:func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
+"""
+
+
+HeartRateStudyDataDict = Dict[str, Dict[str, pd.DataFrame]]
+"""Dictionary with heart rate data from **multiple phases** collected during a psychological protocol.
+
+A ``HeartRateStudyDataDict`` is a nested dictionary with time-series heart rate data from multiple phases,
+each phase containing data from different subjects. It is expected to have the level order `phase`, `subject`:
+  {
+      "phase_1" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
+      "phase_2" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
+      ...
+  }
+
+Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
+    * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
+    * ``Heart_Rate`` Column: heart rate values
+
+This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.HeartRateSubjectDataDict` by calling
+:func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
+"""
+
+MergedStudyDataDict = Dict[str, pd.DataFrame]
+"""Dictionary with merged time-series data of **multiple subjects**, split into **different phases**.
+
+A ``MergedSubjectsDict`` is a dictionary with the following format:
 
 {
-    "subject1" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
-    "subject2" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+    "phase_1" : merged_dataframe,
+    "phase_2" : merged_dataframe,
     ...
 }
 
-This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.HeartRateStudySubjectDict`,
-where the top-level keys are the different study phases, not the individual subjects.
+This dict results from merging the inner dictionary into one dataframe by calling
+:func:`~biopsykit.utils.data_processing.merge_study_data_dict`.
 
+.. note::
+    Merging the inner dictionaries requires that the dataframes of all subjects have same length within each phase.
+
+Each ``merged_dataframe`` is a :class:`pandas.DataFrame` with the following format:
+    * Index: time. Name of index level: ``time``
+    * Columns: time series data per subject, each subject has its own column.
+      Name of the column index level: ``subject``
 """
 
 SalivaRawDataFrame = pd.DataFrame
@@ -104,18 +225,16 @@ Additionally, the following index levels can be added to identify saliva values,
 SalivaFeatureDataFrame = pd.DataFrame
 """:class:`pandas.DataFrame` containing feature computed from saliva data in a standardized format.
 
-The resulting dataframe must at least have a ``subject`` index level and all column names need to begin with 
+The resulting dataframe must at least have a ``subject`` index level and all column names need to begin with
 the saliva marker type (e.g. "cortisol"), followed by the feature name, separated by underscore '_'
 Additionally, the name of the column index needs to be `saliva_feature`.
-
 """
 
 SalivaMeanSeDataFrame = pd.DataFrame
 """:class:`pandas.DataFrame` containing mean and standard error of saliva samples in a standardized format.
 
-The resulting dataframe must at least have a ``sample`` index level and the two columns ``mean`` and ``se``. 
+The resulting dataframe must at least have a ``sample`` index level and the two columns ``mean`` and ``se``.
 It can have additional index levels, such as ``condition`` or ``time``.
-
 """
 
 SleepEndpointDict = Dict[str, Any]
@@ -132,10 +251,16 @@ Required are the entries:
 The following entries are common, but not required:
     * ``total_duration``: Total recording time, in minutes
     * ``net_sleep_duration``: Net duration spent sleeping, in minutes
-    * ``num_wake_bouts``: Total number of wake bouts
+    * ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
+    * ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
+    * ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
+      in percent
     * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
-    * ``getup_onset_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
+    * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
     * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in minutes
+    * ``sleep_bouts``: List with start and end times of sleep bouts
+    * ``wake_bouts``: List with start and end times of wake bouts
+    * ``number_wake_bouts``: Total number of wake bouts
 
 The following entries are, for instance, further possible:
     * ``total_time_light_sleep``: Total time of light sleep, in minutes
@@ -153,7 +278,7 @@ The following entries are, for instance, further possible:
 SleepEndpointDataFrame = pd.DataFrame
 """:class:`pandas.DataFrame` containing sleep endpoints in a standardized format.
 
-The resulting dataframe must at least have a ``date`` index level, 
+The resulting dataframe must at least have a ``date`` index level,
 and, optionally, further index levels like ``night``.
 
 The columns defining the sleep endpoints should follow a standardized naming convention, regardless of the origin
@@ -167,10 +292,14 @@ Required are the columns:
 The following columns are common, but not required:
     * ``total_duration``: Total recording time, in minutes
     * ``net_sleep_duration``: Net duration spent sleeping, in minutes
-    * ``num_wake_bouts``: Total number of wake bouts
+    * ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
+    * ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
+    * ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
+      in percent
     * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
-    * ``getup_onset_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
+    * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
     * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in minutes
+    * ``number_wake_bouts``: Total number of wake bouts
 
 The following columns are further possible:
     * ``total_time_light_sleep``: Total time of light sleep, in minutes
@@ -181,8 +310,7 @@ The following columns are further possible:
     * ``total_time_snoring``: Total time of snoring, in minutes
     * ``heart_rate_avg``: Average heart rate during recording, in bpm
     * ``heart_rate_min``: Minimum heart rate during recording, in bpm
-    * ``heart_rate_max``: Maximum heart rate during recording, in bpm 
-
+    * ``heart_rate_max``: Maximum heart rate during recording, in bpm
 """
 
 
@@ -215,6 +343,47 @@ The dataframe is expected to have the following columns:
     * ``R_Peak_Idx``: Array index of detected R peak in the raw ECG signal
     * ``RR_Interval``: Interval between the current and the successive R peak in seconds
     * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
+
+"""
+
+AccDataFrame = pd.DataFrame
+""":class:`~pandas.DataFrame` containing 3-d acceleration data.
+
+The dataframe is expected to have one of the following column sets:
+    * ["acc_x", "acc_y", "acc_z"]: one level column index
+    * [("acc", "x"), ("acc", "y"), ("acc", "z")]: two-level column index, first level specifying the channel
+      (acceleration), second level specifying the axes
+
+"""
+
+GyrDataFrame = pd.DataFrame
+""":class:`~pandas.DataFrame` containing 3-d gyroscope data.
+
+The dataframe is expected to have one of the following column sets:
+    * ["gyr_x", "gyr_y", "gyr_z"]: one level column index
+    * [("gyr", "x"), ("gyr", "y"), ("gyr", "z")]: two-level column index, first level specifying the channel
+      (gyroscope), second level specifying the axes
+
+"""
+
+ImuDataFrame = pd.DataFrame
+""":class:`~pandas.DataFrame` containing 3-d inertial measurement (IMU) (acceleration and gyroscope) data.
+
+Hence, an ``ImuDataFrame`` must both be a ``AccDataFrame`` **and** a ``GyrDataFrame``.
+
+The dataframe is expected to have one of the following column sets:
+    * ["acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z"]: one level column index
+    * [("acc", "x"), ("acc", "y"), ("acc", "z"), ("gyr", "x"), ("gyr", "y"), ("gyr", "z")]:
+      two-level column index, first level specifying the channel (acceleration and gyroscope),
+      second level specifying the axes
+
+"""
+
+SleepWakeDataFrame = pd.DataFrame
+""":class:`~pandas.DataFrame` containing sleep/wake predictions.
+
+The dataframe is expected to have at least the following column(s):
+    * ["sleep_wake"]: sleep/wake predictions where 0 indicates sleep and 1 indicates wake
 
 """
 
@@ -302,6 +471,94 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
     return True
 
 
+def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``CodebookDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``CodebookDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``CodebookDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``CodebookDataFrame``
+
+
+    See Also
+    --------
+    ``CodebookDataFrame``
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_index_levels(data, index_levels="variable", match_atleast=True, match_order=False)
+        if not np.issubdtype(data.columns.dtype, np.integer):
+            raise ValidationError(
+                "The dtypes of columns in a CodebookDataFrame are expected to be of type int, but it is {}.".format(
+                    data.columns.dtype
+                )
+            )
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a CodebookDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``MeanSeDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``MeanSeDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``MeanSeDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``MeanSeDataFrame``
+
+    See Also
+    --------
+    ``MeanSeDataFrame``
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_index_levels(data, index_levels="phase", match_atleast=True, match_order=False)
+        _assert_has_columns(data, [["mean", "se"]])
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a MeanSeDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
 def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
     """Check whether a dict is a ``HeartRatePhaseDict``.
 
@@ -348,8 +605,8 @@ def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] =
     return True
 
 
-def is_hr_subjects_dict(data: HeartRateSubjectsDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a ``HeartRateSubjectsDict``.
+def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether a dict is a ``PhaseDict``.
 
     Parameters
     ----------
@@ -360,28 +617,199 @@ def is_hr_subjects_dict(data: HeartRateSubjectsDict, raise_exception: Optional[b
 
     Returns
     -------
-    ``True`` if ``data`` is a ``HeartRateSubjectsDict``, ``False`` otherwise
+    ``True`` if ``data`` is a ``PhaseDict``, ``False`` otherwise
     (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a ``HeartRateSubjectsDict``
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``PhaseDict``
 
     See Also
     --------
-    ``HeartRateSubjectsDict``
+    ``PhaseDict``
         dictionary format
 
     """
     try:
         _assert_is_dtype(data, dict)
-        for hr_subject_dict in data.values():
-            is_hr_phase_dict(hr_subject_dict)
+        for df in data.values():
+            _assert_is_dtype(df, pd.DataFrame)
+            _assert_has_multiindex(df, expected=False)
+            _assert_has_column_multiindex(df, expected=False)
+            _assert_has_index_levels(df, ["time"])
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(
-                "The passed object does not seem to be a HeartRateSubjectsDict. "
+                "The passed object does not seem to be a PhaseDict. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether a dict is a ``HeartRateSubjectDataDict``.
+
+    Parameters
+    ----------
+    data : dict
+        dict to check
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``HeartRateSubjectDataDict``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``HeartRateSubjectDataDict``
+
+    See Also
+    --------
+    ``HeartRateSubjectDataDict``
+        dictionary format
+
+    """
+    try:
+        _assert_is_dtype(data, dict)
+        for df in data.values():
+            is_hr_phase_dict(df)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a HeartRateSubjectDataDict. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether a dict is a ``StudyDataDict``.
+
+    Parameters
+    ----------
+    data : dict
+        dict to check
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``StudyDataDict``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``StudyDataDict``
+
+    See Also
+    --------
+    ``StudyDataDict``
+        dictionary format
+
+    """
+    try:
+        _assert_is_dtype(data, dict)
+        for data_dict in data.values():
+            _assert_is_dtype(data_dict, dict)
+            for df in data_dict.values():
+                _assert_is_dtype(df, pd.DataFrame)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a StudyDataDict. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether a dict is a ``SubjectDataDict``.
+
+    Parameters
+    ----------
+    data : dict
+        dict to check
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``SubjectDataDict``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SubjectDataDict``
+
+    See Also
+    --------
+    ``SubjectDataDict``
+        dictionary format
+
+    """
+    try:
+        _assert_is_dtype(data, dict)
+        for data_dict in data.values():
+            _assert_is_dtype(data_dict, dict)
+            for df in data_dict.values():
+                _assert_is_dtype(df, pd.DataFrame)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a SubjectDataDict. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether a dict is a ``MergedStudyDataDict``.
+
+    Parameters
+    ----------
+    data : dict
+        dict to check
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``MergedStudyDataDict``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``MergedStudyDataDict``
+
+    See Also
+    --------
+    ``MergedStudyDataDict``
+        dictionary format
+
+    """
+    try:
+        _assert_is_dtype(data, dict)
+        for df in data.values():
+            _assert_is_dtype(df, pd.DataFrame)
+            _assert_has_multiindex(df, expected=False)
+            _assert_has_column_multiindex(df, expected=False)
+            _assert_has_column_levels(df, ["subject"])
+            _assert_has_index_levels(df, ["time"])
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a MergedStudyDataDict. "
                 "The validation failed with the following error:\n\n{}".format(str(e))
             ) from e
         return False
@@ -729,6 +1157,179 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a RPeakDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_acc_dataframe(data: AccDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``AccDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``AccDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``AccDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``AccDataFrame``
+
+    See Also
+    --------
+    ``AccDataFrame``
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(
+            data,
+            columns_sets=[
+                ["acc_x", "acc_y", "acc_z"],
+                [("acc", "x"), ("acc", "y"), ("acc", "z")],
+            ],
+        )
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a AccDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_gyr_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``GyrDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``GyrDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``GyrDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``GyrDataFrame``
+
+    See Also
+    --------
+    ``GyrDataFrame``
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(
+            data,
+            columns_sets=[
+                ["gyr_x", "gyr_y", "gyr_z"],
+                [("gyr", "x"), ("gyr", "y"), ("gyr", "z")],
+            ],
+        )
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a GyrDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_imu_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``ImuDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``ImuDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``ImuDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``ImuDataFrame``
+
+    See Also
+    --------
+    ``ImuDataFrame``
+        dataframe format
+
+    """
+    try:
+        is_acc_dataframe(data, raise_exception=True)
+        is_gyr_dataframe(data, raise_exception=True)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a ImuDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a ``SleepWakeDataFrame``.
+
+    Parameters
+    ----------
+    data : :class:`pandas.DataFrame`
+        data to check if it is a ``SleepWakeDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``SleepWakeDataFrame``, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SleepWakeDataFrame``
+
+    See Also
+    --------
+    ``SleepWakeDataFrame``
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(data, [["sleep_wake"]])
+        if not all(data["sleep_wake"].between(0, 1, inclusive=True)):
+            raise ValidationError(
+                "Invalid values for sleep/wake prediction! Sleep/wake scores are expected to be "
+                "in the interval [0, 1]."
+            )
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a SleepWakeDataFrame. "
                 "The validation failed with the following error:\n\n{}".format(str(e))
             ) from e
         return False

@@ -35,7 +35,7 @@ def find_cols(
     contains: Optional[str] = None,
     zero_pad_numbers: Optional[bool] = True,
 ) -> Tuple[pd.DataFrame, Sequence[str]]:
-    """Find columns in dataframe that match a specific pattern.
+    r"""Find columns in dataframe that match a specific pattern.
 
     This function is useful to find all columns that belong to a questionnaire. Column names can be filtered based on
     one (or a combination of) the following criteria:

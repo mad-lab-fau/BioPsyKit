@@ -17,7 +17,6 @@ from biopsykit.utils.datatype_helper import (
     is_ecg_raw_dataframe,
     is_ecg_result_dataframe,
     is_r_peak_dataframe,
-    HeartRateSubjectsDict,
 )
 from biopsykit.utils.array_handling import (
     find_extrema_in_radius,
@@ -25,7 +24,7 @@ from biopsykit.utils.array_handling import (
     sanitize_input_1d,
 )
 
-__all__ = ["EcgProcessor", "normalize_heart_rate"]
+__all__ = ["EcgProcessor"]
 
 
 class EcgProcessor(_BaseProcessor):
@@ -65,7 +64,7 @@ class EcgProcessor(_BaseProcessor):
         time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
         include_start: Optional[bool] = False,
     ):
-        """Initialize an ``EcgProcessor`` instance.
+        """Initialize a new ``EcgProcessor`` instance.
 
         You can either pass a data dictionary 'data_dict' containing ECG data or dataframe containing ECG data.
         For the latter, you can additionally supply time information via ``time_intervals`` parameter to automatically
@@ -77,7 +76,7 @@ class EcgProcessor(_BaseProcessor):
         data : :class:`~biopsykit.utils.datatype_helper.EcgRawDataFrame` or dict
             dataframe (or dict of such) with ECG data
         sampling_rate : float, optional
-            sampling rate of recorded data
+            sampling rate of recorded data in Hz
         time_intervals : dict or :class:`~pandas.Series`, optional
             time intervals indicating how ``data`` should be split.
             Can either be a :class:`~pandas.Series` with the `start` times of the single phases
@@ -446,7 +445,8 @@ class EcgProcessor(_BaseProcessor):
             after R peak outlier, or ``moving_average`` for average value of the
             10 preceding and 10 succeding RR intervals. Default: ``None`` (corresponds to ``moving_average``)
         sampling_rate : float, optional
-            Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256
+            Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
+            Default: 256
 
         Returns
         -------
@@ -561,7 +561,6 @@ class EcgProcessor(_BaseProcessor):
         cls,
         ecg_processor: Optional["EcgProcessor"] = None,
         key: Optional[str] = None,
-        ecg_signal: Optional[EcgResultDataFrame] = None,
         rpeaks: Optional[RPeakDataFrame] = None,
         sampling_rate: Optional[float] = 256.0,
     ) -> pd.DataFrame:
@@ -569,9 +568,9 @@ class EcgProcessor(_BaseProcessor):
 
         R peak correction comes from ``neurokit`` and is based on an algorithm by `Lipponen et al. (2019)`.
 
-        To use this function, either simply pass an :class:`~biopsykit.signals.ecg.EcgProcessor` object  together with
-        a ``key`` indicating which phase needs to be processed should be processed or the two dataframes ``ecg_signal``
-        and ``rpeaks`` resulting from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
+        To use this function, either simply pass an :class:`~biopsykit.signals.ecg.EcgProcessor` object together with
+        a ``key`` indicating which phase needs to be processed should be processed or the dataframe ``rpeaks``
+        which is a result from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
 
         .. warning ::
             This algorithm might *add* additional R peaks or *remove* certain ones, so results of this function
@@ -589,12 +588,11 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
-            Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         sampling_rate : float, optional
-            Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256
+            Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
+            Default: 256
 
 
         Returns
@@ -619,7 +617,7 @@ class EcgProcessor(_BaseProcessor):
         >>> rpeaks_corrected = ep.correct_rpeaks(ecg_processor, key="Data")
 
         """
-        _assert_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
+        _assert_rpeaks_input(ecg_processor, key, rpeaks)
         if ecg_processor:
             rpeaks = ecg_processor.rpeaks[key]
             sampling_rate = ecg_processor.sampling_rate
@@ -642,7 +640,6 @@ class EcgProcessor(_BaseProcessor):
         cls,
         ecg_processor: Optional["EcgProcessor"] = None,
         key: Optional[str] = None,
-        ecg_signal: Optional[EcgResultDataFrame] = None,
         rpeaks: Optional[RPeakDataFrame] = None,
         hrv_types: Optional[Sequence[str]] = None,
         correct_rpeaks: Optional[bool] = True,
@@ -655,9 +652,9 @@ class EcgProcessor(_BaseProcessor):
         By default, it applies R peak correction (see :meth:`~biopsykit.signals.ecg.EcgProcessor.correct_rpeaks`)
         before computing HRV parameters.
 
-        To use this function, either simply pass an :class:`~biopsykit.signals.ecg.EcgProcessor` object  together with
-        a ``key`` indicating which phase needs to be processed should be processed or the two dataframes ``ecg_signal``
-        and ``rpeaks`` resulting from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
+        To use this function, either simply pass an :class:`~biopsykit.signals.ecg.EcgProcessor` object together with
+        a ``key`` indicating which phase needs to be processed should be processed or the dataframe ``rpeaks``
+        which is a result from  :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
 
         Parameters
         ----------
@@ -665,8 +662,6 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
-            Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         hrv_types: str (or list of such), optional
@@ -682,7 +677,8 @@ class EcgProcessor(_BaseProcessor):
         index_name : str, optional
             Index name of the output dataframe. Only used if ``index`` is also supplied. Default: ``None``
         sampling_rate : float, optional
-            Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256
+            Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
+            Default: 256
 
 
         Returns
@@ -704,17 +700,15 @@ class EcgProcessor(_BaseProcessor):
         >>> hrv_output = ecg_processor.hrv_process(ecg_processor, key="Data", hrv_types='all', correct_rpeaks=False)
 
         """
-        _assert_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
+        _assert_rpeaks_input(ecg_processor, key, rpeaks)
         if ecg_processor:
-            ecg_signal = ecg_processor.ecg_result[key]
             rpeaks = ecg_processor.rpeaks[key]
             sampling_rate = ecg_processor.sampling_rate
 
-        is_ecg_result_dataframe(ecg_signal)
         is_r_peak_dataframe(rpeaks)
 
         if correct_rpeaks:
-            rpeaks = cls.correct_rpeaks(ecg_signal=ecg_signal, rpeaks=rpeaks, sampling_rate=sampling_rate)
+            rpeaks = cls.correct_rpeaks(rpeaks=rpeaks, sampling_rate=sampling_rate)
 
         if hrv_types is None:
             hrv_types = ["hrv_time", "hrv_nonlinear"]
@@ -797,7 +791,8 @@ class EcgProcessor(_BaseProcessor):
             Method to use for estimating EDR. Must be one of 'peak_trough_mean', 'peak_trough_diff',
             or 'peak_peak_interval'. Default: 'peak_trough_mean'
         sampling_rate : float, optional
-            Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256
+            Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
+            Default: 256
 
         Returns
         -------
@@ -865,7 +860,8 @@ class EcgProcessor(_BaseProcessor):
             Dataframe with 1-D raw respiration signal. Can be a 'true' respiration signal
             (e.g. from bioimpedance or Radar) or an 'estimated' respiration signal (e.g. from ECG-derived respiration)
         sampling_rate : float, optional
-            Sampling rate of recorded data. Default: 256
+            Sampling rate of recorded data in Hz.
+            Default: 256
 
         Returns
         -------
@@ -943,7 +939,8 @@ class EcgProcessor(_BaseProcessor):
     #     index_name : str, optional
     #         Index name of the output dataframe. Only used if 'index' is also supplied
     #     sampling_rate : float
-    #         Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
+    #         Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
+    #         Default: 256
     #
     #     Returns
     #     -------
@@ -1007,35 +1004,6 @@ class EcgProcessor(_BaseProcessor):
     #         if index:
     #             return pd.concat([df_rsa], keys=[index], names=[index_name])
     #         return df_rsa
-
-
-def normalize_heart_rate(dict_hr_subjects: HeartRateSubjectsDict, normalize_to: str) -> HeartRateSubjectsDict:
-    """Normalize heart rate per subject to the phase specified by ``normalize_to``.
-
-    The result is the relative change of heart rate compared to the mean heart rate in the ``normalize_to`` phase.
-
-    Parameters
-    ----------
-    dict_hr_subjects : :class:`~biopsykit.utils.datatype_helper.HeartRateSubjectsDict`
-        ``HeartRateSubjectsDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
-        per subject
-    normalize_to : str
-        phase name (i.e., dict key present in ``HeartRatePhaseDict`` of all subjects) data of all other phases
-        should be normalized to
-
-    Returns
-    -------
-    dict
-        dictionary with normalized heart rate data per subject
-
-    """
-    dict_hr_subjects_norm = {}
-    for subject_id, dict_hr in dict_hr_subjects.items():
-        bl_mean = dict_hr[normalize_to].mean()
-        dict_hr_norm = {phase: (df_hr - bl_mean) / bl_mean * 100 for phase, df_hr in dict_hr.items()}
-        dict_hr_subjects_norm[subject_id] = dict_hr_norm
-
-    return dict_hr_subjects_norm
 
 
 def _edr_peak_trough_mean(ecg: pd.Series, peaks: np.array, troughs: np.array) -> np.array:
@@ -1140,7 +1108,7 @@ def _correct_outlier_correlation(rpeaks: pd.DataFrame, bool_mask: np.array, corr
         * ecg_signal :class:`~pandas.DataFrame`
           dataframe with processed ECG signal. Output from :meth:`biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         * sampling_rate : float
-          sampling rate of recorded data
+          sampling rate of recorded data in Hz
 
     Returns
     -------
@@ -1437,13 +1405,46 @@ _outlier_correction_params_default: Dict[str, Union[float, Sequence[float]]] = {
 }
 
 
+def _assert_rpeaks_input(
+    ecg_processor: "EcgProcessor",
+    key: str,
+    rpeaks: RPeakDataFrame,
+) -> None:
+    """Assert valid input for ECG processing functions that require only R peaks.
+
+    This function checks if either ``ecg_processor`` **and** ``key`` are supplied as arguments *or*
+    ``rpeaks``.
+
+    Parameters
+    ----------
+    ecg_processor : :class:`~biopsykit.signals.ecg.EcgProcessor`, optional
+        ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
+    key : str, optional
+        Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
+    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
+
+    Raises
+    ------
+    ValueError
+        if input is invalid
+
+    """
+    if all(x is None for x in [ecg_processor, key]) and rpeaks is None:
+        raise ValueError("Either 'ecg_processor' and 'key', or 'rpeaks' must be passed as arguments!")
+    if ecg_processor is not None and key is None:
+        raise ValueError("Both of 'ecg_processor' and 'key' must be passed as arguments!")
+    if rpeaks is None:
+        raise ValueError("'rpeaks' must be passed as arguments!")
+
+
 def _assert_ecg_input(
     ecg_processor: "EcgProcessor",
     key: str,
     ecg_signal: EcgResultDataFrame,
     rpeaks: RPeakDataFrame,
 ) -> None:
-    """Assert valid input for ECG processing functions.
+    """Assert valid input for ECG processing functions that require both only ECG signal and R peaks.
 
     This function checks if either ``ecg_processor`` **and** ``key`` are supplied as arguments *or*
     ``ecg_signal`` **and** `rpeaks`.
