@@ -1,0 +1,7 @@
+﻿subject,condition,HADS02,HADS04,HADS06,HADS08,HADS10,HADS12,HADS14
+Vp01,Control,3,3,3,0,0,3,3
+Vp02,Intervention,3,3,3,0,0,3,3
+Vp03,Control,3,3,2,1,2,3,3
+Vp04,Intervention,2,3,1,1,0,2,3
+Vp05,Control,2,3,2,1,0,3,3
+Vp06,Intervention,2,3,1,1,1,0,1

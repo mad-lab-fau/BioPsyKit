@@ -1,0 +1,7 @@
+﻿subject,condition,FSCRS01,FSCRS02,FSCRS04,FSCRS06,FSCRS07,FSCRS14,FSCRS17,FSCRS18,FSCRS20
+Vp01,Control,1,1,0,1,1,1,2,1,1
+Vp02,Intervention,0,0,0,0,0,0,0,1,0
+Vp03,Control,2,1,2,1,1,3,2,3,1
+Vp04,Intervention,3,3,2,3,2,3,2,3,3
+Vp05,Control,3,3,3,3,1,1,2,3,3
+Vp06,Intervention,2,3,0,3,3,1,3,2,4

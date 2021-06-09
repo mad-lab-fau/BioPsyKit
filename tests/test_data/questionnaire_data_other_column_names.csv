@@ -1,0 +1,6 @@
+ID,Group,time,PSS_01,PANAS_01
+Vp01,Control,pre,4,2
+Vp02,Intervention,post,2,1
+Vp03,Intervention,pre,3,4
+Vp04,Control,post,-66,-66
+Vp05,Control,pre,,

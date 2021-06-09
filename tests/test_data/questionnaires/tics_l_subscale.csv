@@ -1,0 +1,7 @@
+﻿subject,condition,TICS_L_01,TICS_L_04,TICS_L_17,TICS_L_27,TICS_L_38,TICS_L_44,TICS_L_50,TICS_L_54
+Vp01,Control,1,1,2,1,1,1,1,1
+Vp02,Intervention,3,2,4,1,3,3,3,1
+Vp03,Control,1,0,0,0,0,1,1,1
+Vp04,Intervention,3,3,2,1,2,2,2,2
+Vp05,Control,2,1,2,0,1,1,2,1
+Vp06,Intervention,3,4,4,3,4,4,4,4

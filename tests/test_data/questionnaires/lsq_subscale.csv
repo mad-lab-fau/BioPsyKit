@@ -1,0 +1,7 @@
+﻿subject,condition,LSQ_Partner01,LSQ_Partner02,LSQ_Partner03,LSQ_Partner04,LSQ_Partner05,LSQ_Partner06,LSQ_Partner07,LSQ_Partner08,LSQ_Partner09,LSQ_Partner10
+Vp01,Control,0,1,0,0,0,0,0,0,0,0
+Vp02,Intervention,1,0,1,1,0,1,1,1,1,1
+Vp03,Control,0,0,1,1,1,1,1,1,1,1
+Vp04,Intervention,1,1,0,1,1,1,1,1,1,1
+Vp05,Control,0,1,0,1,1,1,1,1,1,1
+Vp06,Intervention,1,1,1,0,0,0,0,0,0,0

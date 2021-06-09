@@ -1,0 +1,6 @@
+﻿subject,condition,time,PSS_01,PANAS_01
+Vp01,Control,pre,4,2
+Vp02,Intervention,pre,2,1
+Vp03,Intervention,post,3,4
+Vp04,Control,post,-66,-66
+Vp05,Control,pre,,

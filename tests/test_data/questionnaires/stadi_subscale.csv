@@ -1,0 +1,7 @@
+﻿subject,condition,STADI_S_1,STADI_S_5,STADI_S_9,STADI_S_13,STADI_S_17,STADI_T_1,STADI_T_5,STADI_T_9,STADI_T_13,STADI_T_17
+Vp01,Control,1,1,1,1,1,3,3,3,3,2
+Vp02,Intervention,2,2,2,2,2,2,2,2,2,2
+Vp03,Control,2,1,1,1,3,1,2,1,1,1
+Vp04,Intervention,1,2,2,1,1,3,3,1,3,2
+Vp05,Control,2,2,2,2,2,2,2,2,2,2
+Vp06,Intervention,2,1,1,1,1,2,3,3,3,2
