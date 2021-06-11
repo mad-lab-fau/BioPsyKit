@@ -91,7 +91,7 @@ class MIST(BaseProtocol):
                 "Part2": None,
             }
 
-        test_times = [0, 30]
+        test_times = kwargs.pop("test_times", [0, 30])
 
         hr_mean_plot_params = {"xlabel": "MIST Subphases"}
         hr_mean_plot_params.update(kwargs.pop("hr_mean_plot_params", {}))

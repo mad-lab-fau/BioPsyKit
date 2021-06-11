@@ -79,8 +79,8 @@ class TSST(BaseProtocol):
         if structure is None:
             structure = {"Part1": None, "TSST": {"Preparation": 300, "Talk": 300, "Math": 300}, "Part2": None}
 
-        test_times = [0, 20]
+        test_times = kwargs.pop("test_times", [0, 20])
 
-        super().__init__(name=name, structure=structure, test_times=test_times)
+        super().__init__(name=name, structure=structure, test_times=test_times, **kwargs)
 
         self.saliva_plot_params.update({"test_title": "TSST", "xlabel": "Time relative to TSST start [min]"})

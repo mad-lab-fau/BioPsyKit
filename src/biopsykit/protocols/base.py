@@ -1,11 +1,17 @@
 """Module implementing a base class to represent psychological protocols."""
-from typing import Dict, Sequence, Union, Tuple, Optional, Any, Iterable
+from pathlib import Path
+from typing import Dict, Sequence, Union, Tuple, Optional, Any, Iterable, Type
+
+import json
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
 import biopsykit.protocols.plotting as plot
 from biopsykit.protocols.utils import _check_sample_times_match, _get_sample_times
+from biopsykit.signals.ecg import EcgProcessor
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_file_extension
+from biopsykit.utils._types import path_t, T
 from biopsykit.utils.data_processing import (
     resample_dict_sec,
     select_dict_phases,
@@ -24,11 +30,12 @@ from biopsykit.utils.datatype_helper import (
     is_study_data_dict,
     SalivaRawDataFrame,
     is_saliva_raw_dataframe,
+    SubjectDataDict,
 )
 from biopsykit.utils.exceptions import ValidationError
 
 
-class BaseProtocol:
+class BaseProtocol:  # pylint:disable=too-many-public-methods
     """Base class representing a psychological protocol and data collected within a study.
 
     The general structure of the protocol can be specified by passing a ``structure`` dict to the constructor of
@@ -168,11 +175,28 @@ class BaseProtocol:
         :meth:`~biopsykit.protocols.base.BaseProtocol.add_hr_data`.
         """
 
+        self.rpeak_data: Dict[str, SubjectDataDict] = {}
+        """Dictionary with R peak data collected during the study.
+        If the study consists of multiple study parts each part has its own ``SubjectDataDict``.
+        If the study has no individual study parts (only different phases), the name of the one and only study part
+        defaults to ``Study`` (to ensure consistent dictionary structure).
+
+        Data in :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` format can be added using
+        :meth:`~biopsykit.protocols.base.BaseProtocol.add_hr_data`.
+        """
+
         self.hr_results: Dict[str, pd.DataFrame] = {}
         """Dictionary with heart rate results.
 
         Dict keys are the identifiers that are specified when computing results from ``hr_data`` using
         :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_results`.
+        """
+
+        self.hrv_results: Dict[str, pd.DataFrame] = {}
+        """Dictionary with heart rate variability ensemble.
+
+        Dict keys are the identifiers that are specified when computing ensemble from ``rpeak_data`` using
+        :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hrv_results`.
         """
 
         self.hr_ensemble: Dict[str, Dict[str, pd.DataFrame]] = {}
@@ -248,10 +272,53 @@ class BaseProtocol:
             self.name, self.structure
         )
 
+    def to_file(self, file_path: path_t):
+        """Serialize ``Protocol`` object and export as file.
+
+        This function converts the basic information of this object (``name``, ``structure``, ``test_times``)
+        to a JSON object and saves the serialized object to a JSON file.
+
+        Parameters
+        ----------
+        file_path : :class:`~pathlib.Path` or str
+            file path to export
+
+        """
+        # ensure pathlib
+        file_path = Path(file_path)
+        _assert_file_extension(file_path, ".json")
+
+        to_export = ["name", "structure", "test_times"]
+        json_dict = {key: self.__dict__[key] for key in to_export}
+        with open(file_path, "w+") as fp:
+            json.dump(json_dict, fp)
+
+    @classmethod
+    def from_file(cls: Type[T], file_path: path_t) -> T:
+        """Load serialized ``Protocol`` object from file.
+
+        Parameters
+        ----------
+        file_path : :class:`~pathlib.Path` or str
+            file path to export
+
+        Returns
+        -------
+        instance of :class:`~biopsykit.protocols.base.BaseProtocol`
+            ``Protocol`` instance
+
+        """
+        file_path = Path(file_path)
+        _assert_file_extension(file_path, ".json")
+
+        with open(file_path) as fp:
+            json_dict = json.load(fp)
+            return cls(**json_dict)
+
     def add_saliva_data(
         self,
-        saliva_type: Union[str, Sequence[str]],
         saliva_data: Union[SalivaRawDataFrame, Dict[str, SalivaRawDataFrame]],
+        saliva_type: Optional[Union[str, Sequence[str]]] = None,
         sample_times: Optional[Union[Sequence[int], Dict[str, Sequence[int]]]] = None,
         test_times: Optional[Sequence[int]] = None,
     ):
@@ -259,10 +326,11 @@ class BaseProtocol:
 
         Parameters
         ----------
-        saliva_type : str or list of str
-            saliva type (or list of such) of saliva data
         saliva_data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame` or dict
             saliva data (or dict of such) to be added to this protocol.
+        saliva_type : str or list of str, optional
+            saliva type (or list of such) of saliva data. Not needed if ``saliva_data`` is a dictionary, then the
+            saliva types are inferred from the dictionary keys
         sample_times : list of int or dict, optional
             list of sample times in minutes. Sample times are expected to be provided *relative* to the psychological
             test in the protocol (if present). Per convention, a sample collected **directly before** was collected at
@@ -272,6 +340,8 @@ class BaseProtocol:
             should be at time point $t = 0$. ``test_times`` is also used to compute the **absolute** sample times
 
         """
+        if isinstance(saliva_data, dict):
+            saliva_type = list(saliva_data.keys())
         if isinstance(saliva_type, str):
             saliva_type = [saliva_type]
         self.saliva_types = saliva_type
@@ -308,22 +378,32 @@ class BaseProtocol:
                 "The validation raised the following error:\n\n{}".format(str(e))
             ) from e
 
-    def add_hr_data(self, data: HeartRateSubjectDataDict, study_part: Optional[str] = None):
+    def add_hr_data(
+        self,
+        hr_data: HeartRateSubjectDataDict,
+        rpeak_data: Optional[SubjectDataDict] = None,
+        study_part: Optional[str] = None,
+    ):
         """Add time-series heart rate data collected during psychological protocol to ``Protocol`` instance.
 
         Parameters
         ----------
-        data : :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
-            dictionary heart rate data of all subjects collected during the protocol
+        hr_data : :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+            dictionary with heart rate data of all subjects collected during the protocol
+        rpeak_data : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`, optional
+            dictionary with rpeak data of all subjects collected during the protocol. Needed if heart rate
+            variability should be computed
         study_part : str, optional
             string indicating to which study part data belongs to or ``None`` if data has no individual study parts.
             Default: ``None``
 
         """
-        is_study_data_dict(data)
+        is_study_data_dict(hr_data)
         if study_part is None:
             study_part = "Study"
-        self.hr_data[study_part] = data
+        self.hr_data[study_part] = hr_data
+        if rpeak_data is not None:
+            self.rpeak_data[study_part] = rpeak_data
 
     def compute_hr_results(
         self,
@@ -335,7 +415,7 @@ class BaseProtocol:
         split_into_subphases: Optional[bool] = False,
         mean_per_subject: Optional[bool] = True,
         add_conditions: Optional[bool] = False,
-        params: Dict[str, Any] = None,
+        params: Optional[Dict[str, Any]] = None,
     ):
         """Compute heart rate data results from one study part.
 
@@ -418,12 +498,111 @@ class BaseProtocol:
 
         self.hr_results[result_id] = data_dict
 
+    def compute_hrv_results(
+        self,
+        result_id: str,
+        study_part: Optional[str] = None,
+        select_phases: Optional[bool] = False,
+        split_into_subphases: Optional[bool] = False,
+        add_conditions: Optional[bool] = False,
+        dict_levels: Sequence[str] = None,
+        hrv_params: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None,
+    ):
+        """Compute heart rate variability ensemble from one study part.
+
+        The different processing steps can be enabled or disabled by setting the function parameters to
+        ``True`` or ``False``, respectively. Parameters that are required for a specific processing step can be
+        provided in the ``params`` dict. The dict key must match the name of the processing step.
+
+        Parameters
+        ----------
+        result_id : str
+            Result ID, a descriptive name of the ensemble that were computed.
+            This ID will also be used as key to store the computed ensemble in the ``hrv_results`` dictionary
+        study_part : str, optional
+            study part the data which should be processed belongs to or ``None`` if data has no
+            individual study parts.
+            Default: ``None``
+        select_phases : bool, optional
+            ``True`` to only select specific phases for further processing, ``False`` to use all data from
+            ``study_part``. The phases to be selected are specified in the ``params`` dictionary
+            (key: ``select_phases``).
+            Default: ``False``
+        split_into_subphases : bool, optional
+            ``True`` to further split phases into subphases, ``False`` otherwise. The subphases are provided as
+            dictionary (keys: subphase names, values: subphase durations in seconds) in the ``params`` dictionary
+            (key: ``split_into_subphases``).
+            Default: ``False``
+        add_conditions : bool, optional
+            ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
+            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            (key: ``add_conditions``).
+            Default: ``False``
+        dict_levels : list, optional
+            list with names of dictionary levels which will also be the index level names of the resulting dataframe
+            or ``None`` to use default level names: ["subject", "phase"] (if ``split_into_subphases`` is ``False``)
+            or ["subject", "phase", "subphase"] (if ``split_into_subphases`` is ``True``)
+        hrv_params : dict, optional
+            dictionary with parameters to configure HRV processing or ``None`` to use default parameter.
+            See :func:`~biopsykit.signals.ecg.ecg.EcgProcessor.hrv_process` for an overview on available parameters
+        params : dict, optional
+            dictionary with parameters provided to the different processing steps
+
+        """
+        if study_part is None:
+            study_part = "Study"
+        if dict_levels is None:
+            dict_levels = ["subject", "phase"]
+            if split_into_subphases:
+                dict_levels.append("subphase")
+
+        data_dict = self.rpeak_data[study_part].copy()
+
+        if hrv_params is None:
+            hrv_params = {}
+        if params is None:
+            params = {}
+
+        if select_phases:
+            param = params.get("select_phases", None)
+            data_dict = select_dict_phases(data_dict, param)
+
+        if split_into_subphases:
+            param = params.get("split_into_subphases", None)
+            data_dict = split_dict_into_subphases(data_dict, param)
+
+        hrv_result = self._compute_hrv_dict(data_dict, hrv_params, dict_levels)
+        # drop most inner level (comes from neurokit's hrv function and is not needed)
+        hrv_result = hrv_result.droplevel(level=-1)
+
+        if add_conditions:
+            param = params.get("add_conditions", None)
+            hrv_result = add_subject_conditions(hrv_result, param)
+        self.hrv_results[result_id] = hrv_result
+
+    def _compute_hrv_dict(
+        self, rpeak_dict: Dict[str, Any], hrv_params: Dict[str, Any], dict_levels: Sequence[str]
+    ) -> pd.DataFrame:
+        result_dict = {}
+        for key, value in rpeak_dict.items():
+            _assert_is_dtype(value, (dict, pd.DataFrame))
+            if isinstance(value, dict):
+                # nested dictionary
+                result_dict[key] = self._compute_hrv_dict(value, hrv_params, dict_levels[1:])
+            else:
+                result_dict[key] = EcgProcessor.hrv_process(rpeaks=value, **hrv_params)
+
+        return pd.concat(result_dict, names=[dict_levels[0]])
+
     def compute_hr_ensemble(
         self,
         ensemble_id: str,
         study_part: Optional[str] = None,
         resample_sec: Optional[bool] = True,
         normalize_to: Optional[bool] = True,
+        select_phases: Optional[bool] = False,
         cut_phases: Optional[bool] = True,
         merge_dict: Optional[bool] = True,
         add_conditions: Optional[bool] = False,
@@ -455,6 +634,11 @@ class BaseProtocol:
             ``True`` to normalize heart rate data per subject. Data will then be the heart rate increase relative to
             the average heart rate in the phase. The name of the phase (or a dataframe containing heart rate
             data to normalize to) is specified in the ``params`` dictionary (key: ``normalize_to``).
+            Default: ``False``
+        select_phases : bool, optional
+            ``True`` to only select specific phases for further processing, ``False`` to use all data from
+            ``study_part``. The phases to be selected are specified in the ``params`` dictionary
+            (key: ``select_phases``).
             Default: ``False``
         cut_phases : bool, optional
             ``True`` to cut time-series data to shortest duration of a subject in each phase, ``False`` otherwise.
@@ -491,6 +675,10 @@ class BaseProtocol:
 
         data_dict = rearrange_subject_data_dict(data_dict)
 
+        if select_phases:
+            param = params.get("select_phases", data_dict.keys())
+            data_dict = {phase: data_dict[phase] for phase in param}
+
         if cut_phases:
             data_dict = cut_phases_to_shortest(data_dict)
 
@@ -502,6 +690,19 @@ class BaseProtocol:
             data_dict = split_subject_conditions(data_dict, param)
 
         self.hr_ensemble[ensemble_id] = data_dict
+
+    def add_hr_results(self, result_id: str, results: pd.DataFrame):
+        """Add existing heart rate processing ensemble.
+
+        Parameters
+        ----------
+        result_id : str
+            identifier of result parameters used to store dataframe in ``hr_results`` dictionary
+        results : :class:`~pandas.DataFrame`
+            dataframe with computed heart rate processing ensemble
+
+        """
+        self.hr_results[result_id] = results
 
     def get_hr_results(self, result_id: str) -> pd.DataFrame:
         """Return heart rate processing results.
@@ -522,6 +723,89 @@ class BaseProtocol:
         """
         return self.hr_results.get(result_id, None)
 
+    def add_hrv_results(self, result_id: str, results: pd.DataFrame):
+        """Add existing heart rate variability processing ensemble.
+
+        Parameters
+        ----------
+        result_id : str
+            identifier of result parameters used to store dataframe in ``hrv_results`` dictionary
+        results : :class:`~pandas.DataFrame`
+            dataframe with computed heart rate variability processing ensemble
+
+        """
+        self.hrv_results[result_id] = results
+
+    def export_hr_results(self, base_path: path_t, prefix: Optional[str] = None):
+        """Export all heart rate results to csv files.
+
+        Parameters
+        ----------
+        base_path : :class:`~pathlib.Path` or str
+            folder path to export all heart rate result files to
+        prefix : str, optional
+            prefix to add to file name or ``None`` to use ``name`` attribute (in lowercase) as prefix
+
+        """
+        self._export_results(base_path, prefix, self.hr_results)
+
+    def export_hrv_results(self, base_path: path_t, prefix: Optional[str] = None):
+        """Export all heart rate variability results to csv files.
+
+        Parameters
+        ----------
+        base_path : :class:`~pathlib.Path` or str
+            folder path to export all heart rate variability result files to
+        prefix : str, optional
+            prefix to add to file name or ``None`` to use ``name`` attribute (in lowercase) as prefix
+
+        """
+        self._export_results(base_path, prefix, self.hrv_results)
+
+    def _export_results(self, base_path: path_t, prefix: str, result_dict: Dict[str, pd.DataFrame]):
+        # ensure pathlib
+        base_path = Path(base_path)
+        if not base_path.is_dir():
+            raise ValueError("'base_path' must be a directory!")
+        if prefix is None:
+            prefix = self.name.lower().replace(" ", "_")
+        for key, data in result_dict.items():
+            file_name = "{}_{}.csv".format(prefix, key)
+            data.to_csv(base_path.joinpath(file_name))
+
+    def get_hrv_results(self, result_id: str) -> pd.DataFrame:
+        """Return heart rate variability processing ensemble.
+
+        Heart rate variability ensemble can be computed by calling
+        :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hrv_results`.
+
+        Parameters
+        ----------
+        result_id : str
+            identifier of result parameters specified when computing ensemble via
+            :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hrv_results`
+
+        Returns
+        -------
+        :class:`~pandas.DataFrame`
+            heart rate variability processing ensemble
+
+        """
+        return self.hrv_results.get(result_id, None)
+
+    def add_hr_ensemble(self, ensemble_id: str, ensemble: Dict[str, pd.DataFrame]):
+        """Add existing heart rate ensemble data.
+
+        Parameters
+        ----------
+        ensemble_id : str
+            identifier of ensemble parameters used to store dictionary in ``hr_ensemble`` dictionary
+        ensemble : :class:`~pandas.DataFrame`
+            dataframe with computed heart rate ensemble data
+
+        """
+        self.hr_ensemble[ensemble_id] = ensemble
+
     def get_hr_ensemble(self, ensemble_id: str):
         """Return heart rate ensemble data.
 
@@ -534,7 +818,7 @@ class BaseProtocol:
         Returns
         -------
         :class:`~pandas.DataFrame`
-            heart rate ensemble results
+            heart rate ensemble ensemble
 
         """
         return self.hr_ensemble.get(ensemble_id, None)

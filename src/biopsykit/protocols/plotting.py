@@ -444,6 +444,7 @@ def hr_mean_plot(
             ymargin = ylims
         ax.margins(y=ymargin)
     ax.margins(x=0)
+    ax.relim()
 
     # customize legend
     if "condition" in data.index.names:
@@ -466,6 +467,10 @@ def _hr_mean_plot(data: MeanSeDataFrame, x_vals: np.array, key: str, index: int,
         linestyles = linestyles[index]
 
     is_mean_se_dataframe(data)
+    if isinstance(data.columns, pd.MultiIndex):
+        # if data has multiindex columns: drop all levels except the last one
+        # (which is expected to contain ["mean", "se"])
+        data.columns = data.columns.droplevel(list(range(0, data.columns.nlevels - 1)))
 
     ax.errorbar(
         x=x_vals + index * x_offset,
