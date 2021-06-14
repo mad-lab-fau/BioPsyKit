@@ -74,7 +74,7 @@ def load_time_log(
 
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         dataframe with time log information
 
     Raises
@@ -314,7 +314,7 @@ def load_questionnaire_data(
 
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         dataframe with imported questionnaire data
 
     Raises
@@ -456,13 +456,13 @@ def convert_time_log_datetime(
     dataset: Optional[Dataset] = None,
     df: Optional[pd.DataFrame] = None,
     date: Optional[Union[str, datetime.datetime]] = None,
-    timezone: Optional[Union[str, pytz.timezone]] = None,
+    timezone: Optional[Union[str, pytz.tzinfo.tzinfo]] = None,
 ) -> pd.DataFrame:
     """Convert the time log information into datetime objects.
 
     This function converts time log information (containing only time, but no date)
     into datetime objects, thus, adds the `start date` of the recording. To specify the recording date,
-    either a NilsPod :class:`~nilspodlib.Dataset` or a pandas dataframe with a :class:`~pandas.DateTimeIndex`
+    either a NilsPod :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DateTimeIndex`
     must be supplied from which the recording date can be extracted.
     As an alternative, the date can be specified explicitly via ``date`` parameter.
 
@@ -470,17 +470,17 @@ def convert_time_log_datetime(
     ----------
     time_log : pd.DataFrame
         pandas dataframe with time log information
-    dataset : :class:`~nilspodlib.Dataset`, optional
+    dataset : :class:`~nilspodlib.dataset.Dataset`, optional
         NilsPod Dataset object extract time and date information. Default: ``None``
-    df : :class:`pandas.DataFrame`, optional
+    df : :class:`~pandas.DataFrame`, optional
         dataframe with :class:`pandas.DateTimeIndex` to extract time and date information. Default: ``None``
     date : str or datetime, optional
         datetime object or date string used to convert time log information into datetime.
         If ``date`` is a string, it must be supplied in a common date format, e.g. "dd.mm.yyyy" or "dd/mm/yyyy".
         Default: ``None``
-    timezone : str or pytz.timezone, optional
+    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
         timezone of the acquired data to convert, either as string of as pytz object.
-        Default: pytz.timezone('Europe/Berlin')
+        Default: "Europe/Berlin"
 
     Returns
     -------
@@ -525,7 +525,7 @@ def convert_time_log_datetime(
 
 
 def load_pandas_dict_excel(
-    file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, pytz.timezone]] = None
+    file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, pytz.tzinfo.tzinfo]] = None
 ) -> Dict[str, pd.DataFrame]:
     """Load Excel file containing pandas dataframes with time series data of one subject.
 
@@ -535,10 +535,10 @@ def load_pandas_dict_excel(
         path to file
     index_col : str, optional
         name of index columns of dataframe or ``None`` if no index column is present. Default: "time"
-    timezone : str or pytz.timezone, optional
+    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
         timezone of the acquired data for localization (since Excel does not support localized timestamps),
         either as string of as pytz object.
-        Default: pytz.timezone('Europe/Berlin')
+        Default: "Europe/Berlin"
 
     Returns
     -------
@@ -615,7 +615,7 @@ def write_result_dict(
     """Write dictionary with processing results (e.g. HR, HRV, RSA) to csv file.
 
     The keys in the dictionary should be the subject IDs (or any other identifier),´
-    the values should be :class:`pandas.DataFrame`. The index level(s) of the exported dataframe can be specified
+    the values should be :class:`~pandas.DataFrame`. The index level(s) of the exported dataframe can be specified
     by the ``index_col`` parameter.
 
     The dictionary will be concatenated to one large dataframe which will then be saved as csv file.

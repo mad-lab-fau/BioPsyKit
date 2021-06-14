@@ -4,9 +4,10 @@ from pathlib import Path
 from typing import Optional, Union, Sequence
 
 import re
+import pytz
 
 import pandas as pd
-import pytz
+
 from biopsykit.sleep.utils import split_nights
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dir
 from biopsykit.utils._types import path_t
@@ -32,7 +33,7 @@ WITHINGS_RAW_DATA_SOURCES = {
 
 def load_withings_sleep_analyzer_raw_folder(
     folder_path: path_t,
-    timezone: Optional[Union[pytz.timezone, str]] = None,
+    timezone: Optional[Union[pytz.tzinfo.tzinfo, str]] = None,
     split_into_nights: Optional[bool] = True,
 ) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     """Load folder with raw data from a Withings Sleep Analyzer recording session and convert into time-series data.
@@ -55,7 +56,7 @@ def load_withings_sleep_analyzer_raw_folder(
     ----------
     folder_path: :any:`pathlib.Path` or str
         path to folder with Sleep Analyzer raw data
-    timezone : str or pytz.timezone, optional
+    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
         timezone of the acquired data, either as string of as pytz object.
         Default: 'Europe/Berlin'
     split_into_nights : bool, optional
@@ -113,7 +114,7 @@ def load_withings_sleep_analyzer_raw_folder(
 def load_withings_sleep_analyzer_raw_file(
     file_path: path_t,
     data_source: str,
-    timezone: Optional[Union[pytz.timezone, str]] = None,
+    timezone: Optional[Union[pytz.tzinfo.tzinfo, str]] = None,
     split_into_nights: Optional[bool] = True,
 ) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     """Load single Withings Sleep Analyzer raw data file and convert into time-series data.
@@ -124,7 +125,7 @@ def load_withings_sleep_analyzer_raw_file(
         path to file
     data_source : str
         data source of file specified by ``file_path``
-    timezone : str or pytz.timezone, optional
+    timezone : str or :class:`datetime.tzin:o`, optional
         timezone of recorded data, either as string or as pytz object.
         Default: 'Europe/Berlin'
     split_into_nights : bool, optional
@@ -221,7 +222,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
     ----------
     file_path : :any:`pathlib.Path` or str
         path to file
-    timezone : str or pytz.timezone, optional
+    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
         timezone of recorded data, either as string or as pytz object.
         Default: 'Europe/Berlin'
 

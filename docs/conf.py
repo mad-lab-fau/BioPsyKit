@@ -70,6 +70,7 @@ except Exception as e:
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
+    "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
@@ -79,7 +80,6 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon",
     # "sphinx_gallery.gen_gallery"
     "sphinx_rtd_theme",
 ]
@@ -90,6 +90,8 @@ templates_path = ["_templates"]
 # generate autosummary even if no references
 autosummary_generate = True
 autosummary_generate_overwrite = True
+
+napoleon_numpy_docstring = True
 
 # This value selects if automatically documented members are sorted alphabetical (value 'alphabetical'),
 # by member type (value 'groupwise') or by source order (value 'bysource'). The default is alphabetical.
@@ -350,4 +352,5 @@ intersphinx_mapping = {
     "pyscaffold": ("https://pyscaffold.org/en/stable", None),
     "neurokit2": ("https://neurokit2.readthedocs.io/en/latest", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
+    "nilspodlib": ("https://nilspodlib.readthedocs.io/en/latest/", None),
 }

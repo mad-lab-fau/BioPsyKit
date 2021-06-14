@@ -37,7 +37,7 @@ def get_time_from_date(
     data: pd.Series,
     is_utc: Optional[bool] = False,
     tz_convert: Optional[bool] = False,
-    timezone: Optional[Union[str, pytz.tzinfo.tzinfo]] = None,
+    timezone: Optional[Union[str, datetime.tzinfo]] = None,
 ) -> pd.Series:
     """Extract time information from series with date information.
 
