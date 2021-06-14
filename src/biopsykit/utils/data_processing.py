@@ -747,7 +747,7 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
 
     Returns
     -------
-    `~pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         dataframe with ``dict_levels`` as index levels and mean values of time-series data as column values
 
     """

@@ -52,17 +52,17 @@ def fau_palette_blue(palette_type: Optional[str] = None) -> Sequence[str]:
     Parameters
     ----------
     palette_type : str, optional
-        Specify specialized color palette. Available palette types:
+        Specify specialized color palette (or ``None`` to return default palette). Available palette types:
             * ``line_2``: For line plots with two elements
             * ``line_3``: For line plots with three elements
             * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
             * ``box_2``: For boxplots with two elements
-        `Default`: ``None``
+        Default: ``None``
 
     Returns
     -------
-    sns.palette
-        list of tuple
+    list of tuple
+        list of RGB tuples
 
     """
     # generated using this link: https://noeldelgado.github.io/shadowlord
@@ -101,17 +101,17 @@ def fau_palette_wiso(palette_type: Union[str, None]) -> Sequence[str]:
     Parameters
     ----------
     palette_type : str, optional
-        Specify specialized color palette. Available palette types:
+        Specify specialized color palette (or ``None`` to return default palette). Available palette types:
             * ``line_2``: For line plots with two elements
             * ``line_3``: For line plots with three elements
             * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
             * ``box_2``: For boxplots with two elements
-        `Default`: ``None``
+        Default: ``None``
 
     Returns
     -------
-    sns.palette
-        list of tuple
+    list of tuple
+        list of RGB tuples
 
     """
     # generated using this link: https://noeldelgado.github.io/shadowlord
@@ -151,17 +151,17 @@ def fau_palette_phil(palette_type: Union[str, None]) -> Sequence[str]:
     Parameters
     ----------
     palette_type : str, optional
-        Specify specialized color palette. Available palette types:
+        Specify specialized color palette (or ``None`` to return default palette). Available palette types:
             * ``line_2``: For line plots with two elements
             * ``line_3``: For line plots with three elements
             * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
             * ``box_2``: For boxplots with two elements
-        `Default`: ``None``
+        Default: ``None``
 
     Returns
     -------
-    sns.palette
-        list of tuple
+    list of tuple
+        list of RGB tuples
 
     """
     # generated using this link: https://noeldelgado.github.io/shadowlord
@@ -200,17 +200,17 @@ def fau_palette_med(palette_type: Union[str, None]) -> Sequence[str]:
     Parameters
     ----------
     palette_type : str, optional
-        Specify specialized color palette. Available palette types:
+        Specify specialized color palette (or ``None`` to return default palette). Available palette types:
             * ``line_2``: For line plots with two elements
             * ``line_3``: For line plots with three elements
             * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
             * ``box_2``: For boxplots with two elements
-        `Default`: ``None``
+        Default: ``None``
 
     Returns
     -------
-    sns.palette
-        list of tuple
+    list of tuple
+        list of RGB tuples
 
     """
     # generated using this link: https://noeldelgado.github.io/shadowlord
@@ -249,17 +249,17 @@ def fau_palette_nat(palette_type: Union[str, None]) -> Sequence[str]:
     Parameters
     ----------
     palette_type : str, optional
-        Specify specialized color palette. Available palette types:
+        Specify specialized color palette (or ``None`` to return default palette). Available palette types:
             * ``line_2``: For line plots with two elements
             * ``line_3``: For line plots with three elements
             * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
             * ``box_2``: For boxplots with two elements
-        `Default`: ``None``
+        Default: ``None``
 
     Returns
     -------
-    sns.palette
-        list of tuple
+    list of tuple
+        list of RGB tuples
 
     """
     # generated using this link: https://noeldelgado.github.io/shadowlord
@@ -298,17 +298,17 @@ def fau_palette_tech(palette_type: Union[str, None]) -> Sequence[str]:
     Parameters
     ----------
     palette_type : str, optional
-        Specify specialized color palette. Available palette types:
+        Specify specialized color palette (or ``None`` to return default palette). Available palette types:
             * ``line_2``: For line plots with two elements
             * ``line_3``: For line plots with three elements
             * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
             * ``box_2``: For boxplots with two elements
-        `Default`: ``None``
+        Default: ``None``
 
     Returns
     -------
-    sns.palette
-        list of tuple
+    list of tuple
+        list of RGB tuples
 
     """
     # generated using this link: https://noeldelgado.github.io/shadowlord
