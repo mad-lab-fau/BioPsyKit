@@ -7,9 +7,51 @@ from datetime import time, datetime
 import pandas as pd
 import numpy as np
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_index_levels
-from biopsykit.utils.datatype_helper import SalivaRawDataFrame
+from biopsykit.utils.datatype_helper import SalivaRawDataFrame, SalivaFeatureDataFrame
 
-__all__ = ["get_saliva_column_suggestions", "extract_saliva_columns", "sample_times_datetime_to_minute"]
+__all__ = [
+    "saliva_feature_wide_to_long",
+    "get_saliva_column_suggestions",
+    "extract_saliva_columns",
+    "sample_times_datetime_to_minute",
+]
+
+
+def saliva_feature_wide_to_long(
+    data: SalivaFeatureDataFrame,
+    saliva_type: str,
+) -> pd.DataFrame:
+    """Convert ``SalivaFeatureDataFrame`` from wide-format into long-format.
+
+    Parameters
+    ----------
+    data : :class:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+        dataframe containing saliva features in wide-format, i.e. one column per saliva sample, one row per subject
+    saliva_type : str
+        saliva type (e.g. 'cortisol')
+
+    Returns
+    -------
+    :class:`pandas.DataFrame`
+        dataframe with saliva features in long-format
+
+    """
+
+    data = data.filter(like=saliva_type)
+    index_cols = list(data.index.names)
+    j = "saliva_feature"
+    # iteratively build up long-format dataframe
+    data = pd.wide_to_long(
+        data.reset_index(),
+        stubnames=saliva_type,
+        i=index_cols,
+        j=j,
+        sep="_",
+        suffix=r"\w+",
+    )
+
+    # reorder levels and sort
+    return data.reorder_levels(index_cols + [j]).sort_index()
 
 
 def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Sequence[str]]) -> Sequence[str]:
