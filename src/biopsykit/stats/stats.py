@@ -99,31 +99,31 @@ class StatsPipeline:
         * *Preparatory Analysis* (``prep``): Analyses applied to the data before performing the actual statistical
           analysis. Currently supported functions are:
             * ``normality``: Test whether a random sample comes from a normal distribution.
-              See :func:`~pingouin.distribution.normality` for further information.
+              See :func:`~pingouin.normality` for further information.
             * ``equal_var``: Test equality of variances (homoscedasticity).
-              See :func:`~pingouin.distribution.homoscedasticity` for further information.
+              See :func:`~pingouin.homoscedasticity` for further information.
         * *Statistical Test* (``test``): Statistical test to determine differences or similarities in the data.
           Currently supported functions are:
             * ``pairwise_ttests``: Pairwise T-tests (either for independent or dependent samples).
-              See :func:`~pingouin.pairwise.pairwise_ttests` for further information.
-            * ``anova``: One-way or N-way ANOVA. See :func:`~pingouin.parametric.anova` for further information.
-            * ``welch_anova``: One-way Welch-ANOVA. See :func:`~pingouin.parametric.welch_anova` for further
+              See :func:`~pingouin.pairwise_ttests` for further information.
+            * ``anova``: One-way or N-way ANOVA. See :func:`~pingouin.anova` for further information.
+            * ``welch_anova``: One-way Welch-ANOVA. See :func:`~pingouin.welch_anova` for further
               information.
-            * ``rm_anova``: One-way and two-way repeated measures ANOVA. See :func:`~pingouin.parametric.rm_anova`
+            * ``rm_anova``: One-way and two-way repeated measures ANOVA. See :func:`~pingouin.rm_anova`
               for further information.
-            * ``mixed_anova``: Mixed-design (split-plot) ANOVA. See :func:`~pingouin.parametric.mixed_anova` for
+            * ``mixed_anova``: Mixed-design (split-plot) ANOVA. See :func:`~pingouin.mixed_anova` for
               further information.
-            * ``kruskal``: Kruskal-Wallis H-test for independent samples. See :func:`~pingouin.nonparametric.kruskal`
+            * ``kruskal``: Kruskal-Wallis H-test for independent samples. See :func:`~pingouin.kruskal`
               for further information.
         * *Posthoc Tests* (``posthoc``): Posthoc tests to determine differences of individual groups if more than two
           groups are analyzed.
           Currently supported functions are:
             * ``pairwise_ttests``: Pairwise T-tests (either for independent or dependent samples).
-              See :func:`~pingouin.pairwise.pairwise_ttests` for further information.
+              See :func:`~pingouin.pairwise_ttests` for further information.
             * ``pairwise_tukey``: Pairwise Tukey-HSD post-hoc test.
-              See :func:`~pingouin.pairwise.pairwise_tukey` for further information.
+              See :func:`~pingouin.pairwise_tukey` for further information.
             * ``pairwise_gameshowell``: Pairwise Games-Howell post-hoc test.
-              See :func:`~pingouin.pairwise.pairwise_gameshowell` for further information.
+              See :func:`~pingouin.pairwise_gameshowell` for further information.
 
     """
 
@@ -528,7 +528,7 @@ class StatsPipeline:
         stats_data : :class:`~pandas.DataFrame`
             dataframe with results from statistical analysis
         method : str, optional
-            method used for testing and adjustment of p-values. See :func:`pingouin.multicomp.multicomp` for the
+            method used for testing and adjustment of p-values. See :func:`pingouin.multicomp` for the
             available methods. Default: "bonf"
 
         Returns
