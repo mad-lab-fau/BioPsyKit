@@ -31,6 +31,7 @@ from biopsykit.utils.datatype_helper import (
     SalivaRawDataFrame,
     is_saliva_raw_dataframe,
     SubjectDataDict,
+    SalivaFeatureDataFrame,
 )
 from biopsykit.utils.exceptions import ValidationError
 
@@ -943,8 +944,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             self.saliva_data[saliva_type], x, saliva_type, feature, stats_kwargs, **kwargs
         )
 
+    @staticmethod
     def saliva_multi_feature_boxplot(
-        self,
+        data: SalivaFeatureDataFrame,
         saliva_type: str,
         features: Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]],
         hue: Optional[str] = None,
@@ -953,11 +955,12 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     ) -> Tuple[plt.Figure, Iterable[plt.Axes]]:
         """Draw multiple features as boxplots with significance brackets, specifically designed for saliva features.
 
-        This is a wrapper of :func:`~biopsykit.protocols.plotting.saliva_multi_feature_boxplot` that directly uses the
-        saliva data added to this ``Protocol`` instance.
+        This is a wrapper of :func:`~biopsykit.protocols.plotting.saliva_multi_feature_boxplot`.
 
         Parameters
         ----------
+        data : :class:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+            saliva feature dataframe
         saliva_type : str
             type of saliva data to plot
         hue : str, optional
@@ -986,13 +989,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         --------
         `biopsykit.plotting.saliva_multi_feature_boxplot`
             plot multiple saliva features as boxplots without instantiating a ``Protocol`` instance
-            `biopsykit.stats.StatsPipeline`
-                class to create statistical analysis pipelines and get parameter for plotting significance brackets
+        `biopsykit.stats.StatsPipeline`
+            class to create statistical analysis pipelines and get parameter for plotting significance brackets
 
         """
-        return plot.saliva_multi_feature_boxplot(
-            self.saliva_data[saliva_type], saliva_type, features, hue, stats_kwargs, **kwargs
-        )
+        return plot.saliva_multi_feature_boxplot(data, saliva_type, features, hue, stats_kwargs, **kwargs)
 
     def hr_ensemble_plot(
         self, ensemble_id: str, subphases: Optional[Dict[str, Dict[str, int]]] = None, **kwargs
