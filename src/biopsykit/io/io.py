@@ -8,9 +8,9 @@ import pytz
 
 import numpy as np
 import pandas as pd
-
 from nilspodlib import Dataset
 
+from biopsykit.utils.file_handling import is_excel_file
 from biopsykit.utils.exceptions import ValidationError
 from biopsykit.utils.dataframe_handling import convert_nan
 from biopsykit.utils.time import tz
@@ -31,6 +31,8 @@ __all__ = [
     "load_time_log",
     "load_subject_condition_list",
     "load_questionnaire_data",
+    "load_pandas_dict_excel",
+    "load_codebook",
     "convert_time_log_datetime",
     "write_pandas_dict_excel",
     "write_result_dict",
@@ -119,7 +121,7 @@ def load_time_log(
         # not to be automatically converted into datetime objects
         data = pd.read_excel(file_path, dtype=str, **kwargs)
     else:
-        data = pd.read_csv(file_path, **kwargs)
+        data = pd.read_csv(file_path, dtype=str, **kwargs)
 
     data = _apply_index_cols(data, index_cols=index_cols)
 
@@ -138,6 +140,8 @@ def load_time_log(
         data = _parse_time_log_not_continuous(data, index_cols)
 
     for val in data.values.flatten():
+        if val is np.nan:
+            continue
         _assert_is_dtype(val, str)
 
     return data
@@ -518,6 +522,53 @@ def convert_time_log_datetime(
 
     time_log = time_log.applymap(lambda x: timezone.localize(datetime.datetime.combine(date, x)))
     return time_log
+
+
+def load_pandas_dict_excel(
+    file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, pytz.timezone]] = None
+) -> Dict[str, pd.DataFrame]:
+    """Load Excel file containing pandas dataframes with time series data of one subject.
+
+    Parameters
+    ----------
+    file_path : :any:`pathlib.Path` or str
+        path to file
+    index_col : str, optional
+        name of index columns of dataframe or ``None`` if no index column is present. Default: "time"
+    timezone : str or pytz.timezone, optional
+        timezone of the acquired data for localization (since Excel does not support localized timestamps),
+        either as string of as pytz object.
+        Default: pytz.timezone('Europe/Berlin')
+
+    Returns
+    -------
+    dict
+        dictionary with multiple pandas dataframes
+
+    Raises
+    ------
+    :class:`~biopsykit.exceptions.FileExtensionError`
+        if file is no Excel file (.xls or .xlsx)
+
+    See Also
+    --------
+    write_pandas_dict_excel : Write dictionary with dataframes to file
+
+    """
+    # ensure pathlib
+    file_path = Path(file_path)
+    _assert_file_extension(file_path, (".xls", ".xlsx"))
+
+    # assure that the file is an Excel file
+    is_excel_file(file_path)
+
+    dict_df: Dict[str, pd.DataFrame] = pd.read_excel(file_path, index_col=index_col, sheet_name=None)
+
+    # (re-)localize each sheet since Excel does not support timezone-aware dates (if index is DatetimeIndex)
+    for key in dict_df:
+        if isinstance(dict_df[key].index, pd.DatetimeIndex):
+            dict_df[key] = dict_df[key].tz_localize(timezone)
+    return dict_df
 
 
 def write_pandas_dict_excel(

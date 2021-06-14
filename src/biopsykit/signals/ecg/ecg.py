@@ -954,7 +954,7 @@ class EcgProcessor(_BaseProcessor):
     #     >>> ecg_processor = ep.EcgProcessor(...)
     #
     #     >>> # Compute respiration rate and RSA. Extract respiration signal using all available
-    #     >>> # methods and average the results ('return_mean' is True by default)
+    #     >>> # methods and average the ensemble ('return_mean' is True by default)
     #     >>> rsp_signal = ecg_processor.rsp_rsa_process(ecg_processor, key="Data")
     #
     #     >>> # Compute respiration rate and RSA. Extract respiration signal using all available
@@ -1422,7 +1422,7 @@ def _assert_rpeaks_input(
     key : str, optional
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
-        Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
+        Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process`
 
     Raises
     ------
@@ -1434,16 +1434,11 @@ def _assert_rpeaks_input(
         raise ValueError("Either 'ecg_processor' and 'key', or 'rpeaks' must be passed as arguments!")
     if ecg_processor is not None and key is None:
         raise ValueError("Both of 'ecg_processor' and 'key' must be passed as arguments!")
-    if rpeaks is None:
-        raise ValueError("'rpeaks' must be passed as arguments!")
+    if ecg_processor is None and rpeaks is None:
+        raise ValueError("'rpeaks' must be passed as arguments when 'ecg_processor' is None!")
 
 
-def _assert_ecg_input(
-    ecg_processor: "EcgProcessor",
-    key: str,
-    ecg_signal: EcgResultDataFrame,
-    rpeaks: RPeakDataFrame,
-) -> None:
+def _assert_ecg_input(ecg_processor: "EcgProcessor", key: str, ecg_signal: EcgResultDataFrame, rpeaks: RPeakDataFrame):
     """Assert valid input for ECG processing functions that require both only ECG signal and R peaks.
 
     This function checks if either ``ecg_processor`` **and** ``key`` are supplied as arguments *or*

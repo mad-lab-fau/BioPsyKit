@@ -491,7 +491,7 @@ def multi_feature_boxplot(
             legend_orientation=legend_orientation,
         )
 
-    fig.tight_layout()
+    fig.tight_layout(rect=rect)
     return fig, axs
 
 

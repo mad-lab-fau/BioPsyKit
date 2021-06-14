@@ -440,7 +440,7 @@ class StatsPipeline:
         if stats_type == "interaction":
             stats_data, box_pairs = self._get_stats_data_box_pairs_interaction(stats_data)
         else:
-            stats_data, box_pairs = self._get_stats_data_box_pairs(stats_data, plot_type, x)
+            stats_data, box_pairs = self._get_stats_data_box_pairs(stats_data, plot_type, features, x)
 
         if box_pairs.empty:
             return [], []
