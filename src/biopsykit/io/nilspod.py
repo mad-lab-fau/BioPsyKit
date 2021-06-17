@@ -416,7 +416,7 @@ def load_folder_nilspod(
         raise ValueError("Datasets in the sessions have different sampling rates! Got: {}.".format(fs_list))
     fs = fs_list[0]
 
-    dataset_dict = {phase: fs for phase, (df, fs) in zip(phase_names, dataset_list)}
+    dataset_dict = {phase: df for phase, (df, fs) in zip(phase_names, dataset_list)}
     return dataset_dict, fs
 
 
