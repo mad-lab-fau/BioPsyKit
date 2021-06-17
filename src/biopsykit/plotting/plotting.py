@@ -23,8 +23,8 @@ def lineplot(
     It offers the same interface, but several improvements:
         * Data points are not only connected as line, but are also drawn with marker
         * Lines can have an offset along the categorical (x) axis for better visualization
-        (seaborn equivalent: ``dodge``, which is only available for :func:`seaborn.pointplot`,
-        not for :func:`seaborn.lineplot`)
+          (seaborn equivalent: ``dodge``, which is only available for :func:`seaborn.pointplot`,
+          not for :func:`seaborn.lineplot`)
         * Further plot parameters (axis labels, ticks, etc.) are inferred from the dataframe
 
     Equivalent to seaborn, the relationship between ``x`` and ``y`` can be shown for different subsets of the
@@ -418,7 +418,7 @@ def multi_feature_boxplot(
 
     See Also
     --------
-    `~seaborn.boxplot`
+    :func:`~seaborn.boxplot`
         seaborn function to create boxplots
     `~biopsykit.plotting.feature_boxplot`
         plot single feature boxplot

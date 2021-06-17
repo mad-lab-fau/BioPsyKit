@@ -12,7 +12,7 @@ def mkdirs(dir_list: Union[path_t, Sequence[path_t]]) -> None:
     """Batch-create a list of directories.
 
     Conveniently create a list of directories, e.g. directories for storing processing
-    results, figures, and statistic reports, using :any:`~pathlib.Path.mkdir`.
+    results, figures, and statistic reports, using :meth:`~pathlib.Path.mkdir`.
     If parent directories do not exist yet, they are created (`pathlib` option ``parent=True``),
     if directories already exist no Error is thrown (`pathlib` option ``exist_ok=True``).
 
