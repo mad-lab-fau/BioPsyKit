@@ -19,7 +19,7 @@ class ScrippsClinic(_SleepWakeBase):
 
     def __init__(self, **kwargs):
         """
-        Create an instance of the Sadeh Algorithm class for sleep/wake detection.
+        Create an instance of the Scripps Clinic Algorithm class for sleep/wake detection.
         """
 
         self.scale_factor = kwargs.get("scale_factor", self.scale_factor)

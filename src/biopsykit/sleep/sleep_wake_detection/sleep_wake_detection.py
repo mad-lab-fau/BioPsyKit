@@ -17,7 +17,7 @@ from biopsykit.sleep.sleep_wake_detection.algorithms.sazonov import Sazonov
 class SleepWakeDetection:
     sleep_wake_algo = None
 
-    def __init__(self, algorithm_type: Optional[str] = "default", **kw_args):
+    def __init__(self, algorithm_type: Optional[str] = "default", **kwargs):
         available_sleep_wake_algorithms = {"cole_kripke": ColeKripke, "sadeh": Sadeh, "cole_kripke_alternative": ColeKripkeAlternative,
                                            "webster": Webster, "scripps_clinic": ScrippsClinic, "perez_pozuelo": PerezPozuelo,
                                            "sazonov": Sazonov}
@@ -35,8 +35,8 @@ class SleepWakeDetection:
         sleep_wake_cls = available_sleep_wake_algorithms[algorithm_type]
 
         if sleep_wake_cls is ColeKripke or ColeKripkeAlternative or Webster or ScrippsClinic:
-            if "scale_factor" in kw_args:
-                self.sleep_wake_algo = sleep_wake_cls(kw_args["scale_factor"])
+            if "scale_factor" in kwargs:
+                self.sleep_wake_algo = sleep_wake_cls(scale_factor=kwargs["scale_factor"])
             else:
                 self.sleep_wake_algo = sleep_wake_cls()
 
@@ -44,7 +44,7 @@ class SleepWakeDetection:
             self.sleep_wake_algo = sleep_wake_cls()
 
 
-        
+
 
 
     def predict(self, data: Union[pd.DataFrame, np.array]) -> Union[np.array, pd.DataFrame]:
