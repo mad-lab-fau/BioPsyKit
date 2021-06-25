@@ -167,13 +167,9 @@ def _parse_time_log_not_continuous(
         index_cols = data.index.names
 
     data = pd.wide_to_long(
-        data.reset_index(),
-        stubnames=start_cols,
-        i=index_cols,
-        j="time",
-        sep="_",
-        suffix="(start|end)",
+        data.reset_index(), stubnames=start_cols, i=index_cols, j="time", sep="_", suffix="(start|end)"
     )
+    data.columns = data.columns.set_names("phase")
 
     # ensure that "start" is always before "end"
     data = data.reindex(["start", "end"], level=-1)
