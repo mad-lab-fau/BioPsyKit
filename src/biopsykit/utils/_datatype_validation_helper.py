@@ -508,7 +508,7 @@ def _multiindex_level_names_helper(
     if not expected:
         if raise_exception:
             raise ValidationError(
-                "The dataframe is expected to have exactly the following {} level names ({}), "
+                "The dataframe is expected to have exactly the following {} level names {}, "
                 "but it has {}".format(idx_or_col, level_names, ac_levels)
             )
         return False
