@@ -69,10 +69,11 @@ def get_time_from_date(
     _assert_is_dtype(data, pd.Series)
     if timezone is None:
         timezone = tz
-    if tz_convert:
-        data = pd.to_datetime(data, utc=is_utc).dt.tz_convert(timezone)
+    data = pd.to_datetime(data, utc=is_utc)
+    if tz_convert or pd.DatetimeIndex(data).tzinfo is not None:
+        data = data.dt.tz_convert(timezone)
     else:
-        data = pd.to_datetime(data, utc=is_utc).dt.tz_localize(timezone)
+        data = data.dt.tz_localize(timezone)
 
     data = data - data.dt.normalize()
     return data
