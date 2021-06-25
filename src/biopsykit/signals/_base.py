@@ -2,6 +2,7 @@
 from typing import Optional, Union, Dict, Sequence
 
 import pandas as pd
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 from biopsykit.utils.data_processing import split_data
 
 
@@ -19,8 +20,11 @@ class _BaseProcessor:
         """Sampling rate of recorded data."""
 
         if isinstance(data, dict):
+            for key, df in data.items():
+                _assert_is_dtype(df, pd.DataFrame)
             data_dict = data
         else:
+            _assert_is_dtype(data, pd.DataFrame)
             if time_intervals is not None:
                 # split data into subphases if time_intervals are passed
                 data_dict = split_data(
@@ -31,7 +35,7 @@ class _BaseProcessor:
             else:
                 data_dict = {"Data": data}
 
-        self.data = data_dict
+        self.data: Dict[str, pd.DataFrame] = data_dict
         """Dictionary with raw data, split into different phases.
 
         Each dataframe is expected to be a :class:`~pandas.DataFrame`.
