@@ -310,12 +310,15 @@ def hr_plot(
         plot ECG overview
 
     """
-    ax: plt.Axes = kwargs.get("ax", None)
+    ax: plt.Axes = kwargs.pop("ax", None)
     figsize = kwargs.get("figsize", (15, 5))
     title: str = kwargs.get("title", None)
     legend_loc = kwargs.get("legend_loc", "upper right")
     legend_fontsize = kwargs.get("legend_fontsize", "small")
     plt.rcParams["mathtext.default"] = "regular"
+
+    color = kwargs.pop("color", colors.fau_color("wiso"))
+    mean_color = kwargs.pop("mean_color", colors.adjust_color("wiso", 1.5))
 
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
@@ -327,12 +330,7 @@ def hr_plot(
     if title:
         ax.set_title("Heart Rate – {}".format(title))
 
-    ax.plot(
-        heart_rate["Heart_Rate"],
-        color=colors.fau_color("wiso"),
-        label="Heart Rate",
-        linewidth=1.5,
-    )
+    ax.plot(heart_rate["Heart_Rate"], color=color, label="Heart Rate", linewidth=1.5, **kwargs)
 
     if plot_mean:
         rate_mean = heart_rate["Heart_Rate"].mean()
@@ -340,24 +338,26 @@ def hr_plot(
             y=rate_mean,
             label="Mean: {:.1f} bpm".format(rate_mean),
             linestyle="--",
-            color=colors.adjust_color("wiso", 1.5),
+            color=mean_color,
             linewidth=2,
         )
         ax.margins(x=0)
 
     ax.set_ylim(auto=True)
 
-    if plot_outlier and outlier is not None:
-        ax.vlines(
-            outlier,
-            ymin=0,
-            ymax=1,
-            transform=ax.get_xaxis_transform(),
-            colors=colors.fau_color("phil"),
-            alpha=0.5,
-            label="ECG Outlier",
-        )
-        ax.relim()
+    if plot_outlier:
+        if "R_Peak_Outlier" in heart_rate.columns:
+            outlier = heart_rate["R_Peak_Outlier"]
+            outlier = heart_rate.index[np.where(outlier == 1)[0]]
+        if outlier is not None:
+            ax.scatter(
+                x=outlier,
+                y=heart_rate.loc[outlier, "Heart_Rate"],
+                color=colors.fau_color("phil"),
+                zorder=3,
+                label="ECG Outlier",
+            )
+            ax.relim()
 
     if isinstance(heart_rate.index, pd.DatetimeIndex):
         # TODO add axis style for non-Datetime axes
