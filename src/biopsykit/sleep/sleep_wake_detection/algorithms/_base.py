@@ -6,7 +6,7 @@ class _SleepWakeBase:
     """Base class for sleep/wake detection algorithms."""
 
     def __init__(self, **kwargs):
-        raise NotImplementedError("Needs to be implemented by child class.")
+        pass
 
     def fit(self, data: arr_t, **kwargs) -> arr_t:
         """Fit sleep/wake detection algorithm to input data.
