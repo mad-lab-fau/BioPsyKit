@@ -261,6 +261,7 @@ class EcgProcessor(_BaseProcessor):
                 sampling_rate=self.sampling_rate,
             )
             heart_rate = pd.DataFrame({"Heart_Rate": 60 / rpeaks["RR_Interval"]})
+            rpeaks.loc[:, "Heart_Rate"] = heart_rate
             heart_rate_interpolated = nk.signal_interpolate(
                 x_values=np.squeeze(rpeaks["R_Peak_Idx"].values),
                 y_values=np.squeeze(heart_rate["Heart_Rate"].values),
@@ -498,7 +499,8 @@ class EcgProcessor(_BaseProcessor):
             rpeaks = ecg_processor.rpeaks[key]
             sampling_rate = ecg_processor.sampling_rate
 
-        is_ecg_result_dataframe(ecg_signal)
+        if ecg_signal is not None:
+            is_ecg_result_dataframe(ecg_signal)
         is_r_peak_dataframe(rpeaks)
 
         outlier_correction, outlier_params, outlier_funcs = _get_outlier_params(outlier_correction, outlier_params)
@@ -518,7 +520,7 @@ class EcgProcessor(_BaseProcessor):
         bool_mask = np.full(rpeaks.shape[0], False)
         rpeaks["R_Peak_Outlier"] = 0.0
 
-        # TODO add source of different outlier methods for plotting?
+        # TODO add source of different outlier methods for plotting/statistics
         for k in outlier_funcs:
             kwargs = {"ecg_signal": ecg_signal, "sampling_rate": sampling_rate}
             bool_mask = outlier_funcs[k](rpeaks, bool_mask, outlier_params[k], **kwargs)
@@ -528,16 +530,18 @@ class EcgProcessor(_BaseProcessor):
         removed_beats = rpeaks_copy["R_Peak_Idx"][rpeaks["R_Peak_Idx"].isna()]
         # mark all outlier with 1.0 in the column R_Peak_Outlier column
         rpeaks = rpeaks.fillna({"R_Peak_Outlier": 1.0})
-        # also mark outlier in the ECG signal dataframe
-        ecg_signal.loc[removed_beats.index, "R_Peak_Outlier"] = 1.0
+        if ecg_signal is not None:
+            # also mark outlier in the ECG signal dataframe
+            ecg_signal.loc[removed_beats.index, "R_Peak_Outlier"] = 1.0
 
         # replace the last beat by average
-        rpeaks.loc[last_sample.name] = [
-            rpeaks["R_Peak_Quality"].mean(),
-            last_sample["R_Peak_Idx"],
-            rpeaks["RR_Interval"].mean(),
-            0.0,
-        ]
+        if "R_Peak_Quality" in rpeaks.columns:
+            rpeaks.loc[last_sample.name] = [
+                rpeaks["R_Peak_Quality"].mean(),
+                last_sample["R_Peak_Idx"],
+                rpeaks["RR_Interval"].mean(),
+                0.0,
+            ]
 
         # if imputation type is moving average: replace RR intervals by moving average before interpolating
         # the other columns
@@ -551,7 +555,8 @@ class EcgProcessor(_BaseProcessor):
         # drop duplicate R peaks (can happen during outlier correction at edge cases)
         rpeaks = rpeaks.drop_duplicates(subset="R_Peak_Idx")
 
-        is_ecg_result_dataframe(ecg_signal)
+        if ecg_signal is not None:
+            is_ecg_result_dataframe(ecg_signal)
         is_r_peak_dataframe(rpeaks)
 
         return ecg_signal, rpeaks
@@ -1263,10 +1268,6 @@ def _correct_outlier_artifact(
 
     This function uses the artifact detection algorithm from `Berntson et al. (1990)`.
     Marks beats as outlier if they detected as such by this algorithm.
-
-    marks beats as outlier if their successive differences of RR intervals are within the xx % highest or
-    lowest values, i.e. if their z-score is above a threshold, e.g. ``1.96`` => 5% (2.5% highest, 2.5% lowest values);
-    ``2.576`` => 1% (0.5% highest, 0.5% lowest values).
 
 
     Parameters
