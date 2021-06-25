@@ -30,15 +30,7 @@ MAP_STAT_PARAMS = {
     "rm_anova": ["dv", "within", "subject"],
     "mixed_anova": ["dv", "between", "within", "subject"],
     "kruskal": ["dv", "between"],
-    "pairwise_ttests": [
-        "dv",
-        "between",
-        "within",
-        "subject",
-        "effsize",
-        "tail",
-        "padjust",
-    ],
+    "pairwise_ttests": ["dv", "between", "within", "subject", "effsize", "tail", "padjust", "parametric"],
     "pairwise_tukey": ["dv", "between", "effsize"],
     "pairwise_gameshowell": ["dv", "between", "effsize"],
 }
