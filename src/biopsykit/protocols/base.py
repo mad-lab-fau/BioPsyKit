@@ -32,6 +32,7 @@ from biopsykit.utils.datatype_helper import (
     is_saliva_raw_dataframe,
     SubjectDataDict,
     SalivaFeatureDataFrame,
+    is_saliva_mean_se_dataframe,
 )
 from biopsykit.utils.exceptions import ValidationError
 
@@ -365,19 +366,23 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         sample_times: Union[Sequence[int], Dict[str, Sequence[int]]],
     ) -> Union[SalivaRawDataFrame, Dict[str, SalivaRawDataFrame]]:
         saliva_data = {}
-        try:
-            if isinstance(data, dict):
-                for key, value in data.items():
-                    saliva_data[key] = self._add_saliva_data(value, key, sample_times[key])
-                return saliva_data
-            is_saliva_raw_dataframe(data, saliva_type)
-            _check_sample_times_match(data, sample_times)
-            return data
-        except ValidationError as e:
-            raise ValidationError(
-                "'data' is not a 'SalivaRawDataFrame' (or a dict of such). "
-                "The validation raised the following error:\n\n{}".format(str(e))
-            ) from e
+        if isinstance(data, dict):
+            for key, value in data.items():
+                saliva_data[key] = self._add_saliva_data(value, key, sample_times[key])
+            return saliva_data
+        is_raw = is_saliva_raw_dataframe(data, saliva_type, raise_exception=False)
+        is_mse = is_saliva_mean_se_dataframe(data, raise_exception=False)
+        if not any([is_mse, is_raw]):
+            try:
+                is_saliva_raw_dataframe(data, saliva_type)
+                is_saliva_mean_se_dataframe(data)
+            except ValidationError as e:
+                raise ValidationError(
+                    "'data' is expected to be either a SalivaRawDataFrame or a SalivaMeanSeDataFrame! "
+                    "The validation raised the following error:\n\n{}".format(str(e))
+                )
+        _check_sample_times_match(data, sample_times)
+        return data
 
     def add_hr_data(
         self,
