@@ -129,7 +129,6 @@ def sleep_imu_plot(
             datastream=ds,
             downsample_factor=downsample_factor,
             sleep_endpoints=sleep_endpoints,
-            ax=ax,
             **kwargs,
         )
 
@@ -143,9 +142,9 @@ def _sleep_imu_plot(
     datastream: str,
     downsample_factor: int,
     sleep_endpoints: SleepEndpointDict,
-    ax: plt.Axes,
     **kwargs,
 ):
+    ax = kwargs.get("ax")
     legend_loc = kwargs.get("legend_loc", "lower left")
     legend_fontsize = kwargs.get("legend_fontsize", "smaller")
     ylabel = kwargs.get("ylabel", {"acc": "Acceleration [$m/s^2$]", "gyr": "Angular Velocity [$°/s$]"})
