@@ -56,8 +56,10 @@ class ScrippsClinic(_SleepWakeBase):
         kernel = sf * np.array([0.0064, 0.0074, 0.0112, 0.0112, 0.0118, 0.0118, 0.0128, 0.0188 ,0.0280, 0.0664, 0.0300, 0.0112, 0.100,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         scores = np.convolve(data, kernel, "same")
-        scores[scores >= 1] = 1
-        scores[scores < 1] = 0
+
+        scores[scores >= 1] = 99     #wake = 0
+        scores[scores < 1] = 1      #sleep = 1
+        scores[scores == 99] = 0     #wake = 0
 
 
 

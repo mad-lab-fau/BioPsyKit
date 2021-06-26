@@ -54,8 +54,10 @@ class ColeKripke(_SleepWakeBase):
         sf = np.array(self.scale_factor)
         kernel = sf * np.array([4.64, 6.87, 3.75, 5.07, 16.19, 5.84, 4.024, 0.00, 0.00])[::-1]
         scores = np.convolve(data, kernel, "same")
-        scores[scores >= 0.5] = 1
-        scores[scores < 0.5] = 0
+
+        scores[scores >= 1] = 99  # wake = 0
+        scores[scores < 1] = 1  # sleep = 1
+        scores[scores == 99] = 0  # wake = 0
 
         # rescore the original predictions
         scores = self._rescore(scores)

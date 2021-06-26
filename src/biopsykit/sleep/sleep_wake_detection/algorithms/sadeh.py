@@ -57,8 +57,8 @@ class Sadeh(_SleepWakeBase):
         locAct = np.log(data + 1)[5:-5]
         score = 7.601 - 0.065 * mean - 0.056 * std - 0.0703 * locAct - 1.08 * nat
 
-        score[score >= 0] = 0
-        score[score < 0] = 1
+        score[score >= 0] = 1       #sleep = 1
+        score[score < 0] = 0        #wake = 0
 
         score = np.pad(np.asarray(score),(5), 'constant')
 

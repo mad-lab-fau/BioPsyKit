@@ -41,8 +41,8 @@ class PerezPozuelo(_SleepWakeBase):
         heart_rate = dist.x[np.searchsorted(dist.y, self.quantile, side="left")]
 
         preprocessed = data
-        preprocessed[data<=heart_rate] = 1
-        preprocessed[data>heart_rate] = 0
+        preprocessed[data<=heart_rate] = 0      #wake = 0
+        preprocessed[data>heart_rate] = 1       #sleep = 1
 
         preprocessed = sliding_window(preprocessed,window_samples=10,overlap_samples=9)
 

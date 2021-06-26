@@ -47,5 +47,5 @@ class SleepWakeDetection:
 
 
 
-    def predict(self, data: Union[pd.DataFrame, np.array]) -> Union[np.array, pd.DataFrame]:
-        return getattr(self.sleep_wake_algo, "predict")(data)
+    def predict(self, data: Union[pd.DataFrame, np.array], rescore: bool = True) -> Union[np.array, pd.DataFrame]:
+        return getattr(self.sleep_wake_algo, "predict")(data, rescore)

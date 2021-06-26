@@ -56,8 +56,9 @@ class ColeKripkeAlternative(_SleepWakeBase):
         kernel = sf * np.array([50, 30, 14, 28, 121, 8, 50, 0 ,0])
         scores = np.convolve(data, kernel, "same")
 
-        scores[scores >= 1] = 1 #changed to 1 according to paper
-        scores[scores < 1] = 0
+        scores[scores >= 1] = 99  # wake = 0
+        scores[scores < 1] = 1  # sleep = 1
+        scores[scores == 99] = 0  #wake = 0       #changed to 1 according to paper
 
 
 

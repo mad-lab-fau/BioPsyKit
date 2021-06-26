@@ -33,9 +33,8 @@ class Sazonov(_SleepWakeBase):
 
         scores = 1 / (1 + np.exp(-scores))
 
-        scores[scores >= 0.5] = 99
-        scores[scores < 0.5] = 1
-        scores[scores == 99] = 0
+        scores[scores >= 0.5] = 1
+        scores[scores < 0.5] = 0
 
 
         if rescore_data:

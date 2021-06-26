@@ -150,6 +150,32 @@ def read_all_r_point(folder_path):
     return r_point
 
 
+
+def read_single_r_point(folder_path,mesa_id):
+    """
+    Read in all the csv-files from the r-roint mesa-dataset.
+
+    Parameters
+    ----------
+    folder_path: str
+        file path to the mesa folder with your r-point csv-files. Important: not the filename itself!
+
+    Returns
+    -------
+    dict:
+        dict that contains a pandas.DataFrame for every subject
+
+    """
+    try:
+        r_point = pd.read_csv(folder_path + '\polysomnography/annotations-rpoints/mesa-sleep-' + "{:04d}".format(mesa_id) + "-rpoint.csv")
+
+    except ImportError as e:
+        raise ImportError("Dataset don't exist") from e
+
+
+    return r_point
+
+
 def xml_reader(file_path):
     psg_data = ET.parse(file_path)  #read xml files in a tree structure
     root = psg_data.getroot()       # root of the tree structure
