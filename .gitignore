@@ -1,6 +1,10 @@
 # Ignore result folder in examples
 examples/results/
 
+docs/readme.md
+docs/authors.md
+docs/changelog.md
+
 
 # Created by .ignore support plugin (hsz.mobi)
 ### JupyterNotebooks template
