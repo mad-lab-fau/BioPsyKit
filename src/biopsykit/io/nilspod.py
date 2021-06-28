@@ -34,7 +34,7 @@ def load_dataset_nilspod(
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
     legacy_support: Optional[str] = "resolve",
-    timezone: Optional[Union[pytz.tzinfo.tzinfo, str]] = None,
+    timezone: Optional[Union[datetime.tzinfo, str]] = None,
 ) -> Tuple[pd.DataFrame, float]:
     """Load NilsPod recording and convert into dataframe.
 
@@ -68,8 +68,8 @@ def load_dataset_nilspod(
           an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
           to learn more about available conversions.
 
-    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
-        timezone of the acquired data, either as string of as pytz object.
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the acquired data, either as string of as tzinfo object.
         Default: "Europe/Berlin"
 
     Returns
@@ -151,7 +151,7 @@ def load_synced_session_nilspod(
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
     legacy_support: Optional[str] = "resolve",
-    timezone: Optional[Union[pytz.tzinfo.tzinfo, str]] = None,
+    timezone: Optional[Union[datetime.tzinfo, str]] = None,
 ) -> Tuple[pd.DataFrame, float]:
     """Load a synchronized session of NilsPod recordings and convert into dataframes.
 
@@ -180,7 +180,7 @@ def load_synced_session_nilspod(
         * "resolve" (default): perform a legacy conversion to load old files. If no suitable conversion is found,
           an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
           to learn more about available conversions.
-    timezone : str or :class:`~pytz.tzinfo.tzinfo`, optional
+    timezone : str or :class:`datetime.tzinfo`, optional
         timezone of the acquired data, either as string of as tzinfo object.
         Default: "Europe/Berlin"
 
@@ -253,7 +253,7 @@ def load_synced_session_nilspod(
 def load_csv_nilspod(
     file_path: path_t = None,
     datastreams: Optional[Sequence[str]] = None,
-    timezone: Optional[Union[pytz.tzinfo.tzinfo, str]] = tz,
+    timezone: Optional[Union[datetime.tzinfo, str]] = tz,
     filename_regex: Optional[str] = None,
     time_regex: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, float]:
@@ -276,8 +276,8 @@ def load_csv_nilspod(
         or ``None`` to load all datastreams. Datastreams that are not part of the current dataset will
         be silently ignored.
         Default: ``None``
-    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
-        timezone of the acquired data, either as string of as pytz object.
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the acquired data, either as string of as tzinfo object.
         Default: 'Europe/Berlin'
     filename_regex : str, optional
         regex string to extract time substring from file name or ``None`` to use default file name pattern.

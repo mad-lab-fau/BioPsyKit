@@ -1,5 +1,6 @@
 """Module containing different I/O functions to load data recorded by Withings Sleep Analyzer."""
 from ast import literal_eval
+import datetime
 from pathlib import Path
 from typing import Optional, Union, Sequence
 
@@ -33,7 +34,7 @@ WITHINGS_RAW_DATA_SOURCES = {
 
 def load_withings_sleep_analyzer_raw_folder(
     folder_path: path_t,
-    timezone: Optional[Union[pytz.tzinfo.tzinfo, str]] = None,
+    timezone: Optional[Union[datetime.tzinfo, str]] = None,
     split_into_nights: Optional[bool] = True,
 ) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     """Load folder with raw data from a Withings Sleep Analyzer recording session and convert into time-series data.
@@ -57,17 +58,12 @@ def load_withings_sleep_analyzer_raw_folder(
     ----------
     folder_path: :class:`~pathlib.Path` or str
         path to folder with Sleep Analyzer raw data
-    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
-        timezone of the acquired data, either as string of as pytz object.
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the acquired data, either as string of as tzinfo object.
         Default: 'Europe/Berlin'
     split_into_nights : bool, optional
         whether to split the dataframe into the different recording nights (and return a list of dataframes) or not.
         Default: ``True``
-
-    See Also
-    --------
-    load_withings_sleep_analyzer_raw_file
-        load a single Sleep Analyzer file with only one data source
 
     Returns
     -------
@@ -79,6 +75,12 @@ def load_withings_sleep_analyzer_raw_folder(
     ValueError
         if ``folder_path`` is not a directory
         if no Sleep Analyzer Raw files are in directory specified by ``folder_path``
+
+
+    See Also
+    --------
+    load_withings_sleep_analyzer_raw_file
+        load a single Sleep Analyzer file with only one data source
 
     """
     # ensure pathlib
@@ -115,7 +117,7 @@ def load_withings_sleep_analyzer_raw_folder(
 def load_withings_sleep_analyzer_raw_file(
     file_path: path_t,
     data_source: str,
-    timezone: Optional[Union[pytz.tzinfo.tzinfo, str]] = None,
+    timezone: Optional[Union[datetime.tzinfo, str]] = None,
     split_into_nights: Optional[bool] = True,
 ) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     """Load single Withings Sleep Analyzer raw data file and convert into time-series data.
@@ -127,7 +129,7 @@ def load_withings_sleep_analyzer_raw_file(
     data_source : str
         data source of file specified by ``file_path``
     timezone : str or :class:`datetime.tzinfo`, optional
-        timezone of recorded data, either as string or as pytz object.
+        timezone of recorded data, either as string or as tzinfo object.
         Default: 'Europe/Berlin'
     split_into_nights : bool, optional
         whether to split the dataframe into the different recording nights (and return a list of dataframes) or not.
@@ -224,8 +226,8 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
     ----------
     file_path : :class:`~pathlib.Path` or str
         path to file
-    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
-        timezone of recorded data, either as string or as pytz object.
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of recorded data, either as string or as tzinfo object.
         Default: 'Europe/Berlin'
 
 

@@ -70,7 +70,7 @@ def load_hr_phase_dict_folder(
     base_path: path_t,
     filename_pattern: str,
     subfolder_pattern: Optional[str] = None,) -> HeartRateSubjectDataDict:
-    r"""Load a folder with multiple :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` and concatenate them into a ``HeartRateSubjectDict``.
+    r"""Load a folder with multiple :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` and concatenate them into a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`.
 
     This functions looks for all files that match the ``file_pattern`` in the folder specified by ``base_path``
     and loads the files that are all expected to be :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
@@ -81,7 +81,7 @@ def load_hr_phase_dict_folder(
     Alternatively, if the files are stored in subfolders, the name pattern of these subfolders can be specified by
     ``subject_folder_pattern``. Then, it is expected that the subfolder names correspond to the subject IDs.
 
-    The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDict`
+    The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
     with the following format:
 
     { ``subject_id`` : :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` }
@@ -102,8 +102,8 @@ def load_hr_phase_dict_folder(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDict`
-        ``HeartRateSubjectDict``, i.e., a dictionary with :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+        ``HeartRateSubjectDataDict``, i.e., a dictionary with :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         of multiple subjects
 
     Raises

@@ -457,7 +457,7 @@ def convert_time_log_datetime(
     dataset: Optional[Dataset] = None,
     df: Optional[pd.DataFrame] = None,
     date: Optional[Union[str, datetime.datetime]] = None,
-    timezone: Optional[Union[str, pytz.tzinfo.tzinfo]] = None,
+    timezone: Optional[Union[str, datetime.tzinfo]] = None,
 ) -> pd.DataFrame:
     """Convert the time log information into datetime objects.
 
@@ -479,8 +479,8 @@ def convert_time_log_datetime(
         datetime object or date string used to convert time log information into datetime.
         If ``date`` is a string, it must be supplied in a common date format, e.g. "dd.mm.yyyy" or "dd/mm/yyyy".
         Default: ``None``
-    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
-        timezone of the acquired data to convert, either as string of as pytz object.
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the acquired data to convert, either as string of as tzinfo object.
         Default: "Europe/Berlin"
 
     Returns
@@ -526,7 +526,7 @@ def convert_time_log_datetime(
 
 
 def load_pandas_dict_excel(
-    file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, pytz.tzinfo.tzinfo]] = None
+    file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, datetime.tzinfo]] = None
 ) -> Dict[str, pd.DataFrame]:
     """Load Excel file containing pandas dataframes with time series data of one subject.
 
@@ -536,9 +536,9 @@ def load_pandas_dict_excel(
         path to file
     index_col : str, optional
         name of index columns of dataframe or ``None`` if no index column is present. Default: "time"
-    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
+    timezone : str or :class:`datetime.tzinfo`, optional
         timezone of the acquired data for localization (since Excel does not support localized timestamps),
-        either as string of as pytz object.
+        either as string of as tzinfo object.
         Default: "Europe/Berlin"
 
     Returns
