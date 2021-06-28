@@ -53,7 +53,7 @@ def load_time_log(
 
     Parameters
     ----------
-    file_path : :any:`pathlib.path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to time log file. Must either be an Excel or csv file
     index_cols : str, list of str or dict, optional
         specifies dataframe index. Can either be a string or a list of strings to indicate column name(s) from the
@@ -79,9 +79,9 @@ def load_time_log(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file format is none of [.xls, .xlsx, .csv]
-    :class:`~biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if ``continuous_time`` is ``False``, but 'start' and 'end' time columns of each phase do not match or
         none of these columns were found in the dataframe
 
@@ -98,7 +98,7 @@ def load_time_log(
     >>> data = bp.io.load_time_log(file_path, index_cols="subject_id")
     >>> # Example 3:
     >>> # load time log file into a pandas dataframe, specify the columns "subject_id" and "condition"
-    >>> # to be the new index, and the columns 'Phase1' 'Phase2' and 'Phase3' to be the used
+    >>> # to be the new index, and the columns 'Phase1' 'Phase2' and 'Phase3' to be used
     >>> # for extracting time information
     >>> data = bp.io.load_time_log(
     >>>     file_path, index_cols=["subject_id", "condition"], phase_cols=["Phase1", "Phase2", "Phase3"]
@@ -167,9 +167,13 @@ def _parse_time_log_not_continuous(
         index_cols = data.index.names
 
     data = pd.wide_to_long(
-        data.reset_index(), stubnames=start_cols, i=index_cols, j="time", sep="_", suffix="(start|end)"
+        data.reset_index(),
+        stubnames=start_cols,
+        i=index_cols,
+        j="time",
+        sep="_",
+        suffix="(start|end)",
     )
-    data.columns = data.columns.set_names("phase")
 
     # ensure that "start" is always before "end"
     data = data.reindex(["start", "end"], level=-1)
@@ -193,7 +197,7 @@ def load_subject_condition_list(
 
     Parameters
     ----------
-    file_path : :any:`pathlib.path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to time log file. Must either be an Excel or csv file
     subject_col : str, optional
         name of column containing subject IDs or ``None`` to use default column name ``subject``.
@@ -209,22 +213,22 @@ def load_subject_condition_list(
         whether to return a dict with subject IDs per condition (``True``) or a dataframe (``False``).
         Default: ``False``
     **kwargs
-        Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
+        Additional parameters that are passed tos :func:`pandas.read_csv` or :func:`pandas.read_excel`
 
     Returns
     -------
-    :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` or
-    :class:`~biopsykit.datatype_helper.SubjectConditionDict`
+    :class:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
+    :class:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
         a standardized pandas dataframe with subject IDs and condition assignments (if ``return_dict`` is ``False``) or
         a standardized dict with subject IDs per group (if ``return_dict`` is ``True``)
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is not a csv or Excel file
-    :class:`~biopsykit.exceptions.ValidationError`
-        if result is not a :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` or a
-        :class:`~biopsykit.datatype_helper.SubjectConditionDict`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if result is not a :class:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or a
+        :class:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
 
     """
     # ensure pathlib
@@ -282,7 +286,7 @@ def load_questionnaire_data(
 
     Parameters
     ----------
-    file_path : :any:`pathlib.path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to time log file. Must either be an Excel or csv file
     subject_col : str, optional
         name of column containing subject IDs or ``None`` to use default column name ``subject``.
@@ -299,8 +303,9 @@ def load_questionnaire_data(
         Can either be a string or a list strings to indicate column name(s) that should be used as index level(s),
         or ``None`` for no additional index levels. Default: ``None``
     replace_missing_vals : bool, optional
-        ``True`` to replace encoded "missing values" from software like SPSS (e.g. -77, -99, or -66)
-         to "actual" missing values (NaN). Default: ``True``
+        ``True`` to replace encoded "missing values" from software like SPSS (e.g. -77, -99, or -66) 
+        to "actual" missing values (NaN). 
+        Default: ``True``
     remove_nan_rows : bool, optional
         ``True`` to remove rows that only contain NaN values (except the index cols), ``False`` to keep NaN rows.
         Default: ``True``
@@ -315,7 +320,7 @@ def load_questionnaire_data(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :class:`~biopsykit.utils.exceptions.FileExtensionError`
         if file format is none of [.xls, .xlsx, .csv]
 
     """
@@ -372,13 +377,13 @@ def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
     file_path : :class:`~pathlib.Path` or str
         file path to codebook
     **kwargs
-        additional arguments to pass to :func:`~pandas.read_csv` or :func:`~pandas.read_excel`
+        additional arguments to pass to :func:`pandas.read_csv` or :func:`pandas.read_excel`
 
 
     Returns
     -------
     :class:`~pandas.DataFrame`
-        :obj:`biopsykit.utils.datatype_helper.CodebookDataFrame`, a dataframe in a standardized format
+        :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame`, a dataframe in a standardized format
 
 
     See Also
@@ -458,18 +463,18 @@ def convert_time_log_datetime(
 
     This function converts time log information (containing only time, but no date)
     into datetime objects, thus, adds the `start date` of the recording. To specify the recording date,
-    either a NilsPod :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DateTimeIndex`
+    either a NilsPod :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DatetimeIndex`
     must be supplied from which the recording date can be extracted.
     As an alternative, the date can be specified explicitly via ``date`` parameter.
 
     Parameters
     ----------
-    time_log : pd.DataFrame
+    time_log : :class:`~pandas.DataFrame`
         pandas dataframe with time log information
     dataset : :class:`~nilspodlib.dataset.Dataset`, optional
         NilsPod Dataset object extract time and date information. Default: ``None``
     df : :class:`~pandas.DataFrame`, optional
-        dataframe with :class:`pandas.DateTimeIndex` to extract time and date information. Default: ``None``
+        dataframe with :class:`~pandas.DatetimeIndex` to extract time and date information. Default: ``None``
     date : str or datetime, optional
         datetime object or date string used to convert time log information into datetime.
         If ``date`` is a string, it must be supplied in a common date format, e.g. "dd.mm.yyyy" or "dd/mm/yyyy".
@@ -480,14 +485,14 @@ def convert_time_log_datetime(
 
     Returns
     -------
-    pd.DataFrame
+    :class:`~pandas.DataFrame`
         pandas dataframe with log time converted into datetime
 
     Raises
     ------
     ValueError
         if none of ``dataset``, ``df`` and ``date`` are supplied as argument,
-        or if index of ``df`` is not a :class:`pandas.DatetimeIndex`
+        or if index of ``df`` is not a :class:`~pandas.DatetimeIndex`
 
     """
     if dataset is None and date is None and df is None:
@@ -527,7 +532,7 @@ def load_pandas_dict_excel(
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to file
     index_col : str, optional
         name of index columns of dataframe or ``None`` if no index column is present. Default: "time"
@@ -543,7 +548,7 @@ def load_pandas_dict_excel(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :class:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no Excel file (.xls or .xlsx)
 
     See Also
@@ -578,14 +583,14 @@ def write_pandas_dict_excel(
     ----------
     data_dict : dict
         dictionary with pandas dataframes
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to exported Excel file
     index_col : bool, optional
         ``True`` to include dataframe index in Excel export, ``False`` otherwise. Default: ``True``
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if ``file_path`` is not an Excel file
 
     """
@@ -610,7 +615,7 @@ def write_result_dict(
 ) -> None:
     """Write dictionary with processing results (e.g. HR, HRV, RSA) to csv file.
 
-    The keys in the dictionary should be the subject IDs (or any other identifier),´
+    The keys in the dictionary should be the subject IDs (or any other identifier),
     the values should be :class:`~pandas.DataFrame`. The index level(s) of the exported dataframe can be specified
     by the ``index_col`` parameter.
 
@@ -621,14 +626,14 @@ def write_result_dict(
     result_dict : dict
         Dictionary containing processing results for all subjects. The keys in the dictionary should be the Subject IDs
         (or any other identifier), the values should be pandas dataframes
-    file_path : path, str
+    file_path : :class:`~pathlib.Path`, str
         path to file
     index_name : str, optional
         name of the index resulting from concatenting dataframes. Default: ``subject``
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if ``file_path`` is not a csv or Excel file
 
     Examples

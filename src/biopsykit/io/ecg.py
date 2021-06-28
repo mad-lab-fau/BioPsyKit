@@ -25,7 +25,7 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to file
     assert_format : bool, optional
         whether to check if the imported dict is in the right format or not
@@ -37,10 +37,10 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if file in ``file_path`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         (if ``assert_format`` is ``True``)
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no Excel file (.xls or .xlsx)
 
     See Also
@@ -69,9 +69,8 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 def load_hr_phase_dict_folder(
     base_path: path_t,
     filename_pattern: str,
-    subfolder_pattern: Optional[str] = None,
-) -> HeartRateSubjectDataDict:
-    r"""Load a folder with multiple ``HeartRatePhaseDict``s and concatenate them into a ``HeartRateSubjectDict``.
+    subfolder_pattern: Optional[str] = None,) -> HeartRateSubjectDataDict:
+    r"""Load a folder with multiple :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` and concatenate them into a ``HeartRateSubjectDict``.
 
     This functions looks for all files that match the ``file_pattern`` in the folder specified by ``base_path``
     and loads the files that are all expected to be :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
@@ -90,7 +89,7 @@ def load_hr_phase_dict_folder(
 
     Parameters
     ----------
-    base_path : :any:`pathlib.Path` or str
+    base_path : :class: `~pathlib.Path` or str
         path to top-level folder containing all subject folders
     filename_pattern : str
         filename pattern of exported :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
@@ -109,7 +108,7 @@ def load_hr_phase_dict_folder(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if any file that matches ``filename_pattern`` is not a
         :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
     :exc:`FileNotFoundError`
@@ -206,7 +205,7 @@ def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t) ->
     hr_phase_dict : :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` containing pandas dataframes
         with heart rate data
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to export file
 
     See Also

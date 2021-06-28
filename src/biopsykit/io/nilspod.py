@@ -39,11 +39,11 @@ def load_dataset_nilspod(
     """Load NilsPod recording and convert into dataframe.
 
     To load a dataset either a :class:`~nilspodlib.dataset.Dataset` object (via ``dataset`` parameter)
-    or the path to the binary file file (via ``file_path`` variable) can be passed.
+    or the path to the binary file (via ``file_path`` variable) can be passed.
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str, optional
+    file_path : :class:`~pathlib.Path` or str, optional
         path to binary file
     dataset : :class:`~nilspodlib.dataset.Dataset`, optional
         Dataset object
@@ -197,11 +197,11 @@ def load_synced_session_nilspod(
     ValueError
         if ``handle_counter_inconsistency`` is ``raise`` and counter of any dataset is inconsistent
         (not monotonously increasing).
-        if ``legacy_support`` is ``raise`` and so suitable conversion can be found for the files in the session.
-        if sampling rate is not the same for all of datasets in the session
+        If ``legacy_support`` is ``raise`` and so suitable conversion can be found for the files in the session.
+        If sampling rate is not the same for all of datasets in the session
             ValueError
-        if ``folder_path`` does not contain any NilsPod files
-        if the sampling rates of the files in the folder are not the same
+        If ``folder_path`` does not contain any NilsPod files
+        If the sampling rates of the files in the folder are not the same
 
     See Also
     --------
@@ -269,7 +269,7 @@ def load_csv_nilspod(
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str, optional
+    file_path : :class:`~pathlib.Path` or str, optional
         path to binary file
     datastreams : list of str, optional
         list of datastreams if only specific datastreams of the file should be imported
@@ -295,7 +295,7 @@ def load_csv_nilspod(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no csv file
 
     See Also
@@ -356,7 +356,7 @@ def load_folder_nilspod(
 
     Parameters
     ----------
-    folder_path : :any:`pathlib.Path` or str, optional
+    folder_path : :class:`~pathlib.Path` or str, optional
         folder path to files
     phase_names: list, optional
         list of phase names corresponding to the files in the folder. Must match the number of recordings.
@@ -443,22 +443,24 @@ def get_nilspod_dataset_corrupted_info(dataset: Dataset, file_path: path_t) -> D
     """Get information about the corruption state of a NilsPod dataset.
 
     Corruption information include the information:
+
         * "name": recording date and time
         * "percent_corrupt": Amount of corrupted data in percent
         * "condition": Condition of the dataset. Can be one of:
-            * "fine": if dataset is not corrupted
-            * "lost": if more than 90% of all samples are corrupted
-            * "parts": if between 50% and 90% of all samples are corrupted
-            * "start_only": if less than 50% of all samples are corrupted and corrupted samples
-              are only in the first third of the dataset
-            * "end_only": if less than 50% of all samples are corrupted and corrupted samples
-              are only in the last third of the dataset
+
+          * "fine": if dataset is not corrupted
+          * "lost": if more than 90% of all samples are corrupted
+          * "parts": if between 50% and 90% of all samples are corrupted
+          * "start_only": if less than 50% of all samples are corrupted and corrupted samples
+            are only in the first third of the dataset
+          * "end_only": if less than 50% of all samples are corrupted and corrupted samples
+            are only in the last third of the dataset
 
     Parameters
     ----------
     dataset : :class:`~nilspodlib.dataset.Dataset`, optional
         Dataset object
-    file_path : :any:`pathlib.Path` or str, optional
+    file_path : :class:`~pathlib.Path` or str, optional
         path to binary file
 
     Returns
