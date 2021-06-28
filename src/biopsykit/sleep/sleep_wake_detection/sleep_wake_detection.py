@@ -55,12 +55,15 @@ class SleepWakeDetection:
         sleep_wake_cls = available_sleep_wake_algorithms[algorithm_type]
 
         if sleep_wake_cls is ColeKripke or ColeKripkeAlternative or Webster or ScrippsClinic:
-            scale_factor = kwargs.get("scale_factor", None)
-            self.sleep_wake_algo = sleep_wake_cls(scale_factor=scale_factor)
+            if "scale_factor" in kwargs:
+                self.sleep_wake_algo = sleep_wake_cls(scale_factor=kwargs["scale_factor"])
+            else:
+                self.sleep_wake_algo = sleep_wake_cls()
+
         else:
             self.sleep_wake_algo = sleep_wake_cls()
 
-    def predict(self, data: arr_t) -> SleepWakeDataFrame:
+    def predict(self, data: arr_t, rescore: bool = True) -> SleepWakeDataFrame:
         """Apply sleep/wake prediction on input data.
         Parameters
         ----------

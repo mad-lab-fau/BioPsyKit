@@ -1,6 +1,5 @@
 """Functions to process sleep data from raw IMU data or Actigraph data."""
-from typing import Dict, Optional, Any
-
+from typing import Dict, Optional, Any, Union
 from biopsykit.signals.imu import convert_acc_data_to_g
 from biopsykit.signals.imu.rest_periods import RestPeriods
 from biopsykit.signals.imu.wear_detection import WearDetection
@@ -8,7 +7,8 @@ from biopsykit.signals.imu.activity_counts import ActivityCounts
 from biopsykit.sleep.sleep_wake_detection.sleep_wake_detection import SleepWakeDetection
 from biopsykit.sleep.sleep_endpoints import compute_sleep_endpoints
 from biopsykit.utils._types import arr_t
-
+import pandas as pd
+import numpy as np
 
 def predict_pipeline_acceleration(
     data: arr_t, sampling_rate: float, convert_to_g: Optional[bool] = True, **kwargs

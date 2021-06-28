@@ -6,8 +6,6 @@ from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.rescore import rescore
 
 
-
-
 class ColeKripkeAlternative(_SleepWakeBase):
     """
     Runs sleep wake detection on epoch level activity data. Epochs are 1 minute long and activity is represented
@@ -16,7 +14,6 @@ class ColeKripkeAlternative(_SleepWakeBase):
 
     scale_factor: float = 0.0001
 
-
     def __init__(self, **kwargs):
         """
         Create an instance of the Sadeh Algorithm class for sleep/wake detection.
@@ -24,12 +21,12 @@ class ColeKripkeAlternative(_SleepWakeBase):
 
         self.scale_factor = kwargs.get("scale_factor", self.scale_factor)
 
-
     def fit(self):
         pass
 
-
-    def predict(self, data: Union[pd.DataFrame, np.array], rescore_data: Optional[bool] = True) -> Union[np.array, pd.DataFrame]:
+    def predict(
+        self, data: Union[pd.DataFrame, np.array], rescore_data: Optional[bool] = True
+    ) -> Union[np.array, pd.DataFrame]:
         """
         Perform the sleep/wake score prediction.
 
@@ -48,22 +45,16 @@ class ColeKripkeAlternative(_SleepWakeBase):
             index = data.index
             data = sanitize_input_1d(data)
 
-
         # ensure numpy
         # problem in my view: with np.convolve and "same" we dont make the "unsymmetric" convolution... ( formula is with A-4 and A+2)
         # possible solution: np.valid and append 4 zeros in front and 2 zeros at the back or like implemented
         sf = np.array(self.scale_factor)
-        kernel = sf * np.array([50, 30, 14, 28, 121, 8, 50, 0 ,0])
+        kernel = sf * np.array([50, 30, 14, 28, 121, 8, 50, 0, 0])
         scores = np.convolve(data, kernel, "same")
 
         scores[scores >= 1] = 99  # wake = 0
         scores[scores < 1] = 1  # sleep = 1
-        scores[scores == 99] = 0  #wake = 0       #changed to 1 according to paper
-
-
-
-
-
+        scores[scores == 99] = 0  # wake = 0       #changed to 1 according to paper
 
         if rescore_data:
             scores = rescore(scores)
@@ -72,4 +63,3 @@ class ColeKripkeAlternative(_SleepWakeBase):
             scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
 
         return scores
-
