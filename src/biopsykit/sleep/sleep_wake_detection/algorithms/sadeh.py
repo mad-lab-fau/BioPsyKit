@@ -42,9 +42,9 @@ class Sadeh(_SleepWakeBase):
             index = data.index
             data = sanitize_input_1d(data)
 
-        window_past = 6
-        window_mean = 11
-        window_center = 11
+        window_past = 11
+        window_mean = 21
+        window_center = 21
 
         #mean = (self._rolling_window(data, window_mean, window_mean - 1)).mean(1)
         mean = sliding_window(data,window_samples=window_mean,overlap_samples=window_mean-1).mean(1)
@@ -53,15 +53,16 @@ class Sadeh(_SleepWakeBase):
         nat = np.logical_and(nat < 100, nat > 50)
         nat = np.sum(nat, axis=1)
         #std = (self._rolling_window(data, window_past, window_past - 1)).std(1)[:-5]
-        std = sliding_window(data,window_samples=window_past,overlap_samples=window_past-1).std(1)[:-5]
-        locAct = np.log(data + 1)[5:-5]
+        std = sliding_window(data,window_samples=window_past,overlap_samples=window_past-1).std(1)[:-10]
+        locAct = np.log(data + 1)[10:-10]
         score = 7.601 - 0.065 * mean - 0.056 * std - 0.0703 * locAct - 1.08 * nat
 
         score[score >= 0] = 1       #sleep = 1
         score[score < 0] = 0        #wake = 0
 
-        score = np.pad(np.asarray(score),(5), 'constant')
+        score = np.pad(np.asarray(score),(10), 'constant')
 
+        score_without_rescore = score
         if rescore_data:
             score = rescore(score)
 

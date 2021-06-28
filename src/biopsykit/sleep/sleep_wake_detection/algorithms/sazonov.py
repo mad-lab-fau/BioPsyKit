@@ -5,6 +5,8 @@ from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.array_handling import sliding_window
 from biopsykit.utils.rescore import rescore
 
+from scipy.special import expit
+
 import numpy as np
 import pandas as pd
 
@@ -29,9 +31,10 @@ class Sazonov(_SleepWakeBase):
         w3 = np.pad(np.max(sliding_window(data, window_samples=4,overlap_samples = 3),axis=1), (3, 0))
         w4 = np.pad(np.max(sliding_window(data, window_samples=5, overlap_samples=4), axis=1), (4, 0))
 
-        scores = 1.727  - 0.256 * w0 - 0.154 * w1 - 0.136 * w2 - 0.140 * w3 - 0.176 * w4
+        scores = np.array(1.727  - 0.256 * w0 - 0.154 * w1 - 0.136 * w2 - 0.140 * w3 - 0.176 * w4)
 
-        scores = 1 / (1 + np.exp(-scores))
+
+        scores = expit(scores)  # 1/(1+np.exp(-scores))
 
         scores[scores >= 0.5] = 1
         scores[scores < 0.5] = 0
