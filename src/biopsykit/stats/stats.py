@@ -181,10 +181,15 @@ class StatsPipeline:
             params = {key: general_params[key] for key in MAP_STAT_PARAMS[step[1]] if key in general_params}
 
             grouper = []
+            grouper_tmp = []
             if "groupby" in specific_params:
-                grouper.append(specific_params.pop("groupby"))
+                grouper_tmp = specific_params.pop("groupby")
             elif "groupby" in general_params:
-                grouper.append(general_params.pop("groupby"))
+                grouper_tmp = general_params.pop("groupby")
+            if isinstance(grouper_tmp, str):
+                grouper_tmp = [grouper_tmp]
+
+            grouper = grouper + grouper_tmp
 
             if step[0] == "prep":
                 if "within" in general_params and "between" in general_params:
