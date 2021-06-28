@@ -1,51 +1,67 @@
-"""Provides some standard plots for plotting biopsychological data during a psychological protocol"""
-from typing import Union, Dict, Optional, Sequence, Tuple
+"""Module providing some standard plots for visualizing data collected during a psychological protocol."""
+from typing import Union, Dict, Optional, Sequence, Tuple, Any, Iterable
+
+import re
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
 
-import biopsykit.colors as colors
+import matplotlib.pyplot as plt
 import matplotlib.patches as mpatch
+import matplotlib.ticker as mticks
+from matplotlib.legend_handler import HandlerTuple
 
-_saliva_params: Dict = {
-    "colormap": colors.fau_palette_blue("line_2"),
-    "line_styles": ["-", "--"],
-    "markers": ["o", "P"],
-    # 'background_color': "#e0e0e0",
-    # 'background_alpha': 0.5,
-    # 'x_padding': 0.1,
-    "test_text": "",
-    "test_color": "#9e9e9e",
-    "test_alpha": 0.5,
-    "x_offsets": [0, 0.5],
-    "multi_x_offset": 1,
-    "multi_fontsize": 10,
-    "multi_legend_offset": 0.3,
-    "multi_colormap": colors.fau_palette_phil("line_2"),
-    "xaxis_tick_locator": plt.MultipleLocator(20),
-    "xaxis_label": "Time [min]",
-    "yaxis_label": {
-        "cortisol": "Cortisol [nmol/l]",
-        "amylase": "sAA [U/l]",
-        "il6": "IL-6 [pg/ml]",
-    },
+import biopsykit.colors as colors
+from biopsykit.plotting import lineplot, multi_feature_boxplot, feature_boxplot
+from biopsykit.protocols.utils import _get_sample_times
+from biopsykit.utils.exceptions import ValidationError
+from biopsykit.utils.data_processing import get_subphase_durations
+from biopsykit.utils.datatype_helper import (
+    is_saliva_mean_se_dataframe,
+    is_saliva_raw_dataframe,
+    SalivaRawDataFrame,
+    SalivaMeanSeDataFrame,
+    MergedStudyDataDict,
+    MeanSeDataFrame,
+    is_mean_se_dataframe,
+    SalivaFeatureDataFrame,
+    is_saliva_feature_dataframe,
+)
+
+_hr_ensemble_plot_params = {
+    "figsize": (12, 5),
+    "colormap": colors.fau_palette_blue("ensemble"),
+    "linestyles": ["-", "--", ":", "-."],
+    "ensemble_alpha": 0.4,
+    "background_color": ["#e0e0e0", "#9e9e9e", "#808080", "#6b6b6b"],
+    "background_alpha": 0.5,
+    "xlabel": r"Time [s]",
+    "xaxis_minor_tick_locator": mticks.MultipleLocator(60),
+    "ylabel": r"$\Delta$HR [%]",
+    "legend_loc": "lower right",
+    "legend_bbox_to_anchor": (0.99, 0.01),
+    "phase_text": "{}",
+    "end_phase_text": "End {}",
+    "end_phase_line_color": "#e0e0e0",
+    "end_phase_line_style": "--",
+    "end_phase_line_width": 2.0,
 }
 
 _hr_mean_plot_params = {
+    "figsize": (12, 5),
     "colormap": colors.fau_palette_blue("line_2"),
-    "line_styles": ["-", "--"],
+    "linestyles": ["-", "--"],
     "markers": ["o", "P"],
-    "background_color": None,
-    "background_alpha": None,
-    "x_offsets": [0, 0.05],
-    "xaxis_label": "Phases",
-    "yaxis_label": "Value",
+    "background_color": ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
+    "background_alpha": 0.5,
+    "x_offset": 0.1,
+    "ylabel": r"$\Delta$HR [%]",
+    "phase_text": "{}",
 }
 
-_saliva_feature_params = {
-    "yaxis_label": {
+_saliva_feature_params: Dict[str, Dict[str, Any]] = {
+    "ylabel": {
         "cortisol": {
             "auc": r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
             "auc_g": r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
@@ -72,565 +88,870 @@ _saliva_feature_params = {
     },
 }
 
+_saliva_plot_params: Dict = {
+    "colormap": colors.fau_palette_blue("line_2"),
+    "linestyles": ["-", "--"],
+    "markers": ["o", "P"],
+    "test_title": "",
+    "test_color": "#9e9e9e",
+    "test_alpha": 0.5,
+    "multi_x_offset": 0.01,
+    "xlabel": "Time [min]",
+    "ylabel": {
+        "cortisol": "Cortisol [nmol/l]",
+        "amylase": "sAA [U/l]",
+        "il6": "IL-6 [pg/ml]",
+    },
+    "legend_title": {"cortisol": "Cortisol", "amylase": "sAA", "il6": "IL-6"},
+}
 
-# TODO add support for groups in one dataframe (indicated by group column)
-def hr_mean_plot(
-    data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-    phases: Optional[Sequence[str]] = None,
-    subphases: Optional[Sequence[str]] = None,
-    groups: Optional[Sequence[str]] = None,
-    group_col: Optional[str] = None,
-    plot_params: Optional[Dict] = None,
+
+def hr_ensemble_plot(
+    data: MergedStudyDataDict,
+    subphases: Optional[Dict[str, Dict[str, int]]] = None,
     **kwargs,
-) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
-    """
-    Plots the course of heart rate during the complete MIST (mean ± standard error per subphase).
+) -> Optional[Tuple[plt.Figure, plt.Axes]]:
+    r"""Draw a heart rate ensemble plot.
 
-    In case of only one group a pandas dataframe can be passed.
+    This function plots time-series heart rate continuously as ensemble plot (mean ± standard error).
+    If the data consist of multiple phases, data from each phase are overlaid in the same plot.
+    If each phase additionally consists of subphases, the single subphases are highlighted in the plot.
 
-    In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
-    to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
-
-    Regardless of the kind of input the dataframes need to be in the format of a 'mse dataframe', as returned
-    by ``MIST.hr_course_mist`` (see ``MIST.hr_course_mist`` for further information).
-
+    The input data is expected to be a :obj:`~biopsykit.utils.datatype_helper.MergedSubjectsDict`, i.e.,
+    a dictionary with merged time-series heart rate data, of multiple subjects, split into individual phases.
+    Per phase, the data of each subjects have same length and are combined into one common dataframe.
 
 
     Parameters
     ----------
-    data : dataframe or dict
-        Heart rate data to plot. Can either be one dataframe (in case of only one group or in case of
-        multiple groups, together with `group_col`) or a dictionary of dataframes,
-        where one dataframe belongs to one group
-    phases : list of str, optional
-        list of phase names or ``None`` to infer from data
-    subphases : list of str, optional
-        list of subphase names of ``None`` to infer from data
-    groups : list, optional:
-         List of group names. If ``None`` is passed, the groups and their order are inferred from the
-         dictionary keys or from the unique values in `group_col`. If list is supplied the groups are
-         plotted in that order.
-         Default: ``None``
-    group_col : str, optional
-        Name of group column in the dataframe in case of multiple groups and one dataframe
-    plot_params : dict, optional
-        dict with adjustable parameters specific for this plot or ``None`` to keep default parameter values.
-        For an overview of parameters and their default values, see `mist.hr_course_params`
-    kwargs: dict, optional
-        optional parameters to be passed to the plot, such as:
-            * Axes to plot on, otherwise create a new one. Default: ``None``
-            * figsize: tuple specifying figure dimensions
-            * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``Axes.margin()``
-            for further information), None to automatically infer y-axis limits
+    data : :obj:`~biopsykit.utils.datatype_helper.MergedSubjectsDict`
+        dict with heart rate data to plot
+    subphases : dict, optional
+        dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
+        ``None`` if no subphases are present. Default: ``None``
+    kwargs : dict, optional
+        optional arguments for plot configuration.
+
+        To style general plot appearance:
+            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+            * ``colormap``: colormap to plot data from different phases
+            * ``ensemble_alpha``: transparency value for ensemble plot errorband (around mean). Default: 0.4
+            * ``linestyles``: list of line styles for ensemble plots. Must match the number of phases to plot
+            * ``phase_text``: string pattern to customize phase name shown in legend with placeholder for subphase name.
+              Default: "{}"
+
+        To style axes:
+            * ``xlabel``: label of x axis. Default: "Time [s]"
+            * ``xaxis_minor_tick_locator``: locator object to style x axis minor ticks. Default: 60 sec
+            * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+            * ``ylims``: y axis limits. Default: ``None`` to automatically infer limits
+
+        To style the annotations at the end of each phase:
+            * ``end_phase_text``: string pattern to customize text at the end of phase with placeholder for phase name.
+              Default: "{}"
+            * ``end_phase_line_color``: line color of vertical lines used to indicate end of phase. Default: #e0e0e0
+            * ``end_phase_line_width``: line width of vertical lines used  to indicate end of phase. Default: 2.0
+
+        To style legend:
+            * ``legend_loc``: location of legend. Default: "lower right"
+            * ``legend_bbox_to_anchor``: box that is used to position the legend in conjunction with ``legend_loc``
+
 
     Returns
     -------
-    tuple or none
-        Tuple of Figure and Axes or None if Axes object was passed
+    fig : :class:`matplotlib.figure.Figure`
+        figure object
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.datatype_helper.MergedSubjectsDict`
+        dictionary format
+    :func:`~biopsykit.utils.data_processing.merge_subjects_dict`
+        function to build ``MergedSubjectsDict``
+
+
+    Examples
+    --------
+    >>> from biopsykit.protocols.plotting import hr_ensemble_plot
+    >>> # Example with subphases
+    >>> subphase_dict = {
+    >>>     "Phase1": {"Baseline": 60, "Stress": 120, "Recovery": 60},
+    >>>     "Phase2": {"Baseline": 60, "Stress": 120, "Recovery": 60},
+    >>>     "Phase3": {"Baseline": 60, "Stress": 120, "Recovery": 60}
+    >>> }
+    >>> fig, ax = hr_ensemble_plot(data=data, subphases=subphase_dict)
+
     """
-
-    fig: Union[plt.Figure, None] = None
-    ax: Union[plt.Axes, None] = kwargs.get("ax", None)
+    ax: plt.Axes = kwargs.pop("ax", None)
     if ax is None:
-        figsize = kwargs.get("figsize", plt.rcParams["figure.figsize"])
+        figsize = kwargs.get("figsize", _hr_ensemble_plot_params.get("figsize"))
         fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.get_figure()
 
-    hr_mean_plot_params = _hr_mean_plot_params.copy()
+    colormap = kwargs.get("colormap", _hr_ensemble_plot_params.get("colormap"))
+    sns.set_palette(colormap)
+    linestyles = kwargs.get("linestyles", _hr_ensemble_plot_params.get("linestyles"))
 
-    # update default parameter if plot parameter were passed
-    if plot_params:
-        hr_mean_plot_params.update(plot_params)
+    xlabel = kwargs.get("xlabel", _hr_ensemble_plot_params.get("xlabel"))
+    ylabel = kwargs.get("ylabel", _hr_ensemble_plot_params.get("ylabel"))
+    ylims = kwargs.get("ylims", _hr_ensemble_plot_params.get("ylims"))
+    xaxis_minor_tick_locator = kwargs.get(
+        "xaxis_minor_tick_locator", _hr_ensemble_plot_params.get("xaxis_minor_tick_locator")
+    )
 
-    ylims = kwargs.get("ylims", None)
+    ensemble_alpha = kwargs.get("ensemble_alpha", _hr_ensemble_plot_params.get("ensemble_alpha"))
+
+    phase_text = kwargs.get("phase_text", _hr_ensemble_plot_params.get("phase_text"))
+
+    legend_loc = kwargs.get("legend_loc", _hr_ensemble_plot_params.get("legend_loc"))
+    legend_bbox_to_anchor = kwargs.get("legend_bbox_to_anchor", _hr_ensemble_plot_params.get("legend_bbox_to_anchor"))
+
+    for i, phase in enumerate(data):
+        df_hr_phase = data[phase]
+        x = df_hr_phase.index
+        hr_mean = df_hr_phase.mean(axis=1)
+        hr_stderr = df_hr_phase.std(axis=1) / np.sqrt(df_hr_phase.shape[1])
+        ax.plot(x, hr_mean, zorder=2, label=phase_text.format(phase), linestyle=linestyles[i])
+        ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
+        _hr_ensemble_plot_end_phase_annotation(ax, df_hr_phase, phase, i, **kwargs)
+
+    if subphases is not None:
+        _hr_ensemble_plot_subphase_vspans(ax, data, subphases, **kwargs)
+
+    ax.set_xlabel(xlabel)
+    ax.xaxis.set_minor_locator(xaxis_minor_tick_locator)
+    ax.tick_params(axis="x", which="both", bottom=True)
+
+    ax.set_ylabel(ylabel)
+    ax.tick_params(axis="y", which="major", left=True)
+
+    if ylims is not None:
+        ax.margins(x=0)
+        ax.set_ylim(ylims)
+    else:
+        ax.margins(0, 0.1)
+
+    ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor)
+
+    fig.tight_layout()
+    return fig, ax
+
+
+def _hr_ensemble_plot_end_phase_annotation(ax: plt.Axes, data: pd.DataFrame, phase: str, i: int, **kwargs):
+    """Add End Phase annotations to heart rate ensemble plot.
+
+    Parameters
+    ----------
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+    data : :class:`~pandas.DataFrame`
+        data belonging to ``phase``
+    phase : str
+        phase to add annotations
+    i : int
+        counter of phase
+
+    """
+    end_phase_text = kwargs.get("end_phase_text", _hr_ensemble_plot_params.get("end_phase_text"))
+    end_phase_line_color = kwargs.get("end_phase_line_color", _hr_ensemble_plot_params.get("end_phase_line_color"))
+    end_phase_line_style = kwargs.get("end_phase_line_style", _hr_ensemble_plot_params.get("end_phase_line_style"))
+    end_phase_line_width = kwargs.get("end_phase_line_width", _hr_ensemble_plot_params.get("end_phase_line_width"))
+
+    ax.vlines(
+        x=len(data),
+        ymin=0,
+        ymax=1,
+        transform=ax.get_xaxis_transform(),
+        ls=end_phase_line_style,
+        lw=end_phase_line_width,
+        colors=end_phase_line_color,
+        zorder=3,
+    )
+    ax.annotate(
+        text=end_phase_text.format(phase),
+        xy=(len(data), 0.85 - 0.05 * i),
+        xytext=(-5, 0),
+        xycoords=ax.get_xaxis_transform(),
+        textcoords="offset points",
+        ha="right",
+        fontsize="small",
+        bbox=dict(facecolor="#e0e0e0", alpha=0.7, boxstyle="round"),
+        zorder=3,
+    )
+
+
+def _hr_ensemble_plot_subphase_vspans(
+    ax: plt.Axes, data: Dict[str, pd.DataFrame], subphases: Dict[str, Dict[str, int]], **kwargs
+):
+    """Add subphase vertical spans (vspans) to heart rate ensemble plot.
+
+    Parameters
+    ----------
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+    data : :class:`~pandas.DataFrame`
+        data belonging to ``phase``
+    subphases : dict
+        dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations)
+
+    """
+    num_phases = len(data.keys())
+
+    bg_colors = kwargs.get("background_color", _hr_ensemble_plot_params.get("background_color"))
+    bg_alphas = kwargs.get("background_alpha", _hr_ensemble_plot_params.get("background_alpha"))
+    bg_alphas = [bg_alphas] * num_phases
+
+    subphase_times = [get_subphase_durations(df, subphases[phase]) for phase, df in data.items()]
+    subphase_times = np.array(subphase_times)
+    subphase_times = np.max(subphase_times, axis=0)
+
+    subphase_names = np.array([list(subphase_dict.keys()) for phase, subphase_dict in subphases.items()])
+
+    if not (subphase_names[0] == subphase_names).all():
+        raise ValueError("Subphases must be the same for all phases!")
+    subphase_names = subphase_names[0]
+
+    for i, subphase in enumerate(subphase_names):
+        start, end = subphase_times[i]
+        color = bg_colors[i]
+        alpha = bg_alphas[i]
+        ax.axvspan(start, end, color=color, alpha=alpha, zorder=0, lw=0)
+        ax.text(
+            x=start + 0.5 * (end - start),
+            y=0.95,
+            transform=ax.get_xaxis_transform(),
+            s=subphase,
+            ha="center",
+            va="center",
+        )
+    p = mpatch.Rectangle(
+        xy=(0, 0.9),
+        width=1,
+        height=0.1,
+        transform=ax.transAxes,
+        color="white",
+        alpha=0.4,
+        zorder=3,
+        lw=0,
+    )
+    ax.add_patch(p)
+    ax.set_xticks([start for (start, end) in subphase_times])
+
+
+def hr_mean_plot(
+    data: MeanSeDataFrame,
+    **kwargs,
+) -> Tuple[plt.Figure, plt.Axes]:
+    r"""Plot course of heart rate as mean ± standard error over phases (and subphases) of a psychological protocol.
+
+    The correct plot is automatically inferred from the provided data:
+        * only ``phase`` index level: plot phases over x axis
+        * ``phase`` and ``subphase`` index levels: plot subphases over x axis, highlight phases as vertical spans
+        * additionally: ``condition`` level: plot data of different conditions individually
+          (corresponds to ``hue`` parameter in :func:`biopsykit.plotting.lineplot`)
+
+    Parameters
+    ----------
+    data : :class:`~biopsykit.utils.datatype_handling.MeanSeDataFrame`
+        Heart rate data to plot. Must be provided as ``MeanSeDataFrame`` with columns ``mean`` and ``se``
+        computed over phases (and, if available, subphases)
+    kwargs
+        additional parameters to be passed to the plot, such as:
+            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+            * ``colormap``: colormap to plot data from different phases
+            * ``figsize``: tuple specifying figure dimensions
+            * ``x_offset``: offset value to move different groups along the x axis for better visualization.
+              Default: 0.05
+            * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
+              or "Phases" (if only phases are present)
+            * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+            * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
+              (see :meth:`~matplotlib.Axes.margin()` for further information), or ``None`` to automatically infer
+              y axis limits
+            * ``marker``: string or list of strings to specify marker style.
+              If ``marker`` is a string, then marker of each line will have the same style.
+              If ``marker`` is a list, then marker of each line will have a different style.
+            * ``linestyle``: string or list of strings to specify line style.
+              If ``linestyle`` is a string, then each line will have the same style.
+              If ``linestyle`` is a list, then each line will have a different style.
+
+    Returns
+    -------
+    fig : :class:`matplotlib.figure.Figure`
+        figure object
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+
+    See Also
+    --------
+    `biopsykit.plotting.lineplot`
+        Plot data as lineplot with mean and standard error
+
+    """
+    ax: plt.Axes = kwargs.get("ax", None)
+    if ax is None:
+        figsize = kwargs.get("figsize", _hr_mean_plot_params.get("figsize"))
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.get_figure()
+    kwargs.update({"ax": ax})
 
     # get all plot parameter
-    sns.set_palette(hr_mean_plot_params["colormap"])
-    line_styles = hr_mean_plot_params["line_styles"]
-    markers = hr_mean_plot_params["markers"]
-    bg_colors = kwargs.get("background_color", hr_mean_plot_params["background_color"])
-    bg_alphas = kwargs.get("background_alpha", hr_mean_plot_params["background_alpha"])
-    x_offsets = hr_mean_plot_params["x_offsets"]
-    xaxis_label = kwargs.get("xlabel", hr_mean_plot_params["xaxis_label"])
-    yaxis_label = kwargs.get("ylabel", hr_mean_plot_params["yaxis_label"])
-    phase_text = hr_mean_plot_params.get("phase_text", None)
+    sns.set_palette(kwargs.get("colormap", _hr_mean_plot_params.get("colormap")))
 
-    if phases is None:
-        if isinstance(data, pd.DataFrame):
-            if isinstance(data.index, pd.MultiIndex):
-                phases = list(data.index.get_level_values(0).unique())
-            else:
-                phases = list(data.index)
-        else:
-            data_grp = list(data.values())[0]
-            if isinstance(data_grp.index, pd.MultiIndex):
-                phases = list(data_grp.index.get_level_values(0).unique())
-            else:
-                phases = list(data_grp.index)
+    ylabel = kwargs.get("ylabel", _hr_mean_plot_params.get("ylabel"))
+    ylims = kwargs.get("ylims", None)
 
-    if subphases is None:
-        if isinstance(data, pd.DataFrame):
-            if isinstance(data.index, pd.MultiIndex):
-                subphases = list(data.index.get_level_values(1).unique())
-            else:
-                # No subphases
-                subphases = [""]
-        else:
-            data_grp = list(data.values())[0]
-            if isinstance(data_grp.index, pd.MultiIndex):
-                subphases = list(data_grp.index.get_level_values(1).unique())
-            else:
-                # No subphases
-                subphases = [""]
+    phase_dict = _hr_mean_get_phases_subphases(data)
+    num_phases = len(phase_dict)
+    num_subphases = [len(arr) for arr in phase_dict.values()]
+    x_vals = _hr_mean_get_x_vals(num_phases, num_subphases)
 
-    if isinstance(data, pd.DataFrame):
-        if isinstance(data.index, pd.MultiIndex):
-            # get subphase labels from data
-            subphase_labels = data.index.get_level_values(1)
-            if "condition" in data.index.names:
-                groups = list(data.index.get_level_values(level="condition").unique())
-        else:
-            subphase_labels = [""]
+    # build x axis, axis limits and limits for phase spans
+    dist = np.mean(np.ediff1d(x_vals))
+    x_lims = np.append(x_vals, x_vals[-1] + dist)
+    x_lims = x_lims - 0.5 * np.ediff1d(x_lims, to_end=dist)
+
+    if "condition" in data.index.names:
+        for i, (key, df) in enumerate(data.groupby("condition")):
+            _hr_mean_plot(df, x_vals, key, index=i, **kwargs)
     else:
-        if not groups:
-            # get group names from dict if groups were not supplied
-            groups = list(data.keys())
-        # get subphase labels from data
-        data_grp = list(data.values())[0]
-        if isinstance(data_grp.index, pd.MultiIndex):
-            subphase_labels = data_grp.index.get_level_values(1)
-        else:
-            subphase_labels = [""]
+        _hr_mean_plot(data, x_vals, "Data", index=0, **kwargs)
 
-    num_subph = len(subphases)
-
-    # build x axis, axis limits and limits for MIST phase spans
-    if len(subphases) == 1:
-        x = np.arange(len(phases))
-    else:
-        x = np.arange(len(subphase_labels))
-
-    xlims = np.append(x, x[-1] + 1)
-    xlims = xlims[::num_subph] + 0.5 * (xlims[::num_subph] - xlims[::num_subph] - 1)
-    span_lims = [(x_l, x_u) for x_l, x_u in zip(xlims, xlims[1::])]
-
-    # plot data as errorbar with mean and se
-    if groups:
-        for group, x_off, marker, ls in zip(groups, x_offsets, markers, line_styles):
-            ax.errorbar(
-                x=x + x_off,
-                y=data[group]["mean"],
-                label=group,
-                yerr=data[group]["se"],
-                capsize=3,
-                marker=marker,
-                linestyle=ls,
-            )
-    else:
-        ax.errorbar(
-            x=x,
-            y=data["mean"],
-            yerr=data["se"],
-            capsize=3,
-            marker=markers[0],
-            linestyle=line_styles[0],
-        )
-
-    # add decorators if specified: spans and Phase labels
-    if bg_colors is not None:
-        for (i, name), (x_l, x_u), color, alpha in zip(enumerate(phases), span_lims, bg_colors, bg_alphas):
-            ax.axvspan(x_l, x_u, color=color, alpha=alpha, zorder=0, lw=0)
-            if phase_text is not None:
-                name = phase_text.format(i + 1)
-
-            ax.text(
-                x=x_l + 0.5 * (x_u - x_l),
-                y=0.95,
-                s=name,
-                transform=ax.get_xaxis_transform(),
-                horizontalalignment="center",
-                verticalalignment="center",
-            )
-
-        p = mpatch.Rectangle(
-            xy=(0, 0.9),
-            width=1,
-            height=0.1,
-            transform=ax.transAxes,
-            color="white",
-            alpha=0.4,
-            zorder=3,
-            lw=0,
-        )
-        ax.add_patch(p)
+    # add decorators to phases if subphases are present
+    if sum(num_subphases) > 0:
+        _hr_mean_plot_subphase_annotations(phase_dict, x_lims, **kwargs)
 
     # customize x axis
     ax.tick_params(axis="x", bottom=True)
-    ax.set_xticks(x)
-    if len(subphase_labels) == len(x):
-        ax.set_xticklabels(subphase_labels)
-    else:
-        # no subphases
-        ax.set_xticklabels(phases)
-
-    xlims = kwargs.get("xlims", [span_lims[0][0], span_lims[-1][-1]])
-    ax.set_xlim(xlims)
-    ax.set_xlabel(xaxis_label)
+    ax.set_xticks(x_vals)
+    ax.set_xlim(np.min(x_lims), np.max(x_lims))
+    _hr_mean_style_x_axis(ax, phase_dict, num_subphases)
 
     # customize y axis
     ax.tick_params(axis="y", which="major", left=True)
+    ax.set_ylabel(ylabel)
+
     if isinstance(ylims, (tuple, list)):
         ax.set_ylim(ylims)
     else:
         ymargin = 0.15
         if isinstance(ylims, float):
             ymargin = ylims
-        ax.margins(x=0, y=ymargin)
-
-    ax.set_ylabel(yaxis_label)
+        ax.margins(y=ymargin)
+    ax.margins(x=0)
+    ax.relim()
 
     # customize legend
-    if groups:
-        # get handles
-        handles, labels = ax.get_legend_handles_labels()
-        # remove the errorbars
-        handles = [h[0] for h in handles]
-        # use them in the legend
-        ax.legend(
-            handles,
-            labels,
-            loc="upper left",
-            bbox_to_anchor=(0.01, 0.90),
-            numpoints=1,
-        )
+    if "condition" in data.index.names:
+        _hr_mean_add_legend(**kwargs)
 
-    if fig:
-        fig.tight_layout()
-        return fig, ax
+    fig.tight_layout()
+    return fig, ax
 
 
-def saliva_plot(
-    data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-    biomarker: str,
-    saliva_times: Sequence[int],
-    test_times: Sequence[int],
-    groups: Optional[Sequence[str]] = None,
-    group_col: Optional[str] = None,
-    **kwargs,
-) -> Union[None, Tuple[plt.Figure, plt.Axes]]:
-    """
-    TODO: add documentation
+def _hr_mean_plot(data: MeanSeDataFrame, x_vals: np.array, key: str, index: int, **kwargs):
+    ax: plt.Axes = kwargs.get("ax")
+    x_offset = kwargs.get("x_offset", _hr_mean_plot_params.get("x_offset"))
+    markers = kwargs.get("markers", _hr_mean_plot_params.get("markers"))
+    linestyles = kwargs.get("linestyles", _hr_mean_plot_params.get("linestyles"))
+
+    if isinstance(markers, list):
+        markers = markers[index]
+
+    if isinstance(linestyles, list):
+        linestyles = linestyles[index]
+
+    is_mean_se_dataframe(data)
+    if isinstance(data.columns, pd.MultiIndex):
+        # if data has multiindex columns: drop all levels except the last one
+        # (which is expected to contain ["mean", "se"])
+        data.columns = data.columns.droplevel(list(range(0, data.columns.nlevels - 1)))
+
+    ax.errorbar(
+        x=x_vals + index * x_offset,
+        y=data["mean"],
+        label=key,
+        yerr=data["se"],
+        capsize=3,
+        marker=markers,
+        linestyle=linestyles,
+    )
+
+
+def _hr_mean_add_legend(**kwargs):
+    """Add legend to mean HR plot."""
+    ax: plt.Axes = kwargs.get("ax")
+    legend_loc = kwargs.get("legend_loc", "upper left")
+    # get handles
+    handles, labels = ax.get_legend_handles_labels()
+    # remove the errorbars
+    handles = [h[0] for h in handles]
+    # use them in the legend
+    if legend_loc == "upper left":
+        bbox_to_anchor = (0.01, 0.90)
+    elif legend_loc == "upper right":
+        bbox_to_anchor = (0.99, 0.90)
+    else:
+        bbox_to_anchor = None
+    ax.legend(
+        handles,
+        labels,
+        loc=legend_loc,
+        bbox_to_anchor=bbox_to_anchor,
+        numpoints=1,
+    )
+
+
+def _hr_mean_style_x_axis(ax: plt.Axes, phase_dict: Dict[str, Sequence[str]], num_subphases: Sequence[int], **kwargs):
+    """Style x axis of mean HR plot.
 
     Parameters
     ----------
-    data
-    biomarker
-    saliva_times
-    test_times
-    groups
-    group_col
-    kwargs: dict, optional
-            optional parameters to be passed to the plot, such as:
-                * ax: Axes object to plot on
-                * figsize: tuple specifying figure dimensions
-                * ylims: list to manually specify y-axis limits, float to specify y-axis margin (see ``plt.Axes.margin()``
-                for further information), None to automatically infer y-axis limits
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+    phase_dict : dict
+        dictionary with phase names (keys) and dict of subphases (values)
+    num_subphases : list
+        list with number of subphases for each phase
+
+    """
+    if sum(num_subphases) == 0:
+        # no subphases
+        ax.set_xticklabels(phase_dict.keys())
+        ax.set_xlabel(kwargs.get("xlabel", "Phases"))
+    else:
+        ax.set_xticklabels([s for subph in phase_dict.values() for s in subph])
+        ax.set_xlabel(kwargs.get("xlabel", "Subphases"))
+
+
+def _hr_mean_plot_subphase_annotations(
+    phase_dict: Dict[str, Sequence[str]],
+    xlims: Sequence[float],
+    **kwargs,
+):
+    """Add subphase annotations to mean HR plot.
+
+    Parameters
+    ----------
+    phase_dict : dict
+        dictionary with phase names (keys) and dict of subphases (values)
+    xlims : list
+        x axis limits
+
+    """
+    ax: plt.Axes = kwargs.get("ax")
+    bg_colors = kwargs.get("background_color", _hr_mean_plot_params.get("background_color"))
+    bg_alpha = kwargs.get("background_alpha", _hr_mean_plot_params.get("background_alpha"))
+    phase_text = kwargs.get("phase_text", _hr_mean_plot_params.get("phase_text"))
+
+    num_phases = len(phase_dict)
+    num_subphases = [len(arr) for arr in phase_dict.values()]
+
+    x_spans = _hr_mean_get_x_spans(num_phases, num_subphases)
+
+    for (i, phase), bg_color in zip(enumerate(phase_dict), bg_colors):
+        left, right = x_spans[i]
+        ax.axvspan(xlims[left], xlims[right], color=bg_color, alpha=bg_alpha, zorder=0, lw=0)
+        name = phase_text.format(phase)
+        ax.text(
+            x=xlims[left] + 0.5 * (xlims[right] - xlims[left]),
+            y=0.95,
+            s=name,
+            transform=ax.get_xaxis_transform(),
+            horizontalalignment="center",
+            verticalalignment="center",
+        )
+
+    p = mpatch.Rectangle(
+        xy=(0, 0.9),
+        width=1,
+        height=0.1,
+        transform=ax.transAxes,
+        color="white",
+        alpha=0.4,
+        zorder=3,
+        lw=0,
+    )
+    ax.add_patch(p)
+
+
+def _hr_mean_get_x_spans(num_phases: int, num_subphases: Sequence[int]):
+    if sum(num_subphases) == 0:
+        x_spans = list(zip([0] + list(range(0, num_phases)), list(range(0, num_phases))))
+    else:
+        x_spans = list(zip([0] + list(np.cumsum(num_subphases)), list(np.cumsum(num_subphases))))
+    return x_spans
+
+
+def _hr_mean_get_x_vals(num_phases: int, num_subphases: Sequence[int]):
+    if sum(num_subphases) == 0:
+        x_vals = np.linspace(0, 10, num_phases)
+    else:
+        x_vals = np.linspace(0, 10, sum(num_subphases))
+    return x_vals
+
+
+def _hr_mean_get_phases_subphases(data: pd.DataFrame) -> Dict[str, Sequence[str]]:
+    if "condition" in data.index.names:
+        data = [value for key, value in data.groupby("condition")][0]
+
+    phases = data.index.get_level_values("phase").unique()
+
+    if "subphase" in data.index.names:
+        phase_dict = {phase: list(df.index.get_level_values("subphase")) for phase, df in data.groupby("phase")}
+    else:
+        phase_dict = {phase: [] for phase in phases}
+
+    return phase_dict
+
+
+def saliva_plot(
+    data: Union[
+        SalivaRawDataFrame, SalivaMeanSeDataFrame, Dict[str, SalivaRawDataFrame], Dict[str, SalivaMeanSeDataFrame]
+    ],
+    saliva_type: Optional[str] = None,
+    sample_times: Optional[Union[Sequence[int], Dict[str, Sequence[int]]]] = None,
+    test_times: Optional[Sequence[int]] = None,
+    sample_times_absolute: Optional[bool] = False,
+    **kwargs,
+) -> Optional[Tuple[plt.Figure, plt.Axes]]:
+    r"""Plot saliva data during psychological protocol as mean ± standard error.
+
+    The function accepts raw saliva data per subject (``SalivaRawDataFrame``) as well as pre-computed
+    mean and standard error values of saliva samples (``SalivaMeanSeDataFrame``). To combine data from multiple saliva
+    types (maximum: 2) into one plot a dict can be passed to ``data``.
+
+    If a psychological test (e.g., TSST, MIST, or Stroop) was performed the test time is highlighted as vertical span
+    within the plot.
+
+    .. note::
+        If no sample times are provided (neither via ``time`` column in ``data`` nor via ``sample_times`` parameter)
+        then ``samples`` will be used as x axis
+
+
+    Parameters
+    ----------
+    data : :class:`~biopsykit.utils.datatype_handling.SalivaRawDataFrame`,
+        :class:`~biopsykit.utils.datatype_handling.SalivaMeanSeDataFrame`, or dict of such
+        Saliva data to plot. Must either be provided as ``SalivaRawDataFrame``with raw saliva data per subject or
+        as ``SalivaMeanSeDataFrame`` with columns ``mean`` and ``se`` computed per saliva sample. To plot data from
+        multiple saliva types (maximum: 2) a dict can be passed (keys: saliva types, values: saliva data)
+    saliva_type : {"cortisol", "amylase", "il6"}, optional
+        saliva type to be plotted. If a dict is passed and ``saliva_type`` is ``None``
+        the saliva types are inferred from dict keys
+    sample_times : list or dict of lists
+        sample times in minutes relative to psychological test or a dict of such if sample times are different for
+        the individual saliva types
+    test_times : list of int, optional
+        start and end times of psychological test (in minutes) or ``None`` if no test was performed
+    sample_times_absolute : bool, optional
+        ``True`` if absolute sample times were provided (i.e., the duration of the psychological test was already
+        added to the sample times), ``False`` if relative sample times were provided and absolute times should be
+        computed based on test times specified by ``test_times``. Default: ``False``
+    kwargs
+        additional parameters to be passed to the plot.
+
+        To style general plot appearance:
+            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+            * ``colormap``: colormap to plot data from different phases
+            * ``figsize``: tuple specifying figure dimensions
+            * ``marker``: string or list of strings to specify marker style.
+              If ``marker`` is a string, then marker of each line will have the same style.
+              If ``marker`` is a list, then marker of each line will have a different style.
+            * ``linestyle``: string or list of strings to specify line style.
+              If ``linestyle`` is a string, then each line will have the same style.
+              If ``linestyle`` is a list, then each line will have a different style.
+
+        To style axes:
+            * ``x_offset``: offset value to move different groups along the x axis for better visualization.
+              Default: 0.05
+            * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
+              or "Phases" (if only phases are present)
+            * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+            * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
+              (see :meth:`~matplotlib.Axes.margin()` for further information), or ``None`` to automatically infer
+              y axis limits
+
+        To style the vertical span highlighting the psychological test in the plot:
+            * ``test_text``: title of test
+            * ``test_color``: color of vspan. Default: #9e9e9e
+            * ``test_alpha``: transparency value of vspan: Default: 0.5
 
     Returns
     -------
+    fig : :class:`matplotlib.figure.Figure`
+        figure object
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+
+    See Also
+    --------
+    `biopsykit.plotting.lineplot`
+        Plot data as lineplot with mean and standard error
 
     """
-
-    fig: Union[plt.Figure, None] = None
-    ax: Union[plt.Axes, None] = kwargs.get("ax", None)
-
+    ax: plt.Axes = kwargs.get("ax", None)
     if ax is None:
-        figsize = kwargs.get("figsize", plt.rcParams["figure.figsize"])
+        figsize = kwargs.get("figsize", _hr_ensemble_plot_params.get("figsize"))
         fig, ax = plt.subplots(figsize=figsize)
-
-    saliva_params = _saliva_params.copy()
-
-    bg_color = kwargs.get("background_color", saliva_params.get("background_color", None))
-    bg_alpha = kwargs.get("background_alpha", saliva_params.get("background_alpha", None))
-    x_padding = kwargs.get("x_padding", saliva_params.get("x_padding", None))
-    ylims = kwargs.get("ylims", None)
-    test_text = kwargs.get("test_text", saliva_params["test_text"])
-    test_color = kwargs.get("test_color", saliva_params["test_color"])
-    test_alpha = kwargs.get("test_alpha", saliva_params["test_alpha"])
-    xaxis_label = kwargs.get("xaxis_label", saliva_params["xaxis_label"])
-    xaxis_tick_locator = kwargs.get("xaxis_tick_locator", saliva_params["xaxis_tick_locator"])
-
-    if isinstance(data, dict) and biomarker in data.keys():
-        # multiple biomarkers were passed => get the selected biomarker and try to get the groups from the index
-        data = data[biomarker]
-
-    if saliva_times is None:
-        if isinstance(data, pd.DataFrame):
-            # DataFrame was passed
-            if "time" in data.index.names:
-                saliva_times = np.array(data.index.get_level_values("time").unique())
-        else:
-            # Dict was passed => multiple groups (where each entry is a dataframe per group) or multiple biomarker
-            # (where each entry is one biomarker)
-            if all(["time" in d.index.names for d in data.values()]):
-                saliva_times = np.array(
-                    [d.index.get_level_values("time").unique() for d in data.values()],
-                    dtype=object,
-                )
-                if not all([len(saliva_time) == len(saliva_times[0]) for saliva_time in saliva_times]):
-                    raise ValueError(
-                        "Different saliva time lengths passed! Did you pass multiple biomarkers? "
-                        "For plotting multiple biomarkers, call the `saliva_plot` function on the same axis "
-                        "repeatedly for the different biomarkers!"
-                    )
-                if (saliva_times == saliva_times[0]).all():
-                    saliva_times = saliva_times[0]
-                else:
-                    raise ValueError("Saliva times inconsistent for the different groups!")
-            else:
-                raise ValueError("Not all dataframes contain a 'time' column for saliva times!")
-
-    if not groups:
-        # extract groups from data if they were not supplied
-        if isinstance(data, pd.DataFrame):
-            # get group names from index
-            if "condition" in data.index.names:
-                groups = list(data.index.get_level_values("condition").unique())
-            elif group_col:
-                if group_col in data:
-                    groups = list(data[group_col].unique())
-                else:
-                    raise ValueError(
-                        "`{}`, specified as `group_col` not in columns of the dataframe!".format(group_col)
-                    )
-            else:
-                groups = ["Data"]
-        else:
-            # get group names from dict
-            groups = list(data.keys())
-
-    if saliva_times is None:
-        raise ValueError("Must specify saliva times!")
-
-    if len(ax.lines) == 0:
-        line_colors = saliva_params["colormap"]
-        _saliva_plot_helper(
-            data,
-            biomarker,
-            groups,
-            saliva_times,
-            ylims=ylims,
-            ax=ax,
-            line_colors=line_colors,
-        )
-
-        ax.text(
-            x=test_times[0] + 0.5 * (test_times[1] - test_times[0]),
-            y=0.95,
-            transform=ax.get_xaxis_transform(),
-            s=test_text,
-            horizontalalignment="center",
-            verticalalignment="top",
-        )
-
-        ax.axvspan(*test_times, color=test_color, alpha=test_alpha, zorder=1, lw=0)
-        if bg_color is not None:
-            if x_padding is None:
-                total_length = saliva_times[-1] - saliva_times[0]
-                x_padding = 0.1 * total_length
-            ax.axvspan(
-                saliva_times[0] - x_padding,
-                test_times[0],
-                color=bg_color,
-                alpha=bg_alpha,
-                zorder=0,
-                lw=0,
-            )
-            ax.axvspan(
-                test_times[1],
-                saliva_times[-1] + x_padding,
-                color=bg_color,
-                alpha=bg_alpha,
-                zorder=0,
-                lw=0,
-            )
-            ax.set_xlim(saliva_times[0] - x_padding, saliva_times[-1] + x_padding)
-
-        ax.xaxis.set_major_locator(xaxis_tick_locator)
-        ax.set_xlabel(xaxis_label)
     else:
+        fig = ax.get_figure()
+    kwargs.update({"ax": ax})
+
+    if saliva_type is None and not isinstance(data, dict):
+        raise ValueError("If 'saliva_type' is None, you must pass a dict!")
+
+    if isinstance(data, pd.DataFrame):
+        # multiple saliva data were passed in a dict => get the selected saliva type
+        data = {saliva_type: data}
+        sample_times = {saliva_type: sample_times}
+
+    linestyle = kwargs.pop("linestyle", None)
+    marker = kwargs.pop("marker", "o")
+    colormap = kwargs.pop("colormap", None)
+    for i, key in enumerate(data):
+        ls = _saliva_plot_get_plot_param(linestyle, key)
+        if linestyle is not None:
+            kwargs.setdefault("linestyle", ls)
+
+        m = _saliva_plot_get_plot_param(marker, key)
+        if marker is not None:
+            kwargs.setdefault("marker", m)
+
+        cmap = _saliva_plot_get_plot_param(colormap, key)
+        if colormap is not None:
+            kwargs.setdefault("colormap", cmap)
+
+        _saliva_plot(
+            data=data[key],
+            saliva_type=key,
+            counter=i,
+            sample_times=sample_times[key],
+            test_times=test_times,
+            sample_times_absolute=sample_times_absolute,
+            **kwargs,
+        )
+
+    if len(data) > 1:
+        saliva_plot_combine_legend(fig, saliva_types=list(data.keys()), **kwargs)
+    else:
+        fig.tight_layout()
+
+    return fig, ax
+
+
+def _saliva_plot(
+    data: Union[SalivaRawDataFrame, SalivaMeanSeDataFrame],
+    saliva_type: str,
+    counter: int,
+    sample_times: Optional[Union[Sequence[int], Dict[str, Sequence[int]]]] = None,
+    test_times: Optional[Sequence[int]] = None,
+    sample_times_absolute: Optional[bool] = False,
+    **kwargs,
+):
+
+    ax: plt.Axes = kwargs.get("ax")
+    if test_times is None:
+        test_times = [0, 0]
+
+    test_title = kwargs.get("test_title", _saliva_plot_params.get("test_title"))
+    test_color = kwargs.get("test_color", _saliva_plot_params.get("test_color"))
+    test_alpha = kwargs.get("test_alpha", _saliva_plot_params.get("test_alpha"))
+    xlabel = kwargs.get("xlabel", _saliva_plot_params.get("xlabel"))
+    ylabel = kwargs.get("ylabel", _saliva_plot_params.get("ylabel"))
+    xticks = kwargs.get("xticks")
+    xaxis_tick_locator = kwargs.get("xaxis_tick_locator")
+
+    if isinstance(ylabel, dict):
+        ylabel = ylabel[saliva_type]
+
+    if isinstance(data, dict):
+        # multiple saliva data were passed in a dict => get the selected saliva type
+        data = data[saliva_type]
+
+    ret = is_saliva_raw_dataframe(data, saliva_type, raise_exception=False)
+    ret = ret or is_saliva_mean_se_dataframe(data, raise_exception=False)
+    if not ret:
+        raise ValidationError("'data' is expected to be either a SalivaRawDataFrame or a SalivaMeanSeDataFrame!")
+
+    data = data.copy()
+
+    if sample_times is None and "time" not in data.reset_index().columns:
+        x = "sample"
+        xlabel = "Sample"
+    else:
+        sample_times = _get_sample_times(data, sample_times, test_times, sample_times_absolute)
+        if "time" in data.index.names:
+            data.index = data.index.droplevel("time")
+        data["time"] = sample_times * int(len(data) / len(sample_times))
+        x = "time"
+
+    hue = "condition" if "condition" in data.index.names else None
+    style = "condition" if "condition" in data.index.names else None
+    kwargs.setdefault("markers", "o")
+
+    if counter == 0 and len(ax.lines) == 0:
+        kwargs.setdefault("colormap", colors.fau_palette_blue("line_2"))
+        if sum(test_times) != 0:
+            ax.axvspan(*test_times, color=test_color, alpha=test_alpha, zorder=1, lw=0)
+            ax.text(
+                x=test_times[0] + 0.5 * (test_times[1] - test_times[0]),
+                y=0.95,
+                transform=ax.get_xaxis_transform(),
+                s=test_title,
+                fontsize="small",
+                horizontalalignment="center",
+                verticalalignment="top",
+            )
+    else:
+        kwargs.setdefault("colormap", colors.fau_palette_tech("line_2"))
         # the was already something drawn into the axis => we are using the same axis to add another feature
         ax_twin = ax.twinx()
-        line_colors = saliva_params["multi_colormap"]
-        _saliva_plot_helper(
-            data,
-            biomarker,
-            groups,
-            saliva_times,
-            ylims=ylims,
-            ax=ax_twin,
-            x_offset_basis=saliva_params["multi_x_offset"],
-            line_colors=line_colors,
-        )
+        kwargs.update({"ax": ax_twin, "show_legend": False})
 
-    if len(groups) > 1:
-        # get handles
-        handles, labels = ax.get_legend_handles_labels()
-        # remove the errorbars
-        handles = [h[0] for h in handles]
-        # use them in the legend
-        ax.legend(
-            handles,
-            labels,
-            loc="upper right",
-            bbox_to_anchor=(0.99, 0.99),
-            numpoints=1,
-        )
+    kwargs.update({"xlabel": xlabel, "ylabel": ylabel})
 
-    if fig:
-        fig.tight_layout()
-        return fig, ax
+    lineplot(data=data, x=x, y=saliva_type, hue=hue, style=style, **kwargs)
+
+    if xticks is not None and xaxis_tick_locator is not None:
+        ax.xaxis.set_major_locator(xaxis_tick_locator)
+        ax.xaxis.set_ticks(xticks)
 
 
-def _saliva_plot_helper(
-    data: pd.DataFrame,
-    biomarker: str,
-    groups: Sequence[str],
-    saliva_times: Sequence[int],
-    plot_params: Optional[Dict] = None,
-    **kwargs,
-) -> plt.Axes:
-    saliva_params = _saliva_params.copy()
-    if plot_params:
-        saliva_params.update(plot_params)
-
-    ax: Union[plt.Axes, None] = kwargs.get("ax", None)
-    # get all plot parameter
-    ylims = kwargs.get("ylims", None)
-    line_colors = kwargs.get("line_colors", saliva_params["colormap"])
-    x_offset_basis = kwargs.get("x_offset_basis", 0)
-    line_styles = saliva_params["line_styles"]
-    markers = saliva_params["markers"]
-    yaxis_label = saliva_params["yaxis_label"][biomarker]
-    x_offsets = list(np.array(saliva_params["x_offsets"]) + x_offset_basis)
-
-    for group, x_off, line_color, marker, ls in zip(groups, x_offsets, line_colors, markers, line_styles):
-        if group == "Data":
-            # no condition index
-            df_grp = data
-        else:
-            df_grp = data.xs(group, level="condition")
-        ax.errorbar(
-            x=saliva_times + x_off,
-            y=df_grp["mean"],
-            label=group,
-            yerr=df_grp["se"],
-            capsize=3,
-            marker=marker,
-            color=line_color,
-            ls=ls,
-        )
-
-    ax.set_ylabel(yaxis_label)
-
-    if isinstance(ylims, (tuple, list)):
-        ax.set_ylim(ylims)
+def _saliva_plot_get_plot_param(param: Union[Dict[str, str], str], key: str):
+    if isinstance(param, dict):
+        p = param[key]
     else:
-        ymargin = 0.15
-        if isinstance(ylims, float):
-            ymargin = ylims
-        ax.margins(x=0.05, y=ymargin)
-
-    ax.tick_params(axis="both", which="major")
-    return ax
+        p = param
+    return p
 
 
 def saliva_plot_combine_legend(
     fig: plt.Figure,
     ax: plt.Axes,
-    biomarkers: Sequence[str],
-    separate_legends: Optional[bool] = False,
-    plot_params: Optional[Dict] = None,
+    saliva_types: Sequence[str],
+    **kwargs,
 ):
-    """
-    TODO: add documentation
+    """Combine multiple legends of ``saliva_plot`` into one joint legend outside of plot.
+
+    If data from multiple saliva types are combined into one plot (e.g., by calling
+    :func:`~biopsykit.protocols.plotting.saliva_plot` on the same plot twice) then two separate legend are created.
+    This function can be used to combine the two legends into one.
 
     Parameters
     ----------
-    fig
-    ax
-    biomarkers
-    separate_legends
-    plot_params
-
-    Returns
-    -------
+    fig : :class:`~matplotlib.figure.Figure`
+        figure object
+    ax : :class:`~matplotlib.axes.Axes`
+        axes object
+    saliva_types : list
+        list of saliva types in plot
+    kwargs
+        additional arguments to customize plot, such as:
+            * ``legend_loc``: Location of legend. Default: ``upper center``
+            * ``legend_size``: Legend size. Default: ``small``
+            * ``rect``: Rectangle in normalized figure coordinates into which the whole subplots area
+              (including labels) will fit. Used to conveniently place legend outside of figure
 
     """
-    from matplotlib.legend_handler import HandlerTuple
-
-    saliva_params = _saliva_params.copy()
-    if plot_params:
-        saliva_params.update(plot_params)
-
-    fontsize = saliva_params["multi_fontsize"]
-    legend_offset = saliva_params["multi_legend_offset"]
-
+    legend_loc = kwargs.get("legend_loc", "upper center")
+    legend_size = kwargs.get("legend_size", "small")
+    rect = kwargs.get("rect", (0, 0, 1.0, 0.95))
     labels = [ax.get_legend_handles_labels()[1] for ax in fig.get_axes()]
-    if all([len(l) == 1 for l in labels]):
+
+    if all([len(label) == 1 for label in labels]):
         # only one group
         handles = [ax.get_legend_handles_labels()[0] for ax in fig.get_axes()]
         handles = [h[0] for handle in handles for h in handle]
-        labels = biomarkers
-        ax.legend(
+        labels = [_saliva_plot_params.get("legend_title")[b] for b in saliva_types]
+        ncol = len(handles)
+        fig.legend(
             handles,
             labels,
-            loc="upper right",
-            bbox_to_anchor=(0.99, 0.99),
-            prop={"size": fontsize},
+            loc=legend_loc,
+            ncol=ncol,
+            prop={"size": legend_size},
         )
     else:
-        if separate_legends:
-            for (i, a), biomarker in zip(enumerate(reversed(fig.get_axes())), reversed(biomarkers)):
-                handles, labels = a.get_legend_handles_labels()
-                l = ax.legend(
-                    handles,
-                    labels,
-                    title=biomarker,
-                    loc="upper right",
-                    bbox_to_anchor=(0.99 - legend_offset * i, 0.99),
-                    prop={"size": fontsize},
-                )
-                ax.add_artist(l)
-        else:
-            handles = [ax.get_legend_handles_labels()[0] for ax in fig.get_axes()]
-            handles = [h[0] for handle in handles for h in handle]
-            labels = [ax.get_legend_handles_labels()[1] for ax in fig.get_axes()]
-            labels = ["{}:\n{}".format(b, " - ".join(l)) for b, l in zip(biomarkers, labels)]
-            ax.legend(
-                list(zip(handles[::2], handles[1::2])),
-                labels,
-                loc="upper right",
-                bbox_to_anchor=(0.99, 0.99),
-                numpoints=1,
-                handler_map={tuple: HandlerTuple(ndivide=None)},
-                prop={"size": fontsize},
-            )
+        handles = [ax.get_legend_handles_labels()[0] for ax in fig.get_axes()]
+        handles = [h[0] for handle in handles for h in handle]
+        labels = [ax.get_legend_handles_labels()[1] for ax in fig.get_axes()]
+        labels = [
+            "{}: {}".format(_saliva_plot_params.get("legend_title")[b], " - ".join(l))
+            for b, l in zip(saliva_types, labels)
+        ]
+        ncol = len(handles)
+
+        fig.legend(
+            list(zip(handles[::2], handles[1::2])),
+            labels,
+            loc=legend_loc,
+            ncol=ncol,
+            numpoints=1,
+            handler_map={tuple: HandlerTuple(ndivide=None)},
+            prop={"size": legend_size},
+        )
+    ax.legend().remove()
+    fig.tight_layout(pad=1.0, rect=rect)
 
 
 def saliva_feature_boxplot(
-    data: pd.DataFrame,
+    data: SalivaFeatureDataFrame,
     x: str,
     saliva_type: str,
     feature: Optional[str] = None,
-    stats_kwargs: Optional[Dict] = None,
+    stats_kwargs: Optional[Dict[str, Any]] = None,
     **kwargs,
-):
-    from biopsykit.plotting import feature_boxplot
+) -> Tuple[plt.Figure, plt.Axes]:
+    """Draw a boxplot with significance brackets, specifically designed for saliva features.
 
+    This is a wrapper of :func:`~biopsykit.plotting.feature_boxplot` that can be used to plot saliva features and
+    allows to easily add significance brackets that indicate statistical significance.
+
+    .. note::
+        The input data is assumed to be in long-format.
+
+
+    data : :class:`~biopsykit.utils.dataframe_handling.SalivaFeatureDataFrame`
+        data to plot
+    x : str
+        column of x axis in ``data``
+    saliva_type : str
+        type of saliva data to plot
+    feature : str, optional
+        name of feature to plot or ``None``
+    stats_kwargs : dict, optional
+        dictionary with arguments for significance brackets
+    kwargs
+        additional arguments that are passed to :func:`~biopsykit.plotting.feature_boxplot` and :func:`~seaborn.boxplot`
+
+
+    Returns
+    -------
+    fig : :class:`matplotlib.figure.Figure`
+        figure object
+    ax : :class:`matplotlib.axes.Axes`
+        axes object
+
+
+    See Also
+    --------
+    `biopsykit.plotting.feature_boxplot`
+        plot features as boxplot
+    `~biopsykit.stats.StatsPipeline`
+        class to create statistical analysis pipelines and get parameter for plotting significance brackets
+
+    """
+    is_saliva_feature_dataframe(data, saliva_type)
     if feature is not None:
         if isinstance(feature, str):
             feature = [feature]
-        ylabel = _get_ylabels(saliva_type, feature)
+        ylabel = _saliva_feature_boxplot_get_ylabels(saliva_type, feature)
         ylabel = [ylabel[f] for f in feature]
         if len(set(ylabel)) == 1:
             kwargs["ylabel"] = ylabel[0]
@@ -638,62 +959,79 @@ def saliva_feature_boxplot(
 
 
 def saliva_multi_feature_boxplot(
-    data: pd.DataFrame,
+    data: SalivaFeatureDataFrame,
     saliva_type: str,
-    features: Union[str, Sequence[str]],
+    features: Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]],
     hue: Optional[str] = None,
-    xticklabels: Optional[Dict[str, str]] = None,
     stats_kwargs: Optional[Dict] = None,
     **kwargs,
-):
-    """
+) -> Tuple[plt.Figure, Iterable[plt.Axes]]:
+    """Draw multiple features as boxplots with significance brackets, specifically designed for saliva features.
+
+    This is a wrapper of :func:`~biopsykit.plotting.multi_feature_boxplot` that can be used to plot saliva features and
+    allows to easily add significance brackets that indicate statistical significance.
+
+    .. note::
+        The input data is assumed to be in long-format.
 
     Parameters
     ----------
-    data
-    saliva_type
-    hue
-    features
-    filter_features : bool, optional
-        ``True`` to filter features by name, ``False`` to match exact feature names. Default: ``True``
-    xticklabels
-    stats_kwargs
-    kwargs
+    data : :class:`~biopsykit.utils.dataframe_handling.SalivaFeatureDataFrame`
+        data to plot
+    saliva_type : str
+        type of saliva data to plot
+    hue : str, optional
+        column name of grouping variable. Default: ``None``
+    features : list of str or dict of str
+        features to plot. If ``features`` is a list, each entry must correspond to one feature category in the
+        index level specified by ``group``. A separate subplot will be created for each feature.
+        If similar features (i.e., different `slope` or `AUC` parameters) should be combined into one subplot,
+        ``features`` can be provided as dictionary.
+        Then, the dict keys specify the feature category (a separate subplot will be created for each category)
+        and the dict values specify the feature (or list of features) that are combined into the subplots.
+    stats_kwargs : dict, optional
+        nested dictionary with arguments for significance brackets.
+        See :func:`~biopsykit.plotting.feature_boxplot` for further information
+
 
     Returns
     -------
+    fig : :class:`matplotlib.figure.Figure`
+        figure object
+    axs : list of :class:`matplotlib.axes.Axes`
+        list of subplot axes objects
+
+
+    See Also
+    --------
+    `biopsykit.plotting.multi_feature_boxplot`
+        plot multiple features as boxplots
+    `biopsykit.stats.StatsPipeline`
+        class to create statistical analysis pipelines and get parameter for plotting significance brackets
 
     """
-    from biopsykit.plotting import multi_feature_boxplot
-
-    x = kwargs.get("x", "biomarker")
+    x = kwargs.pop("x", "saliva_feature")
 
     if isinstance(features, str):
         # ensure list
         features = [features]
 
-    if xticklabels is None:
-        xticklabels = _get_xticklabels(data, features)
-
-    if "ylabels" not in kwargs:
-        kwargs["ylabels"] = _get_ylabels(saliva_type, features)
+    kwargs.setdefault("xticklabels", _saliva_feature_boxplot_get_xticklabels(features))
+    kwargs.setdefault("ylabels", _saliva_feature_boxplot_get_ylabels(saliva_type, features))
 
     return multi_feature_boxplot(
         data,
         x=x,
         y=saliva_type,
-        group="biomarker",
-        hue=hue,
+        group="saliva_feature",
         features=features,
-        xticklabels=xticklabels,
+        hue=hue,
         stats_kwargs=stats_kwargs,
         **kwargs,
     )
 
 
-def _get_xticklabels(data: pd.DataFrame, features: Sequence[str]) -> Dict[str, Sequence[str]]:
-    import re
-
+def _saliva_feature_boxplot_get_xticklabels(features: Dict[str, str]) -> Dict[str, Sequence[str]]:
     xlabel_dict = {}
     for feature in features:
         cols = features[feature]
@@ -711,8 +1049,8 @@ def _get_xticklabels(data: pd.DataFrame, features: Sequence[str]) -> Dict[str, S
     return xlabel_dict
 
 
-def _get_ylabels(saliva_type: str, features: Union[str, Sequence[str]]):
-    ylabels = _saliva_feature_params["yaxis_label"][saliva_type]
+def _saliva_feature_boxplot_get_ylabels(saliva_type: str, features: Union[str, Sequence[str]]) -> Dict[str, str]:
+    ylabels = _saliva_feature_params["ylabel"][saliva_type]
     if isinstance(features, str):
         features = [features]
     for feature in features:

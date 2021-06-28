@@ -1,14 +1,17 @@
 """A set of util functions to detect static regions in a IMU signal given certain constrains."""
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Optional, Union, Literal
 
 import numpy as np
 from numpy.linalg import norm
-from typing_extensions import Literal
+import pandas as pd
 
+from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import (
     sliding_window_view,
     _bool_fill,
     bool_array_to_start_end_array,
+    sanitize_input_nd,
+    sanitize_sliding_window_input,
 )
 
 # supported metric functions
@@ -21,8 +24,8 @@ _METRIC_FUNCTIONS = {
 METRIC_FUNCTION_NAMES = Literal["maximum", "variance", "mean", "median"]
 
 
-def find_static_samples(
-    signal: np.ndarray,
+def _find_static_samples(
+    data: np.ndarray,
     window_length: int,
     inactive_signal_th: float,
     metric: METRIC_FUNCTION_NAMES = "mean",
@@ -34,63 +37,61 @@ def find_static_samples(
         Due to edge cases at the end of the input data where window size and overlap might not fit your data, the last
         window might be discarded for analysis and will therefore always be considered as non-static!
 
+
     Parameters
     ----------
-    signal : array with shape (n, 3)
+    data : array with shape (n, 3)
         3D signal on which static moment detection should be performed (e.g. 3D-acc or 3D-gyr data)
-
     window_length : int
         Length of desired window in units of samples
-
     inactive_signal_th : float
        Threshold to decide whether a window should be considered as active or inactive. Window will be tested on
        <= threshold
-
     metric : str, optional
-        Metric which will be calculated per window, one of the following strings
-
-        'mean' (default)
-            Calculates mean value per window
-        'maximum'
-            Calculates maximum value per window
-        'median'
-            Calculates median value per window
-        'variance'
-            Calculates variance value per window
-
+        Metric which will be calculated per window, one of the following strings:
+            * 'mean' (default)
+              Calculates mean value per window
+            * 'maximum'
+              Calculates maximum value per window
+            * 'median'
+              Calculates median value per window
+            * 'variance'
+              Calculates variance value per window
     overlap : int, optional
-        Length of desired overlap in units of samples. If None (default) overlap will be window_length - 1
+        Length of desired overlap in units of samples. If ``None`` (default) overlap will be window_length - 1
+
 
     Returns
     -------
-    Boolean array with length n to indicate static (=True) or non-static (=False) for each sample
+    Boolean array with length n to indicate static (=``True``) or non-static (=``False``) for each sample
+
 
     Examples
     --------
-    >>> test_data = load_gyro_data(path)
-    >>> get_static_moments(gyro_data, window_length=128, overlap=64, inactive_signal_th = 5, metric = 'mean')
+    >>> _find_static_samples(data, window_length=128, overlap=64, inactive_signal_th = 5, metric = 'mean')
 
     See Also
     --------
-    biopsykit.signals.utils.sliding_window_view: Details on the used windowing function for this method.
+    :func:`~biopsykit.signals.utils.array_handling.sliding_window_view`
+        Details on the used windowing function for this method.
 
     """
     # test for correct input data shape
-    if np.shape(signal)[-1] != 3:
+    if np.shape(data)[-1] != 3:
         raise ValueError("Invalid signal dimensions, signal must be of shape (n,3).")
 
     if metric not in _METRIC_FUNCTIONS:
-        raise ValueError("Invalid metric passed! %s as metric is not supported." % metric)
+        raise ValueError("Invalid metric passed! {} as metric is not supported.".format(metric))
 
     # add default overlap value
     if overlap is None:
         overlap = window_length - 1
 
     # allocate output array
-    inactive_signal_bool_array = np.zeros(len(signal))
+    inactive_signal_bool_array = np.zeros(len(data))
 
     # calculate norm of input signal (do this outside of loop to boost performance at cost of memory!)
-    signal_norm = norm(signal, axis=1)
+    signal_norm = norm(data, axis=1)
 
     mfunc = _METRIC_FUNCTIONS[metric]
 
@@ -99,7 +100,7 @@ def find_static_samples(
     is_static = np.broadcast_to(mfunc(windowed_norm, axis=1) <= inactive_signal_th, windowed_norm.shape[::-1]).T
 
     # create the list of indices for sliding windows with overlap
-    windowed_indices = sliding_window_view(np.arange(0, len(signal)), window_length, overlap, nan_padding=False)
+    windowed_indices = sliding_window_view(np.arange(0, len(data)), window_length, overlap, nan_padding=False)
 
     # iterate over sliding windows
     inactive_signal_bool_array = _bool_fill(windowed_indices, is_static, inactive_signal_bool_array)
@@ -107,11 +108,11 @@ def find_static_samples(
     return inactive_signal_bool_array.astype(bool)
 
 
-def find_static_sequences(
-    signal: np.ndarray,
+def _find_static_sequences(
+    data: np.ndarray,
     window_length: int,
     inactive_signal_th: float,
-    metric: METRIC_FUNCTION_NAMES = "mean",
+    metric: METRIC_FUNCTION_NAMES = "variance",
     overlap: int = None,
 ) -> np.ndarray:
     """Search for static sequences within given input signal, based on windowed L2-norm thresholding.
@@ -122,27 +123,19 @@ def find_static_sequences(
 
     Parameters
     ----------
-    signal : array with shape (n, 3)
+    data : array with shape (n, 3)
         3D signal on which static moment detection should be performed (e.g. 3D-acc or 3D-gyr data)
-
     window_length : int
         Length of desired window in units of samples
-
     inactive_signal_th : float
        Threshold to decide whether a window should be considered as active or inactive. Window will be tested on
        <= threshold
-
     metric : str, optional
-        Metric which will be calculated per window, one of the following strings
-
-        'mean' (default)
-            Calculates mean value per window
-        'maximum'
-            Calculates maximum value per window
-        'median'
-            Calculates median value per window
-        'variance'
-            Calculates variance value per window
+        Metric which will be calculated per window, one of the following strings:
+            * 'variance' (default): Calculates variance value per window
+            * 'mean': Calculates mean value per window
+            * 'maximum': Calculates maximum value per window
+            * 'median': Calculates median value per window
 
     overlap : int, optional
         Length of desired overlap in units of samples. If None (default) overlap will be window_length - 1
@@ -153,22 +146,101 @@ def find_static_sequences(
 
     Examples
     --------
-    >>> gyro_data = load_gyro_data(path)
-    >>> static_regions = get_static_moment_labels(gyro_data, window_length=128, overlap=64, inactive_signal_th=5)
+    >>> _find_static_sequences(data, window_length=128, overlap=64, inactive_signal_th = 5, metric = 'mean')
 
     See Also
     --------
-    biopsykit.signals.utils.sliding_window_view: Details on the used windowing function for this method.
+    :func:`~biopsykit.signals.utils.array_handling.sliding_window`
+        Details on the used windowing function for this method.
 
     """
-    static_moment_bool_array = find_static_samples(
-        signal=signal,
-        window_length=window_length,
-        inactive_signal_th=inactive_signal_th,
-        metric=metric,
-        overlap=overlap,
+    static_moment_bool_array = _find_static_samples(
+        data=data, window_length=window_length, inactive_signal_th=inactive_signal_th, metric=metric, overlap=overlap
     )
     return bool_array_to_start_end_array(static_moment_bool_array)
+
+
+def find_static_moments(
+    data: arr_t,
+    threshold: float,
+    window_samples: Optional[int] = None,
+    window_sec: Optional[int] = None,
+    sampling_rate: Optional[Union[int, float]] = 0,
+    overlap_samples: Optional[int] = None,
+    overlap_percent: Optional[float] = None,
+    metric: METRIC_FUNCTION_NAMES = "variance",
+) -> pd.DataFrame:
+    """Search for static moments within given input signal, based on windowed L2-norm thresholding.
+
+    The window size of sliding windows can either be specified in *samples* (``window_samples``)
+    or in *seconds* (``window_sec``, together with ``sampling_rate``).
+
+    The overlap of windows can either be specified in *samples* (``overlap_samples``)
+    or in *percent* (``overlap_percent``).
+
+
+    Parameters
+    ----------
+    data : array with shape (n, 3)
+        3D signal on which static moment detection should be performed (e.g. 3D-acc or 3D-gyr data)
+    window_samples : int, optional
+        window size in samples or ``None`` if window size is specified in seconds + sampling rate. Default: ``None``
+    window_sec : int, optional
+        window size in seconds or ``None`` if window size is specified in samples. Default: ``None``
+    sampling_rate : float, optional
+        sampling rate of data in Hz. Only needed if window size is specified in seconds (``window_sec`` parameter).
+        Default: ``None``
+    overlap_samples : int, optional
+        overlap of windows in samples or ``None`` if window overlap is specified in percent. Default: ``None``
+    overlap_percent : float, optional
+        overlap of windows in percent or ``None`` if window overlap is specified in samples. Default: ``None``
+    threshold : float
+       Threshold to decide whether a window should be considered as active or inactive. Window will be tested on
+       <= threshold
+    metric : str, optional
+        Metric which will be calculated per window, one of the following strings:
+            * 'variance' (default): Calculates variance value per window
+            * 'mean': Calculates mean value per window
+            * 'maximum': Calculates maximum value per window
+            * 'median': Calculates median value per window
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        dataframe with ["start", "end"] columns indicating beginning and end of static regions within the input signal
+
+
+    Examples
+    --------
+    >>> _find_static_sequences(data, window_length=128, overlap=64, inactive_signal_th = 5, metric = 'mean')
+
+
+    See Also
+    --------
+    :func:`~biopsykit.signals.utils.array_handling.sliding_window`
+        Details on the used windowing function for this method.
+
+    """
+    # compute the data_norm of the variance in the windows
+    window, overlap = sanitize_sliding_window_input(
+        window_samples=window_samples,
+        window_sec=window_sec,
+        sampling_rate=sampling_rate,
+        overlap_samples=overlap_samples,
+        overlap_percent=overlap_percent,
+    )
+    if data.empty:
+        start_end = np.zeros(shape=(0, 2))
+    else:
+        data = sanitize_input_nd(data)
+        start_end = _find_static_sequences(
+            data, window_length=window, overlap=overlap, inactive_signal_th=threshold, metric=metric
+        )
+        if start_end[-1, -1] >= len(data):
+            # fix: handle edge case manually
+            start_end[-1, -1] = len(data) - 1
+    return pd.DataFrame(start_end, columns=["start", "end"])
 
 
 def find_first_static_window_multi_sensor(

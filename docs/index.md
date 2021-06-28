@@ -9,10 +9,10 @@ to use **BioPsyKit**.
 ## Contents
 
 * [Readme](readme)
-* [User Guide](guides/index)
-* [Examples](guides/index)
+* [User Guide](guides/index.rst)
+* [Examples](guides/index.rst)
 * [Authors](authors)
-* [Module Reference](api/modules)
+* [Module Reference](api/modules.rst)
 
 [comment]: <> (## Indices and tables)
 

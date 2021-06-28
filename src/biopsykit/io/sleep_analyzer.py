@@ -4,9 +4,10 @@ from pathlib import Path
 from typing import Optional, Union, Sequence
 
 import re
+import pytz
 
 import pandas as pd
-import pytz
+
 from biopsykit.sleep.utils import split_nights
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dir
 from biopsykit.utils._types import path_t
@@ -32,7 +33,7 @@ WITHINGS_RAW_DATA_SOURCES = {
 
 def load_withings_sleep_analyzer_raw_folder(
     folder_path: path_t,
-    timezone: Optional[Union[pytz.timezone, str]] = None,
+    timezone: Optional[Union[pytz.tzinfo.tzinfo, str]] = None,
     split_into_nights: Optional[bool] = True,
 ) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     """Load folder with raw data from a Withings Sleep Analyzer recording session and convert into time-series data.
@@ -55,7 +56,7 @@ def load_withings_sleep_analyzer_raw_folder(
     ----------
     folder_path: :any:`pathlib.Path` or str
         path to folder with Sleep Analyzer raw data
-    timezone : str or pytz.timezone, optional
+    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
         timezone of the acquired data, either as string of as pytz object.
         Default: 'Europe/Berlin'
     split_into_nights : bool, optional
@@ -113,7 +114,7 @@ def load_withings_sleep_analyzer_raw_folder(
 def load_withings_sleep_analyzer_raw_file(
     file_path: path_t,
     data_source: str,
-    timezone: Optional[Union[pytz.timezone, str]] = None,
+    timezone: Optional[Union[pytz.tzinfo.tzinfo, str]] = None,
     split_into_nights: Optional[bool] = True,
 ) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
     """Load single Withings Sleep Analyzer raw data file and convert into time-series data.
@@ -124,7 +125,7 @@ def load_withings_sleep_analyzer_raw_file(
         path to file
     data_source : str
         data source of file specified by ``file_path``
-    timezone : str or pytz.timezone, optional
+    timezone : str or :class:`datetime.tzin:o`, optional
         timezone of recorded data, either as string or as pytz object.
         Default: 'Europe/Berlin'
     split_into_nights : bool, optional
@@ -204,7 +205,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
         * ``total_time_rem_sleep``: Total time of REM sleep
         * ``total_time_awake``: Total time of being awake
         * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset
-        * ``num_wake_bouts``: Total number of wake bouts
+        * ``number_wake_bouts``: Total number of wake bouts
         * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep
         * ``getup_onset_latency``: Get Up Latency, i.e., time in bed after awakening until getting up
         * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
@@ -216,13 +217,15 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
         * ``heart_rate_min``: Minimum heart rate during recording in bpm
         * ``heart_rate_max``: Maximum heart rate during recording in bpm
 
+
     Parameters
     ----------
     file_path : :any:`pathlib.Path` or str
         path to file
-    timezone : str or pytz.timezone, optional
+    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
         timezone of recorded data, either as string or as pytz object.
         Default: 'Europe/Berlin'
+
 
     Returns
     -------
@@ -260,7 +263,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
             "tief (s)": "total_time_deep_sleep",
             "rem (s)": "total_time_rem_sleep",
             "wach (s)": "total_time_awake",
-            "Aufwachen": "num_wake_bouts",
+            "Aufwachen": "number_wake_bouts",
             "Duration to sleep (s)": "sleep_onset_latency",
             "Duration to wake up (s)": "getup_latency",
             "Snoring episodes": "count_snoring_episodes",

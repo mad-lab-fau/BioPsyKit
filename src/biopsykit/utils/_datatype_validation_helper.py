@@ -337,7 +337,9 @@ def _assert_has_column_levels(
 
 
 def _assert_value_range(
-    data: pd.DataFrame, value_range: Sequence[Union[int, float]], raise_exception: Optional[bool] = True
+    data: Union[pd.DataFrame, pd.Series],
+    value_range: Sequence[Union[int, float]],
+    raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
     """Check if all values are within the specified range.
 
@@ -413,6 +415,67 @@ def _assert_num_columns(
     return True
 
 
+def _assert_len_list(data: Sequence, length: int, raise_exception: Optional[bool] = True):
+    """Check if a list has the required length.
+
+    Parameters
+    ----------
+    data : list
+        list to check
+    length : int
+        the required length or the list
+    raise_exception : bool, optional
+        Whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` has the required length, ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    :exc:`~biopsykit.exceptions.ValidationError`
+        if ``raise_exception`` is ``True`` and ``data`` does not have the required length
+
+    """
+    _assert_is_dtype(data, (list, tuple, np.ndarray))
+    if len(data) != length:
+        if raise_exception:
+            raise ValidationError(
+                "The list does not have the required length. "
+                "Expected was length {}, but it has length {}.".format(length, len(data))
+            )
+        return False
+    return True
+
+
+def _assert_dataframes_same_length(df_list: Sequence[pd.DataFrame], raise_exception: Optional[bool] = True):
+    """Check if all dataframes have same length.
+
+    Parameters
+    ----------
+    df_list : list
+        list of dataframes to check
+    raise_exception : bool, optional
+        Whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if all dataframes in ``df_list`` have same length, ``False`` otherwise
+    (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    :exc:`~biopsykit.exceptions.ValidationError`
+        if ``raise_exception`` is ``True`` and ``data`` does not have the required length
+
+    """
+    if len(set(len(df) for df in df_list)) != 1:
+        if raise_exception:
+            raise ValidationError("Not all dataframes have the same length!")
+        return False
+    return True
+
+
 def _multiindex_level_names_helper(
     df: pd.DataFrame,
     level_names: Iterable[_Hashable],
@@ -445,7 +508,7 @@ def _multiindex_level_names_helper(
     if not expected:
         if raise_exception:
             raise ValidationError(
-                "The dataframe is expected to have exactly the following {} level names ({}), "
+                "The dataframe is expected to have exactly the following {} level names {}, "
                 "but it has {}".format(idx_or_col, level_names, ac_levels)
             )
         return False

@@ -8,9 +8,9 @@ import pytz
 
 import numpy as np
 import pandas as pd
-
 from nilspodlib import Dataset
 
+from biopsykit.utils.file_handling import is_excel_file
 from biopsykit.utils.exceptions import ValidationError
 from biopsykit.utils.dataframe_handling import convert_nan
 from biopsykit.utils.time import tz
@@ -20,6 +20,8 @@ from biopsykit.utils.datatype_helper import (
     SubjectConditionDict,
     is_subject_condition_dict,
     is_subject_condition_dataframe,
+    CodebookDataFrame,
+    is_codebook_dataframe,
 )
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dtype
@@ -29,6 +31,8 @@ __all__ = [
     "load_time_log",
     "load_subject_condition_list",
     "load_questionnaire_data",
+    "load_pandas_dict_excel",
+    "load_codebook",
     "convert_time_log_datetime",
     "write_pandas_dict_excel",
     "write_result_dict",
@@ -52,7 +56,7 @@ def load_time_log(
     file_path : :any:`pathlib.path` or str
         path to time log file. Must either be an Excel or csv file
     index_cols : str, list of str or dict, optional
-        specifies dataframe index. Can either be a string or a list strings to indicate column name(s) from the
+        specifies dataframe index. Can either be a string or a list of strings to indicate column name(s) from the
         dataframe that should be used as index level(s), or ``None`` for no index.
         If the index levels of the time log dataframe should have different names than the columns in the file,
         a dict specifying the mapping (column_name : new_index_name) can be passed. Default: ``None``
@@ -70,7 +74,7 @@ def load_time_log(
 
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         dataframe with time log information
 
     Raises
@@ -117,7 +121,7 @@ def load_time_log(
         # not to be automatically converted into datetime objects
         data = pd.read_excel(file_path, dtype=str, **kwargs)
     else:
-        data = pd.read_csv(file_path, **kwargs)
+        data = pd.read_csv(file_path, dtype=str, **kwargs)
 
     data = _apply_index_cols(data, index_cols=index_cols)
 
@@ -133,37 +137,44 @@ def load_time_log(
         data = data.rename(columns=new_phase_cols)
 
     if not continuous_time:
-        start_cols = np.squeeze(data.columns.str.extract(r"(\w+)_start").dropna().values)
-        end_cols = np.squeeze(data.columns.str.extract(r"(\w+)_end").dropna().values)
-        if start_cols.size == 0:
-            raise ValidationError(
-                "No 'start' and 'end' columns were found. "
-                "Make sure that each phase has columns with 'start' and 'end' suffixes!"
-            )
-        if not np.array_equal(start_cols, end_cols):
-            raise ValidationError("Not all phases have 'start' and 'end' columns!")
-
-        if index_cols is None:
-            index_cols = [s for s in ["subject", "condition"] if s in data.columns]
-            data = data.set_index(index_cols)
-
-        data = pd.wide_to_long(
-            data.reset_index(),
-            stubnames=start_cols,
-            i=index_cols,
-            j="time",
-            sep="_",
-            suffix="(start|end)",
-        )
-
-        # ensure that "start" is always before "end"
-        data = data.reindex(["start", "end"], level=-1)
-        # unstack start|end level
-        data = data.unstack()
+        data = _parse_time_log_not_continuous(data, index_cols)
 
     for val in data.values.flatten():
+        if val is np.nan:
+            continue
         _assert_is_dtype(val, str)
 
+    return data
+
+
+def _parse_time_log_not_continuous(
+    data: pd.DataFrame, index_cols: Union[str, Sequence[str], Dict[str, str]]
+) -> pd.DataFrame:
+    start_cols = np.squeeze(data.columns.str.extract(r"(\w+)_start").dropna().values)
+    end_cols = np.squeeze(data.columns.str.extract(r"(\w+)_end").dropna().values)
+    if start_cols.size == 0:
+        raise ValidationError(
+            "No 'start' and 'end' columns were found. "
+            "Make sure that each phase has columns with 'start' and 'end' suffixes!"
+        )
+    if not np.array_equal(start_cols, end_cols):
+        raise ValidationError("Not all phases have 'start' and 'end' columns!")
+
+    if index_cols is None:
+        index_cols = [s for s in ["subject", "condition"] if s in data.columns]
+        data = data.set_index(index_cols)
+    if isinstance(index_cols, dict):
+        index_cols = data.index.names
+
+    data = pd.wide_to_long(
+        data.reset_index(), stubnames=start_cols, i=index_cols, j="time", sep="_", suffix="(start|end)"
+    )
+    data.columns = data.columns.set_names("phase")
+
+    # ensure that "start" is always before "end"
+    data = data.reindex(["start", "end"], level=-1)
+    # unstack start|end level
+    data = data.unstack()
     return data
 
 
@@ -299,7 +310,7 @@ def load_questionnaire_data(
 
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         dataframe with imported questionnaire data
 
     Raises
@@ -346,6 +357,49 @@ def load_questionnaire_data(
         data = convert_nan(data)
     if remove_nan_rows:
         data = data.dropna(how="all")
+    return data
+
+
+def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
+    """Load codebook from file.
+
+    A codebook is used to convert numerical values from a dataframe (e.g., from questionnaire data)
+    to categorical values.
+
+
+    Parameters
+    ----------
+    file_path : :class:`~pathlib.Path` or str
+        file path to codebook
+    **kwargs
+        additional arguments to pass to :func:`~pandas.read_csv` or :func:`~pandas.read_excel`
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        :obj:`biopsykit.utils.datatype_helper.CodebookDataFrame`, a dataframe in a standardized format
+
+
+    See Also
+    --------
+    :func:`~biopsykit.utils.dataframe_handling.apply_codebook`
+        apply codebook to data
+
+    """
+    # ensure pathlib
+    file_path = Path(file_path)
+
+    _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
+    if file_path.suffix in [".xls", ".xlsx"]:
+        data = pd.read_excel(file_path, **kwargs)
+    else:
+        data = pd.read_csv(file_path, **kwargs)
+
+    _assert_has_columns(data, [["variable"]])
+    data = data.set_index("variable")
+    is_codebook_dataframe(data)
+
     return data
 
 
@@ -398,13 +452,13 @@ def convert_time_log_datetime(
     dataset: Optional[Dataset] = None,
     df: Optional[pd.DataFrame] = None,
     date: Optional[Union[str, datetime.datetime]] = None,
-    timezone: Optional[Union[str, pytz.timezone]] = None,
+    timezone: Optional[Union[str, pytz.tzinfo.tzinfo]] = None,
 ) -> pd.DataFrame:
     """Convert the time log information into datetime objects.
 
     This function converts time log information (containing only time, but no date)
     into datetime objects, thus, adds the `start date` of the recording. To specify the recording date,
-    either a NilsPod :class:`~nilspodlib.Dataset` or a pandas dataframe with a :class:`~pandas.DateTimeIndex`
+    either a NilsPod :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DateTimeIndex`
     must be supplied from which the recording date can be extracted.
     As an alternative, the date can be specified explicitly via ``date`` parameter.
 
@@ -412,17 +466,17 @@ def convert_time_log_datetime(
     ----------
     time_log : pd.DataFrame
         pandas dataframe with time log information
-    dataset : :class:`~nilspodlib.Dataset`, optional
+    dataset : :class:`~nilspodlib.dataset.Dataset`, optional
         NilsPod Dataset object extract time and date information. Default: ``None``
-    df : :class:`pandas.DataFrame`, optional
+    df : :class:`~pandas.DataFrame`, optional
         dataframe with :class:`pandas.DateTimeIndex` to extract time and date information. Default: ``None``
     date : str or datetime, optional
         datetime object or date string used to convert time log information into datetime.
         If ``date`` is a string, it must be supplied in a common date format, e.g. "dd.mm.yyyy" or "dd/mm/yyyy".
         Default: ``None``
-    timezone : str or pytz.timezone, optional
+    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
         timezone of the acquired data to convert, either as string of as pytz object.
-        Default: pytz.timezone('Europe/Berlin')
+        Default: "Europe/Berlin"
 
     Returns
     -------
@@ -464,6 +518,53 @@ def convert_time_log_datetime(
 
     time_log = time_log.applymap(lambda x: timezone.localize(datetime.datetime.combine(date, x)))
     return time_log
+
+
+def load_pandas_dict_excel(
+    file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, pytz.tzinfo.tzinfo]] = None
+) -> Dict[str, pd.DataFrame]:
+    """Load Excel file containing pandas dataframes with time series data of one subject.
+
+    Parameters
+    ----------
+    file_path : :any:`pathlib.Path` or str
+        path to file
+    index_col : str, optional
+        name of index columns of dataframe or ``None`` if no index column is present. Default: "time"
+    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
+        timezone of the acquired data for localization (since Excel does not support localized timestamps),
+        either as string of as pytz object.
+        Default: "Europe/Berlin"
+
+    Returns
+    -------
+    dict
+        dictionary with multiple pandas dataframes
+
+    Raises
+    ------
+    :class:`~biopsykit.exceptions.FileExtensionError`
+        if file is no Excel file (.xls or .xlsx)
+
+    See Also
+    --------
+    write_pandas_dict_excel : Write dictionary with dataframes to file
+
+    """
+    # ensure pathlib
+    file_path = Path(file_path)
+    _assert_file_extension(file_path, (".xls", ".xlsx"))
+
+    # assure that the file is an Excel file
+    is_excel_file(file_path)
+
+    dict_df: Dict[str, pd.DataFrame] = pd.read_excel(file_path, index_col=index_col, sheet_name=None)
+
+    # (re-)localize each sheet since Excel does not support timezone-aware dates (if index is DatetimeIndex)
+    for key in dict_df:
+        if isinstance(dict_df[key].index, pd.DatetimeIndex):
+            dict_df[key] = dict_df[key].tz_localize(timezone)
+    return dict_df
 
 
 def write_pandas_dict_excel(
@@ -510,7 +611,7 @@ def write_result_dict(
     """Write dictionary with processing results (e.g. HR, HRV, RSA) to csv file.
 
     The keys in the dictionary should be the subject IDs (or any other identifier),´
-    the values should be :class:`pandas.DataFrame`. The index level(s) of the exported dataframe can be specified
+    the values should be :class:`~pandas.DataFrame`. The index level(s) of the exported dataframe can be specified
     by the ``index_col`` parameter.
 
     The dictionary will be concatenated to one large dataframe which will then be saved as csv file.

@@ -35,7 +35,6 @@ def load_eeg_raw_muse(file_path: path_t) -> Tuple[pd.DataFrame, float]:
         EEG channel columns
 
     """
-
     fs = MUSE_EEG_SAMPLING_RATE
     data = pd.read_csv(file_path)
 

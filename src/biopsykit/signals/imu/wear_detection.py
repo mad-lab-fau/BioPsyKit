@@ -1,19 +1,49 @@
+"""Module for detection non-wear times from raw acceleration signals."""
+import datetime
 from typing import Union, Tuple
 
 import numpy as np
 import pandas as pd
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns
+from biopsykit.utils._types import arr_t
 
-import biopsykit.utils.array_handling
+from biopsykit.utils.array_handling import sliding_window
 
 
 class WearDetection:
-    sampling_rate: int
+    """Detect non-wear times from raw acceleration signals.
 
-    def __init__(self, sampling_rate: int):
+    Non-wear times are estimated over 15 minute intervals over the day.
+
+    """
+
+    sampling_rate: float
+
+    def __init__(self, sampling_rate: float):
+        """Initialize a new ``WearDetection`` instance.
+
+        Parameters
+        ----------
+        sampling_rate : float
+            sampling rate of recorded data in Hz
+
+        """
         self.sampling_rate = sampling_rate
 
-    def predict(self, data: Union[pd.DataFrame, pd.Series, np.array]) -> pd.DataFrame:
+    def predict(self, data: arr_t) -> pd.DataFrame:
+        """Predict non-wear times from acceleration data.
 
+        Parameters
+        ----------
+        data : array_like
+            input acceleration data. Must be 3-d.
+
+        Returns
+        -------
+        :class:`~pandas.DataFrame`
+            dataframe with wear (1) and non-wear (0) times per 15 minute interval
+
+        """
         index = None
         index_resample = None
         if isinstance(data, (pd.DataFrame, pd.Series)):
@@ -29,7 +59,7 @@ class WearDetection:
         overlap_percent = 1.0 - (overlap / window)
 
         acc_sliding = {
-            col: biopsykit.utils.array_handling.sliding_window(
+            col: sliding_window(
                 data[col].values,
                 window_sec=window * 60,
                 sampling_rate=self.sampling_rate,
@@ -39,7 +69,7 @@ class WearDetection:
         }
 
         if index is not None:
-            index_resample = biopsykit.utils.array_handling.sliding_window(
+            index_resample = sliding_window(
                 np.arange(0, len(index)),
                 window_sec=window * 60,
                 sampling_rate=self.sampling_rate,
@@ -93,7 +123,7 @@ class WearDetection:
         blocks = list(data.groupby("block"))
 
         # iterate through blocks
-        for (idx_prev, prev), (idx_curr, curr), (idx_post, post) in zip(blocks[0:-2], blocks[1:-1], blocks[2:]):
+        for (_, prev), (idx_curr, curr), (_, post) in zip(blocks[0:-2], blocks[1:-1], blocks[2:]):
             if curr["wear"].unique():
                 # get hour lengths of the previous, current, and next blocks
                 dur_prev, dur_curr, dur_post = (len(dur) * 0.25 for dur in [prev, curr, post])
@@ -110,17 +140,58 @@ class WearDetection:
         return data
 
     @staticmethod
-    def get_major_wear_block(wear_data: pd.DataFrame) -> Tuple:
-        wear_data = wear_data.copy()
-        wear_data["block"] = wear_data["wear"].diff().ne(0).cumsum()
-        wear_blocks = list(wear_data.groupby("block").filter(lambda x: (x["wear"] == 1.0).all()).groupby("block"))
+    def get_major_wear_block(data: pd.DataFrame) -> Tuple[Union[datetime.datetime, int], Union[datetime.datetime, int]]:
+        """Return major wear block.
+
+        The major wear block is the longest continuous wear block in the data.
+
+        Parameters
+        ----------
+        data : :class:`~pandas.DataFrame`
+            data with wear detection applied. The dataframe is expected to have a "wear" column
+
+        Returns
+        -------
+        start : :class:`datetime.datetime` or int
+            start of major wear block as datetime or int index
+        end : :class:`datetime.datetime` or int
+            end of major wear block as datetime or int index
+
+        See Also
+        --------
+        :meth:`~biopsykit.signals.imu.wear_detection.WearDetection.predict`
+            apply wear detection on accelerometer data
+
+        """
+        data = data.copy()
+        _assert_has_columns(data, [["wear"]])
+
+        data["block"] = data["wear"].diff().ne(0).cumsum()
+        wear_blocks = list(data.groupby("block").filter(lambda x: (x["wear"] == 1.0).all()).groupby("block"))
         max_block = wear_blocks[np.argmax([len(b) for i, b in wear_blocks])][1]
         max_block = (max_block["start"].iloc[0], max_block["end"].iloc[-1])
         return max_block
 
     @staticmethod
-    def cut_to_wear_block(data: pd.DataFrame, wear_block: Tuple) -> pd.DataFrame:
+    def cut_to_wear_block(
+        data: pd.DataFrame, wear_block: Tuple[Union[datetime.datetime, int], Union[datetime.datetime, int]]
+    ) -> pd.DataFrame:
+        """Cut data to wear block.
+
+        Parameters
+        ----------
+        data : :class:`~pandas.DataFrame`
+            input data that contains wear block
+        wear_block : tuple
+            tuple with start and end times of wear block. The type of ``wear_block`` depends on the index of ``data``
+            (datetime or int)
+
+        Returns
+        -------
+        :class:`~pandas.DataFrame`
+            data cut to wear block
+
+        """
         if isinstance(data.index, pd.DatetimeIndex):
             return data.loc[wear_block[0] : wear_block[-1]]
-        else:
-            return data.iloc[wear_block[0] : wear_block[-1]]
+        return data.iloc[wear_block[0] : wear_block[-1]]

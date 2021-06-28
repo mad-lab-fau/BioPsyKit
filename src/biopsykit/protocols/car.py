@@ -1,51 +1,66 @@
-from typing import Sequence, Optional, Dict, Union
+"""Module representing the Cortisol Awakening Response (CAR) protocol."""
+from typing import Optional, Tuple
 
-import pandas as pd
+import matplotlib.pyplot as plt
+from biopsykit.plotting import lineplot
+from biopsykit.protocols import BaseProtocol
+from biopsykit.utils.datatype_helper import is_saliva_raw_dataframe
 
 
-class CAR:
-    """Class representing the cortisol awakening response (CAR)."""
+class CAR(BaseProtocol):
+    """Class representing psychological protocols for assessing the cortisol awakening response (CAR)."""
 
-    def __init__(self, saliva_times: Sequence[int]):
-        self.saliva_times = saliva_times
-        self.car_plot_params = {
-            "xlabel": "Time after Awakening [min]",
-            "ylabel": r"Cortisol [nmol/l]",
-        }
+    def __init__(self, name: Optional[str] = None, **kwargs):
+        """Initialize a new ``CAR`` instance.
 
-    def car_plot(self, data: pd.DataFrame, **kwargs):
-        from biopsykit.plotting import lineplot
+        Parameters
+        ----------
+        name : str, optional
+            name of CAR study or ``None`` to use default name ("CAR"). Default: ``None``
+        **kwargs
+            additional parameters to be passed to ``CAR`` and its superclass, ``BaseProtocol``, such as:
+                * ``car_saliva_plot_params``: parameters to style :meth:`~biopsykit.protocols.car.CAR.car_saliva_plot`
 
-        kwargs["x"] = kwargs.get("x", "sample")
-        kwargs["y"] = kwargs.get("y", kwargs.get("saliva_type", "cortisol"))
-        kwargs["xticklabels"] = self.saliva_times
-        kwargs["xlabel"] = self.car_plot_params["xlabel"]
-        kwargs["ylabel"] = self.car_plot_params["ylabel"]
+        """
+        if name is None:
+            name = "CAR"
+
+        car_saliva_plot_params = {"xlabel": "Time after Awakening [min]", "ylabel": r"Cortisol [nmol/l]"}
+        car_saliva_plot_params.update(kwargs.pop("car_saliva_plot_params", {}))
+        self.car_plot_params = car_saliva_plot_params
+        """Plot parameters to style :meth:`~biopsykit.protocols.CAR.car_saliva_plot`."""
+
+        super().__init__(name, **kwargs)
+
+    def car_saliva_plot(self, saliva_type: Optional[str] = "cortisol", **kwargs) -> Tuple[plt.Figure, plt.Axes]:
+        """Plot CAR saliva data as lineplot.
+
+        Parameters
+        ----------
+        saliva_type : str, optional
+            type of saliva data to plot. Default: ``cortisol``
+        kwargs : optional arguments to be passed to :func:`~biopsykit.plotting.lineplot`
+
+
+        Returns
+        -------
+        fig : :class:`matplotlib.figure.Figure`
+            figure object
+        ax : :class:`matplotlib.axes.Axes`
+            axes object
+
+
+        See Also
+        --------
+        `biopsykit.plotting.lineplot`
+            draw line plot with error bars
+
+        """
+        data = self.saliva_data[saliva_type]
+        is_saliva_raw_dataframe(data, saliva_type)
+
+        kwargs.setdefault("x", "sample")
+        kwargs.setdefault("y", saliva_type)
+        kwargs.setdefault("xticklabels", self.sample_times[saliva_type])
+        kwargs.update(self.car_plot_params)
         return lineplot(data, **kwargs)
-
-    def saliva_feature_boxplot(
-        self,
-        data: pd.DataFrame,
-        x: str,
-        saliva_type: str,
-        feature: Optional[str] = None,
-        stats_kwargs: Optional[Dict] = None,
-        **kwargs,
-    ):
-        from biopsykit.protocols.plotting import saliva_feature_boxplot
-
-        return saliva_feature_boxplot(data, x, saliva_type, feature, stats_kwargs, **kwargs)
-
-    def saliva_multi_feature_boxplot(
-        self,
-        data: pd.DataFrame,
-        saliva_type: str,
-        features: Union[str, Sequence[str]],
-        hue: Optional[str] = None,
-        xticklabels: Optional[Dict[str, str]] = None,
-        stats_kwargs: Optional[Dict] = None,
-        **kwargs,
-    ):
-        from biopsykit.protocols.plotting import saliva_multi_feature_boxplot
-
-        return saliva_multi_feature_boxplot(data, saliva_type, features, hue, xticklabels, stats_kwargs, **kwargs)

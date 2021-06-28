@@ -184,15 +184,29 @@ class TestIoIo:
             )
 
     @pytest.mark.parametrize(
-        "file_path, index_cols, phase_cols, expected",
+        "file_path, index_cols, phase_cols, continuous_time, expected",
         [
-            ("time_log.csv", None, None, time_log_no_index()),
-            ("time_log.csv", ["subject", "condition"], None, time_log_correct()),
-            ("time_log_other_index_names.csv", {"ID": "subject", "Condition": "condition"}, None, time_log_correct()),
+            ("time_log.csv", None, None, True, time_log_no_index()),
+            ("time_log.csv", ["subject", "condition"], None, True, time_log_correct()),
+            (
+                "time_log_other_index_names.csv",
+                {"ID": "subject", "Condition": "condition"},
+                None,
+                True,
+                time_log_correct(),
+            ),
+            (
+                "time_log_not_continuous_other_index_names.csv",
+                {"ID": "subject", "Condition": "condition"},
+                None,
+                False,
+                time_log_not_continuous_correct(),
+            ),
             (
                 "time_log.csv",
                 ["subject", "condition"],
                 ["Baseline", "Intervention", "Stress", "Recovery", "End"],
+                True,
                 time_log_correct(),
             ),
             (
@@ -205,13 +219,17 @@ class TestIoIo:
                     "Phase4": "Recovery",
                     "End": "End",
                 },
+                True,
                 time_log_correct(),
             ),
         ],
     )
-    def test_load_time_log_index_cols(self, file_path, index_cols, phase_cols, expected):
+    def test_load_time_log_index_cols(self, file_path, index_cols, phase_cols, continuous_time, expected):
         data_out = load_time_log(
-            file_path=TEST_FILE_PATH.joinpath(file_path), index_cols=index_cols, phase_cols=phase_cols
+            file_path=TEST_FILE_PATH.joinpath(file_path),
+            index_cols=index_cols,
+            phase_cols=phase_cols,
+            continuous_time=continuous_time,
         )
         assert_index_equal(expected.index, data_out.index)
         assert_index_equal(expected.columns, data_out.columns)
