@@ -160,7 +160,10 @@ def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Opt
     if not inplace:
         data = data.copy()
 
-    data.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(2), c) for c in data.columns]
+    nums = [re.findall(r"(\d+)$", c)[0] for c in data.columns]
+    zfill_num = max(list(map(len, nums)))
+
+    data.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(zfill_num), c) for c in data.columns]
 
     if inplace:
         return None
