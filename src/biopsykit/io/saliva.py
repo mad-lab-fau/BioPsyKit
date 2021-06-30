@@ -146,7 +146,12 @@ def load_saliva_plate(
     return df_saliva
 
 
-def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Optional[str] = "cortisol") -> None:
+def save_saliva(
+    file_path: path_t,
+    data: SalivaRawDataFrame,
+    saliva_type: Optional[str] = "cortisol",
+    as_wide_format: Optional[bool] = False,
+) -> None:
     """Save saliva data to csv file.
 
     Parameters
@@ -157,6 +162,9 @@ def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Option
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str
         type of saliva data in the dataframe
+    as_wide_format : bool, optional
+        ``True`` to save data in wide format (and flatten all index levels), ``False`` to save data in long-format.
+        Default: ``False``
 
     Raises
     ------
@@ -172,7 +180,12 @@ def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Option
 
     is_saliva_raw_dataframe(data, saliva_type)
     data = data[saliva_type]
-    data = data.unstack(level="sample")
+    if as_wide_format:
+        levels = list(data.index.names)
+        levels.remove("subject")
+        data = data.unstack(level=levels)
+        data.columns = ["_".join(col) for col in data.columns]
+
     if file_path.suffix in [".csv"]:
         data.to_csv(file_path)
     else:
