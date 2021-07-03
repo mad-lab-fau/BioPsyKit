@@ -54,7 +54,7 @@ class SleepWakeDetection:
 
         sleep_wake_cls = available_sleep_wake_algorithms[algorithm_type]
 
-        if sleep_wake_cls is ColeKripke or ColeKripkeAlternative or Webster or ScrippsClinic:
+        if sleep_wake_cls is ColeKripke or sleep_wake_cls is ColeKripkeAlternative or sleep_wake_cls is Webster or sleep_wake_cls is ScrippsClinic:
             if "scale_factor" in kwargs:
                 self.sleep_wake_algo = sleep_wake_cls(scale_factor=kwargs["scale_factor"])
             else:

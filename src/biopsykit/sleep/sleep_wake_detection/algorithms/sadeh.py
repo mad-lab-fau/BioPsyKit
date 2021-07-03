@@ -55,7 +55,7 @@ class Sadeh(_SleepWakeBase):
         #std = (self._rolling_window(data, window_past, window_past - 1)).std(1)[:-5]
         std = sliding_window(data,window_samples=window_past,overlap_samples=window_past-1).std(1)[:-5]
         locAct = np.log(data + 1)[5:-5]
-        score = 7.601 - 0.065 * mean - 0.056 * std - 0.0703 * locAct - 1.08 * nat
+        score = 7.601 - 0.065 * mean - 0.056 * std - 0.703 * locAct - 1.08 * nat
 
         score[score >= 0] = 1       #sleep = 1
         score[score < 0] = 0        #wake = 0
@@ -64,7 +64,7 @@ class Sadeh(_SleepWakeBase):
 
         score_without_rescore = score
         if rescore_data:
-            score = rescore(score)
+            score = rescore(score,epoch_length=1)
 
         if index is not None:
             score = pd.DataFrame(score, index=index, columns=["sleep_wake"])

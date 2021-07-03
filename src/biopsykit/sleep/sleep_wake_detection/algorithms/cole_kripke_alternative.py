@@ -57,7 +57,7 @@ class ColeKripkeAlternative(_SleepWakeBase):
         scores[scores == 99] = 0  # wake = 0       #changed to 1 according to paper
 
         if rescore_data:
-            scores = rescore(scores)
+            scores = rescore(scores, epoch_length=1)
 
         if index is not None:
             scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])

@@ -67,7 +67,7 @@ class ScrippsClinic(_SleepWakeBase):
 
 
         if rescore_data:
-            scores = rescore(scores)
+            scores = rescore(scores,epoch_length=30)
 
         if index is not None:
             scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
