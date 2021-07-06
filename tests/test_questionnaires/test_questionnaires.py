@@ -3433,7 +3433,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_bfi10_raises(self, data, columns, subscales, expected):
+    def test_bfi_10_raises(self, data, columns, subscales, expected):
         with expected:
             bfi_10(data, columns, subscales)
 
@@ -3461,7 +3461,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_bfi10(self, data, columns, subscales, result):
+    def test_bfi_10(self, data, columns, subscales, result):
         data_out = bfi_10(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
@@ -3491,7 +3491,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_mkhai_raises(self, data, columns, expected):
+    def test_mk_hai_raises(self, data, columns, expected):
         with expected:
             data = convert_scale(data, offset=1)
             mk_hai(data, columns)
@@ -3512,7 +3512,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_mkhai(self, data, columns, result):
+    def test_mk_hai(self, data, columns, result):
         data = convert_scale(data, offset=1)
         data_out = mk_hai(data, columns)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
@@ -3616,7 +3616,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_abims_raises(self, data, columns, subscales, expected):
+    def test_abi_ms_raises(self, data, columns, subscales, expected):
         with expected:
             data = convert_scale(data, offset=1)
             abi_ms(data, columns, subscales)
@@ -3758,7 +3758,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_sci_raises(self, data, columns, subscales, expected):
+    def test_strategies_questionnaire_raises(self, data, columns, subscales, expected):
         with expected:
             strategies_questionnaire(data, columns, subscales)
 
@@ -3788,7 +3788,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_sci(self, data, columns, subscales, result):
+    def test_strategies_questionnaire(self, data, columns, subscales, result):
         data_out = strategies_questionnaire(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
@@ -3936,7 +3936,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_sd_raises(self, data, columns, expected):
+    def test_social_desirability_raises(self, data, columns, expected):
         with expected:
             social_desirability(data, columns)
 
@@ -3956,7 +3956,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_sd(self, data, columns, result):
+    def test_social_desirability(self, data, columns, result):
         data_out = social_desirability(data, columns)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
@@ -3986,7 +3986,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_ev_raises(self, data, columns, expected):
+    def test_eval_clinic_raises(self, data, columns, expected):
         with expected:
             eval_clinic(data, columns)
 
@@ -4006,7 +4006,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_ev(self, data, columns, result):
+    def test_eval_clinic(self, data, columns, result):
         data_out = eval_clinic(data, columns)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
@@ -4141,7 +4141,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_ps_raises(self, data, columns, subscales, expected):
+    def test_seop_raises(self, data, columns, subscales, expected):
         with expected:
             seop(data, columns, subscales)
 
@@ -4169,7 +4169,7 @@ class TestQuestionnaires:
             ),
         ],
     )
-    def test_ps(self, data, columns, subscales, result):
+    def test_seop(self, data, columns, subscales, result):
         data_out = seop(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
