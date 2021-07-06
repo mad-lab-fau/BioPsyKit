@@ -553,7 +553,7 @@ class TestIoSaliva:
             (saliva_data_samples(), "cortisol", "test_saliva.csv", does_not_raise()),
             (saliva_data_samples(), "cortisol", "test_saliva.xlsx", does_not_raise()),
             (saliva_data_samples(), "cortisol", "test_saliva.xls", does_not_raise()),
-            (saliva_data_samples_time(), "cortisol", "test_saliva_.csv", does_not_raise()),
+            (saliva_data_samples_time(), "cortisol", "test_saliva_time.csv", does_not_raise()),
             (saliva_data_samples_days(), "cortisol", "test_saliva_days.csv", does_not_raise()),
             (saliva_data_samples_condition(), "cortisol", "test_saliva_condition.csv", does_not_raise()),
             (saliva_data_samples_time_condition(), "cortisol", "test_saliva_condition.csv", does_not_raise()),

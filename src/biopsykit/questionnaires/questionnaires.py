@@ -185,9 +185,9 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def tics_l(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Trier Inventory for Chronic Stress (Long Version) (TICS_L)**.
 
@@ -297,9 +297,9 @@ def tics_l(
 
 
 def tics_s(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Trier Inventory for Chronic Stress (Short Version) (TICS_S)**.
 
@@ -466,7 +466,7 @@ def pss(data: pd.DataFrame,
 
     """
     score_name = "PSS"
-    score_range = [1, 5]
+    score_range = [0, 4]
 
     # create copy of data
     data = data.copy()
@@ -556,6 +556,69 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
+def ads_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+    """Compute the **Allgemeine Depressionsskala - Langform (ADS-L)**.
+
+    Die allgemeine Depressionsskala (ADS) ist ein Selbstbeurteilungsinstrument, mit dem die Beeinträchtigung durch
+    depressive Symptome innerhalb der letzten Woche eingeschätzt werden kann. Dabei werden sowohl emotionale,
+    motivationale, kognitive, somatische als auch motorisch/interaktionale Beschwerden erfragt.
+
+    .. note::
+        This implementation assumes a score range of [0, 4].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        ADS-L score
+
+
+    Raises
+    ------
+    `biopsykit.exceptions.ValidationError`
+        if number of columns do not match
+    `biopsykit.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+
+    References
+    ----------
+    Meyer, T. D., & Hautzinger, M. (2001). Allgemeine Depressions-Skala (ADS). Normierung an Minderjährigen und
+    Erweiterung zur Erfassung manischer Symptome (ADMS). Diagnostica.
+
+    """
+    score_name = "ADS_L"
+    score_range = [0, 3]
+
+    # create copy of data
+    data = data.copy()
+
+    if columns is not None:
+        # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
+        data = data.loc[:, columns]
+
+    _assert_num_columns(data, 20)
+    _assert_value_range(data, score_range)
+
+    # Reverse scores 4, 8, 12, 16
+    data = invert(data, cols=to_idx([4, 8, 12, 16]), score_range=score_range)
+    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+
+
 def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
     """Compute the **General Health Questionnaire (GHQ)**.
 
@@ -618,9 +681,9 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
 
 def hads(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Hospital Anxiety and Depression Scale (HADS)**.
 
@@ -708,11 +771,11 @@ def hads(
 
 
 def type_d(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute **Type D Personality Scale**.
+    """Compute the **Type D Personality Scale**.
 
     Type D personality is a personality trait characterized by negative affectivity (NA) and social
     inhibition (SI). Individuals who are high in both NA and SI have a *distressed* or Type D personality.
@@ -802,7 +865,7 @@ def type_d(
 
 
 def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute **Rosenberg Self-Esteem Inventory**.
+    """Compute the **Rosenberg Self-Esteem Inventory**.
 
     The RSE is the most frequently used measure of global self-esteem. Higher scores indicate greater self-esteem.
 
@@ -863,11 +926,11 @@ def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
 
 def scs(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute **Self-Compassion Scale (SCS)**.
+    """Compute the **Self-Compassion Scale (SCS)**.
 
     The Self-Compassion Scale measures the tendency to be compassionate rather than critical
     toward the self in difficult times. It is typically assessed as a composite but can be broken down
@@ -973,7 +1036,7 @@ def scs(
 
 
 def midi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute **Midlife Development Inventory (MIDI) Sense of Control Scale**.
+    """Compute the **Midlife Development Inventory (MIDI) Sense of Control Scale**.
 
     The Midlife Development Inventory (MIDI) sense of control scale assesses perceived control,
     that is, how much an individual perceives to be in control of his or her environment. Higher scores indicate
@@ -1037,11 +1100,11 @@ def midi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def tsgs(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
-    """Compute **Trait Shame and Guilt Scale**.
+    """Compute the **Trait Shame and Guilt Scale**.
 
     The TSGS assesses the experience of shame, guilt, and pride over the past few months with three separate subscales.
     Shame and guilt are considered distinct emotions, with shame being a global negative feeling about the self,
@@ -1124,11 +1187,11 @@ def tsgs(
 
 
 def rmidi(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
-    """Compute **Revised Midlife Development Inventory (MIDI) Personality Scale**.
+    """Compute the **Revised Midlife Development Inventory (MIDI) Personality Scale**.
 
     The Midlife Development Inventory (MIDI) includes 6 personality trait scales: Neuroticism,
     Extraversion, Openness to Experience, Conscientiousness, Agreeableness, and Agency.  Higher scores
@@ -1226,11 +1289,11 @@ def rmidi(
 
 
 def lsq(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Sequence[str]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Sequence[str]] = None,
 ) -> pd.DataFrame:
-    """Compute **Life Stress Questionnaire**.
+    """Compute the **Life Stress Questionnaire**.
 
     The LSQ asks participants about stressful life events that they and their close relatives have experienced
     throughout their entire life, what age they were when the event occurred, and how much it impacted them.
@@ -1306,11 +1369,11 @@ def lsq(
 
 
 def ctq(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute **Childhood Trauma Questionnaire (CTQ)**.
+    """Compute the **Childhood Trauma Questionnaire (CTQ)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
         * ``PhysicalAbuse``: [9, 11, 12, 15, 17]
@@ -1411,7 +1474,7 @@ def ctq(
 
 
 def peat(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute **Pittsburgh Enjoyable Activities Test (PEAT)**.
+    """Compute the **Pittsburgh Enjoyable Activities Test (PEAT)**.
 
     The PEAT is a self-report measure of engagement in leisure activities. It asks participants to report how often
     over the last month they have engaged in each of the activities. Higher scores indicate more time spent in
@@ -1472,7 +1535,7 @@ def peat(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def purpose_life(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute **Purpose in Life** questionnaire.
+    """Compute the **Purpose in Life** questionnaire.
 
     Purpose in life refers to the psychological tendency to derive meaning from life’s experiences
     and to possess a sense of intentionality and goal directedness that guides behavior.
@@ -1528,7 +1591,7 @@ def purpose_life(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
 
 
 def trait_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute **Trait Rumination**.
+    """Compute the **Trait Rumination**.
 
     Higher scores indicate greater rumination.
 
@@ -1579,11 +1642,11 @@ def trait_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
 
 
 def besaa(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[Union[int, str]]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[int, str]]]] = None,
 ) -> pd.DataFrame:
-    """Compute **Body-Esteem Scale for Adolescents and Adults (BESAA)**.
+    """Compute the **Body-Esteem Scale for Adolescents and Adults (BESAA)**.
 
     Body Esteem refers to self-evaluations of one’s body or appearance. The BESAA is based on
     the idea that feelings about one’s weight can be differentiated from feelings about one’s general appearance,
@@ -1668,11 +1731,11 @@ def besaa(
 
 
 def fscrs(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute **Forms of Self-Criticizing/Attacking and Self-Reassuring Scale (FSCRS)**.
+    """Compute the **Forms of Self-Criticizing/Attacking and Self-Reassuring Scale (FSCRS)**.
 
     Self-criticism describes the internal relationship with the self in which part of the self shames
     and puts down, while the other part of the self responds and submits to such attacks.
@@ -1761,9 +1824,9 @@ def fscrs(
 
 
 def pasa(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Primary Appraisal Secondary Appraisal Scale (PASA)**.
 
@@ -1859,28 +1922,26 @@ def pasa(
 
     if all(s in subscales for s in ["Threat", "Challenge"]):
         pasa_data[score_name + "_Primary"] = (
-                                                     pasa_data[score_name + "_Threat"] + pasa_data[
-                                                 score_name + "_Challenge"]
-                                             ) / 2
+            pasa_data[score_name + "_Threat"] + pasa_data[score_name + "_Challenge"]
+        ) / 2
 
     if all(s in subscales for s in ["SelfConcept", "ControlExp"]):
         pasa_data[score_name + "_Secondary"] = (
-                                                       pasa_data[score_name + "_SelfConcept"] + pasa_data[
-                                                   score_name + "_ControlExp"]
-                                               ) / 2
+            pasa_data[score_name + "_SelfConcept"] + pasa_data[score_name + "_ControlExp"]
+        ) / 2
 
     if all("{}_{}".format(score_name, s) in pasa_data.keys() for s in ["Primary", "Secondary"]):
         pasa_data[score_name + "_StressComposite"] = (
-                pasa_data[score_name + "_Primary"] - pasa_data[score_name + "_Secondary"]
+            pasa_data[score_name + "_Primary"] - pasa_data[score_name + "_Secondary"]
         )
 
     return pd.DataFrame(pasa_data, index=data.index)
 
 
 def ssgs(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **State Shame and Guilt Scale (SSGS)**.
 
@@ -1970,9 +2031,9 @@ def ssgs(
 
 
 def panas(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        language: Optional[Literal["english", "german"]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    language: Optional[Literal["english", "german"]] = None,
 ) -> pd.DataFrame:
     """Compute the **Positive and Negative Affect Schedule (PANAS)**.
 
@@ -2226,10 +2287,10 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
 
 def stadi(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
-        stadi_type: Optional[Literal["state", "trait", "state_trait"]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    stadi_type: Optional[Literal["state", "trait", "state_trait"]] = None,
 ) -> pd.DataFrame:
     """Compute the **State-Trait Anxiety-Depression Inventory (STADI)**.
 
@@ -2338,7 +2399,7 @@ def stadi(
             stadi_data.update(
                 {
                     "{}_{}_Anxiety".format(score_name, st): stadi_data["{}_{}_AU".format(score_name, st)]
-                                                            + stadi_data["{}_{}_BE".format(score_name, st)]
+                    + stadi_data["{}_{}_BE".format(score_name, st)]
                 }
             )
 
@@ -2346,7 +2407,7 @@ def stadi(
             stadi_data.update(
                 {
                     "{}_{}_Depression".format(score_name, st): stadi_data["{}_{}_EU".format(score_name, st)]
-                                                               + stadi_data["{}_{}_DY".format(score_name, st)]
+                    + stadi_data["{}_{}_DY".format(score_name, st)]
                 }
             )
 
@@ -2354,7 +2415,7 @@ def stadi(
             stadi_data.update(
                 {
                     "{}_{}_Total".format(score_name, st): stadi_data["{}_{}_Anxiety".format(score_name, st)]
-                                                          + stadi_data["{}_{}_Depression".format(score_name, st)]
+                    + stadi_data["{}_{}_Depression".format(score_name, st)]
                 }
             )
 
@@ -2379,9 +2440,9 @@ def _get_stadi_type(stadi_type: str) -> Sequence[str]:
 
 
 def svf_120(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Stressverarbeitungsfragebogen - 120 item version (SVF120)**.
 
@@ -2522,9 +2583,9 @@ def svf_120(
 
 
 def svf_42(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Stressverarbeitungsfragebogen - 42 item version (SVF42)**.
 
@@ -2654,9 +2715,9 @@ def svf_42(
 
 
 def brief_cope(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Brief-COPE (28 items) Questionnaire (Brief_COPE)**.
 
@@ -2768,9 +2829,9 @@ def brief_cope(
 
 
 def bfi_k(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Big Five Inventory (short version) (BFI-K)**.
 
@@ -2869,9 +2930,9 @@ def bfi_k(
 
 
 def rsq(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Response Styles Questionnaire (RSQ)**.
 
@@ -2972,9 +3033,9 @@ def rsq(
 
 
 def sss(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Subjective Social Status (SSS)**.
 
@@ -3048,9 +3109,9 @@ def sss(
 
 
 def fkk(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Fragebogen zur Kompetenz- und Kontrollüberzeugungen (FKK)**.
 
@@ -3117,6 +3178,7 @@ def fkk(
     `biopsykit.exceptions.ValueRangeError`
         if values are not within the required score range
 
+
     References
     ----------
     Krampen, G. (1991). Fragebogen zu Kompetenz-und Kontrollüberzeugungen: (FKK). *Hogrefe, Verlag für Psychologie*.
@@ -3153,27 +3215,27 @@ def fkk(
     # Sekundärskalenwerte
     if all("{}_{}".format(score_name, s) in fkk_data.columns for s in ["SK", "I"]):
         fkk_data["{}_{}".format(score_name, "SKI")] = (
-                fkk_data["{}_{}".format(score_name, "SK")] + fkk_data["{}_{}".format(score_name, "I")]
+            fkk_data["{}_{}".format(score_name, "SK")] + fkk_data["{}_{}".format(score_name, "I")]
         )
 
     if all("{}_{}".format(score_name, s) in fkk_data.columns for s in ["P", "C"]):
         fkk_data["{}_{}".format(score_name, "PC")] = (
-                fkk_data["{}_{}".format(score_name, "P")] + fkk_data["{}_{}".format(score_name, "C")]
+            fkk_data["{}_{}".format(score_name, "P")] + fkk_data["{}_{}".format(score_name, "C")]
         )
 
     # Tertiärskalenwerte
     if all("{}_{}".format(score_name, s) in fkk_data.columns for s in ["SKI", "PC"]):
         fkk_data["{}_{}".format(score_name, "SKI_PC")] = (
-                fkk_data["{}_{}".format(score_name, "SKI")] - fkk_data["{}_{}".format(score_name, "PC")]
+            fkk_data["{}_{}".format(score_name, "SKI")] - fkk_data["{}_{}".format(score_name, "PC")]
         )
 
     return fkk_data
 
 
 def bidr(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Balanced Inventory of Desirable Responding (BIDR)**.
 
@@ -3268,9 +3330,9 @@ def bidr(
 
 
 def kkg(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Kontrollüberzeugungen zu Krankheit und Gesundheit Questionnaire (KKG)**.
 
@@ -3353,10 +3415,10 @@ def kkg(
 
 
 def fee(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
-        language: Optional[Literal["german", "english"]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    language: Optional[Literal["german", "english"]] = None,
 ) -> pd.DataFrame:
     """Compute the **Fragebogen zum erinnerten elterlichen Erziehungsverhalten (FEE)**.
 
@@ -3469,9 +3531,9 @@ def fee(
 
 
 def mbi_gs(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Maslach Burnout Inventory – General Survey (MBI-GS)**.
 
@@ -3555,9 +3617,9 @@ def mbi_gs(
 
 
 def mbi_gss(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Maslach Burnout Inventory – General Survey for Students (MBI-GS (S))**.
 
@@ -3640,9 +3702,9 @@ def mbi_gss(
 
 
 def mlq(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Meaning in Life Questionnaire (MLQ)**.
 
@@ -3800,9 +3862,9 @@ def mlq(
 
 
 def pfb(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Partnerschaftsfragebogen (PFB)**.
 
@@ -3949,9 +4011,9 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
 
 def mdbf(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
-        subscales: Optional[Dict[str, Sequence[int]]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Multidimensionaler Befindlichkeitsfragebogen (MDBF)**.
 
@@ -4053,8 +4115,8 @@ def mdbf(
 
 
 def meq(
-        data: pd.DataFrame,
-        columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
 ) -> pd.DataFrame:
     """Compute the **Morningness Eveningness Questionnaire (MEQ)**.
 

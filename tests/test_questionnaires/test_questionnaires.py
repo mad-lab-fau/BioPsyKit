@@ -128,6 +128,51 @@ class TestQuestionnaires:
         "data, columns, expected",
         [
             (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("ADSL"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("ADSL"), -1), None, does_not_raise()),
+            (data_filtered_correct("ADSL"), None, does_not_raise()),
+            (
+                data_filtered_correct("ADSL"),
+                ["ADSL{}".format(i) for i in range(1, 21)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ADSL"),
+                ["ADSL{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ADSL"),
+                ["ADSL_{}".format(i) for i in range(1, 21)],
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_ads_l_raises(self, data, columns, expected):
+        with expected:
+            ads_l(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("ADSL"), None, result_filtered("ADS_L")),
+            (
+                data_filtered_correct("ADSL"),
+                ["ADSL_{}".format(i) for i in range(1, 21)],
+                result_filtered("ADS_L"),
+            ),
+            (convert_scale(data_filtered_wrong_range("ADSL"), -1), None, result_filtered("ADS_L")),
+        ],
+    )
+    def test_ads_l(self, data, columns, result):
+        data_out = ads_l(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
             (data_filtered_wrong_range("ASQ"), None, pytest.raises(ValueRangeError)),
             (convert_scale(data_filtered_wrong_range("ASQ"), -1), None, does_not_raise()),
             (data_filtered_correct("ASQ"), None, does_not_raise()),
@@ -1626,7 +1671,7 @@ class TestQuestionnaires:
     def test_pasa(self, data, columns, subscales, result):
         data_out = pasa(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-        assert_frame_equal(data_out, result)
+        assert_frame_equal(data_out, result, check_dtype=False)
 
     @pytest.mark.parametrize(
         "data, columns, expected",

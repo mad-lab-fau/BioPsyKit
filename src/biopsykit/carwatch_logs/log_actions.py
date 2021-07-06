@@ -1,3 +1,4 @@
+"""List of all log data actions available in the CARWatch App."""
 app_metadata: str = "app_metadata"
 phone_metadata: str = "phone_metadata"
 subject_id_set: str = "subject_id_set"

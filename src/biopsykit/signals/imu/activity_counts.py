@@ -1,3 +1,4 @@
+"""Module for generating Activity Counts from raw acceleration signals."""
 from typing import Union
 
 import pandas as pd
@@ -6,25 +7,39 @@ from scipy import signal
 
 from biopsykit.utils.array_handling import sanitize_input_nd, downsample
 from biopsykit.utils.time import tz
+from biopsykit.utils._types import arr_t
 
 
 class ActivityCounts:
-    """Generate Activity Counts from raw IMU signals.
+    """Generate Activity Counts from raw acceleration signals.
 
     ActiGraph Activity Counts are a unit used in many human activity studies.
-    However, it can only be outputed by the official ActiGraph Software.
+    However, it can only be outputted by the official ActiGraph Software.
     The following implementation uses a reverse engineered version of the ActiGraph filter based on
-    Brond JC et al. 2017 [1].
+    (Brønd et al., 2017).
 
 
-    [1] https://www.ncbi.nlm.nih.gov/pubmed/28604558
+    References
+    ----------
+    Brønd, J. C., Andersen, L. B., & Arvidsson, D. (2017). Generating ActiGraph Counts from Raw Acceleration Recorded
+    by an Alternative Monitor. *Medicine and Science in Sports and Exercise*, 49(11), 2351–2360.
+    https://doi.org/10.1249/MSS.0000000000001344
+
     """
 
-    data = None
-    sampling_rate = None
-    activity_counts_ = None
+    data: pd.DataFrame = None
+    sampling_rate: float = None
+    activity_counts_: np.ndarray = None
 
-    def __init__(self, sampling_rate: int):
+    def __init__(self, sampling_rate: float):
+        """Initialize a new ``ActivityCounts`` instance.
+
+        Parameters
+        ----------
+        sampling_rate : float
+            sampling rate of recorded data in Hz
+
+        """
         self.sampling_rate = sampling_rate
 
     @staticmethod
@@ -115,8 +130,20 @@ class ActivityCounts:
         padded_data = np.pad(data, (0, n_samples - len(data) % n_samples), "constant", constant_values=0)
         return padded_data.reshape((len(padded_data) // n_samples, -1)).mean(axis=1)
 
-    def calculate(self, data: Union[np.ndarray, pd.DataFrame]) -> Union[np.ndarray, pd.DataFrame]:
+    def calculate(self, data: arr_t) -> arr_t:
+        """Calculate Activity Counts from acceleration data.
 
+        Parameters
+        ----------
+        data : array_like
+            input data. Must either be 3-d or 1-d (e.g., norm, or a specific axis) acceleration data
+
+        Returns
+        -------
+        array_like
+            output data with Activity Counts
+
+        """
         start_idx = None
         if isinstance(data, pd.DataFrame):
             data = data.filter(like="acc")

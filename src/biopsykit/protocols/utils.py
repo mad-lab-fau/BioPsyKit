@@ -1,4 +1,5 @@
-from typing import Sequence, Union, Dict
+"""Utility functions for the ``biopsykit.protocols`` module."""
+from typing import Sequence, Union, Dict, Optional
 
 import numpy as np
 from biopsykit.utils._datatype_validation_helper import _assert_len_list
@@ -10,27 +11,36 @@ def _get_sample_times(
     saliva_data: Union[Dict[str, SalivaMeanSeDataFrame], SalivaMeanSeDataFrame],
     sample_times: Union[Sequence[int], Dict[str, Sequence[int]]],
     test_times: Sequence[int],
+    sample_times_absolute: Optional[bool] = False,
 ) -> Union[Sequence[int], Dict[str, Sequence[int]]]:
+
     if isinstance(sample_times, dict):
         for key in sample_times:
             sample_times[key] = _get_sample_times(saliva_data[key], sample_times[key], test_times)
         return sample_times
 
+    if isinstance(saliva_data, dict):
+        sample_times = {}
+        for key in saliva_data:
+            sample_times[key] = _get_sample_times(saliva_data[key], sample_times, test_times)
+        return sample_times
+
     if sample_times is None:
-        if "time" in saliva_data.index.names:
-            sample_times = saliva_data.index.get_level_values("time").unique()
+        if "time" in saliva_data.reset_index().columns:
+            sample_times = saliva_data.reset_index()["time"].unique()
         else:
             raise ValueError(
                 "No sample times specified! Sample times must either be specified by passing them to the "
-                "'sample_times' parameter or to by including them in 'saliva_data' ('time' index level)."
+                "'sample_times' parameter or to by including them in 'saliva_data' ('time' column)."
             )
 
     _assert_len_list(test_times, 2)
     # ensure numpy
     sample_times = np.array(sample_times)
 
-    index_post = np.where(sample_times >= 0)[0]
-    sample_times[index_post] = sample_times[index_post] + test_times[1]
+    if not sample_times_absolute:
+        index_post = np.where(sample_times >= test_times[0])[0]
+        sample_times[index_post] = sample_times[index_post] + (test_times[1] - test_times[0])
     return list(sample_times)
 
 

@@ -1,79 +1,85 @@
+"""Module providing various functions for processing more complex structured data (e.g., collected during a study)."""
 import warnings
-from numbers import Number
-from typing import Sequence, Union, Dict, Optional, Tuple
+from typing import Sequence, Union, Dict, Optional, Tuple, Any
+
+# from tqdm.notebook import tqdm
 
 import numpy as np
 import pandas as pd
-import pytz
+from scipy import interpolate
+
+from biopsykit.utils._datatype_validation_helper import (
+    _assert_is_dtype,
+    _assert_dataframes_same_length,
+    _assert_has_index_levels,
+    _assert_has_multiindex,
+)
+from biopsykit.utils.functions import se
+from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.datatype_helper import (
     SubjectConditionDict,
     SubjectConditionDataFrame,
     is_subject_condition_dataframe,
     is_subject_condition_dict,
+    SubjectDataDict,
+    StudyDataDict,
+    MergedStudyDataDict,
+    is_merged_study_data_dict,
+    is_subject_data_dict,
+    is_study_data_dict,
 )
-from nilspodlib import Dataset
-from tqdm.notebook import tqdm
-
-from biopsykit.utils.time import tz, utc
 
 
 def split_data(
+    data: pd.DataFrame,
     time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
-    dataset: Optional[Dataset] = None,
-    data: Optional[pd.DataFrame] = None,
-    timezone: Optional[Union[str, pytz.timezone]] = tz,
     include_start: Optional[bool] = False,
 ) -> Dict[str, pd.DataFrame]:
-    """
-    Splits the data into parts based on time intervals.
+    """Split data into different phases based on time intervals.
+
+    The start and end times of the phases are prodivded via the ``time_intervals`` parameter and can either be a
+    :class:`~pandas.Series`, 1 row of a :class:`~pandas.DataFrame`, or a dictionary with start and end times per phase.
+
 
     Parameters
     ----------
-    time_intervals : dict or pd.Series or pd.DataFrame
-        time intervals indicating where the data should be split.
-        Can either be a pandas Series or 1 row of a pandas Dataframe with the `start` times of the single phases
-        (the names of the phases are then derived from the index in case of a Series or column names in case of a
-        Dataframe) or a dictionary with tuples indicating start and end times of the phases
-        (the names of the phases are then derived from the dict keys)
-    dataset : Dataset, optional
-        NilsPodLib dataset object to be split
-    data : pd.DataFrame, optional
+    data : :class:`~pandas.DataFrame`
         data to be split
-    timezone : str or pytz.timezone, optional
-        timezone of the acquired data to convert, either as string of as pytz object (default: 'Europe/Berlin')
+    time_intervals : dict or pd.Series or pd.DataFrame
+        time intervals indicating where the data should be split. This can be:
+            * :class:`~pandas.Series` object or 1 row of a :class:`~pandas.DataFrame` with `start` times each phase.
+              The phase names are then derived from the `index` names in case of a :class:`~pandas.Series` or from the
+              `columns` names in case of a :class:`~pandas.DataFrame`
+            * dictionary with phase names (keys) and tuples with start and end times of the phase (values)
     include_start: bool, optional
-        ``True`` to include the data from the beginning of the recording to the first time interval as the
-        first interval, ``False`` otherwise. Default: ``False``
+        ``True`` to include data from the beginning of the recording to the start of the first phase as the
+        first phase (this phase will be named "Start"), ``False`` to discard this data. Default: ``False``
+
 
     Returns
     -------
     dict
-        Dictionary containing split data
+        dictionary with data split into different phases
+
 
     Examples
     --------
     >>> from biopsykit.utils.data_processing import split_data
+    >>> # read pandas dataframe from csv file and split data based on time interval dictionary
+    >>> data = pd.read_csv("path-to-file.csv")
     >>> # Example 1: define time intervals (start and end) of the different recording phases as dictionary
     >>> time_intervals = {"Part1": ("09:00", "09:30"), "Part2": ("09:30", "09:45"), "Part3": ("09:45", "10:00")}
+    >>> data_dict = split_data(data=data, time_intervals=time_intervals)
     >>> # Example 2: define time intervals as pandas Series. Here, only start times of the are required, it is assumed
     >>> # that the phases are back to back
     >>> time_intervals = pd.Series(data=["09:00", "09:30", "09:45", "10:00"], index=["Part1", "Part2", "Part3", "End"])
-    >>>
-    >>> # read pandas dataframe from csv file and split data based on time interval dictionary
-    >>> df = pd.read_csv(path_to_file)
-    >>> data_dict = split_data(time_intervals, data=data)
+    >>> data_dict = split_data(data=data, time_intervals=time_intervals)
     >>>
     >>> # Example: Get Part 2 of data_dict
     >>> print(data_dict['Part2'])
+
     """
     data_dict: Dict[str, pd.DataFrame] = {}
-    if dataset is None and data is None:
-        raise ValueError("Either 'dataset' or 'df' must be specified as parameter!")
-    if dataset:
-        if isinstance(timezone, str):
-            # convert to pytz object
-            timezone = pytz.timezone(timezone)
-        data = dataset.data_as_df("ecg", index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
     if isinstance(time_intervals, pd.DataFrame):
         if len(time_intervals) > 1:
             raise ValueError("Only dataframes with 1 row allowed!")
@@ -102,24 +108,52 @@ def split_data(
 
 
 def exclude_subjects(
-    excluded_subjects: Union[Sequence[str], Sequence[int]], id_column: Optional[str] = "subject", **kwargs
+    excluded_subjects: Union[Sequence[str], Sequence[int]], index_name: Optional[str] = "subject", **kwargs
 ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    """Exclude subjects from dataframes.
+
+    This function can be used to exclude subject IDs for later analysis from different kinds of dataframes, such as:
+        * dataframes with subject condition information
+          (:obj:`biopsykit.utils.datatype_helper.SubjectConditionDataFrame`)
+        * dataframes with time log information
+        * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.datatype_helper.SalivaRawDataFrame` or
+          :obj:`biopsykit.utils.datatype_helper.MeanSeDataFrame`)
+
+    All dataframes can be supplied at once via **kwargs.
+
+    Parameters
+    ----------
+    excluded_subjects : list of str or int
+        list with subjects IDs to be excluded
+    index_name : str, optional
+        name of dataframe index level with subject IDs. Default: "subject"
+    kwargs :
+        data to be cleaned as key-value pairs
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame` or dict of such
+        dictionary with cleaned versions of the dataframes passed to the function via **kwargs
+        or dataframe if function was only called with one single dataframe
+
+    """
     cleaned_data: Dict[str, pd.DataFrame] = {}
 
     for key, data in kwargs.items():
-        if id_column in data.index.names:
+        _assert_is_dtype(data, pd.DataFrame)
+        if index_name in data.index.names:
             if (
-                data.index.get_level_values(id_column).dtype == np.object
+                data.index.get_level_values(index_name).dtype == np.object
                 and all([isinstance(s, str) for s in excluded_subjects])
             ) or (
-                data.index.get_level_values(id_column).dtype == np.int
+                data.index.get_level_values(index_name).dtype == np.int
                 and all([isinstance(s, int) for s in excluded_subjects])
             ):
                 # dataframe index and subjects are both strings or both integers
                 try:
                     if isinstance(data.index, pd.MultiIndex):
                         # MultiIndex => specify index level
-                        cleaned_data[key] = data.drop(index=excluded_subjects, level=id_column)
+                        cleaned_data[key] = data.drop(index=excluded_subjects, level=index_name)
                     else:
                         # Regular Index
                         cleaned_data[key] = data.drop(index=excluded_subjects)
@@ -128,500 +162,641 @@ def exclude_subjects(
             else:
                 raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
         else:
-            raise ValueError("No '{}' level in index!".format(id_column))
+            raise ValueError("No '{}' level in index!".format(index_name))
     if len(cleaned_data) == 1:
         cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data
 
 
-def concat_phase_dict(
-    dict_hr_subject: Dict[str, Dict[str, pd.DataFrame]],
-    phases: Optional[Sequence[str]] = None,
-) -> Dict[str, pd.DataFrame]:
-    """
-    Rearranges a 'HR subject dict' (a nested dictionary containing heart rate data, see below and
-    ``utils.load_hr_excel_all_subjects()`` for further information) into a 'Phase dict', i.e. a dictionary with
-    one dataframe per Phase where each dataframe contains column-wise HR data for all subjects.
+def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.DataFrame]) -> SubjectDataDict:
+    """Normalize time series data per subject to the phase specified by ``normalize_to``.
 
-    The **input** needs to be a 'HR subject dict', a nested dictionary with the following format:
+    The result is the relative change (of, for example, heart rate) compared to the mean value in ``phase``.
+
+    Parameters
+    ----------
+    subject_data_dict : :class:`~biopsykit.utils.datatype_helper.SubjectsDict`
+        ``SubjectsDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.PhaseDict` for each subject
+    phase : str or :class:`~pandas.DataFrame`
+        phase to normalize all other data to. If ``phase`` is a string then it is interpreted as the name of a phase
+        present in ``subject_data_dict``. If ``phase`` is a DataFrame then the data will be normalized (per subject)
+        to the mean value of the DataFrame.
+
+    Returns
+    -------
+    dict
+        dictionary with normalized data per subject
+
+    """
+    _assert_is_dtype(phase, (str, pd.DataFrame))
+    dict_subjects_norm = {}
+    for subject_id, data in subject_data_dict.items():
+        if isinstance(phase, str):
+            bl_mean = data[phase].mean()
+        else:
+            bl_mean = phase.mean()
+        dict_subjects_norm[subject_id] = {p: (df - bl_mean) / bl_mean * 100 for p, df in data.items()}
+
+    return dict_subjects_norm
+
+
+def resample_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+    """Resample input data to a frequency of 1 Hz.
+
+    .. note::
+        For resampling the index of ``data`` either be has to be a :class:`~pandas.DatetimeIndex`
+        or a :class:`~pandas.Index` with time information in seconds.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
+        data to resample. Index of data needs to be a :class:`~pandas.DatetimeIndex`
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        dataframe with data resampled to 1 Hz
+
+
+    Raises
+    ------
+    ValueError
+        If ``data`` is not a DataFrame or Series
+
+    """
+    _assert_is_dtype(data, (pd.DataFrame, pd.Series))
+
+    if isinstance(data, pd.DataFrame):
+        column_name = data.columns
+    else:
+        column_name = [data.name]
+
+    if isinstance(data.index, pd.DatetimeIndex):
+        x_old = np.array((data.index - data.index[0]).total_seconds())
+    else:
+        x_old = np.array(data.index - data.index[0])
+    x_new = np.arange(1, np.ceil(x_old[-1]) + 1)
+    data = sanitize_input_1d(data)
+
+    interpol_f = interpolate.interp1d(x=x_old, y=data, fill_value="extrapolate")
+    return pd.DataFrame(interpol_f(x_new), index=pd.Index(x_new, name="time"), columns=column_name)
+
+
+def resample_dict_sec(
+    data_dict: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Resample all data in the dictionary to 1 Hz data.
+
+    This function recursively looks for all dataframes in the dictionary and resamples data to 1 Hz using
+    :func:`~biopsykit.utils.data_processing.resample_sec`.
+
+
+    Parameters
+    ----------
+    data_dict : dict
+        nested dictionary with data to be resampled
+
+
+    Returns
+    -------
+    dict
+        nested dictionary with data resampled to 1 Hz
+
+
+    See Also
+    --------
+    `~biopsykit.utils.data_processing.resample_sec`
+        resample dataframe to 1 Hz
+
+    """
+    result_dict = {}
+    for key, value in data_dict.items():
+        if isinstance(value, (pd.DataFrame, pd.Series)):
+            result_dict[key] = resample_sec(value)
+        elif isinstance(value, dict):
+            result_dict[key] = resample_dict_sec(value)
+        else:
+            raise ValueError("Invalid input format!")
+    return result_dict
+
+
+def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Sequence[str]) -> SubjectDataDict:
+    """Select specific phases from ``SubjectDataDict``.
+
+    Parameters
+    ----------
+    subject_data_dict : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+        ``SubjectDataDict``, i.e. a dictionary with :obj:`~biopsykit.utils.datatype_helper.PhaseDict` for each subject
+    phases : list of str
+        list of phases to select
+
+    Returns
+    -------
+    :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+        ``SubjectDataDict`` containing only the phases of interest
+
+    """
+    is_subject_data_dict(subject_data_dict)
+    return {
+        subject: {phase: dict_subject[phase] for phase in phases} for subject, dict_subject in subject_data_dict.items()
+    }
+
+
+def rearrange_subject_data_dict(
+    subject_data_dict: SubjectDataDict,
+) -> StudyDataDict:
+    """Rearrange ``SubjectDataDict`` to ``StudyDataDict``.
+
+    A ``StudyDataDict`` is constructed from a ``SubjectDataDict`` by swapping outer (subject IDs) and inner
+    (phase names) dictionary keys.
+
+    The **input** needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
+    a nested dictionary in the following format:
+
     {
-        "<Subject_1>" : {
-            "<Phase_1>" : hr_dataframe,
-            "<Phase_2>" : hr_dataframe,
-            ...
-        },
-        "<Subject_2>" : {
-            "<Phase_1>" : hr_dataframe,
-            "<Phase_2>" : hr_dataframe,
-            ...
-        },
+        "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+        "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
         ...
     }
 
     The **output** format will be the following:
 
-    { "<Phase>" : hr_dataframe, 1 subject per column }
+    {
+        "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+        "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+        ...
+    }
 
-    E.g., see ``biopsykit.protocols.mist.MIST.concat_phase_dict()`` for further information.
 
     Parameters
     ----------
-    dict_hr_subject : dict
-        'HR subject dict', i.e. a nested dict with heart rate data per phase and subject
-    phases : list, optional
-        list of phase names. If `None` is passed, phases are inferred from the keys of the first subject
+    subject_data_dict : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+        ``SubjectDataDict``, i.e. a dictionary with data from multiple subjects, each containing data from
+        multiple phases (in form of a :obj:`~biopsykit.utils.datatype_helper.PhaseDict`)
+
 
     Returns
     -------
-    dict
-        'Phase dict', i.e. a dict with heart rate data of all subjects per phase
+    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+        rearranged ``SubjectDataDict``
 
     """
+    dict_flipped = {}
+    phases = [np.array(dict_phase.keys()) for dict_phase in subject_data_dict.values()]
+    if not all(phases[0] == p for p in phases):
+        raise ValueError(
+            "Error rearranging the dictionary! Not all 'PhaseDict's have the same phases. "
+            "To rearrange the 'SubjectDataDict', "
+            "the dictionaries of all subjects need to have the exact same phases!"
+        )
+
+    for subject, phase_dict in subject_data_dict.items():
+        for phase, df in phase_dict.items():
+            dict_flipped.setdefault(phase, dict.fromkeys(subject_data_dict.keys()))
+            dict_flipped[phase][subject] = df
+
+    return dict_flipped
+
+
+def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequence[str]] = None) -> StudyDataDict:
+    """Cut time-series data to shortest duration of a subject in each phase.
+
+    To overlay time-series data from multiple subjects in an `ensemble plot` it is beneficial if all data have
+    the same length. For that reason, data can be cut to the same length using this function.
+
+    Parameters
+    ----------
+    study_data_dict : :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+        ``StudyDataDict``, i.e. a dictionary with data from multiple phases, each phase containing data from
+        different subjects.
+    phases : list of str, optional
+        list of phases if only a subset of phases should be cut or ``None`` to cut all phases.
+        Default: ``None``
+
+    Returns
+    -------
+    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+        ``StudyDataDict`` with data cut to the shortest duration in each phase
+
+    """
+    is_study_data_dict(study_data_dict)
 
     if phases is None:
-        phases = list(dict_hr_subject.values())[0].keys()
+        phases = study_data_dict.keys()
 
-    dict_phase: Dict[str, pd.DataFrame] = {key: pd.DataFrame(columns=list(dict_hr_subject.keys())) for key in phases}
-    for subj in dict_hr_subject:
-        dict_bl = dict_hr_subject[subj]
-        for phase in phases:
-            dict_phase[phase][subj] = dict_bl[phase]["Heart_Rate"]
+    dict_cut = {}
+    for phase in phases:
+        min_dur = min([len(df) for df in study_data_dict[phase].values()])
+        dict_cut[phase] = {subject: df.iloc[0:min_dur].copy() for subject, df in study_data_dict[phase].items()}
 
-    return dict_phase
+    is_study_data_dict(study_data_dict)
+    return dict_cut
 
 
-def split_subphases(
-    data: Union[Dict[str, pd.DataFrame], Dict[str, Dict[str, pd.DataFrame]]],
-    subphase_names: Sequence[str],
-    subphase_times: Sequence[Tuple[int, int]],
-    is_group_dict: Optional[bool] = False,
-) -> Union[Dict[str, Dict[str, pd.DataFrame]], Dict[str, Dict[str, Dict[str, pd.DataFrame]]]]:
-    """
-    Splits a `Phase dict` (or a dict of such, in case of multiple groups, see ``bp.signals.utils.concat_phase_dict``)
-    into a `Subphase dict` (see below for further explanation).
+def merge_study_data_dict(study_data_dict: StudyDataDict) -> MergedStudyDataDict:
+    """Merge inner dictionary level of ``StudyDataDict`` into one dataframe.
 
-    The **input** is a `Phase dict`, i.e. a dictionary with data (e.g. heart rate) per Phase
-    in the following format:
+    This function removes the inner level of the nested ``StudyDataDict`` by merging data from all subjects
+    into one dataframe for each phase.
 
-    { <"Phase"> : dataframe, 1 subject per column }
-
-    If multiple groups are present, then the expected input is nested, i.e. a dict of 'Phase dicts',
-    with one entry per group.
-
-    The **output** is a `Subphase dict`, i.e. a nested dictionary with data (e.g. heart rate) per Subphase in the
-    following format:
-
-    { <"Phase"> : { <"Subphase"> : dataframe, 1 subject per column } }
-
-    If multiple groups are present, then the output is nested, i.e. a dict of 'Subphase dicts',
-    with one entry per group.
+    .. note::
+        To merge data from different subjects into one dataframe the data are all expected to have the same length!
+        If this is not the case, all data needs to be cut to equal length first, e.g. using
+        :func:`~biopsykit.utils.data_processing.cut_phases_to_shortest`.
 
 
     Parameters
     ----------
-    data : dict
-        'Phase dict' or nested dict of 'Phase dicts' if `is_group_dict` is ``True``
-    subphase_names : list
-        List with names of subphases
-    subphase_times : list
-        List with start and end times (as tuples) of each subphase in seconds or list with subphase durations
-    is_group_dict : bool, optional
-        ``True`` if group dict was passed, ``False`` otherwise. Default: ``False``
+    study_data_dict : :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+        ``StudyDataDict``, i.e. a dictionary with data from multiple phases, each phase containing data from
+        different subjects.
+
 
     Returns
     -------
-    dict
-        'Subphase dict' with course of data per Phase, Subphase and Subject, respectively or
-        nested dict of 'Subphase dicts' if `is_group_dict` is ``True``
+    :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
+        ``MergedStudyDataDict`` with data of all subjects merged into one dataframe for each phase
 
     """
-    if isinstance(subphase_times[0], Number):
-        times_cum = np.cumsum(np.array(subphase_times))
-        subphase_times = [(start, end) for start, end in zip(np.append([0], times_cum[:-1]), times_cum)]
+    is_study_data_dict(study_data_dict)
 
-    if is_group_dict:
-        # recursively call this function for each group
-        return {
-            group: split_subphases(dict_group, subphase_names=subphase_names, subphase_times=subphase_times)
-            for group, dict_group in data.items()
-        }
-    else:
-        phase_dict = {}
-        # split data into subphases for each Phase
-        for phase, df in data.items():
-            phase_dict[phase] = {subph: df[start:end] for subph, (start, end) in zip(subphase_names, subphase_times)}
-        return phase_dict
+    dict_merged = {}
+    for phase, dict_phase in study_data_dict.items():
+        _assert_dataframes_same_length(list(dict_phase.values()))
+        df_merged = pd.concat(dict_phase, names=["subject"], axis=1)
+        df_merged.columns = df_merged.columns.droplevel(1)
+        dict_merged[phase] = df_merged
+
+    is_merged_study_data_dict(dict_merged)
+    return dict_merged
 
 
-def split_groups(
-    phase_dict: Dict[str, pd.DataFrame], condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
-) -> Dict[str, Dict[str, pd.DataFrame]]:
-    """
-    Splits 'Phase dict' into group dict, i.e. one 'Phase dict' per group.
+def split_dict_into_subphases(
+    data_dict: Dict[str, Any],
+    subphases: Dict[str, int],
+) -> Union[Dict[str, Dict[str, Any]]]:
+    """Split dataframes in a nested dictionary into subphases.
+
+    By further splitting a dataframe into subphases a new dictionary level is created. The new dictionary level
+    then contains the subphases with their data.
+
+    .. note::
+        If the duration of the last subphase is unknown (e.g., because it has variable length) this can be
+        indicated by setting the duration of this subphase to 0.
+        The duration of this subphase will then be inferred from the data.
 
     Parameters
     ----------
-    phase_dict : dict
-        'Phase dict' to be split in groups. See ``bp.signals.utils.concat_phase_dict`` for further information
-    condition_list : :class:`~biopsykit.datatype_helper.SubjectConditionDict` or
-    :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame`
-        dataframe or dictionary of group membership in standardized format
+    data_dict : dict
+        dictionary with an arbitrary number of outer level (e.g., conditions, phases, etc.) as keys and
+        dataframes with data to be split into subphases as values
+    subphases : dict
+        dictionary with subphase names (keys) and subphase durations (values) in seconds
 
     Returns
     -------
     dict
-        nested group dict with one 'Phase dict' per group
+        dictionary where each dataframe in the dictionary is split into the subphases specified by ``subphases``
+
+    """
+    result_dict = {}
+    for key, value in data_dict.items():
+        _assert_is_dtype(value, (dict, pd.DataFrame))
+        if isinstance(value, dict):
+            # nested dictionary
+            result_dict[key] = split_dict_into_subphases(value, subphases)
+        else:
+            subphase_times = get_subphase_durations(value, subphases)
+            subphase_dict = {}
+            for subphase, times in zip(subphases.keys(), subphase_times):
+                subphase_dict[subphase] = value.iloc[times[0] : times[1]]
+            result_dict[key] = subphase_dict
+    return result_dict
+
+
+def get_subphase_durations(data: pd.DataFrame, subphases: Dict[str, int]) -> Sequence[Tuple[int, int]]:
+    """Compute subphase durations from dataframe.
+
+    .. note::
+        If the duration of the last subphase is unknown (e.g., because it has variable length) this can be
+        indicated by setting the duration of this subphase to 0.
+        The duration of this subphase will then be inferred from the data.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe with data from one phase. Used to compute the duration of the last subphase if this subphase
+        is expected to have variable duration.
+    subphases : dict
+        dictionary with subphase names (keys) and subphase durations (values) in seconds
+
+    Returns
+    -------
+    list
+        list with start and end times of each subphase in seconds relative to beginning of the phase
+
+    """
+    subphase_durations = list(subphases.values())
+    times_cum = np.cumsum(subphase_durations)
+    if subphase_durations[-1] == 0:
+        # last subphase has duration 0 => end of last subphase is length of dataframe
+        times_cum[-1] = len(data)
+    subphase_times = list(zip([0] + list(times_cum), times_cum))
+    return subphase_times
+
+
+def add_subject_conditions(
+    data: pd.DataFrame, condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
+) -> pd.DataFrame:
+    """Add subject conditions to dataframe.
+
+    This function expects a dataframe with data from multiple subjects and information on which subject
+    belongs to which condition.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe where new index level ``condition`` with subject conditions should be added to
+    condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
+        :class:`~biopsykit.datatype_helper.SubjectConditionDict` or
+        :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        which condition
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        dataframe with new index level ``condition`` indicating which subject belongs to which condition
 
     """
     if is_subject_condition_dataframe(condition_list, raise_exception=False):
         condition_list = condition_list.groupby("condition").groups
     is_subject_condition_dict(condition_list)
-    return {
-        condition: {key: df[condition_list[condition]] for key, df in phase_dict.items()}
-        for condition in condition_list.keys()
-    }
+    return pd.concat({cond: data.loc[subjects] for cond, subjects in condition_list.items()}, names=["condition"])
 
 
-def param_subphases(
-    ecg_processor: Optional["EcgProcessor"] = None,
-    dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
-    dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
-    subphases: Optional[Sequence[str]] = None,
-    subphase_durations: Optional[Sequence[int]] = None,
-    param_types: Optional[Union[str, Sequence[str]]] = "all",
-    sampling_rate: Optional[int] = 256,
-    include_total: Optional[bool] = True,
-    title: Optional[str] = None,
-) -> pd.DataFrame:
-    """
-    Computes specified parameters (HRV / RSA / ...) over phases and subphases **for one subject**.
+def split_subject_conditions(
+    data_dict: Dict[str, Any], condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
+) -> Dict[str, Dict[str, Any]]:
+    """Split dictionary with data based on conditions subjects were assigned to.
 
-    To use this function, either simply pass an ``EcgProcessor`` object or two dictionaries
-    ``dict_ecg`` and ``dict_rpeaks`` resulting from ``EcgProcessor.ecg_process()``.
+    This function adds a new outer dictionary level with the different conditions as keys and dictionaries
+    belonging to the conditions as values. For that, it expects a dictionary with data from multiple subjects and
+    information on which subject belongs to which condition.
+
 
     Parameters
     ----------
-    ecg_processor : EcgProcessor, optional
-        `EcgProcessor` object
-    dict_ecg : dict, optional
-        dict with dataframes of processed ECG signals. Output from `EcgProcessor.ecg_process()`.
-    dict_rpeaks : dict, optional
-        dict with dataframes of processed R peaks. Output from `EcgProcessor.ecg_process()`.
-    subphases : list of int
-        list of subphase names
-    subphase_durations : list of str
-        list of subphase durations
-    param_types : list or str, optional
-        list with parameter types to compute or 'all' to compute all available parameters. Choose from a subset of
-        ['hrv', 'rsa'] to compute HRV and RSA parameters, respectively.
-    sampling_rate : float, optional
-        Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
-    include_total : bool, optional
-        ``True`` to also compute parameters over the complete phases (in addition to only over subphases),
-        ``False`` to only compute parameters over the single subphases. Default: ``True``
-    title : str, optional
-        Optional title of the processing progress bar. Default: ``None``
+    data_dict : dict
+        (nested) dictionary with data which should be split based on the conditions subjects belong to
+    condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
+        :class:`~biopsykit.datatype_helper.SubjectConditionDict` or
+        :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        which condition
+
 
     Returns
     -------
-    pd.DataFrame
-        dataframe with computed parameters over the single subphases
+    dict
+        dictionary with additional outer level indicating which subject belongs to which condition
+
     """
-    import biopsykit.signals.ecg as ecg
-
-    if ecg_processor is None and dict_rpeaks is None and dict_ecg is None:
-        raise ValueError("Either `ecg_processor` or `dict_rpeaks` and `dict_ecg` must be passed as arguments!")
-
-    if subphases is None or subphase_durations is None:
-        raise ValueError("Both `subphases` and `subphase_durations` are required as parameter!")
-
-    # get all desired parameter types
-    possible_param_types = {
-        "hrv": ecg.EcgProcessor.hrv_process,
-        "rsp": ecg.EcgProcessor.rsp_rsa_process,
-    }
-    if param_types == "all":
-        param_types = possible_param_types
-
-    if isinstance(param_types, str):
-        param_types = {param_types: possible_param_types[param_types]}
-    if not all([param in possible_param_types for param in param_types]):
-        raise ValueError(
-            "`param_types` must all be of {}, not {}".format(possible_param_types.keys(), param_types.keys())
-        )
-
-    param_types = {param: possible_param_types[param] for param in param_types}
-
-    if ecg_processor:
-        sampling_rate = ecg_processor.sampling_rate
-        dict_rpeaks = ecg_processor.rpeaks
-        dict_ecg = ecg_processor.ecg_result
-
-    if "rsp" in param_types and dict_ecg is None:
-        raise ValueError("`dict_ecg` must be passed if param_type is {}!".format(param_types))
-
-    index_name = "subphase"
-    # dict to store results. one entry per parameter and a list of dataframes per MIST phase
-    # that will later be concated to one large dataframes
-    dict_df_subphases = {param: list() for param in param_types}
-
-    # iterate through all phases in the data
-    for (phase, rpeaks), (ecg_phase, ecg_data) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc=title):
-        rpeaks = rpeaks.copy()
-        ecg_data = ecg_data.copy()
-
-        # dict to store intermediate results of subphases. one entry per parameter with a
-        # list of dataframes per subphase that will later be concated to one dataframe per MIST phase
-        dict_subphases = {param: list() for param in param_types}
-        if include_total:
-            # compute HRV, RSP over complete phase
-            for param_type, param_func in param_types.items():
-                dict_subphases[param_type].append(
-                    param_func(
-                        ecg_signal=ecg_data,
-                        rpeaks=rpeaks,
-                        index="Total",
-                        index_name=index_name,
-                        sampling_rate=sampling_rate,
-                    )
-                )
-
-        if phase not in ["Part1", "Part2"]:
-            # skip Part1, Part2 for subphase parameter analysis (parameters in total are computed above)
-            for subph, dur in zip(subphases, subphase_durations):
-                # get the first xx seconds of data (i.e., get only the current subphase)
-                if dur > 0:
-                    df_subph_rpeaks = rpeaks.first("{}S".format(dur))
-                else:
-                    # duration of 0 seconds = Feedback Interval, don't cut the beginning,
-                    # use all remaining data
-                    df_subph_rpeaks = rpeaks
-                # ECG does not need to be sliced because rpeaks are already sliced and
-                # will select only the relevant ECG signal parts anyways
-                df_subph_ecg = ecg_data
-
-                for param_type, param_func in param_types.items():
-                    # compute HRV, RSP over subphases
-                    dict_subphases[param_type].append(
-                        param_func(
-                            ecg_signal=df_subph_ecg,
-                            rpeaks=df_subph_rpeaks,
-                            index=subph,
-                            index_name=index_name,
-                            sampling_rate=sampling_rate,
-                        )
-                    )
-
-                # remove the currently analyzed subphase of data
-                # (so that the next subphase is first in the next iteration)
-                rpeaks = rpeaks.drop(df_subph_rpeaks.index)
-
-        for param in dict_subphases:
-            # concat dataframe of all subphases to one dataframe per MIST phase and add to parameter dict
-            dict_df_subphases[param].append(pd.concat(dict_subphases[param]))
-
-    # concat all dataframes together to one big result dataframes
-    return pd.concat(
-        [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["phase"]) for dict_df in dict_df_subphases.values()],
-        axis=1,
-    )
+    if is_subject_condition_dataframe(condition_list, raise_exception=False):
+        condition_list = condition_list.groupby("condition").groups
+    is_subject_condition_dict(condition_list)
+    return {cond: _splits_subject_conditions(data_dict, subjects) for cond, subjects in condition_list.items()}
 
 
-def mean_per_subject_nested_dict(
-    data: Dict[str, Dict[str, pd.DataFrame]],
-    param_name: str,
-    is_group_dict: Optional[bool] = False,
-) -> pd.DataFrame:
-    """
+def _splits_subject_conditions(data_dict: Dict[str, Any], subject_list: Sequence[str]):
+    _assert_is_dtype(data_dict, (dict, pd.DataFrame))
+    if isinstance(data_dict, pd.DataFrame):
+        return data_dict[subject_list]
+    return {key: _splits_subject_conditions(value, subject_list) for key, value in data_dict.items()}
+
+
+# def param_subphases(
+#     ecg_processor: Optional["EcgProcessor"] = None,
+#     dict_ecg: Optional[Dict[str, pd.DataFrame]] = None,
+#     dict_rpeaks: Optional[Dict[str, pd.DataFrame]] = None,
+#     subphases: Optional[Sequence[str]] = None,
+#     subphase_durations: Optional[Sequence[int]] = None,
+#     param_types: Optional[Union[str, Sequence[str]]] = "all",
+#     sampling_rate: Optional[int] = 256,
+#     include_total: Optional[bool] = True,
+#     title: Optional[str] = None,
+# ) -> pd.DataFrame:
+#     """
+#     Computes specified parameters (HRV / RSA / ...) over phases and subphases **for one subject**.
+#
+#     To use this function, either simply pass an ``EcgProcessor`` object or two dictionaries
+#     ``dict_ecg`` and ``dict_rpeaks`` resulting from ``EcgProcessor.ecg_process()``.
+#
+#     Parameters
+#     ----------
+#     ecg_processor : EcgProcessor, optional
+#         `EcgProcessor` object
+#     dict_ecg : dict, optional
+#         dict with dataframes of processed ECG signals. Output from `EcgProcessor.ecg_process()`.
+#     dict_rpeaks : dict, optional
+#         dict with dataframes of processed R peaks. Output from `EcgProcessor.ecg_process()`.
+#     subphases : list of int
+#         list of subphase names
+#     subphase_durations : list of str
+#         list of subphase durations
+#     param_types : list or str, optional
+#         list with parameter types to compute or 'all' to compute all available parameters. Choose from a subset of
+#         ['hrv', 'rsa'] to compute HRV and RSA parameters, respectively.
+#     sampling_rate : float, optional
+#         Sampling rate of recorded data. Not needed if ``ecg_processor`` is supplied as parameter. Default: 256 Hz
+#     include_total : bool, optional
+#         ``True`` to also compute parameters over the complete phases (in addition to only over subphases),
+#         ``False`` to only compute parameters over the single subphases. Default: ``True``
+#     title : str, optional
+#         Optional title of the processing progress bar. Default: ``None``
+#
+#     Returns
+#     -------
+#     pd.DataFrame
+#         dataframe with computed parameters over the single subphases
+#     """
+#     import biopsykit.signals.ecg as ecg
+#
+#     if ecg_processor is None and dict_rpeaks is None and dict_ecg is None:
+#         raise ValueError("Either `ecg_processor` or `dict_rpeaks` and `dict_ecg` must be passed as arguments!")
+#
+#     if subphases is None or subphase_durations is None:
+#         raise ValueError("Both `subphases` and `subphase_durations` are required as parameter!")
+#
+#     # TODO change
+#     # get all desired parameter types
+#     possible_param_types = {
+#         "hrv": ecg.EcgProcessor.hrv_process,
+#         # "rsp": ecg.EcgProcessor.rsp_rsa_process,
+#     }
+#     if param_types == "all":
+#         param_types = possible_param_types
+#
+#     if isinstance(param_types, str):
+#         param_types = {param_types: possible_param_types[param_types]}
+#     if not all([param in possible_param_types for param in param_types]):
+#         raise ValueError(
+#             "`param_types` must all be of {}, not {}".format(possible_param_types.keys(), param_types.keys())
+#         )
+#
+#     param_types = {param: possible_param_types[param] for param in param_types}
+#
+#     if ecg_processor:
+#         sampling_rate = ecg_processor.sampling_rate
+#         dict_rpeaks = ecg_processor.rpeaks
+#         dict_ecg = ecg_processor.ecg_result
+#
+#     if "rsp" in param_types and dict_ecg is None:
+#         raise ValueError("`dict_ecg` must be passed if param_type is {}!".format(param_types))
+#
+#     index_name = "subphase"
+#     # dict to store results. one entry per parameter and a list of dataframes per MIST phase
+#     # that will later be concated to one large dataframes
+#     dict_df_subphases = {param: list() for param in param_types}
+#
+#     # iterate through all phases in the data
+#     for (phase, rpeaks), (ecg_phase, ecg_data) in tqdm(zip(dict_rpeaks.items(), dict_ecg.items()), desc=title):
+#         rpeaks = rpeaks.copy()
+#         ecg_data = ecg_data.copy()
+#
+#         # dict to store intermediate results of subphases. one entry per parameter with a
+#         # list of dataframes per subphase that will later be concated to one dataframe per MIST phase
+#         dict_subphases = {param: list() for param in param_types}
+#         if include_total:
+#             # compute HRV, RSP over complete phase
+#             for param_type, param_func in param_types.items():
+#                 dict_subphases[param_type].append(
+#                     param_func(
+#                         ecg_signal=ecg_data,
+#                         rpeaks=rpeaks,
+#                         index="Total",
+#                         index_name=index_name,
+#                         sampling_rate=sampling_rate,
+#                     )
+#                 )
+#
+#         if phase not in ["Part1", "Part2"]:
+#             # skip Part1, Part2 for subphase parameter analysis (parameters in total are computed above)
+#             for subph, dur in zip(subphases, subphase_durations):
+#                 # get the first xx seconds of data (i.e., get only the current subphase)
+#                 if dur > 0:
+#                     df_subph_rpeaks = rpeaks.first("{}S".format(dur))
+#                 else:
+#                     # duration of 0 seconds = Feedback Interval, don't cut the beginning,
+#                     # use all remaining data
+#                     df_subph_rpeaks = rpeaks
+#                 # ECG does not need to be sliced because rpeaks are already sliced and
+#                 # will select only the relevant ECG signal parts anyways
+#                 df_subph_ecg = ecg_data
+#
+#                 for param_type, param_func in param_types.items():
+#                     # compute HRV, RSP over subphases
+#                     dict_subphases[param_type].append(
+#                         param_func(
+#                             ecg_signal=df_subph_ecg,
+#                             rpeaks=df_subph_rpeaks,
+#                             index=subph,
+#                             index_name=index_name,
+#                             sampling_rate=sampling_rate,
+#                         )
+#                     )
+#
+#                 # remove the currently analyzed subphase of data
+#                 # (so that the next subphase is first in the next iteration)
+#                 rpeaks = rpeaks.drop(df_subph_rpeaks.index)
+#
+#         for param in dict_subphases:
+#             # concat dataframe of all subphases to one dataframe per MIST phase and add to parameter dict
+#             dict_df_subphases[param].append(pd.concat(dict_subphases[param]))
+#
+#     # concat all dataframes together to one big result dataframes
+#     return pd.concat(
+#         [pd.concat(dict_df, keys=dict_rpeaks.keys(), names=["phase"]) for dict_df in dict_df_subphases.values()],
+#         axis=1,
+#     )
+
+
+def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], param_name: str) -> pd.DataFrame:
+    """Compute mean values of time-series data from a nested dictionary.
+
+    This function computes the mean value of time-series data in a nested dictionary per subject and combines it into
+    a joint dataframe. The dictionary will be traversed recursively and can thus have arbitrary depth.
+    The most inner level must contain dataframes with time-series data of which mean values will be computed.
+    The names of the dictionary levels are specified by ``dict_levels``.
+
 
     Parameters
     ----------
-    data: nested dictionary
+    data: dict
+        nested dictionary with data on which mean should be computed. The number of nested levels must match the
+        number of levels specified in ``dict_levels``
+    dict_levels : list of str
+        list with names of dictionary levels.
     param_name : str
-        Name of the parameter to compute mean from. Corresponds to the column name of the resulting dataframe
-    is_group_dict: bool, optional
+        type of data of which mean values will be computed from.
+        This will also be the column name in the resulting dataframe
+
 
     Returns
     -------
-        dataframe
+    :class:`~pandas.DataFrame`
+        dataframe with ``dict_levels`` as index levels and mean values of time-series data as column values
+
     """
-    df_result = _mean_per_subject_nested_dict(data, param_name)
-
-    # name index levels correctly (depending on number of levels)
-    nlevels = df_result.index.nlevels
-    if is_group_dict:
-        nlevels -= 1
-
-    index_names = ["phase"]
-    if nlevels == 3:
-        index_names = ["phase", "subphase"]
-
-    if is_group_dict:
-        index_names = ["condition"] + index_names
-
-    index_names = index_names + ["subject"]
-    df_result.index.names = index_names
-
-    # last index level is always 'subject' => reorder index levels to that 'subject' is the first
-    # (except when 'condition' index is present, then this is the first, 'subject' is second)
-    index_names = [index_names[-1]] + index_names[:-1]
-    if "condition" in index_names:
-        index_names.remove("condition")
-        index_names = ["condition"] + index_names
-    return df_result.reorder_levels(index_names).sort_index()
-
-
-def _mean_per_subject_nested_dict(data: Dict[str, Dict[str, pd.DataFrame]], param_name: str) -> pd.DataFrame:
     result_data = {}
 
-    for phase, data_phase in data.items():
-        if isinstance(data_phase, dict):
+    one_col_df = False
+    for key, value in data.items():
+        _assert_is_dtype(value, (dict, pd.DataFrame))
+        if isinstance(value, dict):
+            if len(dict_levels) <= 1:
+                raise ValueError("Invalid number of 'dict_levels' specified!")
             # nested dictionary
-            result_data[phase] = _mean_per_subject_nested_dict(data_phase, param_name)
-        elif isinstance(data_phase, pd.DataFrame):
-            df = pd.DataFrame(data_phase.mean(), columns=[param_name])
-            result_data[phase] = df
+            result_data[key] = mean_per_subject_dict(value, dict_levels[1:], param_name)
         else:
-            raise ValueError("Invalid input!")
+            if len(value.columns) == 1:
+                one_col_df = True
+            df = pd.DataFrame(value.mean(axis=0), columns=[param_name])
+            result_data[key] = df
 
-    return pd.concat(result_data)
+    ret = pd.concat(result_data, names=[dict_levels[0]])
+    if one_col_df:
+        ret.index = ret.index.droplevel(-1)
+    return ret
 
 
-def mean_se_nested_dict(
-    data: Dict[str, Dict[str, pd.DataFrame]],
-    subphases: Optional[Sequence[str]] = None,
-    is_group_dict: Optional[bool] = False,
-    std_type: Optional[str] = "se",
-) -> pd.DataFrame:
-    """
-    Computes mean and standard error (se) or standard deviation (std) for a nested dictionary.
+def mean_se_per_phase(data: pd.DataFrame) -> pd.DataFrame:
+    """Compute mean and standard error over all subjects in a dataframe.
 
-    As input either
-    (a) a 'Subject dict' (e.g. like returned from bp.signals.ecg.io.load_combine_hr_all_subjects()),
-    (b) a 'Subphase dict' (for only one group), or
-    (c) a dict of 'Subphase dict', one dict per group (for multiple groups, if ``is_group_dict`` is ``True``)
-    can be passed (see ``utils.split_subphases`` for more explanation). Both dictionaries are outputs from
-    ``utils.split_subphases``.
-
-    The input dict structure is expected to look like one of these examples:
-        (a) { "<Subject>" : { "<Phase>" : dataframe with values } }
-        (b) { "<Phase>" : dataframe with values, 1 subject per column }
-        (c) { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } }
-        (d) { "<Group>" : { "<Phase>" : dataframe with values } }
-        (e) { "<Group>" : { "<Phase>" : { "<Subphase>" : dataframe with values, 1 subject per column } } }
-
-    The output is a 'mse dataframe', a pandas dataframe with:
-        * columns: ['mean', 'se'] for mean and standard error or ['mean', 'std'] for mean and standard deviation
-        * rows: MultiIndex with level 0 = Condition, level 1 = Phases and level 2 = Subphases (depending on input).
+    .. note::
+        The dataframe in ``data`` is expected to have a :class:`~pandas.MultiIndex` with at least two levels,
+        one of the levels being the level "subject"!
 
     Parameters
     ----------
-    data : dict
-        nested dictionary containing data to be reduced (e.g. heart rate)
-    subphases : list, optional
-        list of subphase names or ``None`` to use default subphase names. Default: ``None``
-    is_group_dict : boolean, optional
-        ``True`` if `data` is a group dict, i.e. contains dictionaries for multiple groups, ``False`` otherwise.
-        Default: ``False``
-    std_type : str, optional
-        'std' to compute standard deviation, 'se' to compute standard error. Default: 'se'
+    data : :class:`~pandas.DataFrame`
+        dataframe with :class:`~pandas.MultiIndex` from which to compute mean and standard error
 
     Returns
     -------
-    pd.DataFrame
-        'mse dataframe' with MultiIndex (order: condition, phase, subphase, depending on input data)
-
-    Examples
-    --------
-    >>> from biopsykit.utils.data_processing import mean_se_nested_dict
-    >>> # Example (a): Nested dictionary with outer-keys = Subjects, inner-keys = Phases, inner-values = pandas dataframe with 1 column
-    >>> # Construct dictionary (as example)
-    >>> dict_subject = {
-    >>>     'Vp_01': {
-    >>>         'Phase1': pd.DataFrame([1, 2, 3, 4, 5]),
-    >>>         'Phase2': pd.DataFrame([6, 7, 8, 9, 10]),
-    >>>         'Phase3': pd.DataFrame([11, 12, 13, 14, 15])
-    >>>     },
-    >>>     'Vp_02': {
-    >>>         'Phase1': pd.DataFrame([1, 2, 3, 4, 5]),
-    >>>         'Phase2': pd.DataFrame([6, 7, 8, 9, 10]),
-    >>>         'Phase3': pd.DataFrame([11, 12, 13, 14, 15])
-    >>>     },
-    >>>     # ...
-    >>> }
-    >>> df_mse = mean_se_nested_dict(dict_subject)
-    >>> print(df_mse)
-    >>> # Output = DataFrame with
-    >>> #   Row Index:       [Phase1, Phase2, Phase3]
-    >>> #   Column Index:    [mean, se]
-    >>>
-    >>>
-    >>> # Example (b): Nested dictionary with outer-keys = Phases, inner-keys = Subphases, inner-values = pandas dataframe with multiple columns, 1 column per subject
-    >>> # Construct dictionary (as example)
-    >>> dict_subject = {
-    >>>     'Phase1': {
-    >>>         'Subphase1': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]}),
-    >>>         'Subphase2': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]}),
-    >>>         'Subphase3': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]})
-    >>>     },
-    >>>     'Phase2': {
-    >>>         'Subphase1': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]}),
-    >>>         'Subphase2': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]}),
-    >>>         'Subphase3': pd.DataFrame({'Vp_01': [1, 2, 3, 4, 5], 'Vp_02': [6, 7, 8, 9, 10], 'Vp_03': [11, 12, 13, 14, 15]})
-    >>>     },
-    >>>     # ...
-    >>> }
-    >>> df_mse = mean_se_nested_dict(dict_subject)
-    >>> print(df_mse)
-    >>> # Output = DataFrame with
-    >>> #   Row Index: MultiIndex with 1st level = Phases, 2nd level = Subphases
-    >>> #   Column Index:    [mean, se]
+    :class:`~pandas.DataFrame`
+        dataframe with mean and standard error over all subjects
 
     """
+    # expect dataframe to have at least 2 levels, one of it being "subject"
+    _assert_has_multiindex(data, expected=True, nlevels=2, nlevels_atleast=True)
+    _assert_has_index_levels(data, ["subject"], match_atleast=True)
 
-    # TODO improve interface: automatically check for groups, phases, subphases, always return a dataframe (instead of a dict when data for different groups is passed), name index levels
+    # group by all columns except the "subject" column
+    group_cols = list(data.index.names)
+    group_cols.remove("subject")
 
-    if std_type not in ["std", "se"]:
-        raise ValueError("Invalid argument for 'std_type'! Must be one of {}, not {}.".format(["std", "se"], std_type))
-
-    if is_group_dict:
-        # return pd.concat({group: mean_se_nested_dict(dict_group, subphases, std_type=std_type) for group, dict_group in
-        #                           data.items()})
-        return {
-            group: mean_se_nested_dict(dict_group, subphases, std_type=std_type) for group, dict_group in data.items()
-        }
-    else:
-        if subphases is None:
-            # compute mean value per nested dictionary entry
-            dict_mean = {}
-            for key, dict_val in data.items():
-                if isinstance(dict_val, dict):
-                    # passed dict was case (c) or (e) explained in docstring
-                    dict_mean[key] = pd.DataFrame({subkey: dict_val[subkey].mean() for subkey in dict_val})
-                else:
-                    # passed dict was case (d) explained in docstring
-                    dict_mean[key] = dict_val.mean()
-        else:
-            dict_mean = {
-                key: pd.DataFrame({subph: dict_val[subph].mean() for subph in subphases})
-                for key, dict_val in data.items()
-            }
-
-        if (np.array([len(df) for df in dict_mean.values()]) == 1).all():
-            # Dataframes with one row => concat on this axis
-            df_mean = pd.concat(dict_mean)
-        else:
-            df_mean = pd.concat(dict_mean.values(), axis=1, keys=dict_mean.keys())
-
-        if isinstance(df_mean.index, pd.MultiIndex):
-            # if resulting index is a MultiIndex drop the second index level because it's redundant
-            df_mean.index = df_mean.index.droplevel(1)
-
-        if std_type == "se":
-            return pd.concat(
-                [df_mean.mean(), df_mean.std() / np.sqrt(df_mean.shape[0])],
-                axis=1,
-                keys=["mean", "se"],
-            )
-        else:
-            return pd.concat([df_mean.mean(), df_mean.std()], axis=1, keys=["mean", "std"])
+    return data.groupby(group_cols).agg([np.mean, se])

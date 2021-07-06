@@ -18,7 +18,7 @@ def load_eeg_raw_muse(file_path: path_t) -> Tuple[pd.DataFrame, float]:
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to file
 
     Returns
@@ -35,7 +35,6 @@ def load_eeg_raw_muse(file_path: path_t) -> Tuple[pd.DataFrame, float]:
         EEG channel columns
 
     """
-
     fs = MUSE_EEG_SAMPLING_RATE
     data = pd.read_csv(file_path)
 

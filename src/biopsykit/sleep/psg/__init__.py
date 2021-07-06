@@ -1,1 +1,1 @@
-"""Module containing functions to process psg (PSG) data."""
+"""Module containing functions to process polysomnography (PSG) data."""

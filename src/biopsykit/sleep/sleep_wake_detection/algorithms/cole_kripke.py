@@ -1,23 +1,28 @@
-from typing import Optional, Union
-
+"""Sleep/Wake detection using the *Cole/Kripke Algorithm*."""
 import numpy as np
 import pandas as pd
-
-from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
+from biopsykit.utils._types import arr_t
+from biopsykit.utils.array_handling import sanitize_input_1d
+from biopsykit.utils.datatype_helper import SleepWakeDataFrame
 
 
 class ColeKripke(_SleepWakeBase):
-    """
-    Runs sleep wake detection on epoch level activity data. Epochs are 1 minute long and activity is represented
-    by an activity index.
-    """
+    """Class representing the *Cole/Kripke Algorithm* for sleep/wake detection based on activity counts.
 
-    scale_factor: float = 0.193125
+    The *Cole/Kripke Algorithm* runs sleep wake detection on epoch level activity data. Epochs are 1 minute long and
+    activity is represented by an activity index which comes from Actigraph data or from raw acceleration data
+    converted into activity index data.
+
+    References
+    ----------
+    Cole, R. J., Kripke, D. F., Gruen, W., Mullaney, D. J., & Gillin, J. C. (1992). Automatic Sleep/Wake
+    Identification From Wrist Activity. *Sleep*, 15(5), 461–469. https://doi.org/10.1093/sleep/15.5.461
+
+    """
 
     def __init__(self, **kwargs):
-        """
-        Creates a new instance of the Cole/Kripke Algorithm class for sleep/wake detection.
+        """Initialize a new ``ColeKripke`` instance.
 
         Parameters
         ----------
@@ -28,23 +33,32 @@ class ColeKripke(_SleepWakeBase):
             desired, and possibly the population being observed.
 
         """
-        self.scale_factor = kwargs.get("scale_factor", self.scale_factor)
 
-    def predict(self, data: Union[pd.DataFrame, np.array], **kwargs) -> Union[np.array, pd.DataFrame]:
+        self.scale_factor: float = kwargs.pop("scale_factor", None)
+
+        if self.scale_factor is None:
+            self.scale_factor = 0.193125
+        """Scale factor to use for the predictions (default corresponds to scale factor optimized for use with the
+        activity index, if other activity measures are desired the scale factor can be modified or optimized).
+        The recommended range for the scale factor is between 0.1 and 0.25 depending on the sensitivity to activity
+        desired, and possibly the population being observed.
         """
-        Performs the sleep/wake score prediction.
+        super().__init__(**kwargs)
+
+    def predict(self, data: arr_t, **kwargs) -> SleepWakeDataFrame:
+        """Apply sleep/wake prediction on activity index values.
 
         Parameters
         ----------
-        data : pd.DataFrame
-            pandas dataframe of activity index values
+        data : array_like
+            array with activity index values
 
         Returns
         -------
-        np.array
-            rescored predictions
-        """
+        :obj:`~biopsykit.utils.datatype_helper.SleepWakeDataFrame`
+            dataframe with sleep/wake predictions
 
+        """
         index = None
         if isinstance(data, pd.DataFrame):
             index = data.index
@@ -60,27 +74,33 @@ class ColeKripke(_SleepWakeBase):
         # rescore the original predictions
         scores = self._rescore(scores)
 
-        if index is not None:
-            scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
+        scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
         return scores
 
     @staticmethod
     def _rescore(predictions: np.array) -> np.array:
-        """
-        Application of Webster's rescoring rules as described in the Cole-Kripke paper.
+        """Apply Webster's rescoring rules.
 
-        :param predictions: array of predictions
-        :return: rescored predictions
+        Parameters
+        ----------
+        predictions : array_like
+            sleep/wake predictions
+
+        Returns
+        -------
+        array_like
+            rescored sleep/wake predictions
+
         """
         rescored = predictions.copy()
 
         # rules a through c
         wake_bin = 0
-        for t in range(len(rescored)):
+        for t in range(len(rescored)):  # pylint:disable=consider-using-enumerate
             if rescored[t] == 1:
                 wake_bin += 1
             else:
-                if 15 <= wake_bin:
+                if wake_bin >= 15:
                     # rule c: at least 15 minutes of wake, next 4 minutes of sleep get rescored
                     rescored[t : t + 4] = 1.0
                 elif 10 <= wake_bin < 15:
@@ -111,7 +131,7 @@ class ColeKripke(_SleepWakeBase):
                 sleep_bin = 0
 
         # wake phases of 1 minute, surrounded by sleep, get rescored
-        for t in range(1, len(rescored) - 1):
+        for t in range(1, len(rescored) - 1):  # pylint:disable=consider-using-enumerate
             if rescored[t] == 1 and rescored[t - 1] == 0 and rescored[t + 1] == 0:
                 rescored[t] = 0
 

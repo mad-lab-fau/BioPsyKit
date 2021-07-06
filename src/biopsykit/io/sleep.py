@@ -16,14 +16,14 @@ def save_sleep_endpoints(file_path: path_t, df_or_dict: Union[pd.DataFrame, Dict
 
     Parameters
     ----------
-    file_path: :any:`pathlib.Path` or str
+    file_path: :class:`~pathlib.Path` or str
         file path to export
     df_or_dict : :class:`~pandas.DataFrame` or dict
          dataframe or dict with sleep endpoints to export
 
     Raises
     ------
-    `~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if ``df_or_dict`` is a dataframe and ``file_path`` is not a csv file
 
     """

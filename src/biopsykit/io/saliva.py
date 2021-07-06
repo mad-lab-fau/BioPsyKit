@@ -37,18 +37,19 @@ def load_saliva_plate(
 
     Here are some examples on how sample identifiers might look like and what the corresponding
     ``regex_str`` would output:
+
         * "Vp01 S1"
-            => ``r"(Vp\d+) (S\d)"`` (this is the default pattern, you can also just set ``regex_str`` to ``None``)
-            => data ``[Vp01, S1]`` in two columns: ``subject``, ``sample``
-            (unless column names are explicitly specified in ``data_col_names``)
+          => ``r"(Vp\d+) (S\d)"`` (this is the default pattern, you can also just set ``regex_str`` to ``None``)
+          => data ``[Vp01, S1]`` in two columns: ``subject``, ``sample``
+          (unless column names are explicitly specified in ``data_col_names``)
         * "Vp01 T1 S1" ... "Vp01 T1 S5" (only *numeric* characters in day/sample)
-            => ``r"(Vp\d+) (T\d) (S\d)"``
-            => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
-            (unless column names are explicitly specified in ``data_col_names``)
+          => ``r"(Vp\d+) (T\d) (S\d)"``
+          => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
+          (unless column names are explicitly specified in ``data_col_names``)
         * "Vp01 T1 S1" ... "Vp01 T1 SA" (also *letter* characters in day/sample)
-            => ``r"(Vp\d+) (T\w) (S\w)"``
-            => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
-            (unless column names are explicitly specified in ``data_col_names``)
+          => ``r"(Vp\d+) (T\w) (S\w)"``
+          => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
+          (unless column names are explicitly specified in ``data_col_names``)
 
     If you **don't** want to extract the 'S' or 'T' prefixes in saliva or day IDs, respectively,
     you have to move it **out** of the capture group in the ``regex_str`` (round brackets), like this:
@@ -58,7 +59,7 @@ def load_saliva_plate(
 
     Parameters
     ----------
-    file_path: :any:`pathlib.Path` or str
+    file_path: :class:`~pathlib.Path` or str
         path to the Excel sheet in 'plate' format containing saliva data
     saliva_type: str
         saliva type to load from file
@@ -86,11 +87,11 @@ def load_saliva_plate(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no Excel file (.xls or .xlsx)
     ValueError
         if any saliva sample can not be converted into a float (e.g. because there was text in one of the columns)
-    :exc:`biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if imported data can not be parsed to a SalivaRawDataFrame
 
     """
@@ -145,23 +146,31 @@ def load_saliva_plate(
     return df_saliva
 
 
-def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Optional[str] = "cortisol") -> None:
+def save_saliva(
+    file_path: path_t,
+    data: SalivaRawDataFrame,
+    saliva_type: Optional[str] = "cortisol",
+    as_wide_format: Optional[bool] = False,
+) -> None:
     """Save saliva data to csv file.
 
     Parameters
     ----------
-    file_path: :any:`pathlib.Path` or str
+    file_path: :class:`~pathlib.Path` or str
         file path to export. Must be a csv or an Excel file
     data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str
         type of saliva data in the dataframe
+    as_wide_format : bool, optional
+        ``True`` to save data in wide format (and flatten all index levels), ``False`` to save data in long-format.
+        Default: ``False``
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if ``data`` is not a SalivaRawDataFrame
-    :exc:`biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if ``file_path`` is not a csv or Excel file
 
     """
@@ -171,7 +180,12 @@ def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Option
 
     is_saliva_raw_dataframe(data, saliva_type)
     data = data[saliva_type]
-    data = data.unstack(level="sample")
+    if as_wide_format:
+        levels = list(data.index.names)
+        levels.remove("subject")
+        data = data.unstack(level=levels)
+        data.columns = ["_".join(col) for col in data.columns]
+
     if file_path.suffix in [".csv"]:
         data.to_csv(file_path)
     else:
@@ -197,7 +211,7 @@ def load_saliva_wide_format(
 
     Parameters
     ----------
-    file_path: :any:`pathlib.Path` or str
+    file_path: :class:`~pathlib.Path` or str
         path to file
     saliva_type: str
         saliva type to load from file. Example: ``cortisol``
@@ -228,7 +242,7 @@ def load_saliva_wide_format(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no csv or Excel file
 
     """

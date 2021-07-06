@@ -1,52 +1,72 @@
+"""Module providing functions to load and save logs from the *CARWatch* app."""
+from typing import Optional, Dict, Union
 import re
 import json
 import warnings
+import zipfile
+
 from pathlib import Path
-from typing import Optional, Dict, Union
 
 import pandas as pd
 from tqdm.notebook import tqdm
 
+from biopsykit.carwatch_logs import LogData
 from biopsykit.utils._types import path_t
 from biopsykit.utils.time import utc, tz
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
 
 
 def load_logs_all_subjects(
-    path: path_t,
+    base_folder: path_t,
     has_subject_folders: Optional[bool] = True,
     log_filename_pattern: Optional[str] = None,
     return_df: Optional[bool] = True,
 ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-    """
+    """Load log files from all subjects in a folder.
+
+    This function iterates through the base folder and looks for subfolders
+    (if ``has_subject_folders`` is ``True``), or for .csv files or .zip files matching the log file name pattern.
+
+    Files from all subjects are then loaded and returned as one :class:`~pandas.DataFrame`
+    (if ``return_df`` is ``True``) or a dictionary (if ``return_df`` is ``False``).
+
 
     Parameters
     ----------
-    has_subject_folders
-    path : path or str
-        path to folder containing logs
+    base_folder : str or :class:`~pathlib.Path`
+        path to base folder containing log files
+    has_subject_folders : boolean, optional
+        ``True`` if log files are stored in subfolders per subject, ``False`` if they are all stored in one
+        top-level folder
     log_filename_pattern : str, optional
+        file name pattern of log files as regex string or ``None`` if files have default filename
+        pattern: "logs_(.*?)". A custom filename pattern needs to contain a capture group to extract the subject ID
     return_df : bool, optional
+        ``True`` to return data from all subjects combined as one dataframe, ``False`` to return a dictionary with
+        data per subject. Default: ``True``
+
 
     Returns
     -------
-    dict
-        dictionary with log data per subject
+    :class:`~pandas.DataFrame` or dict
+        dataframe with log data for all subjects (if ``return_df`` is ``True``).
+        or dictionary with log data per subject
 
     """
     # ensure pathlib
-    path = Path(path)
+    base_folder = Path(base_folder)
 
     dict_log_files = {}
     if has_subject_folders:
-        folder_list = [p for p in sorted(path.glob("*")) if p.is_dir() and not p.name.startswith(".")]
+        folder_list = [p for p in sorted(base_folder.glob("*")) if p.is_dir() and not p.name.startswith(".")]
         for folder in tqdm(folder_list):
             subject_id = folder.name
             dict_log_files[subject_id] = load_log_one_subject(folder)
     else:
         # first, look for available csv files
-        file_list = [p for p in sorted(path.glob("*.csv"))]
+        file_list = list(sorted(base_folder.glob("*.csv")))
         if len(file_list) > 0:
             if log_filename_pattern is None:
                 log_filename_pattern = LOG_FILENAME_PATTERN + ".csv"
@@ -58,7 +78,7 @@ def load_logs_all_subjects(
                 dict_log_files[subject_id] = df
         else:
             # fallback: look for zip files
-            file_list = [p for p in sorted(path.glob("*.zip"))]
+            file_list = list(sorted(base_folder.glob("*.zip")))
             if len(file_list) > 0:
                 if log_filename_pattern is None:
                     log_filename_pattern = LOG_FILENAME_PATTERN + ".zip"
@@ -68,32 +88,33 @@ def load_logs_all_subjects(
 
     if return_df:
         return pd.concat(dict_log_files, names=["subject_id"])
-    else:
-        return dict_log_files
+    return dict_log_files
 
 
 def load_log_one_subject(
     path: path_t,
     log_filename_pattern: Optional[str] = None,
-    overwrite_logs_unzip: Optional[bool] = False,
+    overwrite_unzipped_logs: Optional[bool] = False,
 ) -> pd.DataFrame:
-    """
+    """Load log files from one subject.
 
     Parameters
     ----------
-    path : path or str
-        path to subject folder containing log files or path to log file
+    path : :class:`~pathlib.Path` or str
+        path to folder containing log files from subject or path to log file from subject
     log_filename_pattern : str, optional
-    overwrite_logs_unzip : bool, optional
+        file name pattern of log files as regex string or ``None`` if file has default filename
+        pattern: "logs_(.*?)". A custom filename pattern needs to contain a capture group to extract the subject ID
+    overwrite_unzipped_logs : bool, optional
+        ``True`` to overwrite already unzipped log files, ``False`` to not overwrite.
+        Only relevant if log files are provided as zip files. Default: ``False``
 
     Returns
     -------
-    pd.DataFrame
-        log data for one subject
+    :class:`~pandas.DataFrame`
+        dataframe with log data for one subject
 
     """
-    import zipfile
-
     if log_filename_pattern is None:
         log_filename_pattern = LOG_FILENAME_PATTERN + ".zip"
 
@@ -102,27 +123,40 @@ def load_log_one_subject(
     if path.is_dir():
         # TODO add error messages if no log files are found (e.g. wrong folder path etc.)
         return log_folder_to_dataframe(path)
-    if path.is_file():
-        if path.suffix == ".zip":
-            with zipfile.ZipFile(path, "r") as zip_ref:
-                export_folder = path.parent.joinpath(re.search(log_filename_pattern, path.name).group(1))
-                export_folder.mkdir(exist_ok=True)
-                if overwrite_logs_unzip or len(list(export_folder.glob("*"))) == 0:
-                    zip_ref.extractall(export_folder)
-                    # call recursively with newly exported folder
-                    return log_folder_to_dataframe(export_folder)
-                else:
-                    # folder not empty => inform user and load folder
-                    warnings.warn(
-                        "Folder {} already contains log files which will be loaded. "
-                        "Set `overwrite_logs_unzip = True` to overwrite log files.".format(export_folder.name)
-                    )
-                    return log_folder_to_dataframe(export_folder)
-        if path.suffix == ".csv":
-            return log_folder_to_dataframe(path)
+
+    _assert_file_extension(path, [".zip", ".csv"])
+    if path.suffix == ".zip":
+        with zipfile.ZipFile(path, "r") as zip_ref:
+            export_folder = path.parent.joinpath(re.search(log_filename_pattern, path.name).group(1))
+            export_folder.mkdir(exist_ok=True)
+            if overwrite_unzipped_logs or len(list(export_folder.glob("*"))) == 0:
+                zip_ref.extractall(export_folder)
+                # call recursively with newly exported folder
+                return log_folder_to_dataframe(export_folder)
+            # folder not empty => inform user and load folder
+            warnings.warn(
+                "Folder {} already contains log files which will be loaded. "
+                "Set `overwrite_logs_unzip = True` to overwrite log files.".format(export_folder.name)
+            )
+            return log_folder_to_dataframe(export_folder)
+    return log_folder_to_dataframe(path)
 
 
 def log_folder_to_dataframe(folder_path: path_t) -> pd.DataFrame:
+    """Load log data from folder of one subject and return it as dataframe.
+
+    Parameters
+    ----------
+    folder_path : :class:`~pathlib.Path` or str
+        path to folder containing log files from subject
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        dataframe with log data for one subject
+
+    """
     file_list = list(sorted(folder_path.glob("*.csv")))
     df = pd.concat([pd.read_csv(file, sep=";", header=None, names=["time", "action", "extras"]) for file in file_list])
 
@@ -135,33 +169,74 @@ def log_folder_to_dataframe(folder_path: path_t) -> pd.DataFrame:
 
 
 def save_log_data(
-    log_data: Union[pd.DataFrame, "LogData"],
+    log_data: Union[pd.DataFrame, LogData],
     path: path_t,
     subject_id: Optional[str] = None,
     overwrite: Optional[bool] = False,
     show_skipped: Optional[bool] = False,
 ):
-    from biopsykit.carwatch_logs import LogData
+    """Save log data for a single subject or for all subjects at once.
 
+    The behavior of this function depends on the input passed to ``log_data``:
+
+    * If ``log_data`` is a :class:`~pandas.DataFrame` with a :class:`~pandas.MultiIndex` it is assumed that 
+      the dataframe contains data from multiple subjects and will be exported accordingly as one combined csv file.
+    * If ``log_data`` is a :class:`~pandas.DataFrame` without :class:`~pandas.MultiIndex` it is assumed that the 
+      dataframe only contains data from one single subject and will be exported accordingly as csv file.
+
+    Parameters
+    ----------
+    log_data : :class:`~pandas.DataFrame` or :class:`~biopsykit.carwatch_logs.log_data.LogData`
+        log data to save
+    path : :class:`~pathlib.Path` or str
+        path for export. The expected format of ``path`` depends on ``log_data``:
+
+        * If ``log_data`` is log data from a single subject ``path`` needs to specify a **folder** . 
+          The log data will then be exported to "path/logs_<subject_id>.csv".
+        * If ``log_data`` is log data from multiple subjects ``path`` needs to specify a **file** . 
+          The combined log data of all subjects will then be exported to "path".
+
+    subject_id : str, optional
+        subject ID or ``None`` to get subject ID from ``LogData`` object
+    overwrite : bool, optional
+        ``True`` to overwrite file if it already exists, ``False`` otherwise. Default: ``False``
+    show_skipped : bool, optional
+        ``True`` to print message if log data was already exported and will be skipped, ``False`` otherwise.
+        Default: ``False``
+
+    """
     if isinstance(log_data, pd.DataFrame):
         if isinstance(log_data.index, pd.MultiIndex):
             # dataframe has a multiindex => it's a combined dataframe for all subjects
             log_data.to_csv(path, sep=";")
             return
-        else:
-            log_data = LogData(log_data)
+        log_data = LogData(log_data)
 
     if subject_id is None:
         subject_id = log_data.subject_id
 
     export_path = path.joinpath("logs_{}.csv".format(subject_id))
     if not export_path.exists() or overwrite:
-        log_data.df.to_csv(export_path, sep=";")
-    elif show_skipped:
-        print("Skipping {}. Already exported.".format(subject_id))
+        log_data.data.to_csv(export_path, sep=";")
+    else:
+        if show_skipped:
+            print("Skipping subject {}. Already exported.".format(subject_id))
 
 
 def _parse_date(row: pd.Series) -> pd.Series:
+    """Parse date in "timestamp" and "timestamp_hidden" columns of a pandas series.
+
+    Parameters
+    ----------
+    row : :class:`~pandas.Series`
+        one row of a dataframe
+
+    Returns
+    -------
+    :class:`~pandas.Series`
+        series with parsed date
+
+    """
     json_extra = json.loads(row["extras"])
     row_cpy = row.copy()
     keys = ["timestamp", "timestamp_hidden"]

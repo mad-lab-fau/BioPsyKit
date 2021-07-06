@@ -1,3 +1,4 @@
+"""List of all log data extract available in the CARWatch App."""
 # log extras
 subject_id: str = "subject_id"
 subject_condition: str = "subject_condition"

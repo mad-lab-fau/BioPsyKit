@@ -2,14 +2,14 @@
 import warnings
 import re
 
-from typing import Optional, Union, Sequence, Tuple, Dict, Literal
+from typing import Optional, Union, Sequence, Tuple, Dict, Literal, Any
 
 from inspect import getmembers, isfunction
 
 import numpy as np
 import pandas as pd
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_value_range, _assert_len_list
 
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_value_range, _assert_len_list
 from biopsykit.utils.dataframe_handling import wide_to_long as wide_to_long_utils
 from biopsykit.questionnaires import questionnaires
 
@@ -29,12 +29,13 @@ __all__ = [
 
 def find_cols(
     data: pd.DataFrame,
+    regex_str: Optional[str] = None,
     starts_with: Optional[str] = None,
     ends_with: Optional[str] = None,
     contains: Optional[str] = None,
     zero_pad_numbers: Optional[bool] = True,
 ) -> Tuple[pd.DataFrame, Sequence[str]]:
-    """Find columns in dataframe that match a specific pattern.
+    r"""Find columns in dataframe that match a specific pattern.
 
     This function is useful to find all columns that belong to a questionnaire. Column names can be filtered based on
     one (or a combination of) the following criteria:
@@ -42,14 +43,28 @@ def find_cols(
         * ``ends_with``: columns have to end with the specified string
         * ``contains``: columns have to contain the specified string
 
-    Optionally, item numbers in the found column names can be zero-padded and renamed, if they are not already.
-    If item numbers are not zero-padded (e.g. 'XX_1', 'XX_2', ... 'XX_10'), the column name order will be wrong as soon
-    as columns are sorted (e.g., 'XX_1', 'XX_10', 'XX_2', ...).
+    Optionally, the item numbers in the matching column names can be zero-padded, if they are not already.
+
+    .. note::
+        If ``zero_pad_numbers`` is ``True`` then the column names returned by this function will be renamed and might
+        thus not match the column names of the original dataframe. To solve this, make sure your orignal dataframe
+        already has zero-padded columns (by manually renaming them) or convert column names using
+        :func:`biopsykit.questionnaires.utils.zero_pad_columns`.
+
+    .. warning::
+        Zero-padding using :func:`biopsykit.questionnaires.utils.zero_pad_columns` assumes, by default, that numbers
+        are *at the end* of column names. If you want to change that behavior
+        (e.g., because the column names have string suffixes), you might need to apply zero-padding manually.
+
+
 
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe with columns to be filtered
+    regex_str : str, optional
+        regex string to extract column names. If this parameter is passed the other parameters (``starts_with``,
+        ``ends_with``, ``contains``) will be ignored. Default: ``None``
     starts_with : str, optional
         string columns have to start with. Default: ``None``
     ends_with : str, optional
@@ -80,17 +95,21 @@ def find_cols(
     >>> df, cols = bp.questionnaires.utils.find_cols(data, ends_with="Post")
     >>> print(cols)
     >>> ["XX_01_Post", "XX_02_Post", "XX_03_Post"]
-    >>>
     >>> # Option 3: has to start with "XX" and end with "Post"
     >>> data = pd.DataFrame(columns=["XX_1_Pre", "XX_2_Pre", "XX_3_Pre", "XX_1_Post", "XX_2_Post", "XX_3_Post",
      "YY_1_Pre", "YY_2_Pre", "YY_1_Post", "YY_2_Post"])
     >>> bp.questionnaires.utils.find_cols(data, starts_with="XX", ends_with="Post")
     >>> print(cols)
-    >>> ["XX_01_Post", "XX_02_Post", "XX_03_Post"]
-    >>> bp.questionnaires.utils.find_cols(data, starts_with="XX", ends_with="Post")
+    >>> # WARNING: this will not zero-pad the questionnaire numbers!
+    >>> ["XX_1_Post", "XX_2_Post", "XX_3_Post"]
+    >>> # Option 4: pass custom regex string
+    >>> data = pd.DataFrame(columns=["XX_1_Pre", "XX_2_Pre", "XX_3_Pre", "XX_1_Post", "XX_2_Post", "XX_3_Post",
+     "YY_1_Pre", "YY_2_Pre", "YY_1_Post", "YY_2_Post"])
+    >>> bp.questionnaires.utils.find_cols(data, regex_str=r"XX_\d+_\w+")
     >>> print(cols)
+    >>> # here, zero-padding will be possible again
     >>> ["XX_01_Post", "XX_02_Post", "XX_03_Post"]
-    >>> # Option 4: disable zero-padding
+    >>> # Option 5: disable zero-padding
     >>> data = pd.DataFrame(columns=["XX_{}".format(i) for i in range(1, 11)])
     >>> df, cols = bp.questionnaires.utils.find_cols(data, starts_with="XX", zero_pad_numbers=False)
     >>> print(cols)
@@ -100,28 +119,25 @@ def find_cols(
     _assert_is_dtype(data, pd.DataFrame)
     data_filt = data.copy()
 
-    if starts_with:
-        data_filt = data_filt.filter(regex="^" + starts_with)
-    if ends_with:
-        data_filt = data_filt.filter(regex=ends_with + "$")
-    if contains:
-        data_filt = data_filt.filter(regex=contains)
-
-    cols = data_filt.columns
+    if regex_str:
+        data_filt = data_filt.filter(regex=regex_str)
+    else:
+        if starts_with:
+            data_filt = data_filt.filter(regex="^" + starts_with)
+        if ends_with:
+            data_filt = data_filt.filter(regex=ends_with + "$")
+        if contains:
+            data_filt = data_filt.filter(regex=contains)
 
     if zero_pad_numbers:
-        cols = data_filt.columns
         data_filt = zero_pad_columns(data_filt)
-    data_filt = data_filt.reindex(sorted(data_filt.columns), axis="columns")
-
-    if not zero_pad_numbers:
-        cols = data_filt.columns
+    cols = data_filt.columns
 
     return data_filt, cols
 
 
 def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Optional[pd.DataFrame]:
-    """Add zero-padding to numbers in column names of a dataframe.
+    r"""Add zero-padding to numbers at the **end** of column names in a dataframe.
 
     Parameters
     ----------
@@ -129,6 +145,10 @@ def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Opt
         dataframe with columns to zero-pad
     inplace : bool, optional
         whether to perform the operation inplace or not. Default: ``False``
+
+    .. warning::
+        By default, this function assumes that numbers are **at the end** of column names. If you need to change that
+        behavior (e.g., because the column names have string suffixes), you might need to apply zero-padding manually.
 
     Returns
     -------
@@ -140,7 +160,10 @@ def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Opt
     if not inplace:
         data = data.copy()
 
-    data.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(2), c) for c in data.columns]
+    nums = [re.findall(r"(\d+)$", c)[0] for c in data.columns]
+    zfill_num = max(list(map(len, nums)))
+
+    data.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(zfill_num), c) for c in data.columns]
 
     if inplace:
         return None
@@ -311,7 +334,7 @@ def convert_scale(
     cols: Optional[Union[pd.DataFrame, pd.Series]] = None,
     inplace: Optional[bool] = False,
 ) -> Optional[Union[pd.DataFrame, pd.Series]]:
-    """Convert the score range of a questionnaire.
+    """Convert the score range of questionnaire items.
 
     Parameters
     ----------
@@ -371,10 +394,8 @@ def convert_scale(
                 data.iloc[:, cols] = data.iloc[:, cols] + offset
             elif isinstance(cols[0], str):
                 data.loc[:, cols] = data.loc[:, cols] + offset
-    elif isinstance(data, pd.Series):
-        data.iloc[:] = data.iloc[:] + offset
     else:
-        raise ValueError("Only pd.DataFrame and pd.Series supported!")
+        data.iloc[:] = data.iloc[:] + offset
 
     if inplace:
         return None
@@ -384,8 +405,8 @@ def convert_scale(
 def crop_scale(
     data: Union[pd.DataFrame, pd.Series],
     score_range: Sequence[int],
-    inplace: Optional[bool] = False,
     set_nan: Optional[bool] = False,
+    inplace: Optional[bool] = False,
 ) -> Optional[Union[pd.DataFrame, pd.Series]]:
     """Crop questionnaire scales, i.e., set values out of range to specific minimum and maximum values or to NaN.
 
@@ -413,10 +434,10 @@ def crop_scale(
         data = data.copy()
 
     if set_nan:
-        data = data.mask((data < score_range[0]) | (data > score_range[1]))
+        data.mask((data < score_range[0]) | (data > score_range[1]), inplace=True)
     else:
-        data = data.mask((data < score_range[0]), other=score_range[0])
-        data = data.mask((data > score_range[1]), other=score_range[1])
+        data.mask((data < score_range[0]), other=score_range[0], inplace=True)
+        data.mask((data > score_range[1]), other=score_range[1], inplace=True)
 
     if inplace:
         return None
@@ -425,8 +446,9 @@ def crop_scale(
 
 def bin_scale(
     data: Union[pd.DataFrame, pd.Series],
-    bins: Sequence[float],
+    bins: Union[int, Sequence[float], pd.IntervalIndex],
     cols: Optional[Union[Sequence[Union[int, str]], Union[int, str]]] = None,
+    first_min: Optional[bool] = True,
     last_max: Optional[bool] = False,
     inplace: Optional[bool] = False,
     **kwargs,
@@ -450,8 +472,12 @@ def bin_scale(
     cols : list of str or list of int, optional
         column name/index (or list of such) to be binned or ``None`` to use all columns (or if ``data`` is a series).
         Default: ``None``
+    first_min : bool, optional
+        whether the minimum value should be added as the leftmost edge of the last bin or not.
+        Only considered if ``bins`` is a list. Default: ``False``
     last_max : bool, optional
-        whether the maximum value should be added as the rightmost edge of the last bin or not. Default: ``False``
+        whether the maximum value should be added as the rightmost edge of the last bin or not.
+        Only considered if ``bins`` is a list. Default: ``False``
     inplace : bool, optional
         whether to perform the operation inplace or not. Default: ``False``
     **kwargs
@@ -478,20 +504,20 @@ def bin_scale(
     # set "labels" argument to False, but only if is wasn't specified by the user yet
     kwargs["labels"] = kwargs.get("labels", False)
     if isinstance(data, pd.Series):
-        bins = _get_bins(data, bins, None, last_max)
-        c = pd.cut(data.iloc[:], bins=bins, **kwargs)
+        bins_c = _get_bins(data, bins, None, first_min, last_max)
+        c = pd.cut(data.iloc[:], bins=bins_c, **kwargs)
         data.iloc[:] = c
         return data
 
     cols = _get_cols(data, cols)
     for col in cols:
-        bins = _get_bins(data, bins, col, last_max)
+        bins_c = _get_bins(data, bins, col, first_min, last_max)
         if isinstance(col, int):
-            c = pd.cut(data.iloc[:, col], bins=bins, **kwargs)
-            data.iloc[:, cols] = c
+            c = pd.cut(data.iloc[:, col], bins=bins_c, **kwargs)
+            data.iloc[:, col] = c
         else:
-            c = pd.cut(data.loc[:, col], bins=bins, **kwargs)
-            data.loc[:, cols] = c
+            c = pd.cut(data.loc[:, col], bins=bins_c, **kwargs)
+            data.loc[:, col] = c
 
     if inplace:
         return None
@@ -533,7 +559,11 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
     return wide_to_long_utils(data=data, stubname=quest_name, levels=levels)
 
 
-def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str], pd.Index]]) -> pd.DataFrame:
+def compute_scores(
+    data: pd.DataFrame,
+    quest_dict: Dict[str, Union[Sequence[str], pd.Index]],
+    quest_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> pd.DataFrame:
     """Compute questionnaire scores from dataframe.
 
     This function can be used if multiple questionnaires from a dataframe should be computed at once. If the same
@@ -551,6 +581,9 @@ def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str]
         dataframe containing questionnaire data
     quest_dict : dict
         dictionary with questionnaire names to be computed (keys) and columns of the questionnaires (values)
+    quest_kwargs : dict
+        dictionary with optional arguments to be passed to questionnaire functions. The dictionary is expected
+        consist of questionnaire names (keys) and **kwargs dictionaries (values) with arguments per questionnaire
 
     Returns
     -------
@@ -572,20 +605,64 @@ def compute_scores(data: pd.DataFrame, quest_dict: Dict[str, Union[Sequence[str]
 
     df_scores = pd.DataFrame(index=data.index)
     quest_funcs = dict(getmembers(questionnaires, isfunction))
+    if quest_kwargs is None:
+        quest_kwargs = {}
 
     for score, columns in quest_dict.items():
+        score_orig = score
         score = score.lower()
         suffix = None
         if "-" in score:
             score_split = score.split("-")
             score = score_split[0]
             suffix = score_split[1]
-        df = quest_funcs[score](data[columns])
+
+        if score not in quest_funcs:
+            raise ValueError(
+                "Unknown questionnaire '{}'! Call "
+                "'biopsykit.questionnaires.utils.get_supported_questionnaires()' "
+                "to get a list of all supported questionnaires.".format(score)
+            )
+        kwargs = quest_kwargs.get(score_orig, None)
+        if kwargs is None:
+            df = quest_funcs[score](data[columns])
+        else:
+            try:
+                df = quest_funcs[score](data[columns], **kwargs)
+            except TypeError as e:
+                raise TypeError(
+                    "Error computing questionnaire '{}'. The computation failed with the following "
+                    "error: \n\n{}.".format(score, str(e))
+                ) from e
+
         if suffix is not None:
             df.columns = ["{}_{}".format(col, suffix) for col in df.columns]
         df_scores = df_scores.join(df)
 
     return df_scores
+
+
+def get_supported_questionnaires() -> Dict[str, str]:
+    """List all supported (i.e., implemented) questionnaires.
+
+    Returns
+    -------
+    dict
+        dictionary with questionnaire names (keys) and description (values)
+
+    """
+    funcs = dict(getmembers(questionnaires, isfunction))
+    quests = {}
+    for key, value in funcs.items():
+        if key.startswith("_"):
+            continue
+        summary = value.__doc__.split("\n")[0]
+        summary = re.findall(r"\*\*(.*)\*\*.", summary)
+        if len(summary) == 0:
+            continue
+        quests[key] = summary[0]
+
+    return quests
 
 
 def _compute_questionnaire_subscales(
@@ -655,10 +732,28 @@ def _get_cols(
 
 def _get_bins(
     data: Union[pd.DataFrame, pd.Series],
-    bins: Sequence[float],
+    bins: Union[int, Sequence[float]],
     col: Optional[Union[int, str]] = None,
+    first_min: Optional[bool] = False,
     last_max: Optional[bool] = False,
-) -> Sequence[float]:
+) -> Union[int, Sequence[float]]:
+
+    if isinstance(bins, (int, pd.IntervalIndex)):
+        return bins
+
+    # ensure list
+    bins = list(bins)
+
+    if first_min:
+        if isinstance(col, int):
+            min_val = data.iloc[:, col].min()
+        elif isinstance(col, str):
+            min_val = data[col].min()
+        else:
+            min_val = data.min()
+
+        if min_val < min(bins):
+            bins = [min_val - 0.01] + bins
 
     if last_max:
         if isinstance(col, int):
@@ -668,9 +763,7 @@ def _get_bins(
         else:
             max_val = data.max()
 
-        # ensure list
-        bins = list(bins)
         if max_val > max(bins):
-            bins = bins + [max_val + 1]
+            bins = bins + [max_val + 0.01]
 
     return bins

@@ -1,4 +1,5 @@
 """Module for importing data recorded by NilsPod sensors."""
+import datetime
 from pathlib import Path
 from typing import Optional, Sequence, Union, Tuple, Dict, Literal
 
@@ -33,63 +34,64 @@ def load_dataset_nilspod(
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
     legacy_support: Optional[str] = "resolve",
-    timezone: Optional[Union[pytz.timezone, str]] = None,
+    timezone: Optional[Union[datetime.tzinfo, str]] = None,
 ) -> Tuple[pd.DataFrame, float]:
     """Load NilsPod recording and convert into dataframe.
 
-    To load a dataset either a :class:`~nilspodlib.Dataset` object (via ``dataset`` parameter)
-    or the path to the binary file file (via ``file_path`` variable) can be passed.
+    To load a dataset either a :class:`~nilspodlib.dataset.Dataset` object (via ``dataset`` parameter)
+    or the path to the binary file (via ``file_path`` variable) can be passed.
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str, optional
+    file_path : :class:`~pathlib.Path` or str, optional
         path to binary file
-    dataset : :class:`nilspodlib.Dataset`, optional
+    dataset : :class:`~nilspodlib.dataset.Dataset`, optional
         Dataset object
     datastreams : str or list of str, optional
         list of datastreams if only specific datastreams of the dataset object should be imported or
         ``None`` to load all datastreams. Datastreams that are not part of the current dataset will be silently ignored.
         Default: ``None``
-    handle_counter_inconsistency : str, optional
-         how to handle if counter of dataset is not monotonously increasing, which might be an indicator for a
-         corrupted dataset:
-            * ``raise``: raise an error
-            * ``warn``: issue a warning but still return a dataframe
-            * ``ignore``: ignore the counter check result
-        Default: ``raise``
-    legacy_support : str, optional
+    handle_counter_inconsistency : {"raise", "warn", "ignore"}, optional
+        how to handle if counter of dataset is not monotonously increasing, which might be an indicator for a
+        corrupted dataset:
+
+        * "raise" (default): raise an error
+        * "warn": issue a warning but still return a dataframe
+        * "ignore": ignore the counter check result
+
+    legacy_support : {"error", "warn", "resolve"}, optional
         Flag indicating how to deal with older NilsPod firmware versions:
-            * `error`: raise an error if an unsupported version is detected
-            * `warn`: issue a warning and parse the file without modification
-            * `resolve`: perform a legacy conversion to load old files. If no suitable conversion is found,
-            an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
-            to learn more about available conversions.
-        Default: ``resolve``
-    timezone : str or pytz.timezone, optional
-        timezone of the acquired data, either as string of as pytz object.
-        Default: 'Europe/Berlin'
+
+        * "error": raise an error if an unsupported version is detected
+        * "warn": issue a warning and parse the file without modification
+        * "resolve" (default): perform a legacy conversion to load old files. If no suitable conversion is found,
+          an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
+          to learn more about available conversions.
+
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the acquired data, either as string of as tzinfo object.
+        Default: "Europe/Berlin"
 
     Returns
     -------
     tuple
-        df : :class:`pandas.DataFrame`
+        df : :class:`~pandas.DataFrame`
             dataframe of imported dataset
         fs : float
             sampling rate
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if `file_path` is specified and file is not a binary (.bin) file
     ValueError
-        if neither `file_path` nor `dataset` are supplied as parameter
-        if ``handle_counter_inconsistency`` is ``raise`` and :class:`~nilspodlib.Dataset` counter is inconsistent
-        (not monotonously increasing).
+        if neither `file_path` nor `dataset` are supplied as parameter, if ``handle_counter_inconsistency`` is
+        ``raise`` and :class:`~nilspodlib.dataset.Dataset` counter is inconsistent (not monotonously increasing),
         if ``legacy_support`` is ``raise`` and so suitable conversion can be found for this file version.
 
     See Also
     --------
-    :class:`~nilspodlib.Dataset`
+    :class:`~nilspodlib.dataset.Dataset`
         NilsPod Dataset
 
     Examples
@@ -149,42 +151,43 @@ def load_synced_session_nilspod(
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
     legacy_support: Optional[str] = "resolve",
-    timezone: Optional[Union[pytz.timezone, str]] = None,
+    timezone: Optional[Union[datetime.tzinfo, str]] = None,
 ) -> Tuple[pd.DataFrame, float]:
     """Load a synchronized session of NilsPod recordings and convert into dataframes.
 
     Parameters
     ----------
-    folder_path : :any:`pathlib.Path` or str, optional
+    folder_path : :class:`~pathlib.Path` or str, optional
         folder path to session files
     datastreams : list of str, optional
         list of datastreams if only specific datastreams of the datasets in the session should be imported or
         ``None`` to load all datastreams. Datastreams that are not part of
         the current datasets will be silently ignored.
         Default: ``None``
-    handle_counter_inconsistency : str, optional
-         how to handle if counter of any dataset is not monotonously increasing, which might be an indicator for a
-         corrupted dataset:
-            * ``raise``: raise an error
-            * ``warn``: issue a warning but still return a dataframe
-            * ``ignore``: ignore the counter check result
-        Default: ``raise``
-    legacy_support : str, optional
+    handle_counter_inconsistency : {"raise", "warn", "ignore"}, optional
+        how to handle if counter of dataset is not monotonously increasing, which might be an indicator for a
+        corrupted dataset:
+
+        * "raise" (default): raise an error
+        * "warn": issue a warning but still return a dataframe
+        * "ignore": ignore the counter check result
+
+    legacy_support : {"error", "warn", "resolve"}, optional
         Flag indicating how to deal with older NilsPod firmware versions:
-            * `error`: raise an error if an unsupported version is detected
-            * `warn`: issue a warning and parse the file without modification
-            * `resolve`: perform a legacy conversion to load old files. If no suitable conversion is found,
-            an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
-            to learn more about available conversions.
-        Default: ``resolve``
-    timezone : str or pytz.timezone, optional
-        timezone of the acquired data, either as string of as pytz object.
-        Default: 'Europe/Berlin'
+
+        * "error": raise an error if an unsupported version is detected
+        * "warn": issue a warning and parse the file without modification
+        * "resolve" (default): perform a legacy conversion to load old files. If no suitable conversion is found,
+          an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
+          to learn more about available conversions.
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the acquired data, either as string of as tzinfo object.
+        Default: "Europe/Berlin"
 
     Returns
     -------
     tuple
-        df : :class:`pandas.DataFrame`
+        df : :class:`~pandas.DataFrame`
             concatenated dataframe of imported session
         fs : float
             sampling rate
@@ -194,17 +197,17 @@ def load_synced_session_nilspod(
     ValueError
         if ``handle_counter_inconsistency`` is ``raise`` and counter of any dataset is inconsistent
         (not monotonously increasing).
-        if ``legacy_support`` is ``raise`` and so suitable conversion can be found for the files in the session.
-        if sampling rate is not the same for all of datasets in the session
+        If ``legacy_support`` is ``raise`` and so suitable conversion can be found for the files in the session.
+        If sampling rate is not the same for all of datasets in the session
             ValueError
-        if ``folder_path`` does not contain any NilsPod files
-        if the sampling rates of the files in the folder are not the same
+        If ``folder_path`` does not contain any NilsPod files
+        If the sampling rates of the files in the folder are not the same
 
     See Also
     --------
-    :class:`~nilspodlib.Dataset`
+    :class:`~nilspodlib.dataset.Dataset`
         NilsPod Dataset
-    `load_dataset_nilspod`
+    :func:`~biopsykit.io.nilspod.load_dataset_nilspod`
         load a single NilsPod dataset
 
     """
@@ -250,30 +253,31 @@ def load_synced_session_nilspod(
 def load_csv_nilspod(
     file_path: path_t = None,
     datastreams: Optional[Sequence[str]] = None,
-    timezone: Optional[Union[pytz.timezone, str]] = tz,
+    timezone: Optional[Union[datetime.tzinfo, str]] = tz,
     filename_regex: Optional[str] = None,
     time_regex: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, float]:
     r"""Convert a csv file recorded by NilsPod into a dataframe.
 
     By default, this function expects the file name to have the following pattern:
-    "NilsPodX-XXXX_YYYYMMDD_hhmmss.csv". The time information in the file name is used
-    to infer the start time of the recording and add absolute time information to return a dataframe with a :class:`~pandas.DatetimeIndex`.
+    "NilsPodX-<sensor-id>_YYYYMMDD_hhmmss.csv". The time information in the file name is used
+    to infer the start time of the recording and add absolute time information to return
+    a dataframe with a :class:`~pandas.DatetimeIndex`.
 
     If no start time can be extracted the index of the resulting
     dataframe is a :class:`~pandas.TimedeltaIndex`, not a :class:`~pandas.DatetimeIndex`.
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str, optional
+    file_path : :class:`~pathlib.Path` or str, optional
         path to binary file
     datastreams : list of str, optional
         list of datastreams if only specific datastreams of the file should be imported
         or ``None`` to load all datastreams. Datastreams that are not part of the current dataset will
         be silently ignored.
         Default: ``None``
-    timezone : str or pytz.timezone, optional
-        timezone of the acquired data, either as string of as pytz object.
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the acquired data, either as string of as tzinfo object.
         Default: 'Europe/Berlin'
     filename_regex : str, optional
         regex string to extract time substring from file name or ``None`` to use default file name pattern.
@@ -291,12 +295,12 @@ def load_csv_nilspod(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no csv file
 
     See Also
     --------
-    :class:`~nilspodlib.Dataset`
+    :class:`~nilspodlib.dataset.Dataset`
         NilsPod Dataset
     `load_dataset_nilspod`
         load a single NilsPod dataset from binary file
@@ -352,13 +356,13 @@ def load_folder_nilspod(
 
     Parameters
     ----------
-    folder_path : :any:`pathlib.Path` or str, optional
+    folder_path : :class:`~pathlib.Path` or str, optional
         folder path to files
     phase_names: list, optional
         list of phase names corresponding to the files in the folder. Must match the number of recordings.
         If ``None`` phase names will be named ``Part{1-x}``. Default: ``None``
     **kwargs
-        additional arguments that are passed to `load_dataset_nilspod`
+        additional arguments that are passed to :func:`load_dataset_nilspod`
 
     Returns
     -------
@@ -375,7 +379,7 @@ def load_folder_nilspod(
 
     See Also
     --------
-    `load_dataset_nilspod`
+    :func:`load_dataset_nilspod`
         load single NilsPod dataset
 
 
@@ -412,7 +416,7 @@ def load_folder_nilspod(
         raise ValueError("Datasets in the sessions have different sampling rates! Got: {}.".format(fs_list))
     fs = fs_list[0]
 
-    dataset_dict = {phase: fs for phase, (df, fs) in zip(phase_names, dataset_list)}
+    dataset_dict = {phase: df for phase, (df, fs) in zip(phase_names, dataset_list)}
     return dataset_dict, fs
 
 
@@ -423,7 +427,7 @@ def check_nilspod_dataset_corrupted(dataset: Dataset) -> bool:
 
     Parameters
     ----------
-    dataset : :class:`~nilspodlib.Dataset`
+    dataset : :class:`~nilspodlib.dataset.Dataset`
         dataset to check
 
     Returns
@@ -439,22 +443,24 @@ def get_nilspod_dataset_corrupted_info(dataset: Dataset, file_path: path_t) -> D
     """Get information about the corruption state of a NilsPod dataset.
 
     Corruption information include the information:
-        * `name`: recording date and time
-        * `percent_corrupt`: Amount of corrupted data in percent
-        * `condition`: Condition of the dataset. Can be one of:
-            * `fine`: if dataset is not corrupted
-            * `lost`: if more than 90% of all samples are corrupted
-            * `parts`: if between 50% and 90% of all samples are corrupted
-            * `start_only`: if less than 50% of all samples are corrupted and corrupted samples
+
+        * "name": recording date and time
+        * "percent_corrupt": Amount of corrupted data in percent
+        * "condition": Condition of the dataset. Can be one of:
+
+          * "fine": if dataset is not corrupted
+          * "lost": if more than 90% of all samples are corrupted
+          * "parts": if between 50% and 90% of all samples are corrupted
+          * "start_only": if less than 50% of all samples are corrupted and corrupted samples
             are only in the first third of the dataset
-            * `end_only`: if less than 50% of all samples are corrupted and corrupted samples
+          * "end_only": if less than 50% of all samples are corrupted and corrupted samples
             are only in the last third of the dataset
 
     Parameters
     ----------
-    dataset : :class:`nilspodlib.Dataset`, optional
+    dataset : :class:`~nilspodlib.dataset.Dataset`, optional
         Dataset object
-    file_path : :any:`pathlib.Path` or str, optional
+    file_path : :class:`~pathlib.Path` or str, optional
         path to binary file
 
     Returns

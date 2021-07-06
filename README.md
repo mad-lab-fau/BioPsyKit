@@ -73,7 +73,7 @@ For development:
 ```
 git clone https://github.com/mad-lab-fau/BioPsyKit.git
 cd BioPsyKit
-pip install -e . --upgrade
+pip install -r requirements-dev.txt -e . --upgrade
 ```
 
 

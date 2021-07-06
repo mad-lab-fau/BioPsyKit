@@ -16,17 +16,18 @@ import biopsykit.example_data  # noqa: F401
 import biopsykit.utils  # noqa: F401
 
 __all__ = [
-    "signals",
-    "saliva",
-    "sleep",
-    "stats",
-    "protocols",
-    "questionnaires",
-    "metadata",
-    "classification",
-    "io",
     "carwatch_logs",
+    "classification",
     "colors",
     "example_data",
+    "io",
+    "metadata",
+    "plotting",
+    "protocols",
+    "questionnaires",
+    "saliva",
+    "signals",
+    "sleep",
+    "stats",
     "utils",
 ]
