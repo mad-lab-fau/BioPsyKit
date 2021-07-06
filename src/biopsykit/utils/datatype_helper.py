@@ -224,7 +224,7 @@ HeartRateDataFrame = pd.DataFrame
 """:class:`~pandas.DataFrame` containing heart rate time series data of `one` subject.
 
 The dataframe is expected to have the following columns:
-    * ``Heart_Rate``: Heart rate data. Can either be instantaneous heart rate or resampled heart rate 
+    * ``Heart_Rate``: Heart rate data. Can either be instantaneous heart rate or resampled heart rate
 
 """
 

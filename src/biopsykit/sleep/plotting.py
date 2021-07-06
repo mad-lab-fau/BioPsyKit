@@ -86,7 +86,7 @@ def sleep_imu_plot(
         list of subplot axes objects
 
     """
-    axs: List[plt.Axes] = kwargs.get("ax", kwargs.get("axs", None))
+    axs: List[plt.Axes] = kwargs.pop("ax", kwargs.pop("axs", None))
     figsize = kwargs.get("figsize", None)
     sns.set_palette(kwargs.get("colormap", colors.fau_palette_blue("line_3")))
 
@@ -129,6 +129,7 @@ def sleep_imu_plot(
             datastream=ds,
             downsample_factor=downsample_factor,
             sleep_endpoints=sleep_endpoints,
+            ax=ax,
             **kwargs,
         )
 
@@ -142,9 +143,9 @@ def _sleep_imu_plot(
     datastream: str,
     downsample_factor: int,
     sleep_endpoints: SleepEndpointDict,
+    ax: plt.Axes,
     **kwargs,
 ):
-    ax = kwargs.get("ax")
     legend_loc = kwargs.get("legend_loc", "lower left")
     legend_fontsize = kwargs.get("legend_fontsize", "smaller")
     ylabel = kwargs.get("ylabel", {"acc": "Acceleration [$m/s^2$]", "gyr": "Angular Velocity [$°/s$]"})
@@ -156,7 +157,7 @@ def _sleep_imu_plot(
     data_plot = data.filter(like=datastream)[::downsample_factor]
     data_plot.plot(ax=ax)
     if sleep_endpoints is not None:
-        kwargs["ax"] = ax
+        kwargs.setdefault("ax", ax)
         _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints=sleep_endpoints, **kwargs)
 
     if isinstance(data_plot.index, pd.DatetimeIndex):

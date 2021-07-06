@@ -20,7 +20,7 @@ class _BaseProcessor:
         """Sampling rate of recorded data."""
 
         if isinstance(data, dict):
-            for key, df in data.items():
+            for _, df in data.items():
                 _assert_is_dtype(df, pd.DataFrame)
             data_dict = data
         else:

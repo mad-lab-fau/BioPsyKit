@@ -36,7 +36,6 @@ def saliva_feature_wide_to_long(
         dataframe with saliva features in long-format
 
     """
-
     data = data.filter(like=saliva_type)
     index_cols = list(data.index.names)
     j = "saliva_feature"
