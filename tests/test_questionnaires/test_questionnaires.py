@@ -86,21 +86,21 @@ class TestQuestionnaires:
             (data_complete_correct(), None, pytest.raises(ValidationError)),
             (data_filtered_wrong_range(regex=r"ABI\d"), None, pytest.raises(ValueRangeError)),
             (
-                    data_filtered_correct(regex=r"ABI\d"),
-                    ["ABI_{}".format(i) for i in range(1, 11)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct(regex=r"ABI\d"),
+                ["ABI_{}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
             ),
             (convert_scale(data_filtered_wrong_range(regex=r"ABI\d"), 1), None, does_not_raise()),
             (data_filtered_correct(regex=r"ABI\d"), None, does_not_raise()),
             (
-                    data_complete_correct(),
-                    ["ABI{}_{}".format(i, j) for i, j in product(range(1, 9), range(1, 11))],
-                    does_not_raise(),
+                data_complete_correct(),
+                ["ABI{}_{}".format(i, j) for i, j in product(range(1, 9), range(1, 11))],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct(regex=r"ABI\d"),
-                    ["ABI{}_{}".format(i, j) for i, j in product(range(1, 9), range(1, 11))],
-                    does_not_raise(),
+                data_filtered_correct(regex=r"ABI\d"),
+                ["ABI{}_{}".format(i, j) for i, j in product(range(1, 9), range(1, 11))],
+                does_not_raise(),
             ),
         ],
     )
@@ -113,9 +113,9 @@ class TestQuestionnaires:
         [
             (data_filtered_correct(regex=r"ABI\d"), None, result_filtered("ABI_")),
             (
-                    data_complete_correct(),
-                    ["ABI{}_{}".format(i, j) for i, j in product(range(1, 9), range(1, 11))],
-                    result_filtered("ABI_"),
+                data_complete_correct(),
+                ["ABI{}_{}".format(i, j) for i, j in product(range(1, 9), range(1, 11))],
+                result_filtered("ABI_"),
             ),
             (convert_scale(data_filtered_wrong_range(regex=r"ABI\d"), 1), None, result_filtered("ABI_")),
         ],
@@ -177,19 +177,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("ASQ"), -1), None, does_not_raise()),
             (data_filtered_correct("ASQ"), None, does_not_raise()),
             (
-                    data_filtered_correct("ASQ"),
-                    ["ASQ{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("ASQ"),
+                ["ASQ{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("ASQ"),
-                    ["ASQ{:02d}".format(i) for i in range(1, 11)],
-                    does_not_raise(),
+                data_filtered_correct("ASQ"),
+                ["ASQ{:02d}".format(i) for i in range(1, 11)],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("ASQ"),
-                    ["ASQ_{}".format(i) for i in range(1, 11)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("ASQ"),
+                ["ASQ_{}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -202,14 +202,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("ASQ"), None, result_filtered("ASQ")),
             (
-                    data_filtered_correct("ASQ"),
-                    ["ASQ{:02d}".format(i) for i in range(1, 11)],
-                    result_filtered("ASQ"),
+                data_filtered_correct("ASQ"),
+                ["ASQ{:02d}".format(i) for i in range(1, 11)],
+                result_filtered("ASQ"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("ASQ"), -1),
-                    None,
-                    result_filtered("ASQ"),
+                convert_scale(data_filtered_wrong_range("ASQ"), -1),
+                None,
+                result_filtered("ASQ"),
             ),
         ],
     )
@@ -226,37 +226,37 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("BE"), -1), None, None, does_not_raise()),
             (data_filtered_correct("BE"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("BE"),
-                    ["BE{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("BE"),
+                ["BE{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("BE"), ["BE{:02d}".format(i) for i in range(1, 24)], None, does_not_raise()),
             (
-                    data_filtered_correct("BE"),
-                    None,
-                    {
-                        "Appearance": [1, 6, 7, 9, 11, 13, 15, 17, 21, 23],
-                        "Weight": [3, 4, 8, 10, 16, 18, 19, 22],
-                        "Attribution": [2, 5, 12, 14, 20],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("BE"),
+                None,
+                {
+                    "Appearance": [1, 6, 7, 9, 11, 13, 15, 17, 21, 23],
+                    "Weight": [3, 4, 8, 10, 16, 18, 19, 22],
+                    "Attribution": [2, 5, 12, 14, 20],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("BE"),
-                    None,
-                    {
-                        "Appearance": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("BE"),
+                None,
+                {
+                    "Appearance": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("BE"),
-                    None,
-                    {
-                        "Appearance": [1, 3, 5, 7, 9, 11, 13],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("BE"),
+                None,
+                {
+                    "Appearance": [1, 3, 5, 7, 9, 11, 13],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -271,10 +271,10 @@ class TestQuestionnaires:
             (data_filtered_correct("BE"), ["BE{:02d}".format(i) for i in range(1, 24)], None, result_filtered("BESAA")),
             (convert_scale(data_filtered_wrong_range("BE"), -1), None, None, result_filtered("BESAA")),
             (
-                    data_subscale("besaa"),
-                    None,
-                    {"Appearance": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-                    result_filtered("BESAA_Appearance"),
+                data_subscale("besaa"),
+                None,
+                {"Appearance": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+                result_filtered("BESAA_Appearance"),
             ),
         ],
     )
@@ -290,39 +290,39 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("BFI_K"), 1), None, None, does_not_raise()),
             (data_filtered_correct("BFI_K"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("BFI_K"),
-                    ["BFI_K_{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("BFI_K"),
+                ["BFI_K_{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("BFI_K"), ["BFI_K_{}".format(i) for i in range(1, 22)], None, does_not_raise()),
             (
-                    data_filtered_correct("BFI_K"),
-                    None,
-                    {
-                        "E": [1, 6, 11, 16],
-                        "A": [2, 7, 12, 17],
-                        "C": [3, 8, 13, 18],
-                        "N": [4, 9, 14, 19],
-                        "O": [5, 10, 15, 20, 21],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("BFI_K"),
+                None,
+                {
+                    "E": [1, 6, 11, 16],
+                    "A": [2, 7, 12, 17],
+                    "C": [3, 8, 13, 18],
+                    "N": [4, 9, 14, 19],
+                    "O": [5, 10, 15, 20, 21],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("BFI_K"),
-                    None,
-                    {
-                        "E": [1, 2, 3, 4],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("BFI_K"),
+                None,
+                {
+                    "E": [1, 2, 3, 4],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("BFI_K"),
-                    None,
-                    {
-                        "E": [2, 4],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("BFI_K"),
+                None,
+                {
+                    "E": [2, 4],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -335,17 +335,17 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("BFI_K"), None, None, result_filtered("BFI_K")),
             (
-                    data_filtered_correct("BFI_K"),
-                    ["BFI_K_{}".format(i) for i in range(1, 22)],
-                    None,
-                    result_filtered("BFI_K"),
+                data_filtered_correct("BFI_K"),
+                ["BFI_K_{}".format(i) for i in range(1, 22)],
+                None,
+                result_filtered("BFI_K"),
             ),
             (convert_scale(data_filtered_wrong_range("BFI_K"), 1), None, None, result_filtered("BFI_K")),
             (
-                    data_subscale("bfi_k"),
-                    None,
-                    {"E": [1, 2, 3, 4]},
-                    result_filtered("BFI_K_E"),
+                data_subscale("bfi_k"),
+                None,
+                {"E": [1, 2, 3, 4]},
+                result_filtered("BFI_K_E"),
             ),
         ],
     )
@@ -361,34 +361,34 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("BIDR"), 1), None, None, does_not_raise()),
             (data_filtered_correct("BIDR"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("BIDR"),
-                    ["BIDR_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("BIDR"),
+                ["BIDR_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("BIDR"), ["BIDR_{}".format(i) for i in range(1, 21)], None, does_not_raise()),
             (
-                    data_filtered_correct("BIDR"),
-                    None,
-                    {
-                        "ST": list(range(1, 11)),
-                        "FT": list(range(11, 21)),
-                    },
-                    does_not_raise(),
+                data_filtered_correct("BIDR"),
+                None,
+                {
+                    "ST": list(range(1, 11)),
+                    "FT": list(range(11, 21)),
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("BIDR"),
-                    None,
-                    {
-                        "FT": list(range(1, 11)),
-                    },
-                    does_not_raise(),
+                data_filtered_correct("BIDR"),
+                None,
+                {
+                    "FT": list(range(1, 11)),
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("BIDR"),
-                    None,
-                    {"FT": [1, 2, 3, 4, 5, 6, 7]},
-                    pytest.raises(IndexError),
+                data_filtered_correct("BIDR"),
+                None,
+                {"FT": [1, 2, 3, 4, 5, 6, 7]},
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -403,10 +403,10 @@ class TestQuestionnaires:
             (data_filtered_correct("BIDR"), ["BIDR_{}".format(i) for i in range(1, 21)], None, result_filtered("BIDR")),
             (convert_scale(data_filtered_wrong_range("BIDR"), 1), None, None, result_filtered("BIDR")),
             (
-                    data_subscale("bidr"),
-                    None,
-                    {"FT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-                    result_filtered("BIDR_FT"),
+                data_subscale("bidr"),
+                None,
+                {"FT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+                result_filtered("BIDR_FT"),
             ),
         ],
     )
@@ -422,47 +422,47 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("Brief_COPE"), 1), None, None, does_not_raise()),
             (data_filtered_correct("Brief_COPE"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("Brief_COPE"),
-                    ["Brief_COPE_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("Brief_COPE"),
+                ["Brief_COPE_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("Brief_COPE"),
-                    ["Brief_COPE_{}".format(i) for i in range(1, 29)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("Brief_COPE"),
+                ["Brief_COPE_{}".format(i) for i in range(1, 29)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("Brief_COPE"),
-                    None,
-                    {
-                        "SelfDistraction": [1, 19],
-                        "ActiveCoping": [2, 7],
-                        "Denial": [3, 8],
-                        "SubstanceUse": [4, 11],
-                        "EmotionalSupport": [5, 15],
-                        "InstrumentalSupport": [10, 23],
-                        "BehavioralDisengagement": [6, 16],
-                        "Venting": [9, 21],
-                        "PosReframing": [12, 17],
-                        "Planning": [14, 25],
-                        "Humor": [18, 28],
-                        "Acceptance": [20, 24],
-                        "Religion": [22, 27],
-                        "SelfBlame": [13, 26],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("Brief_COPE"),
+                None,
+                {
+                    "SelfDistraction": [1, 19],
+                    "ActiveCoping": [2, 7],
+                    "Denial": [3, 8],
+                    "SubstanceUse": [4, 11],
+                    "EmotionalSupport": [5, 15],
+                    "InstrumentalSupport": [10, 23],
+                    "BehavioralDisengagement": [6, 16],
+                    "Venting": [9, 21],
+                    "PosReframing": [12, 17],
+                    "Planning": [14, 25],
+                    "Humor": [18, 28],
+                    "Acceptance": [20, 24],
+                    "Religion": [22, 27],
+                    "SelfBlame": [13, 26],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("Brief_COPE"),
-                    None,
-                    {
-                        "EmotionalSupport": [5, 15],
-                        "InstrumentalSupport": [10, 23],
-                        "BehavioralDisengagement": [6, 16],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("Brief_COPE"),
+                None,
+                {
+                    "EmotionalSupport": [5, 15],
+                    "InstrumentalSupport": [10, 23],
+                    "BehavioralDisengagement": [6, 16],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -475,28 +475,28 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("Brief_COPE"), None, None, result_filtered("Brief_COPE")),
             (
-                    data_filtered_correct("Brief_COPE"),
-                    ["Brief_COPE_{}".format(i) for i in range(1, 29)],
-                    None,
-                    result_filtered("Brief_COPE"),
+                data_filtered_correct("Brief_COPE"),
+                ["Brief_COPE_{}".format(i) for i in range(1, 29)],
+                None,
+                result_filtered("Brief_COPE"),
             ),
             (convert_scale(data_filtered_wrong_range("Brief_COPE"), 1), None, None, result_filtered("Brief_COPE")),
             (
-                    data_subscale("brief_cope"),
-                    None,
-                    {
-                        "EmotionalSupport": [1, 4],
-                        "InstrumentalSupport": [3, 6],
-                        "BehavioralDisengagement": [2, 5],
-                    },
-                    pd.concat(
-                        [
-                            result_filtered("Brief_COPE_EmotionalSupport"),
-                            result_filtered("Brief_COPE_InstrumentalSupport"),
-                            result_filtered("Brief_COPE_BehavioralDisengagement"),
-                        ],
-                        axis=1,
-                    ),
+                data_subscale("brief_cope"),
+                None,
+                {
+                    "EmotionalSupport": [1, 4],
+                    "InstrumentalSupport": [3, 6],
+                    "BehavioralDisengagement": [2, 5],
+                },
+                pd.concat(
+                    [
+                        result_filtered("Brief_COPE_EmotionalSupport"),
+                        result_filtered("Brief_COPE_InstrumentalSupport"),
+                        result_filtered("Brief_COPE_BehavioralDisengagement"),
+                    ],
+                    axis=1,
+                ),
             ),
         ],
     )
@@ -513,19 +513,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("CESD"), -1), None, does_not_raise()),
             (data_filtered_correct("CESD"), None, does_not_raise()),
             (
-                    data_filtered_correct("CESD"),
-                    ["CESD_{}".format(i) for i in range(1, 21)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("CESD"),
+                ["CESD_{}".format(i) for i in range(1, 21)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("CESD"),
-                    ["CESD{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("CESD"),
+                ["CESD{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("CESD"),
-                    ["CESD{:02d}".format(i) for i in range(1, 21)],
-                    does_not_raise(),
+                data_filtered_correct("CESD"),
+                ["CESD{:02d}".format(i) for i in range(1, 21)],
+                does_not_raise(),
             ),
         ],
     )
@@ -538,9 +538,9 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("CESD"), None, result_filtered("CESD")),
             (
-                    data_filtered_correct("CESD"),
-                    ["CESD{:02d}".format(i) for i in range(1, 21)],
-                    result_filtered("CESD"),
+                data_filtered_correct("CESD"),
+                ["CESD{:02d}".format(i) for i in range(1, 21)],
+                result_filtered("CESD"),
             ),
             (convert_scale(data_filtered_wrong_range("CESD"), -1), None, result_filtered("CESD")),
         ],
@@ -558,43 +558,43 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("CTQ"), 1), None, None, does_not_raise()),
             (data_filtered_correct("CTQ"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("CTQ"),
-                    ["CTQ_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("CTQ"),
+                ["CTQ_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("CTQ"),
-                    ["CTQ_{}".format(i) for i in range(1, 29)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("CTQ"),
+                ["CTQ_{}".format(i) for i in range(1, 29)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("CTQ"),
-                    ["CTQ{:02d}".format(i) for i in range(1, 29)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("CTQ"),
+                ["CTQ{:02d}".format(i) for i in range(1, 29)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("CTQ"),
-                    None,
-                    {
-                        "PhysicalAbuse": [9, 11, 12, 15, 17],
-                        "SexualAbuse": [20, 21, 23, 24, 27],
-                        "EmotionalNeglect": [5, 7, 13, 19, 28],
-                        "PhysicalNeglect": [1, 2, 4, 6, 26],
-                        "EmotionalAbuse": [3, 8, 14, 18, 25],
-                        "Validity": [10, 16, 22],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("CTQ"),
+                None,
+                {
+                    "PhysicalAbuse": [9, 11, 12, 15, 17],
+                    "SexualAbuse": [20, 21, 23, 24, 27],
+                    "EmotionalNeglect": [5, 7, 13, 19, 28],
+                    "PhysicalNeglect": [1, 2, 4, 6, 26],
+                    "EmotionalAbuse": [3, 8, 14, 18, 25],
+                    "Validity": [10, 16, 22],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("CTQ"),
-                    None,
-                    {
-                        "PhysicalNeglect": [1, 2, 4],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("CTQ"),
+                None,
+                {
+                    "PhysicalNeglect": [1, 2, 4],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -609,12 +609,12 @@ class TestQuestionnaires:
             (data_filtered_correct("CTQ"), ["CTQ_{}".format(i) for i in range(1, 29)], None, result_filtered("CTQ")),
             (convert_scale(data_filtered_wrong_range("CTQ"), 1), None, None, result_filtered("CTQ")),
             (
-                    data_subscale("ctq"),
-                    None,
-                    {
-                        "PhysicalNeglect": [1, 2, 3, 4, 5],
-                    },
-                    result_filtered("CTQ_PhysicalNeglect"),
+                data_subscale("ctq"),
+                None,
+                {
+                    "PhysicalNeglect": [1, 2, 3, 4, 5],
+                },
+                result_filtered("CTQ_PhysicalNeglect"),
             ),
         ],
     )
@@ -636,36 +636,36 @@ class TestQuestionnaires:
             (fee_english(), None, None, "german", pytest.raises(ValidationError)),
             (fee_wrong(), None, None, None, pytest.raises(ValidationError)),
             (
-                    data_filtered_correct("FEE"),
-                    ["FEE_{}".format(i) for i in range(1, 25)],
-                    None,
-                    "german",
-                    pytest.raises(ValidationError),
+                data_filtered_correct("FEE"),
+                ["FEE_{}".format(i) for i in range(1, 25)],
+                None,
+                "german",
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("FEE"),
-                    ["FEE_{}_{}".format(i, e) for i, e in product(range(1, 10), ["Mutter", "Vater"])],
-                    None,
-                    "german",
-                    pytest.raises(ValidationError),
+                data_filtered_correct("FEE"),
+                ["FEE_{}_{}".format(i, e) for i, e in product(range(1, 10), ["Mutter", "Vater"])],
+                None,
+                "german",
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("FEE"),
-                    ["FEE_{}_{}".format(i, e) for i, e in product(range(1, 25), ["Mutter", "Vater"])],
-                    None,
-                    "german",
-                    does_not_raise(),
+                data_filtered_correct("FEE"),
+                ["FEE_{}_{}".format(i, e) for i, e in product(range(1, 25), ["Mutter", "Vater"])],
+                None,
+                "german",
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("FEE"),
-                    None,
-                    {
-                        "RejectionPunishment": [1, 3, 6, 8, 16, 18, 20, 22],
-                        "EmotionalWarmth": [2, 7, 9, 12, 14, 15, 17, 24],
-                        "ControlOverprotection": [4, 5, 10, 11, 13, 19, 21, 23],
-                    },
-                    "german",
-                    does_not_raise(),
+                data_filtered_correct("FEE"),
+                None,
+                {
+                    "RejectionPunishment": [1, 3, 6, 8, 16, 18, 20, 22],
+                    "EmotionalWarmth": [2, 7, 9, 12, 14, 15, 17, 24],
+                    "ControlOverprotection": [4, 5, 10, 11, 13, 19, 21, 23],
+                },
+                "german",
+                does_not_raise(),
             ),
         ],
     )
@@ -678,19 +678,19 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("FEE"), None, None, result_filtered("FEE")),
             (
-                    data_filtered_correct("FEE"),
-                    ["FEE_{}_{}".format(i, e) for i, e in product(range(1, 25), ["Mutter", "Vater"])],
-                    None,
-                    result_filtered("FEE"),
+                data_filtered_correct("FEE"),
+                ["FEE_{}_{}".format(i, e) for i, e in product(range(1, 25), ["Mutter", "Vater"])],
+                None,
+                result_filtered("FEE"),
             ),
             (convert_scale(data_filtered_wrong_range("FEE"), 1), None, None, result_filtered("FEE")),
             (
-                    data_subscale("fee"),
-                    None,
-                    {
-                        "RejectionPunishment": [1, 2, 3, 4, 5, 6, 7, 8],
-                    },
-                    result_filtered("FEE_RejectionPunishment"),
+                data_subscale("fee"),
+                None,
+                {
+                    "RejectionPunishment": [1, 2, 3, 4, 5, 6, 7, 8],
+                },
+                result_filtered("FEE_RejectionPunishment"),
             ),
         ],
     )
@@ -707,30 +707,30 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("FKK"), 1), None, None, does_not_raise()),
             (data_filtered_correct("FKK"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("FKK"),
-                    ["FKK_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("FKK"),
+                ["FKK_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("FKK"),
-                    ["FKK_{}".format(i) for i in range(1, 33)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("FKK"),
+                ["FKK_{}".format(i) for i in range(1, 33)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("FKK"),
-                    ["FKK_{:02d}".format(i) for i in range(1, 33)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("FKK"),
+                ["FKK_{:02d}".format(i) for i in range(1, 33)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("FKK"),
-                    None,
-                    {
-                        "SK": [4, 8, 12, 16],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("FKK"),
+                None,
+                {
+                    "SK": [4, 8, 12, 16],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -743,51 +743,51 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("FKK"), None, None, result_filtered("FKK")),
             (
-                    data_filtered_correct("FKK"),
-                    ["FKK_{}".format(i) for i in range(1, 33)],
-                    None,
-                    result_filtered("FKK"),
+                data_filtered_correct("FKK"),
+                ["FKK_{}".format(i) for i in range(1, 33)],
+                None,
+                result_filtered("FKK"),
             ),
             (convert_scale(data_filtered_wrong_range("FKK"), 1), None, None, result_filtered("FKK")),
             (
-                    data_subscale("fkk"),
-                    None,
-                    {
-                        "SK": [1, 2, 3, 4, 5, 6, 7, 8],
-                    },
-                    result_filtered(regex="FKK_SK$"),
+                data_subscale("fkk"),
+                None,
+                {
+                    "SK": [1, 2, 3, 4, 5, 6, 7, 8],
+                },
+                result_filtered(regex="FKK_SK$"),
             ),
             (
-                    data_subscale("fkk"),
-                    None,
-                    {
-                        "SK": [1, 2, 3, 4, 5, 6, 7, 8],
-                        "I": [9, 10, 11, 12, 13, 14, 15, 16],
-                    },
-                    pd.concat(
-                        [
-                            result_filtered(regex="FKK_SK$"),
-                            result_filtered(regex="FKK_I$"),
-                            result_filtered(regex="FKK_SKI$"),
-                        ],
-                        axis=1,
-                    ),
+                data_subscale("fkk"),
+                None,
+                {
+                    "SK": [1, 2, 3, 4, 5, 6, 7, 8],
+                    "I": [9, 10, 11, 12, 13, 14, 15, 16],
+                },
+                pd.concat(
+                    [
+                        result_filtered(regex="FKK_SK$"),
+                        result_filtered(regex="FKK_I$"),
+                        result_filtered(regex="FKK_SKI$"),
+                    ],
+                    axis=1,
+                ),
             ),
             (
-                    data_filtered_correct("FKK"),
-                    None,
-                    {
-                        "P": [3, 10, 14, 17, 19, 22, 26, 29],
-                        "C": [2, 7, 9, 13, 15, 18, 21, 31],
-                    },
-                    pd.concat(
-                        [
-                            result_filtered(regex="FKK_P$"),
-                            result_filtered(regex="FKK_C$"),
-                            result_filtered(regex="FKK_PC$"),
-                        ],
-                        axis=1,
-                    ),
+                data_filtered_correct("FKK"),
+                None,
+                {
+                    "P": [3, 10, 14, 17, 19, 22, 26, 29],
+                    "C": [2, 7, 9, 13, 15, 18, 21, 31],
+                },
+                pd.concat(
+                    [
+                        result_filtered(regex="FKK_P$"),
+                        result_filtered(regex="FKK_C$"),
+                        result_filtered(regex="FKK_PC$"),
+                    ],
+                    axis=1,
+                ),
             ),
         ],
     )
@@ -804,22 +804,22 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("FSCRS"), -1), None, None, does_not_raise()),
             (data_filtered_correct("FSCRS"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("FSCRS"),
-                    ["FSCRS{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("FSCRS"),
+                ["FSCRS{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("FSCRS"),
-                    ["FSCRS_{}".format(i) for i in range(1, 23)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("FSCRS"),
+                ["FSCRS_{}".format(i) for i in range(1, 23)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("FSCRS"),
-                    ["FSCRS{:02d}".format(i) for i in range(1, 23)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("FSCRS"),
+                ["FSCRS{:02d}".format(i) for i in range(1, 23)],
+                None,
+                does_not_raise(),
             ),
         ],
     )
@@ -832,19 +832,19 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("FSCRS"), None, None, result_filtered("FSCRS")),
             (
-                    data_filtered_correct("FSCRS"),
-                    ["FSCRS{:02d}".format(i) for i in range(1, 23)],
-                    None,
-                    result_filtered("FSCRS"),
+                data_filtered_correct("FSCRS"),
+                ["FSCRS{:02d}".format(i) for i in range(1, 23)],
+                None,
+                result_filtered("FSCRS"),
             ),
             (convert_scale(data_filtered_wrong_range("FSCRS"), -1), None, None, result_filtered("FSCRS")),
             (
-                    data_subscale("fscrs"),
-                    None,
-                    {
-                        "InadequateSelf": [1, 2, 3, 4, 5, 6, 7, 8, 9],
-                    },
-                    result_filtered("FSCRS_InadequateSelf"),
+                data_subscale("fscrs"),
+                None,
+                {
+                    "InadequateSelf": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                },
+                result_filtered("FSCRS_InadequateSelf"),
             ),
         ],
     )
@@ -861,19 +861,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("GHQ"), -1), None, does_not_raise()),
             (data_filtered_correct("GHQ"), None, does_not_raise()),
             (
-                    data_filtered_correct("GHQ"),
-                    ["GHQ{}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("GHQ"),
+                ["GHQ{}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("GHQ"),
-                    ["GHQ_{}".format(i) for i in range(1, 13)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("GHQ"),
+                ["GHQ_{}".format(i) for i in range(1, 13)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("GHQ"),
-                    ["GHQ{:02d}".format(i) for i in range(1, 13)],
-                    does_not_raise(),
+                data_filtered_correct("GHQ"),
+                ["GHQ{:02d}".format(i) for i in range(1, 13)],
+                does_not_raise(),
             ),
         ],
     )
@@ -886,9 +886,9 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("GHQ"), None, result_filtered("GHQ")),
             (
-                    data_filtered_correct("GHQ"),
-                    ["GHQ{:02d}".format(i) for i in range(1, 13)],
-                    result_filtered("GHQ"),
+                data_filtered_correct("GHQ"),
+                ["GHQ{:02d}".format(i) for i in range(1, 13)],
+                result_filtered("GHQ"),
             ),
             (convert_scale(data_filtered_wrong_range("GHQ"), -1), None, result_filtered("GHQ")),
         ],
@@ -906,30 +906,30 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("HADS"), -1), None, None, does_not_raise()),
             (data_filtered_correct("HADS"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("HADS"),
-                    ["HADS_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("HADS"),
+                ["HADS_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("HADS"),
-                    ["HADS_{}".format(i) for i in range(1, 15)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("HADS"),
+                ["HADS_{}".format(i) for i in range(1, 15)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("HADS"),
-                    ["HADS{:02d}".format(i) for i in range(1, 15)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("HADS"),
+                ["HADS{:02d}".format(i) for i in range(1, 15)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("HADS"),
-                    None,
-                    {
-                        "Depression": [2, 4, 6, 8, 10],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("HADS"),
+                None,
+                {
+                    "Depression": [2, 4, 6, 8, 10],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -942,19 +942,19 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("HADS"), None, None, result_filtered("HADS")),
             (
-                    data_filtered_correct("HADS"),
-                    ["HADS{:02d}".format(i) for i in range(1, 15)],
-                    None,
-                    result_filtered("HADS"),
+                data_filtered_correct("HADS"),
+                ["HADS{:02d}".format(i) for i in range(1, 15)],
+                None,
+                result_filtered("HADS"),
             ),
             (convert_scale(data_filtered_wrong_range("HADS"), -1), None, None, result_filtered("HADS")),
             (
-                    data_subscale("hads"),
-                    None,
-                    {
-                        "Depression": [1, 2, 3, 4, 5, 6, 7],
-                    },
-                    result_filtered("HADS_Depression"),
+                data_subscale("hads"),
+                None,
+                {
+                    "Depression": [1, 2, 3, 4, 5, 6, 7],
+                },
+                result_filtered("HADS_Depression"),
             ),
         ],
     )
@@ -971,22 +971,22 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("KKG"), 1), None, None, does_not_raise()),
             (data_filtered_correct("KKG"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("KKG"),
-                    ["KKG_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("KKG"),
+                ["KKG_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("KKG"),
-                    ["KKG_{}".format(i) for i in range(1, 22)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("KKG"),
+                ["KKG_{}".format(i) for i in range(1, 22)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("KKG"),
-                    ["KKG{:02d}".format(i) for i in range(1, 22)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("KKG"),
+                ["KKG{:02d}".format(i) for i in range(1, 22)],
+                None,
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -999,19 +999,19 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("KKG"), None, None, result_filtered("KKG")),
             (
-                    data_filtered_correct("KKG"),
-                    ["KKG_{}".format(i) for i in range(1, 22)],
-                    None,
-                    result_filtered("KKG"),
+                data_filtered_correct("KKG"),
+                ["KKG_{}".format(i) for i in range(1, 22)],
+                None,
+                result_filtered("KKG"),
             ),
             (convert_scale(data_filtered_wrong_range("KKG"), 1), None, None, result_filtered("KKG")),
             (
-                    data_subscale("kkg"),
-                    None,
-                    {
-                        "I": [1, 2, 3, 4, 5, 6, 7],
-                    },
-                    result_filtered("KKG_I"),
+                data_subscale("kkg"),
+                None,
+                {
+                    "I": [1, 2, 3, 4, 5, 6, 7],
+                },
+                result_filtered("KKG_I"),
             ),
         ],
     )
@@ -1028,46 +1028,46 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("LSQ"), -1), None, None, does_not_raise()),
             (data_filtered_correct("LSQ"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("LSQ"),
-                    ["LSQ_{}_{}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("LSQ"),
+                ["LSQ_{}_{}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("LSQ"),
-                    ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 5))],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("LSQ"),
+                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 5))],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("LSQ"),
-                    ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("LSQ"),
+                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("LSQ"),
-                    ["LSQ_{}{}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("LSQ"),
+                ["LSQ_{}{}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("LSQ"),
-                    ["LSQ_Partner{:02d}".format(i) for i in range(1, 11)],
-                    ["Partner"],
-                    does_not_raise(),
+                data_filtered_correct("LSQ"),
+                ["LSQ_Partner{:02d}".format(i) for i in range(1, 11)],
+                ["Partner"],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("LSQ"),
-                    ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
-                    ["Partner", "Parent"],
-                    does_not_raise(),
+                data_filtered_correct("LSQ"),
+                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
+                ["Partner", "Parent"],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("LSQ"),
-                    ["LSQ_Partner{:02d}".format(i) for i in range(1, 11)],
-                    "Partner",
-                    does_not_raise(),
+                data_filtered_correct("LSQ"),
+                ["LSQ_Partner{:02d}".format(i) for i in range(1, 11)],
+                "Partner",
+                does_not_raise(),
             ),
         ],
     )
@@ -1080,10 +1080,10 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("LSQ"), None, None, result_filtered("LSQ")),
             (
-                    data_filtered_correct("LSQ"),
-                    ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
-                    None,
-                    result_filtered("LSQ"),
+                data_filtered_correct("LSQ"),
+                ["LSQ_{}{:02d}".format(p, i) for p, i in product(["Partner", "Parent", "Child"], range(1, 11))],
+                None,
+                result_filtered("LSQ"),
             ),
             (convert_scale(data_filtered_wrong_range("LSQ"), -1), None, None, result_filtered("LSQ")),
             (data_subscale("lsq"), None, "Partner", result_filtered("LSQ_Partner")),
@@ -1102,32 +1102,32 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("MBI_GS"), -1), None, None, does_not_raise()),
             (data_filtered_correct("MBI_GS"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("MBI_GS"),
-                    ["MBI_GS_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MBI_GS"),
+                ["MBI_GS_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MBI_GS"),
-                    ["MBI_GS_{}".format(i) for i in range(1, 17)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("MBI_GS"),
+                ["MBI_GS_{}".format(i) for i in range(1, 17)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("MBI_GS"),
-                    ["MBI_GS{:02d}".format(i) for i in range(1, 17)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MBI_GS"),
+                ["MBI_GS{:02d}".format(i) for i in range(1, 17)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MBI_GS"),
-                    None,
-                    {
-                        "EE": [1, 2, 3, 4, 5],
-                        "PA": [6, 7, 8, 11, 12, 16],
-                        "DC": [9, 10, 13, 14, 15],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("MBI_GS"),
+                None,
+                {
+                    "EE": [1, 2, 3, 4, 5],
+                    "PA": [6, 7, 8, 11, 12, 16],
+                    "DC": [9, 10, 13, 14, 15],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -1140,16 +1140,16 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("MBI_GS"), None, None, result_filtered(regex="MBI_GS_(EE|PA|DC)")),
             (
-                    data_filtered_correct("MBI_GS"),
-                    ["MBI_GS_{}".format(i) for i in range(1, 17)],
-                    None,
-                    result_filtered(regex="MBI_GS_(EE|PA|DC)"),
+                data_filtered_correct("MBI_GS"),
+                ["MBI_GS_{}".format(i) for i in range(1, 17)],
+                None,
+                result_filtered(regex="MBI_GS_(EE|PA|DC)"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("MBI_GS"), -1),
-                    None,
-                    None,
-                    result_filtered(regex="MBI_GS_(EE|PA|DC)"),
+                convert_scale(data_filtered_wrong_range("MBI_GS"), -1),
+                None,
+                None,
+                result_filtered(regex="MBI_GS_(EE|PA|DC)"),
             ),
             (data_subscale("mbi"), None, {"PA": [1, 2, 3, 4, 5, 6]}, result_filtered("MBI_GS_PA")),
         ],
@@ -1167,32 +1167,32 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("MBI_Students"), -1), None, None, does_not_raise()),
             (data_filtered_correct("MBI_Students"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("MBI_Students"),
-                    ["MBI_Students_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MBI_Students"),
+                ["MBI_Students_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MBI_Students"),
-                    ["MBI_Students_{}".format(i) for i in range(1, 17)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("MBI_Students"),
+                ["MBI_Students_{}".format(i) for i in range(1, 17)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("MBI_Students"),
-                    ["MBI_Students{:02d}".format(i) for i in range(1, 17)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MBI_Students"),
+                ["MBI_Students{:02d}".format(i) for i in range(1, 17)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MBI_Students"),
-                    None,
-                    {
-                        "EE": [1, 2, 3, 4, 5],
-                        "PA": [6, 7, 8, 11, 12, 16],
-                        "DC": [9, 10, 13, 14, 15],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("MBI_Students"),
+                None,
+                {
+                    "EE": [1, 2, 3, 4, 5],
+                    "PA": [6, 7, 8, 11, 12, 16],
+                    "DC": [9, 10, 13, 14, 15],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -1205,16 +1205,16 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("MBI_Students"), None, None, result_filtered(regex="MBI_GSS_(EE|PA|DC)")),
             (
-                    data_filtered_correct("MBI_Students"),
-                    ["MBI_Students_{}".format(i) for i in range(1, 17)],
-                    None,
-                    result_filtered(regex="MBI_GSS_(EE|PA|DC)"),
+                data_filtered_correct("MBI_Students"),
+                ["MBI_Students_{}".format(i) for i in range(1, 17)],
+                None,
+                result_filtered(regex="MBI_GSS_(EE|PA|DC)"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("MBI_Students"), -1),
-                    None,
-                    None,
-                    result_filtered(regex="MBI_GSS_(EE|PA|DC)"),
+                convert_scale(data_filtered_wrong_range("MBI_Students"), -1),
+                None,
+                None,
+                result_filtered(regex="MBI_GSS_(EE|PA|DC)"),
             ),
             (data_subscale("mbi"), None, {"PA": [7, 8, 9, 10, 11, 12]}, result_filtered("MBI_GSS_PA")),
         ],
@@ -1232,40 +1232,40 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("MDBF"), 1), None, None, does_not_raise()),
             (data_filtered_correct("MDBF"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("MDBF"),
-                    ["MDBF_{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MDBF"),
+                ["MDBF_{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MDBF"),
-                    ["MDBF_{:02d}".format(i) for i in range(1, 25)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("MDBF"),
+                ["MDBF_{:02d}".format(i) for i in range(1, 25)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("MDBF"),
-                    ["MDBF{}".format(i) for i in range(1, 25)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MDBF"),
+                ["MDBF{}".format(i) for i in range(1, 25)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MDBF"),
-                    None,
-                    {
-                        "GoodBad": [1, 4, 8, 11, 14, 16, 18, 21],
-                        "AwakeTired": [2, 5, 7, 10, 13, 17, 20, 23],
-                        "CalmNervous": [3, 6, 9, 12, 15, 19, 22, 24],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("MDBF"),
+                None,
+                {
+                    "GoodBad": [1, 4, 8, 11, 14, 16, 18, 21],
+                    "AwakeTired": [2, 5, 7, 10, 13, 17, 20, 23],
+                    "CalmNervous": [3, 6, 9, 12, 15, 19, 22, 24],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("MDBF"),
-                    None,
-                    {
-                        "GoodBad": [1, 4, 8, 11, 14],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("MDBF"),
+                None,
+                {
+                    "GoodBad": [1, 4, 8, 11, 14],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -1278,16 +1278,16 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("MDBF"), None, None, result_filtered("MDBF")),
             (
-                    data_filtered_correct("MDBF"),
-                    ["MDBF_{:02}".format(i) for i in range(1, 25)],
-                    None,
-                    result_filtered("MDBF"),
+                data_filtered_correct("MDBF"),
+                ["MDBF_{:02}".format(i) for i in range(1, 25)],
+                None,
+                result_filtered("MDBF"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("MDBF"), 1),
-                    None,
-                    None,
-                    result_filtered("MDBF"),
+                convert_scale(data_filtered_wrong_range("MDBF"), 1),
+                None,
+                None,
+                result_filtered("MDBF"),
             ),
             (data_subscale("mdbf"), None, {"GoodBad": [1, 2, 3, 4, 5, 6, 7, 8]}, result_filtered("MDBF_GoodBad")),
         ],
@@ -1305,19 +1305,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("MEQ"), 1), None, does_not_raise()),
             (data_filtered_correct("MEQ"), None, does_not_raise()),
             (
-                    data_filtered_correct("MEQ"),
-                    ["MEQ_{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MEQ"),
+                ["MEQ_{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MEQ"),
-                    ["MEQ_{:02d}".format(i) for i in range(1, 20)],
-                    does_not_raise(),
+                data_filtered_correct("MEQ"),
+                ["MEQ_{:02d}".format(i) for i in range(1, 20)],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("MEQ"),
-                    ["MEQ{}".format(i) for i in range(1, 20)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MEQ"),
+                ["MEQ{}".format(i) for i in range(1, 20)],
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -1330,14 +1330,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("MEQ"), None, result_filtered(regex="(MEQ|Chronotype_*)")),
             (
-                    data_filtered_correct("MEQ"),
-                    ["MEQ_{:02}".format(i) for i in range(1, 20)],
-                    result_filtered(regex="(MEQ|Chronotype_*)"),
+                data_filtered_correct("MEQ"),
+                ["MEQ_{:02}".format(i) for i in range(1, 20)],
+                result_filtered(regex="(MEQ|Chronotype_*)"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("MEQ"), 1),
-                    None,
-                    result_filtered(regex="(MEQ|Chronotype_*)"),
+                convert_scale(data_filtered_wrong_range("MEQ"), 1),
+                None,
+                result_filtered(regex="(MEQ|Chronotype_*)"),
             ),
         ],
     )
@@ -1354,19 +1354,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range(regex=r"MIDI\d+"), 1), None, does_not_raise()),
             (data_filtered_correct(regex=r"MIDI\d+"), None, does_not_raise()),
             (
-                    data_filtered_correct(regex=r"MIDI\d+"),
-                    ["MIDI{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct(regex=r"MIDI\d+"),
+                ["MIDI{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct(regex=r"MIDI\d+"),
-                    ["MIDI{:02d}".format(i) for i in range(1, 13)],
-                    does_not_raise(),
+                data_filtered_correct(regex=r"MIDI\d+"),
+                ["MIDI{:02d}".format(i) for i in range(1, 13)],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct(regex=r"MIDI\d+"),
-                    ["MIDI_{}".format(i) for i in range(1, 13)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct(regex=r"MIDI\d+"),
+                ["MIDI_{}".format(i) for i in range(1, 13)],
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -1379,14 +1379,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct(regex=r"MIDI\d+"), None, result_filtered(regex="^MIDI$")),
             (
-                    data_filtered_correct(regex=r"MIDI\d+"),
-                    ["MIDI{:02d}".format(i) for i in range(1, 13)],
-                    result_filtered(regex="^MIDI$"),
+                data_filtered_correct(regex=r"MIDI\d+"),
+                ["MIDI{:02d}".format(i) for i in range(1, 13)],
+                result_filtered(regex="^MIDI$"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range(regex=r"MIDI\d+"), 1),
-                    None,
-                    result_filtered(regex="^MIDI$"),
+                convert_scale(data_filtered_wrong_range(regex=r"MIDI\d+"), 1),
+                None,
+                result_filtered(regex="^MIDI$"),
             ),
         ],
     )
@@ -1403,39 +1403,39 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("MLQ"), 1), None, None, does_not_raise()),
             (data_filtered_correct("MLQ"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("MLQ"),
-                    ["MLQ_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MLQ"),
+                ["MLQ_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MLQ"),
-                    ["MLQ_{:02d}".format(i) for i in range(1, 11)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MLQ"),
+                ["MLQ_{:02d}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MLQ"),
-                    ["MLQ_{}".format(i) for i in range(1, 11)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("MLQ"),
+                ["MLQ_{}".format(i) for i in range(1, 11)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("MLQ"),
-                    None,
-                    {
-                        "PresenceMeaning": [1, 4, 5, 6, 9],
-                        "SearchMeaning": [2, 3, 7, 8, 10],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("MLQ"),
+                None,
+                {
+                    "PresenceMeaning": [1, 4, 5, 6, 9],
+                    "SearchMeaning": [2, 3, 7, 8, 10],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("MLQ"),
-                    None,
-                    {
-                        "PresenceMeaning": [1, 4, 5],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("MLQ"),
+                None,
+                {
+                    "PresenceMeaning": [1, 4, 5],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -1448,16 +1448,16 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("MLQ"), None, None, result_filtered("MLQ")),
             (
-                    data_filtered_correct("MLQ"),
-                    ["MLQ_{}".format(i) for i in range(1, 11)],
-                    None,
-                    result_filtered("MLQ"),
+                data_filtered_correct("MLQ"),
+                ["MLQ_{}".format(i) for i in range(1, 11)],
+                None,
+                result_filtered("MLQ"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("MLQ"), 1),
-                    None,
-                    None,
-                    result_filtered("MLQ"),
+                convert_scale(data_filtered_wrong_range("MLQ"), 1),
+                None,
+                None,
+                result_filtered("MLQ"),
             ),
             (data_subscale("mlq"), None, {"PresenceMeaning": [1, 2, 3, 4, 5]}, result_filtered("MLQ_PresenceMeaning")),
         ],
@@ -1475,19 +1475,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("MVES"), -1), None, does_not_raise()),
             (data_filtered_correct("MVES"), None, does_not_raise()),
             (
-                    data_filtered_correct("MVES"),
-                    ["MVES{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MVES"),
+                ["MVES{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MVES"),
-                    ["MVES{:02d}".format(i) for i in range(1, 24)],
-                    does_not_raise(),
+                data_filtered_correct("MVES"),
+                ["MVES{:02d}".format(i) for i in range(1, 24)],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("MVES"),
-                    ["MVES_{}".format(i) for i in range(1, 24)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MVES"),
+                ["MVES_{}".format(i) for i in range(1, 24)],
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -1500,14 +1500,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("MVES"), None, result_filtered("MVES")),
             (
-                    data_filtered_correct("MVES"),
-                    ["MVES{:02d}".format(i) for i in range(1, 24)],
-                    result_filtered("MVES"),
+                data_filtered_correct("MVES"),
+                ["MVES{:02d}".format(i) for i in range(1, 24)],
+                result_filtered("MVES"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("MVES"), -1),
-                    None,
-                    result_filtered("MVES"),
+                convert_scale(data_filtered_wrong_range("MVES"), -1),
+                None,
+                result_filtered("MVES"),
             ),
         ],
     )
@@ -1525,28 +1525,28 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("PANAS"), 1), None, "german", does_not_raise()),
             (data_filtered_correct("PANAS"), None, "german", does_not_raise()),
             (
-                    data_filtered_correct("PANAS"),
-                    ["PANAS_{}".format(i) for i in range(1, 10)],
-                    "german",
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PANAS"),
+                ["PANAS_{}".format(i) for i in range(1, 10)],
+                "german",
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("PANAS"),
-                    ["PANAS_{}".format(i) for i in range(1, 10)],
-                    "german",
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PANAS"),
+                ["PANAS_{}".format(i) for i in range(1, 10)],
+                "german",
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("PANAS"),
-                    ["PANAS_{}".format(i) for i in range(1, 21)],
-                    "german",
-                    does_not_raise(),
+                data_filtered_correct("PANAS"),
+                ["PANAS_{}".format(i) for i in range(1, 21)],
+                "german",
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("PANAS"),
-                    ["PANAS_{}".format(i) for i in range(1, 21)],
-                    "english",
-                    does_not_raise(),
+                data_filtered_correct("PANAS"),
+                ["PANAS_{}".format(i) for i in range(1, 21)],
+                "english",
+                does_not_raise(),
             ),
         ],
     )
@@ -1560,10 +1560,10 @@ class TestQuestionnaires:
             (data_filtered_correct("PANAS"), None, "english", result_filtered("PANAS")),
             (data_filtered_correct("PANAS"), None, "german", panas_results_german()),
             (
-                    data_filtered_correct("PANAS"),
-                    ["PANAS_{}".format(i) for i in range(1, 21)],
-                    None,
-                    result_filtered("PANAS"),
+                data_filtered_correct("PANAS"),
+                ["PANAS_{}".format(i) for i in range(1, 21)],
+                None,
+                result_filtered("PANAS"),
             ),
             (convert_scale(data_filtered_wrong_range("PANAS"), 1), None, None, result_filtered("PANAS")),
         ],
@@ -1581,38 +1581,38 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("PASA"), 1), None, None, does_not_raise()),
             (data_filtered_correct("PASA"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("PASA"),
-                    ["PASA_{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PASA"),
+                ["PASA_{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("PASA"),
-                    ["PASA{:02d}".format(i) for i in range(1, 17)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PASA"),
+                ["PASA{:02d}".format(i) for i in range(1, 17)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("PASA"),
-                    ["PASA_{:02d}".format(i) for i in range(1, 17)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("PASA"),
+                ["PASA_{:02d}".format(i) for i in range(1, 17)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("PASA"),
-                    None,
-                    {
-                        "Threat": [1, 9, 5, 13],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("PASA"),
+                None,
+                {
+                    "Threat": [1, 9, 5, 13],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("PASA"),
-                    None,
-                    {
-                        "Threat": [1, 2],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("PASA"),
+                None,
+                {
+                    "Threat": [1, 2],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -1625,46 +1625,46 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("PASA"), None, None, result_filtered("PASA")),
             (
-                    data_filtered_correct("PASA"),
-                    ["PASA_{:02d}".format(i) for i in range(1, 17)],
-                    None,
-                    result_filtered("PASA"),
+                data_filtered_correct("PASA"),
+                ["PASA_{:02d}".format(i) for i in range(1, 17)],
+                None,
+                result_filtered("PASA"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("PASA"), 1),
-                    None,
-                    None,
-                    result_filtered("PASA"),
+                convert_scale(data_filtered_wrong_range("PASA"), 1),
+                None,
+                None,
+                result_filtered("PASA"),
             ),
             (
-                    data_subscale("pasa"),
-                    None,
-                    {"Threat": [1, 2, 3, 4]},
-                    result_filtered("PASA_Threat"),
+                data_subscale("pasa"),
+                None,
+                {"Threat": [1, 2, 3, 4]},
+                result_filtered("PASA_Threat"),
             ),
             (
-                    data_filtered_correct("PASA"),
-                    None,
-                    {"Threat": [1, 5, 9, 13], "Challenge": [2, 6, 10, 14]},
-                    result_filtered(regex="PASA_(Threat|Challenge|Primary)"),
+                data_filtered_correct("PASA"),
+                None,
+                {"Threat": [1, 5, 9, 13], "Challenge": [2, 6, 10, 14]},
+                result_filtered(regex="PASA_(Threat|Challenge|Primary)"),
             ),
             (
-                    data_filtered_correct("PASA"),
-                    None,
-                    {
-                        "Threat": [1, 5, 9, 13],
-                        "SelfConcept": [3, 7, 11, 15],
-                    },
-                    result_filtered(regex="PASA_(Threat|SelfConcept)"),
+                data_filtered_correct("PASA"),
+                None,
+                {
+                    "Threat": [1, 5, 9, 13],
+                    "SelfConcept": [3, 7, 11, 15],
+                },
+                result_filtered(regex="PASA_(Threat|SelfConcept)"),
             ),
             (
-                    data_filtered_correct("PASA"),
-                    None,
-                    {
-                        "SelfConcept": [3, 7, 11, 15],
-                        "ControlExp": [4, 8, 12, 16],
-                    },
-                    result_filtered(regex="PASA_(SelfConcept|ControlExp|Secondary)"),
+                data_filtered_correct("PASA"),
+                None,
+                {
+                    "SelfConcept": [3, 7, 11, 15],
+                    "ControlExp": [4, 8, 12, 16],
+                },
+                result_filtered(regex="PASA_(SelfConcept|ControlExp|Secondary)"),
             ),
         ],
     )
@@ -1681,19 +1681,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("PEAT"), -1), None, does_not_raise()),
             (data_filtered_correct("PEAT"), None, does_not_raise()),
             (
-                    data_filtered_correct("PEAT"),
-                    ["PEAT{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PEAT"),
+                ["PEAT{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("PEAT"),
-                    ["PEAT{:02d}".format(i) for i in range(1, 11)],
-                    does_not_raise(),
+                data_filtered_correct("PEAT"),
+                ["PEAT{:02d}".format(i) for i in range(1, 11)],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("PEAT"),
-                    ["PEAT_{}".format(i) for i in range(1, 11)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PEAT"),
+                ["PEAT_{}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -1706,14 +1706,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("PEAT"), None, result_filtered("PEAT")),
             (
-                    data_filtered_correct("PEAT"),
-                    ["PEAT{:02d}".format(i) for i in range(1, 11)],
-                    result_filtered("PEAT"),
+                data_filtered_correct("PEAT"),
+                ["PEAT{:02d}".format(i) for i in range(1, 11)],
+                result_filtered("PEAT"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("PEAT"), -1),
-                    None,
-                    result_filtered("PEAT"),
+                convert_scale(data_filtered_wrong_range("PEAT"), -1),
+                None,
+                result_filtered("PEAT"),
             ),
         ],
     )
@@ -1730,46 +1730,46 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("PFB"), 1), None, None, does_not_raise()),
             (data_filtered_correct("PFB"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("PFB"),
-                    ["PFB{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PFB"),
+                ["PFB{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("PFB"),
-                    ["PFB{:02d}".format(i) for i in range(1, 32)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("PFB"),
+                ["PFB{:02d}".format(i) for i in range(1, 32)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("PFB"),
-                    ["PFB_{}".format(i) for i in range(1, 32)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PFB"),
+                ["PFB_{}".format(i) for i in range(1, 32)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_wrong_range("PFB"),
-                    None,
-                    {
-                        "Zaertlichkeit": [2, 3, 5, 9, 13, 14, 16, 23, 27, 28],
-                    },
-                    pytest.raises(ValueRangeError),
+                data_filtered_wrong_range("PFB"),
+                None,
+                {
+                    "Zaertlichkeit": [2, 3, 5, 9, 13, 14, 16, 23, 27, 28],
+                },
+                pytest.raises(ValueRangeError),
             ),
             (
-                    data_filtered_correct("PFB"),
-                    None,
-                    {
-                        "Zaertlichkeit": [2, 3, 5, 9, 13, 14, 16, 23, 27, 28],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("PFB"),
+                None,
+                {
+                    "Zaertlichkeit": [2, 3, 5, 9, 13, 14, 16, 23, 27, 28],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("PFB"),
-                    None,
-                    {
-                        "Streitverhalten": [1, 6, 8, 17, 18],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("PFB"),
+                None,
+                {
+                    "Streitverhalten": [1, 6, 8, 17, 18],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -1782,22 +1782,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("PFB"), None, None, result_filtered("PFB")),
             (
-                    data_filtered_correct("PFB"),
-                    ["PFB{:02d}".format(i) for i in range(1, 32)],
-                    None,
-                    result_filtered("PFB"),
+                data_filtered_correct("PFB"),
+                ["PFB{:02d}".format(i) for i in range(1, 32)],
+                None,
+                result_filtered("PFB"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("PFB"), 1),
-                    None,
-                    None,
-                    result_filtered("PFB"),
+                convert_scale(data_filtered_wrong_range("PFB"), 1),
+                None,
+                None,
+                result_filtered("PFB"),
             ),
             (
-                    data_subscale("pfb"),
-                    None,
-                    {"Streitverhalten": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-                    result_filtered("PFB_Streitverhalten"),
+                data_subscale("pfb"),
+                None,
+                {"Streitverhalten": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+                result_filtered("PFB_Streitverhalten"),
             ),
         ],
     )
@@ -1842,19 +1842,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("PL"), 1), None, does_not_raise()),
             (data_filtered_correct("PL"), None, does_not_raise()),
             (
-                    data_filtered_correct("PL"),
-                    ["PL{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PL"),
+                ["PL{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("PL"),
-                    ["PL{:02d}".format(i) for i in range(1, 11)],
-                    does_not_raise(),
+                data_filtered_correct("PL"),
+                ["PL{:02d}".format(i) for i in range(1, 11)],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("PL"),
-                    ["PL_{}".format(i) for i in range(1, 11)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PL"),
+                ["PL_{}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -1867,14 +1867,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("PL"), None, result_filtered("PurposeLife")),
             (
-                    data_filtered_correct("PL"),
-                    ["PL{:02d}".format(i) for i in range(1, 11)],
-                    result_filtered("PurposeLife"),
+                data_filtered_correct("PL"),
+                ["PL{:02d}".format(i) for i in range(1, 11)],
+                result_filtered("PurposeLife"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("PL"), 1),
-                    None,
-                    result_filtered("PurposeLife"),
+                convert_scale(data_filtered_wrong_range("PL"), 1),
+                None,
+                result_filtered("PurposeLife"),
             ),
         ],
     )
@@ -1891,38 +1891,38 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("RMIDI"), 1), None, None, does_not_raise()),
             (data_filtered_correct("RMIDI"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("RMIDI"),
-                    ["RMIDIPS{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("RMIDI"),
+                ["RMIDIPS{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("RMIDI"),
-                    ["RMIDIPS{:02d}".format(i) for i in range(1, 32)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("RMIDI"),
+                ["RMIDIPS{:02d}".format(i) for i in range(1, 32)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("RMIDI"),
-                    ["RMIDIPS_{}".format(i) for i in range(1, 32)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("RMIDI"),
+                ["RMIDIPS_{}".format(i) for i in range(1, 32)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("RMIDI"),
-                    None,
-                    {
-                        "Conscientiousness": [4, 9, 16, 24, 31],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("RMIDI"),
+                None,
+                {
+                    "Conscientiousness": [4, 9, 16, 24, 31],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("RMIDI"),
-                    None,
-                    {
-                        "Conscientiousness": [4, 9, 16],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("RMIDI"),
+                None,
+                {
+                    "Conscientiousness": [4, 9, 16],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -1935,22 +1935,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("RMIDI"), None, None, result_filtered("RMIDI")),
             (
-                    data_filtered_correct("RMIDI"),
-                    ["RMIDIPS{:02d}".format(i) for i in range(1, 32)],
-                    None,
-                    result_filtered("RMIDI"),
+                data_filtered_correct("RMIDI"),
+                ["RMIDIPS{:02d}".format(i) for i in range(1, 32)],
+                None,
+                result_filtered("RMIDI"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("RMIDI"), 1),
-                    None,
-                    None,
-                    result_filtered("RMIDI"),
+                convert_scale(data_filtered_wrong_range("RMIDI"), 1),
+                None,
+                None,
+                result_filtered("RMIDI"),
             ),
             (
-                    data_subscale("rmidi"),
-                    None,
-                    {"Conscientiousness": [1, 2, 3, 4, 5]},
-                    result_filtered("RMIDI_Conscientiousness"),
+                data_subscale("rmidi"),
+                None,
+                {"Conscientiousness": [1, 2, 3, 4, 5]},
+                result_filtered("RMIDI_Conscientiousness"),
             ),
         ],
     )
@@ -1967,19 +1967,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("RSE"), -1), None, does_not_raise()),
             (data_filtered_correct("RSE"), None, does_not_raise()),
             (
-                    data_filtered_correct("RSE"),
-                    ["RSE{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("RSE"),
+                ["RSE{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("RSE"),
-                    ["RSE{:02d}".format(i) for i in range(1, 11)],
-                    does_not_raise(),
+                data_filtered_correct("RSE"),
+                ["RSE{:02d}".format(i) for i in range(1, 11)],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("RSE"),
-                    ["RSE_{}".format(i) for i in range(1, 11)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("RSE"),
+                ["RSE_{}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -1992,14 +1992,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("RSE"), None, result_filtered("RSE")),
             (
-                    data_filtered_correct("RSE"),
-                    ["RSE{:02d}".format(i) for i in range(1, 11)],
-                    result_filtered("RSE"),
+                data_filtered_correct("RSE"),
+                ["RSE{:02d}".format(i) for i in range(1, 11)],
+                result_filtered("RSE"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("RSE"), -1),
-                    None,
-                    result_filtered("RSE"),
+                convert_scale(data_filtered_wrong_range("RSE"), -1),
+                None,
+                result_filtered("RSE"),
             ),
         ],
     )
@@ -2016,30 +2016,30 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("RSQ"), 1), None, None, does_not_raise()),
             (data_filtered_correct("RSQ"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("RSQ"),
-                    ["RSQ_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("RSQ"),
+                ["RSQ_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("RSQ"),
-                    ["RSQ{:02d}".format(i) for i in range(1, 33)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("RSQ"),
+                ["RSQ{:02d}".format(i) for i in range(1, 33)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("RSQ"),
-                    ["RSQ_{}".format(i) for i in range(1, 33)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("RSQ"),
+                ["RSQ_{}".format(i) for i in range(1, 33)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("RSQ"),
-                    None,
-                    {
-                        "SymptomRumination": [2, 3, 4, 8, 11, 12, 13, 25],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("RSQ"),
+                None,
+                {
+                    "SymptomRumination": [2, 3, 4, 8, 11, 12, 13, 25],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -2052,22 +2052,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("RSQ"), None, None, result_filtered("RSQ")),
             (
-                    data_filtered_correct("RSQ"),
-                    ["RSQ_{}".format(i) for i in range(1, 33)],
-                    None,
-                    result_filtered("RSQ"),
+                data_filtered_correct("RSQ"),
+                ["RSQ_{}".format(i) for i in range(1, 33)],
+                None,
+                result_filtered("RSQ"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("RSQ"), 1),
-                    None,
-                    None,
-                    result_filtered("RSQ"),
+                convert_scale(data_filtered_wrong_range("RSQ"), 1),
+                None,
+                None,
+                result_filtered("RSQ"),
             ),
             (
-                    data_subscale("rsq"),
-                    None,
-                    {"SymptomRumination": [1, 2, 3, 4, 5, 6, 7, 8]},
-                    result_filtered("RSQ_SymptomRumination"),
+                data_subscale("rsq"),
+                None,
+                {"SymptomRumination": [1, 2, 3, 4, 5, 6, 7, 8]},
+                result_filtered("RSQ_SymptomRumination"),
             ),
         ],
     )
@@ -2084,33 +2084,33 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SCS"), 1), None, None, does_not_raise()),
             (data_filtered_correct("SCS"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("SCS"),
-                    ["SCS{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SCS"),
+                ["SCS{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("SCS"), ["SCS{:02d}".format(i) for i in range(1, 27)], None, does_not_raise()),
             (
-                    data_filtered_correct("SCS"),
-                    ["SCS_{}".format(i) for i in range(1, 27)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SCS"),
+                ["SCS_{}".format(i) for i in range(1, 27)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SCS"),
-                    None,
-                    {
-                        "SelfJudgment": [1, 8, 11, 16, 21],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("SCS"),
+                None,
+                {
+                    "SelfJudgment": [1, 8, 11, 16, 21],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("SCS"),
-                    None,
-                    {
-                        "SelfJudgment": [1, 8, 11, 16],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("SCS"),
+                None,
+                {
+                    "SelfJudgment": [1, 8, 11, 16],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -2123,22 +2123,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SCS"), None, None, result_filtered("SCS")),
             (
-                    data_filtered_correct("SCS"),
-                    ["SCS{:02d}".format(i) for i in range(1, 27)],
-                    None,
-                    result_filtered("SCS"),
+                data_filtered_correct("SCS"),
+                ["SCS{:02d}".format(i) for i in range(1, 27)],
+                None,
+                result_filtered("SCS"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SCS"), 1),
-                    None,
-                    None,
-                    result_filtered("SCS"),
+                convert_scale(data_filtered_wrong_range("SCS"), 1),
+                None,
+                None,
+                result_filtered("SCS"),
             ),
             (
-                    data_subscale("scs"),
-                    None,
-                    {"SelfKindness": [1, 2, 3, 4, 5]},
-                    result_filtered("SCS_SelfKindness"),
+                data_subscale("scs"),
+                None,
+                {"SelfKindness": [1, 2, 3, 4, 5]},
+                result_filtered("SCS_SelfKindness"),
             ),
         ],
     )
@@ -2155,25 +2155,25 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SSGS"), 1), None, None, does_not_raise()),
             (data_filtered_correct("SSGS"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("SSGS"),
-                    ["SSGS{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SSGS"),
+                ["SSGS{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("SSGS"), ["SSGS{:02d}".format(i) for i in range(1, 16)], None, does_not_raise()),
             (
-                    data_filtered_correct("SSGS"),
-                    ["SSGS_{}".format(i) for i in range(1, 16)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SSGS"),
+                ["SSGS_{}".format(i) for i in range(1, 16)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SSGS"),
-                    None,
-                    {
-                        "Pride": [1, 4, 7, 10, 13],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("SSGS"),
+                None,
+                {
+                    "Pride": [1, 4, 7, 10, 13],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -2186,22 +2186,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SSGS"), None, None, result_filtered("SSGS")),
             (
-                    data_filtered_correct("SSGS"),
-                    ["SSGS{:02d}".format(i) for i in range(1, 16)],
-                    None,
-                    result_filtered("SSGS"),
+                data_filtered_correct("SSGS"),
+                ["SSGS{:02d}".format(i) for i in range(1, 16)],
+                None,
+                result_filtered("SSGS"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SSGS"), 1),
-                    None,
-                    None,
-                    result_filtered("SSGS"),
+                convert_scale(data_filtered_wrong_range("SSGS"), 1),
+                None,
+                None,
+                result_filtered("SSGS"),
             ),
             (
-                    data_subscale("ssgs"),
-                    None,
-                    {"Pride": [1, 2, 3, 4, 5]},
-                    result_filtered("SSGS_Pride"),
+                data_subscale("ssgs"),
+                None,
+                {"Pride": [1, 2, 3, 4, 5]},
+                result_filtered("SSGS_Pride"),
             ),
         ],
     )
@@ -2218,25 +2218,25 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SSS"), 1), None, None, does_not_raise()),
             (data_filtered_correct("SSS"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("SSS"),
-                    ["SSS_U_{}".format(i) for i in range(1, 2)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SSS"),
+                ["SSS_U_{}".format(i) for i in range(1, 2)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("SSS"), ["SSS_U_{}".format(i) for i in range(1, 3)], None, does_not_raise()),
             (
-                    data_filtered_correct("SSS"),
-                    ["SSS_U{:02d}".format(i) for i in range(1, 3)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SSS"),
+                ["SSS_U{:02d}".format(i) for i in range(1, 3)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SSS"),
-                    None,
-                    {
-                        "SocioeconomicStatus": [1],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("SSS"),
+                None,
+                {
+                    "SocioeconomicStatus": [1],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -2249,16 +2249,16 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SSS"), None, None, result_filtered("SSS")),
             (
-                    data_filtered_correct("SSS"),
-                    ["SSS_U_{}".format(i) for i in range(1, 3)],
-                    None,
-                    result_filtered("SSS"),
+                data_filtered_correct("SSS"),
+                ["SSS_U_{}".format(i) for i in range(1, 3)],
+                None,
+                result_filtered("SSS"),
             ),
             (
-                    data_subscale("sss"),
-                    None,
-                    {"Community": [1]},
-                    result_filtered("SSS_Community"),
+                data_subscale("sss"),
+                None,
+                {"Community": [1]},
+                result_filtered("SSS_Community"),
             ),
         ],
     )
@@ -2275,62 +2275,62 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("STADI"), 1), None, None, None, does_not_raise()),
             (data_filtered_correct("STADI"), None, None, None, does_not_raise()),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 10))],
-                    None,
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 10))],
+                None,
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI{:02d}".format(i) for i in range(1, 21)],
-                    None,
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("STADI"),
+                ["STADI{:02d}".format(i) for i in range(1, 21)],
+                None,
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
-                    None,
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
+                None,
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
-                    None,
-                    "state_trait",
-                    does_not_raise(),
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
+                None,
+                "state_trait",
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI_S_{}".format(i) for i in range(1, 21)],
-                    None,
-                    "state",
-                    does_not_raise(),
+                data_filtered_correct("STADI"),
+                ["STADI_S_{}".format(i) for i in range(1, 21)],
+                None,
+                "state",
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI_T_{}".format(i) for i in range(1, 21)],
-                    None,
-                    "trait",
-                    does_not_raise(),
+                data_filtered_correct("STADI"),
+                ["STADI_T_{}".format(i) for i in range(1, 21)],
+                None,
+                "trait",
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
-                    None,
-                    "trate",
-                    pytest.raises(ValueError),
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
+                None,
+                "trate",
+                pytest.raises(ValueError),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    None,
-                    {
-                        "AU": [1, 5, 9, 13, 17],
-                    },
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("STADI"),
+                None,
+                {
+                    "AU": [1, 5, 9, 13, 17],
+                },
+                None,
+                does_not_raise(),
             ),
         ],
     )
@@ -2346,73 +2346,73 @@ class TestQuestionnaires:
             (data_filtered_correct("STADI_S"), None, None, "state", result_filtered("STADI_State")),
             (data_filtered_correct("STADI_T"), None, None, "trait", result_filtered("STADI_Trait")),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
-                    None,
-                    None,
-                    result_filtered("STADI"),
+                data_filtered_correct("STADI"),
+                ["STADI_{}_{}".format(s, i) for s, i in product(["S", "T"], range(1, 21))],
+                None,
+                None,
+                result_filtered("STADI"),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI_S_{}".format(i) for i in range(1, 21)],
-                    None,
-                    "state",
-                    result_filtered("STADI_State"),
+                data_filtered_correct("STADI"),
+                ["STADI_S_{}".format(i) for i in range(1, 21)],
+                None,
+                "state",
+                result_filtered("STADI_State"),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    ["STADI_T_{}".format(i) for i in range(1, 21)],
-                    None,
-                    "trait",
-                    result_filtered("STADI_Trait"),
+                data_filtered_correct("STADI"),
+                ["STADI_T_{}".format(i) for i in range(1, 21)],
+                None,
+                "trait",
+                result_filtered("STADI_Trait"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("STADI"), 1),
-                    None,
-                    None,
-                    None,
-                    result_filtered("STADI"),
+                convert_scale(data_filtered_wrong_range("STADI"), 1),
+                None,
+                None,
+                None,
+                result_filtered("STADI"),
             ),
             (
-                    data_subscale("stadi"),
-                    None,
-                    {"AU": [1, 2, 3, 4, 5]},
-                    None,
-                    result_filtered(regex="STADI_(State|Trait)_AU"),
+                data_subscale("stadi"),
+                None,
+                {"AU": [1, 2, 3, 4, 5]},
+                None,
+                result_filtered(regex="STADI_(State|Trait)_AU"),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    None,
-                    {"AU": [1, 5, 9, 13, 17], "BE": [2, 6, 10, 14, 18]},
-                    None,
-                    result_filtered(regex="STADI_(State|Trait)_(AU|BE|Anxiety)"),
+                data_filtered_correct("STADI"),
+                None,
+                {"AU": [1, 5, 9, 13, 17], "BE": [2, 6, 10, 14, 18]},
+                None,
+                result_filtered(regex="STADI_(State|Trait)_(AU|BE|Anxiety)"),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    None,
-                    {
-                        "EU": [3, 7, 11, 15, 19],
-                        "DY": [4, 8, 12, 16, 20],
-                    },
-                    None,
-                    result_filtered(regex="STADI_(State|Trait)_(EU|DY|Depression)"),
+                data_filtered_correct("STADI"),
+                None,
+                {
+                    "EU": [3, 7, 11, 15, 19],
+                    "DY": [4, 8, 12, 16, 20],
+                },
+                None,
+                result_filtered(regex="STADI_(State|Trait)_(EU|DY|Depression)"),
             ),
             (
-                    data_filtered_correct("STADI"),
-                    None,
-                    {
-                        "AU": [1, 5, 9, 13, 17],
-                        "EU": [3, 7, 11, 15, 19],
-                    },
-                    None,
-                    result_filtered(regex="STADI_(State|Trait)_(AU|EU)"),
+                data_filtered_correct("STADI"),
+                None,
+                {
+                    "AU": [1, 5, 9, 13, 17],
+                    "EU": [3, 7, 11, 15, 19],
+                },
+                None,
+                result_filtered(regex="STADI_(State|Trait)_(AU|EU)"),
             ),
             (
-                    data_filtered_correct("STADI_T"),
-                    None,
-                    {"AU": [1, 5, 9, 13, 17], "BE": [2, 6, 10, 14, 18]},
-                    "trait",
-                    result_filtered(regex="STADI_Trait_(AU|BE|Anxiety)"),
+                data_filtered_correct("STADI_T"),
+                None,
+                {"AU": [1, 5, 9, 13, 17], "BE": [2, 6, 10, 14, 18]},
+                "trait",
+                result_filtered(regex="STADI_Trait_(AU|BE|Anxiety)"),
             ),
         ],
     )
@@ -2429,19 +2429,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("StateRumination"), -1), None, does_not_raise()),
             (data_filtered_correct("StateRumination"), None, does_not_raise()),
             (
-                    data_filtered_correct("StateRumination"),
-                    ["StateRumination{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("StateRumination"),
+                ["StateRumination{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("StateRumination"),
-                    ["StateRumination{:02d}".format(i) for i in range(1, 28)],
-                    does_not_raise(),
+                data_filtered_correct("StateRumination"),
+                ["StateRumination{:02d}".format(i) for i in range(1, 28)],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("StateRumination"),
-                    ["StateRumination_{}".format(i) for i in range(1, 28)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("StateRumination"),
+                ["StateRumination_{}".format(i) for i in range(1, 28)],
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -2454,14 +2454,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("StateRumination"), None, result_filtered("StateRumination")),
             (
-                    data_filtered_correct("StateRumination"),
-                    ["StateRumination{:02d}".format(i) for i in range(1, 28)],
-                    result_filtered("StateRumination"),
+                data_filtered_correct("StateRumination"),
+                ["StateRumination{:02d}".format(i) for i in range(1, 28)],
+                result_filtered("StateRumination"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("StateRumination"), -1),
-                    None,
-                    result_filtered("StateRumination"),
+                convert_scale(data_filtered_wrong_range("StateRumination"), -1),
+                None,
+                result_filtered("StateRumination"),
             ),
         ],
     )
@@ -2478,28 +2478,28 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SVF120"), 1), None, None, does_not_raise()),
             (data_filtered_correct("SVF120"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("SVF120"),
-                    ["SVF120_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SVF120"),
+                ["SVF120_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SVF120"),
-                    ["SVF120{:03d}".format(i) for i in range(1, 121)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SVF120"),
+                ["SVF120{:03d}".format(i) for i in range(1, 121)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SVF120"),
-                    ["SVF120_{}".format(i) for i in range(1, 121)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("SVF120"),
+                ["SVF120_{}".format(i) for i in range(1, 121)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("SVF120"),
-                    None,
-                    {"Bag": [10, 31, 50, 67, 88, 106]},
-                    does_not_raise(),
+                data_filtered_correct("SVF120"),
+                None,
+                {"Bag": [10, 31, 50, 67, 88, 106]},
+                does_not_raise(),
             ),
         ],
     )
@@ -2512,70 +2512,70 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SVF120"), None, None, result_filtered("SVF120")),
             (
-                    data_filtered_correct("SVF120"),
-                    ["SVF120_{}".format(i) for i in range(1, 121)],
-                    None,
-                    result_filtered("SVF120"),
+                data_filtered_correct("SVF120"),
+                ["SVF120_{}".format(i) for i in range(1, 121)],
+                None,
+                result_filtered("SVF120"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SVF120"), 1),
-                    None,
-                    None,
-                    result_filtered("SVF120"),
+                convert_scale(data_filtered_wrong_range("SVF120"), 1),
+                None,
+                None,
+                result_filtered("SVF120"),
             ),
             (
-                    data_subscale("svf_120"),
-                    None,
-                    {
-                        "Bag": [1, 3, 5, 7, 9, 11],
-                        "Her": [2, 4, 6, 8, 10, 12],
-                    },
-                    result_filtered(regex="SVF120_(Bag|Her)"),
+                data_subscale("svf_120"),
+                None,
+                {
+                    "Bag": [1, 3, 5, 7, 9, 11],
+                    "Her": [2, 4, 6, 8, 10, 12],
+                },
+                result_filtered(regex="SVF120_(Bag|Her)"),
             ),
             (
-                    data_filtered_correct("SVF120"),
-                    None,
-                    {
-                        "Bag": [10, 31, 50, 67, 88, 106],
-                        "Her": [17, 38, 52, 77, 97, 113],
-                        "Schab": [5, 30, 43, 65, 104, 119],
-                    },
-                    result_filtered(regex="SVF120_(Bag|Her|Schab|Pos1)"),
+                data_filtered_correct("SVF120"),
+                None,
+                {
+                    "Bag": [10, 31, 50, 67, 88, 106],
+                    "Her": [17, 38, 52, 77, 97, 113],
+                    "Schab": [5, 30, 43, 65, 104, 119],
+                },
+                result_filtered(regex="SVF120_(Bag|Her|Schab|Pos1)"),
             ),
             (
-                    data_filtered_correct("SVF120"),
-                    None,
-                    {
-                        "Bag": [10, 31, 50, 67, 88, 106],  # Bagatellisierung
-                        "Her": [17, 38, 52, 77, 97, 113],  # Herunterspielen
-                        "Schab": [5, 30, 43, 65, 104, 119],  # Schuldabwehr
-                        "Abl": [1, 20, 45, 86, 101, 111],  # Ablenkung
-                        "Ers": [22, 36, 64, 74, 80, 103],  # Ersatzbefriedigung
-                        "Sebest": [34, 47, 59, 78, 95, 115],  # Selbstbestätigung
-                        "Entsp": [12, 28, 58, 81, 99, 114],  # Entspannung
-                        "Sitkon": [11, 18, 39, 66, 91, 116],  # Situationskontrolle
-                        "Rekon": [2, 26, 54, 68, 85, 109],  # Reaktionskontrolle
-                        "Posi": [15, 37, 56, 71, 83, 96],  # Positive Selbstinstruktion
-                    },
-                    result_filtered(
-                        regex="SVF120_(Bag|Her|Schab|Abl|Ers|Sebest|Entsp|Sitkon|Rekon|Posi|Pos1|Pos2|Pos3|Pos_Gesamt)"
-                    ),
+                data_filtered_correct("SVF120"),
+                None,
+                {
+                    "Bag": [10, 31, 50, 67, 88, 106],  # Bagatellisierung
+                    "Her": [17, 38, 52, 77, 97, 113],  # Herunterspielen
+                    "Schab": [5, 30, 43, 65, 104, 119],  # Schuldabwehr
+                    "Abl": [1, 20, 45, 86, 101, 111],  # Ablenkung
+                    "Ers": [22, 36, 64, 74, 80, 103],  # Ersatzbefriedigung
+                    "Sebest": [34, 47, 59, 78, 95, 115],  # Selbstbestätigung
+                    "Entsp": [12, 28, 58, 81, 99, 114],  # Entspannung
+                    "Sitkon": [11, 18, 39, 66, 91, 116],  # Situationskontrolle
+                    "Rekon": [2, 26, 54, 68, 85, 109],  # Reaktionskontrolle
+                    "Posi": [15, 37, 56, 71, 83, 96],  # Positive Selbstinstruktion
+                },
+                result_filtered(
+                    regex="SVF120_(Bag|Her|Schab|Abl|Ers|Sebest|Entsp|Sitkon|Rekon|Posi|Pos1|Pos2|Pos3|Pos_Gesamt)"
+                ),
             ),
             (
-                    data_filtered_correct("SVF120"),
-                    None,
-                    {
-                        "Bag": [10, 31, 50, 67, 88, 106],  # Bagatellisierung
-                        "Her": [17, 38, 52, 77, 97, 113],  # Herunterspielen
-                        "Schab": [5, 30, 43, 65, 104, 119],  # Schuldabwehr
-                        "Abl": [1, 20, 45, 86, 101, 111],  # Ablenkung
-                        "Ers": [22, 36, 64, 74, 80, 103],  # Ersatzbefriedigung
-                        "Sebest": [34, 47, 59, 78, 95, 115],  # Selbstbestätigung
-                        "Entsp": [12, 28, 58, 81, 99, 114],  # Entspannung
-                        "Sitkon": [11, 18, 39, 66, 91, 116],  # Situationskontrolle
-                        "Rekon": [2, 26, 54, 68, 85, 109],  # Reaktionskontrolle
-                    },
-                    result_filtered(regex="SVF120_(Bag|Her|Schab|Abl|Ers|Sebest|Entsp|Sitkon|Rekon|Pos1|Pos2)"),
+                data_filtered_correct("SVF120"),
+                None,
+                {
+                    "Bag": [10, 31, 50, 67, 88, 106],  # Bagatellisierung
+                    "Her": [17, 38, 52, 77, 97, 113],  # Herunterspielen
+                    "Schab": [5, 30, 43, 65, 104, 119],  # Schuldabwehr
+                    "Abl": [1, 20, 45, 86, 101, 111],  # Ablenkung
+                    "Ers": [22, 36, 64, 74, 80, 103],  # Ersatzbefriedigung
+                    "Sebest": [34, 47, 59, 78, 95, 115],  # Selbstbestätigung
+                    "Entsp": [12, 28, 58, 81, 99, 114],  # Entspannung
+                    "Sitkon": [11, 18, 39, 66, 91, 116],  # Situationskontrolle
+                    "Rekon": [2, 26, 54, 68, 85, 109],  # Reaktionskontrolle
+                },
+                result_filtered(regex="SVF120_(Bag|Her|Schab|Abl|Ers|Sebest|Entsp|Sitkon|Rekon|Pos1|Pos2)"),
             ),
         ],
     )
@@ -2592,28 +2592,28 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SVF42"), 1), None, None, does_not_raise()),
             (data_filtered_correct("SVF42"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("SVF42"),
-                    ["SVF42_{}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SVF42"),
+                ["SVF42_{}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SVF42"),
-                    ["SVF42{:03d}".format(i) for i in range(1, 43)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SVF42"),
+                ["SVF42{:03d}".format(i) for i in range(1, 43)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SVF42"),
-                    ["SVF42_{}".format(i) for i in range(1, 43)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("SVF42"),
+                ["SVF42_{}".format(i) for i in range(1, 43)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("SVF42"),
-                    None,
-                    {"Bag": [7, 22]},
-                    does_not_raise(),
+                data_filtered_correct("SVF42"),
+                None,
+                {"Bag": [7, 22]},
+                does_not_raise(),
             ),
         ],
     )
@@ -2626,74 +2626,74 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SVF42"), None, None, result_filtered("SVF42")),
             (
-                    data_filtered_correct("SVF42"),
-                    ["SVF42_{}".format(i) for i in range(1, 43)],
-                    None,
-                    result_filtered("SVF42"),
+                data_filtered_correct("SVF42"),
+                ["SVF42_{}".format(i) for i in range(1, 43)],
+                None,
+                result_filtered("SVF42"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SVF42"), 1),
-                    None,
-                    None,
-                    result_filtered("SVF42"),
+                convert_scale(data_filtered_wrong_range("SVF42"), 1),
+                None,
+                None,
+                result_filtered("SVF42"),
             ),
             (
-                    data_subscale("svf_42"),
-                    None,
-                    {
-                        "Bag": [1, 3],  # Bagatellisierung
-                        "Her": [2, 4],  # Herunterspielen
-                    },
-                    result_filtered(regex="SVF42_(Bag|Her)"),
+                data_subscale("svf_42"),
+                None,
+                {
+                    "Bag": [1, 3],  # Bagatellisierung
+                    "Her": [2, 4],  # Herunterspielen
+                },
+                result_filtered(regex="SVF42_(Bag|Her)"),
             ),
             (
-                    data_filtered_correct("SVF42"),
-                    None,
-                    {
-                        "Bag": [7, 22],  # Bagatellisierung
-                        "Her": [11, 35],  # Herunterspielen
-                        "Schab": [2, 34],  # Schuldabwehr
-                    },
-                    result_filtered(regex="SVF42_(Bag|Her|Schab)"),
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Bag": [7, 22],  # Bagatellisierung
+                    "Her": [11, 35],  # Herunterspielen
+                    "Schab": [2, 34],  # Schuldabwehr
+                },
+                result_filtered(regex="SVF42_(Bag|Her|Schab)"),
             ),
             (
-                    data_filtered_correct("SVF42"),
-                    None,
-                    {
-                        "Verm": [6, 30],  # Vermeidung
-                        "Flu": [16, 40],  # Flucht
-                        "Soza": [20, 29],  # Soziale Abkapselung
-                    },
-                    result_filtered(regex="SVF42_(Verm|Flu|Soza|Denial)"),
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Verm": [6, 30],  # Vermeidung
+                    "Flu": [16, 40],  # Flucht
+                    "Soza": [20, 29],  # Soziale Abkapselung
+                },
+                result_filtered(regex="SVF42_(Verm|Flu|Soza|Denial)"),
             ),
             (
-                    data_filtered_correct("SVF42"),
-                    None,
-                    {
-                        "Ers": [12, 42],  # Ersatzbefriedigung
-                        "Entsp": [13, 26],  # Entspannung
-                        "Sozube": [14, 27],  # Soziales Unterstützungsbedürfnis
-                    },
-                    result_filtered(regex="SVF42_(Ers|Entsp|Sozube|Distraction)"),
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Ers": [12, 42],  # Ersatzbefriedigung
+                    "Entsp": [13, 26],  # Entspannung
+                    "Sozube": [14, 27],  # Soziales Unterstützungsbedürfnis
+                },
+                result_filtered(regex="SVF42_(Ers|Entsp|Sozube|Distraction)"),
             ),
             (
-                    data_filtered_correct("SVF42"),
-                    None,
-                    {
-                        "Bag": [7, 22],  # Bagatellisierung
-                        "Her": [11, 35],  # Herunterspielen
-                        "Posi": [9, 24],  # Positive Selbstinstruktion
-                    },
-                    result_filtered(regex="SVF42_(Bag|Her|Posi|Stressordevaluation)"),
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Bag": [7, 22],  # Bagatellisierung
+                    "Her": [11, 35],  # Herunterspielen
+                    "Posi": [9, 24],  # Positive Selbstinstruktion
+                },
+                result_filtered(regex="SVF42_(Bag|Her|Posi|Stressordevaluation)"),
             ),
             (
-                    data_filtered_correct("SVF42"),
-                    None,
-                    {
-                        "Verm": [6, 30],  # Vermeidung
-                        "Flu": [16, 40],  # Flucht
-                    },
-                    result_filtered(regex="SVF42_(Verm|Flu)"),
+                data_filtered_correct("SVF42"),
+                None,
+                {
+                    "Verm": [6, 30],  # Vermeidung
+                    "Flu": [16, 40],  # Flucht
+                },
+                result_filtered(regex="SVF42_(Verm|Flu)"),
             ),
         ],
     )
@@ -2710,28 +2710,28 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("TICS_L"), -1), None, None, does_not_raise()),
             (data_filtered_correct("TICS_L"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("TICS_L"),
-                    ["TICS_L_{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("TICS_L"),
+                ["TICS_L_{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("TICS_L"),
-                    ["TICS_L_{}".format(i) for i in range(1, 58)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("TICS_L"),
+                ["TICS_L_{}".format(i) for i in range(1, 58)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("TICS_L"),
-                    ["TICS_L_{:02d}".format(i) for i in range(1, 58)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("TICS_L"),
+                ["TICS_L_{:02d}".format(i) for i in range(1, 58)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("TICS_L"),
-                    None,
-                    {"WorkOverload": [50, 38, 44, 54, 17, 4, 27, 1]},
-                    does_not_raise(),
+                data_filtered_correct("TICS_L"),
+                None,
+                {"WorkOverload": [50, 38, 44, 54, 17, 4, 27, 1]},
+                does_not_raise(),
             ),
         ],
     )
@@ -2744,38 +2744,38 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("TICS_L"), None, None, result_filtered("TICS_L")),
             (
-                    data_filtered_correct("TICS_L"),
-                    ["TICS_L_{:02d}".format(i) for i in range(1, 58)],
-                    None,
-                    result_filtered("TICS_L"),
+                data_filtered_correct("TICS_L"),
+                ["TICS_L_{:02d}".format(i) for i in range(1, 58)],
+                None,
+                result_filtered("TICS_L"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("TICS_L"), -1),
-                    None,
-                    None,
-                    result_filtered("TICS_L"),
+                convert_scale(data_filtered_wrong_range("TICS_L"), -1),
+                None,
+                None,
+                result_filtered("TICS_L"),
             ),
             (
-                    data_filtered_correct("TICS_L"),
-                    None,
-                    {
-                        "WorkOverload": [1, 4, 17, 27, 38, 44, 50, 54],  # Arbeitsüberlastung
-                        "SocialOverload": [7, 19, 28, 39, 49, 57],  # Soziale Überlastung
-                        "PressureToPerform": [8, 12, 14, 22, 23, 30, 32, 43, 40],  # Erfolgsdruck
-                        "WorkDiscontent": [5, 10, 13, 21, 37, 41, 48, 53],  # Unzufriedenheit mit der Arbeit
-                        "DemandsWork": [3, 20, 24, 35, 47, 55],  # Überforderung bei der Arbeit
-                        "LackSocialRec": [2, 18, 31, 46],  # Mangel an sozialer Anerkennung
-                        "SocialTension": [6, 15, 26, 33, 45, 52],  # Soziale Spannungen
-                        "SocialIsolation": [11, 29, 34, 42, 51, 56],  # Soziale Isolation
-                        "ChronicWorry": [9, 16, 25, 36],  # Chronische Besorgnis
-                    },
-                    result_filtered(regex="TICS_L"),
+                data_filtered_correct("TICS_L"),
+                None,
+                {
+                    "WorkOverload": [1, 4, 17, 27, 38, 44, 50, 54],  # Arbeitsüberlastung
+                    "SocialOverload": [7, 19, 28, 39, 49, 57],  # Soziale Überlastung
+                    "PressureToPerform": [8, 12, 14, 22, 23, 30, 32, 43, 40],  # Erfolgsdruck
+                    "WorkDiscontent": [5, 10, 13, 21, 37, 41, 48, 53],  # Unzufriedenheit mit der Arbeit
+                    "DemandsWork": [3, 20, 24, 35, 47, 55],  # Überforderung bei der Arbeit
+                    "LackSocialRec": [2, 18, 31, 46],  # Mangel an sozialer Anerkennung
+                    "SocialTension": [6, 15, 26, 33, 45, 52],  # Soziale Spannungen
+                    "SocialIsolation": [11, 29, 34, 42, 51, 56],  # Soziale Isolation
+                    "ChronicWorry": [9, 16, 25, 36],  # Chronische Besorgnis
+                },
+                result_filtered(regex="TICS_L"),
             ),
             (
-                    data_subscale("tics_l"),
-                    None,
-                    {"WorkOverload": [1, 2, 3, 4, 5, 6, 7, 8]},
-                    result_filtered(regex="TICS_L_WorkOverload"),
+                data_subscale("tics_l"),
+                None,
+                {"WorkOverload": [1, 2, 3, 4, 5, 6, 7, 8]},
+                result_filtered(regex="TICS_L_WorkOverload"),
             ),
         ],
     )
@@ -2792,28 +2792,28 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("TICS_S"), -1), None, None, does_not_raise()),
             (data_filtered_correct("TICS_S"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("TICS_S"),
-                    ["TICS_S_{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("TICS_S"),
+                ["TICS_S_{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("TICS_S"),
-                    ["TICS_S_{}".format(i) for i in range(1, 31)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("TICS_S"),
+                ["TICS_S_{}".format(i) for i in range(1, 31)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("TICS_S"),
-                    ["TICS_S_{:02d}".format(i) for i in range(1, 31)],
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("TICS_S"),
+                ["TICS_S_{:02d}".format(i) for i in range(1, 31)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("TICS_S"),
-                    None,
-                    {"WorkOverload": [1, 3, 21]},
-                    does_not_raise(),
+                data_filtered_correct("TICS_S"),
+                None,
+                {"WorkOverload": [1, 3, 21]},
+                does_not_raise(),
             ),
         ],
     )
@@ -2826,39 +2826,39 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("TICS_S"), None, None, result_filtered("TICS_S")),
             (
-                    data_filtered_correct("TICS_S"),
-                    ["TICS_S_{:02d}".format(i) for i in range(1, 31)],
-                    None,
-                    result_filtered("TICS_S"),
+                data_filtered_correct("TICS_S"),
+                ["TICS_S_{:02d}".format(i) for i in range(1, 31)],
+                None,
+                result_filtered("TICS_S"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("TICS_S"), -1),
-                    None,
-                    None,
-                    result_filtered("TICS_S"),
+                convert_scale(data_filtered_wrong_range("TICS_S"), -1),
+                None,
+                None,
+                result_filtered("TICS_S"),
             ),
             (
-                    data_filtered_correct("TICS_S"),
-                    None,
-                    {
-                        "WorkOverload": [1, 3, 21],
-                        "SocialOverload": [11, 18, 28],
-                        "PressureToPerform": [5, 14, 29],
-                        "WorkDiscontent": [8, 13, 24],
-                        "DemandsWork": [12, 16, 27],
-                        "PressureSocial": [6, 15, 22],
-                        "LackSocialRec": [2, 20, 23],
-                        "SocialTension": [4, 9, 26],
-                        "SocialIsolation": [19, 25, 30],
-                        "ChronicWorry": [7, 10, 17],
-                    },
-                    result_filtered(regex="TICS_S"),
+                data_filtered_correct("TICS_S"),
+                None,
+                {
+                    "WorkOverload": [1, 3, 21],
+                    "SocialOverload": [11, 18, 28],
+                    "PressureToPerform": [5, 14, 29],
+                    "WorkDiscontent": [8, 13, 24],
+                    "DemandsWork": [12, 16, 27],
+                    "PressureSocial": [6, 15, 22],
+                    "LackSocialRec": [2, 20, 23],
+                    "SocialTension": [4, 9, 26],
+                    "SocialIsolation": [19, 25, 30],
+                    "ChronicWorry": [7, 10, 17],
+                },
+                result_filtered(regex="TICS_S"),
             ),
             (
-                    data_subscale("tics_s"),
-                    None,
-                    {"WorkOverload": [1, 2, 3]},
-                    result_filtered(regex="TICS_S_WorkOverload"),
+                data_subscale("tics_s"),
+                None,
+                {"WorkOverload": [1, 2, 3]},
+                result_filtered(regex="TICS_S_WorkOverload"),
             ),
         ],
     )
@@ -2875,19 +2875,19 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("TraitRumination"), -1), None, does_not_raise()),
             (data_filtered_correct("TraitRumination"), None, does_not_raise()),
             (
-                    data_filtered_correct("TraitRumination"),
-                    ["TraitRumination{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("TraitRumination"),
+                ["TraitRumination{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("TraitRumination"),
-                    ["TraitRumination{:02d}".format(i) for i in range(1, 15)],
-                    does_not_raise(),
+                data_filtered_correct("TraitRumination"),
+                ["TraitRumination{:02d}".format(i) for i in range(1, 15)],
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("TraitRumination"),
-                    ["TraitRumination_{}".format(i) for i in range(1, 15)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("TraitRumination"),
+                ["TraitRumination_{}".format(i) for i in range(1, 15)],
+                pytest.raises(ValidationError),
             ),
         ],
     )
@@ -2900,14 +2900,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("TraitRumination"), None, result_filtered("TraitRumination")),
             (
-                    data_filtered_correct("TraitRumination"),
-                    ["TraitRumination{:02d}".format(i) for i in range(1, 15)],
-                    result_filtered("TraitRumination"),
+                data_filtered_correct("TraitRumination"),
+                ["TraitRumination{:02d}".format(i) for i in range(1, 15)],
+                result_filtered("TraitRumination"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("TraitRumination"), -1),
-                    None,
-                    result_filtered("TraitRumination"),
+                convert_scale(data_filtered_wrong_range("TraitRumination"), -1),
+                None,
+                result_filtered("TraitRumination"),
             ),
         ],
     )
@@ -2924,25 +2924,25 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("TSGS"), 1), None, None, does_not_raise()),
             (data_filtered_correct("TSGS"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("TSGS"),
-                    ["TSGS{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("TSGS"),
+                ["TSGS{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("TSGS"), ["TSGS{:02d}".format(i) for i in range(1, 16)], None, does_not_raise()),
             (
-                    data_filtered_correct("TSGS"),
-                    ["TSGS_{}".format(i) for i in range(1, 16)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("TSGS"),
+                ["TSGS_{}".format(i) for i in range(1, 16)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("TSGS"),
-                    None,
-                    {
-                        "Pride": [1, 4, 7, 10, 13],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("TSGS"),
+                None,
+                {
+                    "Pride": [1, 4, 7, 10, 13],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -2955,22 +2955,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("TSGS"), None, None, result_filtered("TSGS")),
             (
-                    data_filtered_correct("TSGS"),
-                    ["TSGS{:02d}".format(i) for i in range(1, 16)],
-                    None,
-                    result_filtered("TSGS"),
+                data_filtered_correct("TSGS"),
+                ["TSGS{:02d}".format(i) for i in range(1, 16)],
+                None,
+                result_filtered("TSGS"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("TSGS"), 1),
-                    None,
-                    None,
-                    result_filtered("TSGS"),
+                convert_scale(data_filtered_wrong_range("TSGS"), 1),
+                None,
+                None,
+                result_filtered("TSGS"),
             ),
             (
-                    data_subscale("tsgs"),
-                    None,
-                    {"Pride": [1, 2, 3, 4, 5]},
-                    result_filtered("TSGS_Pride"),
+                data_subscale("tsgs"),
+                None,
+                {"Pride": [1, 2, 3, 4, 5]},
+                result_filtered("TSGS_Pride"),
             ),
         ],
     )
@@ -2987,33 +2987,33 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("Type_D"), -1), None, None, does_not_raise()),
             (data_filtered_correct("Type_D"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("Type_D"),
-                    ["Type_D{:02d}".format(i) for i in range(1, 10)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("Type_D"),
+                ["Type_D{:02d}".format(i) for i in range(1, 10)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("Type_D"), ["Type_D{:02d}".format(i) for i in range(1, 15)], None, does_not_raise()),
             (
-                    data_filtered_correct("Type_D"),
-                    ["Type_D_{}".format(i) for i in range(1, 15)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("Type_D"),
+                ["Type_D_{}".format(i) for i in range(1, 15)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("Type_D"),
-                    None,
-                    {
-                        "SocialInhibition": [1, 3, 6, 8, 10, 11, 14],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("Type_D"),
+                None,
+                {
+                    "SocialInhibition": [1, 3, 6, 8, 10, 11, 14],
+                },
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("Type_D"),
-                    None,
-                    {
-                        "SocialInhibition": [1],
-                    },
-                    pytest.raises(IndexError),
+                data_filtered_correct("Type_D"),
+                None,
+                {
+                    "SocialInhibition": [1],
+                },
+                pytest.raises(IndexError),
             ),
         ],
     )
@@ -3026,22 +3026,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("Type_D"), None, None, result_filtered("Type_D")),
             (
-                    data_filtered_correct("Type_D"),
-                    ["Type_D{:02d}".format(i) for i in range(1, 15)],
-                    None,
-                    result_filtered("Type_D"),
+                data_filtered_correct("Type_D"),
+                ["Type_D{:02d}".format(i) for i in range(1, 15)],
+                None,
+                result_filtered("Type_D"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("Type_D"), -1),
-                    None,
-                    None,
-                    result_filtered("Type_D"),
+                convert_scale(data_filtered_wrong_range("Type_D"), -1),
+                None,
+                None,
+                result_filtered("Type_D"),
             ),
             (
-                    data_subscale("type_d"),
-                    None,
-                    {"SocialInhibition": [1, 2, 3, 4, 5, 6, 7]},
-                    result_filtered("Type_D_SocialInhibition"),
+                data_subscale("type_d"),
+                None,
+                {"SocialInhibition": [1, 2, 3, 4, 5, 6, 7]},
+                result_filtered("Type_D_SocialInhibition"),
             ),
         ],
     )
@@ -3058,20 +3058,20 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("KAB"), 1), None, does_not_raise()),
             (data_filtered_correct("KAB"), None, does_not_raise()),
             (
-                    data_filtered_correct("KAB"),
-                    ["T0_KAB_{:01d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("KAB"),
+                ["T0_KAB_{:01d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("KAB"), ["T0_KAB_{:01d}".format(i) for i in range(1, 7)], does_not_raise()),
             (
-                    data_filtered_correct("KAB"),
-                    ["T0_KAB_{:02d}".format(i) for i in range(1, 7)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("KAB"),
+                ["T0_KAB_{:02d}".format(i) for i in range(1, 7)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("KAB"),
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("KAB"),
+                None,
+                does_not_raise(),
             ),
         ],
     )
@@ -3084,14 +3084,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("KAB"), None, result_filtered("KAB")),
             (
-                    data_filtered_correct("KAB"),
-                    ["T0_KAB_{:01d}".format(i) for i in range(1, 7)],
-                    result_filtered("KAB"),
+                data_filtered_correct("KAB"),
+                ["T0_KAB_{:01d}".format(i) for i in range(1, 7)],
+                result_filtered("KAB"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("KAB"), 1),
-                    None,
-                    result_filtered("KAB"),
+                convert_scale(data_filtered_wrong_range("KAB"), 1),
+                None,
+                result_filtered("KAB"),
             ),
         ],
     )
@@ -3108,24 +3108,28 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SAI"), 1), None, ["state"], does_not_raise()),
             (data_filtered_correct("SAI"), None, ["state"], does_not_raise()),
             (
-                    data_filtered_correct("SAI"),
-                    ["T0_SAI_{:01d}".format(i) for i in range(1, 15)],
-                    ["state"],
-                    pytest.raises(ValidationError),
-            ),
-            (data_filtered_correct("SAI"), ["T0_SAI_{:01d}".format(i) for i in range(1, 11)], ["state"],
-             does_not_raise()),
-            (
-                    data_filtered_correct("SAI"),
-                    ["T0_SAI_{:02d}".format(i) for i in range(1, 10)],
-                    ["state"],
-                    pytest.raises(ValidationError)
+                data_filtered_correct("SAI"),
+                ["T0_SAI_{:01d}".format(i) for i in range(1, 15)],
+                ["state"],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SAI"),
-                    None,
-                    ["state"],
-                    does_not_raise(),
+                data_filtered_correct("SAI"),
+                ["T0_SAI_{:01d}".format(i) for i in range(1, 11)],
+                ["state"],
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("SAI"),
+                ["T0_SAI_{:02d}".format(i) for i in range(1, 10)],
+                ["state"],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SAI"),
+                None,
+                ["state"],
+                does_not_raise(),
             ),
         ],
     )
@@ -3138,16 +3142,16 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SAI"), None, result_filtered("SAI"), ["state"]),
             (
-                    data_filtered_correct("SAI"),
-                    ["T0_SAI_{:01d}".format(i) for i in range(1, 11)],
-                    result_filtered("SAI"),
-                    ["state"],
+                data_filtered_correct("SAI"),
+                ["T0_SAI_{:01d}".format(i) for i in range(1, 11)],
+                result_filtered("SAI"),
+                ["state"],
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SAI"), 1),
-                    None,
-                    result_filtered("SAI"),
-                    ["state"],
+                convert_scale(data_filtered_wrong_range("SAI"), 1),
+                None,
+                result_filtered("SAI"),
+                ["state"],
             ),
         ],
     )
@@ -3164,24 +3168,28 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("TAI"), 1), None, ["trait"], does_not_raise()),
             (data_filtered_correct("TAI"), None, ["trait"], does_not_raise()),
             (
-                    data_filtered_correct("TAI"),
-                    ["T2_TAI_{:01d}".format(i) for i in range(1, 15)],
-                    ["trait"],
-                    pytest.raises(ValidationError),
-            ),
-            (data_filtered_correct("TAI"), ["T2_TAI_{:01d}".format(i) for i in range(1, 11)], ["trait"],
-             does_not_raise()),
-            (
-                    data_filtered_correct("TAI"),
-                    ["T2_TAI_{:02d}".format(i) for i in range(1, 10)],
-                    ["trait"],
-                    pytest.raises(ValidationError)
+                data_filtered_correct("TAI"),
+                ["T2_TAI_{:01d}".format(i) for i in range(1, 15)],
+                ["trait"],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("TAI"),
-                    None,
-                    ["trait"],
-                    does_not_raise(),
+                data_filtered_correct("TAI"),
+                ["T2_TAI_{:01d}".format(i) for i in range(1, 11)],
+                ["trait"],
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("TAI"),
+                ["T2_TAI_{:02d}".format(i) for i in range(1, 10)],
+                ["trait"],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("TAI"),
+                None,
+                ["trait"],
+                does_not_raise(),
             ),
         ],
     )
@@ -3194,16 +3202,16 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("TAI"), None, result_filtered("TAI"), ["trait"]),
             (
-                    data_filtered_correct("TAI"),
-                    ["T2_TAI_{:01d}".format(i) for i in range(1, 11)],
-                    result_filtered("TAI"),
-                    ["trait"],
+                data_filtered_correct("TAI"),
+                ["T2_TAI_{:01d}".format(i) for i in range(1, 11)],
+                result_filtered("TAI"),
+                ["trait"],
             ),
             (
-                    convert_scale(data_filtered_wrong_range("TAI"), 1),
-                    None,
-                    result_filtered("TAI"),
-                    ["trait"],
+                convert_scale(data_filtered_wrong_range("TAI"), 1),
+                None,
+                result_filtered("TAI"),
+                ["trait"],
             ),
         ],
     )
@@ -3220,20 +3228,20 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SW_"), 1), None, does_not_raise()),
             (data_filtered_correct("SW_"), None, does_not_raise()),
             (
-                    data_filtered_correct("SW_"),
-                    ["T2_SW_{:01d}".format(i) for i in range(1, 15)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SW_"),
+                ["T2_SW_{:01d}".format(i) for i in range(1, 15)],
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("SW_"), ["T2_SW_{:01d}".format(i) for i in range(1, 11)], does_not_raise()),
             (
-                    data_filtered_correct("SW_"),
-                    ["T2_SW_{:02d}".format(i) for i in range(1, 11)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SW_"),
+                ["T2_SW_{:02d}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SW_"),
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("SW_"),
+                None,
+                does_not_raise(),
             ),
         ],
     )
@@ -3247,14 +3255,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SW_"), None, result_filtered("RSE_ges")),
             (
-                    data_filtered_correct("SW_"),
-                    ["T2_SW_{:01d}".format(i) for i in range(1, 11)],
-                    result_filtered("RSE_ges"),
+                data_filtered_correct("SW_"),
+                ["T2_SW_{:01d}".format(i) for i in range(1, 11)],
+                result_filtered("RSE_ges"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SW_"), 1),
-                    None,
-                    result_filtered("RSE_ges"),
+                convert_scale(data_filtered_wrong_range("SW_"), 1),
+                None,
+                result_filtered("RSE_ges"),
             ),
         ],
     )
@@ -3272,25 +3280,25 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("CLQ"), 1), None, None, does_not_raise()),
             (data_filtered_correct("CLQ"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("CLQ"),
-                    ["T2_CLQ_{:01d}".format(i) for i in range(1, 28)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("CLQ"),
+                ["T2_CLQ_{:01d}".format(i) for i in range(1, 28)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("CLQ"), ["T2_CLQ_{:01d}".format(i) for i in range(1, 27)], None, does_not_raise()),
             (
-                    data_filtered_correct("CLQ"),
-                    ["T2_CLQ_{:02d}".format(i) for i in range(1, 27)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("CLQ"),
+                ["T2_CLQ_{:02d}".format(i) for i in range(1, 27)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("CLQ"),
-                    None,
-                    {
-                        "SS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("CLQ"),
+                None,
+                {
+                    "SS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -3303,22 +3311,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("CLQ"), None, None, result_filtered("CLQ")),
             (
-                    data_filtered_correct("CLQ"),
-                    ["T2_CLQ_{:01d}".format(i) for i in range(1, 27)],
-                    None,
-                    result_filtered("CLQ"),
+                data_filtered_correct("CLQ"),
+                ["T2_CLQ_{:01d}".format(i) for i in range(1, 27)],
+                None,
+                result_filtered("CLQ"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("CLQ"), 1),
-                    None,
-                    None,
-                    result_filtered("CLQ"),
+                convert_scale(data_filtered_wrong_range("CLQ"), 1),
+                None,
+                None,
+                result_filtered("CLQ"),
             ),
             (
-                    data_subscale("CLQ"),
-                    None,
-                    {"SS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]},
-                    result_filtered("CLQ_SS"),
+                data_subscale("CLQ"),
+                None,
+                {"SS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]},
+                result_filtered("CLQ_SS"),
             ),
         ],
     )
@@ -3335,25 +3343,25 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SOP"), 1), None, None, does_not_raise()),
             (data_filtered_correct("SOP"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("SOP"),
-                    ["T2_SOP_{:01d}".format(i) for i in range(1, 11)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SOP"),
+                ["T2_SOP_{:01d}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("SOP"), ["T2_SOP_{:01d}".format(i) for i in range(1, 10)], None, does_not_raise()),
             (
-                    data_filtered_correct("SOP"),
-                    ["T2_SOP_{:02d}".format(i) for i in range(1, 11)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SOP"),
+                ["T2_SOP_{:02d}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SOP"),
-                    None,
-                    {
-                        "SW": [1, 3, 5, 7, 8],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("SOP"),
+                None,
+                {
+                    "SW": [1, 3, 5, 7, 8],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -3366,22 +3374,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SOP"), None, None, result_filtered("SOP")),
             (
-                    data_filtered_correct("SOP"),
-                    ["T2_SOP_{:01d}".format(i) for i in range(1, 10)],
-                    None,
-                    result_filtered("SOP"),
+                data_filtered_correct("SOP"),
+                ["T2_SOP_{:01d}".format(i) for i in range(1, 10)],
+                None,
+                result_filtered("SOP"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SOP"), 1),
-                    None,
-                    None,
-                    result_filtered("SOP"),
+                convert_scale(data_filtered_wrong_range("SOP"), 1),
+                None,
+                None,
+                result_filtered("SOP"),
             ),
             (
-                    data_subscale("SOP"),
-                    None,
-                    {"SW": [1, 2, 3, 4, 5]},
-                    result_filtered("SOP_SW"),
+                data_subscale("SOP"),
+                None,
+                {"SW": [1, 2, 3, 4, 5]},
+                result_filtered("SOP_SW"),
             ),
         ],
     )
@@ -3398,60 +3406,63 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("T2_BFI"), 1), None, None, does_not_raise()),
             (data_filtered_correct("T2_BFI"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("T2_BFI"),
-                    ["T2_BFI_{:01d}".format(i) for i in range(1, 12)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("T2_BFI"),
+                ["T2_BFI_{:01d}".format(i) for i in range(1, 12)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-            data_filtered_correct("T2_BFI"), [f"T2_BFI_{l}{i}" for l in ["N", "O", "E", "V", "G"] for i in range(1, 3)],
-            None, does_not_raise()),
-            (
-                    data_filtered_correct("T2_BFI"),
-                    ["T2_BFI_{:02d}".format(i) for i in range(1, 11)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("T2_BFI"),
+                [f"T2_BFI_{l}{i}" for l in ["N", "O", "E", "V", "G"] for i in range(1, 3)],
+                None,
+                does_not_raise(),
             ),
             (
-                    data_filtered_correct("T2_BFI"),
-                    None,
-                    {
-                        "E": [1, 2],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("T2_BFI"),
+                ["T2_BFI_{:02d}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("T2_BFI"),
+                None,
+                {
+                    "E": [1, 2],
+                },
+                does_not_raise(),
             ),
         ],
     )
     def test_bfi10_raises(self, data, columns, subscales, expected):
         with expected:
-            bfi10(data, columns, subscales)
+            bfi_10(data, columns, subscales)
 
     @pytest.mark.parametrize(
         "data, columns, subscales, result",
         [
             (data_filtered_correct("T2_BFI"), None, None, result_filtered("BFI10")),
             (
-                    data_filtered_correct("T2_BFI"),
-                    [f"T2_BFI_{l}{i}" for i in range(1, 3) for l in ["E", "V", "G", "N", "O"]],
-                    None,
-                    result_filtered("BFI10"),
+                data_filtered_correct("T2_BFI"),
+                [f"T2_BFI_{l}{i}" for i in range(1, 3) for l in ["E", "V", "G", "N", "O"]],
+                None,
+                result_filtered("BFI10"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("T2_BFI"), 1),
-                    None,
-                    None,
-                    result_filtered("BFI10"),
+                convert_scale(data_filtered_wrong_range("T2_BFI"), 1),
+                None,
+                None,
+                result_filtered("BFI10"),
             ),
             (
-                    data_subscale("BFI10"),
-                    None,
-                    {"E": [1, 2]},
-                    result_filtered("BFI10_E"),
+                data_subscale("BFI10"),
+                None,
+                {"E": [1, 2]},
+                result_filtered("BFI10_E"),
             ),
         ],
     )
     def test_bfi10(self, data, columns, subscales, result):
-        data_out = bfi10(data, columns, subscales)
+        data_out = bfi_10(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
 
@@ -3463,47 +3474,47 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("MKHAI"), 1), None, does_not_raise()),
             (data_filtered_correct("MKHAI"), None, does_not_raise()),
             (
-                    data_filtered_correct("MKHAI"),
-                    ["T2_MKAHI_{:01d}".format(i) for i in range(1, 16)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MKHAI"),
+                ["T2_MKAHI_{:01d}".format(i) for i in range(1, 16)],
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("MKHAI"), ["T2_MKHAI_{:01d}".format(i) for i in range(1, 15)], does_not_raise()),
             (
-                    data_filtered_correct("MKHAI"),
-                    ["T2_MKHAI_{:02d}".format(i) for i in range(1, 15)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("MKHAI"),
+                ["T2_MKHAI_{:02d}".format(i) for i in range(1, 15)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("MKHAI"),
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("MKHAI"),
+                None,
+                does_not_raise(),
             ),
         ],
     )
     def test_mkhai_raises(self, data, columns, expected):
         with expected:
             data = convert_scale(data, offset=1)
-            mkhai(data, columns)
+            mk_hai(data, columns)
 
     @pytest.mark.parametrize(
         "data, columns, result",
         [
             (data_filtered_correct("MKHAI"), None, result_filtered("MKHAI")),
             (
-                    data_filtered_correct("MKHAI"),
-                    ["T2_MKHAI_{:01d}".format(i) for i in range(1, 15)],
-                    result_filtered("MKHAI"),
+                data_filtered_correct("MKHAI"),
+                ["T2_MKHAI_{:01d}".format(i) for i in range(1, 15)],
+                result_filtered("MKHAI"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("MKHAI"), 1),
-                    None,
-                    result_filtered("MKHAI"),
+                convert_scale(data_filtered_wrong_range("MKHAI"), 1),
+                None,
+                result_filtered("MKHAI"),
             ),
         ],
     )
     def test_mkhai(self, data, columns, result):
         data = convert_scale(data, offset=1)
-        data_out = mkhai(data, columns)
+        data_out = mk_hai(data, columns)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
 
@@ -3515,25 +3526,25 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SWB"), 1), None, None, does_not_raise()),
             (data_filtered_correct("SWB"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("SWB"),
-                    ["T2_SWB_{:01d}".format(i) for i in range(1, 15)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SWB"),
+                ["T2_SWB_{:01d}".format(i) for i in range(1, 15)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("SWB"), ["T2_SWB_{:01d}".format(i) for i in range(1, 14)], None, does_not_raise()),
             (
-                    data_filtered_correct("SWB"),
-                    ["T2_SWB_{:02d}".format(i) for i in range(1, 14)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SWB"),
+                ["T2_SWB_{:02d}".format(i) for i in range(1, 14)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SWB"),
-                    None,
-                    {
-                        "SN": [2, 5, 8, 10, 11, 13],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("SWB"),
+                None,
+                {
+                    "SN": [2, 5, 8, 10, 11, 13],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -3546,22 +3557,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SWB"), None, None, result_filtered("SWB")),
             (
-                    data_filtered_correct("SWB"),
-                    ["T2_SWB_{:01d}".format(i) for i in range(1, 14)],
-                    None,
-                    result_filtered("SWB"),
+                data_filtered_correct("SWB"),
+                ["T2_SWB_{:01d}".format(i) for i in range(1, 14)],
+                None,
+                result_filtered("SWB"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SWB"), 1),
-                    None,
-                    None,
-                    result_filtered("SWB"),
+                convert_scale(data_filtered_wrong_range("SWB"), 1),
+                None,
+                None,
+                result_filtered("SWB"),
             ),
             (
-                    data_subscale("SWB"),
-                    None,
-                    {"SN": [1, 2, 3, 4, 5, 6]},
-                    result_filtered("SWB_SN"),
+                data_subscale("SWB"),
+                None,
+                {"SN": [1, 2, 3, 4, 5, 6]},
+                result_filtered("SWB_SN"),
             ),
         ],
     )
@@ -3578,62 +3589,66 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("ABIMS"), 1), None, None, does_not_raise()),
             (data_filtered_correct("ABIMS"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("ABIMS"),
-                    ["T2_ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 6) for j in range(1, 9)],
-                    None,
-                    pytest.raises(ValidationError),
-            ),
-            (data_filtered_correct("ABIMS"),
-             ["T2_ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 5) for j in range(1, 9)], None, does_not_raise()),
-            (
-                    data_filtered_correct("ABIMS"),
-                    ["T2_ABIMS_{:02d}_{:01d}".format(i, j) for i in range(1, 6) for j in range(1, 9)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("ABIMS"),
+                ["T2_ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 6) for j in range(1, 9)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("ABIMS"),
-                    None,
-                    {
-                        "1_K": [1, 4, 5, 7],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("ABIMS"),
+                ["T2_ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 5) for j in range(1, 9)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("ABIMS"),
+                ["T2_ABIMS_{:02d}_{:01d}".format(i, j) for i in range(1, 6) for j in range(1, 9)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ABIMS"),
+                None,
+                {
+                    "1_K": [1, 4, 5, 7],
+                },
+                does_not_raise(),
             ),
         ],
     )
     def test_abims_raises(self, data, columns, subscales, expected):
         with expected:
             data = convert_scale(data, offset=1)
-            abims(data, columns, subscales)
+            abi_ms(data, columns, subscales)
 
     @pytest.mark.parametrize(
         "data, columns, subscales, result",
         [
             (data_filtered_correct("ABIMS"), None, None, result_filtered("ABIMS")),
             (
-                    data_filtered_correct("ABIMS"),
-                    ["T2_ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 5) for j in range(1, 9)],
-                    None,
-                    result_filtered("ABIMS"),
+                data_filtered_correct("ABIMS"),
+                ["T2_ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 5) for j in range(1, 9)],
+                None,
+                result_filtered("ABIMS"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("ABIMS"), 1),
-                    None,
-                    None,
-                    result_filtered("ABIMS"),
+                convert_scale(data_filtered_wrong_range("ABIMS"), 1),
+                None,
+                None,
+                result_filtered("ABIMS"),
             ),
             (
-                    data_subscale("ABIMS"),
-                    None,
-                    {"1_K": [1, 2, 3, 4]},
-                    result_filtered("ABIMS_1_K"),
+                data_subscale("ABIMS"),
+                None,
+                {"1_K": [1, 2, 3, 4]},
+                result_filtered("ABIMS_1_K"),
             ),
         ],
     )
     def test_abims(self, data, columns, subscales, result):
         data.replace({1.5: 1}, inplace=True)
         data = convert_scale(data, offset=1)
-        data_out = abims(data, columns, subscales)
+        data_out = abi_ms(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
 
@@ -3645,25 +3660,25 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("ASI"), 1), None, None, does_not_raise()),
             (data_filtered_correct("ASI"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("ASI"),
-                    ["T2_ASI_{:01d}".format(i) for i in range(1, 14)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("ASI"),
+                ["T2_ASI_{:01d}".format(i) for i in range(1, 14)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("ASI"), ["T2_ASI_{:01d}".format(i) for i in range(1, 13)], None, does_not_raise()),
             (
-                    data_filtered_correct("ASI"),
-                    ["T2_ASI_{:02d}".format(i) for i in range(1, 13)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("ASI"),
+                ["T2_ASI_{:02d}".format(i) for i in range(1, 13)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("ASI"),
-                    None,
-                    {
-                        "BSM": [3, 4, 7, 8, 12],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("ASI"),
+                None,
+                {
+                    "BSM": [3, 4, 7, 8, 12],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -3677,22 +3692,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("ASI"), None, None, result_filtered("ASI")),
             (
-                    data_filtered_correct("ASI"),
-                    ["T2_ASI_{:01d}".format(i) for i in range(1, 13)],
-                    None,
-                    result_filtered("ASI"),
+                data_filtered_correct("ASI"),
+                ["T2_ASI_{:01d}".format(i) for i in range(1, 13)],
+                None,
+                result_filtered("ASI"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("ASI"), 1),
-                    None,
-                    None,
-                    result_filtered("ASI"),
+                convert_scale(data_filtered_wrong_range("ASI"), 1),
+                None,
+                None,
+                result_filtered("ASI"),
             ),
             (
-                    data_subscale("ASI"),
-                    None,
-                    {"BSM": [1, 2, 3, 4, 5]},
-                    result_filtered("ASI_BSM"),
+                data_subscale("ASI"),
+                None,
+                {"BSM": [1, 2, 3, 4, 5]},
+                result_filtered("ASI_BSM"),
             ),
         ],
     )
@@ -3710,67 +3725,71 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SCI"), 1), None, None, does_not_raise()),
             (data_filtered_correct("SCI"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("SCI"),
-                    ["T2_SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 6) for j in range(1, 8)] + [
-                        "T2_SCI_4_{:01d}".format(i) for i in range(8, 14)] + ["T2_SCI_5_{:01d}".format(i) for i in
-                                                                              range(1, 21)],
-                    None,
-                    pytest.raises(ValidationError),
-            ),
-            (data_filtered_correct("SCI"),
-             ["T2_SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 5) for j in range(1, 8)] + [
-                 "T2_SCI_4_{:01d}".format(i) for i in range(8, 14)] + ["T2_SCI_5_{:01d}".format(i) for i in
-                                                                       range(1, 21)], None, does_not_raise()),
-            (
-                    data_filtered_correct("SCI"),
-                    ["T2_SCI_{:01d}_{:02d}".format(i, j) for i in range(1, 5) for j in range(1, 8)] + [
-                        "T2_SCI_4_{:01d}".format(i) for i in range(8, 14)] + ["T2_SCI_5_{:01d}".format(i) for i in
-                                                                              range(1, 21)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SCI"),
+                ["T2_SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 6) for j in range(1, 8)]
+                + ["T2_SCI_4_{:01d}".format(i) for i in range(8, 14)]
+                + ["T2_SCI_5_{:01d}".format(i) for i in range(1, 21)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SCI"),
-                    None,
-                    {
-                        "Uncertainty": [1, 2, 3, 4, 5, 6, 7],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("SCI"),
+                ["T2_SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 5) for j in range(1, 8)]
+                + ["T2_SCI_4_{:01d}".format(i) for i in range(8, 14)]
+                + ["T2_SCI_5_{:01d}".format(i) for i in range(1, 21)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("SCI"),
+                ["T2_SCI_{:01d}_{:02d}".format(i, j) for i in range(1, 5) for j in range(1, 8)]
+                + ["T2_SCI_4_{:01d}".format(i) for i in range(8, 14)]
+                + ["T2_SCI_5_{:01d}".format(i) for i in range(1, 21)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SCI"),
+                None,
+                {
+                    "Uncertainty": [1, 2, 3, 4, 5, 6, 7],
+                },
+                does_not_raise(),
             ),
         ],
     )
     def test_sci_raises(self, data, columns, subscales, expected):
         with expected:
-            sci(data, columns, subscales)
+            strategies_questionnaire(data, columns, subscales)
 
     @pytest.mark.parametrize(
         "data, columns, subscales, result",
         [
             (data_filtered_correct("SCI"), None, None, result_filtered("SCI")),
             (
-                    data_filtered_correct("SCI"),
-                    ["T2_SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 5) for j in range(1, 8)] + [
-                        "T2_SCI_4_{:01d}".format(i) for i in range(8, 14)] + ["T2_SCI_5_{:01d}".format(i) for i in
-                                                                              range(1, 21)],
-                    None,
-                    result_filtered("SCI"),
+                data_filtered_correct("SCI"),
+                ["T2_SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 5) for j in range(1, 8)]
+                + ["T2_SCI_4_{:01d}".format(i) for i in range(8, 14)]
+                + ["T2_SCI_5_{:01d}".format(i) for i in range(1, 21)],
+                None,
+                result_filtered("SCI"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SCI"), 1),
-                    None,
-                    None,
-                    result_filtered("SCI"),
+                convert_scale(data_filtered_wrong_range("SCI"), 1),
+                None,
+                None,
+                result_filtered("SCI"),
             ),
             (
-                    data_subscale("SCI"),
-                    None,
-                    {"1_ges": [1, 2, 3, 4, 5, 6, 7]},
-                    result_filtered("SCI_1_ges"),
+                data_subscale("SCI"),
+                None,
+                {"1_ges": [1, 2, 3, 4, 5, 6, 7]},
+                result_filtered("SCI_1_ges"),
             ),
         ],
     )
     def test_sci(self, data, columns, subscales, result):
-        data_out = sci(data, columns, subscales)
+        data_out = strategies_questionnaire(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
 
@@ -3782,25 +3801,30 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("T2_ERQ"), 1), None, None, does_not_raise()),
             (data_filtered_correct("T2_ERQ"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("T2_ERQ"),
-                    ["T2_ERQ_{:01d}".format(i) for i in range(1, 12)],
-                    None,
-                    pytest.raises(ValidationError),
-            ),
-            (data_filtered_correct("T2_ERQ"), ["T2_ERQ_{:01d}".format(i) for i in range(1, 11)], None, does_not_raise()),
-            (
-                    data_filtered_correct("T2_ERQ"),
-                    ["T2_ERQ_{:02d}".format(i) for i in range(1, 11)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("T2_ERQ"),
+                ["T2_ERQ_{:01d}".format(i) for i in range(1, 12)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("T2_ERQ"),
-                    None,
-                    {
-                        "S": [2, 4, 6, 9],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("T2_ERQ"),
+                ["T2_ERQ_{:01d}".format(i) for i in range(1, 11)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("T2_ERQ"),
+                ["T2_ERQ_{:02d}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("T2_ERQ"),
+                None,
+                {
+                    "S": [2, 4, 6, 9],
+                },
+                does_not_raise(),
             ),
         ],
     )
@@ -3813,22 +3837,22 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("T2_ERQ"), None, None, result_filtered("ERQ")),
             (
-                    data_filtered_correct("T2_ERQ"),
-                    ["T2_ERQ_{:01d}".format(i) for i in range(1, 11)],
-                    None,
-                    result_filtered("ERQ"),
+                data_filtered_correct("T2_ERQ"),
+                ["T2_ERQ_{:01d}".format(i) for i in range(1, 11)],
+                None,
+                result_filtered("ERQ"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("T2_ERQ"), 1),
-                    None,
-                    None,
-                    result_filtered("ERQ"),
+                convert_scale(data_filtered_wrong_range("T2_ERQ"), 1),
+                None,
+                None,
+                result_filtered("ERQ"),
             ),
             (
-                    data_subscale("ERQ"),
-                    None,
-                    {"S": [1, 2, 3, 4]},
-                    result_filtered("ERQ_S"),
+                data_subscale("ERQ"),
+                None,
+                {"S": [1, 2, 3, 4]},
+                result_filtered("ERQ_S"),
             ),
         ],
     )
@@ -3845,20 +3869,20 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("PHQ"), 1), None, does_not_raise()),
             (data_filtered_correct("PHQ"), None, does_not_raise()),
             (
-                    data_filtered_correct("PHQ"),
-                    ["T2_PHQ_{:01d}".format(i) for i in range(1, 11)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PHQ"),
+                ["T2_PHQ_{:01d}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("PHQ"), ["T2_PHQ_{:01d}".format(i) for i in range(1, 10)], does_not_raise()),
             (
-                    data_filtered_correct("PHQ"),
-                    ["T2_PHQ_{:02d}".format(i) for i in range(1, 10)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("PHQ"),
+                ["T2_PHQ_{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("PHQ"),
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("PHQ"),
+                None,
+                does_not_raise(),
             ),
         ],
     )
@@ -3871,14 +3895,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("PHQ"), None, result_filtered("PHQ")),
             (
-                    data_filtered_correct("PHQ"),
-                    ["T2_PHQ_{:01d}".format(i) for i in range(1, 10)],
-                    result_filtered("PHQ"),
+                data_filtered_correct("PHQ"),
+                ["T2_PHQ_{:01d}".format(i) for i in range(1, 10)],
+                result_filtered("PHQ"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("PHQ"), 1),
-                    None,
-                    result_filtered("PHQ"),
+                convert_scale(data_filtered_wrong_range("PHQ"), 1),
+                None,
+                result_filtered("PHQ"),
             ),
         ],
     )
@@ -3895,20 +3919,20 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("SE_"), 1), None, does_not_raise()),
             (data_filtered_correct("SE_"), None, does_not_raise()),
             (
-                    data_filtered_correct("SE_"),
-                    ["T2_SE_{:01d}".format(i) for i in range(1, 6)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SE_"),
+                ["T2_SE_{:01d}".format(i) for i in range(1, 6)],
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("SE_"), ["T2_SE_{:01d}".format(i) for i in range(1, 5)], does_not_raise()),
             (
-                    data_filtered_correct("SE_"),
-                    ["T2_SE_{:02d}".format(i) for i in range(1, 5)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("SE_"),
+                ["T2_SE_{:02d}".format(i) for i in range(1, 5)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("SE_"),
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("SE_"),
+                None,
+                does_not_raise(),
             ),
         ],
     )
@@ -3921,14 +3945,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("SE_"), None, result_filtered("SocDes")),
             (
-                    data_filtered_correct("SE_"),
-                    ["T2_SE_{:01d}".format(i) for i in range(1, 5)],
-                    result_filtered("SocDes"),
+                data_filtered_correct("SE_"),
+                ["T2_SE_{:01d}".format(i) for i in range(1, 5)],
+                result_filtered("SocDes"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("SE_"), 1),
-                    None,
-                    result_filtered("SocDes"),
+                convert_scale(data_filtered_wrong_range("SE_"), 1),
+                None,
+                result_filtered("SocDes"),
             ),
         ],
     )
@@ -3945,20 +3969,20 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("EV_"), 1), None, does_not_raise()),
             (data_filtered_correct("EV_"), None, does_not_raise()),
             (
-                    data_filtered_correct("EV_"),
-                    ["T1_EV_{:01d}".format(i) for i in range(1, 5)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("EV_"),
+                ["T1_EV_{:01d}".format(i) for i in range(1, 5)],
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("EV_"), ["T1_EV_{:01d}".format(i) for i in range(1, 4)], does_not_raise()),
             (
-                    data_filtered_correct("EV_"),
-                    ["T1_EV_{:02d}".format(i) for i in range(1, 4)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("EV_"),
+                ["T1_EV_{:02d}".format(i) for i in range(1, 4)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("EV_"),
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("EV_"),
+                None,
+                does_not_raise(),
             ),
         ],
     )
@@ -3971,14 +3995,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("EV_"), None, result_filtered("EV")),
             (
-                    data_filtered_correct("EV_"),
-                    ["T1_EV_{:01d}".format(i) for i in range(1, 4)],
-                    result_filtered("EV"),
+                data_filtered_correct("EV_"),
+                ["T1_EV_{:01d}".format(i) for i in range(1, 4)],
+                result_filtered("EV"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("EV_"), 1),
-                    None,
-                    result_filtered("EV"),
+                convert_scale(data_filtered_wrong_range("EV_"), 1),
+                None,
+                result_filtered("EV"),
             ),
         ],
     )
@@ -3995,20 +4019,20 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("ASKU"), 1), None, does_not_raise()),
             (data_filtered_correct("ASKU"), None, does_not_raise()),
             (
-                    data_filtered_correct("ASKU"),
-                    ["T2_ASKU_{:01d}".format(i) for i in range(1, 5)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("ASKU"),
+                ["T2_ASKU_{:01d}".format(i) for i in range(1, 5)],
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("ASKU"), ["T2_ASKU_{:01d}".format(i) for i in range(1, 4)], does_not_raise()),
             (
-                    data_filtered_correct("ASKU"),
-                    ["T2_ASKU_{:02d}".format(i) for i in range(1, 4)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("ASKU"),
+                ["T2_ASKU_{:02d}".format(i) for i in range(1, 4)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("ASKU"),
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("ASKU"),
+                None,
+                does_not_raise(),
             ),
         ],
     )
@@ -4021,14 +4045,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("ASKU"), None, result_filtered("ASKU")),
             (
-                    data_filtered_correct("ASKU"),
-                    ["T2_ASKU_{:01d}".format(i) for i in range(1, 4)],
-                    result_filtered("ASKU"),
+                data_filtered_correct("ASKU"),
+                ["T2_ASKU_{:01d}".format(i) for i in range(1, 4)],
+                result_filtered("ASKU"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("ASKU"), 1),
-                    None,
-                    result_filtered("ASKU"),
+                convert_scale(data_filtered_wrong_range("ASKU"), 1),
+                None,
+                result_filtered("ASKU"),
             ),
         ],
     )
@@ -4045,20 +4069,20 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("LZ"), 1), None, does_not_raise()),
             (data_filtered_correct("LZ"), None, does_not_raise()),
             (
-                    data_filtered_correct("LZ"),
-                    ["T2_LZ_{:01d}".format(i) for i in range(1, 7)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("LZ"),
+                ["T2_LZ_{:01d}".format(i) for i in range(1, 7)],
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("LZ"), ["T2_LZ_{:01d}".format(i) for i in range(1, 6)], does_not_raise()),
             (
-                    data_filtered_correct("LZ"),
-                    ["T2_LZ_{:02d}".format(i) for i in range(1, 6)],
-                    pytest.raises(ValidationError),
+                data_filtered_correct("LZ"),
+                ["T2_LZ_{:02d}".format(i) for i in range(1, 6)],
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("LZ"),
-                    None,
-                    does_not_raise(),
+                data_filtered_correct("LZ"),
+                None,
+                does_not_raise(),
             ),
         ],
     )
@@ -4071,14 +4095,14 @@ class TestQuestionnaires:
         [
             (data_filtered_correct("LZ"), None, result_filtered("SWLS")),
             (
-                    data_filtered_correct("LZ"),
-                    ["T2_LZ_{:01d}".format(i) for i in range(1, 6)],
-                    result_filtered("SWLS"),
+                data_filtered_correct("LZ"),
+                ["T2_LZ_{:01d}".format(i) for i in range(1, 6)],
+                result_filtered("SWLS"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("LZ"), 1),
-                    None,
-                    result_filtered("SWLS"),
+                convert_scale(data_filtered_wrong_range("LZ"), 1),
+                None,
+                result_filtered("SWLS"),
             ),
         ],
     )
@@ -4095,57 +4119,57 @@ class TestQuestionnaires:
             (convert_scale(data_filtered_wrong_range("T2_PZ"), 1), None, None, does_not_raise()),
             (data_filtered_correct("T2_PZ"), None, None, does_not_raise()),
             (
-                    data_filtered_correct("T2_PZ"),
-                    ["T2_PZ_{:01d}".format(i) for i in range(1, 37)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("T2_PZ"),
+                ["T2_PZ_{:01d}".format(i) for i in range(1, 37)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (data_filtered_correct("T2_PZ"), ["T2_PZ_{:01d}".format(i) for i in range(1, 36)], None, does_not_raise()),
             (
-                    data_filtered_correct("T2_PZ"),
-                    ["T2_PZ_{:02d}".format(i) for i in range(1, 36)],
-                    None,
-                    pytest.raises(ValidationError),
+                data_filtered_correct("T2_PZ"),
+                ["T2_PZ_{:02d}".format(i) for i in range(1, 36)],
+                None,
+                pytest.raises(ValidationError),
             ),
             (
-                    data_filtered_correct("PZ"),
-                    None,
-                    {
-                        "Z": [2, 3, 4, 5, 6],
-                    },
-                    does_not_raise(),
+                data_filtered_correct("PZ"),
+                None,
+                {
+                    "Z": [2, 3, 4, 5, 6],
+                },
+                does_not_raise(),
             ),
         ],
     )
     def test_ps_raises(self, data, columns, subscales, expected):
         with expected:
-            ps(data, columns, subscales)
+            seop(data, columns, subscales)
 
     @pytest.mark.parametrize(
         "data, columns, subscales, result",
         [
             (data_filtered_correct("T2_PZ"), None, None, result_filtered("PZ_")),
             (
-                    data_filtered_correct("T2_PZ"),
-                    ["T2_PZ_{:01d}".format(i) for i in range(1, 36)],
-                    None,
-                    result_filtered("PZ_"),
+                data_filtered_correct("T2_PZ"),
+                ["T2_PZ_{:01d}".format(i) for i in range(1, 36)],
+                None,
+                result_filtered("PZ_"),
             ),
             (
-                    convert_scale(data_filtered_wrong_range("T2_PZ"), 1),
-                    None,
-                    None,
-                    result_filtered("PZ_"),
+                convert_scale(data_filtered_wrong_range("T2_PZ"), 1),
+                None,
+                None,
+                result_filtered("PZ_"),
             ),
             (
-                    data_subscale("PS"),
-                    None,
-                    {"Zugang": [1, 2, 3, 4, 5]},
-                    result_filtered("PZ_Zugang"),
+                data_subscale("PS"),
+                None,
+                {"Zugang": [1, 2, 3, 4, 5]},
+                result_filtered("PZ_Zugang"),
             ),
         ],
     )
     def test_ps(self, data, columns, subscales, result):
-        data_out = ps(data, columns, subscales)
+        data_out = seop(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)

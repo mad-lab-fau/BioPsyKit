@@ -179,9 +179,9 @@ def save_log_data(
 
     The behavior of this function depends on the input passed to ``log_data``:
 
-    * If ``log_data`` is a :class:`~pandas.DataFrame` with a :class:`~pandas.MultiIndex` it is assumed that 
+    * If ``log_data`` is a :class:`~pandas.DataFrame` with a :class:`~pandas.MultiIndex` it is assumed that
       the dataframe contains data from multiple subjects and will be exported accordingly as one combined csv file.
-    * If ``log_data`` is a :class:`~pandas.DataFrame` without :class:`~pandas.MultiIndex` it is assumed that the 
+    * If ``log_data`` is a :class:`~pandas.DataFrame` without :class:`~pandas.MultiIndex` it is assumed that the
       dataframe only contains data from one single subject and will be exported accordingly as csv file.
 
     Parameters
@@ -191,9 +191,9 @@ def save_log_data(
     path : :class:`~pathlib.Path` or str
         path for export. The expected format of ``path`` depends on ``log_data``:
 
-        * If ``log_data`` is log data from a single subject ``path`` needs to specify a **folder** . 
+        * If ``log_data`` is log data from a single subject ``path`` needs to specify a **folder**.
           The log data will then be exported to "path/logs_<subject_id>.csv".
-        * If ``log_data`` is log data from multiple subjects ``path`` needs to specify a **file** . 
+        * If ``log_data`` is log data from multiple subjects ``path`` needs to specify a **file**.
           The combined log data of all subjects will then be exported to "path".
 
     subject_id : str, optional

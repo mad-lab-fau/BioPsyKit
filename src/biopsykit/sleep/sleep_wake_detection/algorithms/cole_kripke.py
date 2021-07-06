@@ -21,6 +21,8 @@ class ColeKripke(_SleepWakeBase):
 
     """
 
+    scale_factor: float
+
     def __init__(self, **kwargs):
         """Initialize a new ``ColeKripke`` instance.
 
@@ -33,16 +35,15 @@ class ColeKripke(_SleepWakeBase):
             desired, and possibly the population being observed.
 
         """
-
         self.scale_factor: float = kwargs.pop("scale_factor", None)
-
-        if self.scale_factor is None:
-            self.scale_factor = 0.193125
         """Scale factor to use for the predictions (default corresponds to scale factor optimized for use with the
         activity index, if other activity measures are desired the scale factor can be modified or optimized).
         The recommended range for the scale factor is between 0.1 and 0.25 depending on the sensitivity to activity
         desired, and possibly the population being observed.
         """
+
+        if self.scale_factor is None:
+            self.scale_factor = 0.193125
         super().__init__(**kwargs)
 
     def predict(self, data: arr_t, **kwargs) -> SleepWakeDataFrame:

@@ -303,8 +303,8 @@ def load_questionnaire_data(
         Can either be a string or a list strings to indicate column name(s) that should be used as index level(s),
         or ``None`` for no additional index levels. Default: ``None``
     replace_missing_vals : bool, optional
-        ``True`` to replace encoded "missing values" from software like SPSS (e.g. -77, -99, or -66) 
-        to "actual" missing values (NaN). 
+        ``True`` to replace encoded "missing values" from software like SPSS (e.g. -77, -99, or -66)
+        to "actual" missing values (NaN).
         Default: ``True``
     remove_nan_rows : bool, optional
         ``True`` to remove rows that only contain NaN values (except the index cols), ``False`` to keep NaN rows.

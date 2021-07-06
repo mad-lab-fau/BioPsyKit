@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional, Union, Sequence
 
 import re
-import pytz
 
 import pandas as pd
 
