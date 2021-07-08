@@ -403,7 +403,7 @@ class StatsPipeline:
         stats_type : {"between", "within", "interaction"}
             type of statistical analysis used in the pipeline
         plot_type : {"single", "multi"}
-            type of plot for which significance brackets are generated: "multi" (default) if boxplots are grouped
+            type of plot for which significance brackets are generated: "multi" if boxplots are grouped
             (by ``hue`` variable), "single" (the default) otherwise
         features : str, list or dict, optional
             feature(s) used in boxplot. The resulting significance brackets will be filtered accordingly to only
