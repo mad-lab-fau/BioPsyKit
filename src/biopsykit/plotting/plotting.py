@@ -21,11 +21,12 @@ def lineplot(
 
     This is an extension to seaborn's lineplot function (:func:`~seaborn.lineplot`).
     It offers the same interface, but several improvements:
-        * Data points are not only connected as line, but are also drawn with marker
-        * Lines can have an offset along the categorical (x) axis for better visualization
-          (seaborn equivalent: ``dodge``, which is only available for :func:`seaborn.pointplot`,
-          not for :func:`seaborn.lineplot`)
-        * Further plot parameters (axis labels, ticks, etc.) are inferred from the dataframe
+
+    * Data points are not only connected as line, but are also drawn with marker.
+    * Lines can have an offset along the categorical (x) axis for better visualization
+      (seaborn equivalent: ``dodge``, which is only available for :func:`seaborn.pointplot`,
+      not for :func:`seaborn.lineplot`).
+    * Further plot parameters (axis labels, ticks, etc.) are inferred from the dataframe.
 
     Equivalent to seaborn, the relationship between ``x`` and ``y`` can be shown for different subsets of the
     data using the ``hue`` and ``style`` parameters. If both parameters are assigned two different grouping variables
@@ -50,32 +51,33 @@ def lineplot(
     style : str, optional
         column name of grouping variable that will produce lines with different dashes and/or marker.
         If ``None`` then lines will not have different styles.
-    kwargs
-        additional parameters to configure the plot. Parameters include:
-            * ``x_offset``: offset value to move different groups along the x axis for better visualization.
-              Default: 0.05
-            * ``xlabel``: Label for x axis. If not specified it is inferred from the ``x`` column name
-            * ``ylabel``: Label for y axis. If not specified it is inferred from the ``y`` column name
-            * ``xticklabels``: List of labels for ticks of x axis. If not specified ``order`` is taken as tick labels.
-              If ``order`` is not specified tick labels are inferred from x values.
-            * ``ylim``: y-axis limits
-            * ``order``: list specifying the order of categorical values along the x axis.
-            * ``hue_order``: list specifying the order of processing and plotting for categorical levels
-              of the ``hue`` semantic.
-            * ``marker``: string or list of strings to specify marker style.
-              If ``marker`` is a string, then marker of each line will have the same style.
-              If ``marker`` is a list, then marker of each line will have a different style.
-            * ``linestyle``: string or list of strings to specify line style.
-              If ``linestyle`` is a string, then each line will have the same style.
-              If ``linestyle`` is a list, then each line will have a different style.
-            * ``legend_fontsize``: font size of legend
-            * ``legend_loc``: location of legend in Axes
-            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
-            * ``err_kws``: additional parameters to control the aesthetics of the error bars.
-              The ``err_kws`` are passed down to :func:`~matplotlib.axes.Axes.errorbar` or
-              :func:`~matplotlib.axes.Axes.fill_between`, depending on ``err_style``. Parameters include:
-                  * ``capsize``: length of error bar caps in points
+    **kwargs
+        Additional parameters to configure the plot. Parameters include:
 
+        * ``x_offset``: offset value to move different groups along the x axis for better visualization.
+          Default: 0.05.
+        * ``xlabel``: Label for x axis. If not specified it is inferred from the ``x`` column name.
+        * ``ylabel``: Label for y axis. If not specified it is inferred from the ``y`` column name.
+        * ``xticklabels``: List of labels for ticks of x axis. If not specified ``order`` is taken as tick labels.
+          If ``order`` is not specified tick labels are inferred from x values.
+        * ``ylim``: y-axis limits.
+        * ``order``: list specifying the order of categorical values along the x axis.
+        * ``hue_order``: list specifying the order of processing and plotting for categorical levels
+          of the ``hue`` semantic.
+        * ``marker``: string or list of strings to specify marker style.
+          If ``marker`` is a string, then marker of each line will have the same style.
+          If ``marker`` is a list, then marker of each line will have a different style.
+        * ``linestyle``: string or list of strings to specify line style.
+          If ``linestyle`` is a string, then each line will have the same style.
+          If ``linestyle`` is a list, then each line will have a different style.
+        * ``legend_fontsize``: font size of legend.
+        * ``legend_loc``: location of legend in Axes.
+        * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+        * ``err_kws``: additional parameters to control the aesthetics of the error bars.
+          The ``err_kws`` are passed down to :func:`~matplotlib.axes.Axes.errorbar` or 
+          :func:`~matplotlib.axes.fill_between`, depending on ``err_style``. Parameters include:
+
+          * ``capsize``: length of error bar caps in points
 
     Returns
     -------
@@ -185,11 +187,12 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes
     ----------
     data : :class:`~pandas.DataFrame`
         data to plot
-    kwargs
-        additional parameters to plotting function. For example, this can be:
-            * ``order``: order of items along the categorical axis
-            * ``ylabel``: label of y axis
-            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+    **kwargs
+        Additional parameters to plotting function. For example, this can be:
+
+        * ``order``: order of items along the categorical axis.
+        * ``ylabel``: label of y axis.
+        * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
 
 
     Returns
@@ -202,7 +205,7 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes
 
     See Also
     --------
-    :func:`~biopsykit.dataframe_handling.stack_groups_percent`
+    :func:`~biopsykit.utils.dataframe_handling.stack_groups_percent`
         function to rearrange dataframe to be plotted as stacked bar chart
 
     """
@@ -263,33 +266,39 @@ def feature_boxplot(
     y : str
         column of y axis in ``data``
     order : list str, optional
-        order to plot the categorical levels along the x axis
+        order to plot the categorical levels along the x axis.
     hue : str, optional
         column name of grouping variable. Default: ``None``
     hue_order : list of str, optional
-        order to plot the grouping variable specified by ``hue`` in
+        order to plot the grouping variable specified by ``hue``
     stats_kwargs : dict, optional
         dictionary with arguments for significance brackets.
 
         If annotations should be added, the following parameter is required:
-            * ``box_pairs``: list of box pairs that should be annotated
+
+        * ``box_pairs``: list of box pairs that should be annotated
 
         If already existing box pairs and p values should be used the following parameter is additionally required:
-            * ``pvalues``: list of p values corresponding to ``box_pairs``
+
+        * ``pvalues``: list of p values corresponding to ``box_pairs``
 
         If statistical tests should be computed by ``statsannot``, the following parameters are required:
-            * ``test``: type of statistical test to be computed
-            * ``comparisons_correction`` (optional): Whether (and which) type of multi-comparison correction should be
-              applied. ``None`` to not apply any multi-comparison (default)
+
+        * ``test``: type of statistical test to be computed
+        * ``comparisons_correction`` (optional): Whether (and which) type of multi-comparison correction should be
+          applied. ``None`` to not apply any multi-comparison (default).
 
         The following parameters are optional:
-            * ``pvalue_thresholds``: list of p value thresholds for statistical annotations. The default annotation is:
-              '*': 0.01 <= p < 0.05, '**': 0.001 <= p < 0.01, '***': p < 0.001
-              (``[[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]``)
-    kwargs
+
+        * ``pvalue_thresholds``: list of p value thresholds for statistical annotations. The default annotation is:
+          '*': 0.01 <= p < 0.05, '**': 0.001 <= p < 0.01, '***': p < 0.001
+          (``[[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]``)
+
+    **kwargs
         additional arguments that are passed down to :func:`~seaborn.boxplot`, for example:
-            * ``ylabel``: label of y axis
-            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+
+        * ``ylabel``: label of y axis
+        * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
 
 
     Returns
@@ -302,9 +311,9 @@ def feature_boxplot(
 
     See Also
     --------
-    `~seaborn.boxplot`
+    :func:`~seaborn.boxplot`
         seaborn function to create boxplots
-    `~biopsykit.stats.StatsPipeline`
+    :class:`~biopsykit.stats.StatsPipeline`
         class to create statistical analysis pipelines
 
     """
@@ -386,26 +395,28 @@ def multi_feature_boxplot(
         and the dict values specify the feature (or list of features) that are combined into the subplots.
     group : str
         name of index level with feature names. Corresponds to the subplots that are created.
-    order : list str, optional
+    order : list of str, optional
         order to plot the categorical levels along the x axis
     hue : str, optional
         column name of grouping variable. Default: ``None``
     hue_order : list of str, optional
-        order to plot the grouping variable specified by ``hue`` in
+        order to plot the grouping variable specified by ``hue``
     stats_kwargs : dict, optional
         nested dictionary with arguments for significance brackets. The behavior and expected parameters are similar
         to the ``stats_kwargs`` parameter in :func:`~biopsykit.plotting.feature_boxplot`. However, the ``box_pairs``
         and ``pvalues`` arguments are expected not to be lists, but dictionaries with keys corresponding to the list
         entries (or the dict keys) in ``features`` and box pair / p-value lists are the dict values.
-    kwargs : additional arguments that are passed down to :func:`~seaborn.boxplot`. For example:
+    **kwargs
+        additional arguments that are passed down to :func:`~seaborn.boxplot`. For example:
+    
         * ``order``: specifies x axis order for subplots. Can be a list if order is the same for all subplots or a
-          dict if order should be individual for subplots
+          dict of order should be individual for subplots
         * ``xticklabels``: dictionary to set tick labels of x axis in subplots. Keys correspond to the list entries
           (or the dict keys) in ``features``. Default: ``None``
         * ``ylabels``: dictionary to set y axis labels in subplots. Keys correspond to the list entries
           (or the dict keys) in ``features``. Default: ``None``
         * ``axs``: list of pre-existing axes for the plot. Otherwise, a new figure and axes object is created and
-          returned.
+          returned. 
 
 
     Returns
@@ -420,9 +431,9 @@ def multi_feature_boxplot(
     --------
     :func:`~seaborn.boxplot`
         seaborn function to create boxplots
-    `~biopsykit.plotting.feature_boxplot`
+    :class:`~biopsykit.plotting.feature_boxplot`
         plot single feature boxplot
-    `~biopsykit.stats.StatsPipeline`
+    :class:`~biopsykit.stats.StatsPipeline`
         class to create statistical analysis pipelines and get parameter for plotting significance brackets
 
     """
