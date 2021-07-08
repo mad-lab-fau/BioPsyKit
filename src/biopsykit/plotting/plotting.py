@@ -411,7 +411,7 @@ def multi_feature_boxplot(
         additional arguments that are passed down to :func:`~seaborn.boxplot`. For example:
     
         * ``order``: specifies x axis order for subplots. Can be a list if order is the same for all subplots or a
-          dict of order should be individual for subplots
+          dict if order should be individual for subplots
         * ``xticklabels``: dictionary to set tick labels of x axis in subplots. Keys correspond to the list entries
           (or the dict keys) in ``features``. Default: ``None``
         * ``ylabels``: dictionary to set y axis labels in subplots. Keys correspond to the list entries
