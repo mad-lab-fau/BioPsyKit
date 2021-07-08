@@ -417,7 +417,7 @@ def multi_feature_boxplot(
         * ``ylabels``: dictionary to set y axis labels in subplots. Keys correspond to the list entries
           (or the dict keys) in ``features``. Default: ``None``
         * ``axs``: list of pre-existing axes for the plot. Otherwise, a new figure and axes object is created and
-          returned. 
+          returned.
 
 
     Returns
