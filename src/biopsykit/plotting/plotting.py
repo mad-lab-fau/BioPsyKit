@@ -291,7 +291,7 @@ def feature_boxplot(
         The following parameters are optional:
 
         * ``pvalue_thresholds``: list of p value thresholds for statistical annotations. The default annotation is:
-          '*': 0.01 <= p < 0.05, '**': 0.001 <= p < 0.01, '***': p < 0.001
+          '*': 0.01 <= p < 0.05, '**': 0.001 <= p < 0.01, `'***'`: p < 0.001
           (``[[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]``)
 
     **kwargs
