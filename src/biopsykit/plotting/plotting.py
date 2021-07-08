@@ -74,10 +74,11 @@ def lineplot(
         * ``legend_loc``: location of legend in Axes.
         * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
         * ``err_kws``: additional parameters to control the aesthetics of the error bars.
-          The ``err_kws`` are passed down to :func:`~matplotlib.axes.Axes.errorbar` or 
-          :func:`~matplotlib.axes.fill_between`, depending on ``err_style``. Parameters include:
+          The ``err_kws`` are passed down to :meth:`matplotlib.axes.Axes.errorbar` or 
+          :meth:`matplotlib.axes.fill_between`, depending on ``err_style``. Parameters include:
 
           * ``capsize``: length of error bar caps in points
+
 
     Returns
     -------
