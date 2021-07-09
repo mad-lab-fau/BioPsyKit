@@ -189,7 +189,7 @@ copyright = (
     "Erlangen-Nürnberg (FAU)".format(datetime.now().year)
 )
 
-# -- Copy the README and Changelog and fix image path --------------------------------------
+# -- Copy the README and Changelog --------------------------------------
 HERE = Path(__file__).parent
 with (HERE.parent.joinpath("README.md")).open() as f:
     out = f.read()
