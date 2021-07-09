@@ -74,7 +74,7 @@ def lineplot(
         * ``legend_loc``: location of legend in Axes.
         * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
         * ``err_kws``: additional parameters to control the aesthetics of the error bars.
-          The ``err_kws`` are passed down to :meth:`matplotlib.axes.Axes.errorbar` or 
+          The ``err_kws`` are passed down to :meth:`matplotlib.axes.Axes.errorbar` or
           :meth:`matplotlib.axes.fill_between`, depending on ``err_style``. Parameters include:
 
           * ``capsize``: length of error bar caps in points
@@ -409,7 +409,7 @@ def multi_feature_boxplot(
         entries (or the dict keys) in ``features`` and box pair / p-value lists are the dict values.
     **kwargs
         additional arguments that are passed down to :func:`~seaborn.boxplot`. For example:
-    
+
         * ``order``: specifies x axis order for subplots. Can be a list if order is the same for all subplots or a
           dict if order should be individual for subplots
         * ``xticklabels``: dictionary to set tick labels of x axis in subplots. Keys correspond to the list entries

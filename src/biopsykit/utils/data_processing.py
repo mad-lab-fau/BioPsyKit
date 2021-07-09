@@ -30,6 +30,22 @@ from biopsykit.utils.datatype_helper import (
 )
 
 
+def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_start: bool) -> Dict[str, pd.DataFrame]:
+    if time_intervals.index.nlevels > 1:
+        # multi-index series => second level contains start/end times of phases
+        time_intervals = time_intervals.unstack().T
+        time_intervals = {key: tuple(value.values()) for key, value in time_intervals.to_dict().items()}
+    else:
+        if include_start:
+            time_intervals["Start"] = data.index[0].to_pydatetime().time()
+        time_intervals.sort_values(inplace=True)
+        time_intervals = {
+            name: (start, end)
+            for name, start, end in zip(time_intervals.index, time_intervals[:-1], time_intervals[1:])
+        }
+    return time_intervals
+
+
 def split_data(
     data: pd.DataFrame,
     time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
@@ -79,31 +95,23 @@ def split_data(
     >>> print(data_dict['Part2'])
 
     """
-    data_dict: Dict[str, pd.DataFrame] = {}
+    _assert_is_dtype(time_intervals, (pd.DataFrame, pd.Series, dict))
+
     if isinstance(time_intervals, pd.DataFrame):
         if len(time_intervals) > 1:
             raise ValueError("Only dataframes with 1 row allowed!")
         time_intervals = time_intervals.iloc[0]
 
     if isinstance(time_intervals, pd.Series):
-        if time_intervals.index.nlevels > 1:
-            # multi-index series => second level contains start/end times of phases
-            time_intervals = time_intervals.unstack().T
-            time_intervals = {key: tuple(value.values()) for key, value in time_intervals.to_dict().items()}
-        else:
-            if include_start:
-                time_intervals["Start"] = data.index[0].to_pydatetime().time()
-            time_intervals.sort_values(inplace=True)
-            for name, start, end in zip(time_intervals.index, np.pad(time_intervals, (0, 1)), time_intervals[1:]):
-                data_dict[name] = data.between_time(start, end)
-
-    if isinstance(time_intervals, dict):
+        time_intervals = _split_data_series(data, time_intervals, include_start)
+    else:
         if include_start:
             time_intervals["Start"] = (
                 data.index[0].to_pydatetime().time(),
                 list(time_intervals.values())[0][0],
             )
-        data_dict = {name: data.between_time(*start_end) for name, start_end in time_intervals.items()}
+
+    data_dict = {name: data.between_time(*start_end) for name, start_end in time_intervals.items()}
     return data_dict
 
 
@@ -142,30 +150,32 @@ def exclude_subjects(
     for key, data in kwargs.items():
         _assert_is_dtype(data, pd.DataFrame)
         if index_name in data.index.names:
-            if (
-                data.index.get_level_values(index_name).dtype == np.object
-                and all([isinstance(s, str) for s in excluded_subjects])
-            ) or (
-                data.index.get_level_values(index_name).dtype == np.int
-                and all([isinstance(s, int) for s in excluded_subjects])
+            level_values = data.index.get_level_values(index_name)
+            if (level_values.dtype == np.object and all([isinstance(s, str) for s in excluded_subjects])) or (
+                level_values.dtype == np.int and all([isinstance(s, int) for s in excluded_subjects])
             ):
-                # dataframe index and subjects are both strings or both integers
-                try:
-                    if isinstance(data.index, pd.MultiIndex):
-                        # MultiIndex => specify index level
-                        cleaned_data[key] = data.drop(index=excluded_subjects, level=index_name)
-                    else:
-                        # Regular Index
-                        cleaned_data[key] = data.drop(index=excluded_subjects)
-                except KeyError:
-                    warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
-            else:
-                raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
-        else:
-            raise ValueError("No '{}' level in index!".format(index_name))
+                cleaned_data[key] = _exclude_single_subject(data, excluded_subjects, index_name)
+            raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
+        raise ValueError("No '{}' level in index!".format(index_name))
     if len(cleaned_data) == 1:
         cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data
+
+
+def _exclude_single_subject(
+    data: pd.DataFrame,
+    excluded_subjects: Union[Sequence[str], Sequence[int]],
+    index_name: str,
+):
+    # dataframe index and subjects are both strings or both integers
+    try:
+        if isinstance(data.index, pd.MultiIndex):
+            # MultiIndex => specify index level
+            return data.drop(index=excluded_subjects, level=index_name)
+        # Regular Index
+        return data.drop(index=excluded_subjects)
+    except KeyError:
+        warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
 
 
 def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.DataFrame]) -> SubjectDataDict:

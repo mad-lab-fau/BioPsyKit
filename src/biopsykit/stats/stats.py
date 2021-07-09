@@ -1,6 +1,6 @@
 """Module for setting up a pipeline for statistical analysis."""
 from pathlib import Path
-from typing import Dict, Sequence, Union, Tuple, Literal, Optional
+from typing import Dict, Sequence, Union, Tuple, Literal, Optional, List
 
 import pandas as pd
 import pingouin as pg
@@ -181,22 +181,11 @@ class StatsPipeline:
             params = {key: general_params[key] for key in MAP_STAT_PARAMS[step[1]] if key in general_params}
 
             grouper = []
-            grouper_tmp = []
-            if "groupby" in specific_params:
-                grouper_tmp = specific_params.pop("groupby")
-            elif "groupby" in general_params:
-                grouper_tmp = general_params.pop("groupby")
-            if isinstance(grouper_tmp, str):
-                grouper_tmp = [grouper_tmp]
-
+            grouper_tmp = self._get_grouper_variable(general_params, specific_params)
             grouper = grouper + grouper_tmp
 
             if step[0] == "prep":
-                if "within" in general_params and "between" in general_params:
-                    grouper.append(general_params["within"])
-                    specific_params["group"] = general_params["between"]
-                else:
-                    specific_params["group"] = general_params.get("within", general_params.get("between"))
+                grouper, specific_params = self._get_specific_params_prep(grouper, general_params, specific_params)
 
             test_func = MAP_STAT_TESTS[step[1]]
             if len(grouper) > 0:
@@ -216,6 +205,29 @@ class StatsPipeline:
 
         self.results = pipeline_results
         return pipeline_results
+
+    @staticmethod
+    def _get_grouper_variable(general_params: Dict[str, str], specific_params: Dict[str, str]):
+        grouper_tmp = []
+        if "groupby" in specific_params:
+            grouper_tmp = specific_params.pop("groupby")
+        elif "groupby" in general_params:
+            grouper_tmp = general_params.pop("groupby")
+
+        if isinstance(grouper_tmp, str):
+            grouper_tmp = [grouper_tmp]
+
+        return grouper_tmp
+
+    @staticmethod
+    def _get_specific_params_prep(grouper: List[str], general_params: Dict[str, str], specific_params: Dict[str, str]):
+        if "within" in general_params and "between" in general_params:
+            grouper.append(general_params["within"])
+            specific_params["group"] = general_params["between"]
+        else:
+            specific_params["group"] = general_params.get("within", general_params.get("between"))
+
+        return grouper, specific_params
 
     def results_cat(self, category: STATS_CATEGORY) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """Return results for pipeline category.
@@ -276,9 +288,21 @@ class StatsPipeline:
 
 
         """
-        if sig_only is None:
-            sig_only = {}
+        sig_only = self._get_sig_only()
         grouped = kwargs.pop("grouped", False)
+
+        if self.results is None:
+            display(Markdown("No results."))
+            return
+
+        if grouped and "groupby" in self.params:
+            for key, _ in self.data.groupby(self.params.get("groupby")):
+                display(Markdown("""<font size="4"><b> {} </b></font>""".format(key)))
+                self._display_results(sig_only, self.params.get("groupby"), key, **kwargs)
+        else:
+            self._display_results(sig_only, **kwargs)
+
+    def _get_sig_only(self, sig_only: Optional[Union[str, bool, Sequence[str], Dict[str, bool]]] = None):
         if sig_only is None:
             sig_only = {}
         if isinstance(sig_only, str):
@@ -291,16 +315,7 @@ class StatsPipeline:
         if isinstance(sig_only, list):
             sig_only = {cat: cat in sig_only for cat in self.category_steps}
 
-        if self.results is None:
-            display(Markdown("No results."))
-            return
-
-        if grouped and "groupby" in self.params:
-            for key, _ in self.data.groupby(self.params.get("groupby")):
-                display(Markdown("""<font size="4"><b> {} </b></font>""".format(key)))
-                self._display_results(sig_only, self.params.get("groupby"), key, **kwargs)
-        else:
-            self._display_results(sig_only, **kwargs)
+        return sig_only
 
     def _display_results(
         self, sig_only: Dict[str, bool], groupby: Optional[str] = None, group_key: Optional[str] = None, **kwargs

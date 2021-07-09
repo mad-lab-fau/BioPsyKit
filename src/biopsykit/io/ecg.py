@@ -69,8 +69,7 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 def load_hr_phase_dict_folder(
     base_path: path_t, filename_pattern: str, subfolder_pattern: Optional[str] = None
 ) -> HeartRateSubjectDataDict:
-    r"""Load a folder with multiple ``HeartRatePhaseDict`` and concatenate them
-    into a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict``.
+    r"""Load a folder with multiple ``HeartRatePhaseDict`` and concatenate them into a ``HeartRateSubjectDataDict``.
 
     This functions looks for all files that match the ``file_pattern`` in the folder specified by ``base_path``
     and loads the files that are all expected to be :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.

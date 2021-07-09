@@ -127,19 +127,7 @@ def find_extrema_in_radius(
     # possible start offset if beginning of array needs to be padded to ensure radius
     start_padding = 0
 
-    # determine upper and lower limit
-    if isinstance(radius, tuple):
-        lower_limit = radius[0]
-    else:
-        lower_limit = radius
-    if isinstance(radius, tuple):
-        upper_limit = radius[-1]
-    else:
-        upper_limit = radius
-
-    # round up and make sure it's an integer
-    lower_limit = np.ceil(lower_limit).astype(int)
-    upper_limit = np.ceil(upper_limit).astype(int)
+    lower_limit, upper_limit = _find_extrema_in_radius_get_limits(radius)
 
     # pad end/start of array if last_index+radius/first_index-radius is longer/shorter than array
     if len(data) - np.max(indices) <= upper_limit:
@@ -155,6 +143,23 @@ def find_extrema_in_radius(
         windows[i] = data[index - lower_limit + start_padding : index + upper_limit + start_padding + 1]
 
     return extrema_func(windows, axis=1) + indices - lower_limit
+
+
+def _find_extrema_in_radius_get_limits(radius: Union[int, Tuple[int, int]]) -> Tuple[int, int]:
+    # determine upper and lower limit
+    if isinstance(radius, tuple):
+        lower_limit = radius[0]
+    else:
+        lower_limit = radius
+    if isinstance(radius, tuple):
+        upper_limit = radius[-1]
+    else:
+        upper_limit = radius
+
+    # round up and make sure it's an integer
+    lower_limit = np.ceil(lower_limit).astype(int)
+    upper_limit = np.ceil(upper_limit).astype(int)
+    return lower_limit, upper_limit
 
 
 def remove_outlier_and_interpolate(
@@ -331,14 +336,21 @@ def sanitize_sliding_window_input(
     else:
         window = int(window_samples)
 
+    overlap = _compute_overlap_samples(window, overlap_samples, overlap_percent)
+
+    return window, overlap
+
+
+def _compute_overlap_samples(
+    window: int, overlap_samples: Optional[int] = None, overlap_percent: Optional[float] = None
+):
     if overlap_samples is not None:
         overlap = int(overlap_samples)
     elif overlap_percent is not None:
         overlap = int(overlap_percent * window)
     else:
         overlap = window - 1
-
-    return window, overlap
+    return overlap
 
 
 def sliding_window_view(array: np.ndarray, window_length: int, overlap: int, nan_padding: bool = False) -> np.ndarray:

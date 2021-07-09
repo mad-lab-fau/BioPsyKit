@@ -68,7 +68,7 @@ def whr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     """Compute the **Waist to Hip Ratio**.
 
     This function assumes the required data in the following format:
-    
+
     * 1st column: waist circumference
     * 2nd column: hip circumference
 
