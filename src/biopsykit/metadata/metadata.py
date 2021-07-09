@@ -19,8 +19,9 @@ def bmi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     """Compute the **Body Mass Index**.
 
     This function assumes the required data in the following format:
-        * 1st column: weight in kilogram
-        * 2nd column: height in centimeter
+
+    * 1st column: weight in kilogram
+    * 2nd column: height in centimeter
 
     If ``data`` is a dataframe that contains more than the required two columns, e.g., if the complete questionnaire
     dataframe is passed, the required columns can be sliced by specifying them in the ``columns`` parameter.
@@ -41,9 +42,9 @@ def bmi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     Raises
     ------
-    :exc:`~biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if input values or output values are not in the expected range, e.g., because values are provided in the
-        wrong unit or column are in the wrong order
+        wrong unit or columns are in the wrong order
 
     """
     score_name = "BMI"
@@ -67,8 +68,9 @@ def whr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     """Compute the **Waist to Hip Ratio**.
 
     This function assumes the required data in the following format:
-        * 1st column: waist circumference
-        * 2nd column: hip circumference
+    
+    * 1st column: waist circumference
+    * 2nd column: hip circumference
 
     If ``data`` is a dataframe that contains more than the required two columns, e.g., if the complete questionnaire
     dataframe is passed, the required columns can be sliced by specifying them in the ``columns`` parameter.
@@ -89,7 +91,7 @@ def whr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     Raises
     ------
-    :exc:`~biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if input values or output values are not in the expected range, e.g., because values are provided in the
         wrong unit or column are in the wrong order
 
