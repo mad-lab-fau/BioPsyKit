@@ -5214,11 +5214,10 @@ def bfi_10(
 
     _assert_value_range(data, score_range)
 
-    # Invert scores TODO: adapt if only one subscale is given
+    # Invert scores
     data = _invert_subscales(
         data, subscales=subscales, score_range=score_range, idx_dict={"E": [0], "V": [1], "G": [0], "N": [0], "O": [0]}
     )
-    # invert(data, score_range=score_range, cols=to_idx([1, 4, 5, 7, 9]), inplace=True)
 
     bfi_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
 
@@ -5338,10 +5337,8 @@ def swb(
 
     References
     ----------
-    TODO Janis: correct reference
-    Rammstedt, B., Kemper, C. J., Klein, M. C., Beierlein, C., & Kovaleva, A. (2013).
-    A short scale for assessing the big five dimensions of personality: 10 item big five inventory (BFI-10).
-    *methods, data, analyses*, 7(2), 17.
+    Pontin, Eleanor, et al. "A UK validation of a general measure of subjective well-being: the modified BBC subjective
+    well-being scale (BBC-SWB)." Health and Quality of Life Outcomes 11.1 (2013): 1-9.
 
     """
     score_name = "SWB"
@@ -5542,8 +5539,7 @@ def ie_4(
 def social_desirability(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
     """Compute the **Social Desirability Scale**.
 
-    # TODO Janis: fix
-    Short scale to estimate social desirability following the ALLBUS (1980
+    Short scale to estimate social desirability following the ALLBUS (1980)
 
     .. note::
         This implementation assumes a score range of [1, 8].
@@ -5945,7 +5941,6 @@ def wpi(
         score_range = [1, 4]
         _assert_value_range(data, score_range)
 
-    # TODO: SPSS file says to invert values 1-4, but results are computed w/o inverted values
     # invert(data, score_range=score_range, inplace=True)
 
     psi_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
@@ -5986,7 +5981,7 @@ def eval_clinic(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.In
 
     References
     ----------
-    TODO Janis: Add references
+    Mostly self-generated items.
 
     """
     score_name = "EvalClinic"
