@@ -249,10 +249,7 @@ def load_saliva_wide_format(
     # ensure pathlib
     file_path = Path(file_path)
     _assert_file_extension(file_path, [".csv", ".xls", ".xlsx"])
-    if file_path.suffix in [".csv"]:
-        data = pd.read_csv(file_path, **kwargs)
-    else:
-        data = pd.read_excel(file_path, **kwargs)
+    data = _read_dataframe(file_path, **kwargs)
 
     if subject_col is None:
         subject_col = "subject"
@@ -268,15 +265,7 @@ def load_saliva_wide_format(
 
     data, condition_col = _get_condition_col(data, condition_col)
 
-    if condition_col is not None:
-        index_cols = [condition_col] + index_cols
-
-    if additional_index_cols is None:
-        additional_index_cols = []
-    if isinstance(additional_index_cols, str):
-        additional_index_cols = [additional_index_cols]
-
-    index_cols = index_cols + additional_index_cols
+    index_cols = _get_index_cols(condition_col, index_cols, additional_index_cols)
     data = _apply_index_cols(data, index_cols=index_cols)
 
     num_subjects = len(data)
@@ -292,6 +281,24 @@ def load_saliva_wide_format(
     is_saliva_raw_dataframe(data, saliva_type)
 
     return data
+
+
+def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_index_cols: Sequence[str]):
+    if condition_col is not None:
+        index_cols = [condition_col] + index_cols
+
+    if additional_index_cols is None:
+        additional_index_cols = []
+    if isinstance(additional_index_cols, str):
+        additional_index_cols = [additional_index_cols]
+
+    return index_cols + additional_index_cols
+
+
+def _read_dataframe(file_path: Path, **kwargs):
+    if file_path.suffix in [".csv"]:
+        return pd.read_csv(file_path, **kwargs)
+    return pd.read_excel(file_path, **kwargs)
 
 
 def _check_num_samples(num_samples: int, num_subjects: int) -> None:

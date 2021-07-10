@@ -638,8 +638,8 @@ class Stroop(BaseProtocol):
     #
     #     In case of only one group a pandas dataframe can be passed.
     #
-    #     In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
-    #     to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
+    #     In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe
+    #     belongs to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
     #
     #     Regardless of the kind of input the dataframes need to be in the format of a 'mse dataframe', as returned
     #     by ``stroop.hr_course_mist`` (see ``MIST.hr_course_mist`` for further information).

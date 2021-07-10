@@ -119,19 +119,13 @@ def ecg_plot(
 
     figsize = kwargs.get("figsize", (15, 5))
     title = kwargs.get("title", None)
-    if isinstance(ecg_signal.index, pd.DatetimeIndex):
-        plt.rcParams["timezone"] = ecg_signal.index.tz.zone
-    plt.rcParams["mathtext.default"] = "regular"
+    _set_plt_rcparams(ecg_signal)
 
     # Prepare figure and set axes
     fig = plt.figure(figsize=figsize, constrained_layout=False)
-
     axs = _get_ecg_plot_specs(fig, plot_ecg_signal, plot_individual_beats, plot_distribution)
+    _ecg_plot_set_title(fig, title)
 
-    if title:
-        fig.suptitle("Electrocardiogram (ECG) – {}".format(title), fontweight="bold")
-    else:
-        fig.suptitle("Electrocardiogram (ECG)", fontweight="bold")
     plt.subplots_adjust(hspace=0.3, wspace=0.1)
 
     peaks = np.where(ecg_signal["ECG_R_Peaks"] == 1)[0]
@@ -160,7 +154,20 @@ def ecg_plot(
     return fig, list(axs.values())
 
 
-def _get_ecg_plot_specs(
+def _set_plt_rcparams(ecg_signal: pd.DataFrame):
+    if isinstance(ecg_signal.index, pd.DatetimeIndex):
+        plt.rcParams["timezone"] = ecg_signal.index.tz.zone
+    plt.rcParams["mathtext.default"] = "regular"
+
+
+def _ecg_plot_set_title(fig: plt.Figure, title: str):
+    if title:
+        fig.suptitle("Electrocardiogram (ECG) – {}".format(title), fontweight="bold")
+    else:
+        fig.suptitle("Electrocardiogram (ECG)", fontweight="bold")
+
+
+def _get_ecg_plot_specs(  # pylint:disable=too-many-branches
     fig: plt.Figure, plot_ecg_signal: bool, plot_individual_beats: bool, plot_distribution: bool
 ) -> Dict[str, plt.Axes]:
     if plot_individual_beats or plot_distribution:
@@ -333,32 +340,51 @@ def hr_plot(
     ax.plot(heart_rate["Heart_Rate"], color=color, label="Heart Rate", linewidth=1.5, **kwargs)
 
     if plot_mean:
-        rate_mean = heart_rate["Heart_Rate"].mean()
-        ax.axhline(
-            y=rate_mean,
-            label="Mean: {:.1f} bpm".format(rate_mean),
-            linestyle="--",
-            color=mean_color,
-            linewidth=2,
-        )
-        ax.margins(x=0)
+        _hr_plot_plot_mean(heart_rate, mean_color, ax)
 
     ax.set_ylim(auto=True)
 
     if plot_outlier:
-        if "R_Peak_Outlier" in heart_rate.columns:
-            outlier = heart_rate["R_Peak_Outlier"]
-            outlier = heart_rate.index[np.where(outlier == 1)[0]]
-        if outlier is not None:
-            ax.scatter(
-                x=outlier,
-                y=heart_rate.loc[outlier, "Heart_Rate"],
-                color=colors.fau_color("phil"),
-                zorder=3,
-                label="ECG Outlier",
-            )
-            ax.relim()
+        _hr_plot_plot_outlier(heart_rate, outlier, ax)
 
+    _hr_plot_style_axis(heart_rate, ax)
+
+    if plot_mean or plot_outlier:
+        ax.legend(loc=legend_loc, fontsize=legend_fontsize)
+
+    fig.tight_layout()
+    fig.autofmt_xdate(rotation=0, ha="center")
+    return fig, ax
+
+
+def _hr_plot_plot_mean(heart_rate: pd.DataFrame, mean_color: str, ax: plt.Axes):
+    rate_mean = heart_rate["Heart_Rate"].mean()
+    ax.axhline(
+        y=rate_mean,
+        label="Mean: {:.1f} bpm".format(rate_mean),
+        linestyle="--",
+        color=mean_color,
+        linewidth=2,
+    )
+    ax.margins(x=0)
+
+
+def _hr_plot_plot_outlier(heart_rate: pd.DataFrame, outlier: np.ndarray, ax: plt.Axes):
+    if "R_Peak_Outlier" in heart_rate.columns:
+        outlier = heart_rate["R_Peak_Outlier"]
+        outlier = heart_rate.index[np.where(outlier == 1)[0]]
+    if outlier is not None:
+        ax.scatter(
+            x=outlier,
+            y=heart_rate.loc[outlier, "Heart_Rate"],
+            color=colors.fau_color("phil"),
+            zorder=3,
+            label="ECG Outlier",
+        )
+        ax.relim()
+
+
+def _hr_plot_style_axis(heart_rate: pd.DataFrame, ax: plt.Axes):
     if isinstance(heart_rate.index, pd.DatetimeIndex):
         # TODO add axis style for non-Datetime axes
         ax.xaxis.set_major_locator(mdates.MinuteLocator())
@@ -368,16 +394,8 @@ def hr_plot(
     ax.tick_params(axis="x", which="both", bottom=True)
     ax.tick_params(axis="y", which="major", left=True)
     ax.yaxis.set_major_locator(mticks.MaxNLocator(5, steps=[5, 10]))
-
-    if plot_mean or plot_outlier:
-        ax.legend(loc=legend_loc, fontsize=legend_fontsize)
-
     ax.set_xlabel("Time")
     ax.set_ylabel("Heart Rate [bpm]")
-
-    fig.tight_layout()
-    fig.autofmt_xdate(rotation=0, ha="center")
-    return fig, ax
 
 
 def hrv_plot(

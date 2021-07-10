@@ -271,22 +271,30 @@ def invert(
         data = data.copy()
 
     if isinstance(data, pd.DataFrame):
-        if cols is not None:
-            if isinstance(cols[0], str):
-                _assert_value_range(data[cols], score_range)
-                data.loc[:, cols] = score_range[1] - data.loc[:, cols] + score_range[0]
-            else:
-                _assert_value_range(data.iloc[:, cols], score_range)
-                data.iloc[:, cols] = score_range[1] - data.iloc[:, cols] + score_range[0]
-        else:
-            _assert_value_range(data, score_range)
-            data.iloc[:, :] = score_range[1] - data.iloc[:, :] + score_range[0]
+        data = _invert_dataframe(data, cols, score_range)
     else:
         _assert_value_range(data, score_range)
         data.iloc[:] = score_range[1] - data.iloc[:] + score_range[0]
 
     if inplace:
         return None
+    return data
+
+
+def _invert_dataframe(
+    data: pd.DataFrame, cols: Union[Sequence[str], Sequence[int]], score_range: Sequence[int]
+) -> pd.DataFrame:
+    if cols is not None:
+        if isinstance(cols[0], str):
+            _assert_value_range(data[cols], score_range)
+            data.loc[:, cols] = score_range[1] - data.loc[:, cols] + score_range[0]
+        else:
+            _assert_value_range(data.iloc[:, cols], score_range)
+            data.iloc[:, cols] = score_range[1] - data.iloc[:, cols] + score_range[0]
+    else:
+        _assert_value_range(data, score_range)
+        data.iloc[:, :] = score_range[1] - data.iloc[:, :] + score_range[0]
+
     return data
 
 
@@ -387,18 +395,26 @@ def convert_scale(
         data = data.copy()
 
     if isinstance(data, pd.DataFrame):
-        if cols is None:
-            data.iloc[:, :] = data.iloc[:, :] + offset
-        else:
-            if isinstance(cols[0], int):
-                data.iloc[:, cols] = data.iloc[:, cols] + offset
-            elif isinstance(cols[0], str):
-                data.loc[:, cols] = data.loc[:, cols] + offset
+        data = _convert_scale_dataframe(data, cols, offset)
     else:
         data.iloc[:] = data.iloc[:] + offset
 
     if inplace:
         return None
+    return data
+
+
+def _convert_scale_dataframe(
+    data: pd.DataFrame, cols: Union[Sequence[int], Sequence[str]], offset: int
+) -> pd.DataFrame:
+    if cols is None:
+        data.iloc[:, :] = data.iloc[:, :] + offset
+    else:
+        if isinstance(cols[0], int):
+            data.iloc[:, cols] = data.iloc[:, cols] + offset
+        elif isinstance(cols[0], str):
+            data.loc[:, cols] = data.loc[:, cols] + offset
+
     return data
 
 
@@ -623,17 +639,14 @@ def compute_scores(
                 "'biopsykit.questionnaires.utils.get_supported_questionnaires()' "
                 "to get a list of all supported questionnaires.".format(score)
             )
-        kwargs = quest_kwargs.get(score_orig, None)
-        if kwargs is None:
-            df = quest_funcs[score](data[columns])
-        else:
-            try:
-                df = quest_funcs[score](data[columns], **kwargs)
-            except TypeError as e:
-                raise TypeError(
-                    "Error computing questionnaire '{}'. The computation failed with the following "
-                    "error: \n\n{}.".format(score, str(e))
-                ) from e
+        kwargs = quest_kwargs.get(score_orig, {})
+        try:
+            df = quest_funcs[score](data[columns], **kwargs)
+        except TypeError as e:
+            raise TypeError(
+                "Error computing questionnaire '{}'. The computation failed with the following "
+                "error: \n\n{}.".format(score, str(e))
+            ) from e
 
         if suffix is not None:
             df.columns = ["{}_{}".format(col, suffix) for col in df.columns]
@@ -697,16 +710,10 @@ def _compute_questionnaire_subscales(
     for key, items in subscales.items():
         if all(np.issubdtype(type(i), np.integer) for i in items):
             # assume column indices, starting at 1 (-> convert to 0-indexed indices first)
-            if agg_type == "sum":
-                score = data.iloc[:, to_idx(items)].sum(axis=1)
-            else:
-                score = data.iloc[:, to_idx(items)].mean(axis=1)
+            score = _compute_questionnaire_scores_int(data, items, agg_type)
         elif all(isinstance(i, str) for i in items):
             # assume column names
-            if agg_type == "sum":
-                score = data.loc[:, items].sum(axis=1)
-            else:
-                score = data.loc[:, items].mean(axis=1)
+            score = _compute_questionnaire_scores_str(data, items, agg_type)
         else:
             raise ValueError(
                 "Subscale columns are either expected as column names (list of strings) or "
@@ -716,6 +723,18 @@ def _compute_questionnaire_subscales(
         out["{}_{}".format(score_name, key)] = score
 
     return out
+
+
+def _compute_questionnaire_scores_int(data: pd.DataFrame, items: Sequence[int], agg_type: str):
+    if agg_type == "sum":
+        return data.iloc[:, to_idx(items)].sum(axis=1)
+    return data.iloc[:, to_idx(items)].mean(axis=1)
+
+
+def _compute_questionnaire_scores_str(data: pd.DataFrame, items: Sequence[str], agg_type: str):
+    if agg_type == "sum":
+        return data.loc[:, items].sum(axis=1)
+    return data.loc[:, items].mean(axis=1)
 
 
 def _get_cols(
@@ -745,25 +764,29 @@ def _get_bins(
     bins = list(bins)
 
     if first_min:
-        if isinstance(col, int):
-            min_val = data.iloc[:, col].min()
-        elif isinstance(col, str):
-            min_val = data[col].min()
-        else:
-            min_val = data.min()
-
+        min_val = _bin_scale_get_min_val(data, col)
         if min_val < min(bins):
             bins = [min_val - 0.01] + bins
 
     if last_max:
-        if isinstance(col, int):
-            max_val = data.iloc[:, col].max()
-        elif isinstance(col, str):
-            max_val = data[col].max()
-        else:
-            max_val = data.max()
-
+        max_val = _bin_scale_get_max_val(data, col)
         if max_val > max(bins):
             bins = bins + [max_val + 0.01]
 
     return bins
+
+
+def _bin_scale_get_min_val(data: Union[pd.DataFrame, pd.Series], col: Union[int, str]) -> float:
+    if isinstance(col, int):
+        return data.iloc[:, col].min()
+    if isinstance(col, str):
+        return data[col].min()
+    return data.min()
+
+
+def _bin_scale_get_max_val(data: Union[pd.DataFrame, pd.Series], col: Union[int, str]) -> float:
+    if isinstance(col, int):
+        return data.iloc[:, col].max()
+    if isinstance(col, str):
+        return data[col].max()
+    return data.max()

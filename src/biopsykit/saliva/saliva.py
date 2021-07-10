@@ -1,6 +1,6 @@
 """Functions for processing saliva data and computing established features (AUC, slope, maximum increase, ...)."""
 import warnings
-from typing import Optional, Sequence, Tuple, Union, Dict
+from typing import Optional, Sequence, Tuple, Union, Dict, List
 
 import pandas as pd
 import numpy as np
@@ -343,17 +343,7 @@ def auc(
     }
 
     if compute_auc_post:
-        idxs_post = None
-        if sample_times.ndim == 1:
-            idxs_post = np.where(sample_times >= 0)[0]
-        elif sample_times.ndim == 2:
-            warnings.warn(
-                "Not computing `auc_i_post` values because this is only implemented if `saliva_times` "
-                "are the same for all subjects."
-            )
-        if idxs_post is not None:
-            data_post = data.iloc[:, idxs_post]
-            auc_data["auc_i_post"] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
+        auc_data = _auc_compute_auc_post(data, auc_data, sample_times)
 
     out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(saliva_type))
     out.columns.name = "saliva_feature"
@@ -362,6 +352,23 @@ def auc(
     is_saliva_feature_dataframe(out, saliva_type)
 
     return out
+
+
+def _auc_compute_auc_post(
+    data: SalivaRawDataFrame, auc_data: Dict[str, np.ndarray], sample_times: np.ndarray
+) -> Dict[str, np.ndarray]:
+    idxs_post = None
+    if sample_times.ndim == 1:
+        idxs_post = np.where(sample_times >= 0)[0]
+    elif sample_times.ndim == 2:
+        warnings.warn(
+            "Not computing `auc_i_post` values because this is only implemented if `saliva_times` "
+            "are the same for all subjects."
+        )
+    if idxs_post is not None:
+        data_post = data.iloc[:, idxs_post]
+        auc_data["auc_i_post"] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
+    return auc_data
 
 
 def slope(
@@ -565,7 +572,7 @@ def standard_features(
 def mean_se(
     data: SalivaRawDataFrame,
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    group_cols: Optional[Union[str, Sequence[str]]] = None,
+    group_cols: Optional[Union[str, List[str]]] = None,
     remove_s0: Optional[bool] = False,
 ) -> Union[SalivaMeanSeDataFrame, Dict[str, SalivaMeanSeDataFrame]]:
     """Compute mean and standard error per saliva sample.
@@ -611,7 +618,19 @@ def mean_se(
         data = _remove_s0(data)
 
     group_cols = _get_group_cols(data, group_cols, "subject", "mean_se")
+    _mean_se_assert_group_cols(data, group_cols)
 
+    if "time" in data.columns and "time" not in group_cols:
+        # add 'time' column to grouper if it's in the data and wasn't added yet because otherwise
+        # we would loose this column
+        group_cols = group_cols + ["time"]
+
+    data_mean_se = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
+    is_saliva_mean_se_dataframe(data_mean_se)
+    return data_mean_se
+
+
+def _mean_se_assert_group_cols(data: pd.DataFrame, group_cols: Sequence[str]):
     if group_cols == list(data.index.names):
         # if data should be grouped by *all* index levels we can not compute an aggregation
         raise DataFrameTransformationError(
@@ -622,12 +641,3 @@ def mean_se(
         raise DataFrameTransformationError(
             "Error computing mean and standard error on data: 'sample' index level needs to be added as group column!"
         )
-
-    if "time" in data.columns and "time" not in group_cols:
-        # add 'time' column to grouper if it's in the data and wasn't added yet because otherwise
-        # we would loose this column
-        group_cols = group_cols + ["time"]
-
-    data_mean_se = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
-    is_saliva_mean_se_dataframe(data_mean_se)
-    return data_mean_se

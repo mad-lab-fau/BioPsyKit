@@ -392,12 +392,8 @@ def hr_mean_plot(
         Plot data as lineplot with mean and standard error
 
     """
-    ax: plt.Axes = kwargs.get("ax", None)
-    if ax is None:
-        figsize = kwargs.get("figsize", _hr_mean_plot_params.get("figsize"))
-        fig, ax = plt.subplots(figsize=figsize)
-    else:
-        fig = ax.get_figure()
+    fig, ax = _plot_get_fig_ax(**kwargs)
+
     kwargs.update({"ax": ax})
 
     # get all plot parameter
@@ -436,6 +432,17 @@ def hr_mean_plot(
     ax.tick_params(axis="y", which="major", left=True)
     ax.set_ylabel(ylabel)
 
+    _hr_mean_plot_set_axis_lims(ylims, ax)
+
+    # customize legend
+    if "condition" in data.index.names:
+        _hr_mean_add_legend(**kwargs)
+
+    fig.tight_layout()
+    return fig, ax
+
+
+def _hr_mean_plot_set_axis_lims(ylims: Union[Sequence[float], float], ax: plt.Axes):
     if isinstance(ylims, (tuple, list)):
         ax.set_ylim(ylims)
     else:
@@ -445,13 +452,6 @@ def hr_mean_plot(
         ax.margins(y=ymargin)
     ax.margins(x=0)
     ax.relim()
-
-    # customize legend
-    if "condition" in data.index.names:
-        _hr_mean_add_legend(**kwargs)
-
-    fig.tight_layout()
-    return fig, ax
 
 
 def _hr_mean_plot(data: MeanSeDataFrame, x_vals: np.array, key: str, index: int, **kwargs):
@@ -529,11 +529,7 @@ def _hr_mean_style_x_axis(ax: plt.Axes, phase_dict: Dict[str, Sequence[str]], nu
         ax.set_xlabel(kwargs.get("xlabel", "Subphases"))
 
 
-def _hr_mean_plot_subphase_annotations(
-    phase_dict: Dict[str, Sequence[str]],
-    xlims: Sequence[float],
-    **kwargs,
-):
+def _hr_mean_plot_subphase_annotations(phase_dict: Dict[str, Sequence[str]], xlims: Sequence[float], **kwargs):
     """Add subphase annotations to mean HR plot.
 
     Parameters
@@ -695,12 +691,7 @@ def saliva_plot(
         Plot data as lineplot with mean and standard error
 
     """
-    ax: plt.Axes = kwargs.get("ax", None)
-    if ax is None:
-        figsize = kwargs.get("figsize", _hr_ensemble_plot_params.get("figsize"))
-        fig, ax = plt.subplots(figsize=figsize)
-    else:
-        fig = ax.get_figure()
+    fig, ax = _plot_get_fig_ax(**kwargs)
     kwargs.update({"ax": ax})
 
     if saliva_type is None and not isinstance(data, dict):
@@ -715,18 +706,7 @@ def saliva_plot(
     marker = kwargs.pop("marker", "o")
     colormap = kwargs.pop("colormap", None)
     for i, key in enumerate(data):
-        ls = _saliva_plot_get_plot_param(linestyle, key)
-        if linestyle is not None:
-            kwargs.setdefault("linestyle", ls)
-
-        m = _saliva_plot_get_plot_param(marker, key)
-        if marker is not None:
-            kwargs.setdefault("marker", m)
-
-        cmap = _saliva_plot_get_plot_param(colormap, key)
-        if colormap is not None:
-            kwargs.setdefault("colormap", cmap)
-
+        _saliva_plot_extract_style_params(linestyle, marker, colormap, **kwargs)
         _saliva_plot(
             data=data[key],
             saliva_type=key,
@@ -745,6 +725,45 @@ def saliva_plot(
     return fig, ax
 
 
+def _saliva_plot_extract_style_params(
+    key: str,
+    linestyle: Union[Dict[str, str], str],
+    marker: Union[Dict[str, str], str],
+    colormap: Union[Dict[str, str], str],
+    **kwargs,
+):
+    ls = _saliva_plot_get_plot_param(linestyle, key)
+    if linestyle is not None:
+        kwargs.setdefault("linestyle", ls)
+
+    m = _saliva_plot_get_plot_param(marker, key)
+    if marker is not None:
+        kwargs.setdefault("marker", m)
+
+    cmap = _saliva_plot_get_plot_param(colormap, key)
+    if colormap is not None:
+        kwargs.setdefault("colormap", cmap)
+
+
+def _saliva_plot_hue_style(data: pd.DataFrame):
+    hue = "condition" if "condition" in data.index.names else None
+    style = "condition" if "condition" in data.index.names else None
+    return hue, style
+
+
+def _saliva_plot_sanitize_dicts(
+    data: Union[Dict[str, pd.DataFrame], pd.DataFrame], ylabel: Union[Dict[str, str], str], saliva_type: str
+):
+    if isinstance(ylabel, dict):
+        ylabel = ylabel[saliva_type]
+
+    if isinstance(data, dict):
+        # multiple saliva data were passed in a dict => get the selected saliva type
+        data = data[saliva_type]
+
+    return data, ylabel
+
+
 def _saliva_plot(
     data: Union[SalivaRawDataFrame, SalivaMeanSeDataFrame],
     saliva_type: str,
@@ -756,9 +775,8 @@ def _saliva_plot(
 ):
 
     ax: plt.Axes = kwargs.get("ax")
-    if test_times is None:
-        test_times = [0, 0]
 
+    test_times = test_times or [0, 0]
     test_title = kwargs.get("test_title", _saliva_plot_params.get("test_title"))
     test_color = kwargs.get("test_color", _saliva_plot_params.get("test_color"))
     test_alpha = kwargs.get("test_alpha", _saliva_plot_params.get("test_alpha"))
@@ -767,17 +785,9 @@ def _saliva_plot(
     xticks = kwargs.get("xticks")
     xaxis_tick_locator = kwargs.get("xaxis_tick_locator")
 
-    if isinstance(ylabel, dict):
-        ylabel = ylabel[saliva_type]
+    data, ylabel = _saliva_plot_sanitize_dicts(data, ylabel, saliva_type)
 
-    if isinstance(data, dict):
-        # multiple saliva data were passed in a dict => get the selected saliva type
-        data = data[saliva_type]
-
-    ret = is_saliva_raw_dataframe(data, saliva_type, raise_exception=False)
-    ret = ret or is_saliva_mean_se_dataframe(data, raise_exception=False)
-    if not ret:
-        raise ValidationError("'data' is expected to be either a SalivaRawDataFrame or a SalivaMeanSeDataFrame!")
+    _assert_saliva_data_input(data, saliva_type)
 
     data = data.copy()
 
@@ -791,8 +801,7 @@ def _saliva_plot(
         data["time"] = sample_times * int(len(data) / len(sample_times))
         x = "time"
 
-    hue = "condition" if "condition" in data.index.names else None
-    style = "condition" if "condition" in data.index.names else None
+    hue, style = _saliva_plot_hue_style(data)
     kwargs.setdefault("markers", "o")
 
     if counter == 0 and len(ax.lines) == 0:
@@ -818,9 +827,14 @@ def _saliva_plot(
 
     lineplot(data=data, x=x, y=saliva_type, hue=hue, style=style, **kwargs)
 
-    if xticks is not None and xaxis_tick_locator is not None:
-        ax.xaxis.set_major_locator(xaxis_tick_locator)
-        ax.xaxis.set_ticks(xticks)
+    _saliva_plot_style_xaxis(xticks, xaxis_tick_locator, ax)
+
+
+def _assert_saliva_data_input(data: pd.DataFrame, saliva_type: str):
+    ret = is_saliva_raw_dataframe(data, saliva_type, raise_exception=False)
+    ret = ret or is_saliva_mean_se_dataframe(data, raise_exception=False)
+    if not ret:
+        raise ValidationError("'data' is expected to be either a SalivaRawDataFrame or a SalivaMeanSeDataFrame!")
 
 
 def _saliva_plot_get_plot_param(param: Union[Dict[str, str], str], key: str):
@@ -831,12 +845,13 @@ def _saliva_plot_get_plot_param(param: Union[Dict[str, str], str], key: str):
     return p
 
 
-def saliva_plot_combine_legend(
-    fig: plt.Figure,
-    ax: plt.Axes,
-    saliva_types: Sequence[str],
-    **kwargs,
-):
+def _saliva_plot_style_xaxis(xticks: Sequence[str], xaxis_tick_locator: mticks.Locator, ax: plt.Axes):
+    if xticks is not None and xaxis_tick_locator is not None:
+        ax.xaxis.set_major_locator(xaxis_tick_locator)
+        ax.xaxis.set_ticks(xticks)
+
+
+def saliva_plot_combine_legend(fig: plt.Figure, ax: plt.Axes, saliva_types: Sequence[str], **kwargs):
     """Combine multiple legends of ``saliva_plot`` into one joint legend outside of plot.
 
     If data from multiple saliva types are combined into one plot (e.g., by calling
@@ -1058,3 +1073,13 @@ def _saliva_feature_boxplot_get_ylabels(saliva_type: str, features: Union[str, S
             ylabels[feature] = ylabels["slope"]
 
     return ylabels
+
+
+def _plot_get_fig_ax(**kwargs):
+    ax: plt.Axes = kwargs.get("ax", None)
+    if ax is None:
+        figsize = kwargs.get("figsize", _hr_mean_plot_params.get("figsize"))
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.get_figure()
+    return fig, ax

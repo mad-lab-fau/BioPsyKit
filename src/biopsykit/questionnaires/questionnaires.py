@@ -3927,6 +3927,21 @@ def pfb(
             "Glueck": [31],
         }
 
+    _pfb_assert_value_range(data, subscales, score_range)
+
+    # invert item 19
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
+    data = _invert_subscales(data, subscales=subscales, idx_dict={"Streitverhalten": [5]}, score_range=score_range)
+
+    pfb_data = _compute_questionnaire_subscales(data, score_name, subscales)
+
+    if len(data.columns) == 31:
+        pfb_data[score_name] = data.iloc[:, 0:30].sum(axis=1)
+    return pd.DataFrame(pfb_data, index=data.index)
+
+
+def _pfb_assert_value_range(data: pd.DataFrame, subscales: Dict[str, Sequence[int]], score_range: Sequence[int]):
     try:
         for subscale in subscales:
             # the " Glueck" column has a different score range => check separately
@@ -3943,17 +3958,6 @@ def pfb(
                 "`biopsykit.questionnaire.utils.convert_scale()`.".format(score_range, subscales["Glueck"], [1, 6])
             )
         raise e
-
-    # invert item 19
-    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
-    # by the subscale dict)
-    data = _invert_subscales(data, subscales=subscales, idx_dict={"Streitverhalten": [5]}, score_range=score_range)
-
-    pfb_data = _compute_questionnaire_subscales(data, score_name, subscales)
-
-    if len(data.columns) == 31:
-        pfb_data[score_name] = data.iloc[:, 0:30].sum(axis=1)
-    return pd.DataFrame(pfb_data, index=data.index)
 
 
 def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:

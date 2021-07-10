@@ -108,11 +108,15 @@ def _get_start_end(
     if end is None:
         end = data.index[-1]
 
-    if isinstance(start, str):
-        start = pd.Timestamp(start, tz=timezone)
-    if isinstance(end, str):
-        end = pd.Timestamp(end, tz=timezone)
+    start = _to_timestamp(start, timezone)
+    end = _to_timestamp(end, timezone)
     return start, end
+
+
+def _to_timestamp(date: Union[str, pd.Timestamp], timezone: str) -> pd.Timestamp:
+    if isinstance(date, str):
+        date = pd.Timestamp(date, tz=timezone)
+    return date
 
 
 def static_moment_duration(data: pd.DataFrame, start_end: np.array) -> float:

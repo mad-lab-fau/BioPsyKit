@@ -1,5 +1,5 @@
 """Module providing functions to load and save logs from the *CARWatch* app."""
-from typing import Optional, Dict, Union
+from typing import Optional, Dict, Union, Sequence
 import re
 import json
 import warnings
@@ -58,36 +58,54 @@ def load_logs_all_subjects(
     # ensure pathlib
     base_folder = Path(base_folder)
 
-    dict_log_files = {}
     if has_subject_folders:
         folder_list = [p for p in sorted(base_folder.glob("*")) if p.is_dir() and not p.name.startswith(".")]
-        for folder in tqdm(folder_list):
-            subject_id = folder.name
-            dict_log_files[subject_id] = load_log_one_subject(folder)
+        dict_log_files = _load_log_file_folder(folder_list)
     else:
         # first, look for available csv files
         file_list = list(sorted(base_folder.glob("*.csv")))
         if len(file_list) > 0:
-            if log_filename_pattern is None:
-                log_filename_pattern = LOG_FILENAME_PATTERN + ".csv"
-            for file in tqdm(file_list):
-                subject_id = re.search(log_filename_pattern, file.name).group(1)
-                df = pd.read_csv(file, sep=";")
-                df["time"] = pd.to_datetime(df["time"])
-                df.set_index("time", inplace=True)
-                dict_log_files[subject_id] = df
+            dict_log_files = _load_log_file_csv(file_list, log_filename_pattern)
         else:
             # fallback: look for zip files
             file_list = list(sorted(base_folder.glob("*.zip")))
-            if len(file_list) > 0:
-                if log_filename_pattern is None:
-                    log_filename_pattern = LOG_FILENAME_PATTERN + ".zip"
-                for file in tqdm(file_list):
-                    subject_id = re.search(log_filename_pattern, file.name).group(1)
-                    dict_log_files[subject_id] = load_log_one_subject(file)
+            dict_log_files = _load_log_file_zip(file_list, log_filename_pattern)
 
     if return_df:
         return pd.concat(dict_log_files, names=["subject_id"])
+    return dict_log_files
+
+
+def _load_log_file_folder(folder_list: Sequence[Path]):
+    dict_log_files = {}
+    for folder in tqdm(folder_list):
+        subject_id = folder.name
+        dict_log_files[subject_id] = load_log_one_subject(folder)
+
+    return dict_log_files
+
+
+def _load_log_file_csv(file_list: Sequence[Path], log_filename_pattern: str):
+    dict_log_files = {}
+    if log_filename_pattern is None:
+        log_filename_pattern = LOG_FILENAME_PATTERN + ".csv"
+    for file in tqdm(file_list):
+        subject_id = re.search(log_filename_pattern, file.name).group(1)
+        df = pd.read_csv(file, sep=";")
+        df["time"] = pd.to_datetime(df["time"])
+        df.set_index("time", inplace=True)
+        dict_log_files[subject_id] = df
+    return dict_log_files
+
+
+def _load_log_file_zip(file_list: Sequence[Path], log_filename_pattern: str) -> Dict[str, pd.DataFrame]:
+    dict_log_files = {}
+    if log_filename_pattern is None:
+        log_filename_pattern = LOG_FILENAME_PATTERN + ".zip"
+    for file in tqdm(file_list):
+        subject_id = re.search(log_filename_pattern, file.name).group(1)
+        dict_log_files[subject_id] = load_log_one_subject(file)
+
     return dict_log_files
 
 

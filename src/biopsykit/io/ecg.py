@@ -167,28 +167,35 @@ def load_hr_phase_dict_folder(
             )
         for subject_dir in subject_dirs:
             subject_id = subject_dir.name
-            # first try to search for files with glob (assuming that a regex string without capture group was passed),
-            # then try to search via regex search (assuming that a regex string with capture group was passed,
-            # which should actually not be done if subfolder_pattern is passed)
-            file_list = list(sorted(subject_dir.glob(filename_pattern)))
-            if len(file_list) == 0:
-                file_list = sorted(subject_dir.glob("*"))
-                # then extract the ones that match
-                file_list = [f for f in file_list if re.search(filename_pattern, f.name)]
-            if len(file_list) == 1:
-                dict_hr_subjects[subject_id] = load_hr_phase_dict(file_list[0])
-            elif len(file_list) > 1:
-                warnings.warn(
-                    'More than one file matching file pattern "{}" found in folder {}. '
-                    "Trying to merge these files into one HeartRatePhaseDict".format(filename_pattern, subject_dir)
-                )
-                dict_hr = {}
-                for file in file_list:
-                    dict_hr.update(load_hr_phase_dict(file))
-                dict_hr_subjects[subject_id] = dict_hr
-            else:
-                print("No Heart Rate data for subject {}".format(subject_id))
+            dict_hr_subjects[subject_id] = _load_hr_phase_dict_single_subject(subject_dir, filename_pattern)
     return dict_hr_subjects
+
+
+def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str) -> HeartRatePhaseDict:
+    subject_id = subject_dir.name
+    # first try to search for files with glob (assuming that a regex string without capture group was passed),
+    # then try to search via regex search (assuming that a regex string with capture group was passed,
+    # which should actually not be done if subfolder_pattern is passed)
+    file_list = list(sorted(subject_dir.glob(filename_pattern)))
+    if len(file_list) == 0:
+        file_list = sorted(subject_dir.glob("*"))
+        # then extract the ones that match
+        file_list = [f for f in file_list if re.search(filename_pattern, f.name)]
+
+    if len(file_list) == 1:
+        return load_hr_phase_dict(file_list[0])
+    if len(file_list) > 1:
+        warnings.warn(
+            'More than one file matching file pattern "{}" found in folder {}. '
+            "Trying to merge these files into one HeartRatePhaseDict".format(filename_pattern, subject_dir)
+        )
+        dict_hr = {}
+        for file in file_list:
+            dict_hr.update(load_hr_phase_dict(file))
+        return dict_hr
+
+    print("No Heart Rate data for subject {}".format(subject_id))
+    return {}
 
 
 def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t) -> None:

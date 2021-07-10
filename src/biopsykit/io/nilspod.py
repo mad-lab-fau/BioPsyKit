@@ -121,20 +121,7 @@ def load_dataset_nilspod(
     if timezone is None:
         timezone = tz
 
-    idxs_corrupted = np.where(np.diff(dataset.counter) < 1)[0]
-    # edge case: check if only last sample is corrupted. if yes, cut last sample
-    if len(idxs_corrupted) == 1 and (idxs_corrupted == len(dataset.counter) - 2):
-        dataset.cut(start=0, stop=idxs_corrupted[0], inplace=True)
-    elif len(idxs_corrupted) > 1:
-        if handle_counter_inconsistency == "raise":
-            raise ValueError("Error loading dataset. Counter not monotonously increasing!")
-        if handle_counter_inconsistency == "warn":
-            warnings.warn(
-                "Counter not monotonously increasing. This might indicate that the dataset is corrupted or "
-                "that the dataset was recorded as part of a synchronized session and might need to be loaded "
-                "using `biopsykit.io.load_synced_session_nilspod()`. "
-                "Check the counter of the DataFrame manually!"
-            )
+    _handle_counter_inconsistencies_dataset(dataset, handle_counter_inconsistency)
 
     if isinstance(datastreams, str):
         datastreams = [datastreams]
@@ -220,14 +207,7 @@ def load_synced_session_nilspod(
     session = SyncedSession.from_folder_path(folder_path, legacy_support=legacy_support)
     session.align_to_syncregion(inplace=True)
 
-    if len(np.where(np.diff(session.counter) < 1)[0]) > 0:
-        if handle_counter_inconsistency == "raise":
-            raise ValueError("Error loading session. Counter not monotonously increasing!")
-        if handle_counter_inconsistency == "warn":
-            warnings.warn(
-                "Counter not monotonously increasing. This might indicate that the session is corrupted. "
-                "Check the counter of the DataFrame manually!"
-            )
+    _handle_counter_inconsistencies_session(session, handle_counter_inconsistency)
 
     if timezone is None:
         timezone = tz
@@ -247,6 +227,42 @@ def load_synced_session_nilspod(
         )
     fs = session.info.sampling_rate_hz[0]
     return df, fs
+
+
+def _handle_counter_inconsistencies_dataset(
+    dataset: Dataset, handle_counter_inconsistency: COUNTER_INCONSISTENCY_HANDLING
+):
+    idxs_corrupted = np.where(np.diff(dataset.counter) < 1)[0]
+    # edge case: check if only last sample is corrupted. if yes, cut last sample
+    if len(idxs_corrupted) == 1 and (idxs_corrupted == len(dataset.counter) - 2):
+        dataset.cut(start=0, stop=idxs_corrupted[0], inplace=True)
+    elif len(idxs_corrupted) > 1:
+        if handle_counter_inconsistency == "raise":
+            raise ValueError("Error loading dataset. Counter not monotonously increasing!")
+        if handle_counter_inconsistency == "warn":
+            warnings.warn(
+                "Counter not monotonously increasing. This might indicate that the dataset is corrupted or "
+                "that the dataset was recorded as part of a synchronized session and might need to be loaded "
+                "using `biopsykit.io.load_synced_session_nilspod()`. "
+                "Check the counter of the DataFrame manually!"
+            )
+
+
+def _handle_counter_inconsistencies_session(
+    session: SyncedSession, handle_counter_inconsistency: COUNTER_INCONSISTENCY_HANDLING
+):
+    idxs_corrupted = np.where(np.diff(session.counter) < 1)[0]
+    # edge case: check if only last sample is corrupted. if yes, cut last sample
+    if len(idxs_corrupted) == 1 and (idxs_corrupted == len(session.counter) - 2):
+        session.cut(start=0, stop=idxs_corrupted[0], inplace=True)
+    elif len(idxs_corrupted) > 1:
+        if handle_counter_inconsistency == "raise":
+            raise ValueError("Error loading session. Counter not monotonously increasing!")
+        if handle_counter_inconsistency == "warn":
+            warnings.warn(
+                "Counter not monotonously increasing. This might indicate that the session is corrupted. "
+                "Check the counter of the DataFrame manually!"
+            )
 
 
 def load_csv_nilspod(
@@ -322,17 +338,8 @@ def load_csv_nilspod(
     df.index = ((df.index / sampling_rate) * 1e9).astype(int)
     # infer start time from filename
     start_time = re.findall(filename_regex, str(file_path.name))
-    if len(start_time) > 0:
-        # convert index to datetime index with absolute time information
-        start_time = start_time[0]
-        start_time = pd.to_datetime(start_time, format=time_regex).to_datetime64().astype(int)
-        # add start time as offset and convert into datetime index
-        df.index = pd.to_datetime(df.index + start_time)
-    else:
-        # no start time information available, so convert into timedelta index
-        df.index = pd.to_timedelta(df.index)
+    df = _convert_index(df, start_time, time_regex)
 
-    df.index.name = "time"
     if isinstance(datastreams, str):
         datastreams = [datastreams]
     if datastreams is not None:
@@ -343,6 +350,21 @@ def load_csv_nilspod(
         # localize timezone (is already in correct timezone since start time is inferred from file name)
         df = df.tz_localize(tz=timezone)
     return df, sampling_rate
+
+
+def _convert_index(df: pd.DataFrame, start_time: Sequence[str], time_regex: str):
+    if len(start_time) > 0:
+        # convert index to datetime index with absolute time information
+        start_time = start_time[0]
+        start_time = pd.to_datetime(start_time, format=time_regex).to_datetime64().astype(int)
+        # add start time as offset and convert into datetime index
+        df.index = pd.to_datetime(df.index + start_time)
+    else:
+        # no start time information available, so convert into timedelta index
+        df.index = pd.to_timedelta(df.index)
+    df.index.name = "time"
+
+    return df
 
 
 def load_folder_nilspod(
@@ -488,6 +510,14 @@ def get_nilspod_dataset_corrupted_info(dataset: Dataset, file_path: path_t) -> D
     idx_diff = np.diff(dataset.counter)
     idx_corrupt = np.where(idx_diff != 1.0)[0]
     percent_corrupt = round((len(idx_corrupt) / len(idx_diff)) * 100.0, 1)
+    condition = _get_nilspod_dataset_corrupted_info_get_condition(percent_corrupt, idx_corrupt)
+
+    dict_res["percent_corrupt"] = percent_corrupt
+    dict_res["condition"] = condition
+    return dict_res
+
+
+def _get_nilspod_dataset_corrupted_info_get_condition(percent_corrupt: float, idx_corrupt: Sequence[int]) -> str:
     condition = "parts"
     if percent_corrupt > 90.0:
         condition = "lost"
@@ -496,7 +526,4 @@ def get_nilspod_dataset_corrupted_info(dataset: Dataset, file_path: path_t) -> D
             condition = "start_only"
         elif (idx_corrupt[0] / len(idx_corrupt)) > 0.70:
             condition = "end_only"
-
-    dict_res["percent_corrupt"] = percent_corrupt
-    dict_res["condition"] = condition
-    return dict_res
+    return condition

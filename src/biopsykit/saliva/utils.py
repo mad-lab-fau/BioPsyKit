@@ -1,7 +1,7 @@
 """Utility functions for working with saliva dataframes."""
 import re
 
-from typing import Optional, Dict, Sequence, Union, Tuple
+from typing import Optional, Dict, Sequence, Union, Tuple, List
 from datetime import time, datetime
 
 import pandas as pd
@@ -170,6 +170,14 @@ def extract_saliva_columns(
     return data.filter(regex=col_pattern)
 
 
+def _sample_times_datetime_to_minute_apply(
+    sample_times: Union[pd.DataFrame, pd.Series]
+) -> Union[pd.DataFrame, pd.Series]:
+    if isinstance(sample_times.values.flatten()[0], (pd.Timedelta, np.timedelta64)):
+        return sample_times.apply(pd.to_timedelta)
+    return sample_times.astype(str).apply(pd.to_datetime)
+
+
 def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]) -> Union[pd.Series, pd.DataFrame]:
     """Convert sample times from datetime or timedelta objects into minutes.
 
@@ -199,10 +207,7 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
 
     """
     if isinstance(sample_times.values.flatten()[0], str):
-        if isinstance(sample_times, pd.DataFrame):
-            sample_times = pd.to_timedelta(sample_times.stack()).unstack("sample")
-        else:
-            sample_times = pd.to_timedelta(sample_times)
+        sample_times = _get_sample_times_str(sample_times)
 
     if not isinstance(sample_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64, np.datetime64)):
         raise ValueError(
@@ -217,10 +222,7 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
         # Then stack it back together
         sample_times = sample_times.unstack(level="sample")
 
-    if isinstance(sample_times.values.flatten()[0], (pd.Timedelta, np.timedelta64)):
-        sample_times = sample_times.apply(pd.to_timedelta)
-    else:
-        sample_times = sample_times.astype(str).apply(pd.to_datetime)
+    sample_times = _sample_times_datetime_to_minute_apply(sample_times)
 
     sample_times = sample_times.diff(axis=1).apply(lambda s: (s.dt.total_seconds() / 60))
     sample_times = sample_times.cumsum(axis=1)
@@ -228,6 +230,12 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
     if is_series:
         sample_times = sample_times.stack()
     return sample_times
+
+
+def _get_sample_times_str(sample_times: Union[pd.Series, pd.DataFrame]) -> Union[pd.Series, pd.DataFrame]:
+    if isinstance(sample_times, pd.DataFrame):
+        return pd.to_timedelta(sample_times.stack()).unstack("sample")
+    return pd.to_timedelta(sample_times)
 
 
 def _remove_s0(data: SalivaRawDataFrame) -> SalivaRawDataFrame:
@@ -289,6 +297,14 @@ def _get_sample_times(
 
     # check whether we have the same saliva times for all subjects (1d array) or not (2d array)
     # and whether the input format is correct
+    _get_sample_times_check_dims(data, sample_times, saliva_type)
+
+    if remove_s0:
+        sample_times = sample_times[..., 1:]
+    return sample_times
+
+
+def _get_sample_times_check_dims(data: pd.DataFrame, sample_times, saliva_type):
     if sample_times.ndim == 1:
         exp_shape = data.unstack(level="sample")[saliva_type].shape[1]
         act_shape = sample_times.shape[0]
@@ -308,13 +324,7 @@ def _get_sample_times(
                 "Dimensions of 'sample_times' does not correspond to dimensions of 'data'! "
                 "Expected {}, got {}.".format(exp_shape, act_shape)
             )
-    else:
-        raise ValueError("'sample_times' has invalid dimensions! Expected 1 or 2, got {}".format(sample_times.ndim))
-
-    if remove_s0:
-        sample_times = sample_times[..., 1:]
-
-    return sample_times
+    raise ValueError("'sample_times' has invalid dimensions! Expected 1 or 2, got {}".format(sample_times.ndim))
 
 
 def _get_saliva_idx_labels(
@@ -357,6 +367,11 @@ def _get_saliva_idx_labels(
     if len(sample_idx) != 2:
         raise IndexError("Exactly 2 indices needed for computing slope. Got {} indices.".format(len(sample_idx)))
 
+    sample_idx = _get_saliva_idx_labels_sanitize(sample_idx, columns)
+    return sample_labels, sample_idx
+
+
+def _get_saliva_idx_labels_sanitize(sample_idx: List[int], columns: Sequence[str]):
     # replace idx values like '-1' with the actual index
     if sample_idx[0] < 0:
         sample_idx[0] = len(columns) + sample_idx[0]
@@ -367,13 +382,12 @@ def _get_saliva_idx_labels(
     # check that second index is bigger than first index
     if sample_idx[0] >= sample_idx[1]:
         raise IndexError("`sample_idx[1]` must be bigger than `sample_idx[0]`. Got {}".format(sample_idx))
-
-    return sample_labels, sample_idx
+    return sample_idx
 
 
 def _get_group_cols(
     data: SalivaRawDataFrame, group_cols: Union[str, Sequence[str]], group_type: str, function_name: str
-) -> Sequence[str]:
+) -> List[str]:
     """Get appropriate columns for grouping.
 
     Parameters

@@ -163,7 +163,7 @@ class LogStatistics:
         df = df.reset_index().rename({"index": "logging_days"}, axis=1)
         return df
 
-    def get_plot(self, plot_id: str, **kwargs) -> Tuple[plt.Figure, plt.Axes]:
+    def get_plot(self, plot_id: str, **kwargs) -> Tuple[plt.Figure, plt.Axes]:  # pylint:disable=too-many-branches
         """Return barplot to visualize log data statistics for one data type.
 
         Parameters

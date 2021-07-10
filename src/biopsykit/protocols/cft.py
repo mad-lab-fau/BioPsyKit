@@ -598,6 +598,14 @@ class CFT(BaseProtocol):
         self._cft_plot_add_phase_annotations(ax, times_dict, **kwargs)
         self._cft_plot_add_param_annotations(data, cft_params, times_dict, ax, bbox, **kwargs)
 
+        self._cft_plot_style_axis(data, ax, **kwargs)
+
+        fig.tight_layout()
+        fig.autofmt_xdate(rotation=0, ha="center")
+        return fig, ax
+
+    @staticmethod
+    def _cft_plot_style_axis(data: pd.DataFrame, ax: plt.Axes, **kwargs):
         ylims = kwargs.get("ylims", None)
         if isinstance(ylims, (tuple, list)):
             ax.set_ylim(ylims)
@@ -611,10 +619,6 @@ class CFT(BaseProtocol):
             ax.set_xlabel("Time")
         else:
             ax.set_xlabel("Time [s]")
-
-        fig.tight_layout()
-        fig.autofmt_xdate(rotation=0, ha="center")
-        return fig, ax
 
     def _cft_plot_get_cft_times(
         self, data: pd.DataFrame, time_baseline: int, time_recovery: int

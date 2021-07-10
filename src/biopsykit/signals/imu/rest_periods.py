@@ -1,4 +1,6 @@
 """Module for computing Rest Periods from raw acceleration signals."""
+import datetime
+from typing import Union
 
 import pandas as pd
 import numpy as np
@@ -71,13 +73,8 @@ class RestPeriods:
         angle_sliding = sliding_window(
             angle, window_sec=window_s, sampling_rate=self.sampling_rate, overlap_percent=overlap
         )
-        index_resample = sliding_window(
-            data.index.values, window_sec=window_s, sampling_rate=self.sampling_rate, overlap_percent=overlap
-        )[:, 0]
 
-        if isinstance(data.index, pd.DatetimeIndex):
-            index_resample = pd.DatetimeIndex(index_resample)
-            index_resample = index_resample.tz_localize("UTC").tz_convert(data.index.tzinfo)
+        index_resample = self._resample_index(data, window_s, overlap)
 
         df_angle = pd.DataFrame(
             np.abs(np.diff(np.nanmean(angle_sliding, axis=1))), columns=["angle"], index=index_resample[1:]
@@ -124,6 +121,22 @@ class RestPeriods:
         grp_max = group.get_group(group.size().idxmax())
 
         total_duration = data.index[-1] - data.index[0]
+
+        return self._major_rest_period(data, total_duration, grp_max)
+
+    def _resample_index(self, data: pd.DataFrame, window_s: int, overlap: float):
+        index_resample = sliding_window(
+            data.index.values, window_sec=window_s, sampling_rate=self.sampling_rate, overlap_percent=overlap
+        )[:, 0]
+
+        if isinstance(data.index, pd.DatetimeIndex):
+            index_resample = pd.DatetimeIndex(index_resample)
+            index_resample = index_resample.tz_localize("UTC").tz_convert(data.index.tzinfo)
+        return index_resample
+
+    def _major_rest_period(
+        self, data: pd.DataFrame, total_duration: Union[datetime.timedelta, float], grp_max: pd.DataFrame
+    ) -> pd.DataFrame:
         if isinstance(data.index, pd.DatetimeIndex):
             total_duration = total_duration.total_seconds() / 3600.0
             start = grp_max.index[0]
@@ -134,5 +147,4 @@ class RestPeriods:
             end = int(grp_max.index[-1] / (self.sampling_rate * 60))
 
         mrp = {"start": start, "end": end, "total_duration": total_duration}
-
         return pd.DataFrame(mrp, index=[0])

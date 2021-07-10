@@ -586,21 +586,6 @@ def _multiindex_check_helper_not_expected(
     return False
 
 
-def _check_has_column_prefix_single_col(
-    columns: Sequence[str], col: Any, prefix: str, raise_exception: bool
-) -> Optional[bool]:
-    if not _assert_is_dtype(col, str, raise_exception=False):
-        if raise_exception:
-            raise ValidationError("Column '{}' from {} is not a string!".format(col, columns))
-        return False
-    if not col.startswith(prefix):
-        if raise_exception:
-            raise ValidationError(
-                "Column '{}' from {} are starting with the required prefix '{}'!".format(col, columns, prefix)
-            )
-        return False
-
-
 def _assert_has_column_prefix(
     columns: Sequence[str], prefix: str, raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
@@ -633,4 +618,20 @@ def _assert_has_column_prefix(
     for col in columns:
         return _check_has_column_prefix_single_col(columns, col, prefix, raise_exception)
 
+    return True
+
+
+def _check_has_column_prefix_single_col(
+    columns: Sequence[str], col: Any, prefix: str, raise_exception: bool
+) -> Optional[bool]:
+    if not _assert_is_dtype(col, str, raise_exception=False):
+        if raise_exception:
+            raise ValidationError("Column '{}' from {} is not a string!".format(col, columns))
+        return False
+    if not col.startswith(prefix):
+        if raise_exception:
+            raise ValidationError(
+                "Column '{}' from {} are starting with the required prefix '{}'!".format(col, columns, prefix)
+            )
+        return False
     return True

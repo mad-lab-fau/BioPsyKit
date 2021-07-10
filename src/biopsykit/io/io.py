@@ -116,15 +116,26 @@ def load_time_log(
     file_path = Path(file_path)
 
     _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
-    if file_path.suffix in [".xls", ".xlsx"]:
-        # assert times in the excel sheet are imported as strings,
-        # not to be automatically converted into datetime objects
-        data = pd.read_excel(file_path, dtype=str, **kwargs)
-    else:
-        data = pd.read_csv(file_path, dtype=str, **kwargs)
+    # assert times in the excel sheet are imported as strings,
+    # not to be automatically converted into datetime objects
+    kwargs["dtype"] = str
+    data = _load_dataframe(file_path, **kwargs)
 
-    data = _apply_index_cols(data, index_cols=index_cols)
+    data = _apply_index_cols(data, index_cols)
+    data = _apply_phase_cols(data, phase_cols)
 
+    if not continuous_time:
+        data = _parse_time_log_not_continuous(data, index_cols)
+
+    for val in data.values.flatten():
+        if val is np.nan:
+            continue
+        _assert_is_dtype(val, str)
+
+    return data
+
+
+def _apply_phase_cols(data: pd.DataFrame, phase_cols: Union[Dict[str, Sequence[str]], Sequence[str]]) -> pd.DataFrame:
     new_phase_cols = None
     if isinstance(phase_cols, dict):
         new_phase_cols = phase_cols
@@ -135,14 +146,6 @@ def load_time_log(
         data = data.loc[:, phase_cols]
     if new_phase_cols:
         data = data.rename(columns=new_phase_cols)
-
-    if not continuous_time:
-        data = _parse_time_log_not_continuous(data, index_cols)
-
-    for val in data.values.flatten():
-        if val is np.nan:
-            continue
-        _assert_is_dtype(val, str)
 
     return data
 
@@ -233,12 +236,9 @@ def load_subject_condition_list(
     """
     # ensure pathlib
     file_path = Path(file_path)
-
     _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
-    if file_path.suffix in [".xls", ".xlsx"]:
-        data = pd.read_excel(file_path, **kwargs)
-    else:
-        data = pd.read_csv(file_path, **kwargs)
+
+    data = _load_dataframe(file_path, **kwargs)
 
     if subject_col is None:
         subject_col = "subject"
@@ -267,6 +267,15 @@ def load_subject_condition_list(
         return data
     is_subject_condition_dataframe(data)
     return data
+
+
+def _get_subject_col(data: pd.DataFrame, subject_col: str):
+    if subject_col is None:
+        subject_col = "subject"
+    _assert_has_columns(data, [[subject_col]])
+    if subject_col != "subject":
+        subject_col = "subject"
+    return subject_col
 
 
 def load_questionnaire_data(
@@ -328,20 +337,12 @@ def load_questionnaire_data(
     file_path = Path(file_path)
 
     _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
-    if file_path.suffix in [".xls", ".xlsx"]:
-        data = pd.read_excel(file_path, sheet_name=sheet_name, **kwargs)
-    else:
-        data = pd.read_csv(file_path, **kwargs)
+    kwargs["sheet_name"] = sheet_name
+    data = _load_dataframe(file_path, **kwargs)
 
-    if subject_col is None:
-        subject_col = "subject"
+    subject_col = _get_subject_col(data, subject_col)
 
-    _assert_has_columns(data, [[subject_col]])
-
-    if subject_col != "subject":
-        data = data.rename(columns={subject_col: "subject"})
-        subject_col = "subject"
-
+    data = data.rename(columns={subject_col: "subject"})
     index_cols = [subject_col]
 
     if condition_col is not None:
@@ -498,21 +499,10 @@ def convert_time_log_datetime(
     if dataset is None and date is None and df is None:
         raise ValueError("Either `dataset`, `df` or `date` must be supplied as argument to retrieve date information!")
 
+    date = _extract_date(dataset, df, date)
+
     if timezone is None:
         timezone = tz
-
-    if dataset is not None:
-        date = dataset.info.utc_datetime_start.date()
-    if df is not None:
-        if isinstance(df.index, pd.DatetimeIndex):
-            date = df.index.normalize().unique()[0]
-            date = date.to_pydatetime()
-        else:
-            raise ValueError("Index of 'df' must be DatetimeIndex!")
-    if isinstance(date, str):
-        # ensure datetime
-        date = pd.to_datetime(date)
-        date = date.date()
     if isinstance(timezone, str):
         timezone = pytz.timezone(timezone)
 
@@ -523,6 +513,23 @@ def convert_time_log_datetime(
 
     time_log = time_log.applymap(lambda x: timezone.localize(datetime.datetime.combine(date, x)))
     return time_log
+
+
+def _extract_date(dataset: Dataset, df: pd.DataFrame, date: Union[str, datetime.datetime]) -> datetime.datetime:
+    if dataset is not None:
+        date = dataset.info.utc_datetime_start.date()
+    if df is not None:
+        if isinstance(df.index, pd.DatetimeIndex):
+            date = df.index.normalize().unique()[0]
+            date = date.to_pydatetime()
+        else:
+            raise ValueError("'df' must have a DatetimeIndex!")
+    if isinstance(date, str):
+        # ensure datetime
+        date = pd.to_datetime(date)
+        date = date.date()
+
+    return date
 
 
 def load_pandas_dict_excel(
@@ -662,6 +669,12 @@ def write_result_dict(
         writer = pd.ExcelWriter(file_path, engine="xlsxwriter")  # pylint:disable=abstract-class-instantiated
         df_result_concat.to_excel(writer)
         writer.close()
+
+
+def _load_dataframe(file_path, **kwargs):
+    if file_path.suffix in [".csv"]:
+        return pd.read_csv(file_path, **kwargs)
+    return pd.read_excel(file_path, **kwargs)
 
 
 def _apply_index_cols(

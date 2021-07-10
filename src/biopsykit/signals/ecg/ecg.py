@@ -27,6 +27,23 @@ from biopsykit.utils.array_handling import (
 __all__ = ["EcgProcessor"]
 
 
+def _hrv_process_get_hrv_types(hrv_types: Union[str, Sequence[str]]) -> Sequence[str]:
+    if hrv_types is None:
+        hrv_types = ["hrv_time", "hrv_nonlinear"]
+    if hrv_types == "all":
+        hrv_types = list(_hrv_methods.keys())
+    if isinstance(hrv_types, str):
+        hrv_types = [hrv_types]
+
+    # check whether all supplied hrv_types are valid
+    for hrv_type in hrv_types:
+        if hrv_type not in _hrv_methods:
+            raise ValueError(
+                "Invalid 'hrv_types'. Must be in {}, but got {}".format(list(_hrv_methods.keys()), hrv_type)
+            )
+    return hrv_types
+
+
 class EcgProcessor(_BaseProcessor):
     """Class for processing ECG data.
 
@@ -499,17 +516,12 @@ class EcgProcessor(_BaseProcessor):
             rpeaks = ecg_processor.rpeaks[key]
             sampling_rate = ecg_processor.sampling_rate
 
-        if ecg_signal is not None:
-            is_ecg_result_dataframe(ecg_signal)
-        is_r_peak_dataframe(rpeaks)
+        _check_dataframe_format(ecg_signal, rpeaks)
 
         outlier_correction, outlier_params, outlier_funcs = _get_outlier_params(outlier_correction, outlier_params)
 
         imputation_types = ["linear", "moving_average"]
-        if imputation_type is None:
-            imputation_type = "moving_average"
-        elif imputation_type not in imputation_types:
-            raise ValueError("'imputation_type' must be one of {}, not {}!".format(imputation_types, imputation_type))
+        imputation_type = _get_imputation_type(imputation_type, imputation_types)
 
         # copy dataframe to mark removed beats later
         rpeaks_copy = rpeaks.copy()
@@ -549,15 +561,13 @@ class EcgProcessor(_BaseProcessor):
             rpeaks["RR_Interval"] = rpeaks["RR_Interval"].fillna(
                 rpeaks["RR_Interval"].rolling(21, center=True, min_periods=0).mean()
             )
+
         # interpolate all columns (except RR_Interval if imputation type is moving average)
         rpeaks = rpeaks.interpolate(method="linear", limit_direction="both")
-
         # drop duplicate R peaks (can happen during outlier correction at edge cases)
         rpeaks = rpeaks.drop_duplicates(subset="R_Peak_Idx")
 
-        if ecg_signal is not None:
-            is_ecg_result_dataframe(ecg_signal)
-        is_r_peak_dataframe(rpeaks)
+        _check_dataframe_format(ecg_signal, rpeaks)
 
         return ecg_signal, rpeaks
 
@@ -715,19 +725,7 @@ class EcgProcessor(_BaseProcessor):
         if correct_rpeaks:
             rpeaks = cls.correct_rpeaks(rpeaks=rpeaks, sampling_rate=sampling_rate)
 
-        if hrv_types is None:
-            hrv_types = ["hrv_time", "hrv_nonlinear"]
-        if hrv_types == "all":
-            hrv_types = list(_hrv_methods.keys())
-        if isinstance(hrv_types, str):
-            hrv_types = [hrv_types]
-
-        # check whether all supplied hrv_types are valid
-        for hrv_type in hrv_types:
-            if hrv_type not in _hrv_methods:
-                raise ValueError(
-                    "Invalid 'hrv_types'. Must be in {}, but got {}".format(list(_hrv_methods.keys()), hrv_type)
-                )
+        hrv_types = _hrv_process_get_hrv_types(hrv_types)
         hrv_methods = {key: _hrv_methods[key] for key in hrv_types}
 
         # compute all HRV parameters
@@ -1468,3 +1466,17 @@ def _assert_ecg_input(ecg_processor: "EcgProcessor", key: str, ecg_signal: EcgRe
         raise ValueError("Both of 'ecg_processor' and 'key' must be passed as arguments!")
     if ecg_signal is not None and rpeaks is None:
         raise ValueError("Both of 'ecg_signal' and 'rpeaks' must be passed as arguments!")
+
+
+def _get_imputation_type(imputation_type: str, imputation_types: Sequence[str]) -> str:
+    if imputation_type is None:
+        imputation_type = "moving_average"
+    elif imputation_type not in imputation_types:
+        raise ValueError("'imputation_type' must be one of {}, not {}!".format(imputation_types, imputation_type))
+    return imputation_type
+
+
+def _check_dataframe_format(ecg_signal: EcgResultDataFrame, rpeaks: RPeakDataFrame):
+    if ecg_signal is not None:
+        is_ecg_result_dataframe(ecg_signal)
+    is_r_peak_dataframe(rpeaks)

@@ -2,6 +2,7 @@
 from typing import Sequence, Union, Dict, Optional
 
 import numpy as np
+import pandas as pd
 from biopsykit.utils._datatype_validation_helper import _assert_len_list
 from biopsykit.utils.datatype_helper import SalivaMeanSeDataFrame
 from biopsykit.utils.exceptions import ValidationError
@@ -26,13 +27,7 @@ def _get_sample_times(
         return sample_times
 
     if sample_times is None:
-        if "time" in saliva_data.reset_index().columns:
-            sample_times = saliva_data.reset_index()["time"].unique()
-        else:
-            raise ValueError(
-                "No sample times specified! Sample times must either be specified by passing them to the "
-                "'sample_times' parameter or to by including them in 'saliva_data' ('time' column)."
-            )
+        sample_times = _get_sample_times_extract(saliva_data)
 
     _assert_len_list(test_times, 2)
     # ensure numpy
@@ -42,6 +37,15 @@ def _get_sample_times(
         index_post = np.where(sample_times >= test_times[0])[0]
         sample_times[index_post] = sample_times[index_post] + (test_times[1] - test_times[0])
     return list(sample_times)
+
+
+def _get_sample_times_extract(saliva_data: pd.DataFrame):
+    if "time" in saliva_data.reset_index().columns:
+        return saliva_data.reset_index()["time"].unique()
+    raise ValueError(
+        "No sample times specified! Sample times must either be specified by passing them to the "
+        "'sample_times' parameter or to by including them in 'saliva_data' ('time' column)."
+    )
 
 
 def _check_sample_times_match(data: SalivaMeanSeDataFrame, sample_times: Sequence[int]) -> None:

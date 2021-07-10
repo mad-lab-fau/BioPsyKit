@@ -1,4 +1,5 @@
 """Module providing functions to plot data collected during sleep studies."""
+import datetime
 from typing import Union, Optional, Dict, Tuple, Sequence, List, Iterable
 
 import pandas as pd
@@ -87,7 +88,7 @@ def sleep_imu_plot(
 
     """
     axs: List[plt.Axes] = kwargs.pop("ax", kwargs.pop("axs", None))
-    figsize = kwargs.get("figsize", None)
+
     sns.set_palette(kwargs.get("colormap", colors.fau_palette_blue("line_3")))
 
     if datastreams is None:
@@ -96,25 +97,9 @@ def sleep_imu_plot(
         # ensure list
         datastreams = [datastreams]
 
-    if isinstance(axs, plt.Axes):
-        # ensure list
-        axs = [axs]
+    fig, axs = _sleep_imu_plot_get_fig_axs(axs, len(datastreams), **kwargs)
 
-    if axs is None:
-        fig, axs = plt.subplots(figsize=figsize, nrows=len(datastreams))
-    else:
-        fig = axs[0].get_figure()
-
-    if downsample_factor is None:
-        downsample_factor = 1
-    # ensure int
-    downsample_factor = int(downsample_factor)
-    if downsample_factor < 1:
-        raise ValueError("'downsample_factor' must be >= 1!")
-
-    if isinstance(axs, plt.Axes):
-        # ensure list (if nrows == 1 only one axes object will be created, not a list of axes)
-        axs = [axs]
+    downsample_factor = _sleep_imu_plot_get_downsample_factor(downsample_factor)
 
     if len(datastreams) != len(axs):
         raise ValueError(
@@ -136,6 +121,33 @@ def sleep_imu_plot(
     fig.tight_layout()
     fig.autofmt_xdate(rotation=0, ha="center")
     return fig, axs
+
+
+def _sleep_imu_plot_get_fig_axs(axs: List[plt.Axes], nrows: int, **kwargs):
+    figsize = kwargs.get("figsize", None)
+
+    if isinstance(axs, plt.Axes):
+        # ensure list (if only one Axes object is passed to sleep_imu_plot() instead of a list of Axes objects)
+        axs = [axs]
+    if axs is None:
+        fig, axs = plt.subplots(figsize=figsize, nrows=nrows)
+    else:
+        fig = axs[0].get_figure()
+    if isinstance(axs, plt.Axes):
+        # ensure list (if nrows == 1 only one axes object will be created, not a list of axes)
+        axs = [axs]
+
+    return fig, axs
+
+
+def _sleep_imu_plot_get_downsample_factor(downsample_factor: int):
+    if downsample_factor is None:
+        downsample_factor = 1
+    # ensure int
+    downsample_factor = int(downsample_factor)
+    if downsample_factor < 1:
+        raise ValueError("'downsample_factor' must be >= 1!")
+    return downsample_factor
 
 
 def _sleep_imu_plot(
@@ -171,21 +183,12 @@ def _sleep_imu_plot(
 
 
 def _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints: SleepEndpointDict, **kwargs):
-    legend_loc = "lower right"
-    legend_fontsize = kwargs.get("legend_fontsize", "smaller")
-
     bed_start = pd.to_datetime(sleep_endpoints["bed_interval_start"])
     bed_end = pd.to_datetime(sleep_endpoints["bed_interval_end"])
     sleep_onset = pd.to_datetime(sleep_endpoints["sleep_onset"])
     wake_onset = pd.to_datetime(sleep_endpoints["wake_onset"])
 
     ax = kwargs.get("ax")
-
-    plot_sleep_onset = kwargs.get("plot_sleep_onset", True)
-    plot_wake_onset = kwargs.get("plot_wake_onset", True)
-    plot_bed_start = kwargs.get("plot_bed_start", True)
-    plot_bed_end = kwargs.get("plot_bed_end", True)
-    plot_sleep_wake = kwargs.get("plot_sleep_wake", True)
 
     if isinstance(sleep_endpoints, dict):
         sleep_bouts = sleep_endpoints["sleep_bouts"]
@@ -211,6 +214,40 @@ def _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints: SleepEndpointDict, **kw
             zorder=0,
         )
 
+    _sleep_imu_plot_add_annotations(sleep_onset, wake_onset, bed_start, bed_end, sleep_bouts, wake_bouts, ax, **kwargs)
+
+    # wear_time['end'] = wear_time.index.shift(1, freq=pd.Timedelta("15M"))
+    # wear_time = wear_time[wear_time['wear'] == 0.0]
+    # wear_time = wear_time.reset_index()
+    #
+    # handle = None
+    # for idx, row in wear_time.iterrows():
+    #     handle = ax.axvspan(row['index'], row['end'], color=colors.fau_color('wiso'), alpha=0.5, lw=0)
+    # if handle is not None:
+    #     handles['non-wear'] = handle
+
+    ax.set_title("Sleep IMU Data: {} – {}".format(date.date(), (date + pd.Timedelta("1d")).date()))
+
+
+def _sleep_imu_plot_add_annotations(
+    sleep_onset: datetime.datetime,
+    wake_onset: datetime.datetime,
+    bed_start: datetime.datetime,
+    bed_end: datetime.datetime,
+    sleep_bouts,
+    wake_bouts,
+    ax: plt.Axes,
+    **kwargs,
+):
+    legend_loc = "lower right"
+    legend_fontsize = kwargs.get("legend_fontsize", "smaller")
+
+    plot_sleep_onset = kwargs.get("plot_sleep_onset", True)
+    plot_wake_onset = kwargs.get("plot_wake_onset", True)
+    plot_bed_start = kwargs.get("plot_bed_start", True)
+    plot_bed_end = kwargs.get("plot_bed_end", True)
+    plot_sleep_wake = kwargs.get("plot_sleep_wake", True)
+
     if plot_sleep_onset:
         _sleep_imu_plot_add_sleep_onset(sleep_onset, **kwargs)
     if plot_wake_onset:
@@ -229,18 +266,6 @@ def _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints: SleepEndpointDict, **kw
             framealpha=1.0,
         )
         ax.add_artist(legend)
-
-    # wear_time['end'] = wear_time.index.shift(1, freq=pd.Timedelta("15M"))
-    # wear_time = wear_time[wear_time['wear'] == 0.0]
-    # wear_time = wear_time.reset_index()
-    #
-    # handle = None
-    # for idx, row in wear_time.iterrows():
-    #     handle = ax.axvspan(row['index'], row['end'], color=colors.fau_color('wiso'), alpha=0.5, lw=0)
-    # if handle is not None:
-    #     handles['non-wear'] = handle
-
-    ax.set_title("Sleep IMU Data: {} – {}".format(date.date(), (date + pd.Timedelta("1d")).date()))
 
 
 def _sleep_imu_plot_add_sleep_onset(sleep_onset, **kwargs):

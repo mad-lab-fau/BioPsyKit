@@ -94,7 +94,6 @@ def lineplot(
         line plot function of Seaborn
 
     """
-    ax: plt.Axes = kwargs.get("ax", None)
     x_offset = kwargs.get("x_offset", 0.01)
     multi_x_offset = kwargs.get("multi_x_offset", 0)
     order = kwargs.get("order")
@@ -106,10 +105,7 @@ def lineplot(
 
     data = data.reset_index()
 
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.get_figure()
+    fig, ax = _plot_get_fig_ax(**kwargs)
 
     kwargs.setdefault("ax", ax)
     kwargs.setdefault("err_kws", {"capsize": 5})
@@ -151,26 +147,30 @@ def lineplot(
             **err_kws,
         )
 
-    xlabel = kwargs.get("xlabel", x)
-    ylabel = kwargs.get("ylabel", y)
-    ylim = kwargs.get("ylim", None)
-
-    if order is not None:
-        xticklabels = kwargs.get("xticklabels", order)
-    else:
-        xticklabels = kwargs.get("xticklabels", data.groupby([x]).groups.keys())
-
-    ax.set_xticks(x_vals)
-    ax.set_xticklabels(xticklabels)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_ylim(ylim)
+    _lineplot_style_axis(data, x, y, x_vals, order, ax, **kwargs)
 
     if show_legend:
         _set_legend_errorbar(**kwargs)
 
     fig.tight_layout()
     return fig, ax
+
+
+def _lineplot_style_axis(data: pd.DataFrame, x: str, y: str, x_vals: np.ndarray, order: str, ax: plt.Axes, **kwargs):
+    xlabel = kwargs.get("xlabel", x)
+    ylabel = kwargs.get("ylabel", y)
+    ylim = kwargs.get("ylim", None)
+
+    if order is None:
+        xticklabels = kwargs.get("xticklabels", data.groupby([x]).groups.keys())
+    else:
+        xticklabels = kwargs.get("xticklabels", order)
+
+    ax.set_xticks(x_vals)
+    ax.set_xticklabels(xticklabels)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_ylim(ylim)
 
 
 def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes]:
@@ -327,20 +327,9 @@ def feature_boxplot(
     if stats_kwargs is None:
         stats_kwargs = {}
 
-    ylabel = kwargs.pop("ylabel", None)
+    stats_kwargs = _feature_boxplot_sanitize_stats_kwargs(stats_kwargs)
 
     box_pairs = stats_kwargs.get("box_pairs", {})
-    boxplot_pvals = stats_kwargs.get("pvalues", {})
-
-    if len(stats_kwargs) > 0:
-        stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction", None)
-        stats_kwargs["test"] = stats_kwargs.get("test", None)
-
-    if len(boxplot_pvals) > 0:
-        stats_kwargs["perform_stat_test"] = False
-
-    stats_kwargs.setdefault("pvalue_thresholds", _PVALUE_THRESHOLDS)
-
     if len(box_pairs) == 0:
         stats_kwargs = {}
 
@@ -350,11 +339,25 @@ def feature_boxplot(
             data=data.reset_index(), ax=ax, x=x, y=y, order=order, hue=hue, hue_order=hue_order, **stats_kwargs
         )
 
+    ylabel = kwargs.pop("ylabel", None)
     if ylabel is not None:
         ax.set_ylabel(ylabel)
 
     fig.tight_layout()
     return fig, ax
+
+
+def _feature_boxplot_sanitize_stats_kwargs(stats_kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    boxplot_pvals = stats_kwargs.get("pvalues", {})
+    if len(stats_kwargs) > 0:
+        stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction", None)
+        stats_kwargs["test"] = stats_kwargs.get("test", None)
+
+    if len(boxplot_pvals) > 0:
+        stats_kwargs["perform_stat_test"] = False
+
+    stats_kwargs.setdefault("pvalue_thresholds", _PVALUE_THRESHOLDS)
+    return stats_kwargs
 
 
 def multi_feature_boxplot(
@@ -438,10 +441,6 @@ def multi_feature_boxplot(
         class to create statistical analysis pipelines and get parameter for plotting significance brackets
 
     """
-    axs: List[plt.Axes] = kwargs.pop("axs", kwargs.pop("ax", None))
-
-    figsize = kwargs.pop("figsize", (15, 5))
-
     xlabels = kwargs.pop("xlabels", {})
     ylabels = kwargs.pop("ylabels", {})
     xticklabels = kwargs.pop("xticklabels", {})
@@ -454,10 +453,7 @@ def multi_feature_boxplot(
     if isinstance(features, list):
         features = {f: f for f in features}
 
-    if axs is None:
-        fig, axs = plt.subplots(figsize=figsize, ncols=len(features))
-    else:
-        fig = axs[0].get_figure()
+    fig, axs = _plot_get_fig_ax_list(features, **kwargs)
 
     if stats_kwargs is None:
         stats_kwargs = {}
@@ -472,9 +468,7 @@ def multi_feature_boxplot(
         if data_plot.empty:
             raise ValueError("Empty dataframe for '{}'!".format(key))
 
-        order_list = order
-        if isinstance(order, dict):
-            order_list = order[key]
+        order_list = _multi_feature_boxplot_get_order(order, key)
 
         sns.boxplot(
             data=data_plot.reset_index(), x=x, y=y, order=order_list, hue=hue, hue_order=hue_order, ax=ax, **kwargs
@@ -507,6 +501,12 @@ def multi_feature_boxplot(
     return fig, axs
 
 
+def _multi_feature_boxplot_get_order(order: Union[Dict[str, Sequence[str]], Sequence[str]], key: str):
+    if isinstance(order, dict):
+        return order[key]
+    return order
+
+
 def _get_df_lineplot(data: pd.DataFrame, x: str, y: str, hue: str, order: Sequence[str]) -> pd.DataFrame:
     if "mean" in data.columns and "se" in data.columns:
         m_se = data
@@ -533,16 +533,6 @@ def _set_legend_errorbar(**kwargs):
     ax.legend(handles, labels, loc=legend_loc, numpoints=1, fontsize=legend_fontsize)
 
 
-def _get_marker_linestyle(
-    marker: Union[str, Sequence[str]], linestyle: Union[str, Sequence[str]], num_cats: int
-) -> Tuple[Sequence[str], Sequence[str]]:
-    if isinstance(marker, str):
-        marker = [marker] * num_cats
-    if isinstance(linestyle, str):
-        linestyle = [linestyle] * num_cats
-    return marker, linestyle
-
-
 def _get_styles(
     data: pd.DataFrame,
     style: str,
@@ -557,22 +547,41 @@ def _get_styles(
             marker, linestyle = _get_marker_linestyle(marker, linestyle, num_cats)
         else:
             marker, linestyle = _get_marker_linestyle(marker, linestyle, 1)
-
     else:
         num_cats = len(data[style].unique())
-        if marker is None:
-            marker = "o"
-        if linestyle is None:
-            linestyle = "-"
-        marker, linestyle = _get_marker_linestyle(marker, linestyle, num_cats)
+        marker, linestyle = _get_marker_linestyle_style(marker, linestyle, num_cats)
 
+    _get_styles_assert_styles(marker, linestyle, num_cats)
+
+    return marker, linestyle
+
+
+def _get_marker_linestyle(
+    marker: Union[str, Sequence[str]], linestyle: Union[str, Sequence[str]], num_cats: int
+) -> Tuple[Sequence[str], Sequence[str]]:
+    if isinstance(marker, str):
+        marker = [marker] * num_cats
+    if isinstance(linestyle, str):
+        linestyle = [linestyle] * num_cats
+    return marker, linestyle
+
+
+def _get_marker_linestyle_style(
+    marker: Union[str, Sequence[str]], linestyle: Union[str, Sequence[str]], num_cats: int
+) -> Tuple[Sequence[str], Sequence[str]]:
+    if marker is None:
+        marker = "o"
+    if linestyle is None:
+        linestyle = "-"
+    return _get_marker_linestyle(marker, linestyle, num_cats)
+
+
+def _get_styles_assert_styles(marker: Sequence[str], linestyle: Sequence[str], num_cats: int):
     if num_cats is not None:
         if len(marker) != num_cats:
             raise ValueError("If a list of 'marker' is provided it must match the number of 'style' categories!")
         if len(linestyle) != num_cats:
             raise ValueError("If a list of 'linestyle' is provided it must match the number of 'style' categories!")
-
-    return marker, linestyle
 
 
 def _add_stat_annot_multi_feature_boxplot(
@@ -648,3 +657,24 @@ def _style_xaxis_multi_feature_boxplot(
         if isinstance(xt, str):
             xt = [xt]
         ax.set_xticklabels(xt)
+
+
+def _plot_get_fig_ax(**kwargs):
+    ax: plt.Axes = kwargs.get("ax", None)
+    if ax is None:
+        figsize = kwargs.get("figsize")
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.get_figure()
+    return fig, ax
+
+
+def _plot_get_fig_ax_list(features: Dict[str, Union[str, Sequence[str]]], **kwargs):
+    axs: List[plt.Axes] = kwargs.pop("axs", kwargs.pop("ax", None))
+    figsize = kwargs.pop("figsize", (15, 5))
+
+    if axs is None:
+        fig, axs = plt.subplots(figsize=figsize, ncols=len(features))
+    else:
+        fig = axs[0].get_figure()
+    return fig, axs

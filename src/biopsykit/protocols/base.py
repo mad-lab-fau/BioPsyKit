@@ -411,7 +411,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         if rpeak_data is not None:
             self.rpeak_data[study_part] = rpeak_data
 
-    def compute_hr_results(
+    def compute_hr_results(  # pylint:disable=too-many-branches
         self,
         result_id: str,
         study_part: Optional[str] = None,
@@ -504,7 +504,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         self.hr_results[result_id] = data_dict
 
-    def compute_hrv_results(
+    def compute_hrv_results(  # pylint:disable=too-many-branches
         self,
         result_id: str,
         study_part: Optional[str] = None,
@@ -602,7 +602,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         return pd.concat(result_dict, names=[dict_levels[0]])
 
-    def compute_hr_ensemble(
+    def compute_hr_ensemble(  # pylint:disable=too-many-branches
         self,
         ensemble_id: str,
         study_part: Optional[str] = None,
