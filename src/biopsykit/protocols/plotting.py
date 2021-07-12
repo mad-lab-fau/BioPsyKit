@@ -706,7 +706,7 @@ def saliva_plot(
     marker = kwargs.pop("marker", "o")
     colormap = kwargs.pop("colormap", None)
     for i, key in enumerate(data):
-        _saliva_plot_extract_style_params(linestyle, marker, colormap, **kwargs)
+        _saliva_plot_extract_style_params(key, linestyle, marker, colormap, **kwargs)
         _saliva_plot(
             data=data[key],
             saliva_type=key,

@@ -495,6 +495,7 @@ def _multiindex_level_names_helper_get_expected_levels(
             expected = all(level in ac_levels for level in ex_levels)
         else:
             expected = sorted(ex_levels) == sorted(ac_levels)
+
     return expected
 
 

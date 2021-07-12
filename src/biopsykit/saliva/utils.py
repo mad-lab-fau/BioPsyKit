@@ -324,7 +324,8 @@ def _get_sample_times_check_dims(data: pd.DataFrame, sample_times, saliva_type):
                 "Dimensions of 'sample_times' does not correspond to dimensions of 'data'! "
                 "Expected {}, got {}.".format(exp_shape, act_shape)
             )
-    raise ValueError("'sample_times' has invalid dimensions! Expected 1 or 2, got {}".format(sample_times.ndim))
+    else:
+        raise ValueError("'sample_times' has invalid dimensions! Expected 1 or 2, got {}".format(sample_times.ndim))
 
 
 def _get_saliva_idx_labels(

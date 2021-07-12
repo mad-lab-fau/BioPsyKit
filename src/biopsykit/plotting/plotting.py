@@ -147,7 +147,7 @@ def lineplot(
             **err_kws,
         )
 
-    _lineplot_style_axis(data, x, y, x_vals, order, ax, **kwargs)
+    _lineplot_style_axis(data, x, y, x_vals, order, **kwargs)
 
     if show_legend:
         _set_legend_errorbar(**kwargs)
@@ -327,6 +327,8 @@ def feature_boxplot(
     if stats_kwargs is None:
         stats_kwargs = {}
 
+    ylabel = kwargs.pop("ylabel", None)
+
     stats_kwargs = _feature_boxplot_sanitize_stats_kwargs(stats_kwargs)
 
     box_pairs = stats_kwargs.get("box_pairs", {})
@@ -339,7 +341,6 @@ def feature_boxplot(
             data=data.reset_index(), ax=ax, x=x, y=y, order=order, hue=hue, hue_order=hue_order, **stats_kwargs
         )
 
-    ylabel = kwargs.pop("ylabel", None)
     if ylabel is not None:
         ax.set_ylabel(ylabel)
 
@@ -360,6 +361,7 @@ def _feature_boxplot_sanitize_stats_kwargs(stats_kwargs: Dict[str, Any]) -> Dict
     return stats_kwargs
 
 
+# TODO "group" parameter should always be "x"? check if "group" can be omitted
 def multi_feature_boxplot(
     data: pd.DataFrame,
     x: str,
@@ -521,7 +523,7 @@ def _get_df_lineplot(data: pd.DataFrame, x: str, y: str, hue: str, order: Sequen
 
 
 def _set_legend_errorbar(**kwargs):
-    legend_fontsize = kwargs.get("legend_fontsize", None)
+    legend_fontsize = kwargs.get("legend_fontsize", "small")
     legend_loc = kwargs.get("legend_loc", "upper left")
     ax = kwargs.get("ax")
 
@@ -669,7 +671,9 @@ def _plot_get_fig_ax(**kwargs):
     return fig, ax
 
 
-def _plot_get_fig_ax_list(features: Dict[str, Union[str, Sequence[str]]], **kwargs):
+def _plot_get_fig_ax_list(
+    features: Dict[str, Union[str, Sequence[str]]], **kwargs
+) -> Tuple[plt.Figure, List[plt.Axes]]:
     axs: List[plt.Axes] = kwargs.pop("axs", kwargs.pop("ax", None))
     figsize = kwargs.pop("figsize", (15, 5))
 

@@ -288,7 +288,7 @@ class StatsPipeline:
 
 
         """
-        sig_only = self._get_sig_only()
+        sig_only = self._get_sig_only(sig_only)
         grouped = kwargs.pop("grouped", False)
 
         if self.results is None:
@@ -314,7 +314,6 @@ class StatsPipeline:
             sig_only = {cat: sig_only for cat in self.category_steps}
         if isinstance(sig_only, list):
             sig_only = {cat: cat in sig_only for cat in self.category_steps}
-
         return sig_only
 
     def _display_results(
@@ -358,6 +357,8 @@ class StatsPipeline:
 
     def _filter_effect(self, stats_category: STATS_CATEGORY, stats_type: STATS_TYPE) -> pd.DataFrame:
         results = self.results_cat(stats_category)
+        if len(results) == 0:
+            raise ValueError("No results for category {}!".format(stats_category))
         if "Contrast" in results.columns:
             if stats_type == "interaction":
                 key = "{} * {}".format(self.params["within"], self.params["between"])
@@ -413,10 +414,11 @@ class StatsPipeline:
         Parameters
         ----------
         stats_category_or_data : {"prep", "test", "posthoc"} or :class:`~pandas.DataFrame`
-            pipeline category specifying data to use to generate significance brackets or dataframe with statistical
-            results to generate significance brackets from
+            either a string to specify the pipeline category to use for generating significance brackets or a
+            dataframe with statistical results if significance brackets should be generated from the dataframe
         stats_type : {"between", "within", "interaction"}
-            type of statistical analysis used in the pipeline
+            type of analysis performed ("between", "within", or "interaction"). Needed to extract the correct
+            information from the analysis dataframe.
         plot_type : {"single", "multi"}
             type of plot for which significance brackets are generated: "multi" if boxplots are grouped
             (by ``hue`` variable), "single" (the default) otherwise
@@ -425,7 +427,7 @@ class StatsPipeline:
             contain features present in the boxplot. It can have the following formats:
                 * ``str``: only one feature is plotted in the boxplot
                   (returns significance brackets of only one feature)
-                * ``list``: multiple features are combined in one boxplot
+                * ``list``: multiple features are combined into *one* :class:`matplotlib.axes.Axes` object
                   (returns significance brackets of multiple features)
                 * ``dict``: dictionary with feature (or list of features) per subplot if boxplots are structured in
                   subplots (``subplots`` is ``True``) (returns dictionary with significance brackets per subplot)
@@ -444,8 +446,7 @@ class StatsPipeline:
             ``subplots`` is ``True``)
 
         """
-        if isinstance(features, str):
-            features = [features]
+        features = self._sanitize_features_input(features)
 
         stats_data = self._extract_stats_data(stats_category_or_data, stats_type)
 
@@ -577,14 +578,33 @@ class StatsPipeline:
             )
         return self._filter_sig(stats_data)
 
+    @staticmethod
+    def _sanitize_features_input(features: Union[str, Sequence[str], Dict[str, Union[str, Sequence[str]]]]):
+        if isinstance(features, str):
+            features = [features]
+        if isinstance(features, dict):
+            for key, value in features.items():
+                # ensure that all entries in the dict are lists for consistency
+                if isinstance(value, str):
+                    features[key] = [value]
+
+        return features
+
     def _get_stats_data_box_pairs(
         self,
         stats_data: pd.DataFrame,
         plot_type: Optional[PLOT_TYPE] = "single",
-        features: Optional[Union[str, Sequence[str], Dict[str, Union[str, Sequence[str]]]]] = None,
+        features: Optional[Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]]] = None,
         x: Optional[str] = None,
     ):
         if features is not None:
+            if isinstance(features, dict):
+                # flatten dict values into list of str
+                features = list(features.values())
+                features = [item for sublist in features for item in sublist]
+            else:
+                features = features
+
             stats_data = pd.concat([stats_data.filter(like=f, axis=0) for f in features])
 
         stats_data = stats_data.reset_index()
@@ -596,6 +616,7 @@ class StatsPipeline:
                     "Generating significance brackets failed. If ANOVA (or such) was used as "
                     "statistical test, significance brackets need to be generated from post-hoc tests!"
                 ) from e
+            print(stats_data)
             index = stats_data[self.params.get("groupby", [])]
             if not index.empty:
                 box_pairs.index = index
