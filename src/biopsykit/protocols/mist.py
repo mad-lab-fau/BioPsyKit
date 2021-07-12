@@ -12,13 +12,14 @@ class MIST(BaseProtocol):
     The general structure of the MIST can be specified by passing a ``structure`` dict to the constructor.
 
     Up to three nested structure levels are supported:
-        * 1st level: ``study part``: Different parts of the study where the MIST was conducted, such as: "Pre",
-          "MIST", and "Post"
-        * 2nd level: ``phase``: Different MIST phases that belong to the same *study
-          part*, such as: "MIST1", "MIST2", "MIST3" (for study part "MIST") or
-          "Questionnaires", "Rest", "Training" (for study part "Pre")
-        * 3rd level: ``subphase``: Different MIST subphases that belong to the same *phase*, such as:
-          "Baseline", "Arithmetic Task", "Feedback"
+
+    * 1st level: ``study part``: Different parts of the study where the MIST was conducted, such as: "Pre",
+      "MIST", and "Post"
+    * 2nd level: ``phase``: Different MIST phases that belong to the same *study
+      part*, such as: "MIST1", "MIST2", "MIST3" (for study part "MIST") or
+      "Questionnaires", "Rest", "Training" (for study part "Pre")
+    * 3rd level: ``subphase``: Different MIST subphases that belong to the same *phase*, such as:
+      "Baseline", "Arithmetic Task", "Feedback"
 
 
     Examples
@@ -57,8 +58,9 @@ class MIST(BaseProtocol):
             nested dictionary specifying the structure of the MIST study.
 
             Up to three nested structure levels are supported:
+
             * 1st level: ``study part``: Different parts of the study where the MIST was conducted, such as: "Pre",
-              "MIST", and "Post"
+              MIST", and "Post"
             * 2nd level: ``phase``: Different MIST phases that belong to the same *study
               part*, such as: "MIST1", "MIST2", "MIST3" (for study part "MIST") or
               "Questionnaires", "Rest", "Training" (for study part "Pre")
@@ -69,12 +71,13 @@ class MIST(BaseProtocol):
             dictionary value can be set to ``None``.
         **kwargs
             additional parameters to be passed to ``MIST`` and its superclass, ``BaseProtocol``, such as:
-                * ``saliva_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
-                * ``hr_mean_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
-                * ``hr_ensemble_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+
+            * ``saliva_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
+            * ``hr_mean_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
+            * ``hr_ensemble_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
 
         """
         if name is None:
@@ -111,12 +114,12 @@ class MIST(BaseProtocol):
         ----------
         ensemble_id : str
             identifier of the ensemble data to be plotted.
-            Ensemble data needs to be computed using ``compute_hr_ensemble`` first
+            Ensemble data needs to be computed using :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_ensemble` first.
         subphases : dict, optional
             dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
             ``None`` to retrieve MIST information from ``structure`` dict. When passing ``None``,
-            it is assumed that the study part containing the MIST is named ``MIST``
-        kwargs : dict, optional
+            it is assumed that the study part containing the MIST is named ``MIST``.
+        **kwargs : dict, optional
             optional arguments for plot configuration to be passed to
             :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
 
@@ -131,9 +134,9 @@ class MIST(BaseProtocol):
 
         See Also
         --------
-        `compute_hr_ensemble`
+        :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_ensemble`
             compute heart rate ensemble data
-        `~biopsykit.protocols.plotting.hr_ensemble_plot`
+        :func:`~biopsykit.protocols.plotting.hr_ensemble_plot`
             Heart rate ensemble plot
 
         """
