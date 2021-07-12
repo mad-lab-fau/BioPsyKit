@@ -906,7 +906,7 @@ def is_saliva_feature_dataframe(
             raise ValidationError("`saliva_type` is None!")
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_index_levels(data, index_levels="subject", match_atleast=True, match_order=False)
-        _assert_has_column_levels(data, column_levels="saliva_feature", match_atleast=True, match_order=False)
+        # _assert_has_column_levels(data, column_levels="saliva_feature", match_atleast=True, match_order=False)
         _assert_has_column_prefix(data.columns, prefix=saliva_type)
     except ValidationError as e:
         if raise_exception is True:
