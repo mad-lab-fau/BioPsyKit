@@ -35,8 +35,16 @@ class TestUtilsFileHandling:
 
     @pytest.mark.parametrize(
         "base_path, pattern, expected",
-        [(TEST_FILE_PATH, "Vp*", ["Vp03", "Vp04", "Vp05"]), (TEST_FILE_PATH.joinpath("dir"), "Vp*", [])],
+        [
+            (TEST_FILE_PATH, "Vp*", does_not_raise()),
+            (TEST_FILE_PATH.joinpath("dir"), "Vp*", pytest.raises(FileNotFoundError)),
+        ],
     )
+    def test_get_subject_dirs_raises(self, base_path, pattern, expected):
+        with expected:
+            get_subject_dirs(base_path, pattern)
+
+    @pytest.mark.parametrize("base_path, pattern, expected", [(TEST_FILE_PATH, "Vp*", ["Vp03", "Vp04", "Vp05"])])
     def test_get_subject_dirs(self, base_path, pattern, expected):
         subject_dirs = get_subject_dirs(base_path, pattern)
         assert all([TEST_FILE_PATH.joinpath(p) in subject_dirs for p in expected])
