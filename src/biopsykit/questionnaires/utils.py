@@ -24,6 +24,7 @@ __all__ = [
     "invert",
     "to_idx",
     "wide_to_long",
+    "get_supported_questionnaires",
 ]
 
 
@@ -160,8 +161,11 @@ def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Opt
     if not inplace:
         data = data.copy()
 
-    nums = [re.findall(r"(\d+)$", c)[0] for c in data.columns]
-    zfill_num = max(list(map(len, nums)))
+    nums = [re.findall(r"(\d+)$", c) for c in data.columns]
+    nums = [c[0] if len(c) > 0 else "" for c in nums]
+    if len(nums) == 0:
+        return pd.DataFrame()
+    zfill_num = max(max(list(map(len, nums))), 2)
 
     data.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(zfill_num), c) for c in data.columns]
 
