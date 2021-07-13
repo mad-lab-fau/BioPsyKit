@@ -478,7 +478,7 @@ def pss(
 
     if subscales is None:
         _assert_num_columns(data, 10)
-        subscales = {"H": [1, 2, 3, 6, 9, 10], "S": [4, 5, 7, 8], "GES": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+        subscales = {"H": [1, 2, 3, 6, 9, 10], "S": [4, 5, 7, 8]}
 
     _assert_value_range(data, score_range)
 
@@ -486,6 +486,7 @@ def pss(
     data = invert(data, cols=to_idx([4, 5, 7, 8]), score_range=score_range)
 
     pss_data = _compute_questionnaire_subscales(data, score_name, subscales)
+    pss_data[score_name] = data.sum(axis=1)
 
     return pd.DataFrame(pss_data, index=data.index)
 
