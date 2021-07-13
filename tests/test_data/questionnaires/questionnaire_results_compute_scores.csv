@@ -1,7 +1,7 @@
-﻿subject,condition,PSS,FEE_RejectionPunishment_Mutter,FEE_EmotionalWarmth_Mutter,FEE_ControlOverprotection_Mutter,FEE_RejectionPunishment_Vater,FEE_EmotionalWarmth_Vater,FEE_ControlOverprotection_Vater,PANAS_NegativeAffect_pre,PANAS_PositiveAffect_pre,PANAS_Total_pre,PANAS_NegativeAffect_post,PANAS_PositiveAffect_post,PANAS_Total_post,SVF120_Bag
-Vp01,Control,13,2.375,3,3.375,2.75,2.25,3.625,2.7,2.5,2.9,2.7,2.5,2.9,25
-Vp02,Intervention,11,1.75,2.5,1.75,1.625,1.875,1.625,2.4,2,2.8,2.4,2,2.8,18
-Vp03,Control,11,1,3.125,1.875,1,3.125,1.625,2.8,2.8,3,2.8,2.8,3,20
-Vp04,Intervention,20,1.125,3.625,1.5,1,1,1,1.8,2.1,3.15,1.8,2.1,3.15,11
-Vp05,Control,14,1.375,3.625,2.375,1.625,2.25,2.125,2.6,2.4,2.9,2.6,2.4,2.9,22
-Vp06,Intervention,17,1.875,3.25,3.125,1.75,2.625,3,2.4,2,2.8,2.4,2,2.8,24
+﻿subject,condition,PSS_H,PSS_S,PSS,FEE_RejectionPunishment_Mutter,FEE_EmotionalWarmth_Mutter,FEE_ControlOverprotection_Mutter,FEE_RejectionPunishment_Vater,FEE_EmotionalWarmth_Vater,FEE_ControlOverprotection_Vater,PANAS_NegativeAffect_pre,PANAS_PositiveAffect_pre,PANAS_Total_pre,PANAS_NegativeAffect_post,PANAS_PositiveAffect_post,PANAS_Total_post,SVF120_Bag
+Vp01,Control,9,4,13,2.375,3,3.375,2.75,2.25,3.625,2.7,2.5,2.9,2.7,2.5,2.9,25
+Vp02,Intervention,7,4,11,1.75,2.5,1.75,1.625,1.875,1.625,2.4,2,2.8,2.4,2,2.8,18
+Vp03,Control,6,5,11,1,3.125,1.875,1,3.125,1.625,2.8,2.8,3,2.8,2.8,3,20
+Vp04,Intervention,9,4,13,1.125,3.625,1.5,1,1,1,1.8,2.1,3.15,1.8,2.1,3.15,11
+Vp05,Control,7,4,11,1.375,3.625,2.375,1.625,2.25,2.125,2.6,2.4,2.9,2.6,2.4,2.9,22
+Vp06,Intervention,6,5,11,1.875,3.25,3.125,1.75,2.625,3,2.4,2,2.8,2.4,2,2.8,24
