@@ -7,48 +7,25 @@ from biopsykit.protocols import BaseProtocol
 
 
 class MIST(BaseProtocol):
-    """Class representing the Montreal Imaging Stress Task (MIST) protocol and data collected within a MIST study.
-
-    The general structure of the MIST can be specified by passing a ``structure`` dict to the constructor.
-
-    Up to three nested structure levels are supported:
-
-    * 1st level: ``study part``: Different parts of the study where the MIST was conducted, such as: "Pre",
-      "MIST", and "Post"
-    * 2nd level: ``phase``: Different MIST phases that belong to the same *study
-      part*, such as: "MIST1", "MIST2", "MIST3" (for study part "MIST") or
-      "Questionnaires", "Rest", "Training" (for study part "Pre")
-    * 3rd level: ``subphase``: Different MIST subphases that belong to the same *phase*, such as:
-      "Baseline", "Arithmetic Task", "Feedback"
-
-
-    Examples
-    --------
-    >>> from biopsykit.protocols import MIST
-    >>> # Example: MIST study consisting of three parts. Only the MIST part consists of different phases and subphases
-    >>> structure = {
-    >>>     "Before": None,
-    >>>     "MIST": {
-    >>>         "MIST1": {"BL": 60, "AT": 240, "FB": 120},
-    >>>         "MIST2": {"BL": 60, "AT": 240, "FB": 120},
-    >>>         "MIST3": {"BL": 60, "AT": 240, "FB": 120}
-    >>>     },
-    >>>     "After": None
-    >>> }
-    >>> MIST(name="MIST", structure=structure)
-
-    References
-    ----------
-    Dedovic, K., Renwick, R., Mahani, N. K., Engert, V., Lupien, S. J., & Pruessner, J. C. (2005).
-    The Montreal Imaging Stress Task: Using functional imaging to investigate the effects of perceiving and processing
-    psychosocial stress in the human brain. *Journal of Psychiatry and Neuroscience*, 30(5), 319–325.
-
-    """
+    """Class representing the Montreal Imaging Stress Task (MIST) protocol and data collected within a MIST study."""
 
     def __init__(
         self, name: Optional[str] = None, structure: Optional[Dict[str, Union[None, Dict[str, int]]]] = None, **kwargs
     ):
-        """Initialize a new ``MIST`` instance.
+        """Class representing the Montreal Imaging Stress Task (MIST) protocol and data collected within a MIST study.
+
+        The general structure of the MIST can be specified by passing a ``structure`` dict to the constructor.
+
+        Up to three nested structure levels are supported:
+
+        * 1st level: ``study part``: Different parts of the study where the MIST was conducted, such as: "Pre",
+          "MIST", and "Post"
+        * 2nd level: ``phase``: Different MIST phases that belong to the same *study
+          part*, such as: "MIST1", "MIST2", "MIST3" (for study part "MIST") or
+          "Questionnaires", "Rest", "Training" (for study part "Pre")
+        * 3rd level: ``subphase``: Different MIST subphases that belong to the same *phase*, such as:
+          "Baseline", "Arithmetic Task", "Feedback"
+
 
         Parameters
         ----------
@@ -78,6 +55,30 @@ class MIST(BaseProtocol):
               :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
             * ``hr_ensemble_plot_params``: dictionary with parameters to style
               :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+
+
+        Examples
+        --------
+        >>> from biopsykit.protocols import MIST
+        >>> # Example: MIST study consisting of three parts. Only the MIST part consists of different
+        >>> # phases and subphases
+        >>> structure = {
+        >>>     "Before": None,
+        >>>     "MIST": {
+        >>>         "MIST1": {"BL": 60, "AT": 240, "FB": 120},
+        >>>         "MIST2": {"BL": 60, "AT": 240, "FB": 120},
+        >>>         "MIST3": {"BL": 60, "AT": 240, "FB": 120}
+        >>>     },
+        >>>     "After": None
+        >>> }
+        >>> MIST(name="MIST", structure=structure)
+
+
+        References
+        ----------
+        Dedovic, K., Renwick, R., Mahani, N. K., Engert, V., Lupien, S. J., & Pruessner, J. C. (2005).
+        The Montreal Imaging Stress Task: Using functional imaging to investigate the effects of perceiving and
+        processing psychosocial stress in the human brain. *Journal of Psychiatry and Neuroscience*, 30(5), 319–325.
 
         """
         if name is None:
@@ -114,7 +115,8 @@ class MIST(BaseProtocol):
         ----------
         ensemble_id : str
             identifier of the ensemble data to be plotted.
-            Ensemble data needs to be computed using :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_ensemble` first.
+            Ensemble data needs to be computed using :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_ensemble`
+            first.
         subphases : dict, optional
             dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
             ``None`` to retrieve MIST information from ``structure`` dict. When passing ``None``,

@@ -103,6 +103,10 @@ autodoc_member_order = "bysource"
 # This value controls how to represent typehints
 autodoc_typehints = "description"
 
+# This value selects what content will be inserted into the main body of an autoclass directive.
+autoclass_content = "init"
+
+
 # Taken from sklearn config
 # For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
 # (useful for viewing the doc offline)

@@ -11,7 +11,7 @@ class CAR(BaseProtocol):
     """Class representing psychological protocols for assessing the cortisol awakening response (CAR)."""
 
     def __init__(self, name: Optional[str] = None, **kwargs):
-        """Initialize a new ``CAR`` instance.
+        """Class representing psychological protocols for assessing the cortisol awakening response (CAR).
 
         Parameters
         ----------

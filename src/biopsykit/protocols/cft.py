@@ -15,26 +15,7 @@ from biopsykit.utils.exceptions import FeatureComputationError
 
 
 class CFT(BaseProtocol):
-    """Class representing the Cold Face Test (CFT) and data collected while conducting the CFT.
-
-    The typical structure of the CFT consists of three phases:
-
-      * "Baseline": Time at rest before applying cold face stimulus
-      * "CFT": Application of cold face stimulus
-      * "Recovery": Time at rest after applying cold face stimulus
-
-    Examples
-    --------
-    >>> from biopsykit.protocols import CFT
-    >>> # Example: MIST study consisting of three parts. Only the MIST part consists of different phases and subphases
-    >>> structure = {
-    >>>     "Baseline": 60,
-    >>>     "CFT": 120,
-    >>>     "Recovery": 60
-    >>> }
-    >>> CFT(name="CFT", structure=structure)
-
-    """
+    """Class representing the Cold Face Test (CFT) and data collected while conducting the CFT."""
 
     def __init__(
         self,
@@ -42,7 +23,14 @@ class CFT(BaseProtocol):
         structure: Optional[Dict[str, int]] = None,
         **kwargs,
     ):
-        """Initialize a new ``CFT`` instance.
+        """Class representing the Cold Face Test (CFT) and data collected while conducting the CFT.
+
+        The typical structure of the CFT consists of three phases:
+
+          * "Baseline": Time at rest before applying cold face stimulus
+          * "CFT": Application of cold face stimulus
+          * "Recovery": Time at rest after applying cold face stimulus
+
 
         Parameters
         ----------
@@ -64,9 +52,22 @@ class CFT(BaseProtocol):
             extracted from the structure dictionary.
         **kwargs :
             additional parameters to be passed to ``CFT`` and its superclass, ``BaseProcessor``, such as:
-            
+
             * ``cft_plot_params``: dictionary with parameters to style
               :meth:`~biopsykit.protocols.cft.CFT.cft_plot`
+
+
+        Examples
+        --------
+        >>> from biopsykit.protocols import CFT
+        >>> # Example: CFT procedure consisting of three parts.
+        >>>
+        >>> structure = {
+        >>>     "Baseline": 60,
+        >>>     "CFT": 120,
+        >>>     "Recovery": 60
+        >>> }
+        >>> CFT(name="CFT", structure=structure)
 
         """
         if name is None:
@@ -487,7 +488,7 @@ class CFT(BaseProtocol):
         """Sanitize CFT input.
 
         Most functions for computing CFT parameter expect multiple possible combinations of input parameter:
-    
+
         * Either data over the whole duration of the CFT procedure (Baseline, CFT, Recovery):
           Then, the CFT Interval will be extracted and Baseline heart rate will be computed based on the
           ``cft_start`` and ``cft_duration`` parameters of the ``CFT`` object
@@ -552,7 +553,7 @@ class CFT(BaseProtocol):
             input data
         **kwargs: dict, optional
             optional parameters to be passed to the plot, such as:
-           
+
             * ``time_baseline`` : duration of Baseline Interval to include in plot or ``None`` to include the
               whole Baseline Interval in the plot.
             * ``time_recovery`` : duration of Recovery Interval to include in plot or ``None`` to include the

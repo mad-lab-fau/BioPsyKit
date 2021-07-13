@@ -38,61 +38,7 @@ from biopsykit.utils.exceptions import ValidationError
 
 
 class BaseProtocol:  # pylint:disable=too-many-public-methods
-    """Base class representing a psychological protocol and data collected within a study.
-
-    The general structure of the protocol can be specified by passing a ``structure`` dict to the constructor of
-    ``BaseProtocol``.
-
-    Up to three nested structure levels are supported:
-
-    * 1st level: ``study part``: Different parts of the study, such as: "Preface", "Test",
-      and "Questionnaires"
-    * 2nd level: ``phase``: Different phases of the psychological protocol that belong to the same *study
-      part*, such as: "Preparation", "Stress", "Recovery"
-    * 3rd level: ``subphase``: Different subphases that belong to the same *phase*, such as:
-      "Baseline", "Arithmetic Task", "Feedback"
-
-    .. note::
-        Duration of phases and/or subphases are expected in **seconds**.
-
-
-    Examples
-    --------
-    >>> from biopsykit.protocols import BaseProtocol
-    >>> # Example 1: study with three parts, no finer division into phases
-    >>> structure = {
-    >>>     "Preface": None,
-    >>>     "Test": None,
-    >>>     "Questionnaires": None
-    >>> }
-    >>> BaseProtocol(name="Base", structure=structure)
-    >>> # Example 2: study with three parts, all parts have different phases with specific durations
-    >>> structure = {
-    >>>     "Preface": {"Questionnaires": 240, "Baseline": 60},
-    >>>     "Test": {"Preparation": 120, "Test": 240, "Recovery": 120},
-    >>>     "Recovery": {"Part1": 240, "Part2": 240}
-    >>> }
-    >>> BaseProtocol(name="Base", structure=structure)
-    >>> # Example 3: only certain study parts have different phases (example: TSST)
-    >>> structure = {
-    >>>     "Before": None,
-    >>>     "TSST": {"Preparation": 300, "Talk": 300, "Math": 300},
-    >>>     "After": None
-    >>> }
-    >>> BaseProtocol(name="Base", structure=structure)
-    >>> # Example 4: study with phases and subphases, only certain study parts have different phases (example: MIST)
-    >>> structure = {
-    >>>     "Before": None,
-    >>>     "MIST": {
-    >>>         "MIST1": {"BL": 60, "AT": 240, "FB": 120},
-    >>>         "MIST2": {"BL": 60, "AT": 240, "FB": 120},
-    >>>         "MIST3": {"BL": 60, "AT": 240, "FB": 120}
-    >>>     },
-    >>>     "After": None
-    >>> }
-    >>> BaseProtocol(name="Base", structure=structure)
-
-    """
+    """Base class representing a psychological protocol and data collected within a study."""
 
     def __init__(
         self,
@@ -101,7 +47,23 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         test_times: Optional[Sequence[int]] = None,
         **kwargs,
     ):
-        """Initialize a new ``BaseProtocol`` instance.
+        """Class representing a base class for psychological protocols and data collected within a study.
+
+        The general structure of the protocol can be specified by passing a ``structure`` dict to the constructor of
+        ``BaseProtocol``.
+
+        Up to three nested structure levels are supported:
+
+        * 1st level: ``study part``: Different parts of the study, such as: "Preface", "Test",
+          and "Questionnaires"
+        * 2nd level: ``phase``: Different phases of the psychological protocol that belong to the same *study
+          part*, such as: "Preparation", "Stress", "Recovery"
+        * 3rd level: ``subphase``: Different subphases that belong to the same *phase*, such as:
+          "Baseline", "Arithmetic Task", "Feedback"
+
+        .. note::
+            Duration of phases and/or subphases are expected in **seconds**.
+
 
         Parameters
         ----------
@@ -126,13 +88,50 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             ``test_times`` is then internally set to [0, 0]. Default: ``None``
         **kwargs
             additional parameters to be passed to ``BaseProtocol``, such as:
-                
+
             * ``saliva_plot_params``: dictionary with parameters to style
               :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
             * ``hr_mean_plot_params``: dictionary with parameters to style
               :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
             * ``hr_ensemble_plot_params``: dictionary with parameters to style
               :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+
+
+        Examples
+        --------
+        >>> from biopsykit.protocols import BaseProtocol
+        >>> # Example 1: study with three parts, no finer division into phases
+        >>> structure = {
+        >>>     "Preface": None,
+        >>>     "Test": None,
+        >>>     "Questionnaires": None
+        >>> }
+        >>> BaseProtocol(name="Base", structure=structure)
+        >>> # Example 2: study with three parts, all parts have different phases with specific durations
+        >>> structure = {
+        >>>     "Preface": {"Questionnaires": 240, "Baseline": 60},
+        >>>     "Test": {"Preparation": 120, "Test": 240, "Recovery": 120},
+        >>>     "Recovery": {"Part1": 240, "Part2": 240}
+        >>> }
+        >>> BaseProtocol(name="Base", structure=structure)
+        >>> # Example 3: only certain study parts have different phases (example: TSST)
+        >>> structure = {
+        >>>     "Before": None,
+        >>>     "TSST": {"Preparation": 300, "Talk": 300, "Math": 300},
+        >>>     "After": None
+        >>> }
+        >>> BaseProtocol(name="Base", structure=structure)
+        >>> # Example 4: study with phases and subphases, only certain study parts have different phases (example: MIST)
+        >>> structure = {
+        >>>     "Before": None,
+        >>>     "MIST": {
+        >>>         "MIST1": {"BL": 60, "AT": 240, "FB": 120},
+        >>>         "MIST2": {"BL": 60, "AT": 240, "FB": 120},
+        >>>         "MIST3": {"BL": 60, "AT": 240, "FB": 120}
+        >>>     },
+        >>>     "After": None
+        >>> }
+        >>> BaseProtocol(name="Base", structure=structure)
 
         """
         self.name: str = name
@@ -653,7 +652,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             ``True`` to cut time-series data to shortest duration of a subject in each phase, ``False`` otherwise.
             Default: ``True``
         merge_dict : bool, optional
-            ``True`` to convert :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`, i.e., merge dictionary data from
+            ``True`` to convert :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into
+            :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`, i.e., merge dictionary data from
             individual subjects into one dataframe for each phase.
             Default: ``True``
         add_conditions : bool, optional
@@ -883,7 +883,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
     @staticmethod
     def saliva_plot_combine_legend(fig: plt.Figure, ax: plt.Axes, saliva_types: Sequence[str], **kwargs):
-        """Combine multiple legends of :func:`~biopsykit.protocols.plotting.saliva_plot` into one joint legend outside of plot.
+        """Combine multiple legends of :func:`~biopsykit.protocols.plotting.saliva_plot` into one legend outside plot.
 
         If data from multiple saliva types are combined into one plot (e.g., by calling
         :func:`~biopsykit.protocols.plotting.saliva_plot` on the same plot twice) then two separate legend are created.
@@ -939,7 +939,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         ax : :class:`matplotlib.axes.Axes`
             axes object
 
-        
+
         See Also
         --------
         :func:`~biopsykit.protocols.plotting.saliva_feature_boxplot`
@@ -996,7 +996,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        :func:`~biopsykit.protocols.plotting.saliva_multi_feature_boxplot` 
+        :func:`~biopsykit.protocols.plotting.saliva_multi_feature_boxplot`
             plot multiple saliva features as boxplots without instantiating a ``Protocol`` instance
         :func:`~biopsykit.stats.StatsPipeline`
             class to create statistical analysis pipelines and get parameter for plotting significance brackets
