@@ -154,7 +154,7 @@ def load_hr_phase_dict_folder(
         file_list = [f for f in file_list if re.search(filename_pattern, f.name)]
         if len(file_list) == 0:
             raise FileNotFoundError(
-                'No files matching the pattern "{}" found in {}.'.format(filename_pattern, base_path)
+                "No files matching the pattern '{}' found in {}.".format(filename_pattern, base_path)
             )
         for file in file_list:
             subject_id = re.findall(filename_pattern, file.name)[0]
@@ -163,15 +163,18 @@ def load_hr_phase_dict_folder(
         subject_dirs = get_subject_dirs(base_path, subfolder_pattern)
         if len(subject_dirs) == 0:
             raise FileNotFoundError(
-                'No subfolders matching the pattern "{}" found in {}.'.format(subfolder_pattern, base_path)
+                "No subfolders matching the pattern '{}' found in {}.".format(subfolder_pattern, base_path)
             )
         for subject_dir in subject_dirs:
             subject_id = subject_dir.name
-            dict_hr_subjects[subject_id] = _load_hr_phase_dict_single_subject(subject_dir, filename_pattern)
+            hr_phase_dict = _load_hr_phase_dict_single_subject(subject_dir, filename_pattern)
+            if hr_phase_dict is None:
+                continue
+            dict_hr_subjects[subject_id] = hr_phase_dict
     return dict_hr_subjects
 
 
-def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str) -> HeartRatePhaseDict:
+def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str) -> Optional[HeartRatePhaseDict]:
     subject_id = subject_dir.name
     # first try to search for files with glob (assuming that a regex string without capture group was passed),
     # then try to search via regex search (assuming that a regex string with capture group was passed,
@@ -195,7 +198,7 @@ def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str)
         return dict_hr
 
     print("No Heart Rate data for subject {}".format(subject_id))
-    return {}
+    return None
 
 
 def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t) -> None:

@@ -273,8 +273,6 @@ def _get_subject_col(data: pd.DataFrame, subject_col: str):
     if subject_col is None:
         subject_col = "subject"
     _assert_has_columns(data, [[subject_col]])
-    if subject_col != "subject":
-        subject_col = "subject"
     return subject_col
 
 
@@ -337,12 +335,13 @@ def load_questionnaire_data(
     file_path = Path(file_path)
 
     _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
-    kwargs["sheet_name"] = sheet_name
+    if file_path.suffix != ".csv":
+        kwargs["sheet_name"] = sheet_name
     data = _load_dataframe(file_path, **kwargs)
 
     subject_col = _get_subject_col(data, subject_col)
-
     data = data.rename(columns={subject_col: "subject"})
+    subject_col = "subject"
     index_cols = [subject_col]
 
     if condition_col is not None:
