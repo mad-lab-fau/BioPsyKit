@@ -161,10 +161,7 @@ def load_hr_phase_dict_folder(
             dict_hr_subjects[subject_id] = load_hr_phase_dict(file)
     else:
         subject_dirs = get_subject_dirs(base_path, subfolder_pattern)
-        if len(subject_dirs) == 0:
-            raise FileNotFoundError(
-                "No subfolders matching the pattern '{}' found in {}.".format(subfolder_pattern, base_path)
-            )
+
         for subject_dir in subject_dirs:
             subject_id = subject_dir.name
             hr_phase_dict = _load_hr_phase_dict_single_subject(subject_dir, filename_pattern)

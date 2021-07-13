@@ -602,29 +602,14 @@ class StatsPipeline:
                 # flatten dict values into list of str
                 features = list(features.values())
                 features = [item for sublist in features for item in sublist]
-            else:
-                features = features
 
             stats_data = pd.concat([stats_data.filter(like=f, axis=0) for f in features])
 
         stats_data = stats_data.reset_index()
         if plot_type == "single":
-            try:
-                box_pairs = stats_data.apply(lambda row: (row["A"], row["B"]), axis=1)
-            except KeyError as e:
-                raise ValueError(
-                    "Generating significance brackets failed. If ANOVA (or such) was used as "
-                    "statistical test, significance brackets need to be generated from post-hoc tests!"
-                ) from e
-            print(stats_data)
-            index = stats_data[self.params.get("groupby", [])]
-            if not index.empty:
-                box_pairs.index = index
+            box_pairs = self._get_box_pairs_single(stats_data)
         else:
-            if x is None:
-                raise ValueError("'x' must be specified when 'plot_type' is 'multi'!")
-            stats_data = stats_data.set_index(x)
-            box_pairs = stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
+            box_pairs = self._get_box_pairs_multi(stats_data, x)
 
         return stats_data, box_pairs
 
@@ -637,3 +622,23 @@ class StatsPipeline:
         if not index.empty:
             box_pairs.index = index
         return stats_data, box_pairs
+
+    def _get_box_pairs_single(self, stats_data: pd.DataFrame):
+        try:
+            box_pairs = stats_data.apply(lambda row: (row["A"], row["B"]), axis=1)
+        except KeyError as e:
+            raise ValueError(
+                "Generating significance brackets failed. If ANOVA (or such) was used as "
+                "statistical test, significance brackets need to be generated from post-hoc tests!"
+            ) from e
+        index = stats_data[self.params.get("groupby", [])]
+        if not index.empty:
+            box_pairs.index = index
+        return box_pairs
+
+    @staticmethod
+    def _get_box_pairs_multi(stats_data: pd.DataFrame, x: str):
+        if x is None:
+            raise ValueError("'x' must be specified when 'plot_type' is 'multi'!")
+        stats_data = stats_data.set_index(x)
+        return stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
