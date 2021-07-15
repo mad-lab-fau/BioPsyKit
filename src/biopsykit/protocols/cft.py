@@ -41,9 +41,9 @@ class CFT(BaseProtocol):
 
             The typical structure of the CFT consists of three phases:
 
-              * "Baseline": Time at rest before applying cold face stimulus
-              * "CFT": Application of cold face stimulus
-              * "Recovery": Time at rest after applying cold face stimulus
+            * "Baseline": Time at rest before applying cold face stimulus
+            * "CFT": Application of cold face stimulus
+            * "Recovery": Time at rest after applying cold face stimulus
 
             The duration of each phase is specified in seconds.
             Typical durations are: 60s for *Baseline*, 120s for *CFT*, 60s for *Recovery*
