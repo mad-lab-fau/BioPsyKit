@@ -76,51 +76,59 @@ _sig_cols = ["p-corr", "p-tukey", "p-unc", "pval"]
 
 class StatsPipeline:
     """Class to set up a pipeline for statistical analysis.
+    
+    """
 
-    The purpose of such a pipeline is to assemble several steps of a typical statistical analysis procedure while
-    setting different parameters. The parameters passed to this class depend on the used statistical functions.
-    It enables setting parameters of the various steps using their names and the parameter name separated by a "__",
-    as in the examples below.
+    def __init__(self, steps: Sequence[Tuple[str, str]], params: Dict[str, str]):
+        """Class to set up a pipeline for statistical analysis.
 
-    The interface of this class is inspired by the scikit-learn Pipeline for ML tasks
-    (:class:`~sklearn.pipeline.Pipeline`).
+        The purpose of such a pipeline is to assemble several steps of a typical statistical analysis procedure while
+        setting different parameters. The parameters passed to this class depend on the used statistical functions.
+        It enables setting parameters of the various steps using their names and the parameter name separated by a "__",
+        as in the examples below.
 
-    All functions methods used are from the Pingouin library (https://pingouin-stats.org/) for statistical analysis.
+        The interface of this class is inspired by the scikit-learn Pipeline for ML tasks
+        (:class:`~sklearn.pipeline.Pipeline`).
 
-    The different steps of statistical analysis is divided into different categories:
+        All functions methods used are from the Pingouin library (https://pingouin-stats.org/) for statistical analysis.
+
+        The different steps of statistical analysis is divided into different categories:
+
         * *Preparatory Analysis* (``prep``): Analyses applied to the data before performing the actual statistical
           analysis. Currently supported functions are:
-            * ``normality``: Test whether a random sample comes from a normal distribution.
-              See :func:`~pingouin.normality` for further information.
-            * ``equal_var``: Test equality of variances (homoscedasticity).
-              See :func:`~pingouin.homoscedasticity` for further information.
+
+          * ``normality``: Test whether a random sample comes from a normal distribution.
+            See :func:`~pingouin.normality` for further information.
+          * ``equal_var``: Test equality of variances (homoscedasticity).
+            See :func:`~pingouin.homoscedasticity` for further information.
+
         * *Statistical Test* (``test``): Statistical test to determine differences or similarities in the data.
           Currently supported functions are:
+
             * ``pairwise_ttests``: Pairwise T-tests (either for independent or dependent samples).
               See :func:`~pingouin.pairwise_ttests` for further information.
             * ``anova``: One-way or N-way ANOVA. See :func:`~pingouin.anova` for further information.
             * ``welch_anova``: One-way Welch-ANOVA. See :func:`~pingouin.welch_anova` for further
               information.
             * ``rm_anova``: One-way and two-way repeated measures ANOVA. See :func:`~pingouin.rm_anova`
-              for further information.
+              further information.
             * ``mixed_anova``: Mixed-design (split-plot) ANOVA. See :func:`~pingouin.mixed_anova` for
               further information.
             * ``kruskal``: Kruskal-Wallis H-test for independent samples. See :func:`~pingouin.kruskal`
               for further information.
+
         * *Posthoc Tests* (``posthoc``): Posthoc tests to determine differences of individual groups if more than two
           groups are analyzed.
           Currently supported functions are:
-            * ``pairwise_ttests``: Pairwise T-tests (either for independent or dependent samples).
-              See :func:`~pingouin.pairwise_ttests` for further information.
-            * ``pairwise_tukey``: Pairwise Tukey-HSD post-hoc test.
-              See :func:`~pingouin.pairwise_tukey` for further information.
-            * ``pairwise_gameshowell``: Pairwise Games-Howell post-hoc test.
-              See :func:`~pingouin.pairwise_gameshowell` for further information.
 
-    """
+          * ``pairwise_ttests``: Pairwise T-tests (either for independent or dependent samples).
+            See :func:`~pingouin.pairwise_ttests` for further information.
+          * ``pairwise_tukey``: Pairwise Tukey-HSD post-hoc test.
+            See :func:`~pingouin.pairwise_tukey` for further information.
+          * ``pairwise_gameshowell``: Pairwise Games-Howell post-hoc test.
+            See :func:`~pingouin.pairwise_gameshowell` for further information.
 
-    def __init__(self, steps: Sequence[Tuple[str, str]], params: Dict[str, str]):
-        """Initialize new ``StatsPipeline`` instance.
+        Initialize new ``StatsPipeline`` instance.
 
         A ``StatsPipeline`` consists of a list of tuples specifying the individual ``steps`` of the pipeline.
         The first value of each tuple indicates the category this step belongs to (``prep``, ``test``, or ``posthoc``),
@@ -130,11 +138,12 @@ class StatsPipeline:
         needs to be supplied. Parameters can either be specified *globally*, i.e., for all steps in the pipeline
         (the default), or *locally*, i.e., only for one specific category, by prepending the category,
         separated by a "__". The parameters depend on the type of analysis used in the pipeline. Examples are:
-            * ``dv``: column name of the dependent variable
-            * ``between``: column name of the between-subject factor
-            * ``within``: column name of the within-subject factor
-            * ``effsize``: type of effect size to compute (if applicable)
-            * ...
+
+        * ``dv``: column name of the dependent variable
+        * ``between``: column name of the between-subject factor
+        * ``within``: column name of the within-subject factor
+        * ``effsize``: type of effect size to compute (if applicable)
+        * ...
 
         Parameters
         ----------
@@ -243,7 +252,7 @@ class StatsPipeline:
         -------
         :class:`~pandas.DataFrame` or dict
             dataframe with results from the specified category or dict of such if multiple steps belong to the
-            same category
+            same category.
 
         """
         cat = self.category_steps.get(category, [])
@@ -262,29 +271,33 @@ class StatsPipeline:
 
         This function displays the results of the statistical analysis pipeline. The output is Markdown-formatted and
         optimized for Jupyter Notebooks. The output can be configured to for example:
-            * only show specific categories
-            * only show statistically significant results for specific categories or for all pipeline categories
-            * display results grouped by a grouper (when pipeline is applied on multiple groups of data, e.g.,
-              on multiple feature of the same type independently)
+
+        * only show specific categories
+        * only show statistically significant results for specific categories or for all pipeline categories
+        * display results grouped by a grouper (when pipeline is applied on multiple groups of data, e.g.,
+          on multiple feature of the same type independently)
 
         Parameters
         ----------
         sig_only : bool, str, list, or dict, optional
             whether to only show statistically significant (p < 0.05) results or not. ``sig_only`` accepts multiple
             possible formats:
-                * ``str``: filter only one specific category or "all" to filter all categories by statistical
-                  significance
-                * ``bool``: ``True`` to filter all categories by statistical significance, ``False`` otherwise
-                * ``list``: list of categories whose results should be filtered by statistical significance
-                * ``dict``: dictionary with category names and bool values to filter (or not) for statistical
-                  significance
+
+            * ``str``: filter only one specific category or "all" to filter all categories by statistical
+              significance
+            * ``bool``: ``True`` to filter all categories by statistical significance, ``False`` otherwise
+            * ``list``: list of categories whose results should be filtered by statistical significance
+            * ``dict``: dictionary with category names and bool values to filter (or not) for statistical
+              significance
+                
             Default: ``None`` (no filtering)
-        kwargs
+        **kwargs
             additional arguments to be passed to the function, such as:
-                * category names: ``True`` to display results of this category, ``False`` to skip displaying results
-                  of this category. Default: show results from all categories
-                * ``grouped``: ``True`` to group results by the variable "groupby" specified in the parameter
-                  dictionary when initializing the ``StatsPipeline`` instance.
+
+            * category names: ``True`` to display results of this category, ``False`` to skip displaying results
+              of this category. Default: show results from all categories
+            * ``grouped``: ``True`` to group results by the variable "groupby" specified in the parameter
+              dictionary when initializing the ``StatsPipeline`` instance.
 
 
         """
@@ -415,25 +428,27 @@ class StatsPipeline:
         ----------
         stats_category_or_data : {"prep", "test", "posthoc"} or :class:`~pandas.DataFrame`
             either a string to specify the pipeline category to use for generating significance brackets or a
-            dataframe with statistical results if significance brackets should be generated from the dataframe
+            dataframe with statistical results if significance brackets should be generated from the dataframe.
         stats_type : {"between", "within", "interaction"}
             type of analysis performed ("between", "within", or "interaction"). Needed to extract the correct
             information from the analysis dataframe.
         plot_type : {"single", "multi"}
             type of plot for which significance brackets are generated: "multi" if boxplots are grouped
-            (by ``hue`` variable), "single" (the default) otherwise
+            (by ``hue`` variable), "single" (the default) otherwise.
         features : str, list or dict, optional
             feature(s) used in boxplot. The resulting significance brackets will be filtered accordingly to only
             contain features present in the boxplot. It can have the following formats:
-                * ``str``: only one feature is plotted in the boxplot
-                  (returns significance brackets of only one feature)
-                * ``list``: multiple features are combined into *one* :class:`matplotlib.axes.Axes` object
-                  (returns significance brackets of multiple features)
-                * ``dict``: dictionary with feature (or list of features) per subplot if boxplots are structured in
-                  subplots (``subplots`` is ``True``) (returns dictionary with significance brackets per subplot)
+
+            * ``str``: only one feature is plotted in the boxplot
+              (returns significance brackets of only one feature)
+            * ``list``: multiple features are combined into *one* :class:`matplotlib.axes.Axes` object
+              (returns significance brackets of multiple features)
+            * ``dict``: dictionary with feature (or list of features) per subplot if boxplots are structured in
+              subplots (``subplots`` is ``True``) (returns dictionary with significance brackets per subplot)
+
             Default: ``None`` to return significance brackets of all features
         x : str, optional
-            name of ``x`` variable used to plot data in boxplot. Only required if ``plot_type`` is "multi"
+            name of ``x`` variable used to plot data in boxplot. Only required if ``plot_type`` is "multi".
         subplots : bool, optional
             ``True`` if multiple boxplots are structured in subplots, ``False`` otherwise. Default: ``False``
 
@@ -541,7 +556,7 @@ class StatsPipeline:
         stats_data : :class:`~pandas.DataFrame`
             dataframe with results from statistical analysis
         method : str, optional
-            method used for testing and adjustment of p-values. See :func:`pingouin.multicomp` for the
+            method used for testing and adjustment of p-values. See :func:`~pingouin.multicomp` for the
             available methods. Default: "bonf"
 
         Returns
