@@ -11,7 +11,7 @@ class CAR(BaseProtocol):
     """Class representing psychological protocols for assessing the cortisol awakening response (CAR)."""
 
     def __init__(self, name: Optional[str] = None, **kwargs):
-        """Initialize a new ``CAR`` instance.
+        """Class representing psychological protocols for assessing the cortisol awakening response (CAR).
 
         Parameters
         ----------
@@ -19,7 +19,8 @@ class CAR(BaseProtocol):
             name of CAR study or ``None`` to use default name ("CAR"). Default: ``None``
         **kwargs
             additional parameters to be passed to ``CAR`` and its superclass, ``BaseProtocol``, such as:
-                * ``car_saliva_plot_params``: parameters to style :meth:`~biopsykit.protocols.car.CAR.car_saliva_plot`
+
+            * ``car_saliva_plot_params``: parameters to style :meth:`~biopsykit.protocols.car.CAR.car_saliva_plot`
 
         """
         if name is None:
@@ -39,7 +40,7 @@ class CAR(BaseProtocol):
         ----------
         saliva_type : str, optional
             type of saliva data to plot. Default: ``cortisol``
-        kwargs : optional arguments to be passed to :func:`~biopsykit.plotting.lineplot`
+        **kwargs : optional arguments to be passed to :func:`~biopsykit.plotting.lineplot`
 
 
         Returns
@@ -52,7 +53,7 @@ class CAR(BaseProtocol):
 
         See Also
         --------
-        `biopsykit.plotting.lineplot`
+        :func:`~biopsykit.plotting.lineplot`
             draw line plot with error bars
 
         """

@@ -38,60 +38,7 @@ from biopsykit.utils.exceptions import ValidationError
 
 
 class BaseProtocol:  # pylint:disable=too-many-public-methods
-    """Base class representing a psychological protocol and data collected within a study.
-
-    The general structure of the protocol can be specified by passing a ``structure`` dict to the constructor of
-    ``BaseProtocol``.
-
-    Up to three nested structure levels are supported:
-        * 1st level: ``study part``: Different parts of the study, such as: "Preface", "Test",
-          and "Questionnaires"
-        * 2nd level: ``phase``: Different phases of the psychological protocol that belong to the same *study
-          part*, such as: "Preparation", "Stress", "Recovery"
-        * 3rd level: ``subphase``: Different subphases that belong to the same *phase*, such as:
-          "Baseline", "Arithmetic Task", "Feedback"
-
-    .. note::
-        Duration of phases and/or subphases are expected in **seconds**.
-
-
-    Examples
-    --------
-    >>> from biopsykit.protocols import BaseProtocol
-    >>> # Example 1: study with three parts, no finer division into phases
-    >>> structure = {
-    >>>     "Preface": None,
-    >>>     "Test": None,
-    >>>     "Questionnaires": None
-    >>> }
-    >>> BaseProtocol(name="Base", structure=structure)
-    >>> # Example 2: study with three parts, all parts have different phases with specific durations
-    >>> structure = {
-    >>>     "Preface": {"Questionnaires": 240, "Baseline": 60},
-    >>>     "Test": {"Preparation": 120, "Test": 240, "Recovery": 120},
-    >>>     "Recovery": {"Part1": 240, "Part2": 240}
-    >>> }
-    >>> BaseProtocol(name="Base", structure=structure)
-    >>> # Example 3: only certain study parts have different phases (example: TSST)
-    >>> structure = {
-    >>>     "Before": None,
-    >>>     "TSST": {"Preparation": 300, "Talk": 300, "Math": 300},
-    >>>     "After": None
-    >>> }
-    >>> BaseProtocol(name="Base", structure=structure)
-    >>> # Example 4: study with phases and subphases, only certain study parts have different phases (example: MIST)
-    >>> structure = {
-    >>>     "Before": None,
-    >>>     "MIST": {
-    >>>         "MIST1": {"BL": 60, "AT": 240, "FB": 120},
-    >>>         "MIST2": {"BL": 60, "AT": 240, "FB": 120},
-    >>>         "MIST3": {"BL": 60, "AT": 240, "FB": 120}
-    >>>     },
-    >>>     "After": None
-    >>> }
-    >>> BaseProtocol(name="Base", structure=structure)
-
-    """
+    """Base class representing a psychological protocol and data collected within a study."""
 
     def __init__(
         self,
@@ -100,7 +47,23 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         test_times: Optional[Sequence[int]] = None,
         **kwargs,
     ):
-        """Initialize a new ``BaseProtocol`` instance.
+        """Class representing a base class for psychological protocols and data collected within a study.
+
+        The general structure of the protocol can be specified by passing a ``structure`` dict to the constructor of
+        ``BaseProtocol``.
+
+        Up to three nested structure levels are supported:
+
+        * 1st level: ``study part``: Different parts of the study, such as: "Preface", "Test",
+          and "Questionnaires"
+        * 2nd level: ``phase``: Different phases of the psychological protocol that belong to the same *study
+          part*, such as: "Preparation", "Stress", "Recovery"
+        * 3rd level: ``subphase``: Different subphases that belong to the same *phase*, such as:
+          "Baseline", "Arithmetic Task", "Feedback"
+
+        .. note::
+            Duration of phases and/or subphases are expected in **seconds**.
+
 
         Parameters
         ----------
@@ -109,12 +72,13 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         structure : dict, optional
             nested dictionary specifying the structure of the protocol.
             Up to three nested structure levels are supported:
-                * 1st level: ``study_part``: Different parts of the study, such as: "Preface", "Test",
-                  and "Questionnaires"
-                * 2nd level: ``phase``: Different phases of the psychological protocol that belong to the same *study
-                  part*, such as: "Preparation", "Stress", "Recovery"
-                * 3rd level: ``subphase``: Different subphases that belong to the same *phase*, such as:
-                  "Baseline", "Arithmetic Task", "Feedback"
+
+            * 1st level: ``study_part``: Different parts of the study, such as: "Preface", "Test",
+              and "Questionnaires"
+            * 2nd level: ``phase``: Different phases of the psychological protocol that belong to the same *study
+              part*, such as: "Preparation", "Stress", "Recovery"
+            * 3rd level: ``subphase``: Different subphases that belong to the same *phase*, such as:
+              "Baseline", "Arithmetic Task", "Feedback"
 
             If a study part has no division into finer phases (or a phase has no division into finer subphases) the
             dictionary value can be set to ``None``. If the whole study has no division into different parts, the
@@ -124,19 +88,57 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             ``test_times`` is then internally set to [0, 0]. Default: ``None``
         **kwargs
             additional parameters to be passed to ``BaseProtocol``, such as:
-                * ``saliva_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
-                * ``hr_mean_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
-                * ``hr_ensemble_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+
+            * ``saliva_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
+            * ``hr_mean_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
+            * ``hr_ensemble_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+
+
+        Examples
+        --------
+        >>> from biopsykit.protocols import BaseProtocol
+        >>> # Example 1: study with three parts, no finer division into phases
+        >>> structure = {
+        >>>     "Preface": None,
+        >>>     "Test": None,
+        >>>     "Questionnaires": None
+        >>> }
+        >>> BaseProtocol(name="Base", structure=structure)
+        >>> # Example 2: study with three parts, all parts have different phases with specific durations
+        >>> structure = {
+        >>>     "Preface": {"Questionnaires": 240, "Baseline": 60},
+        >>>     "Test": {"Preparation": 120, "Test": 240, "Recovery": 120},
+        >>>     "Recovery": {"Part1": 240, "Part2": 240}
+        >>> }
+        >>> BaseProtocol(name="Base", structure=structure)
+        >>> # Example 3: only certain study parts have different phases (example: TSST)
+        >>> structure = {
+        >>>     "Before": None,
+        >>>     "TSST": {"Preparation": 300, "Talk": 300, "Math": 300},
+        >>>     "After": None
+        >>> }
+        >>> BaseProtocol(name="Base", structure=structure)
+        >>> # Example 4: study with phases and subphases, only certain study parts have different phases (example: MIST)
+        >>> structure = {
+        >>>     "Before": None,
+        >>>     "MIST": {
+        >>>         "MIST1": {"BL": 60, "AT": 240, "FB": 120},
+        >>>         "MIST2": {"BL": 60, "AT": 240, "FB": 120},
+        >>>         "MIST3": {"BL": 60, "AT": 240, "FB": 120}
+        >>>     },
+        >>>     "After": None
+        >>> }
+        >>> BaseProtocol(name="Base", structure=structure)
 
         """
         self.name: str = name
         """Study or protocol name"""
 
         self.structure: Dict[str, Any] = structure
-        """Structure of protocol, i.e., whether protocol if divided into different parts, phases, or subphases.
+        """Structure of protocol, i.e., whether protocol is divided into different parts, phases, or subphases.
 
         If protocol is not divided into different parts ``protocol_structure`` is set to ``None``.
         """
@@ -332,7 +334,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             saliva data (or dict of such) to be added to this protocol.
         saliva_type : str or list of str, optional
             saliva type (or list of such) of saliva data. Not needed if ``saliva_data`` is a dictionary, then the
-            saliva types are inferred from the dictionary keys
+            saliva types are inferred from the dictionary keys.
         sample_times : list of int or dict, optional
             list of sample times in minutes. Sample times are expected to be provided *relative* to the psychological
             test in the protocol (if present). Per convention, a sample collected **directly before** was collected at
@@ -395,10 +397,10 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         Parameters
         ----------
         hr_data : :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
-            dictionary with heart rate data of all subjects collected during the protocol
+            dictionary with heart rate data of all subjects collected during the protocol.
         rpeak_data : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`, optional
             dictionary with rpeak data of all subjects collected during the protocol. Needed if heart rate
-            variability should be computed
+            variability should be computed.
         study_part : str, optional
             string indicating to which study part data belongs to or ``None`` if data has no individual study parts.
             Default: ``None``
@@ -433,7 +435,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         ----------
         result_id : str
             Result ID, a descriptive name of the results that were computed.
-            This ID will also be used as key to store the computed results in the ``hr_results`` dictionary
+            This ID will also be used as key to store the computed results in the ``hr_results`` dictionary.
         study_part : str, optional
             study part the data which should be processed belongs to or ``None`` if data has no
             individual study parts.
@@ -525,7 +527,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         ----------
         result_id : str
             Result ID, a descriptive name of the ensemble that were computed.
-            This ID will also be used as key to store the computed ensemble in the ``hrv_results`` dictionary
+            This ID will also be used as key to store the computed ensemble in the ``hrv_results`` dictionary.
         study_part : str, optional
             study part the data which should be processed belongs to or ``None`` if data has no
             individual study parts.
@@ -549,12 +551,12 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         dict_levels : list, optional
             list with names of dictionary levels which will also be the index level names of the resulting dataframe
             or ``None`` to use default level names: ["subject", "phase"] (if ``split_into_subphases`` is ``False``)
-            or ["subject", "phase", "subphase"] (if ``split_into_subphases`` is ``True``)
+            or ["subject", "phase", "subphase"] (if ``split_into_subphases`` is ``True``).
         hrv_params : dict, optional
             dictionary with parameters to configure HRV processing or ``None`` to use default parameter.
-            See :func:`~biopsykit.signals.ecg.ecg.EcgProcessor.hrv_process` for an overview on available parameters
+            See :func:`~biopsykit.signals.ecg.ecg.EcgProcessor.hrv_process` for an overview on available parameters.
         params : dict, optional
-            dictionary with parameters provided to the different processing steps
+            dictionary with parameters provided to the different processing steps.
 
         """
         if study_part is None:
@@ -628,7 +630,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         ----------
         ensemble_id : str
             ensemble identifier, a descriptive name of the ensemble data that were computed.
-            This ID will also be used as key to store the computed ensemble data in the ``hr_ensemble`` dictionary
+            This ID will also be used as key to store the computed ensemble data in the ``hr_ensemble`` dictionary.
         study_part : str, optional
             study part the data which should be processed belongs to or ``None`` if data has no
             individual study parts.
@@ -650,7 +652,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             ``True`` to cut time-series data to shortest duration of a subject in each phase, ``False`` otherwise.
             Default: ``True``
         merge_dict : bool, optional
-            ``True`` to convert ``StudyDataDict`` into ``MergedStudyDataDict``, i.e., merge dictionary data from
+            ``True`` to convert :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into
+            :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`, i.e., merge dictionary data from
             individual subjects into one dataframe for each phase.
             Default: ``True``
         add_conditions : bool, optional
@@ -664,7 +667,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        `~biopsykit.protocols.plotting.hr_ensemble_plot`
+        :func:`~biopsykit.protocols.plotting.hr_ensemble_plot`
             Heart rate ensemble plot
 
         """
@@ -703,7 +706,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         Parameters
         ----------
         result_id : str
-            identifier of result parameters used to store dataframe in ``hr_results`` dictionary
+            identifier of result parameters used to store dataframe in ``hr_results`` dictionary.
         results : :class:`~pandas.DataFrame`
             dataframe with computed heart rate processing ensemble
 
@@ -841,8 +844,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         saliva_type : {"cortisol", "amylase", "il6"}, optional
             saliva type to be plotted. If a dict is passed and ``saliva_type`` is ``None``
             the saliva types are inferred from dict keys. Default: ``cortisol``
-        kwargs
-            additional parameters to be passed to :func:`biopsykit.protocols.plotting.saliva_plot`.
+        **kwargs
+            additional parameters to be passed to :func:`~biopsykit.protocols.plotting.saliva_plot`.
 
 
         Returns
@@ -854,7 +857,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        `biopsykit.protocols.plotting.saliva_plot`
+        :func:`~biopsykit.protocols.plotting.saliva_plot`
             Plot saliva data during a psychological protocol
 
         """
@@ -880,7 +883,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
     @staticmethod
     def saliva_plot_combine_legend(fig: plt.Figure, ax: plt.Axes, saliva_types: Sequence[str], **kwargs):
-        """Combine multiple legends of ``saliva_plot`` into one joint legend outside of plot.
+        """Combine multiple legends of :func:`~biopsykit.protocols.plotting.saliva_plot` into one legend outside plot.
 
         If data from multiple saliva types are combined into one plot (e.g., by calling
         :func:`~biopsykit.protocols.plotting.saliva_plot` on the same plot twice) then two separate legend are created.
@@ -895,7 +898,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             axes object
         saliva_types : list
             list of saliva types in plot
-        kwargs
+        **kwargs
             additional arguments to customize plot that are passed to
             :func:`~biopsykit.protocols.plotting.saliva_plot_combine_legend`
 
@@ -925,16 +928,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             name of feature to plot or ``None``
         stats_kwargs : dict, optional
             dictionary with arguments for significance brackets
-        kwargs
+        **kwargs
             additional arguments that are passed to :func:`~biopsykit.protocols.plotting.saliva_feature_boxplot`
-
-
-        See Also
-        --------
-        `biopsykit.protocols.plotting.saliva_feature_plot`
-            plot saliva features as boxplot without ``Protocol`` instance
-        `biopsykit.plotting.feature_boxplot`
-            plot features as boxplot
 
 
         Returns
@@ -943,6 +938,15 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             figure object
         ax : :class:`matplotlib.axes.Axes`
             axes object
+
+
+        See Also
+        --------
+        :func:`~biopsykit.protocols.plotting.saliva_feature_boxplot`
+            plot saliva features as boxplot without ``Protocol`` instance
+        :func:`~biopsykit.plotting.feature_boxplot`
+            plot features as boxplot
+
 
         """
         return plot.saliva_feature_boxplot(
@@ -992,9 +996,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        `biopsykit.plotting.saliva_multi_feature_boxplot`
+        :func:`~biopsykit.protocols.plotting.saliva_multi_feature_boxplot`
             plot multiple saliva features as boxplots without instantiating a ``Protocol`` instance
-        `biopsykit.stats.StatsPipeline`
+        :func:`~biopsykit.stats.StatsPipeline`
             class to create statistical analysis pipelines and get parameter for plotting significance brackets
 
         """
@@ -1009,11 +1013,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         ----------
         ensemble_id : str
             identifier of the ensemble data to be plotted.
-            Ensemble data needs to be computed using ``compute_hr_ensemble`` first
+            Ensemble data needs to be computed using :meth:`~biopsykit.protocols.base.compute_hr_ensemble` first
         subphases : dict, optional
             dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
             ``None`` if no subphases are present. Default: ``None``
-        kwargs : dict, optional
+        **kwargs : dict, optional
             optional arguments for plot configuration to be passed to
             :func:`~biopsykit.protocols.plotting.hr_ensemble_plot`
 
@@ -1028,9 +1032,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        `compute_hr_ensemble`
+        :meth:`~biopsykit.protocols.base.compute_hr_ensemble`
             compute heart rate ensemble data
-        `~biopsykit.protocols.plotting.hr_ensemble_plot`
+        :func:`~biopsykit.protocols.plotting.hr_ensemble_plot`
             Heart rate ensemble plot
 
         """
@@ -1046,36 +1050,38 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         r"""Plot course of heart rate as mean ± standard error over phases (and subphases) of a psychological protocol.
 
         The correct plot is automatically inferred from the provided data:
-            * only ``phase`` index level: plot phases over x axis
-            * ``phase`` and ``subphase`` index levels: plot subphases over x axis, highlight phases as vertical spans
-            * additionally: ``condition`` level: plot data of different conditions individually
-              (corresponds to ``hue`` parameter in :func:`biopsykit.plotting.lineplot`)
+
+        * only ``phase`` index level: plot phases over x axis
+        * ``phase`` and ``subphase`` index levels: plot subphases over x axis, highlight phases as vertical spans
+        * additionally: ``condition`` level: plot data of different conditions individually
+          (corresponds to ``hue`` parameter in :func:`biopsykit.plotting.lineplot`)
 
 
         Parameters
         ----------
         result_id : str
             identifier of the heart rate result data to be plotted
-        kwargs
+        **kwargs
             additional  parameters to be passed to the plot, such as:
-                * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created
-                  and returned.
-                * ``colormap``: colormap to plot data from different phases
-                * ``figsize``: tuple specifying figure dimensions
-                * ``x_offset``: offset value to move different groups along the x axis for better visualization.
-                  Default: 0.05
-                * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
-                  or "Phases" (if only phases are present)
-                * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
-                * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
-                  (see :meth:`~matplotlib.Axes.margin()` for further information), or ``None`` to automatically infer
-                  y axis limits
-                * ``marker``: string or list of strings to specify marker style.
-                  If ``marker`` is a string, then marker of each line will have the same style.
-                  If ``marker`` is a list, then marker of each line will have a different style.
-                * ``linestyle``: string or list of strings to specify line style.
-                  If ``linestyle`` is a string, then each line will have the same style.
-                  If ``linestyle`` is a list, then each line will have a different style.
+
+            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created
+              and returned.
+            * ``colormap``: colormap to plot data from different phases
+            * ``figsize``: tuple specifying figure dimensions
+            * ``x_offset``: offset value to move different groups along the x axis for better visualization.
+              Default: 0.05
+            * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
+              or "Phases" (if only phases are present)
+            * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+            * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
+              (see :meth:`~matplotlib.Axes.margin()` for further information), or ``None`` to automatically infer
+              y axis limits
+            * ``marker``: string or list of strings to specify marker style.
+              If ``marker`` is a string, then marker of each line will have the same style.
+              If ``marker`` is a list, then marker of each line will have a different style.
+            * ``linestyle``: string or list of strings to specify line style.
+              If ``linestyle`` is a string, then each line will have the same style.
+              If ``linestyle`` is a list, then each line will have a different style.
 
 
         Returns
@@ -1088,7 +1094,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        `biopsykit.plotting.lineplot`
+        :func:`~biopsykit.plotting.lineplot`
             Plot data as lineplot with mean and standard error
 
         """

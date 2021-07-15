@@ -377,7 +377,7 @@ This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.Heart
 MergedStudyDataDict = Dict[str, pd.DataFrame]
 """Dictionary with merged time-series data of **multiple subjects**, split into **different phases**.
 
-A ``MergedSubjectsDict`` is a dictionary with the following format:
+A ``MergedStudyDataDict`` is a dictionary with the following format:
 
 {
     "phase_1" : merged_dataframe,
