@@ -16,11 +16,11 @@ class TSST(BaseProtocol):
 
         Up to three nested structure levels are supported:
             * 1st level: ``study part``: Different parts of the study where the TSST was conducted, such as: "Pre",
-              "TSST", and "Post"
+              "TSST", and "Post".
             * 2nd level: ``phase``: Different TSST phases that belong to the same *study part*, such as:
               "Preparation", "Talk", "Math" (for study part "TSST") or "Questionnaires", "Rest"
-              (for study part "Pre")
-            * 3rd level: ``subphase``: Different TSST subphases that belong to the same *phase*
+              (for study part "Pre").
+            * 3rd level: ``subphase``: Different TSST subphases that belong to the same *phase*.
 
 
         Parameters
@@ -31,23 +31,25 @@ class TSST(BaseProtocol):
             nested dictionary specifying the structure of the TSST study.
 
             Up to three nested structure levels are supported:
+
             * 1st level: ``study part``: Different parts of the study where the TSST was conducted, such as: "Pre",
-              "TSST", and "Post"
+              "TSST", and "Post".
             * 2nd level: ``phase``: Different TSST phases that belong to the same *study part*, such as:
               "Preparation", "Talk", "Math" (for study part "TSST") or "Questionnaires", "Rest"
-              (for study part "Pre")
-            * 3rd level: ``subphase``: Different TSST subphases that belong to the same *phase*
+              (for study part "Pre").
+            * 3rd level: ``subphase``: Different TSST subphases that belong to the same *phase*.
 
             If a study part has no division into finer phases (or a phase has no division into finer subphases) the
             dictionary value can be set to ``None``.
         **kwargs
             additional parameters to be passed to ``MIST`` and its superclass, ``BaseProtocol``, such as:
-                * ``saliva_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
-                * ``hr_mean_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
-                * ``hr_ensemble_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+
+            * ``saliva_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
+            * ``hr_mean_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
+            * ``hr_ensemble_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
 
 
         Examples
