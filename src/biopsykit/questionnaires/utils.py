@@ -40,9 +40,10 @@ def find_cols(
 
     This function is useful to find all columns that belong to a questionnaire. Column names can be filtered based on
     one (or a combination of) the following criteria:
-        * ``starts_with``: columns have to start with the specified string
-        * ``ends_with``: columns have to end with the specified string
-        * ``contains``: columns have to contain the specified string
+
+    * ``starts_with``: columns have to start with the specified string
+    * ``ends_with``: columns have to end with the specified string
+    * ``contains``: columns have to contain the specified string
 
     Optionally, the item numbers in the matching column names can be zero-padded, if they are not already.
 
@@ -50,10 +51,10 @@ def find_cols(
         If ``zero_pad_numbers`` is ``True`` then the column names returned by this function will be renamed and might
         thus not match the column names of the original dataframe. To solve this, make sure your orignal dataframe
         already has zero-padded columns (by manually renaming them) or convert column names using
-        :func:`biopsykit.questionnaires.utils.zero_pad_columns`.
+        :func:`~biopsykit.questionnaires.utils.zero_pad_columns`.
 
     .. warning::
-        Zero-padding using :func:`biopsykit.questionnaires.utils.zero_pad_columns` assumes, by default, that numbers
+        Zero-padding using :func:`~biopsykit.questionnaires.utils.zero_pad_columns` assumes, by default, that numbers
         are *at the end* of column names. If you want to change that behavior
         (e.g., because the column names have string suffixes), you might need to apply zero-padding manually.
 
@@ -140,16 +141,16 @@ def find_cols(
 def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Optional[pd.DataFrame]:
     r"""Add zero-padding to numbers at the **end** of column names in a dataframe.
 
+    .. warning::
+        By default, this function assumes that numbers are **at the end** of column names. If you need to change that
+        behavior (e.g., because the column names have string suffixes), you might need to apply zero-padding manually.
+
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe with columns to zero-pad
     inplace : bool, optional
         whether to perform the operation inplace or not. Default: ``False``
-
-    .. warning::
-        By default, this function assumes that numbers are **at the end** of column names. If you need to change that
-        behavior (e.g., because the column names have string suffixes), you might need to apply zero-padding manually.
 
     Returns
     -------
@@ -188,7 +189,7 @@ def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
 
     Returns
     -------
-    :class:`numpy.array`
+    :func:`numpy.array`
         array with converted indices
 
     """
@@ -209,7 +210,7 @@ def invert(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame` or :class:`pandas.Series`
+    data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         questionnaire data to invert
     score_range : list of int
         possible score range of the questionnaire items
@@ -226,10 +227,10 @@ def invert(
 
     Raises
     ------
-    :exc:`~biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if ``data`` is no dataframe or series
         if ``score_range`` does not have length 2
-    :exc:`~biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values in ``data`` are not in ``score_range``
 
 
@@ -367,7 +368,7 @@ def convert_scale(
 
     Raises
     ------
-    :exc:`~biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if ``data`` is no dataframe or series
 
     Examples
@@ -435,7 +436,7 @@ def crop_scale(
     data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         data to be cropped
     score_range : list of int
-        possible score range of the questionnaire items. Values out of ``score_range`` are cropped
+        possible score range of the questionnaire items. Values out of ``score_range`` are cropped.
     set_nan : bool, optional
         whether to set values out of range to NaN or to the values specified by ``score_range``. Default: ``False``
     inplace : bool, optional
@@ -482,13 +483,15 @@ def bin_scale(
     ----------
     data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         data with scales to be binned
-    bins : The criteria to bin by.
+    bins : The criteria to bin by
+
         * ``int`` : Defines the number of equal-width bins in the range of ``data``. The range of ``x`` is extended by
-        0.1% on each side to include the minimum and maximum values of `x`.
+          0.1% on each side to include the minimum and maximum values of `x`.
         * sequence of scalars : Defines the bin edges allowing for non-uniform width. No extension of the range of
-        ``x`` is done.
+          ``x`` is done.
         * ``IntervalIndex`` : Defines the exact bins to be used. Note that IntervalIndex for ``bins`` must be
-        non-overlapping.
+          non-overlapping.
+
     cols : list of str or list of int, optional
         column name/index (or list of such) to be binned or ``None`` to use all columns (or if ``data`` is a series).
         Default: ``None``
@@ -547,19 +550,21 @@ def bin_scale(
 def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
     """Convert a dataframe wide-format into long-format.
 
+    .. warning::
+        This function is deprecated and will be removed in the future!
+        Please use :func:`~biopsykit.utils.dataframe_handling.wide_to_long` instead.
+
+
     Parameters
     ----------
     data : :class:`pandas.DataFrame`
-        pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject
+        pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject.
     quest_name : str
         questionnaire name, i.e., common name for each column to be converted into long-format.
     levels : str or list of str
         index levels of the resulting long-format dataframe.
 
-    .. warning::
-        This function is deprecated and will be removed in the future!
-        Please use :func:`biopsykit.utils.dataframe_handling.wide_to_long` instead.
-
+   
     Returns
     -------
     :class:`pandas.DataFrame`
@@ -567,7 +572,7 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
 
     See Also
     --------
-    :func:`biopsykit.utils.dataframe_handling.wide_to_long`
+    :func:`~biopsykit.utils.dataframe_handling.wide_to_long`
         convert dataframe from wide to long format
 
     """
