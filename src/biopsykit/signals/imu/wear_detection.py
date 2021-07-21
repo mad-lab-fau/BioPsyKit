@@ -152,13 +152,13 @@ class WearDetection:
         Parameters
         ----------
         data : :class:`~pandas.DataFrame`
-            data with wear detection applied. The dataframe is expected to have a "wear" column
+            data with wear detection applied. The dataframe is expected to have a "wear" column.
 
         Returns
         -------
-        start : :class:`datetime.datetime` or int
+        start : :class:`~datetime.datetime` or int
             start of major wear block as datetime or int index
-        end : :class:`datetime.datetime` or int
+        end : :class:`~datetime.datetime` or int
             end of major wear block as datetime or int index
 
         See Also
@@ -187,7 +187,7 @@ class WearDetection:
         data : :class:`~pandas.DataFrame`
             input data that contains wear block
         wear_block : tuple
-            tuple with start and end times of wear block. The type of ``wear_block`` depends on the index of ``data``
+            tuple with start and end times of wear block. The type of ``wear_block`` depends on the index of ``data``.
             (datetime or int)
 
         Returns

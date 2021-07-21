@@ -49,14 +49,16 @@ def _find_static_samples(
        <= threshold
     metric : str, optional
         Metric which will be calculated per window, one of the following strings:
-            * 'mean' (default)
-              Calculates mean value per window
-            * 'maximum'
-              Calculates maximum value per window
-            * 'median'
-              Calculates median value per window
-            * 'variance'
-              Calculates variance value per window
+
+        * 'mean' (default)
+          Calculates mean value per window
+        * 'maximum'
+          Calculates maximum value per window
+        * 'median'
+          Calculates median value per window
+        * 'variance'
+          Calculates variance value per window
+
     overlap : int, optional
         Length of desired overlap in units of samples. If ``None`` (default) overlap will be window_length - 1
 
@@ -72,7 +74,7 @@ def _find_static_samples(
 
     See Also
     --------
-    :func:`~biopsykit.signals.utils.array_handling.sliding_window_view`
+    :func:`~biopsykit.utils.array_handling.sliding_window_view`
         Details on the used windowing function for this method.
 
     """
@@ -199,10 +201,11 @@ def find_static_moments(
        <= threshold
     metric : str, optional
         Metric which will be calculated per window, one of the following strings:
-            * 'variance' (default): Calculates variance value per window
-            * 'mean': Calculates mean value per window
-            * 'maximum': Calculates maximum value per window
-            * 'median': Calculates median value per window
+
+        * 'variance' (default): Calculates variance value per window
+        * 'mean': Calculates mean value per window
+        * 'maximum': Calculates maximum value per window
+        * 'median': Calculates median value per window
 
 
     Returns
@@ -218,7 +221,7 @@ def find_static_moments(
 
     See Also
     --------
-    :func:`~biopsykit.signals.utils.array_handling.sliding_window`
+    :func:`~biopsykit.utils.array_handling.sliding_window`
         Details on the used windowing function for this method.
 
     """
@@ -259,7 +262,7 @@ def find_first_static_window_multi_sensor(
         Length of the required static signal in samples
     inactive_signal_th
         The threshold for static windows.
-        If metric(norm(window, axis=-1))<=`inactive_signal_th` for all sensors, it is considered static.
+        If metric(norm(window, axis=-1)) <= `inactive_signal_th` for all sensors, it is considered static.
     metric
         The metric that should be calculated on the vectornorm over all axis for each sensor in each window
 

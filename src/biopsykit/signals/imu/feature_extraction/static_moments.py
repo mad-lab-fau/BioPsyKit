@@ -20,14 +20,15 @@ def compute_features(
     """Compute features based on frequency and duration of static moments in given input signal.
 
     This function computes the following features:
-        * ``sm_number``: number of static moments in data
-        * ``sm_max``: maximum duration of static moments, i.e., longest duration
-        * ``sm_max_position``: location of the beginning of the longest static moment in the input data normalized to
-          ``[0, 1]`` where 0 = ``start`` and 1 = ``end``
-        * ``sm_median``: median duration of static moments
-        * ``sm_mean``: mean duration of static moments
-        * ``sm_std``: standard deviation of static moment durations
-        * ``sm_skewness``: skewness of static moment durations
+
+    * ``sm_number``: number of static moments in data
+    * ``sm_max``: maximum duration of static moments, i.e., longest duration
+    * ``sm_max_position``: location of the beginning of the longest static moment in the input data normalized to
+      ``[0, 1]`` where 0 = ``start`` and 1 = ``end``
+    * ``sm_median``: median duration of static moments
+    * ``sm_mean``: mean duration of static moments
+    * ``sm_std``: standard deviation of static moment durations
+    * ``sm_skewness``: skewness of static moment durations
 
     The features are both computed on all detected static moments and on static moments that are longer than
     60 seconds (suffix ``_60``).
