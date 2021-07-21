@@ -567,7 +567,7 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
    
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         pandas DataFrame in long-format
 
     See Also
@@ -608,7 +608,7 @@ def compute_scores(
         dictionary with questionnaire names to be computed (keys) and columns of the questionnaires (values)
     quest_kwargs : dict
         dictionary with optional arguments to be passed to questionnaire functions. The dictionary is expected
-        consist of questionnaire names (keys) and **kwargs dictionaries (values) with arguments per questionnaire
+        consist of questionnaire names (keys) and ``**kwargs`` dictionaries (values) with arguments per questionnaire
 
     Returns
     -------
