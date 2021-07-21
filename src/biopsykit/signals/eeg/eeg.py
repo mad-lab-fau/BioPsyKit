@@ -67,10 +67,12 @@ class EegProcessor(_BaseProcessor):
         freq_bands : dict
             dictionary with frequency bounds of EEG frequency bands. By default (``None``) the following
             frequency band definition (in Hz) is used:
-                * ``theta``: [4, 8]
-                * ``alpha``: [8, 13]
-                * ``beta``: [13, 30]
-                * ``gamma``: [30, 44]
+
+            * ``theta``: [4, 8]
+            * ``alpha``: [8, 13]
+            * ``beta``: [13, 30]
+            * ``gamma``: [30, 44]
+
         title : str, optional
             title of ECG processing progress bar in Jupyter Notebooks or ``None`` to leave empty. Default: ``None``
 

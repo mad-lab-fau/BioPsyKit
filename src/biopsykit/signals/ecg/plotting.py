@@ -50,11 +50,12 @@ def ecg_plot(
     """Plot ECG processing results.
 
     By default, this plot consists of four subplots:
-        * `top left`: course of ECG signal plot with signal quality indicator,
-          detected R peaks and R peaks marked as outlier
-        * `bottom left`: course of heart rate (tachogram)
-        * `top right`: individual heart beats overlaid on top of each other
-        * `bottom right`: heart rate distribution (histogram)
+
+    * `top left`: course of ECG signal plot with signal quality indicator,
+      detected R peaks and R peaks marked as outlier
+    * `bottom left`: course of heart rate (tachogram)
+    * `top right`: individual heart beats overlaid on top of each other
+    * `bottom right`: heart rate distribution (histogram)
 
 
     To use this function, either simply pass an :class:`~biopsykit.signals.ecg.ecg.EcgProcessor` object together with
@@ -65,13 +66,13 @@ def ecg_plot(
     Parameters
     ----------
     ecg_processor : :class:`~biopsykit.signals.ecg.ecg.EcgProcessor`, optional
-        ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
+        ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
     key : str, optional
-        Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
+        Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
     ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
-        Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+        Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     heart_rate : :class:`~pandas.DataFrame`, optional
-        Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+        Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
         Default: 256
@@ -81,31 +82,32 @@ def ecg_plot(
         Whether to plot the heart rate distribution in a subplot or not. Default: ``True``
     plot_individual_beats : bool, optional
         Whether to plot the individual heart beats in a subplot or not. Default: ``True``
-    kwargs
+    **kwargs
         Additional parameters to configure the plot. Parameters include:
-            * ``figsize``: figure size
-            * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
-            * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :func:`matplotlib.Axes.legend`
-            * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` :func:`matplotlib.Axes.legend`
+
+        * ``figsize``: figure size
+        * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
+        * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`~matplotlib.axes.Axes.legend`.
+        * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` parameter to :meth:`~matplotlib.axes.Axes.legend`.
 
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         Figure object
-    axs : list of :class:`matplotlib.axes.Axes`
+    axs : list of :class:`~matplotlib.axes.Axes`
         list of subplot axes objects
 
 
     See Also
     --------
-    `hr_plot`
+    :func:`~biopsykit.signals.ecg.plotting.hr_plot`
         plot heart rate only
-    `hr_distribution_plot`
+    :func:`~biopsykit.signals.ecg.plotting.hr_distribution_plot`
         plot heart rate distribution only
-    `individual_beats_plot`
+    :func:`~biopsykit.signals.ecg.plotting.individual_beats_plot`
         plot individual beats only
-    `hrv_plot`
+    :func:`~biopsykit.signals.ecg.plotting.hrv_plot`
         plot heart rate variability
 
     """
@@ -287,33 +289,34 @@ def hr_plot(
     Parameters
     ----------
     heart_rate : :class:`~pandas.DataFrame`
-        Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+        Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     plot_mean : bool, optional
         Whether to plot the mean heart rate as horizontal line or not. Default: ``True``
     plot_outlier : bool, optional
         Whether to plot ECG signal outlier as vertical outlier or not. Default: ``False``
-    outlier : :class:`numpy.array`, optional
+    outlier : :func:`numpy.array`, optional
         List of outlier indices. Only needed if ``plot_outlier`` is ``True``. Default: ``None``
-    kwargs
+    **kwargs
         Additional parameters to configure the plot. Parameters include:
-            * ``figsize``: Figure size
-            * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
-            * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :func:`matplotlib.Axes.legend`
-            * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` :func:`matplotlib.Axes.legend`
-            * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
+
+        * ``figsize``: Figure size
+        * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
+        * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`~matplotlib.axes.Axes.legend`.
+        * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` parameter to :meth:`~matplotlib.axes.Axes.legend`.
+        * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
 
     See Also
     --------
-    `ecg_plot`
+    :func:`~biopsykit.signals.ecg.plotting.ecg_plot`
         plot ECG overview
 
     """
@@ -410,9 +413,10 @@ def hrv_plot(
     """Plot Heart Rate Variability results.
 
     By default, it consists of 3 plots:
-        * `top left`: RR interval distribution (histogram) including boxplot to visualize distribution and median
-        * `bottom left`: Power Spectral Density (PSD) plot of RR intervals
-        * `right`: Poincaré plot of RR intervals
+
+    * `top left`: RR interval distribution (histogram) including boxplot to visualize distribution and median
+    * `bottom left`: Power Spectral Density (PSD) plot of RR intervals
+    * `right`: Poincaré plot of RR intervals
 
     To use this function, either simply pass an :class:`~biopsykit.signals.ecg.ecg.EcgProcessor` object together with
     a ``key`` indicating which phase needs to be processed should be processed or the two dataframes ``ecg_signal``
@@ -421,43 +425,44 @@ def hrv_plot(
 
     Parameters
     ----------
-    ecg_processor : :class:`biopsykit.signals.ecg.ecg.EcgProcessor`, optional
-        ``EcgProcessor`` object. If this argument is passed, the ``key`` argument needs to be supplied as well
+    ecg_processor : :class:`~biopsykit.signals.ecg.ecg.EcgProcessor`, optional
+        ``EcgProcessor`` object. If this argument is passed, the ``key`` argument needs to be supplied as well.
     key : str, optional
-        Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
-    ecg_signal : pd.DataFrame, optional
-        dataframe with processed ECG signal. Output from :meth:`biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+        Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
+    ecg_signal : :class:`~pandas.DataFrame`, optional
+        dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
-        Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+        Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
         Default: 256
     plot_psd : bool, optional
         Whether to plot power spectral density (PDF) from frequency-based HRV analysis in a subplot or not.
         Default: ``True``
-    kwargs
+    **kwargs
         Additional parameters to configure the plot. Parameters include:
-            * ``figsize``: Figure size
-            * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
-            * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :func:`matplotlib.Axes.legend`
-            * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` :func:`matplotlib.Axes.legend`
-            * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
+
+        * ``figsize``: Figure size
+        * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
+        * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`~matplotlib.axes.Axes.legend`.
+        * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` parameter to :meth:`~matplotlib.axes.Axes.legend`.
+        * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
 
     See Also
     --------
-    `rr_distribution_plot`
+    :func:`~biopsykit.signals.ecg.plotting.rr_distribution_plot`
         plot RR interval distribution
-    `hrv_poincare_plot`
+    :func:`~biopsykit.signals.ecg.plotting.hrv_poincare_plot`
         plot HRV using Poincaré plot
-    `hrv_frequency_plot`
+    :func:`~biopsykit.signals.ecg.plotting.hrv_frequency_plot`
         plot Power Spectral Density (PSD) of RR intervals
 
     """
@@ -515,24 +520,25 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, **kwargs) -> Tuple[plt.Figure
 
     Parameters
     ----------
-    heart_rate : pd.DataFrame, optional
-        dataframe with heart rate output. Output from :meth:`biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
-    kwargs
+    heart_rate : :class:`~pandas.DataFrame`, optional
+        dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+    **kwargs
         Additional parameters to configure the plot. Parameters include:
-            * ``figsize``: Figure size
-            * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
+
+        * ``figsize``: Figure size
+        * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
     See Also
     --------
-    `ecg_plot`
+    :func:`~biopsykit.signals.ecg.plotting.ecg_plot`
         plot ECG overview
 
     """
@@ -569,25 +575,26 @@ def rr_distribution_plot(
 
     Parameters
     ----------
-    rpeaks : pd.DataFrame, optional
-        dataframe with R peaks. Output of :meth:`biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+    rpeaks : :class:`~pandas.DataFrame`, optional
+        dataframe with R peaks. Output of :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
-    kwargs
+    *+kwargs
         Additional parameters to configure the plot. Parameters include:
-            * ``figsize``: Figure size
-            * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
+
+        * ``figsize``: Figure size
+        * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
     See Also
     --------
-    `hr_distribution_plot`
+    :func:`~biopsykit.signals.ecg.plotting.hr_distribution_plot`
         plot heart rate distribution (without boxplot and rugplot)
 
     """
@@ -650,28 +657,29 @@ def individual_beats_plot(
     Parameters
     ----------
     ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
-        Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+        Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
         Dataframe with detected R peaks or ``None`` to infer R peaks from ``ecg_signal``. Default: ``None``
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
-    kwargs
+    **kwargs
         Additional parameters to configure the plot. Parameters include:
-            * ``figsize``: Figure size
-            * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
+        
+        * ``figsize``: Figure size
+        * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
 
     See Also
     --------
-    `ecg_plot`
+    :func:`~biopsykit.signals.ecg.plotting.ecg_plot`
         plot ECG overview
 
     """
@@ -725,26 +733,27 @@ def hrv_poincare_plot(
     Parameters
     ----------
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
-            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
-    kwargs
+    **kwargs
         Additional parameters to configure the plot. Parameters include:
-            * ``figsize``: Figure size
-            * ``ax``: List of pre-existing axes for the plot. Otherwise, a new figure and list of axes objects are
-              created and returned.
+
+        * ``figsize``: Figure size
+        * ``ax``: List of pre-existing axes for the plot. Otherwise, a new figure and list of axes objects are
+          created and returned.
 
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         Figure object
-    axs : list of :class:`matplotlib.axes.Axes`
+    axs : list of :class:`~matplotlib.axes.Axes`
         list of subplot axes objects
 
     See Also
     --------
-    `hrv_plot`
+    :func:`~biopsykit.signals.ecg.plotting.hrv_plot`
         plot heart rate variability
 
     """
@@ -892,26 +901,27 @@ def hrv_frequency_plot(
     Parameters
     ----------
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
-            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
-    kwargs
+    **kwargs
         Additional parameters to configure the plot. Parameters include:
-            * ``figsize``: Figure size
-            * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
+       
+        * ``figsize``: Figure size
+        * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
 
     See Also
     --------
-    `hrv_plot`
+    :func:`~biopsykit.signals.ecg.plotting.hrv_plot`
         plot heart rate variability
 
     """

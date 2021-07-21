@@ -46,32 +46,6 @@ def _hrv_process_get_hrv_types(hrv_types: Union[str, Sequence[str]]) -> Sequence
 
 class EcgProcessor(_BaseProcessor):
     """Class for processing ECG data.
-
-    To use this class simply pass data in form of a :class:`~pandas.DataFrame` (or a dict of such).
-    If the data was recorded during a study that consists of multiple phases, the ECG data can be split into single
-    phases by passing time information via the ``time_intervals`` parameter.
-
-    Each instance of ``EcgProcessor`` the following attributes:
-        * ``data``: dict with raw ECG data, split into the specified phases. If data was not split the
-        dictionary only has one entry, accessible by the key ``Data``
-        * ``ecg_result`` : dict with ECG processing results from ``data``. Each dataframe in the dict has the
-        following columns:
-            * ``ECG_Raw``: Raw ECG signal
-            * ``ECG_Clean``: Cleaned (filtered) ECG signal
-            * ``ECG_Quality``: Quality indicator in the range of [0,1] for ECG signal quality
-            * ``ECG_R_Peaks``: 1.0 where R peak was detected in the ECG signal, 0.0 else
-            * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
-            * ``Heart_Rate``: Computed Heart rate interpolated to the length of the raw ECG signal
-        * ``heart_rate``: dict with heart rate derived from ``data``. Each dataframe in the dict has the
-        following columns:
-            * ``Heart_Rate``: Computed heart rate for each detected R peak
-        * ``rpeaks``: dict with R peak location indices derived from ``data``. Each dataframe in the dict has the
-        following columns:
-            * ``R_Peak_Quality``: Quality indicator in the range of [0,1] for quality of the original ECG signal
-            * ``R_Peak_Idx``: Index of detected R peak in the raw ECG signal
-            * ``RR_Interval``: Interval between the current and the successive R peak in seconds
-            * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
-
     """
 
     def __init__(
@@ -82,6 +56,38 @@ class EcgProcessor(_BaseProcessor):
         include_start: Optional[bool] = False,
     ):
         """Initialize a new ``EcgProcessor`` instance.
+
+        To use this class simply pass data in form of a :class:`~pandas.DataFrame` (or a dict of such).
+        If the data was recorded during a study that consists of multiple phases, the ECG data can be split into single
+        phases by passing time information via the ``time_intervals`` parameter.
+
+        Each instance of ``EcgProcessor`` the following attributes:
+
+        * ``data``: dict with raw ECG data, split into the specified phases. If data was not split the
+          dictionary only has one entry, accessible by the key ``Data``
+        * ``ecg_result`` : dict with ECG processing results from ``data``. Each dataframe in the dict has the
+          following columns:
+
+          * ``ECG_Raw``: Raw ECG signal
+          * ``ECG_Clean``: Cleaned (filtered) ECG signal
+          * ``ECG_Quality``: Quality indicator in the range of [0,1] for ECG signal quality
+          * ``ECG_R_Peaks``: 1.0 where R peak was detected in the ECG signal, 0.0 else
+          * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
+          * ``Heart_Rate``: Computed Heart rate interpolated to the length of the raw ECG signal
+
+        * ``heart_rate``: dict with heart rate derived from ``data``. Each dataframe in the dict has the
+          following columns:
+
+          * ``Heart_Rate``: Computed heart rate for each detected R peak
+
+        * ``rpeaks``: dict with R peak location indices derived from ``data``. Each dataframe in the dict has the
+          following columns:
+
+          * ``R_Peak_Quality``: Quality indicator in the range of [0,1] for quality of the original ECG signal
+          * ``R_Peak_Idx``: Index of detected R peak in the raw ECG signal
+          * ``RR_Interval``: Interval between the current and the successive R peak in seconds
+          * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
+
 
         You can either pass a data dictionary 'data_dict' containing ECG data or dataframe containing ECG data.
         For the latter, you can additionally supply time information via ``time_intervals`` parameter to automatically
@@ -140,7 +146,7 @@ class EcgProcessor(_BaseProcessor):
 
         See Also
         --------
-        :obj:`~biopsykit.datatype_helper.EcgResultDataFrame`
+        :obj:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`
             dataframe format
 
         """
@@ -199,11 +205,12 @@ class EcgProcessor(_BaseProcessor):
         """Process ECG signal.
 
         The ECG processing pipeline consists of the following steps:
-        * ``Filtering``: Uses :func:`~neurokit2.ecg_clean` to clean the ECG signal and prepare it
+
+        * ``Filtering``: Uses :func:`~neurokit2.ecg.ecg_clean` to clean the ECG signal and prepare it
           for R peak detection
-        * ``R-peak detection``: Uses :func:`~neurokit2.ecg_peaks` to find and extract R peaks
+        * ``R-peak detection``: Uses :func:`~neurokit2.ecg.ecg_peaks` to find and extract R peaks.
         * ``Outlier correction`` (optional): Uses :meth:`~biopsykit.signals.ecg.EcgProcessor.correct_outlier`
-          to check detected R peaks for outlier and impute removed outlier by linear interpolation
+          to check detected R peaks for outlier and impute removed outlier by linear interpolation.
 
 
         Parameters
@@ -221,8 +228,8 @@ class EcgProcessor(_BaseProcessor):
             title of ECG processing progress bar in Jupyter Notebooks or ``None`` to leave empty. Default: ``None``
         method : {'neurokit', 'hamilton', 'pantompkins', 'elgendi', ... }, optional
             method used to clean ECG signal and perform R-peak detection as defined by the ``neurokit`` library
-            (see :func:`~neurokit2.ecg_clean` and :func:`~neurokit2.ecg_peaks`) or
-            ``None`` to use default method (``neurokit``)
+            (see :func:`~neurokit2.ecg.ecg_clean` and :func:`~neurokit2.ecg.ecg_peaks`) or
+            ``None`` to use default method (``neurokit``).
 
 
         See Also
@@ -233,9 +240,9 @@ class EcgProcessor(_BaseProcessor):
             list of all available outlier correction methods
         :meth:`~biopsykit.signals.ecg.EcgProcessor.outlier_params_default`
             dictionary with default parameters for outlier correction
-        :func:`~neurokit2.ecg_clean`
+        :func:`~neurokit2.ecg.ecg_clean`
             neurokit method to clean ECG signal
-        :func:`~neurokit2.ecg_peaks`
+        :func:`~neurokit2.ecg.ecg_peaks`
             neurokit method for R-peak detection
 
 
@@ -354,26 +361,27 @@ class EcgProcessor(_BaseProcessor):
         """Return all possible outlier correction methods.
 
         Currently available outlier correction methods are:
-            * ``correlation``: Computes cross-correlation coefficient between every single beat and the average of
-              all detected beats. Marks beats as outlier if cross-correlation coefficient is below a certain threshold
-            * ``quality``: Uses the ``ECG_Quality`` indicator from neurokit to assess signal quality. Marks beats as
-              outlier if the quality indicator is below a certain threshold
-            * ``artifact``: Artifact detection based on `Berntson et al. (1990)`
-            * ``physiological``: Physiological outlier removal. Marks beats as outlier if their heart rate is above
-              or below a threshold that is very unlikely to be achieved physiologically
-            * ``statistical_rr``: Statistical outlier removal based on RR intervals. Marks beats as outlier if the RR
-              intervals are within the xx% highest or lowest values. Values are removed based on the z-score;
-              e.g. 1.96 => 5% (2.5% highest, 2.5% lowest values); 2.576 => 1% (0.5% highest, 0.5% lowest values)
-            * ``statistical_rr_diff``: Statistical outlier removal based on successive differences of RR intervals.
-              Marks beats as outlier if the difference of successive RR intervals are within the xx% highest or
-              lowest heart rates. Values are removed based on the z-score;
-              e.g. 1.96 => 5% (2.5% highest, 2.5% lowest values); 2.576 => 1% (0.5% highest, 0.5% lowest values)
+
+        * ``correlation``: Computes cross-correlation coefficient between every single beat and the average of
+          all detected beats. Marks beats as outlier if cross-correlation coefficient is below a certain threshold.
+        * ``quality``: Uses the ``ECG_Quality`` indicator from neurokit to assess signal quality. Marks beats as
+          outlier if the quality indicator is below a certain threshold.
+        * ``artifact``: Artifact detection based on `Berntson et al. (1990)`.
+        * ``physiological``: Physiological outlier removal. Marks beats as outlier if their heart rate is above
+          or below a threshold that is very unlikely to be achieved physiologically.
+        * ``statistical_rr``: Statistical outlier removal based on RR intervals. Marks beats as outlier if the RR
+          intervals are within the xx% highest or lowest values. Values are removed based on the z-score;
+          e.g. 1.96 => 5% (2.5% highest, 2.5% lowest values); 2.576 => 1% (0.5% highest, 0.5% lowest values)
+        * ``statistical_rr_diff``: Statistical outlier removal based on successive differences of RR intervals.
+          Marks beats as outlier if the difference of successive RR intervals are within the xx% highest or
+          lowest heart rates. Values are removed based on the z-score;
+          e.g. 1.96 => 5% (2.5% highest, 2.5% lowest values); 2.576 => 1% (0.5% highest, 0.5% lowest values).
 
         See Also
         --------
-        :meth:`biopsykit.signals.ecg.EcgProcessor.correct_outlier`
+        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.correct_outlier`
             function to perform R peak outlier correction
-        :meth:`biopsykit.signals.ecg.EcgProcessor.outlier_params_default`
+        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_params_default`
             dictionary with default parameters for outlier correction
 
         Returns
@@ -400,9 +408,9 @@ class EcgProcessor(_BaseProcessor):
 
         See Also
         --------
-        :meth:`biopsykit.signals.ecg.EcgProcessor.correct_outlier`
+        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.correct_outlier`
             function to perform R peak outlier correction
-        :meth:`biopsykit.signals.ecg.EcgProcessor.outlier_corrections`
+        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections`
             list with available outlier correction methods
 
         Returns
@@ -427,11 +435,11 @@ class EcgProcessor(_BaseProcessor):
     ) -> Tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Perform outlier correction on the detected R peaks.
 
-        Different methods for outlier detection are available (see ``EcgProcessor.outlier_corrections()`` to get a list
+        Different methods for outlier detection are available (see :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections()` to get a list
         of possible outlier correction methods). All outlier methods work independently on the detected R peaks,
         the results will be combined by a logical 'or'.
 
-        RR intervals classified as outlier will be removed and imputed either using linear interpolation
+        RR intervals classified as outliers will be removed and imputed either using linear interpolation
         (setting ``imputation_type`` to ``linear``) or by replacing it with the average value of the 10 preceding
         and 10 succeding RR intervals (setting ``imputation_type`` to ``moving_average``).
 
@@ -452,8 +460,8 @@ class EcgProcessor(_BaseProcessor):
         outlier_correction : list, optional
             List containing the outlier correction methods to be applied.
             Pass ``None`` to not apply any outlier correction, ``all`` to apply all available outlier correction
-            methods. See `EcgProcessor.outlier_corrections` to get a list of possible outlier correction methods.
-            Default: ``all``
+            methods. See :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections` to get a list of possible 
+            outlier correction methods. Default: ``all``
         outlier_params: dict, optional
             Dict of parameters to be passed to the outlier correction methods or ``None``
             to use default parameters (see :meth:`~biopsykit.signals.ecg.EcgProcessor.outlier_params_default`
@@ -589,8 +597,8 @@ class EcgProcessor(_BaseProcessor):
 
         .. warning ::
             This algorithm might *add* additional R peaks or *remove* certain ones, so results of this function
-            might **not** match with the R peaks of ``EcgProcessor.rpeaks`` or might not be used in combination with
-            ``EcgProcessor.ecg`` since R peak indices won't match.
+            might **not** match with the R peaks of :meth:`~biopsykit.signals.ecg.EcgProcessor.rpeaks` might not be used in combination with
+            :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg` since R peak indices won't match.
 
         .. note ::
             In BioPsyKit this function is **not** applied to the detected R peaks during ECG signal processing but
@@ -600,11 +608,11 @@ class EcgProcessor(_BaseProcessor):
         Parameters
         ----------
         ecg_processor : :class:`~biopsykit.signals.ecg.EcgProcessor`, optional
-            ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
+            ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
         key : str, optional
-            Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
+            Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
         rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
-            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
+            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         sampling_rate : float, optional
             Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
             Default: 256
@@ -674,14 +682,14 @@ class EcgProcessor(_BaseProcessor):
         Parameters
         ----------
         ecg_processor : :class:`~biopsykit.signals.ecg.EcgProcessor`, optional
-            ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
+            ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
         key : str, optional
-            Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
+            Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
         rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
-            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
+            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         hrv_types: str (or list of such), optional
             list of HRV types to be computed. Must be a subset of ['hrv_time', 'hrv_nonlinear', 'hrv_frequency']
-            or 'all' to compute all types of HRV. Refer to :func:`neurokit2.hrv` for further information on
+            or 'all' to compute all types of HRV. Refer to :func:`neurokit2.hrv.hrv` for further information on
             the available HRV parameters. Default: ``None`` (equals to ['hrv_time', 'hrv_nonlinear'])
         correct_rpeaks : bool, optional
             ``True`` to apply R peak correction (using :meth:`~biopsykit.signals.ecg.EcgProcessor.correct_rpeaks()`)
@@ -752,7 +760,7 @@ class EcgProcessor(_BaseProcessor):
         ----------
         hrv_types: str (or list of such), optional
             list of HRV types to be computed. Must be a subset of ['hrv_time', 'hrv_nonlinear', 'hrv_frequency']
-            or 'all' to compute all types of HRV. Refer to :func:`neurokit2.hrv` for further information on
+            or 'all' to compute all types of HRV. Refer to :func:`neurokit2.hrv.hrv` for further information on
             the available HRV parameters. Default: ``None`` (equals to ['hrv_time', 'hrv_nonlinear'])
 
         Returns
@@ -783,11 +791,11 @@ class EcgProcessor(_BaseProcessor):
         Parameters
         ----------
         ecg_processor : :class:`~biopsykit.signals.ecg.EcgProcessor`, optional
-            ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
+            ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
         key : str, optional
-            Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
+            Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
         ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
-            Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
+            Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         edr_type : {'peak_trough_mean', 'peak_trough_diff', 'peak_peak_interval'}, optional
@@ -852,16 +860,16 @@ class EcgProcessor(_BaseProcessor):
     ) -> Dict[str, float]:
         """Compute respiratory sinus arrhythmia (RSA) based on ECG and respiration signal.
 
-        RSA is computed both via Peak-to-Trough (P2T) Porges-Bohrer method using :func:`neurokit2.hrv_rsa`.
+        RSA is computed both via Peak-to-Trough (P2T) Porges-Bohrer method using :func:`~neurokit2.hrv.hrv_rsa`.
 
 
         Parameters
         ----------
         ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
-            Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
+            Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         rsp_signal : pd.DataFrame
             Dataframe with 1-D raw respiration signal. Can be a 'true' respiration signal
-            (e.g. from bioimpedance or Radar) or an 'estimated' respiration signal (e.g. from ECG-derived respiration)
+            (e.g. from bioimpedance or Radar) or an 'estimated' respiration signal (e.g. from ECG-derived respiration).
         sampling_rate : float, optional
             Sampling rate of recorded data in Hz.
             Default: 256
@@ -873,7 +881,7 @@ class EcgProcessor(_BaseProcessor):
 
         See Also
         --------
-        :func:`neurokit2.hrv_rsa`
+        :func:`~neurokit2.hrv.hrv_rsa`
             compute respiratory sinus arrhythmia
 
 
