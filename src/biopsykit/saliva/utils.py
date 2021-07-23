@@ -26,13 +26,13 @@ def saliva_feature_wide_to_long(
     Parameters
     ----------
     data : :class:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
-        dataframe containing saliva features in wide-format, i.e. one column per saliva sample, one row per subject
+        dataframe containing saliva features in wide-format, i.e. one column per saliva sample, one row per subject.
     saliva_type : str
         saliva type (e.g. 'cortisol')
 
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         dataframe with saliva features in long-format
 
     """
@@ -61,7 +61,7 @@ def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Se
 
     Parameters
     ----------
-    data: :class:`pandas.DataFrame`
+    data: :class:`~pandas.DataFrame`
         dataframe which should be extracted
     saliva_type: str or list of str
         saliva type variable which or list of saliva types should be used to extract columns (e.g. 'cortisol')
@@ -129,24 +129,19 @@ def extract_saliva_columns(
 
     Parameters
     ----------
-    data: :class:`pandas.DataFrame`
+    data: :class:`~pandas.DataFrame`
         dataframe to extract columns from
     saliva_type: str or list of str
         saliva type variable or list of saliva types which should be used to extract columns (e.g. 'cortisol')
     col_pattern: str, optional
         string pattern or list of string patterns to identify saliva columns.
-        If ``None``, it is attempted to automatically infer column names using :func:`get_saliva_column_suggestions()`
-        If ``col_pattern`` is a list, it must be the same length like ``saliva_type``
+        If ``None``, it is attempted to automatically infer column names using :func:`get_saliva_column_suggestions()`.
+        If ``col_pattern`` is a list, it must be the same length like ``saliva_type``.
 
     Returns
     -------
-    :class:`pandas.DataFrame` or dict
+    :class:`~pandas.DataFrame` or dict
         pandas dataframe with extracted columns or dict of such if ``saliva_type`` is a list
-
-    Returns
-    -------
-    :class:`pandas.DataFrame`
-        dataframe containing saliva data
 
     """
     if isinstance(saliva_type, list):
@@ -187,7 +182,7 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
 
     Parameters
     ----------
-    sample_times : :class:`pandas.Series` or :class:`pandas.DataFrame`
+    sample_times : :class:`~pandas.Series` or :class:`~pandas.DataFrame`
         saliva sampling times in a Python datetime- or timedelta-related format.
         If ``sample_times`` is a Series, it is assumed to be in long-format and will be unstacked into wide-format
         along the `sample` level.
@@ -197,7 +192,7 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
 
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         dataframe in wide-format with saliva sampling times in minutes relative to the first saliva sample
 
     Raises

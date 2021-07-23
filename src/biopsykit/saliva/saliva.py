@@ -50,8 +50,8 @@ def max_value(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     """
     # check input
@@ -118,8 +118,8 @@ def initial_value(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     """
     # check input
@@ -196,8 +196,8 @@ def max_increase(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     """
     # check input
@@ -254,8 +254,9 @@ def auc(
     parameter (``sample_times``).
 
     Pruessner defined two types of AUC, which are computed by default:
-        * AUC with respect to `ground` (:math:`AUC_{G}`), and
-        * AUC with respect to the first sample, i.e., AUC with respect to `increase` (:math:`AUC_{I}`)
+
+    * AUC with respect to `ground` (:math:`AUC_{G}`), and
+    * AUC with respect to the first sample, i.e., AUC with respect to `increase` (:math:`AUC_{I}`)
 
     If the first sample should be excluded from computation, e.g., because the first sample was just collected for
     controlling against high initial saliva levels, ``remove_s0`` needs to set to ``True``.
@@ -300,8 +301,8 @@ def auc(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     References
     ----------
@@ -396,7 +397,7 @@ def slope(
     sample_labels : list or tuple
         pair of saliva sample labels to compute slope between.
         Labels correspond to the names in the `sample` column of the dataframe.
-        An error will the raised if not exactly 2 samples are specified
+        An error will the raised if not exactly 2 samples are specified.
     sample_idx : list or tuple
         pair of saliva sample indices to compute slope between.
         An error will the raised if not exactly 2 sample are specified
@@ -418,8 +419,8 @@ def slope(
     ------
     IndexError
         if invalid `sample_labels` or `sample_idx` is provided
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     """
     # check input
@@ -477,15 +478,16 @@ def standard_features(
     """Compute a set of `standard features` on saliva data.
 
     The following list of features is computed:
-        * ``argmax``: Argument (=index) of the maximum value
-        * ``mean``: Mean value
-        * ``std``: Standard deviation
-        * ``skew``: Skewness
-        * ``kurt``: Kurtosis
 
-    For all features the built-in pandas functions (e.g. :func:`pandas.DataFrame.mean`) will be used,
+    * ``argmax``: Argument (=index) of the maximum value
+    * ``mean``: Mean value
+    * ``std``: Standard deviation
+    * ``skew``: Skewness
+    * ``kurt``: Kurtosis
+
+    For all features the built-in pandas functions (e.g. :meth:`pandas.DataFrame.mean`) will be used,
     except for ``argmax``, which will use numpy's function (:func:`numpy.argmax`). The functions will be applied on the
-    dataframe using the `aggregate` functions from pandas (:func:`pandas.DataFrame.agg`).
+    dataframe using the `aggregate` functions from pandas (:meth:`pandas.DataFrame.agg`).
 
     The output feature names will be ``argmax``, ``mean``, ``std``, ``skew``, ``kurt``, preceded by the name of the
     saliva type to allow better conversion into long-format later on (if desired).
@@ -513,9 +515,9 @@ def standard_features(
 
     Raises
     ------
-    ValidationError
-        if ``data`` is not a SalivaRawDataFrame
-    :exc:`biopsykit.exceptions.DataFrameTransformationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    :exc:`~biopsykit.utils.exceptions.DataFrameTransformationError`
         if ``keep_index`` is ``True``, but applying the old index fails
 
     """
@@ -597,8 +599,9 @@ def mean_se(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+
 
     """
     # check input
