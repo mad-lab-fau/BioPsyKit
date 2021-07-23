@@ -189,7 +189,7 @@ def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
 
     Returns
     -------
-    :func:`numpy.array`
+    :class:`numpy.ndarray`
         array with converted indices
 
     """
