@@ -597,7 +597,7 @@ class EcgProcessor(_BaseProcessor):
 
         .. warning ::
             This algorithm might *add* additional R peaks or *remove* certain ones, so results of this function
-            might **not** match with the R peaks of :meth:`~biopsykit.signals.ecg.EcgProcessor.rpeaks` might not be used in combination with
+            might **not** match with the R peaks of :meth:`~biopsykit.signals.ecg.EcgProcessor.rpeaks`. Thus, R peaks resulting from this function might not be used in combination with
             :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg` since R peak indices won't match.
 
         .. note ::
