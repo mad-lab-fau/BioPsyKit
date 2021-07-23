@@ -421,8 +421,8 @@ def pss(
 
     The PSS consists of the subscales with the item indices
     (count-by-one, i.e., the first question has the index 1!):
-        * Hilflosigkeit: [1, 2, 3, 6, 9, 10]
-        * Selbstwirksamkeit: [4, 5, 7, 8]
+        * Helplessness (Hilflosigkeit): [1, 2, 3, 6, 9, 10]
+        * Self-Efficacy (Selbstwirksamkeit): [4, 5, 7, 8]
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -554,11 +554,11 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def ads_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Allgemeine Depressionsskala - Langform (ADS-L)**.
+    """Compute the **Allgemeine Depressionsskala - Langform (ADS-L)** (General Depression Scale – Long Version).
 
-    Die allgemeine Depressionsskala (ADS) ist ein Selbstbeurteilungsinstrument, mit dem die Beeinträchtigung durch
-    depressive Symptome innerhalb der letzten Woche eingeschätzt werden kann. Dabei werden sowohl emotionale,
-    motivationale, kognitive, somatische als auch motorisch/interaktionale Beschwerden erfragt.
+    The General Depression Scale (ADS) is a self-report instrument that can be used to assess the impairment caused by
+    depressive symptoms within the last week. Emotional, motivational, cognitive, somatic as well as motor symptoms are
+    assessed, motivational, cognitive, somatic, and motor/interactional complaints.
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -2194,14 +2194,12 @@ def state_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
 
 
 def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Angstbewältigungsinventar (ABI)**.
+    """Compute the **Angstbewältigungsinventar (ABI)** (Anxiety Management Inventory).
 
-    Das ABI erfasst zwei zentrale Persönlichkeitskonstrukte im Bereich der Stress- bzw. Angstbewältigung:
-    *Vigilanz (VIG)* und *kognitive Vermeidung (KOV)*.
-    *VIG* wird definiert als eine Klasse von Bewältigungsstrategien, deren Einsatz das Ziel verfolgt,
-    in bedrohlichen Situationen Unsicherheit zu reduzieren.
-    *KOV* bezeichnet demgegenüber Strategien, die darauf abzielen, den Organismus gegen erregungsinduzierende Reize
-    abzuschirmen.
+    The ABI measures two key personality constructs in the area of stress or anxiety management:
+    *Vigilance (VIG)* and *Cognitive Avoidance (KOV)*. *VIG* is defined as a class of coping strategies whose
+    use aims to, to reduce uncertainty in threatening situations.
+    In contrast, *KOV* refers to strategies aimed at shielding the organism from arousal-inducing stimuli.
 
 
     Parameters
@@ -2303,10 +2301,10 @@ def stadi(
 
     The state and trait scales both consist of the subscales with the item indices
     (count-by-one, i.e., the first question has the index 1!):
-        * Aufgeregtheit (affektive Komponente): [1, 5, 9, 13, 17]
-        * Besorgnis (kognitive Komponente): [2, 6, 10, 14, 18]
-        * Euthymie (positive Stimmung): [3, 7, 11, 15, 19]
-        * Dysthymie (depressive Stimmung): [4, 8, 12, 16, 20]
+        * Emotionality (Aufgeregtheit - affektive Komponente): [1, 5, 9, 13, 17]
+        * Worry (Besorgnis -kognitive Komponente): [2, 6, 10, 14, 18]
+        * Anhedonia (Euthymie - positive Stimmung): [3, 7, 11, 15, 19]
+        * Dysthymia (Dysthymie -depressive Stimmung): [4, 8, 12, 16, 20]
 
     .. note::
         This implementation assumes a score range of [1, 4].
@@ -2449,26 +2447,26 @@ def svf_120(
     the study objective/question.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Bagatellisierung (``Bag``): [10, 31, 50, 67, 88, 106]
-        * Herunterspielen (``Her``): [17, 38, 52, 77, 97, 113]
-        * Schuldabwehr (``Schab``): [5, 30, 43, 65, 104, 119]
-        * Ablenkung (``Abl``): [1, 20, 45, 86, 101, 111]
-        * Ersatzbefriedigung (``Ers``): [22, 36, 64, 74, 80, 103]
-        * Selbstbestätigung (``Sebest``): [34, 47, 59, 78, 95, 115]
-        * Entspannung (``Entsp``): [12, 28, 58, 81, 99, 114]
-        * Situationskontrolle (``Sitkon``): [11, 18, 39, 66, 91, 116]
-        * Reaktionskontrolle (``Rekon``): [2, 26, 54, 68, 85, 109]
-        * Positive Selbstinstruktion (``Posi``): [15, 37, 56, 71, 83, 96]
-        * Soziales Unterstützungsbedürfnis (``Sozube``): [3, 21, 42, 63, 84, 102]
-        * Vermeidung (``Verm``): [8, 29, 48, 69, 98, 118]
-        * Flucht (``Flu``): [14, 24, 40, 62, 73, 120]
-        * Soziale Abkapselung (``Soza``): [6, 27, 49, 76, 92, 107]
-        * Gedankliche Weiterbeschäftigung (``Gedw``): [16, 23, 55, 72, 100, 110]
-        * Resignation (``Res``): [4, 32, 46, 60, 89, 105]
-        * Selbstbemitleidung (``Selmit``): [13, 41, 51, 79, 94, 117]
-        * Selbstbeschuldigung (``Sesch``): [9, 25, 35, 57, 75, 87]
-        * Aggression (``Agg``): [33, 44, 61, 82, 93, 112]
-        * Pharmakaeinnahme (``Pha``): [7, 19, 53, 70, 90, 108]
+        * Trivialization/Minimalization (Bagatellisierung – ``Bag``): [10, 31, 50, 67, 88, 106]
+        * De-Emphasis by Comparison with Others (Herunterspielen – ``Her``): [17, 38, 52, 77, 97, 113]
+        * Rejection of Guilt (Schuldabwehr – ``Schab``): [5, 30, 43, 65, 104, 119]
+        * Distraction/Deflection from a Situation (Ablenkung – ``Abl``): [1, 20, 45, 86, 101, 111]
+        * Vicarious Satisfaction (Ersatzbefriedigung –``Ers``): [22, 36, 64, 74, 80, 103]
+        * Search for Self-Affirmation (Selbstbestätigung – ``Sebest``): [34, 47, 59, 78, 95, 115]
+        * Relaxation (Entspannung –``Entsp``): [12, 28, 58, 81, 99, 114]
+        * Attempt to Control Situation (Situationskontrolle – ``Sitkon``): [11, 18, 39, 66, 91, 116]
+        * Response Control (Reaktionskontrolle – ``Rekon``): [2, 26, 54, 68, 85, 109]
+        * Positive Self-Instruction (Positive Selbstinstruktion – ``Posi``): [15, 37, 56, 71, 83, 96]
+        * Need for Social Support (Soziales Unterstützungsbedürfnis – ``Sozube``): [3, 21, 42, 63, 84, 102]
+        * Avoidance Tendencies (Vermeidung – ``Verm``): [8, 29, 48, 69, 98, 118]
+        * Escapist Tendencies (Flucht – ``Flu``): [14, 24, 40, 62, 73, 120]
+        * Social Isolation (Soziale Abkapselung – ``Soza``): [6, 27, 49, 76, 92, 107]
+        * Mental Perseveration (Gedankliche Weiterbeschäftigung – ``Gedw``): [16, 23, 55, 72, 100, 110]
+        * Resignation (Resignation – ``Res``): [4, 32, 46, 60, 89, 105]
+        * Self-Pity (Selbstbemitleidung – ``Selmit``): [13, 41, 51, 79, 94, 117]
+        * Self-Incrimination (Selbstbeschuldigung – ``Sesch``): [9, 25, 35, 57, 75, 87]
+        * Aggression (Aggression – ``Agg``): [33, 44, 61, 82, 93, 112]
+        * Medicine-Taking (Pharmakaeinnahme – ``Pha``): [7, 19, 53, 70, 90, 108]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -2592,27 +2590,27 @@ def svf_42(
     the study objective/question.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Bagatellisierung (``Bag``): [7, 22]
-        * Herunterspielen (``Her``): [11, 35]
-        * Schuldabwehr (``Schab``): [2, 34]
-        * Ablenkung (``Abl``): [1, 32]
-        * Ersatzbefriedigung (``Ers``): [12, 42]
-        * Selbstbestätigung (``Sebest``): [19, 37]
-        * Entspannung (``Entsp``): [13, 26]
-        * Situationskontrolle (``Sitkon``): [4, 23]
-        * Reaktionskontrolle (``Rekon``): [17, 33]
-        * Positive Selbstinstruktion (``Posi``): [9, 24]
-        * Soziales Unterstützungsbedürfnis (``Sozube``): [14, 27]
-        * Vermeidung (``Verm``): [6, 30]
-        * Flucht (``Flu``): [16, 40]
-        * Soziale Abkapselung (``Soza``): [20, 29]
-        * Gedankliche Weiterbeschäftigung (``Gedw``): [10, 25]
-        * Resignation (``Res``): [38, 15]
-        * Hilflosigkeit (``Hilf``): [18, 28]
-        * Selbstbemitleidung (``Selmit``): [8, 31]
-        * Selbstbeschuldigung (``Sesch``): [21, 36]
-        * Aggression (``Agg``): [3, 39]
-        * Pharmakaeinnahme (``Pha``): [5, 41]
+        * Trivialization/Minimalization (Bagatellisierung – ``Bag``): [7, 22]
+        * De-Emphasis by Comparison with Others (Herunterspielen – ``Her``): [11, 35]
+        * Rejection of Guilt (Schuldabwehr – ``Schab``): [2, 34]
+        * Distraction/Deflection from a Situation (Ablenkung – ``Abl``): [1, 32]
+        * Vicarious Satisfaction (Ersatzbefriedigung –``Ers``): [12, 42]
+        * Search for Self-Affirmation (Selbstbestätigung – ``Sebest``): [19, 37]
+        * Relaxation (Entspannung –``Entsp``): [13, 26]
+        * Attempt to Control Situation (Situationskontrolle – ``Sitkon``): [4, 23]
+        * Response Control (Reaktionskontrolle – ``Rekon``): [17, 33]
+        * Positive Self-Instruction (Positive Selbstinstruktion – ``Posi``): [9, 24]
+        * Need for Social Support (Soziales Unterstützungsbedürfnis – ``Sozube``): [14, 27]
+        * Avoidance Tendencies (Vermeidung – ``Verm``): [6, 30]
+        * Escapist Tendencies (Flucht – ``Flu``): [16, 40]
+        * Social Isolation (Soziale Abkapselung – ``Soza``): [20, 29]
+        * Mental Perseveration (Gedankliche Weiterbeschäftigung – ``Gedw``): [10, 25]
+        * Resignation (Resignation – ``Res``): [38, 15]
+        * Self-Pity (Selbstbemitleidung – ``Selmit``): [18, 28]
+        * Self-Incrimination (Selbstbeschuldigung – ``Sesch``): [8, 31]
+        * Aggression (Aggression – ``Agg``): [21, 36]
+        * Medicine-Taking (Pharmakaeinnahme – ``Pha``): [3, 39]
+
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -2835,11 +2833,11 @@ def bfi_k(
     The BFI measures an individual on the Big Five Factors (dimensions) of personality (Goldberg, 1993).
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Extraversion`` (**E**): [1, 6, 11, 16]
-        * ``Agreeableness`` (**A**): [2, 7, 12, 17]
-        * ``Conscientiousness`` (**C**): [3, 8, 13, 18]
-        * ``Neuroticism`` (**N**): [4, 9, 14, 19]
-        * ``Openness`` (**O**): [5, 10, 15, 20, 21]
+        * Extraversion (``E``): [1, 6, 11, 16]
+        * Agreeableness (``A``): [2, 7, 12, 17]
+        * Conscientiousness (``C``): [3, 8, 13, 18]
+        * Neuroticism (``N``): [4, 9, 14, 19]
+        * Openness (``O``): [5, 10, 15, 20, 21]
 
 
     .. note::
@@ -3110,7 +3108,7 @@ def fkk(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Fragebogen zur Kompetenz- und Kontrollüberzeugungen (FKK)**.
+    """Compute the **Fragebogen zur Kompetenz- und Kontrollüberzeugungen (FKK)** (Questionnaire on Competence and Control Beliefs).
 
     The questionnaire on competence and control beliefs can be used to assess
         (1) the generalized self-concept of own abilities,
@@ -3123,18 +3121,22 @@ def fkk(
 
     It consists of the primary subscales with the item indices (count-by-one, i.e.,
     the first question has the index 1!):
-        * Selbstkonzept eigener Fähigkeiten (``SK``): [4, 8, 12, 24, 16, 20, 28, 32]
-        * Internalität (``I``): [1, 5, 6, 11, 23, 25, 27, 30]
-        * Sozial bedingte Externalität (``P``) (P = powerful others control orientation):
-            [3, 10, 14, 17, 19, 22, 26, 29]
-        * Fatalistische Externalität (``C``) (C = chance control orientation): [2, 7, 9, 13, 15, 18, 21, 31]
+        * Self-concept of Own Abilities (Selbstkonzept eigener Fähigkeiten – ``SK``): [4, 8, 12, 24, 16, 20, 28, 32]
+        * Internality (Internalität – ``I``): [1, 5, 6, 11, 23, 25, 27, 30]
+        * Socially Induced Externality (Sozial bedingte Externalität – ``P``) (P = powerful others control orientation):
+          [3, 10, 14, 17, 19, 22, 26, 29]
+        * Fatalistic Externality (Fatalistische Externalität – ``C``) (C = chance control orientation):
+          [2, 7, 9, 13, 15, 18, 21, 31]
 
     Further, the following secondary subscales can be computed:
-        * Selbstwirksamkeit / generalisierte Selbstwirksamkeitsüberzeugung (``SKI``): ``SK`` + ``I``
-        * Generalisierte Externalität in Kontrollüberzeugungen (``PC``): ``P`` + ``C``
+        * Self-Efficacy / Generalized self-efficacy Beliefs (Selbstwirksamkeit / generalisierte
+          Selbstwirksamkeitsüberzeugung – ``SKI``): ``SK`` + ``I``
+        * Generalized Externality in Control Beliefs (Generalisierte Externalität in Kontrollüberzeugungen – ``PC``):
+          ``P`` + ``C``
 
     Further, the following tertiary subscale can be computed:
-        * Generalisierte Internalität vs. Externalität in Kontrollüberzeugungen (``SKI_PC``): ``SKI`` - ``PC``
+        * Generalized Internality (Generalisierte Internalität) vs. Externality in control beliefs
+          (Externalität in Kontrollüberzeugungen – ``SKI_PC``): ``SKI`` - ``PC``
 
     .. note::
         This implementation assumes a score range of [1, 6].
@@ -4589,7 +4591,7 @@ def mk_hai(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     Returns
     -------
     :class:`~pandas.DataFrame`
-        SCI score
+        MK-HAI score
 
 
     Raises
@@ -4641,14 +4643,14 @@ def abi_ms(
     avoidant and vigilant coping strategies in potentially threatening medical contexts.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * CogAvo1: [1, 4, 5, 7],
-        * CogAvo2: [9, 11, 14, 16]
-        * CogAvo3: [17, 19, 21, 23]
-        * CogAvo4: [25, 27, 28, 31]
-        * Vig1: [2, 3, 6, 8]
-        * Vig2: [10, 12, 13, 17]
-        * Vig3: [18, 20, 22, 24]
-        * Vig4: [26, 29, 30, 32]
+        * Cognitive Avoidance - Specific Factor 1 (``KOG_1``): [1, 4, 5, 7],
+        * Cognitive Avoidance - Specific Factor 2 (``KOG_2``): [9, 11, 14, 16]
+        * Cognitive Avoidance - Specific Factor 3 (``KOG_3``): [17, 19, 21, 23]
+        * Cognitive Avoidance - Specific Factor 4 (``KOG_4``): [25, 27, 28, 31]
+        * Vigilance - Specific Factor 1 (``VIG_1``): [2, 3, 6, 8]
+        * Vigilance - Specific Factor 2 (``VIG_2``): [10, 12, 13, 17]
+        * Vigilance - Specific Factor 3 (``VIG_3``): [18, 20, 22, 24]
+        * Vigilance - Specific Factor 4 (``VIG_4``): [26, 29, 30, 32]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -4711,15 +4713,15 @@ def abi_ms(
         _assert_num_columns(data, 32)
         subscales = {
             # Cognitive Avoidance
-            "1_K": [1, 4, 5, 7],
-            "2_K": list(np.array([1, 3, 6, 8]) + 8),  # [9, 11, 14, 16],
-            "3_K": list(np.array([1, 3, 5, 7]) + 16),  # [17, 19, 21, 23]
-            "4_K": list(np.array([1, 3, 4, 7]) + 24),  # [25, 27, 28, 31]
+            "KOV_1": [1, 4, 5, 7],
+            "KOV_2": list(np.array([1, 3, 6, 8]) + 8),  # [9, 11, 14, 16],
+            "KOV_3": list(np.array([1, 3, 5, 7]) + 16),  # [17, 19, 21, 23]
+            "KOV_4": list(np.array([1, 3, 4, 7]) + 24),  # [25, 27, 28, 31]
             # Vigilance
-            "1_V": [2, 3, 6, 8],
-            "2_V": list(np.array([2, 4, 5, 7]) + 8),  # [10, 12, 13, 15]
-            "3_V": list(np.array([2, 4, 6, 8]) + 16),  # [18, 20, 22, 24]
-            "4_V": list(np.array([2, 5, 6, 8]) + 24),  # [26, 29, 30, 32]
+            "VIG_1": [2, 3, 6, 8],
+            "VIG_2": list(np.array([2, 4, 5, 7]) + 8),  # [10, 12, 13, 15]
+            "VIG_3": list(np.array([2, 4, 6, 8]) + 16),  # [18, 20, 22, 24]
+            "VIG_4": list(np.array([2, 5, 6, 8]) + 24),  # [26, 29, 30, 32]
         }
 
     _assert_value_range(data, score_range)
@@ -4732,13 +4734,13 @@ def abi_ms(
     abims_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     if len(subscales.keys()) == 8:
-        avo_cols = [f"ABIMS_{ele}" for ele in ["1_K", "2_K", "3_K", "4_K"]]
-        vig_cols = [f"ABIMS_{ele}" for ele in ["1_V", "2_V", "3_V", "4_V"]]
+        kov_cols = ["ABI_MS_{}".format(ele) for ele in ["KOV_1", "KOV_2", "KOV_3", "KOV_4"]]
+        vig_cols = ["ABI_MS_{}".format(ele) for ele in ["VIG_1", "VIG_2", "VIG_3", "VIG_4"]]
         # compute total score if all columns are present
-        abims_data[score_name + "_V"] = pd.DataFrame(abims_data)[vig_cols].sum(axis=1)
-        abims_data[score_name + "_K"] = pd.DataFrame(abims_data)[avo_cols].sum(axis=1)
-        abims_data["MW_" + score_name + "_V"] = pd.DataFrame(abims_data)[vig_cols].mean(axis=1)
-        abims_data["MW_" + score_name + "_K"] = pd.DataFrame(abims_data)[avo_cols].mean(axis=1)
+        abims_data[score_name + "_VIG"] = pd.DataFrame(abims_data)[vig_cols].sum(axis=1)
+        abims_data[score_name + "_KOV"] = pd.DataFrame(abims_data)[kov_cols].sum(axis=1)
+        abims_data["MW_" + score_name + "_VIG"] = pd.DataFrame(abims_data)[vig_cols].mean(axis=1)
+        abims_data["MW_" + score_name + "_KOV"] = pd.DataFrame(abims_data)[kov_cols].mean(axis=1)
 
     return pd.DataFrame(abims_data, index=data.index)
 
@@ -4748,12 +4750,14 @@ def asi(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Angstsensitivitätsindex-3 (ASI)**.
+    """Compute the **Angstsensitivitätsindex-3 (ASI)** (Anxiety Sensitivity Index).
+
+    The Angstsensitivitätsindex-3 is the German version of the Anxiety Sensitivity Index by
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Som: [3, 4, 7, 8, 12],
-        * Soc: [1, 6, 9, 11]
-        * Cog: [2, 5, 10]
+        * Physical Concerns (Bedenken Somatisch – ``BSM``): [3, 4, 7, 8, 12],
+        * Social Concerns (Bedenken Sozial – ``BZS``): [1, 6, 9, 11]
+        * Cognitive Concerns (Bedenken Kognitiv – ``BKO``): [2, 5, 10]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -4797,8 +4801,12 @@ def asi(
 
     References
     ----------
-    Kemper, C. J., Ziegler, M., & Taylor, S. (2009). Überprüfung der psychometrischen Qualität der deutschen Version
-    des Angstsensitivitätsindex-3. *Diagnostica*, 55(4), 223-233.
+    German Version: Kemper, C. J., Ziegler, M., & Taylor, S. (2009). Überprüfung der psychometrischen Qualität der
+    deutschen Version des Angstsensitivitätsindex-3. *Diagnostica*, 55(4), 223-233.
+
+    Original Version: Reiss, S., Peterson, R. A., Gursky, D. M., & McNally, R. J. (1986). Anxiety sensitivity, anxiety
+    frequency and the prediction of fearfulness. Behaviour Research and Therapy, 24(1), 1–8.
+    https://doi.org/10.1016/0005-7967(86)90143-9
 
     """
     score_name = "ASI"
@@ -4825,7 +4833,9 @@ def asi(
 
     if len(subscales.keys()) == 3:
         # compute total score if all columns are present
-        asi_data[score_name] = pd.DataFrame(asi_data)[["ASI_BSM", "ASI_BSZ", "ASI_BKO"]].sum(axis=1)
+        asi_data[score_name] = (
+            asi_data[score_name + "_BSM"] + asi_data[score_name + "_BSZ"] + asi_data[score_name + "_BKO"]
+        )
 
     return pd.DataFrame(asi_data, index=data.index)
 
@@ -4838,8 +4848,8 @@ def erq(
     """Compute the **Emotion Regulation Questionnaire (ERQ)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Reappraisal: [1, 3, 5, 7, 8, 10],
-        * Suppression: [2, 4, 6, 9]
+        * Reappraisal (``Reapp``): [1, 3, 5, 7, 8, 10],
+        * Suppression (``Suppr``): [2, 4, 6, 9]
 
     .. note::
         This implementation assumes a score range of [1, 7].
@@ -4903,7 +4913,7 @@ def erq(
 
     if subscales is None:
         _assert_num_columns(data, 10)
-        subscales = {"R": [1, 3, 5, 7, 8, 10], "S": [2, 4, 6, 9]}
+        subscales = {"Reapp": [1, 3, 5, 7, 8, 10], "Suppr": [2, 4, 6, 9]}
 
     _assert_value_range(data, score_range)
 
@@ -5147,11 +5157,11 @@ def bfi_10(
     """Compute the **Big Five Inventory - 10 items (BFI-10)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * E: [1, 2],
-        * V: [3, 4],
-        * G: [5, 6],
-        * N: [7, 8],
-        * O: [9, 10]
+        * Extraversion (``E``): [1, 2],
+        * Agreeableness (``A``): [3, 4],
+        * Conscientiousness (``C``): [5, 6],
+        * Neuroticism (``N``): [7, 8],
+        * Openness (``O``): [9, 10]
 
     .. note::
         This implementation assumes a score range of [1, 5].
