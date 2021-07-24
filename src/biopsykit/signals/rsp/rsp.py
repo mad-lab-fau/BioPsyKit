@@ -56,7 +56,7 @@ class RspProcessor(_BaseProcessor):
 
         Parameters
         ----------
-        rsp_signal : pd.DataFrame
+        rsp_signal : :class:`~pandas.DataFrame`
             Raw respiration signal (1D). Can be a 'true' respiration signal (e.g. from bioimpedance or Radar)
             or an 'estimated' respiration signal (e.g. from ECG-derived respiration)
         sampling_rate : float, optional

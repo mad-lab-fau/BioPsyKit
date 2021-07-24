@@ -5,7 +5,7 @@ Each function at least expects a dataframe containing the required columns in a 
 
 If ``data`` is a dataframe that contains more than the required two columns, e.g., if the complete questionnaire
 dataframe is passed, the required columns can be sliced by specifying them in the ``columns`` parameter.
-Also, if the columns in the dataframe dataframe columns are not in the correct order, the order can be specified
+Also, if the columns in the dataframe are not in the correct order, the order can be specified
 using the ``columns`` parameter.
 
 Some questionnaire functions also allow the possibility to only compute certain subscales. To do this, a dictionary
@@ -55,9 +55,9 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns do not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     """
@@ -152,9 +152,9 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns do not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -193,16 +193,17 @@ def tics_l(
     The TICS assesses frequency of various types of stressful experiences in the past 3 months.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Work Overload: [50, 38, 44, 54, 17, 4, 27, 1]
-        * Social Overload: [39, 28, 49, 19, 7, 57]
-        * Excessive Demands at Work: [55, 24, 20, 35, 47, 3]
-        * Lack of Social Recognition: [31, 18, 46, 2]
-        * Work Discontent: [21, 53, 10, 48, 41, 13, 37, 5]
-        * Social Tension: [26, 15, 45, 52, 6, 33]
-        * Performance Pressure at Work: [23, 43, 32, 22, 12, 14, 8, 40, 30]
-        * Performance Pressure in Social Interactions: [6, 15, 22]
-        * Social Isolation: [42, 51, 34, 56, 11, 29]
-        * Worry Propensity: [36, 25, 16, 9]
+
+    * ``Work Overload``: [50, 38, 44, 54, 17, 4, 27, 1]
+    * ``Social Overload``: [39, 28, 49, 19, 7, 57]
+    * ``Excessive Demands at Work``: [55, 24, 20, 35, 47, 3]
+    * ``Lack of Social Recognition``: [31, 18, 46, 2]
+    * ``Work Discontent``: [21, 53, 10, 48, 41, 13, 37, 5]
+    * ``Social Tension``: [26, 15, 45, 52, 6, 33]
+    * ``Performance Pressure at Work``: [23, 43, 32, 22, 12, 14, 8, 40, 30]
+    * ``Performance Pressure in Social Interactions``: [6, 15, 22]
+    * ``Social Isolation``: [42, 51, 34, 56, 11, 29]
+    * ``Worry Propensity``: [36, 25, 16, 9]
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -218,7 +219,7 @@ def tics_l(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -238,9 +239,9 @@ def tics_l(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns do not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -306,16 +307,17 @@ def tics_s(
 
     It consists of the subscales (the name in the brackets indicate the name in the returned dataframe),
     with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Work Overload``: [1, 3, 21]
-        * ``Social Overload``: [11, 18, 28]
-        * ``Excessive Demands at Work``: [12, 16, 27]
-        * ``Lack of Social Recognition``: [2, 20, 23]
-        * ``Work Discontent``: [8, 13, 24]
-        * ``Social Tension``: [4, 9, 26]
-        * ``Performance Pressure at Work``: [5, 14, 29]
-        * ``Performance Pressure in Social Interactions``: [6, 15, 22]
-        * ``Social Isolation``: [19, 25, 30]
-        * ``Worry Propensity``: [7, 10, 17]
+
+    * ``Work Overload``: [1, 3, 21]
+    * ``Social Overload``: [11, 18, 28]
+    * ``Excessive Demands at Work``: [12, 16, 27]
+    * ``Lack of Social Recognition``: [2, 20, 23]
+    * ``Work Discontent``: [8, 13, 24]
+    * ``Social Tension``: [4, 9, 26]
+    * ``Performance Pressure at Work``: [5, 14, 29]
+    * ``Performance Pressure in Social Interactions``: [6, 15, 22]
+    * ``Social Isolation``: [19, 25, 30]
+    * ``Worry Propensity``: [7, 10, 17]
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -351,9 +353,9 @@ def tics_s(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns do not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -421,8 +423,9 @@ def pss(
 
     The PSS consists of the subscales with the item indices
     (count-by-one, i.e., the first question has the index 1!):
-        * Helplessness (Hilflosigkeit): [1, 2, 3, 6, 9, 10]
-        * Self-Efficacy (Selbstwirksamkeit): [4, 5, 7, 8]
+
+    * Helplessness (Hilflosigkeit): [1, 2, 3, 6, 9, 10]
+    * Self-Efficacy (Selbstwirksamkeit): [4, 5, 7, 8]
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -434,7 +437,7 @@ def pss(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -453,9 +456,9 @@ def pss(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns do not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -507,7 +510,7 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -522,9 +525,9 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns do not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -570,7 +573,7 @@ def ads_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] 
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -585,9 +588,9 @@ def ads_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] 
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns do not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -633,7 +636,7 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -647,9 +650,9 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -689,8 +692,9 @@ def hads(
     Higher scores indicate greater distress.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Anxiety``: [1, 3, 5, 7, 9, 11, 13]
-        * ``Depression``: [2, 4, 6, 8, 10, 12, 14]
+
+    * ``Anxiety``: [1, 3, 5, 7, 9, 11, 13]
+    * ``Depression``: [2, 4, 6, 8, 10, 12, 14]
 
     .. note::
         This implementation assumes a score range of [0, 3].
@@ -701,7 +705,7 @@ def hads(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -721,9 +725,9 @@ def hads(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns do not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -778,8 +782,9 @@ def type_d(
     inhibition (SI). Individuals who are high in both NA and SI have a *distressed* or Type D personality.
 
     It consists of the subscales, with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Negative Affect``: [2, 4, 5, 7, 9, 12, 13]
-        * ``Social Inhibition``: [1, 3, 6, 8, 10, 11, 14]
+
+    * ``Negative Affect``: [2, 4, 5, 7, 9, 12, 13]
+    * ``Social Inhibition``: [1, 3, 6, 8, 10, 11, 14]
 
 
     .. note::
@@ -795,7 +800,7 @@ def type_d(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -815,9 +820,9 @@ def type_d(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -875,7 +880,7 @@ def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -892,9 +897,9 @@ def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -934,12 +939,13 @@ def scs(
     into subscales. Higher scores indicate greater self-compassion.
 
     It consists of the subscales, with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``SelfKindness``: [5, 12, 19, 23, 26]
-        * ``SelfJudgment``: [1, 8, 11, 16, 21]
-        * ``CommonHumanity``: [3, 7, 10, 15]
-        * ``Isolation``: [4, 13, 18, 25]
-        * ``Mindfulness``: [9, 14, 17, 22]
-        * ``OverIdentified`` [2, 6, 20, 24]
+
+    * ``SelfKindness``: [5, 12, 19, 23, 26]
+    * ``SelfJudgment``: [1, 8, 11, 16, 21]
+    * ``CommonHumanity``: [3, 7, 10, 15]
+    * ``Isolation``: [4, 13, 18, 25]
+    * ``Mindfulness``: [9, 14, 17, 22]
+    * ``OverIdentified`` [2, 6, 20, 24]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -955,7 +961,7 @@ def scs(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -975,9 +981,9 @@ def scs(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -1064,9 +1070,9 @@ def midi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -1110,9 +1116,10 @@ def tsgs(
 
     It consists of the subscales,
     with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Shame``: [2, 5, 8, 11, 14]
-        * ``Guilt``: [3, 6, 9, 12, 15]
-        * ``Pride``: [1, 4, 7, 10, 13]
+
+    * ``Shame``: [2, 5, 8, 11, 14]
+    * ``Guilt``: [3, 6, 9, 12, 15]
+    * ``Pride``: [1, 4, 7, 10, 13]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -1128,7 +1135,7 @@ def tsgs(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1147,9 +1154,9 @@ def tsgs(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -1195,12 +1202,13 @@ def rmidi(
     indicate higher endorsement of each personality trait.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Neuroticism``: [3, 8, 13, 19]
-        * ``Extraversion``: [1, 6, 11, 23, 27]
-        * ``Openness``: [14, 17, 21, 22, 25, 28, 29]
-        * ``Conscientiousness``: [4, 9, 16, 24, 31]
-        * ``Agreeableness``: [2, 7, 12, 18, 26]
-        * ``Agency``: [5, 10, 15, 20, 30]
+
+    * ``Neuroticism``: [3, 8, 13, 19]
+    * ``Extraversion``: [1, 6, 11, 23, 27]
+    * ``Openness``: [14, 17, 21, 22, 25, 28, 29]
+    * ``Conscientiousness``: [4, 9, 16, 24, 31]
+    * ``Agreeableness``: [2, 7, 12, 18, 26]
+    * ``Agency``: [5, 10, 15, 20, 30]
 
     .. note::
         This implementation assumes a score range of [1, 4].
@@ -1216,7 +1224,7 @@ def rmidi(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1236,9 +1244,9 @@ def rmidi(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -1297,9 +1305,10 @@ def lsq(
     Higher scores indicate more stress.
 
     It consists of the subscales:
-        * ``PartnerStress``: columns with suffix ``_Partner``
-        * ``ParentStress``: columns with suffix ``_Parent``
-        * ``ChildStress``: columns with suffix ``_Child``
+
+    * ``PartnerStress``: columns with suffix ``_Partner``
+    * ``ParentStress``: columns with suffix ``_Parent``
+    * ``ChildStress``: columns with suffix ``_Child``
 
     .. note::
         This implementation assumes a score range of [0, 1].
@@ -1311,7 +1320,7 @@ def lsq(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1329,9 +1338,9 @@ def lsq(
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -1373,15 +1382,17 @@ def ctq(
     """Compute the **Childhood Trauma Questionnaire (CTQ)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``PhysicalAbuse``: [9, 11, 12, 15, 17]
-        * ``SexualAbuse``: [20, 21, 23, 24, 27]
-        * ``EmotionalNeglect``: [5, 7, 13, 19, 28]
-        * ``PhysicalNeglect``: [1, 2, 4, 6, 26]
-        * ``EmotionalAbuse``: [3, 8, 14, 18, 25]
+
+    * ``PhysicalAbuse``: [9, 11, 12, 15, 17]
+    * ``SexualAbuse``: [20, 21, 23, 24, 27]
+    * ``EmotionalNeglect``: [5, 7, 13, 19, 28]
+    * ``PhysicalNeglect``: [1, 2, 4, 6, 26]
+    * ``EmotionalAbuse``: [3, 8, 14, 18, 25]
 
     Additionally, three items assess the validity of the responses (high scores on these items could be grounds for
     exclusion of a given participants’ responses):
-        * ``Validity``: [10, 16, 22]
+
+    * ``Validity``: [10, 16, 22]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -1396,7 +1407,7 @@ def ctq(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1416,9 +1427,9 @@ def ctq(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -1487,7 +1498,7 @@ def peat(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1502,9 +1513,9 @@ def peat(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -1548,7 +1559,7 @@ def purpose_life(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1602,7 +1613,7 @@ def trait_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1651,15 +1662,16 @@ def besaa(
     Higher scores indicate higher body esteem.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Appearance``: [1, 6, 9, 7, 11, 13, 15, 17, 21, 23]
-        * ``Weight``: [3, 4, 8, 10, 16, 18, 19, 22]
-        * ``Attribution``: [2, 5, 12, 14, 20]
+
+    * ``Appearance``: [1, 6, 9, 7, 11, 13, 15, 17, 21, 23]
+    * ``Weight``: [3, 4, 8, 10, 16, 18, 19, 22]
+    * ``Attribution``: [2, 5, 12, 14, 20]
 
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1679,9 +1691,9 @@ def besaa(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -1744,9 +1756,10 @@ def fscrs(
     self-attacking ("Hated Self"), and self-reassuring "Reassuring Self", respectively.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``InadequateSelf``: [1, 2, 4, 6, 7, 14, 17, 18, 20]
-        * ``HatedSelf``: [9, 10, 12, 15, 22]
-        * ``ReassuringSelf``: [3, 5, 8, 11, 13, 16, 19, 21]
+
+    * ``InadequateSelf``: [1, 2, 4, 6, 7, 14, 17, 18, 20]
+    * ``HatedSelf``: [9, 10, 12, 15, 22]
+    * ``ReassuringSelf``: [3, 5, 8, 11, 13, 16, 19, 21]
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -1762,7 +1775,7 @@ def fscrs(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1782,9 +1795,9 @@ def fscrs(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -1832,10 +1845,11 @@ def pasa(
     (self-concept of own abilities and control expectancy). Higher scores indicate greater appraisals for each sub-type.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Threat``: [1, 9, 5, 13]
-        * ``Challenge``: [6, 10, 2, 14]
-        * ``SelfConcept``: [7, 3, 11, 15]
-        * ``ControlExp``: [4, 8, 12, 16]
+
+    * ``Threat``: [1, 9, 5, 13]
+    * ``Challenge``: [6, 10, 2, 14]
+    * ``SelfConcept``: [7, 3, 11, 15]
+    * ``ControlExp``: [4, 8, 12, 16]
 
     .. note::
         This implementation assumes a score range of [1, 6].
@@ -1851,7 +1865,7 @@ def pasa(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1871,9 +1885,9 @@ def pasa(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -1949,9 +1963,10 @@ def ssgs(
     Higher scores on each subscale indicate higher shame, guilt, or pride.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Pride``: [1, 4, 7, 10, 13]
-        * ``Shame``: [2, 5, 8, 11, 14]
-        * ``Guilt``: [3, 6, 9, 12, 15]
+
+    * ``Pride``: [1, 4, 7, 10, 13]
+    * ``Shame``: [2, 5, 8, 11, 14]
+    * ``Guilt``: [3, 6, 9, 12, 15]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -1967,7 +1982,7 @@ def ssgs(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -1987,9 +2002,9 @@ def ssgs(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -2053,7 +2068,7 @@ def panas(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -2073,9 +2088,9 @@ def panas(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -2144,7 +2159,7 @@ def state_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -2159,9 +2174,9 @@ def state_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -2206,7 +2221,7 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -2221,9 +2236,9 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -2289,7 +2304,7 @@ def stadi(
 ) -> pd.DataFrame:
     """Compute the **State-Trait Anxiety-Depression Inventory (STADI)**.
 
-    With the STADI, anxiety and depression can be recorded both as state and as trait.
+    With the STADI, anxiety and depression can be recorded, both as state and as trait.
     Two self-report questionnaires with 20 items each are available for this purpose.
     The state part measures the degree of anxiety and depression currently experienced by a person, which varies
     depending on internal or external influences. It can be used in a variety of situations of different types.
@@ -2301,10 +2316,11 @@ def stadi(
 
     The state and trait scales both consist of the subscales with the item indices
     (count-by-one, i.e., the first question has the index 1!):
-        * Emotionality (Aufgeregtheit - affektive Komponente): [1, 5, 9, 13, 17]
-        * Worry (Besorgnis -kognitive Komponente): [2, 6, 10, 14, 18]
-        * Anhedonia (Euthymie - positive Stimmung): [3, 7, 11, 15, 19]
-        * Dysthymia (Dysthymie -depressive Stimmung): [4, 8, 12, 16, 20]
+
+    * Emotionality (Aufgeregtheit - affektive Komponente – ``AU``): [1, 5, 9, 13, 17]
+    * Worry (Besorgnis - kognitive Komponente - ``BE``): [2, 6, 10, 14, 18]
+    * Anhedonia (Euthymie - positive Stimmung - ``EU``): [3, 7, 11, 15, 19]
+    * Dysthymia (Dysthymie - depressive Stimmung - ``DY``): [4, 8, 12, 16, 20]
 
     .. note::
         This implementation assumes a score range of [1, 4].
@@ -2324,7 +2340,7 @@ def stadi(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -2347,9 +2363,9 @@ def stadi(
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
         if invalid parameter was passed to ``stadi_type``
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -2447,26 +2463,27 @@ def svf_120(
     the study objective/question.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Trivialization/Minimalization (Bagatellisierung – ``Bag``): [10, 31, 50, 67, 88, 106]
-        * De-Emphasis by Comparison with Others (Herunterspielen – ``Her``): [17, 38, 52, 77, 97, 113]
-        * Rejection of Guilt (Schuldabwehr – ``Schab``): [5, 30, 43, 65, 104, 119]
-        * Distraction/Deflection from a Situation (Ablenkung – ``Abl``): [1, 20, 45, 86, 101, 111]
-        * Vicarious Satisfaction (Ersatzbefriedigung –``Ers``): [22, 36, 64, 74, 80, 103]
-        * Search for Self-Affirmation (Selbstbestätigung – ``Sebest``): [34, 47, 59, 78, 95, 115]
-        * Relaxation (Entspannung –``Entsp``): [12, 28, 58, 81, 99, 114]
-        * Attempt to Control Situation (Situationskontrolle – ``Sitkon``): [11, 18, 39, 66, 91, 116]
-        * Response Control (Reaktionskontrolle – ``Rekon``): [2, 26, 54, 68, 85, 109]
-        * Positive Self-Instruction (Positive Selbstinstruktion – ``Posi``): [15, 37, 56, 71, 83, 96]
-        * Need for Social Support (Soziales Unterstützungsbedürfnis – ``Sozube``): [3, 21, 42, 63, 84, 102]
-        * Avoidance Tendencies (Vermeidung – ``Verm``): [8, 29, 48, 69, 98, 118]
-        * Escapist Tendencies (Flucht – ``Flu``): [14, 24, 40, 62, 73, 120]
-        * Social Isolation (Soziale Abkapselung – ``Soza``): [6, 27, 49, 76, 92, 107]
-        * Mental Perseveration (Gedankliche Weiterbeschäftigung – ``Gedw``): [16, 23, 55, 72, 100, 110]
-        * Resignation (Resignation – ``Res``): [4, 32, 46, 60, 89, 105]
-        * Self-Pity (Selbstbemitleidung – ``Selmit``): [13, 41, 51, 79, 94, 117]
-        * Self-Incrimination (Selbstbeschuldigung – ``Sesch``): [9, 25, 35, 57, 75, 87]
-        * Aggression (Aggression – ``Agg``): [33, 44, 61, 82, 93, 112]
-        * Medicine-Taking (Pharmakaeinnahme – ``Pha``): [7, 19, 53, 70, 90, 108]
+
+    * Trivialization/Minimalization (Bagatellisierung – ``Bag``): [10, 31, 50, 67, 88, 106]
+    * De-Emphasis by Comparison with Others (Herunterspielen – ``Her``): [17, 38, 52, 77, 97, 113]
+    * Rejection of Guilt (Schuldabwehr – ``Schab``): [5, 30, 43, 65, 104, 119]
+    * Distraction/Deflection from a Situation (Ablenkung – ``Abl``): [1, 20, 45, 86, 101, 111]
+    * Vicarious Satisfaction (Ersatzbefriedigung –``Ers``): [22, 36, 64, 74, 80, 103]
+    * Search for Self-Affirmation (Selbstbestätigung – ``Sebest``): [34, 47, 59, 78, 95, 115]
+    * Relaxation (Entspannung –``Entsp``): [12, 28, 58, 81, 99, 114]
+    * Attempt to Control Situation (Situationskontrolle – ``Sitkon``): [11, 18, 39, 66, 91, 116]
+    * Response Control (Reaktionskontrolle – ``Rekon``): [2, 26, 54, 68, 85, 109]
+    * Positive Self-Instruction (Positive Selbstinstruktion – ``Posi``): [15, 37, 56, 71, 83, 96]
+    * Need for Social Support (Soziales Unterstützungsbedürfnis – ``Sozube``): [3, 21, 42, 63, 84, 102]
+    * Avoidance Tendencies (Vermeidung – ``Verm``): [8, 29, 48, 69, 98, 118]
+    * Escapist Tendencies (Flucht – ``Flu``): [14, 24, 40, 62, 73, 120]
+    * Social Isolation (Soziale Abkapselung – ``Soza``): [6, 27, 49, 76, 92, 107]
+    * Mental Perseveration (Gedankliche Weiterbeschäftigung – ``Gedw``): [16, 23, 55, 72, 100, 110]
+    * Resignation (Resignation – ``Res``): [4, 32, 46, 60, 89, 105]
+    * Self-Pity (Selbstbemitleidung – ``Selmit``): [13, 41, 51, 79, 94, 117]
+    * Self-Incrimination (Selbstbeschuldigung – ``Sesch``): [9, 25, 35, 57, 75, 87]
+    * Aggression (Aggression – ``Agg``): [33, 44, 61, 82, 93, 112]
+    * Medicine-Taking (Pharmakaeinnahme – ``Pha``): [7, 19, 53, 70, 90, 108]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -2482,7 +2499,7 @@ def svf_120(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -2502,9 +2519,9 @@ def svf_120(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     """
@@ -2590,26 +2607,27 @@ def svf_42(
     the study objective/question.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Trivialization/Minimalization (Bagatellisierung – ``Bag``): [7, 22]
-        * De-Emphasis by Comparison with Others (Herunterspielen – ``Her``): [11, 35]
-        * Rejection of Guilt (Schuldabwehr – ``Schab``): [2, 34]
-        * Distraction/Deflection from a Situation (Ablenkung – ``Abl``): [1, 32]
-        * Vicarious Satisfaction (Ersatzbefriedigung –``Ers``): [12, 42]
-        * Search for Self-Affirmation (Selbstbestätigung – ``Sebest``): [19, 37]
-        * Relaxation (Entspannung –``Entsp``): [13, 26]
-        * Attempt to Control Situation (Situationskontrolle – ``Sitkon``): [4, 23]
-        * Response Control (Reaktionskontrolle – ``Rekon``): [17, 33]
-        * Positive Self-Instruction (Positive Selbstinstruktion – ``Posi``): [9, 24]
-        * Need for Social Support (Soziales Unterstützungsbedürfnis – ``Sozube``): [14, 27]
-        * Avoidance Tendencies (Vermeidung – ``Verm``): [6, 30]
-        * Escapist Tendencies (Flucht – ``Flu``): [16, 40]
-        * Social Isolation (Soziale Abkapselung – ``Soza``): [20, 29]
-        * Mental Perseveration (Gedankliche Weiterbeschäftigung – ``Gedw``): [10, 25]
-        * Resignation (Resignation – ``Res``): [38, 15]
-        * Self-Pity (Selbstbemitleidung – ``Selmit``): [18, 28]
-        * Self-Incrimination (Selbstbeschuldigung – ``Sesch``): [8, 31]
-        * Aggression (Aggression – ``Agg``): [21, 36]
-        * Medicine-Taking (Pharmakaeinnahme – ``Pha``): [3, 39]
+
+    * Trivialization/Minimalization (Bagatellisierung – ``Bag``): [7, 22]
+    * De-Emphasis by Comparison with Others (Herunterspielen – ``Her``): [11, 35]
+    * Rejection of Guilt (Schuldabwehr – ``Schab``): [2, 34]
+    * Distraction/Deflection from a Situation (Ablenkung – ``Abl``): [1, 32]
+    * Vicarious Satisfaction (Ersatzbefriedigung –``Ers``): [12, 42]
+    * Search for Self-Affirmation (Selbstbestätigung – ``Sebest``): [19, 37]
+    * Relaxation (Entspannung –``Entsp``): [13, 26]
+    * Attempt to Control Situation (Situationskontrolle – ``Sitkon``): [4, 23]
+    * Response Control (Reaktionskontrolle – ``Rekon``): [17, 33]
+    * Positive Self-Instruction (Positive Selbstinstruktion – ``Posi``): [9, 24]
+    * Need for Social Support (Soziales Unterstützungsbedürfnis – ``Sozube``): [14, 27]
+    * Avoidance Tendencies (Vermeidung – ``Verm``): [6, 30]
+    * Escapist Tendencies (Flucht – ``Flu``): [16, 40]
+    * Social Isolation (Soziale Abkapselung – ``Soza``): [20, 29]
+    * Mental Perseveration (Gedankliche Weiterbeschäftigung – ``Gedw``): [10, 25]
+    * Resignation (Resignation – ``Res``): [38, 15]
+    * Self-Pity (Selbstbemitleidung – ``Selmit``): [18, 28]
+    * Self-Incrimination (Selbstbeschuldigung – ``Sesch``): [8, 31]
+    * Aggression (Aggression – ``Agg``): [21, 36]
+    * Medicine-Taking (Pharmakaeinnahme – ``Pha``): [3, 39]
 
 
     .. note::
@@ -2626,7 +2644,7 @@ def svf_42(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -2646,9 +2664,9 @@ def svf_42(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     """
@@ -2725,20 +2743,21 @@ def brief_cope(
     Higher scores indicate better coping capabilities.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``SelfDistraction``: [1, 19]
-        * ``ActiveCoping``: [2, 7]
-        * ``Denial``: [3, 8]
-        * ``SubstanceUse``: [4, 11]
-        * ``EmotionalSupport``: [5, 15]
-        * ``InstrumentalSupport``: [10, 23]
-        * ``BehavioralDisengagement``: [6, 16]
-        * ``Venting``: [9, 21]
-        * ``PosReframing``: [12, 17]
-        * ``Planning``: [14, 25]
-        * ``Humor``: [18, 28]
-        * ``Acceptance``: [20, 24]
-        * ``Religion``: [22, 27]
-        * ``SelfBlame``: [13, 26]
+
+    * ``SelfDistraction``: [1, 19]
+    * ``ActiveCoping``: [2, 7]
+    * ``Denial``: [3, 8]
+    * ``SubstanceUse``: [4, 11]
+    * ``EmotionalSupport``: [5, 15]
+    * ``InstrumentalSupport``: [10, 23]
+    * ``BehavioralDisengagement``: [6, 16]
+    * ``Venting``: [9, 21]
+    * ``PosReframing``: [12, 17]
+    * ``Planning``: [14, 25]
+    * ``Humor``: [18, 28]
+    * ``Acceptance``: [20, 24]
+    * ``Religion``: [22, 27]
+    * ``SelfBlame``: [13, 26]
 
     .. note::
         This implementation assumes a score range of [1, 4].
@@ -2754,7 +2773,7 @@ def brief_cope(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -2774,9 +2793,9 @@ def brief_cope(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -2833,11 +2852,12 @@ def bfi_k(
     The BFI measures an individual on the Big Five Factors (dimensions) of personality (Goldberg, 1993).
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Extraversion (``E``): [1, 6, 11, 16]
-        * Agreeableness (``A``): [2, 7, 12, 17]
-        * Conscientiousness (``C``): [3, 8, 13, 18]
-        * Neuroticism (``N``): [4, 9, 14, 19]
-        * Openness (``O``): [5, 10, 15, 20, 21]
+
+    * Extraversion (``E``): [1, 6, 11, 16]
+    * Agreeableness (``A``): [2, 7, 12, 17]
+    * Conscientiousness (``C``): [3, 8, 13, 18]
+    * Neuroticism (``N``): [4, 9, 14, 19]
+    * Openness (``O``): [5, 10, 15, 20, 21]
 
 
     .. note::
@@ -2854,7 +2874,7 @@ def bfi_k(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -2874,9 +2894,9 @@ def bfi_k(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -2938,9 +2958,10 @@ def rsq(
     attenuates them.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``SymptomRumination``: [2, 3, 4, 8, 11, 12, 13, 25]
-        * ``SelfRumination``: [1, 19, 26, 28, 30, 31, 32]
-        * ``Distraction``: [5, 6, 7, 9, 14, 16, 18, 20]
+
+    * ``SymptomRumination``: [2, 3, 4, 8, 11, 12, 13, 25]
+    * ``SelfRumination``: [1, 19, 26, 28, 30, 31, 32]
+    * ``Distraction``: [5, 6, 7, 9, 14, 16, 18, 20]
 
     .. note::
         This implementation assumes a score range of [1, 4].
@@ -2956,7 +2977,7 @@ def rsq(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -2976,9 +2997,9 @@ def rsq(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -3038,8 +3059,9 @@ def sss(
     person's perceived rank relative to others in their group.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Socioeconomic Status Ladder (``SocioeconomicStatus``): [1]
-        * Community Ladder (``Community``): [2]
+
+    * Socioeconomic Status Ladder (``SocioeconomicStatus``): [1]
+    * Community Ladder (``Community``): [2]
 
     .. note::
         This implementation assumes a score range of [0, 10].
@@ -3055,7 +3077,7 @@ def sss(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -3075,9 +3097,9 @@ def sss(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     """
@@ -3111,32 +3133,37 @@ def fkk(
     """Compute the **Fragebogen zur Kompetenz- und Kontrollüberzeugungen (FKK)** (Questionnaire on Competence and Control Beliefs).
 
     The questionnaire on competence and control beliefs can be used to assess
-        (1) the generalized self-concept of own abilities,
-        (2) internality in generalized control beliefs,
-        (3) socially conditioned externality, and
-        (4) fatalistic externality in adolescents and adults.
+
+    (1) the generalized self-concept of own abilities,
+    (2) internality in generalized control beliefs,
+    (3) socially conditioned externality, and
+    (4) fatalistic externality in adolescents and adults.
+
     In addition to profile evaluations according to these four primary scales, evaluations according to secondary and
     tertiary scales are possible (generalized self-efficacy; generalized externality;
     internality versus externality in control beliefs).
 
     It consists of the primary subscales with the item indices (count-by-one, i.e.,
     the first question has the index 1!):
-        * Self-concept of Own Abilities (Selbstkonzept eigener Fähigkeiten – ``SK``): [4, 8, 12, 24, 16, 20, 28, 32]
-        * Internality (Internalität – ``I``): [1, 5, 6, 11, 23, 25, 27, 30]
-        * Socially Induced Externality (Sozial bedingte Externalität – ``P``) (P = powerful others control orientation):
-          [3, 10, 14, 17, 19, 22, 26, 29]
-        * Fatalistic Externality (Fatalistische Externalität – ``C``) (C = chance control orientation):
-          [2, 7, 9, 13, 15, 18, 21, 31]
+
+    * Self-concept of Own Abilities (Selbstkonzept eigener Fähigkeiten – ``SK``): [4, 8, 12, 24, 16, 20, 28, 32]
+    * Internality (Internalität – ``I``): [1, 5, 6, 11, 23, 25, 27, 30]
+    * Socially Induced Externality (Sozial bedingte Externalität – ``P``) (P = powerful others control orientation):
+      [3, 10, 14, 17, 19, 22, 26, 29]
+    * Fatalistic Externality (Fatalistische Externalität – ``C``) (C = chance control orientation):
+      [2, 7, 9, 13, 15, 18, 21, 31]
 
     Further, the following secondary subscales can be computed:
-        * Self-Efficacy / Generalized self-efficacy Beliefs (Selbstwirksamkeit / generalisierte
-          Selbstwirksamkeitsüberzeugung – ``SKI``): ``SK`` + ``I``
-        * Generalized Externality in Control Beliefs (Generalisierte Externalität in Kontrollüberzeugungen – ``PC``):
-          ``P`` + ``C``
+
+    * Self-Efficacy / Generalized self-efficacy Beliefs (Selbstwirksamkeit / generalisierte
+      Selbstwirksamkeitsüberzeugung – ``SKI``): ``SK`` + ``I``
+    * Generalized Externality in Control Beliefs (Generalisierte Externalität in Kontrollüberzeugungen – ``PC``):
+      ``P`` + ``C``
 
     Further, the following tertiary subscale can be computed:
-        * Generalized Internality (Generalisierte Internalität) vs. Externality in control beliefs
-          (Externalität in Kontrollüberzeugungen – ``SKI_PC``): ``SKI`` - ``PC``
+
+    * Generalized Internality (Generalisierte Internalität) vs. Externality in control beliefs
+      (Externalität in Kontrollüberzeugungen – ``SKI_PC``): ``SKI`` - ``PC``
 
     .. note::
         This implementation assumes a score range of [1, 6].
@@ -3152,7 +3179,7 @@ def fkk(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -3172,9 +3199,9 @@ def fkk(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -3239,15 +3266,14 @@ def bidr(
     """Compute the **Balanced Inventory of Desirable Responding (BIDR)**.
 
     The BIDR is a 40-item instrument that is used to measure 2 constructs:
-        * Self-deceptive positivity – described as the tendency to give self-reports that are believed but have a
-        positivety bias
-        * Impression management – deliberate self-presentation to an audience.
+
+    * Self-deceptive positivity – described as the tendency to give self-reports that are believed but have a
+      positivety bias
+    * Impression management – deliberate self-presentation to an audience.
 
     The BIDR emphasizes exaggerated claims of positive cognitive attributes (overconfidence in one’s judgments and
     rationality). It is viewed as a measure of defense, i.e., people who score high on self-deceptive positivity
     tend to defend against negative self-evaluations and seek out inflated positive self-evaluations.
-
-
 
     .. note::
         This implementation assumes a score range of [1, 7].
@@ -3263,7 +3289,7 @@ def bidr(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -3283,9 +3309,9 @@ def bidr(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -3337,9 +3363,10 @@ def kkg(
 
     The KKG is a health attitude test and assesses the locus of control about disease and health.
     3 health- or illness-related locus of control are evaluated:
-        (1) internality: attitudes that health and illness are controllable by oneself,
-        (2) social externality: attitudes that they are controllable by other outside persons, and
-        (3) fatalistic externality: attitudes that they are not controllable (chance or fate dependence of one's
+
+    (1) internality: attitudes that health and illness are controllable by oneself,
+    (2) social externality: attitudes that they are controllable by other outside persons, and
+    (3) fatalistic externality: attitudes that they are not controllable (chance or fate dependence of one's
         health status).
 
     .. note::
@@ -3356,7 +3383,7 @@ def kkg(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -3376,9 +3403,9 @@ def kkg(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -3426,9 +3453,10 @@ def fee(
     overprotection", as well as "control and overprotection".
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``RejectionPunishment``: [1, 3, 6, 8, 16, 18, 20, 22]
-        * ``EmotionalWarmth``: [2, 7, 9, 12, 14, 15, 17, 24]
-        * ``ControlOverprotection``: [4, 5, 10, 11, 13, 19, 21, 23]
+
+    * ``RejectionPunishment``: [1, 3, 6, 8, 16, 18, 20, 22]
+    * ``EmotionalWarmth``: [2, 7, 9, 12, 14, 15, 17, 24]
+    * ``ControlOverprotection``: [4, 5, 10, 11, 13, 19, 21, 23]
 
 
     .. note::
@@ -3450,7 +3478,7 @@ def fee(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -3471,11 +3499,11 @@ def fee(
     Raises
     ------
     ValueError
-        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints or
         if ``language`` is not supported
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -3543,9 +3571,10 @@ def mbi_gs(
     in jobs such as customer service, maintenance, manufacturing, management, and most other professions.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Emotional Exhaustion (``EE``): [1, 2, 3, 4, 5]
-        * Personal Accomplishment (``PA``): [6, 7, 8, 11, 12, 16]
-        * Depersonalization / Cynicism (``DC``): [9, 10, 13, 14, 15]
+
+    * Emotional Exhaustion (``EE``): [1, 2, 3, 4, 5]
+    * Personal Accomplishment (``PA``): [6, 7, 8, 11, 12, 16]
+    * Depersonalization / Cynicism (``DC``): [9, 10, 13, 14, 15]
 
     .. note::
         This implementation assumes a score range of [0, 6].
@@ -3561,7 +3590,7 @@ def mbi_gs(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -3581,9 +3610,9 @@ def mbi_gs(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     """
@@ -3628,9 +3657,10 @@ def mbi_gss(
     It is available for use but its psychometric properties are not yet documented.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Emotional Exhaustion (``EE``): [1, 2, 3, 4, 5]
-        * Personal Accomplishment (``PA``): [6, 7, 8, 11, 12, 16]
-        * Depersonalization / Cynicism (``DC``): [9, 10, 13, 14, 15]
+
+    * Emotional Exhaustion (``EE``): [1, 2, 3, 4, 5]
+    * Personal Accomplishment (``PA``): [6, 7, 8, 11, 12, 16]
+    * Depersonalization / Cynicism (``DC``): [9, 10, 13, 14, 15]
 
     .. note::
         This implementation assumes a score range of [0, 6].
@@ -3646,7 +3676,7 @@ def mbi_gss(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -3666,9 +3696,9 @@ def mbi_gss(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     """
@@ -3713,8 +3743,9 @@ def mlq(
     happiness and fulfillment.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``PresenceMeaning``: [1, 4, 5, 6, 9]
-        * ``SearchMeaning``: [2, 3, 7, 8, 10]
+
+    * ``PresenceMeaning``: [1, 4, 5, 6, 9]
+    * ``SearchMeaning``: [2, 3, 7, 8, 10]
 
     .. note::
         This implementation assumes a score range of [1, 7].
@@ -3730,7 +3761,7 @@ def mlq(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -3750,9 +3781,9 @@ def mlq(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
     References
     ----------
@@ -3882,7 +3913,7 @@ def pfb(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -3902,9 +3933,9 @@ def pfb(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
     References
@@ -3981,7 +4012,7 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
         list with column names to use for computing this score if a complete dataframe is supplied.
-        See ``bp.questionnaires.utils.convert_scale()``
+        See :func:`~biopsykit.questionnaires.utils.convert_scale()`
 
     Returns
     -------
@@ -4023,9 +4054,10 @@ def mdbf(
     The MDBF measures different bipolar dimensions of current mood and psychological wellbeing.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``GoodBad``: [1, 4, 8, 11, 14, 16, 18, 21]
-        * ``AwakeTired``: [2, 5, 7, 10, 13, 17, 20, 23]
-        * ``CalmNervous``: [3, 6, 9, 12, 15, 19, 22, 24]
+
+    * ``GoodBad``: [1, 4, 8, 11, 14, 16, 18, 21]
+    * ``AwakeTired``: [2, 5, 7, 10, 13, 17, 20, 23]
+    * ``CalmNervous``: [3, 6, 9, 12, 15, 19, 22, 24]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -4041,7 +4073,7 @@ def mdbf(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4061,9 +4093,9 @@ def mdbf(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4130,16 +4162,20 @@ def meq(
     chronotype groups.
 
     Besides the MEQ score the function classifies the chronotype in two stages:
-        * 5 levels (``Chronotype_Fine``):
-            * 0: definite evening type (MEQ score 14-30)
-            * 1: moderate evening type (MEQ score 31-41)
-            * 2: intermediate type (MEQ score 42-58)
-            * 3: moderate morning type (MEQ score 59-69)
-            * 4: definite morning type (MEQ score 70-86)
-        * 3 levels (``Chronotype_Coarse``):
-            * 0: evening type (MEQ score 14-41)
-            * 1: intermediate type (MEQ score 42-58)
-            * 2: morning type (MEQ score 59-86)
+
+    * 5 levels (``Chronotype_Fine``):
+
+      * 0: definite evening type (MEQ score 14-30)
+      * 1: moderate evening type (MEQ score 31-41)
+      * 2: intermediate type (MEQ score 42-58)
+      * 3: moderate morning type (MEQ score 59-69)
+      * 4: definite morning type (MEQ score 70-86)
+
+    * 3 levels (``Chronotype_Coarse``):
+
+      * 0: evening type (MEQ score 14-41)
+      * 1: intermediate type (MEQ score 42-58)
+      * 2: morning type (MEQ score 59-86)
 
     .. note::
         This implementation assumes a score range of [1, 4], except for some columns, which have a score range
@@ -4151,7 +4187,7 @@ def meq(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4229,7 +4265,7 @@ def kab(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4244,9 +4280,9 @@ def kab(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4292,7 +4328,7 @@ def stai_short(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4309,9 +4345,9 @@ def stai_short(
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4362,7 +4398,7 @@ def pre_scan_idq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4376,9 +4412,9 @@ def pre_scan_idq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4423,7 +4459,7 @@ def strategies_questionnaire(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4437,9 +4473,9 @@ def strategies_questionnaire(
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4485,8 +4521,9 @@ def clq(
     """Compute the **Claustrophobia Questionnaire (CLQ)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Suffocation``: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-        * ``Constriction``: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+
+    * ``Suffocation``: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    * ``Constriction``: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -4502,7 +4539,7 @@ def clq(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4522,9 +4559,9 @@ def clq(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4581,7 +4618,7 @@ def mk_hai(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4596,9 +4633,9 @@ def mk_hai(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4643,14 +4680,15 @@ def abi_ms(
     avoidant and vigilant coping strategies in potentially threatening medical contexts.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Cognitive Avoidance - Specific Factor 1 (``KOG_1``): [1, 4, 5, 7],
-        * Cognitive Avoidance - Specific Factor 2 (``KOG_2``): [9, 11, 14, 16]
-        * Cognitive Avoidance - Specific Factor 3 (``KOG_3``): [17, 19, 21, 23]
-        * Cognitive Avoidance - Specific Factor 4 (``KOG_4``): [25, 27, 28, 31]
-        * Vigilance - Specific Factor 1 (``VIG_1``): [2, 3, 6, 8]
-        * Vigilance - Specific Factor 2 (``VIG_2``): [10, 12, 13, 17]
-        * Vigilance - Specific Factor 3 (``VIG_3``): [18, 20, 22, 24]
-        * Vigilance - Specific Factor 4 (``VIG_4``): [26, 29, 30, 32]
+
+    * Cognitive Avoidance - Specific Factor 1 (``KOG_1``): [1, 4, 5, 7],
+    * Cognitive Avoidance - Specific Factor 2 (``KOG_2``): [9, 11, 14, 16]
+    * Cognitive Avoidance - Specific Factor 3 (``KOG_3``): [17, 19, 21, 23]
+    * Cognitive Avoidance - Specific Factor 4 (``KOG_4``): [25, 27, 28, 31]
+    * Vigilance - Specific Factor 1 (``VIG_1``): [2, 3, 6, 8]
+    * Vigilance - Specific Factor 2 (``VIG_2``): [10, 12, 13, 17]
+    * Vigilance - Specific Factor 3 (``VIG_3``): [18, 20, 22, 24]
+    * Vigilance - Specific Factor 4 (``VIG_4``): [26, 29, 30, 32]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -4666,7 +4704,7 @@ def abi_ms(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4686,9 +4724,9 @@ def abi_ms(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4755,9 +4793,10 @@ def asi(
     The Angstsensitivitätsindex-3 is the German version of the Anxiety Sensitivity Index by
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Physical Concerns (Bedenken Somatisch – ``BSM``): [3, 4, 7, 8, 12],
-        * Social Concerns (Bedenken Sozial – ``BZS``): [1, 6, 9, 11]
-        * Cognitive Concerns (Bedenken Kognitiv – ``BKO``): [2, 5, 10]
+
+    * Physical Concerns (Bedenken Somatisch – ``BSM``): [3, 4, 7, 8, 12],
+    * Social Concerns (Bedenken Sozial – ``BZS``): [1, 6, 9, 11]
+    * Cognitive Concerns (Bedenken Kognitiv – ``BKO``): [2, 5, 10]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -4773,7 +4812,7 @@ def asi(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4793,9 +4832,9 @@ def asi(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4848,8 +4887,9 @@ def erq(
     """Compute the **Emotion Regulation Questionnaire (ERQ)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Reappraisal (``Reapp``): [1, 3, 5, 7, 8, 10],
-        * Suppression (``Suppr``): [2, 4, 6, 9]
+
+    * Reappraisal (``Reapp``): [1, 3, 5, 7, 8, 10],
+    * Suppression (``Suppr``): [2, 4, 6, 9]
 
     .. note::
         This implementation assumes a score range of [1, 7].
@@ -4865,7 +4905,7 @@ def erq(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4885,9 +4925,9 @@ def erq(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4936,7 +4976,7 @@ def phq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -4950,9 +4990,9 @@ def phq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -4991,7 +5031,7 @@ def resilience(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Ind
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5005,9 +5045,9 @@ def resilience(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Ind
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5043,15 +5083,16 @@ def sci(
     """Compute the **Stress und Coping Inventar** (SCI).
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Uncertainty: [1, 2, 3, 4, 5, 6, 7],
-        * Load: [8, 9, 10, 11, 12, 13, 14],
-        * Adverse: [15, 16, 17, 18, 19, 20, 21],
-        * PhysSymp: [22, 23, 24, 25, 26, 27, 28],
-        * PosThink: [29, 33, 34, 44],
-        * Coping: [31, 35, 47, 45],
-        * SocSup: [32, 41, 43, 47],
-        * Faith: [36, 37, 38, 46],
-        * AlcCig: [30, 39, 42, 48]
+
+    * Uncertainty: [1, 2, 3, 4, 5, 6, 7],
+    * Load: [8, 9, 10, 11, 12, 13, 14],
+    * Adverse: [15, 16, 17, 18, 19, 20, 21],
+    * PhysSymp: [22, 23, 24, 25, 26, 27, 28],
+    * PosThink: [29, 33, 34, 44],
+    * Coping: [31, 35, 47, 45],
+    * SocSup: [32, 41, 43, 47],
+    * Faith: [36, 37, 38, 46],
+    * AlcCig: [30, 39, 42, 48]
 
 
     .. note::
@@ -5068,7 +5109,7 @@ def sci(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5088,9 +5129,9 @@ def sci(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5143,7 +5184,6 @@ def sci(
     sci_data = pd.DataFrame(sci_data, index=data.index)
 
     if "5_A" in subscales.keys():
-        print("here")
         sci_data["SCI_5_A"] = sci_data["SCI_5_A"].astype(np.int64)
 
     return sci_data
@@ -5157,11 +5197,12 @@ def bfi_10(
     """Compute the **Big Five Inventory - 10 items (BFI-10)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Extraversion (``E``): [1, 2],
-        * Agreeableness (``A``): [3, 4],
-        * Conscientiousness (``C``): [5, 6],
-        * Neuroticism (``N``): [7, 8],
-        * Openness (``O``): [9, 10]
+
+    * Extraversion (``E``): [1, 2],
+    * Agreeableness (``A``): [3, 4],
+    * Conscientiousness (``C``): [5, 6],
+    * Neuroticism (``N``): [7, 8],
+    * Openness (``O``): [9, 10]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -5177,7 +5218,7 @@ def bfi_10(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5197,9 +5238,9 @@ def bfi_10(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5252,7 +5293,7 @@ def swls(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5267,9 +5308,9 @@ def swls(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5305,8 +5346,9 @@ def swb(
     """Compute the **Subjective Well-Being Scale (SWB)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * SN: [2, 5, 8, 10, 11, 13],
-        * ALZ: [1, 3, 4, 6, 7, 9, 12]
+
+    * ``SN``: [2, 5, 8, 10, 11, 13],
+    * ``ALZ``: [1, 3, 4, 6, 7, 9, 12]
 
     .. note::
         This implementation assumes a score range of [1, 6].
@@ -5322,7 +5364,7 @@ def swb(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5344,9 +5386,9 @@ def swb(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5398,9 +5440,10 @@ def sop(
     """Compute the **Self-Efficacy, Optimism & Pessimism Scale (SOP)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * SW: [1, 3, 5, 7, 8]
-        * O: [4, 9]
-        * P: [2, 6]
+
+    * SW: [1, 3, 5, 7, 8]
+    * O: [4, 9]
+    * P: [2, 6]
 
     .. note::
         This implementation assumes a score range of [1, 4].
@@ -5416,7 +5459,7 @@ def sop(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5436,9 +5479,9 @@ def sop(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5480,8 +5523,9 @@ def ie_4(
 
     The IE-4 is a short scale for the assessment of Locus of Control. It consists of the subscales with the item
     indices (count-by-one, i.e., the first question has the index 1!):
-        * Intern: [1, 2]
-        * Extern: [3, 4]
+
+    * Intern: [1, 2]
+    * Extern: [3, 4]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -5497,7 +5541,7 @@ def ie_4(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5517,9 +5561,9 @@ def ie_4(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5554,7 +5598,7 @@ def ie_4(
 def social_desirability(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
     """Compute the **Social Desirability Scale**.
 
-    Short scale to estimate social desirability following the ALLBUS (1980)
+    Short scale to estimate social desirability following the ALLBUS (1980).
 
     .. note::
         This implementation assumes a score range of [1, 8].
@@ -5565,7 +5609,7 @@ def social_desirability(data: pd.DataFrame, columns: Optional[Union[Sequence[str
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5578,9 +5622,9 @@ def social_desirability(data: pd.DataFrame, columns: Optional[Union[Sequence[str
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5617,9 +5661,10 @@ def tb(
     """Compute the **Technology Commitment Questionnaire (TB - Technologiebereitschaft)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * TA: [1, 2, 3, 4]
-        * TCom: [5, 6, 7, 8]
-        * TCon: [9, 10, 11, 12]
+
+    * TA: [1, 2, 3, 4]
+    * TCom: [5, 6, 7, 8]
+    * TCon: [9, 10, 11, 12]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -5635,7 +5680,7 @@ def tb(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5655,9 +5700,9 @@ def tb(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5706,16 +5751,17 @@ def seop(
     """Compute the **Self-Efficacy, Optimism & Pessimism** Scale.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * Z: [2, 3, 4, 5, 6]
-        * K: [11, 12],
-        * W: [22 23, 24],
-        * S: [8, 9, 10],
-        * P: [7, 15, 16, 17, 18, 19, 21],
-        * I: [13, 14, 20],
-        * GZ: [1],
-        * SB: [25, 28, 29, 30, 31],
-        * AM: [26,27],
-        * PU: [32, 33, 34, 35]
+
+    * Z: [2, 3, 4, 5, 6]
+    * K: [11, 12],
+    * W: [22 23, 24],
+    * S: [8, 9, 10],
+    * P: [7, 15, 16, 17, 18, 19, 21],
+    * I: [13, 14, 20],
+    * GZ: [1],
+    * SB: [25, 28, 29, 30, 31],
+    * AM: [26,27],
+    * PU: [32, 33, 34, 35]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -5731,7 +5777,7 @@ def seop(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5751,9 +5797,9 @@ def seop(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5817,7 +5863,7 @@ def asku(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5830,9 +5876,9 @@ def asku(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5867,16 +5913,17 @@ def wpi(
     """Compute the **Wiener Patientenzufriedenheitsinventar (WPI)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-        * ``Access``: [2, 3, 4, 5, 6]
-        * ``Competence``: [11, 12]
-        * ``Effect``: [22, 23, 24]
-        * ``Equiqment``: [8, 9, 10]
-        * ``Relation``: [7, 15, 16, 17, 18, 19, 21]
-        * ``Information``: [13, 14, 20]
-        * ``Satisfaction``: [1],
-        * ``Treatment``: [25, 28, 29, 30, 31],
-        * ``Education``: [26, 27],
-        * ``Support``: [32, 33, 34, 35]
+
+    * ``Access``: [2, 3, 4, 5, 6]
+    * ``Competence``: [11, 12]
+    * ``Effect``: [22, 23, 24]
+    * ``Equiqment``: [8, 9, 10]
+    * ``Relation``: [7, 15, 16, 17, 18, 19, 21]
+    * ``Information``: [13, 14, 20]
+    * ``Satisfaction``: [1],
+    * ``Treatment``: [25, 28, 29, 30, 31],
+    * ``Education``: [26, 27],
+    * ``Support``: [32, 33, 34, 35]
 
     .. note::
         This implementation assumes a score range of [1, 5] or [1, 4].
@@ -5892,7 +5939,7 @@ def wpi(
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5912,9 +5959,9 @@ def wpi(
     ------
     ValueError
         if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 
@@ -5975,7 +6022,7 @@ def eval_clinic(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.In
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied
+        a complete dataframe if ``columns`` parameter is supplied.
     columns : list of str or :class:`pandas.Index`, optional
         list with column names in correct order.
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
@@ -5988,9 +6035,9 @@ def eval_clinic(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.In
 
     Raises
     ------
-    `biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if number of columns does not match
-    `biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
 

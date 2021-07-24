@@ -117,44 +117,48 @@ def hr_ensemble_plot(
     If the data consist of multiple phases, data from each phase are overlaid in the same plot.
     If each phase additionally consists of subphases, the single subphases are highlighted in the plot.
 
-    The input data is expected to be a :obj:`~biopsykit.utils.datatype_helper.MergedSubjectsDict`, i.e.,
+    The input data is expected to be a :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`, i.e.,
     a dictionary with merged time-series heart rate data, of multiple subjects, split into individual phases.
     Per phase, the data of each subjects have same length and are combined into one common dataframe.
 
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.MergedSubjectsDict`
+    data : :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
         dict with heart rate data to plot
     subphases : dict, optional
         dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
         ``None`` if no subphases are present. Default: ``None``
-    kwargs : dict, optional
+    **kwargs : dict, optional
         optional arguments for plot configuration.
 
         To style general plot appearance:
-            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
-            * ``colormap``: colormap to plot data from different phases
-            * ``ensemble_alpha``: transparency value for ensemble plot errorband (around mean). Default: 0.4
-            * ``linestyles``: list of line styles for ensemble plots. Must match the number of phases to plot
-            * ``phase_text``: string pattern to customize phase name shown in legend with placeholder for subphase name.
-              Default: "{}"
+
+        * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+        * ``colormap``: colormap to plot data from different phases
+        * ``ensemble_alpha``: transparency value for ensemble plot errorband (around mean). Default: 0.4
+        * ``linestyles``: list of line styles for ensemble plots. Must match the number of phases to plot
+        * ``phase_text``: string pattern to customize phase name shown in legend with placeholder for subphase name.
+          Default: "{}"
 
         To style axes:
-            * ``xlabel``: label of x axis. Default: "Time [s]"
-            * ``xaxis_minor_tick_locator``: locator object to style x axis minor ticks. Default: 60 sec
-            * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
-            * ``ylims``: y axis limits. Default: ``None`` to automatically infer limits
+
+        * ``xlabel``: label of x axis. Default: "Time [s]"
+        * ``xaxis_minor_tick_locator``: locator object to style x axis minor ticks. Default: 60 sec
+        * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+        * ``ylims``: y axis limits. Default: ``None`` to automatically infer limits
 
         To style the annotations at the end of each phase:
-            * ``end_phase_text``: string pattern to customize text at the end of phase with placeholder for phase name.
-              Default: "{}"
-            * ``end_phase_line_color``: line color of vertical lines used to indicate end of phase. Default: #e0e0e0
-            * ``end_phase_line_width``: line width of vertical lines used  to indicate end of phase. Default: 2.0
+
+        * ``end_phase_text``: string pattern to customize text at the end of phase with placeholder for phase name.
+          Default: "{}"
+        * ``end_phase_line_color``: line color of vertical lines used to indicate end of phase. Default: #e0e0e0
+        * ``end_phase_line_width``: line width of vertical lines used  to indicate end of phase. Default: 2.0
 
         To style legend:
-            * ``legend_loc``: location of legend. Default: "lower right"
-            * ``legend_bbox_to_anchor``: box that is used to position the legend in conjunction with ``legend_loc``
+
+        * ``legend_loc``: location of legend. Default: "lower right"
+        * ``legend_bbox_to_anchor``: box that is used to position the legend in conjunction with ``legend_loc``
 
 
     Returns
@@ -167,10 +171,10 @@ def hr_ensemble_plot(
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.MergedSubjectsDict`
+    :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
         dictionary format
-    :func:`~biopsykit.utils.data_processing.merge_subjects_dict`
-        function to build ``MergedSubjectsDict``
+    :func:`~biopsykit.utils.data_processing.merge_study_data_dict`
+        function to build ``MergedStudyDataDict``
 
 
     Examples
@@ -349,35 +353,37 @@ def hr_mean_plot(
     r"""Plot course of heart rate as mean ± standard error over phases (and subphases) of a psychological protocol.
 
     The correct plot is automatically inferred from the provided data:
-        * only ``phase`` index level: plot phases over x axis
-        * ``phase`` and ``subphase`` index levels: plot subphases over x axis, highlight phases as vertical spans
-        * additionally: ``condition`` level: plot data of different conditions individually
-          (corresponds to ``hue`` parameter in :func:`biopsykit.plotting.lineplot`)
+
+    * only ``phase`` index level: plot phases over x axis
+    * ``phase`` and ``subphase`` index levels: plot subphases over x axis, highlight phases as vertical spans
+    * additionally: ``condition`` level: plot data of different conditions individually
+      (corresponds to ``hue`` parameter in :func:`biopsykit.plotting.lineplot`)
 
     Parameters
     ----------
-    data : :class:`~biopsykit.utils.datatype_handling.MeanSeDataFrame`
+    data : :class:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`
         Heart rate data to plot. Must be provided as ``MeanSeDataFrame`` with columns ``mean`` and ``se``
         computed over phases (and, if available, subphases)
-    kwargs
+    **kwargs
         additional parameters to be passed to the plot, such as:
-            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
-            * ``colormap``: colormap to plot data from different phases
-            * ``figsize``: tuple specifying figure dimensions
-            * ``x_offset``: offset value to move different groups along the x axis for better visualization.
-              Default: 0.05
-            * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
-              or "Phases" (if only phases are present)
-            * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
-            * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
-              (see :meth:`~matplotlib.Axes.margin()` for further information), or ``None`` to automatically infer
-              y axis limits
-            * ``marker``: string or list of strings to specify marker style.
-              If ``marker`` is a string, then marker of each line will have the same style.
-              If ``marker`` is a list, then marker of each line will have a different style.
-            * ``linestyle``: string or list of strings to specify line style.
-              If ``linestyle`` is a string, then each line will have the same style.
-              If ``linestyle`` is a list, then each line will have a different style.
+
+        * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+        * ``colormap``: colormap to plot data from different phases
+        * ``figsize``: tuple specifying figure dimensions
+        * ``x_offset``: offset value to move different groups along the x axis for better visualization.
+          Default: 0.05
+        * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
+          or "Phases" (if only phases are present).
+        * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+        * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
+          (see :meth:`~matplotlib.axes.Axes.margins()` for further information), or ``None`` to automatically infer
+          y axis limits.
+        * ``marker``: string or list of strings to specify marker style.
+          If ``marker`` is a string, then marker of each line will have the same style.
+          If ``marker`` is a list, then marker of each line will have a different style.
+        * ``linestyle``: string or list of strings to specify line style.
+          If ``linestyle`` is a string, then each line will have the same style.
+          If ``linestyle`` is a list, then each line will have a different style.
 
     Returns
     -------
@@ -388,7 +394,7 @@ def hr_mean_plot(
 
     See Also
     --------
-    `biopsykit.plotting.lineplot`
+    :func:`~biopsykit.plotting.plotting.lineplot`
         Plot data as lineplot with mean and standard error
 
     """
@@ -618,11 +624,11 @@ def saliva_plot(
 ) -> Optional[Tuple[plt.Figure, plt.Axes]]:
     r"""Plot saliva data during psychological protocol as mean ± standard error.
 
-    The function accepts raw saliva data per subject (``SalivaRawDataFrame``) as well as pre-computed
-    mean and standard error values of saliva samples (``SalivaMeanSeDataFrame``). To combine data from multiple saliva
+    The function accepts raw saliva data per subject (:obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`) as well as pre-computed
+    mean and standard error values of saliva samples ( :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`). To combine data from multiple saliva
     types (maximum: 2) into one plot a dict can be passed to ``data``.
 
-    If a psychological test (e.g., TSST, MIST, or Stroop) was performed the test time is highlighted as vertical span
+    If a psychological test (e.g., TSST, MIST, or Stroop) was performed, the test time is highlighted as vertical span
     within the plot.
 
     .. note::
@@ -632,51 +638,54 @@ def saliva_plot(
 
     Parameters
     ----------
-    data : :class:`~biopsykit.utils.datatype_handling.SalivaRawDataFrame`,
-        :class:`~biopsykit.utils.datatype_handling.SalivaMeanSeDataFrame`, or dict of such
-        Saliva data to plot. Must either be provided as ``SalivaRawDataFrame``with raw saliva data per subject or
+    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`,
+        :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`, or dict of such
+        Saliva data to plot. Must either be provided as ``SalivaRawDataFrame`` with raw saliva data per subject or
         as ``SalivaMeanSeDataFrame`` with columns ``mean`` and ``se`` computed per saliva sample. To plot data from
-        multiple saliva types (maximum: 2) a dict can be passed (keys: saliva types, values: saliva data)
+        multiple saliva types (maximum: 2) a dict can be passed (keys: saliva types, values: saliva data).
     saliva_type : {"cortisol", "amylase", "il6"}, optional
         saliva type to be plotted. If a dict is passed and ``saliva_type`` is ``None``
-        the saliva types are inferred from dict keys
+        the saliva types are inferred from dict keys.
     sample_times : list or dict of lists
         sample times in minutes relative to psychological test or a dict of such if sample times are different for
-        the individual saliva types
+        the individual saliva types.
     test_times : list of int, optional
         start and end times of psychological test (in minutes) or ``None`` if no test was performed
     sample_times_absolute : bool, optional
         ``True`` if absolute sample times were provided (i.e., the duration of the psychological test was already
         added to the sample times), ``False`` if relative sample times were provided and absolute times should be
         computed based on test times specified by ``test_times``. Default: ``False``
-    kwargs
+    **kwargs
         additional parameters to be passed to the plot.
 
         To style general plot appearance:
-            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
-            * ``colormap``: colormap to plot data from different phases
-            * ``figsize``: tuple specifying figure dimensions
-            * ``marker``: string or list of strings to specify marker style.
-              If ``marker`` is a string, then marker of each line will have the same style.
-              If ``marker`` is a list, then marker of each line will have a different style.
-            * ``linestyle``: string or list of strings to specify line style.
-              If ``linestyle`` is a string, then each line will have the same style.
-              If ``linestyle`` is a list, then each line will have a different style.
+
+        * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+        * ``colormap``: colormap to plot data from different phases
+        * ``figsize``: tuple specifying figure dimensions
+        * ``marker``: string or list of strings to specify marker style.
+          If ``marker`` is a string, then marker of each line will have the same style.
+          If ``marker`` is a list, then marker of each line will have a different style.
+        * ``linestyle``: string or list of strings to specify line style.
+          If ``linestyle`` is a string, then each line will have the same style.
+          If ``linestyle`` is a list, then each line will have a different style.
 
         To style axes:
-            * ``x_offset``: offset value to move different groups along the x axis for better visualization.
-              Default: 0.05
-            * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
-              or "Phases" (if only phases are present)
-            * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
-            * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
-              (see :meth:`~matplotlib.Axes.margin()` for further information), or ``None`` to automatically infer
-              y axis limits
+
+        * ``x_offset``: offset value to move different groups along the x axis for better visualization.
+          Default: 0.05
+        * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present).
+          or "Phases" (if only phases are present)
+        * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+        * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
+          (see :meth:`~matplotlib.axes.Axes.margins()` for further information), or ``None`` to automatically infer
+          y axis limits.
 
         To style the vertical span highlighting the psychological test in the plot:
-            * ``test_title``: title of test
-            * ``test_color``: color of vspan. Default: #9e9e9e
-            * ``test_alpha``: transparency value of vspan: Default: 0.5
+
+        * ``test_title``: title of test
+        * ``test_color``: color of vspan. Default: #9e9e9e
+        * ``test_alpha``: transparency value of vspan: Default: 0.5
 
     Returns
     -------
@@ -687,7 +696,7 @@ def saliva_plot(
 
     See Also
     --------
-    `biopsykit.plotting.lineplot`
+    :func:`~biopsykit.plotting.plotting.lineplot`
         Plot data as lineplot with mean and standard error
 
     """
@@ -868,12 +877,13 @@ def saliva_plot_combine_legend(fig: plt.Figure, ax: plt.Axes, saliva_types: Sequ
         axes object
     saliva_types : list
         list of saliva types in plot
-    kwargs
+    **kwargs
         additional arguments to customize plot, such as:
-            * ``legend_loc``: Location of legend. Default: ``upper center``
-            * ``legend_size``: Legend size. Default: ``small``
-            * ``rect``: Rectangle in normalized figure coordinates into which the whole subplots area
-              (including labels) will fit. Used to conveniently place legend outside of figure
+
+        * ``legend_loc``: Location of legend. Default: ``upper center``
+        * ``legend_size``: Legend size. Default: ``small``
+        * ``rect``: Rectangle in normalized figure coordinates into which the whole subplots area
+          (including labels) will fit. Used to conveniently place legend outside of figure.
 
     """
     legend_loc = kwargs.get("legend_loc", "upper center")
@@ -934,7 +944,9 @@ def saliva_feature_boxplot(
         The input data is assumed to be in long-format.
 
 
-    data : :class:`~biopsykit.utils.dataframe_handling.SalivaFeatureDataFrame`
+    Parameters
+    ----------
+    data : :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
         data to plot
     x : str
         column of x axis in ``data``
@@ -944,7 +956,7 @@ def saliva_feature_boxplot(
         name of feature to plot or ``None``
     stats_kwargs : dict, optional
         dictionary with arguments for significance brackets
-    kwargs
+    **kwargs
         additional arguments that are passed to :func:`~biopsykit.plotting.feature_boxplot` and :func:`~seaborn.boxplot`
 
 
@@ -958,9 +970,9 @@ def saliva_feature_boxplot(
 
     See Also
     --------
-    `biopsykit.plotting.feature_boxplot`
+    :func:`~biopsykit.plotting.plotting.feature_boxplot`
         plot features as boxplot
-    `~biopsykit.stats.StatsPipeline`
+    :class:`~biopsykit.stats.stats.StatsPipeline`
         class to create statistical analysis pipelines and get parameter for plotting significance brackets
 
     """
@@ -993,7 +1005,7 @@ def saliva_multi_feature_boxplot(
 
     Parameters
     ----------
-    data : :class:`~biopsykit.utils.dataframe_handling.SalivaFeatureDataFrame`
+    data : :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
         data to plot
     saliva_type : str
         type of saliva data to plot
@@ -1021,9 +1033,9 @@ def saliva_multi_feature_boxplot(
 
     See Also
     --------
-    `biopsykit.plotting.multi_feature_boxplot`
+    :func:`~biopsykit.plotting.plotting.multi_feature_boxplot`
         plot multiple features as boxplots
-    `biopsykit.stats.StatsPipeline`
+    :class:`~biopsykit.stats.stats.StatsPipeline`
         class to create statistical analysis pipelines and get parameter for plotting significance brackets
 
     """
