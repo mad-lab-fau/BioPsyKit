@@ -2,6 +2,20 @@ from typing import Union, Tuple, Optional
 
 import pandas as pd
 import numpy as np
+from sklearn.pipeline import Pipeline
+
+__all__ = ["factorize_subject_id", "prepare_df_sklearn", "split_train_test", "strip_df", "strip_labels"]
+
+
+class _PipelineWrapper:
+    def __init__(self, pipeline: Pipeline):
+        self.pipeline = pipeline
+
+    def __str__(self):
+        return str(self.pipeline)
+
+    def __repr__(self):
+        return repr(self.pipeline)
 
 
 def strip_df(data: pd.DataFrame) -> np.ndarray:
