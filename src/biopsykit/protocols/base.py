@@ -861,7 +861,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         if len(self.saliva_types) == 0:
             raise ValueError("No saliva data to plot!")
 
-        kwargs.update(self.saliva_plot_params)
+        self.saliva_plot_params.update(**kwargs)
 
         if isinstance(saliva_type, str):
             saliva_type = [saliva_type]

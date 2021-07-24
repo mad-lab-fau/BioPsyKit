@@ -232,8 +232,8 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes
 
 def feature_boxplot(
     data: pd.DataFrame,
-    x: str,
-    y: str,
+    x: Optional[str] = None,
+    y: Optional[str] = None,
     order: Optional[Sequence[str]] = None,
     hue: Optional[str] = None,
     hue_order: Optional[Sequence[str]] = None,
