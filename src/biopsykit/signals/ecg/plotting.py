@@ -579,7 +579,7 @@ def rr_distribution_plot(
         dataframe with R peaks. Output of :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
-    *+kwargs
+    **kwargs
         Additional parameters to configure the plot. Parameters include:
 
         * ``figsize``: Figure size
