@@ -608,7 +608,7 @@ def compute_scores(
         dictionary with questionnaire names to be computed (keys) and columns of the questionnaires (values)
     quest_kwargs : dict
         dictionary with optional arguments to be passed to questionnaire functions. The dictionary is expected
-        consist of questionnaire names (keys) and ``**kwargs`` dictionaries (values) with arguments per questionnaire
+        consist of questionnaire names (keys) and \*\*kwargs dictionaries (values) with arguments per questionnaire
 
     Returns
     -------
