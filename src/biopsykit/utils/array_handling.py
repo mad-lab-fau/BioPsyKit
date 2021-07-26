@@ -9,7 +9,7 @@ from biopsykit.utils._types import arr_t
 
 
 def sanitize_input_1d(data: arr_t) -> np.ndarray:
-    """Convert 1-d array-like data (numpy array, pandas dataframe/series) to a numpy array.
+    """Convert 1-d array-like data (:class:`~numpy.ndarray`, :class:`~pandas.DataFrame`/:class:`~pandas.Series`) to a numpy array.
 
     Parameters
     ----------
@@ -19,8 +19,8 @@ def sanitize_input_1d(data: arr_t) -> np.ndarray:
 
     Returns
     -------
-    array_like
-        data as 1-d numpy array
+    :class:`~numpy.ndarray`
+        data as 1-d :class:`~numpy.ndarray`
 
     """
     if isinstance(data, (pd.Series, pd.DataFrame)):
@@ -36,7 +36,7 @@ def sanitize_input_nd(
     data: arr_t,
     ncols: Optional[Union[int, Tuple[int, ...]]] = None,
 ) -> np.ndarray:
-    """Convert n-d array-like data (numpy array, pandas dataframe/series) to a numpy array.
+    """Convert n-d array-like data (:class:`~numpy.ndarray`, :class:`~pandas.DataFrame`/:class:`~pandas.Series`) to a numpy array.
 
     Parameters
     ----------
@@ -49,7 +49,7 @@ def sanitize_input_nd(
 
     Returns
     -------
-    array_like
+    :class:`~numpy.ndarray`
         data as n-d numpy array
 
     """
@@ -86,10 +86,12 @@ def find_extrema_in_radius(
         array with indices for which to search for extrema values around
     radius: int or tuple of int
         radius around ``indices`` to search for extrema:
-            * if ``radius`` is an ``int`` then search for extrema equally in both directions in the interval
-              [index - radius, index + radius].
-            * if ``radius`` is a ``tuple`` then search for extrema in the interval
-              [ index - radius[0], index + radius[1] ]
+
+        * if ``radius`` is an ``int`` then search for extrema equally in both directions in the interval
+          [index - radius, index + radius].
+        * if ``radius`` is a ``tuple`` then search for extrema in the interval
+          [ index - radius[0], index + radius[1] ]
+
     extrema_type : {'min', 'max'}, optional
         extrema type to be searched for. Default: 'min'
 
@@ -168,9 +170,9 @@ def remove_outlier_and_interpolate(
     x_old: Optional[np.ndarray] = None,
     desired_length: Optional[int] = None,
 ) -> np.ndarray:
-    """Remove outlier, impute missing values and optionally interpolate data to desired length.
+    """Remove outliers, impute missing values and optionally interpolate data to desired length.
 
-    Detected outlier are removed from array and imputed by linear interpolation.
+    Detected outliers are removed from array and imputed by linear interpolation.
     Optionally, the output array can be linearly interpolated to a new length.
 
 
@@ -190,8 +192,8 @@ def remove_outlier_and_interpolate(
 
     Returns
     -------
-    array_like
-        data with removed and imputed outlier, optionally interpolated to desired length
+    :class:`~numpy.ndarray`
+        data with removed and imputed outliers, optionally interpolated to desired length
 
 
     Raises
@@ -260,13 +262,13 @@ def sliding_window(
 
     Returns
     -------
-    array_like
+    :class:`~numpy.ndarray`
         sliding windows from input array.
 
 
     See Also
     --------
-    `sliding_window_view`
+    :func:`~biopsykit.utils.array_handling.sliding_window_view`
         create sliding window of input array. low-level function with less input parameter configuration possibilities
 
     """
@@ -358,7 +360,7 @@ def sliding_window_view(array: np.ndarray, window_length: int, overlap: int, nan
 
     .. warning::
        This function will return by default a view onto your input array, modifying values in your result will directly
-       affect your input data which might lead to unexpected behaviour! If padding is disabled (default) last window
+       affect your input data which might lead to unexpected behaviour! If padding is disabled (default), last window
        fraction of input may not be returned! However, if `nan_padding` is enabled, this will always return a copy
        instead of a view of your input data, independent if padding was actually performed or not!
 
@@ -378,7 +380,7 @@ def sliding_window_view(array: np.ndarray, window_length: int, overlap: int, nan
 
     Returns
     -------
-    array_like
+    :class:`~numpy.ndarray`
         windowed view (or copy if ``nan_padding`` is ``True``) of input array as specified,
         last window might be nan-padded if necessary to match window size
 
