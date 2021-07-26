@@ -40,10 +40,10 @@ def sleep_imu_plot(
 
     Parameters
     ----------
-    data : :class:`~pandas.DataFrame´
+    data : :class:`~pandas.DataFrame`
         data to plot. Data must either be acceleration data (:obj:`~biopsykit.utils.datatype_helper.AccDataFrame`),
         gyroscope data (:obj:`~biopsykit.utils.datatype_helper.GyrDataFrame`), or IMU data
-        (:obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`)
+        (:obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`).
     datastreams : str or list of str, optional
         list of datastreams indicating which type of data should be plotted or ``None`` to only plot acceleration data.
         If more than one type of datastream is specified each datastream is plotted row-wise in its own subplot.
@@ -53,37 +53,40 @@ def sleep_imu_plot(
     downsample_factor : int, optional
         downsample factor to apply to raw input data before plotting or ``None`` to not downsample data before
         plotting (downsample factor 1). Default: ``None``
-    kwargs
+    **kwargs
         optional arguments for plot configuration.
-
         To configure which type of sleep endpoint annotations to plot:
-            * ``plot_sleep_onset``: whether to plot sleep onset annotations or not: Default: ``True``
-            * ``plot_wake_onset``: whether to plot wake onset annotations or not: Default: ``True``
-            * ``plot_bed_start``: whether to plot bed interval start annotations or not: Default: ``True``
-            * ``plot_bed_end``: whether to plot bed interval end annotations or not: Default: ``True``
-            * ``plot_sleep_wake``: whether to plot vspans of detected sleep/wake phases or not: Default: ``True``
+
+        * ``plot_sleep_onset``: whether to plot sleep onset annotations or not: Default: ``True``
+        * ``plot_wake_onset``: whether to plot wake onset annotations or not: Default: ``True``
+        * ``plot_bed_start``: whether to plot bed interval start annotations or not: Default: ``True``
+        * ``plot_bed_end``: whether to plot bed interval end annotations or not: Default: ``True``
+        * ``plot_sleep_wake``: whether to plot vspans of detected sleep/wake phases or not: Default: ``True``
 
         To style general plot appearance:
-            * ``axs``: pre-existing axes for the plot. Otherwise, a new figure and axes objects are created and
-              returned.
-            * ``colormap``: colormap to plot different axes from input data
-            * ``figsize``: tuple specifying figure dimensions
+
+        * ``axs``: pre-existing axes for the plot. Otherwise, a new figure and axes objects are created and
+          returned.
+        * ``colormap``: colormap to plot different axes from input data
+        * ``figsize``: tuple specifying figure dimensions
 
         To style axes:
-            * ``xlabel``: label of x axis. Default: "Time"
-            * ``ylabel``: label of y axis. Default: "Acceleration [$m/s^2$]" for acceleration data and
-              "Angular Velocity [$°/s$]" for gyroscope data
+        
+        * ``xlabel``: label of x axis. Default: "Time"
+        * ``ylabel``: label of y axis. Default: "Acceleration [$m/s^2$]" for acceleration data and
+          "Angular Velocity [$°/s$]" for gyroscope data.
 
         To style legend:
-            * ``legend_loc``: location of legend. Default: "lower left"
-            * ``legend_fontsize``: font size of legend labels. Default: "smaller"
+        
+        * ``legend_loc``: location of legend. Default: "lower left"
+        * ``legend_fontsize``: font size of legend labels. Default: "smaller"
 
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    axs : list of :class:`matplotlib.axes.Axes`
+    axs : list of :class:`~matplotlib.axes.Axes`
         list of subplot axes objects
 
     """
