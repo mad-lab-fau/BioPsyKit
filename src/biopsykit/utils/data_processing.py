@@ -328,19 +328,19 @@ def rearrange_subject_data_dict(
     The \*\*input\*\* needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
     a nested dictionary in the following format:
 
-    {
-        "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        ...
-    }
+    | {
+    |   "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+    |   "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+    |   ...
+    | }
 
     The \*\*output\*\* format will be the following:
 
-    {
-        "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-        "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-        ...
-    }
+    | {
+    |   "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+    |   "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+    |   ...
+    | }
 
 
     Parameters
