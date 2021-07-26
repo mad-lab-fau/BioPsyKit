@@ -251,7 +251,7 @@ def get_time_log_example() -> pd.DataFrame:
     -------
     data : :class:`~pandas.DataFrame`
         dataframe with example time log information. The time log match the data from the two ECG data example
-        functions :func:`~biosykit.utils.get_ecg_example` and :func:`~biosykit.utils.get_ecg_example_02`
+        functions :func:`~biopsykit.example_data.get_ecg_example` and :func:`~biopsykit.example_data.get_ecg_example_02`
 
     """
     return load_time_log(_EXAMPLE_DATA_PATH.joinpath("ecg_time_log.xlsx"))
