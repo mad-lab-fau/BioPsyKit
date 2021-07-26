@@ -71,7 +71,7 @@ def int_from_str_col(
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
-        data with
+        data with column names to extract information from
     col_name : str
         name of column with string values to extract
     regex : str
@@ -185,7 +185,7 @@ def convert_nan(
     numbers are "unrealistic" values. Use this function to convert these negative numbers to
     "actual" missing values: not-a-number (``NaN``).
 
-    Values that will be replaced with ``Nan`` are -66, -77, -99 (integer and string representations).
+    Values that will be replaced with ``NaN`` are -66, -77, -99 (integer and string representations).
 
     Parameters
     ----------
@@ -219,7 +219,7 @@ def multi_xs(
     """Return cross-section of multiple keys from the dataframe.
 
     This function internally calls the :meth:`pandas.DataFrame.xs` method, but it can take a list of key arguments
-    to return multiple keys at once, in comparison to the original :meth:`pandas.DataFrame.xs` method which
+    to return multiple keys at once, in comparison to the original :meth:`~pandas.DataFrame.xs` method which
     only takes one possible key.
 
 
@@ -358,11 +358,11 @@ def wide_to_long(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject
     stubname : str
         common name for each column to be converted into long-format. Usually, this is either the name of the
-        questionnaire (e.g., "PSS") or the saliva type (e.g., "cortisol")
+        questionnaire (e.g., "PSS") or the saliva type (e.g., "cortisol").
     levels : str or list of str
         index levels of the resulting long-format dataframe.
     sep : str, optional
@@ -371,7 +371,7 @@ def wide_to_long(
 
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         pandas DataFrame in long-format
 
 
