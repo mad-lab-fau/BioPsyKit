@@ -18,7 +18,7 @@ def legacy_convert_hr_phase_dict(file_path: path_t, export: Optional[bool] = Tru
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to file
     export : bool, optional
         ``True`` to directly export the converted

@@ -49,7 +49,7 @@ def get_subject_dirs(base_path: path_t, pattern: str) -> Optional[Sequence[Path]
     Returns
     -------
     list of path
-        a list of path or an empty list if no subfolders matched the``pattern``
+        a list of path or an empty list if no subfolders matched the ``pattern``
 
     Raises
     ------
@@ -147,15 +147,15 @@ def is_excel_file(file_name: path_t, raise_exception: Optional[bool] = True) -> 
 
     Parameters
     ----------
-    file_name : :any:`pathlib.Path` or str
+    file_name : :class:`~pathlib.Path` or str
         file name to check
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``file_name`` is an Excel file, i.e. has the suffix ``.xlsx``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``file_name`` is an Excel file, i.e. has the suffix ``.xlsx``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------

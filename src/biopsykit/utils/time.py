@@ -55,7 +55,7 @@ def get_time_from_date(
     tz_convert : bool, optional
         ``True`` to convert datetime into correct timezone before extracting time information or
         ``False`` to localize datetime. Default: ``False``
-    timezone : str or :class:`~pytz.tzinfo.tzinfo`
+    timezone : str or :class:`datetime.tzinfo`
         timezone the datetime objects are in or should be converted to.
         Default: ``None``, which defaults to time zone "Europe/Berlin"
 
