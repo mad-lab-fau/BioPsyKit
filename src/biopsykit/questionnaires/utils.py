@@ -175,7 +175,7 @@ def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Opt
     return data
 
 
-def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
+def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.ndarray:
     """Convert questionnaire item indices into array indices.
 
     In questionnaires, items indices start at 1. To avoid confusion in the implementation of questionnaires
@@ -199,7 +199,7 @@ def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
 def invert(
     data: Union[pd.DataFrame, pd.Series],
     score_range: Sequence[int],
-    cols: Optional[Union[Sequence[int], Sequence[str]]] = None,
+    cols: Optional[Union[np.array, Sequence[int], Sequence[str]]] = None,
     inplace: Optional[bool] = False,
 ) -> Optional[Union[pd.DataFrame, pd.Series]]:
     """Invert questionnaire scores.
@@ -564,7 +564,7 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
     levels : str or list of str
         index levels of the resulting long-format dataframe.
 
-   
+
     Returns
     -------
     :class:`~pandas.DataFrame`

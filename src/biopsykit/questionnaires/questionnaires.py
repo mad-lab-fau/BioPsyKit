@@ -28,7 +28,7 @@ from biopsykit.questionnaires.utils import (
     to_idx,
     _compute_questionnaire_subscales,
     _invert_subscales,
-    convert_scale,
+    # convert_scale,
 )
 from biopsykit.utils._datatype_validation_helper import _assert_value_range, _assert_num_columns, _assert_has_columns
 from biopsykit.utils.exceptions import ValueRangeError
@@ -2919,11 +2919,11 @@ def bfi_k(
     if subscales is None:
         _assert_num_columns(data, 21)
         subscales = {
-            "E": [1, 6, 11, 16],  # Extraversion (Extraversion vs. introversion)
-            "A": [2, 7, 12, 17],  # Verträglichkeit (Agreeableness vs. antagonism)
+            "E": [1, 6, 11, 16],  # Extraversion (Extraversion vs. Introversion)
+            "A": [2, 7, 12, 17],  # Verträglichkeit (Agreeableness vs. Antagonism)
             "C": [3, 8, 13, 18],  # Gewissenhaftigkeit (Conscientiousness vs. lack of direction)
-            "N": [4, 9, 14, 19],  # Neurotizismus (Neuroticism vs. emotional stability)
-            "O": [5, 10, 15, 20, 21],  # Offenheit für neue Erfahrungen (Openness vs. closedness to experience)
+            "N": [4, 9, 14, 19],  # Neurotizismus (Neuroticism vs. Emotional stability)
+            "O": [5, 10, 15, 20, 21],  # Offenheit für neue Erfahrungen (Openness vs. Closedness to experience)
         }
 
     _assert_value_range(data, score_range)
@@ -4386,8 +4386,8 @@ def stai_short(
     return stai
 
 
-def pre_scan_idq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Pre-Scan Imaging Distress Questionnaire** (PreScanIDQ).
+def idq_pre_scan(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+    """Compute the **Pre-Scan Imaging Distress Questionnaire** (IDQ_PRE).
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -4425,8 +4425,8 @@ def pre_scan_idq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
     imaging. *Magnetic resonance imaging*, 15(3), 301-306.
 
     """
-    # score_name = "PreScanIDQ"
-    score_range = [1, 5]
+    score_name = "IDQ_PRE"
+    score_range = [1, 3]
 
     # create copy of data
     data = data.copy()
@@ -4436,22 +4436,17 @@ def pre_scan_idq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.I
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
     _assert_num_columns(data, 5)
+    _assert_value_range(data, score_range)
 
-    # TODO
-    raise NotImplementedError("No computational information given so far.")
+    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
-def strategies_questionnaire(
-    data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None
-) -> pd.DataFrame:
-    """Compute the **Strategies Questionnaire**.
-
-    The Strategies Questionnaire measures the examination of strategies employed during an MRI scan.
+def idq_post_scan(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+    """Compute the **Post-Scan Imaging Distress Questionnaire** (IDQ_POST).
 
     .. note::
-        This implementation assumes a score range of [1, 9].
+        This implementation assumes a score range of [1, 5].
         Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
         beforehand.
 
@@ -4468,7 +4463,7 @@ def strategies_questionnaire(
     Returns
     -------
     :class:`~pandas.DataFrame`
-        Strategies Questionnaire score
+        IDQ_POST score
 
 
     Raises
@@ -4481,13 +4476,13 @@ def strategies_questionnaire(
 
     References
     ----------
-    Original version: Thorpe, S., Salkovskis, P. M., & Dittner, A. (2008).
-
-    Claustrophobia in MRI: the role of cognitions. *Magnetic resonance imaging*, 26(8), 1081-1088.
+    Dantendorfer, K., Amering, M., Bankier, A., Helbich, T., Prayer, D., Youssefzadeh, S., ... & Katschnig, H. (1997).
+    A study of the effects of patient anxiety, perceptions and equipment on motion artifacts in magnetic resonance
+    imaging. *Magnetic resonance imaging*, 15(3), 301-306.
 
     """
-    # score_name = "StratQuest"
-    score_range = [1, 9]
+    score_name = "IDQ_POST"
+    score_range = [1, 3]
 
     # create copy of data
     data = data.copy()
@@ -4497,20 +4492,83 @@ def strategies_questionnaire(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
-    n_cols = 8
-    try:
-        _assert_num_columns(data, 8)
-    except ValueError:
-        n_cols = 9
-        _assert_num_columns(data, 9)
+    _assert_num_columns(data, 7)
+    # columns 1-6 are expected to be in the range [1, 3]
+    _assert_value_range(data.iloc[:, 0:6], score_range)
+    # column 7 is expected to be in the range [1, 2]
+    _assert_value_range(data.iloc[:, [6]], score_range)
 
-    if n_cols == 9:
-        pass
-    else:
-        pass
+    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
-    raise NotImplementedError("No computational infos found.")
+
+# def strategies_questionnaire(
+#     data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None
+# ) -> pd.DataFrame:
+#     """Compute the **Strategies Questionnaire**.
+#
+#     The Strategies Questionnaire measures the examination of strategies employed during an MRI scan.
+#
+#     .. note::
+#         This implementation assumes a score range of [1, 9].
+#         Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+#         beforehand.
+#
+#     Parameters
+#     ----------
+#     data : :class:`~pandas.DataFrame`
+#         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+#         a complete dataframe if ``columns`` parameter is supplied.
+#     columns : list of str or :class:`pandas.Index`, optional
+#         list with column names in correct order.
+#         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+#         passed as ``data``.
+#
+#     Returns
+#     -------
+#     :class:`~pandas.DataFrame`
+#         Strategies Questionnaire score
+#
+#
+#     Raises
+#     ------
+#     :exc:`~biopsykit.utils.exceptions.ValidationError`
+#         if number of columns does not match
+#     :exc:`~biopsykit.utils.exceptions.ValueRangeError`
+#         if values are not within the required score range
+#
+#
+#     References
+#     ----------
+#     Original version: Thorpe, S., Salkovskis, P. M., & Dittner, A. (2008).
+#
+#     Claustrophobia in MRI: the role of cognitions. *Magnetic resonance imaging*, 26(8), 1081-1088.
+#
+#     """
+# # score_name = "StratQuest"
+# score_range = [1, 9]
+#
+# # create copy of data
+# data = data.copy()
+#
+# if columns is not None:
+#     # if columns parameter is supplied: slice columns from dataframe
+#     _assert_has_columns(data, [columns])
+#     data = data.loc[:, columns]
+#
+# _assert_value_range(data, score_range)
+# n_cols = 8
+# try:
+#     _assert_num_columns(data, 8)
+# except ValueError:
+#     n_cols = 9
+#     _assert_num_columns(data, 9)
+#
+# if n_cols == 9:
+#     pass
+# else:
+#     pass
+#
+# raise NotImplementedError("No computational infos found.")
 
 
 def clq(
@@ -4522,8 +4580,8 @@ def clq(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * ``Suffocation``: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-    * ``Constriction``: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+    * Suffocation Subscale (``SS``): [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    * Restriction Subscale (``RS``): [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -4552,7 +4610,7 @@ def clq(
     Returns
     -------
     :class:`~pandas.DataFrame`
-        MDBF score
+        CLQ score
 
 
     Raises
@@ -4589,9 +4647,6 @@ def clq(
             "RS": [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26],
         }
 
-    # Recode missing values to 2
-    data.replace(-99, 2, inplace=True)
-
     _assert_value_range(data, score_range)
 
     clq_data = _compute_questionnaire_subscales(data, score_name, subscales)
@@ -4603,13 +4658,13 @@ def clq(
     return pd.DataFrame(clq_data, index=data.index)
 
 
-def mk_hai(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the modified **Health Anxiety Inventory (MK-HAI)**.
+def mkhai(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+    """Compute the **Modified Health Anxiety Inventory (MKHAI)**.
 
-    The MK-HAI is a measure of health anxiety.
+    The MKHAI is a measure of health anxiety.
 
     .. note::
-        This implementation assumes a score range of [1, 5].
+        This implementation assumes a score range of [0, 4].
         Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
         beforehand.
 
@@ -4628,7 +4683,7 @@ def mk_hai(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     Returns
     -------
     :class:`~pandas.DataFrame`
-        MK-HAI score
+        MKHAI score
 
 
     Raises
@@ -4649,8 +4704,8 @@ def mk_hai(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
     hypochondriasis. *Psychological medicine*,32(5), 843-853.
 
     """
-    score_name = "MK_HAI"
-    score_range = [1, 5]
+    score_name = "MKHAI"
+    score_range = [0, 4]
 
     # create copy of data
     data = data.copy()
@@ -4662,9 +4717,6 @@ def mk_hai(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]]
 
     _assert_num_columns(data, 14)
     _assert_value_range(data, score_range)
-
-    # Recode the score range
-    convert_scale(data, offset=-1, inplace=True)
 
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
@@ -4751,34 +4803,27 @@ def abi_ms(
         _assert_num_columns(data, 32)
         subscales = {
             # Cognitive Avoidance
-            "KOV_1": [1, 4, 5, 7],
-            "KOV_2": list(np.array([1, 3, 6, 8]) + 8),  # [9, 11, 14, 16],
-            "KOV_3": list(np.array([1, 3, 5, 7]) + 16),  # [17, 19, 21, 23]
-            "KOV_4": list(np.array([1, 3, 4, 7]) + 24),  # [25, 27, 28, 31]
+            "KOV1": [1, 4, 5, 7],
+            "KOV2": list(np.array([1, 3, 6, 8]) + 8),  # [9, 11, 14, 16],
+            "KOV3": list(np.array([1, 3, 5, 7]) + 16),  # [17, 19, 21, 23]
+            "KOV4": list(np.array([1, 3, 4, 7]) + 24),  # [25, 27, 28, 31]
             # Vigilance
-            "VIG_1": [2, 3, 6, 8],
-            "VIG_2": list(np.array([2, 4, 5, 7]) + 8),  # [10, 12, 13, 15]
-            "VIG_3": list(np.array([2, 4, 6, 8]) + 16),  # [18, 20, 22, 24]
-            "VIG_4": list(np.array([2, 5, 6, 8]) + 24),  # [26, 29, 30, 32]
+            "VIG1": [2, 3, 6, 8],
+            "VIG2": list(np.array([2, 4, 5, 7]) + 8),  # [10, 12, 13, 15]
+            "VIG3": list(np.array([2, 4, 6, 8]) + 16),  # [18, 20, 22, 24]
+            "VIG4": list(np.array([2, 5, 6, 8]) + 24),  # [26, 29, 30, 32]
         }
 
     _assert_value_range(data, score_range)
 
-    # Recode scores: 2=1, 1=0
-    # In the actual computational notes, the recoding is 2=0, 1=1
-    # but this is shifted due to the -1 offset in our recoding
-    data = data.replace({2: 1, 1: 0})
-
     abims_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     if len(subscales.keys()) == 8:
-        kov_cols = ["ABI_MS_{}".format(ele) for ele in ["KOV_1", "KOV_2", "KOV_3", "KOV_4"]]
-        vig_cols = ["ABI_MS_{}".format(ele) for ele in ["VIG_1", "VIG_2", "VIG_3", "VIG_4"]]
+        kov_cols = ["{}_{}".format(score_name, ele) for ele in ["KOV1", "KOV2", "KOV3", "KOV4"]]
+        vig_cols = ["{}_{}".format(score_name, ele) for ele in ["VIG1", "VIG2", "VIG3", "VIG4"]]
         # compute total score if all columns are present
-        abims_data[score_name + "_VIG"] = pd.DataFrame(abims_data)[vig_cols].sum(axis=1)
         abims_data[score_name + "_KOV"] = pd.DataFrame(abims_data)[kov_cols].sum(axis=1)
-        abims_data["MW_" + score_name + "_VIG"] = pd.DataFrame(abims_data)[vig_cols].mean(axis=1)
-        abims_data["MW_" + score_name + "_KOV"] = pd.DataFrame(abims_data)[kov_cols].mean(axis=1)
+        abims_data[score_name + "_VIG"] = pd.DataFrame(abims_data)[vig_cols].sum(axis=1)
 
     return pd.DataFrame(abims_data, index=data.index)
 
@@ -4849,7 +4894,7 @@ def asi(
 
     """
     score_name = "ASI"
-    score_range = [1, 5]
+    score_range = [0, 4]
 
     # create copy of data
     data = data.copy()
@@ -4865,18 +4910,14 @@ def asi(
 
     _assert_value_range(data, score_range)
 
-    # Recode scores: 1=0, 2=1, 3=2, 4=3, 5=4
-    convert_scale(data, offset=-1, inplace=True)
-
     asi_data = _compute_questionnaire_subscales(data, score_name, subscales)
+    asi_data = pd.DataFrame(asi_data, index=data.index)
 
     if len(subscales.keys()) == 3:
         # compute total score if all columns are present
-        asi_data[score_name] = (
-            asi_data[score_name + "_BSM"] + asi_data[score_name + "_BSZ"] + asi_data[score_name + "_BKO"]
-        )
+        asi_data[score_name] = asi_data.sum(axis=1)
 
-    return pd.DataFrame(asi_data, index=data.index)
+    return asi_data
 
 
 def erq(
@@ -4963,9 +5004,9 @@ def erq(
 
 
 def phq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Depression – Patient Health Questionnaire (PHQ)**.
+    """Compute the **Patient Health Questionnaire (Depression) – 9 items (PHQ-9)**.
 
-    The PHQ is a measure for depression.
+    The PHQ-9 is a measure for depression.
 
     .. note::
         This implementation assumes a score range of [1, 4].
@@ -4985,7 +5026,7 @@ def phq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     Returns
     -------
     :class:`~pandas.DataFrame`
-        PHQ score
+        PHQ9 score
 
 
     Raises
@@ -5002,7 +5043,7 @@ def phq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     *Manual und Testunterlagen*. 2. Auflage
 
     """
-    score_name = "PHQ"
+    score_name = "PHQ9"
     score_range = [0, 3]
 
     # create copy of data
@@ -5020,7 +5061,7 @@ def phq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
 
 def resilience(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Resilience** Questionnaire.
+    """Compute the **Resilience Questionnaire (RS)**.
 
     .. note::
         This implementation assumes a score range of [1, 7].
@@ -5059,7 +5100,7 @@ def resilience(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Ind
 
     """
     score_name = "RS"
-    score_range = [1, 11]
+    score_range = [1, 7]
 
     # create copy of data
     data = data.copy()
@@ -5069,8 +5110,8 @@ def resilience(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Ind
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_value_range(data, score_range)
     _assert_num_columns(data, 11)
+    _assert_value_range(data, score_range)
 
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
@@ -5084,15 +5125,15 @@ def sci(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Uncertainty: [1, 2, 3, 4, 5, 6, 7],
-    * Load: [8, 9, 10, 11, 12, 13, 14],
-    * Adverse: [15, 16, 17, 18, 19, 20, 21],
-    * PhysSymp: [22, 23, 24, 25, 26, 27, 28],
-    * PosThink: [29, 33, 34, 44],
-    * Coping: [31, 35, 47, 45],
-    * SocSup: [32, 41, 43, 47],
-    * Faith: [36, 37, 38, 46],
-    * AlcCig: [30, 39, 42, 48]
+    * Stress Scale 1 – Uncertainty (``Stress1``): [1, 2, 3, 4, 5, 6, 7],
+    * Stress Scale 2 – Load (``Stress2``): [8, 9, 10, 11, 12, 13, 14],
+    * Stress Scale 3 – Adverse (``Stress3``): [15, 16, 17, 18, 19, 20, 21],
+    * Physical and Psychological Symptoms (``PhysPsycSymp``): [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34],
+    * Positive Thinking (``PosThink``): [29, 33, 34, 44],
+    * Active Coping (``ActiveCoping``): [31, 35, 47, 45],
+    * Social Support (``SocSup``): [32, 41, 43, 47],
+    * Faith (``Faith``): [36, 37, 38, 46],
+    * Alcohol and Cigarette Consumption (``AlcCig``): [30, 39, 42, 48]
 
 
     .. note::
@@ -5142,7 +5183,6 @@ def sci(
 
     """
     score_name = "SCI"
-    score_range = [1, 7]
 
     # create copy of data
     data = data.copy()
@@ -5155,36 +5195,45 @@ def sci(
     if subscales is None:
         _assert_num_columns(data, 54)
         subscales = {
-            "1_ges": [1, 2, 3, 4, 5, 6, 7],
-            "2_ges": [8, 9, 10, 11, 12, 13, 14],
-            "3_ges": [15, 16, 17, 18, 19, 20, 21],
-            "4_ges": [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34],
-            "5_P": [35, 39, 40, 50],
-            "5_A": [37, 41, 46, 51],
-            "5_S": [38, 47, 49, 53],
-            "5_G": [42, 43, 44, 52],
-            "5_Z": [36, 45, 48, 54],
+            "Stress1": [1, 2, 3, 4, 5, 6, 7],
+            "Stress2": [8, 9, 10, 11, 12, 13, 14],
+            "Stress3": [15, 16, 17, 18, 19, 20, 21],
+            "PhysPsycSymp": [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34],
+            "PosThink": [35, 39, 40, 50],
+            "ActiveCoping": [37, 41, 46, 51],
+            "SocSup": [38, 47, 49, 53],
+            "Faith": [42, 43, 44, 52],
+            "AlcCig": [36, 45, 48, 54],
         }
 
-        cols = [f"T2_{score_name}_{j}_{i}" for j in range(1, 4) for i in range(1, 8)]
-        cols += [f"T2_{score_name}_4_{i}" for i in range(1, 14)]
-        cols += [f"T2_{score_name}_5_{i}" for i in range(1, 21)]
-        data = data.reindex(cols, axis=1)
+    score_ranges = {
+        "Stress1": [1, 7],
+        "Stress2": [1, 7],
+        "Stress3": [1, 7],
+        "PhysPsycSymp": [1, 4],
+        "PosThink": [1, 4],
+        "ActiveCoping": [1, 4],
+        "SocSup": [1, 4],
+        "Faith": [1, 4],
+        "AlcCig": [1, 4],
+    }
 
+    for subscale, subscale_idx in subscales.items():
+        _assert_value_range(data.iloc[:, to_idx(subscale_idx)], score_ranges[subscale])
+
+    if "AlcCig" in subscales:
         # Invert scores
-        data.iloc[:, to_idx([36])] = data.iloc[:, to_idx([36])].replace({1: 4, 2: 3, 3: 2, 4: 1})
+        inv_idx = [to_idx(subscales["AlcCig"][0])]
+        data = invert(data, score_range=score_ranges["AlcCig"], cols=inv_idx)
 
-    _assert_value_range(data, score_range)
     sci_data = _compute_questionnaire_subscales(data, score_name, subscales)
-
-    if {"1_ges", "2_ges", "3_ges"}.issubset(subscales.keys()):
-        # compute total score if all columns are present
-        sci_data[score_name + "_ges"] = pd.DataFrame(sci_data)[["SCI_1_ges", "SCI_2_ges", "SCI_3_ges"]].sum(axis=1)
-
     sci_data = pd.DataFrame(sci_data, index=data.index)
 
-    if "5_A" in subscales.keys():
-        sci_data["SCI_5_A"] = sci_data["SCI_5_A"].astype(np.int64)
+    if {"Stress1", "Stress2", "Stress3"}.issubset(subscales.keys()):
+        # compute total score if all columns are present
+        sci_data[score_name + "_StressTotal"] = sci_data[[score_name + "_Stress{}".format(i) for i in range(1, 4)]].sum(
+            axis=1
+        )
 
     return sci_data
 
@@ -5194,15 +5243,15 @@ def bfi_10(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Big Five Inventory - 10 items (BFI-10)**.
+    """Compute the **Big Five Inventory – 10 items (BFI-10)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Extraversion (``E``): [1, 2],
-    * Agreeableness (``A``): [3, 4],
-    * Conscientiousness (``C``): [5, 6],
-    * Neuroticism (``N``): [7, 8],
-    * Openness (``O``): [9, 10]
+    * Extraversion (``E``): [1, 6],
+    * Agreeableness (``A``): [2, 7],
+    * Conscientiousness (``C``): [3, 8],
+    * Neuroticism (``N``): [4, 9],
+    * Openness (``O``): [5, 10]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -5264,9 +5313,7 @@ def bfi_10(
 
     if subscales is None:
         _assert_num_columns(data, 10)
-        subscales = {"E": [1, 2], "V": [3, 4], "G": [5, 6], "N": [7, 8], "O": [9, 10]}
-        cols = ["T2_BFI_{}{}".format(key, i) for key in subscales for i in range(1, 3)]
-        data = data[cols]
+        subscales = {"E": [1, 6], "V": [2, 7], "G": [3, 8], "N": [4, 9], "O": [5, 10]}
 
     _assert_value_range(data, score_range)
 
@@ -5347,8 +5394,8 @@ def swb(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * ``SN``: [2, 5, 8, 10, 11, 13],
-    * ``ALZ``: [1, 3, 4, 6, 7, 9, 12]
+    * Mood Level (Stimmungsniveau – ``SN``): [2, 5, 8, 10, 11, 13],
+    * General Life Satisfaction (Allgemeine Lebenszufriedenheit – ``ALZ``): [1, 3, 4, 6, 7, 9, 12]
 
     .. note::
         This implementation assumes a score range of [1, 6].
@@ -5373,7 +5420,7 @@ def swb(
         A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
         if only specific subscales should be computed.
     invert_score : bool, optional
-        A boolean indicating whether to revert the computed subscores.
+        ``True`` to revert the computed subscores, ``False`` otherwise. Default: ``False``
 
 
     Returns
@@ -5418,14 +5465,13 @@ def swb(
 
     _assert_value_range(data, score_range)
 
-    # Invert scores
-    if len(data.columns) < 13 and "SN" in subscales.keys():
-        invert(data, score_range=score_range, cols=to_idx([3, 4]), inplace=True)
-    else:
-        invert(data, score_range=score_range, cols=to_idx([8, 10]), inplace=True)
+    # Reverse scores 8, 10
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
+    data = _invert_subscales(data, subscales=subscales, idx_dict={"SN": [2, 3]}, score_range=score_range)
 
     if invert_score:
-        invert(data, score_range=score_range, inplace=True)
+        data = invert(data, score_range=score_range)
 
     swb_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
 
@@ -5441,9 +5487,9 @@ def sop(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * SW: [1, 3, 5, 7, 8]
-    * O: [4, 9]
-    * P: [2, 6]
+    * Self-Efficacy (``SE``): [1, 3, 5, 7, 8]
+    * Optimism (``O``): [4, 9]
+    * Pessimism (``P``): [2, 6]
 
     .. note::
         This implementation assumes a score range of [1, 4].
@@ -5504,12 +5550,10 @@ def sop(
 
     if subscales is None:
         _assert_num_columns(data, 9)
-        subscales = {"SW": [1, 3, 5, 7, 8], "O": [4, 9], "P": [2, 6]}
+        subscales = {"SE": [1, 3, 5, 7, 8], "O": [4, 9], "P": [2, 6]}
 
     _assert_value_range(data, score_range)
     sop_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
-    if "O" in subscales.keys():
-        sop_data["SOP_O"] = sop_data["SOP_O"].astype(np.int64)
 
     return pd.DataFrame(sop_data, index=data.index)
 
@@ -5519,13 +5563,13 @@ def ie_4(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Interne-Externe Kontrollüberzeugungs-Inventar (IE-4)**.
+    """Compute the **Interne-Externe Kontrollüberzeugungs-Inventar (IE-4)** (Internal-External Locus of Control).
 
-    The IE-4 is a short scale for the assessment of Locus of Control. It consists of the subscales with the item
+    The IE4 is a short scale for the assessment of Locus of Control. It consists of the subscales with the item
     indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Intern: [1, 2]
-    * Extern: [3, 4]
+    * Internal Locus of Control (``Intern``): [1, 2]
+    * External Locus of Control (``Extern``): [3, 4]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -5554,7 +5598,7 @@ def ie_4(
     Returns
     -------
     :class:`~pandas.DataFrame`
-        IE-4 score
+        IE4 score
 
 
     Raises
@@ -5573,7 +5617,7 @@ def ie_4(
     In *Handbuch Kurzskalen psychologischer Merkmale*.
 
     """
-    score_name = "IE_4"
+    score_name = "IE4"
     score_range = [1, 5]
 
     # create copy of data
@@ -5595,8 +5639,8 @@ def ie_4(
     return pd.DataFrame(ie4_data, index=data.index)
 
 
-def social_desirability(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Social Desirability Scale**.
+def sds(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+    """Compute the **Social Desirability Scale (SDS)**.
 
     Short scale to estimate social desirability following the ALLBUS (1980).
 
@@ -5618,7 +5662,7 @@ def social_desirability(data: pd.DataFrame, columns: Optional[Union[Sequence[str
     Returns
     -------
     :class:`~pandas.DataFrame`
-        SD score
+        SDS score
 
     Raises
     ------
@@ -5627,20 +5671,12 @@ def social_desirability(data: pd.DataFrame, columns: Optional[Union[Sequence[str
     :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
 
-
-    References
-    ----------
-    # TODO Janis: add ref
-
     """
-    score_name = "SocDes"
+    score_name = "SDS"
     score_range = [1, 8]
 
     # create copy of data
     data = data.copy()
-
-    # Invert scores
-    invert(data, score_range=score_range, cols=to_idx([2, 4]), inplace=True)
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -5650,6 +5686,9 @@ def social_desirability(data: pd.DataFrame, columns: Optional[Union[Sequence[str
     _assert_num_columns(data, 4)
     _assert_value_range(data, score_range)
 
+    # Invert scores
+    data = invert(data, score_range=score_range, cols=to_idx([2, 4]))
+
     return pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
 
@@ -5658,13 +5697,13 @@ def tb(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Technology Commitment Questionnaire (TB - Technologiebereitschaft)**.
+    """Compute the **Technology Commitment Questionnaire (TB – Technologiebereitschaft)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * TA: [1, 2, 3, 4]
-    * TCom: [5, 6, 7, 8]
-    * TCon: [9, 10, 11, 12]
+    * Technology Acceptance (Technikakzeptanz – ``TechAcc``): [1, 2, 3, 4]
+    * Technology Competence Beliefs (Technikkompetenzüberzeugungen – ``TechComp``): [5, 6, 7, 8]
+    * Technology Control Beliefs (Technikkontrollüberzeugungen – ``TechControl``): [9, 10, 11, 12]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -5725,133 +5764,27 @@ def tb(
 
     if subscales is None:
         _assert_num_columns(data, 12)
-        subscales = {"TA": [1, 2, 3, 4], "TCom": [5, 6, 7, 8], "TCon": [9, 10, 11, 12]}
+        subscales = {"TechAcc": [1, 2, 3, 4], "TechComp": [5, 6, 7, 8], "TechControl": [9, 10, 11, 12]}
 
     _assert_value_range(data, score_range)
 
-    # Invert scores
-    invert(data, score_range=score_range, cols=to_idx([5, 6, 7, 8]), inplace=True)
+    # Reverse scores 5, 6, 7, 8
+    # (numbers in the dictionary correspond to the *positions* of the items to be reversed in the item list specified
+    # by the subscale dict)
+    data = _invert_subscales(data, subscales=subscales, idx_dict={"TechComp": [0, 1, 2, 3]}, score_range=score_range)
 
-    tc_data = _compute_questionnaire_subscales(data, score_name, subscales)
-    tc_data = pd.DataFrame(tc_data, index=data.index)
+    tb_data = _compute_questionnaire_subscales(data, score_name, subscales)
+    tb_data = pd.DataFrame(tb_data, index=data.index)
 
     if len(data.columns) == 12:
         # compute total score if all columns are present
-        tc_data[score_name] = tc_data.sum(axis=1)
+        tb_data[score_name] = tb_data.sum(axis=1)
 
-    return tc_data
-
-
-# TODO Janis: Check SEOP and SOP (same name, different items)
-def seop(
-    data: pd.DataFrame,
-    columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
-) -> pd.DataFrame:
-    """Compute the **Self-Efficacy, Optimism & Pessimism** Scale.
-
-    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
-
-    * Z: [2, 3, 4, 5, 6]
-    * K: [11, 12],
-    * W: [22 23, 24],
-    * S: [8, 9, 10],
-    * P: [7, 15, 16, 17, 18, 19, 21],
-    * I: [13, 14, 20],
-    * GZ: [1],
-    * SB: [25, 28, 29, 30, 31],
-    * AM: [26,27],
-    * PU: [32, 33, 34, 35]
-
-    .. note::
-        This implementation assumes a score range of [1, 5].
-        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
-        beforehand.
-
-    .. warning::
-        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
-        questionnaire item columns, which typically also start with index 1!
-
-
-    Parameters
-    ----------
-    data : :class:`~pandas.DataFrame`
-        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
-        a complete dataframe if ``columns`` parameter is supplied.
-    columns : list of str or :class:`pandas.Index`, optional
-        list with column names in correct order.
-        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
-        passed as ``data``.
-    subscales : dict, optional
-        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
-        if only specific subscales should be computed.
-
-
-    Returns
-    -------
-    :class:`~pandas.DataFrame`
-        SEOP score
-
-
-    Raises
-    ------
-    ValueError
-        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
-    :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if number of columns does not match
-    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
-        if values are not within the required score range
-
-
-    References
-    ----------
-    Scholler, G., Fliege, H., & Klapp, B. F. (1999). Fragebogen zu Selbstwirksamkeit, Optimismus und Pessimismus.
-    *Psychother Psychosom Med Psychol*, 49(8), 275-283.
-
-    """
-    score_name = "SEOP"
-    score_range = [1, 5]
-
-    # create copy of data
-    data = data.copy()
-
-    if columns is not None:
-        # if columns parameter is supplied: slice columns from dataframe
-        _assert_has_columns(data, [columns])
-        data = data.loc[:, columns]
-
-    if subscales is None:
-        _assert_num_columns(data, 35)
-        subscales = {
-            "Zugang": [2, 3, 4, 5, 6],
-            "KomP": [11, 12],
-            "Wirk": [22, 23, 24],
-            "Stat": [8, 9, 10],
-            "Bez": [7, 15, 16, 17, 18, 19, 21],
-            "Info": [13, 14, 20],
-            "GesZ": [1],
-            "Spez": [25, 28, 29, 30, 31],
-            "Medi": [26, 27],
-            "PsySoz": [32, 33, 34, 35],
-        }
-
-    _assert_value_range(data, score_range)
-
-    # Recode scores: 1=4, 2=3, 3=2, 4=1, 5=5
-    # invert(data, score_range=score_range, inplace=True)
-    # data.replace(0, 5, inplace=True)
-
-    ps_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
-    ps_data = pd.DataFrame(ps_data, index=data.index)
-
-    if "GesZ" in subscales.keys():
-        ps_data["PZ_GesZ"] = ps_data["PZ_GesZ"].astype(np.int64)
-
-    return ps_data
+    return tb_data
 
 
 def asku(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the ** Allgemeine Selbstwirksamkeit Kurzskala (ASKU)**.
+    """Compute the **Allgemeine Selbstwirksamkeit Kurzskala (ASKU)**.
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -5914,19 +5847,21 @@ def wpi(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * ``Access``: [2, 3, 4, 5, 6]
-    * ``Competence``: [11, 12]
-    * ``Effect``: [22, 23, 24]
-    * ``Equiqment``: [8, 9, 10]
-    * ``Relation``: [7, 15, 16, 17, 18, 19, 21]
-    * ``Information``: [13, 14, 20]
-    * ``Satisfaction``: [1],
-    * ``Treatment``: [25, 28, 29, 30, 31],
-    * ``Education``: [26, 27],
-    * ``Support``: [32, 33, 34, 35]
+    * Access to Treatment (Zugang zur Behandlung – ``AccessTreatment``): [2, 3, 4, 5, 6]
+    * Staff Competence (Kompetenz des Personals – ``StaffCompetence``): [11, 12]
+    * Effectiveness of Treatment (Wirksamkeit der Behandlung – ``EffectTreatment``): [22, 23, 24]
+    * Station Equipment (Stationsaustattung – ``StationEquipment``): [8, 9, 10]
+    * Staff-Patient Relationship (Personal-Patientenbeziehung –``Relation``): [7, 15, 16, 17, 18, 19, 21]
+    * Information about and Influence on Disease (Information über und Einflussnahme auf Erkrankung – ``Information``):
+      [13, 14, 20]
+    * Overall Satisfaction (Insgesamte Zufriedenheit – ``OverallSatisfaction``): [1],
+    * Special Treatment Interventions (Spezielle Behandlungsinterventionen –``TreatmentInterventions``):
+      [25, 28, 29, 30, 31],
+    * Education about Medications (Aufklärung über Medikamente – ``Education``): [26, 27],
+    * Psychosocial Support Offer (Psychosoziales Unterstützungsangebot – ``Support``): [32, 33, 34, 35]
 
     .. note::
-        This implementation assumes a score range of [1, 5] or [1, 4].
+        This implementation assumes a score range of [1, 4] (for items 1-24) and [1, 5] (for items 25-35).
         Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
         beforehand.
 
@@ -5952,7 +5887,7 @@ def wpi(
     Returns
     -------
     :class:`~pandas.DataFrame`
-        PSI score
+        WPI score
 
 
     Raises
@@ -5971,7 +5906,6 @@ def wpi(
 
     """
     score_name = "WPI"
-    score_range = [1, 4]
 
     # create copy of data
     data = data.copy()
@@ -5981,37 +5915,44 @@ def wpi(
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    short = True
     if subscales is None:
         _assert_num_columns(data, 35)
         subscales = {
-            "Access": [2, 3, 4, 5, 6],
-            "Competence": [11, 12],
-            "Effect": [22, 23, 24],
-            "Equipment": [8, 9, 10],
+            "AccessTreatment": [2, 3, 4, 5, 6],
+            "StaffCompetence": [11, 12],
+            "EffectTreatment": [22, 23, 24],
+            "StationEquipment": [8, 9, 10],
             "Relation": [7, 15, 16, 17, 18, 19, 21],
             "Information": [13, 14, 20],
-            "Satisfaction": [1],
-            "Treatment": [25, 28, 29, 30, 31],
+            "OverallSatisfaction": [1],
+            "TreatmentInterventions": [25, 28, 29, 30, 31],
             "Education": [26, 27],
             "Support": [32, 33, 34, 35],
         }
-        _assert_value_range(data, score_range)
-        short = False
 
-    if short:
-        score_range = [1, 4]
-        _assert_value_range(data, score_range)
+    score_ranges = {
+        "AccessTreatment": [1, 4],
+        "StaffCompetence": [1, 4],
+        "EffectTreatment": [1, 4],
+        "StationEquipment": [1, 4],
+        "Relation": [1, 4],
+        "Information": [1, 4],
+        "OverallSatisfaction": [1, 4],
+        "TreatmentInterventions": [1, 5],
+        "Education": [1, 5],
+        "Support": [1, 5],
+    }
 
-    # invert(data, score_range=score_range, inplace=True)
+    for subscale, subscale_idx in subscales.items():
+        _assert_value_range(data.iloc[:, to_idx(subscale_idx)], score_ranges[subscale])
 
-    psi_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
+    wpi_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
 
-    return pd.DataFrame(psi_data, index=data.index)
+    return pd.DataFrame(wpi_data, index=data.index)
 
 
 def eval_clinic(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Evaluation of the Current Clinic Stay Questionnaire**.
+    """Compute the **Evaluation of the Current Clinic Stay Questionnaire (EvalClinic)**.
 
     .. note::
         This implementation assumes a score range of [1, 6].
@@ -6031,7 +5972,7 @@ def eval_clinic(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.In
     Returns
     -------
     :class:`~pandas.DataFrame`
-        EV score
+        EvalClinic score
 
     Raises
     ------
