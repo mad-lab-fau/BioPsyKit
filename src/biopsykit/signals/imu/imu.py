@@ -141,7 +141,7 @@ def var_norm_windows(data: Union[AccDataFrame, GyrDataFrame]) -> pd.DataFrame:
 
     .. math::
         var_norm = \sqrt{var_x^2 + var_y^2 + var_z^2}
-        
+
     where :math:`var_i` is the variance of axis :math:`i` in the window
 
     Parameters

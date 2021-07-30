@@ -45,8 +45,7 @@ def _hrv_process_get_hrv_types(hrv_types: Union[str, Sequence[str]]) -> Sequence
 
 
 class EcgProcessor(_BaseProcessor):
-    """Class for processing ECG data.
-    """
+    """Class for processing ECG data."""
 
     def __init__(
         self,
@@ -460,7 +459,7 @@ class EcgProcessor(_BaseProcessor):
         outlier_correction : list, optional
             List containing the outlier correction methods to be applied.
             Pass ``None`` to not apply any outlier correction, ``all`` to apply all available outlier correction
-            methods. See :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections` to get a list of possible 
+            methods. See :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections` to get a list of possible
             outlier correction methods. Default: ``all``
         outlier_params: dict, optional
             Dict of parameters to be passed to the outlier correction methods or ``None``

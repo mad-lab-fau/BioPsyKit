@@ -664,7 +664,7 @@ def individual_beats_plot(
         Sampling rate of recorded data in Hz. Default: 256
     **kwargs
         Additional parameters to configure the plot. Parameters include:
-        
+
         * ``figsize``: Figure size
         * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
@@ -906,7 +906,7 @@ def hrv_frequency_plot(
         Sampling rate of recorded data in Hz. Default: 256
     **kwargs
         Additional parameters to configure the plot. Parameters include:
-       
+
         * ``figsize``: Figure size
         * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
