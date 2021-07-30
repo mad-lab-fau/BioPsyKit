@@ -1,0 +1,7 @@
+﻿subject,condition,BFI10_E1,BFI10_E2
+Vp01,Control,1,4
+Vp02,Intervention,2,5
+Vp03,Control,4,2
+Vp04,Intervention,1,4
+Vp05,Control,2,5
+Vp06,Intervention,4,2

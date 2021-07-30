@@ -1,0 +1,7 @@
+﻿subject,condition,SOP_1,SOP_3,SOP_5,SOP_7,SOP_8
+Vp01,Control,3,3,3,3,3
+Vp02,Intervention,4,4,3,3,3
+Vp03,Control,1,2,3,3,3
+Vp04,Intervention,3,3,3,3,3
+Vp05,Control,4,4,3,3,3
+Vp06,Intervention,1,2,3,3,3
