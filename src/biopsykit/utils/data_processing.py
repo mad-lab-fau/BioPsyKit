@@ -64,10 +64,10 @@ def split_data(
     time_intervals : dict or :class:`~pandas.Series` or :class:`~pandas.DataFrame`
         time intervals indicating where the data should be split. This can be:
 
-            * :class:`~pandas.Series` object or 1 row of a :class:`~pandas.DataFrame` with `start` times of each phase.
-              The phase names are then derived from the `index` names in case of a :class:`~pandas.Series` or from the
-              `columns` names in case of a :class:`~pandas.DataFrame`.
-            * dictionary with phase names (keys) and tuples with start and end times of the phase (values)
+        * :class:`~pandas.Series` object or 1 row of a :class:`~pandas.DataFrame` with `start` times of each phase.
+          The phase names are then derived from the `index` names in case of a :class:`~pandas.Series` or from the
+          `columns` names in case of a :class:`~pandas.DataFrame`.
+        * dictionary with phase names (keys) and tuples with start and end times of the phase (values)
 
     include_start: bool, optional
         ``True`` to include data from the beginning of the recording to the start of the first phase as the
@@ -130,7 +130,7 @@ def exclude_subjects(
     * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.datatype_helper.SalivaRawDataFrame` or
       :obj:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`)
 
-    All dataframes can be supplied at once via \*\*kwargs.
+    All dataframes can be supplied at once via ``**kwargs``.
 
     Parameters
     ----------
@@ -144,7 +144,7 @@ def exclude_subjects(
     Returns
     -------
     :class:`~pandas.DataFrame` or dict of such
-        dictionary with cleaned versions of the dataframes passed to the function via \*\*kwargs
+        dictionary with cleaned versions of the dataframes passed to the function via ``**kwargs``
         or dataframe if function was only called with one single dataframe
 
     """
@@ -325,7 +325,7 @@ def rearrange_subject_data_dict(
     A ``StudyDataDict`` is constructed from a ``SubjectDataDict`` by swapping outer (subject IDs) and inner
     (phase names) dictionary keys.
 
-    The \*\*input\*\* needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
+    The **input** needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
     a nested dictionary in the following format:
 
     | {
@@ -334,7 +334,7 @@ def rearrange_subject_data_dict(
     |   ...
     | }
 
-    The \*\*output\*\* format will be the following:
+    The **output** format will be the following:
 
     | {
     |   "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },

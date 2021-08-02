@@ -8,11 +8,13 @@ to use **BioPsyKit**.
 
 ## Contents
 
-* [Readme](readme)
-* [User Guide](guides/index.rst)
-* [Examples](guides/index.rst)
-* [Authors](authors)
+* [Readme](readme.md)
+* [User Guide](guides/index)
+* [Examples](examples/index)
+* [Authors](authors.md)
+* [License](license.rst)
 * [Module Reference](api/modules.rst)
+* [Changelog](changelog.md)
 
 [comment]: <> (## Indices and tables)
 

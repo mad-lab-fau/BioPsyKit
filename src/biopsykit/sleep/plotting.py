@@ -71,13 +71,13 @@ def sleep_imu_plot(
         * ``figsize``: tuple specifying figure dimensions
 
         To style axes:
-        
+
         * ``xlabel``: label of x axis. Default: "Time"
-        * ``ylabel``: label of y axis. Default: "Acceleration [$m/s^2$]" for acceleration data and
-          "Angular Velocity [$°/s$]" for gyroscope data.
+        * ``ylabel``: label of y axis. Default: "Acceleration :math:`[m/s^2]`" for acceleration data and
+          "Angular Velocity :math:`[°/s]`" for gyroscope data
 
         To style legend:
-        
+
         * ``legend_loc``: location of legend. Default: "lower left"
         * ``legend_fontsize``: font size of legend labels. Default: "smaller"
 

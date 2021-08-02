@@ -1,5 +1,5 @@
 """A couple of helper functions that ease the use of the typical biopsykit data formats."""
-from typing import Dict, Optional, Union, List, Any
+from typing import Dict, Optional, Union, List, Any, Type
 
 import numpy as np
 import pandas as pd
@@ -36,7 +36,7 @@ __all__ = [
     "SubjectDataDict",
     "HeartRatePhaseDict",
     "HeartRateSubjectDataDict",
-    "HeartRateStudyDataDict", 
+    "HeartRateStudyDataDict",
     "StudyDataDict",
     "MergedStudyDataDict",
     "is_subject_condition_dataframe",
@@ -64,7 +64,12 @@ __all__ = [
     "is_sleep_wake_dataframe",
 ]
 
-SubjectConditionDataFrame = pd.DataFrame
+# alias are needed because sphinx is dumb as fuck
+class _SubjectConditionDataFrame(pd.DataFrame):
+    pass
+
+
+SubjectConditionDataFrame = Union[_SubjectConditionDataFrame, pd.DataFrame]
 """:class:`pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
 
 A ``SubjectConditionDataFrame`` has an index with subject IDs named ``subject`` and a column with the condition
@@ -271,7 +276,7 @@ The dataframe is expected to have one of the following column sets:
 
 * ["gyr_x", "gyr_y", "gyr_z"]: one level column index
 * [("gyr", "x"), ("gyr", "y"), ("gyr", "z")]: two-level column index, first level specifying the channel
-    (gyroscope), second level specifying the axes
+  (gyroscope), second level specifying the axes
 
 """
 
@@ -307,7 +312,7 @@ A ``PhaseDict`` is a dictionary with the following format:
 
 Each ``dataframe`` is a :class:`~pandas.DataFrame` with the following format:
 
-    * Index: :class:`~pandas.DatetimeIndex` with timestamps, name of index level: ``time``
+* Index: :class:`pandas.DatetimeIndex` with timestamps, name of index level: ``time``
 
 """
 
@@ -320,7 +325,7 @@ A ``HeartRatePhaseDict`` is a dictionary with the following format:
 
 Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
 
-* ``time`` Index: :class:`~pandas.DatetimeIndex` with heart rate sample timestamps
+* ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
 * ``Heart_Rate`` Column: heart rate values
 
 """
@@ -332,12 +337,12 @@ A ``SubjectDataDict`` is a nested dictionary with time-series data from multiple
 from different phases. It is expected to have the level order `subject`, `phase`:
 
 | {
-|  "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-|  "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-|  ...
+|     "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+|     "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+|     ...
 | }
 
-This dictionary can, for instance, be rearranged to a :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`,
+This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.StudyDataDict`,
 where the level order is reversed: `phase`, `subject`.
 """
 
@@ -348,14 +353,14 @@ A ``HeartRateSubjectDataDict`` is a nested dictionary with time-series heart rat
 each containing data from different phases. It is expected to have the level order `subject`, `phase`:
 
 | {
-|   "subject1" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
-|   "subject2" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
-|   ...
+|     "subject1" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+|     "subject2" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+|     ...
 | }
 
 Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
 
-* ``time`` Index: :class:`~pandas.DatetimeIndex` with heart rate sample timestamps
+* ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
 * ``Heart_Rate`` Column: heart rate values
 
 This dictionary can, for instance, be rearranged to a :obj:`~biopsykit.utils.datatype_helper.HeartRateStudyDataDict`,
@@ -370,12 +375,12 @@ A ``StudyDataDict`` is a nested dictionary with time-series data from multiple p
 from different subjects. It is expected to have the level order `phase`, `subject`:
 
 | {
-|  "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-|  "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-|  ...
+|     "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+|     "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+|     ...
 | }
 
-This dict results from rearranging a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` by calling
+This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.SubjectDataDict` by calling
 :func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
 """
 
@@ -387,14 +392,14 @@ A ``HeartRateStudyDataDict`` is a nested dictionary with time-series heart rate 
 each phase containing data from different subjects. It is expected to have the level order `phase`, `subject`:
 
 | {
-|  "phase_1" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
-|  "phase_2" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
-|  ...
+|     "phase_1" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
+|     "phase_2" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
+|     ...
 | }
 
 Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
 
-* ``time`` Index: :class:`~pandas.DatetimeIndex` with heart rate sample timestamps
+* ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
 * ``Heart_Rate`` Column: heart rate values
 
 This dict results from rearranging a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict` by calling
@@ -407,9 +412,9 @@ MergedStudyDataDict = Dict[str, pd.DataFrame]
 A ``MergedStudyDataDict`` is a dictionary with the following format:
 
 | {
-|   "phase_1" : merged_dataframe,
-|   "phase_2" : merged_dataframe,
-|   ...
+|     "phase_1" : merged_dataframe,
+|     "phase_2" : merged_dataframe,
+|     ...
 | }
 
 This dict results from merging the inner dictionary into one dataframe by calling
@@ -423,7 +428,6 @@ Each ``merged_dataframe`` is a :class:`~pandas.DataFrame` with the following for
 * Index: time. Name of index level: ``time``
 * Columns: time series data per subject, each subject has its own column.
   Name of the column index level: ``subject``
-
 """
 
 
@@ -471,7 +475,7 @@ def is_subject_condition_dataframe(
 
 
 def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict`. 
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict`.
 
     Parameters
     ----------
@@ -819,7 +823,7 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
 
     Returns
     -------
-    ``True`` if ``data`` is a ``MergedStudyDataDict`` 
+    ``True`` if ``data`` is a ``MergedStudyDataDict``
     ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises

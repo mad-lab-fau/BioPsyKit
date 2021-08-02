@@ -99,6 +99,7 @@ def prepare_df_sklearn(
     """Prepare a dataframe for usage in sklearn functions and return the single components of the dataframe.
 
     This function performs the following steps:
+
     * Strip dataframe from all index levels and return an array that only contains values
       (using :func:`~biopsykit.classification.utils.strip_df`)
     * Extract labels from dataframe (using :func:`~biopsykit.classification.utils.strip_labels`)

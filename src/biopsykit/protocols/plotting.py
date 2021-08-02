@@ -624,8 +624,9 @@ def saliva_plot(
 ) -> Optional[Tuple[plt.Figure, plt.Axes]]:
     r"""Plot saliva data during psychological protocol as mean ± standard error.
 
-    The function accepts raw saliva data per subject (:obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`) as well as pre-computed
-    mean and standard error values of saliva samples ( :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`). To combine data from multiple saliva
+    The function accepts raw saliva data per subject (:obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`)
+    as well as pre-computed mean and standard error values of saliva samples
+    ( :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`). To combine data from multiple saliva
     types (maximum: 2) into one plot a dict can be passed to ``data``.
 
     If a psychological test (e.g., TSST, MIST, or Stroop) was performed, the test time is highlighted as vertical span

@@ -434,9 +434,10 @@ class EcgProcessor(_BaseProcessor):
     ) -> Tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Perform outlier correction on the detected R peaks.
 
-        Different methods for outlier detection are available (see :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections()` to get a list
-        of possible outlier correction methods). All outlier methods work independently on the detected R peaks,
-        the results will be combined by a logical 'or'.
+        Different methods for outlier detection are available (see
+        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections()` to get a list of possible outlier
+        correction methods). All outlier methods work independently on the detected R peaks, the results will be
+        combined by a logical 'or'.
 
         RR intervals classified as outliers will be removed and imputed either using linear interpolation
         (setting ``imputation_type`` to ``linear``) or by replacing it with the average value of the 10 preceding
@@ -596,7 +597,8 @@ class EcgProcessor(_BaseProcessor):
 
         .. warning ::
             This algorithm might *add* additional R peaks or *remove* certain ones, so results of this function
-            might **not** match with the R peaks of :meth:`~biopsykit.signals.ecg.EcgProcessor.rpeaks`. Thus, R peaks resulting from this function might not be used in combination with
+            might **not** match with the R peaks of :meth:`~biopsykit.signals.ecg.EcgProcessor.rpeaks`. Thus, R peaks
+            resulting from this function might not be used in combination with
             :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg` since R peak indices won't match.
 
         .. note ::
