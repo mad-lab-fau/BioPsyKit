@@ -3130,7 +3130,7 @@ def fkk(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Fragebogen zur Kompetenz- und Kontrollüberzeugungen (FKK)** (Questionnaire on Competence and Control Beliefs).
+    """Compute the **Fragebogen zur Kompetenz- und Kontrollüberzeugungen (FKK)** (Competence and Control Beliefs).
 
     The questionnaire on competence and control beliefs can be used to assess
 

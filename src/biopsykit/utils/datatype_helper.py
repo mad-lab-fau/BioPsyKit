@@ -1,5 +1,5 @@
 """A couple of helper functions that ease the use of the typical biopsykit data formats."""
-from typing import Dict, Optional, Union, List, Any
+from typing import Dict, Optional, Union, List, Any, Type
 
 import numpy as np
 import pandas as pd
@@ -63,7 +63,12 @@ __all__ = [
     "is_sleep_wake_dataframe",
 ]
 
-SubjectConditionDataFrame = pd.DataFrame
+# alias are needed because sphinx is dumb as fuck
+class _SubjectConditionDataFrame(pd.DataFrame):
+    pass
+
+
+SubjectConditionDataFrame = Union[_SubjectConditionDataFrame, pd.DataFrame]
 """:class:`pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
 
 A ``SubjectConditionDataFrame`` has an index with subject IDs named ``subject`` and a column with the condition
@@ -107,16 +112,16 @@ Additionally, the following index levels can be added to identify saliva values,
 
 """
 
-SalivaFeatureDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing feature computed from saliva data in a standardized format.
+SalivaFeatureDataFrame = Union[pd.DataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing feature computed from saliva data in a standardized format.
 
 The resulting dataframe must at least have a ``subject`` index level and all column names need to begin with
 the saliva marker type (e.g. "cortisol"), followed by the feature name, separated by underscore '_'
 Additionally, the name of the column index needs to be `saliva_feature`.
 """
 
-SalivaMeanSeDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing mean and standard error of saliva samples in a standardized format.
+SalivaMeanSeDataFrame = Union[pd.DataFrame]
+""":class:`~pandas.DataFrame` containing mean and standard error of saliva samples in a standardized format.
 
 The resulting dataframe must at least have a ``sample`` index level and the two columns ``mean`` and ``se``.
 It can have additional index levels, such as ``condition`` or ``time``.
@@ -232,10 +237,11 @@ RPeakDataFrame = pd.DataFrame
 """:class:`~pandas.DataFrame` containing R-peak locations of `one` subject extracted from ECG data.
 
 The dataframe is expected to have the following columns:
-    * ``R_Peak_Quality``: Signal quality indicator (of the raw ECG signal) in the range of [0, 1]
-    * ``R_Peak_Idx``: Array index of detected R peak in the raw ECG signal
-    * ``RR_Interval``: Interval between the current and the successive R peak in seconds
-    * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
+
+* ``R_Peak_Quality``: Signal quality indicator (of the raw ECG signal) in the range of [0, 1]
+* ``R_Peak_Idx``: Array index of detected R peak in the raw ECG signal
+* ``RR_Interval``: Interval between the current and the successive R peak in seconds
+* ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
 
 """
 
@@ -243,9 +249,10 @@ AccDataFrame = pd.DataFrame
 """:class:`~pandas.DataFrame` containing 3-d acceleration data.
 
 The dataframe is expected to have one of the following column sets:
-    * ["acc_x", "acc_y", "acc_z"]: one level column index
-    * [("acc", "x"), ("acc", "y"), ("acc", "z")]: two-level column index, first level specifying the channel
-      (acceleration), second level specifying the axes
+
+* ["acc_x", "acc_y", "acc_z"]: one level column index
+* [("acc", "x"), ("acc", "y"), ("acc", "z")]: two-level column index, first level specifying the channel
+  (acceleration), second level specifying the axes
 
 """
 
@@ -253,9 +260,10 @@ GyrDataFrame = pd.DataFrame
 """:class:`~pandas.DataFrame` containing 3-d gyroscope data.
 
 The dataframe is expected to have one of the following column sets:
-    * ["gyr_x", "gyr_y", "gyr_z"]: one level column index
-    * [("gyr", "x"), ("gyr", "y"), ("gyr", "z")]: two-level column index, first level specifying the channel
-      (gyroscope), second level specifying the axes
+
+* ["gyr_x", "gyr_y", "gyr_z"]: one level column index
+* [("gyr", "x"), ("gyr", "y"), ("gyr", "z")]: two-level column index, first level specifying the channel
+  (gyroscope), second level specifying the axes
 
 """
 
@@ -265,10 +273,11 @@ ImuDataFrame = pd.DataFrame
 Hence, an ``ImuDataFrame`` must both be a ``AccDataFrame`` **and** a ``GyrDataFrame``.
 
 The dataframe is expected to have one of the following column sets:
-    * ["acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z"]: one level column index
-    * [("acc", "x"), ("acc", "y"), ("acc", "z"), ("gyr", "x"), ("gyr", "y"), ("gyr", "z")]:
-      two-level column index, first level specifying the channel (acceleration and gyroscope),
-      second level specifying the axes
+
+* ["acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z"]: one level column index
+* [("acc", "x"), ("acc", "y"), ("acc", "z"), ("gyr", "x"), ("gyr", "y"), ("gyr", "z")]:
+  two-level column index, first level specifying the channel (acceleration and gyroscope),
+  second level specifying the axes
 
 """
 
@@ -276,7 +285,8 @@ SleepWakeDataFrame = pd.DataFrame
 """:class:`~pandas.DataFrame` containing sleep/wake predictions.
 
 The dataframe is expected to have at least the following column(s):
-    * ["sleep_wake"]: sleep/wake predictions where 0 indicates sleep and 1 indicates wake
+
+* ["sleep_wake"]: sleep/wake predictions where 0 indicates sleep and 1 indicates wake
 
 """
 
@@ -287,8 +297,9 @@ A ``PhaseDict`` is a dictionary with the following format:
 
 { "phase_1" : dataframe, "phase_2" : dataframe, ... }
 
-Each ``dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * Index: :class:`pandas.DatetimeIndex` with timestamps, name of index level: ``time``
+Each ``dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* Index: :class:`pandas.DatetimeIndex` with timestamps, name of index level: ``time``
 
 """
 
@@ -299,9 +310,10 @@ A ``HeartRatePhaseDict`` is a dictionary with the following format:
 
 { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... }
 
-Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
-    * ``Heart_Rate`` Column: heart rate values
+Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
+* ``Heart_Rate`` Column: heart rate values
 
 """
 
@@ -310,11 +322,12 @@ SubjectDataDict = Dict[str, PhaseDict]
 
 A ``SubjectDataDict`` is a nested dictionary with time-series data from multiple subjects, each containing data
 from different phases. It is expected to have the level order `subject`, `phase`:
-    {
-        "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        ...
-    }
+
+| {
+|     "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+|     "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+|     ...
+| }
 
 This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.StudyDataDict`,
 where the level order is reversed: `phase`, `subject`.
@@ -325,15 +338,17 @@ HeartRateSubjectDataDict = Union[Dict[str, HeartRatePhaseDict], Dict[str, Dict[s
 
 A ``HeartRateSubjectDataDict`` is a nested dictionary with time-series heart rate data from multiple subjects,
 each containing data from different phases. It is expected to have the level order `subject`, `phase`:
-  {
-      "subject1" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
-      "subject2" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
-      ...
-  }
 
-Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
-    * ``Heart_Rate`` Column: heart rate values
+| {
+|     "subject1" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+|     "subject2" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+|     ...
+| }
+
+Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
+* ``Heart_Rate`` Column: heart rate values
 
 This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.HeartRateStudyDataDict`,
 where the level order is reversed: `phase`, `subject`.
@@ -344,11 +359,12 @@ StudyDataDict = Dict[str, Dict[str, pd.DataFrame]]
 
 A ``StudyDataDict`` is a nested dictionary with time-series data from multiple phases, each phase containing data
 from different subjects. It is expected to have the level order `phase`, `subject`:
-  {
-      "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-      "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-      ...
-  }
+
+| {
+|     "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+|     "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+|     ...
+| }
 
 This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.SubjectDataDict` by calling
 :func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
@@ -360,15 +376,17 @@ HeartRateStudyDataDict = Dict[str, Dict[str, HeartRateDataFrame]]
 
 A ``HeartRateStudyDataDict`` is a nested dictionary with time-series heart rate data from multiple phases,
 each phase containing data from different subjects. It is expected to have the level order `phase`, `subject`:
-  {
-      "phase_1" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
-      "phase_2" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
-      ...
-  }
 
-Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
-    * ``Heart_Rate`` Column: heart rate values
+| {
+|     "phase_1" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
+|     "phase_2" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
+|     ...
+| }
+
+Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
+* ``Heart_Rate`` Column: heart rate values
 
 This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.HeartRateSubjectDataDict` by calling
 :func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
@@ -379,11 +397,11 @@ MergedStudyDataDict = Dict[str, pd.DataFrame]
 
 A ``MergedStudyDataDict`` is a dictionary with the following format:
 
-{
-    "phase_1" : merged_dataframe,
-    "phase_2" : merged_dataframe,
-    ...
-}
+| {
+|     "phase_1" : merged_dataframe,
+|     "phase_2" : merged_dataframe,
+|     ...
+| }
 
 This dict results from merging the inner dictionary into one dataframe by calling
 :func:`~biopsykit.utils.data_processing.merge_study_data_dict`.
@@ -391,10 +409,11 @@ This dict results from merging the inner dictionary into one dataframe by callin
 .. note::
     Merging the inner dictionaries requires that the dataframes of all subjects have same length within each phase.
 
-Each ``merged_dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * Index: time. Name of index level: ``time``
-    * Columns: time series data per subject, each subject has its own column.
-      Name of the column index level: ``subject``
+Each ``merged_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* Index: time. Name of index level: ``time``
+* Columns: time series data per subject, each subject has its own column.
+  Name of the column index level: ``subject``
 """
 
 
@@ -405,7 +424,7 @@ def is_subject_condition_dataframe(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SubjectConditionDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
@@ -422,7 +441,7 @@ def is_subject_condition_dataframe(
 
     See Also
     --------
-    ``SubjectConditionDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`
         dataframe format
 
     """
@@ -486,7 +505,7 @@ def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[boo
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``CodebookDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
@@ -534,7 +553,7 @@ def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] 
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``MeanSeDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
@@ -829,7 +848,7 @@ def is_saliva_raw_dataframe(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SalivaRawDataFrame``
     saliva_type : str or list of str
         type of saliva data (or list of saliva types) in the dataframe, e.g., "cortisol" or "amylase"
@@ -878,7 +897,7 @@ def is_saliva_feature_dataframe(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SalivaFeatureDataFrame``
     saliva_type : str or list of str
         type of saliva data in the dataframe, e.g., "cortisol" or "amylase"
@@ -923,7 +942,7 @@ def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: O
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SalivaMeanSeDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
@@ -963,7 +982,7 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SleepEndpointDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
@@ -1045,7 +1064,7 @@ def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] 
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``EcgRawDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
@@ -1084,7 +1103,7 @@ def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[boo
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``EcgResultDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value

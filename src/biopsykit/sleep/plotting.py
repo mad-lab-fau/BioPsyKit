@@ -40,7 +40,7 @@ def sleep_imu_plot(
 
     Parameters
     ----------
-    data : :class:`~pandas.DataFrame´
+    data : :class:`~pandas.DataFrame`
         data to plot. Data must either be acceleration data (:obj:`~biopsykit.utils.datatype_helper.AccDataFrame`),
         gyroscope data (:obj:`~biopsykit.utils.datatype_helper.GyrDataFrame`), or IMU data
         (:obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`)
@@ -53,7 +53,7 @@ def sleep_imu_plot(
     downsample_factor : int, optional
         downsample factor to apply to raw input data before plotting or ``None`` to not downsample data before
         plotting (downsample factor 1). Default: ``None``
-    kwargs
+    kwargs :
         optional arguments for plot configuration.
 
         To configure which type of sleep endpoint annotations to plot:
@@ -71,8 +71,8 @@ def sleep_imu_plot(
 
         To style axes:
             * ``xlabel``: label of x axis. Default: "Time"
-            * ``ylabel``: label of y axis. Default: "Acceleration [$m/s^2$]" for acceleration data and
-              "Angular Velocity [$°/s$]" for gyroscope data
+            * ``ylabel``: label of y axis. Default: "Acceleration :math:`[m/s^2]`" for acceleration data and
+              "Angular Velocity :math:`[°/s]`" for gyroscope data
 
         To style legend:
             * ``legend_loc``: location of legend. Default: "lower left"

@@ -483,14 +483,15 @@ def bin_scale(
     ----------
     data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         data with scales to be binned
-    bins : The criteria to bin by. ``bins``can have one of the following types:
+    bins : int or list of float or :class:`~pandas.IntervalIndex``
+        The criteria to bin by. ``bins`` can have one of the following types:
 
-        * ``int`` : Defines the number of equal-width bins in the range of ``data``. The range of ``x`` is extended by
-          0.1% on each side to include the minimum and maximum values of `x`.
+        * ``int`` : Defines the number of equal-width bins in the range of ``data``. The range of ``data`` is extended
+          by 0.1% on each side to include the minimum and maximum values of ``data``.
         * sequence of scalars : Defines the bin edges allowing for non-uniform width. No extension of the range of
-          ``x`` is done.
-        * :class:`~pandas.IntervalIndex` : Defines the exact bins to be used. Note that the ``IntervalIndex`` for ``bins`` must be
-          non-overlapping.
+          ``data`` is done.
+        * :class:`~pandas.IntervalIndex` : Defines the exact bins to be used. Note that the ``IntervalIndex`` for
+          ``bins`` must be non-overlapping.
 
     cols : list of str or list of int, optional
         column name/index (or list of such) to be binned or ``None`` to use all columns (or if ``data`` is a series).

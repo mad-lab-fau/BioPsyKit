@@ -118,16 +118,17 @@ def split_data(
 def exclude_subjects(
     excluded_subjects: Union[Sequence[str], Sequence[int]], index_name: Optional[str] = "subject", **kwargs
 ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-    """Exclude subjects from dataframes.
+    r"""Exclude subjects from dataframes.
 
     This function can be used to exclude subject IDs for later analysis from different kinds of dataframes, such as:
+
         * dataframes with subject condition information
           (:obj:`biopsykit.utils.datatype_helper.SubjectConditionDataFrame`)
         * dataframes with time log information
         * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.datatype_helper.SalivaRawDataFrame` or
           :obj:`biopsykit.utils.datatype_helper.MeanSeDataFrame`)
 
-    All dataframes can be supplied at once via **kwargs.
+    All dataframes can be supplied at once via ``**kwargs``.
 
     Parameters
     ----------
@@ -141,7 +142,7 @@ def exclude_subjects(
     Returns
     -------
     :class:`~pandas.DataFrame` or dict of such
-        dictionary with cleaned versions of the dataframes passed to the function via **kwargs
+        dictionary with cleaned versions of the dataframes passed to the function via ``**kwargs``
         or dataframe if function was only called with one single dataframe
 
     """
@@ -325,19 +326,19 @@ def rearrange_subject_data_dict(
     The **input** needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
     a nested dictionary in the following format:
 
-    {
-        "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        ...
-    }
+    | {
+    |     "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+    |     "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+    |     ...
+    | }
 
     The **output** format will be the following:
 
-    {
-        "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-        "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-        ...
-    }
+    | {
+    |     "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+    |     "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+    |     ...
+    | }
 
 
     Parameters

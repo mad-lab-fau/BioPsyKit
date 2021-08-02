@@ -127,7 +127,7 @@ class SklearnPipelinePermuter:
         """List of model combinations, i.e. permutations of the different transformers/estimators for
         each pipeline step."""
 
-        self.grid_searches: Dict[Tuple[str, str], pd.Dataframe] = {}
+        self.grid_searches: Dict[Tuple[str, str], pd.DataFrame] = {}
         """Dictionary with grid search search results for each pipeline step combination."""
 
         self.results: Optional[pd.DataFrame] = None
