@@ -1,4 +1,4 @@
-from biopsykit.classification import utils, nested_cv
-from biopsykit.classification.sklearn_pipeline_permuter import SklearnPipelinePermuter
+"""Module for the classification of (biopsychological) data."""
+from biopsykit.classification import utils, model_selection
 
-__all__ = ["utils", "sklearn_pipeline_permuter", "nested_cv"]
+__all__ = ["utils", "model_selection"]
