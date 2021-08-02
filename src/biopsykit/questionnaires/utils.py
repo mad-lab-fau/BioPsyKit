@@ -483,7 +483,7 @@ def bin_scale(
     ----------
     data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         data with scales to be binned
-    bins : The criteria to bin by ``bins`` can have one of the following types:
+    bins : The criteria to bin by. ``bins`` can have one of the following types:
 
         * ``int`` : Defines the number of equal-width bins in the range of ``data``. The range of ``x`` is extended by
           0.1% on each side to include the minimum and maximum values of `x`.
