@@ -1115,6 +1115,7 @@ def _correct_outlier_correlation(rpeaks: pd.DataFrame, bool_mask: np.array, corr
     corr_thres : float
         threshold for cross-correlation coefficient. Beats below that threshold will be marked as outlier
     **kwargs : additional parameters required for this outlier function, such as:
+    
         * ecg_signal :class:`~pandas.DataFrame`
           dataframe with processed ECG signal. Output from :meth:`biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         * sampling_rate : float

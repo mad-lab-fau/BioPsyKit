@@ -14,23 +14,24 @@ def compute_sleep_endpoints(
     """Compute a set of sleep endpoints based on sleep/wake information and time spent in bed.
 
     This functions computes the following sleep endpoints:
-        * ``date``: date of recording if input data is time-aware, ``0`` otherwise. **NOTE**: If the participant went
-          to bed between 12 am and 6 am (i.e, the beginning of ``bed_interval`` between 12 am and 6 am) ``date`` will
-          be set to the day before (because this night is assumed to "belong" to the day before)
-        * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
-        * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
-        * ``net_sleep_duration``: Net duration spent sleeping, in minutes
-        * ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
-        * ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
-        * ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
-          in percent
-        * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
-        * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
-        * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in
-          minutes
-        * ``sleep_bouts``: List with start and end times of sleep bouts
-        * ``wake_bouts``: List with start and end times of wake bouts
-        * ``number_wake_bouts``: Total number of wake bouts
+
+    * ``date``: date of recording if input data is time-aware, ``0`` otherwise. **NOTE**: If the participant went
+      to bed between 12 am and 6 am (i.e, the beginning of ``bed_interval`` between 12 am and 6 am) ``date`` will
+      be set to the day before (because this night is assumed to "belong" to the day before).
+    * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
+    * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
+    * ``net_sleep_duration``: Net duration spent sleeping, in minutes
+    * ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
+    * ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
+    * ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
+      in percent
+    * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
+    * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
+    * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in
+      minutes
+    * ``sleep_bouts``: List with start and end times of sleep bouts
+    * ``wake_bouts``: List with start and end times of wake bouts
+    * ``number_wake_bouts``: Total number of wake bouts
 
 
     Parameters

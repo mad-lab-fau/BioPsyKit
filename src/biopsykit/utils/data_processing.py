@@ -61,12 +61,14 @@ def split_data(
     ----------
     data : :class:`~pandas.DataFrame`
         data to be split
-    time_intervals : dict or pd.Series or pd.DataFrame
+    time_intervals : dict or :class:`~pandas.Series` or :class:`~pandas.DataFrame`
         time intervals indicating where the data should be split. This can be:
-            * :class:`~pandas.Series` object or 1 row of a :class:`~pandas.DataFrame` with `start` times each phase.
+
+            * :class:`~pandas.Series` object or 1 row of a :class:`~pandas.DataFrame` with `start` times of each phase.
               The phase names are then derived from the `index` names in case of a :class:`~pandas.Series` or from the
-              `columns` names in case of a :class:`~pandas.DataFrame`
+              `columns` names in case of a :class:`~pandas.DataFrame`.
             * dictionary with phase names (keys) and tuples with start and end times of the phase (values)
+
     include_start: bool, optional
         ``True`` to include data from the beginning of the recording to the start of the first phase as the
         first phase (this phase will be named "Start"), ``False`` to discard this data. Default: ``False``
@@ -121,13 +123,14 @@ def exclude_subjects(
     """Exclude subjects from dataframes.
 
     This function can be used to exclude subject IDs for later analysis from different kinds of dataframes, such as:
-        * dataframes with subject condition information
-          (:obj:`biopsykit.utils.datatype_helper.SubjectConditionDataFrame`)
-        * dataframes with time log information
-        * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.datatype_helper.SalivaRawDataFrame` or
-          :obj:`biopsykit.utils.datatype_helper.MeanSeDataFrame`)
 
-    All dataframes can be supplied at once via **kwargs.
+    * dataframes with subject condition information
+      (:obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`)
+    * dataframes with time log information
+    * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.datatype_helper.SalivaRawDataFrame` or
+      :obj:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`)
+
+    All dataframes can be supplied at once via \*\*kwargs.
 
     Parameters
     ----------
@@ -135,13 +138,13 @@ def exclude_subjects(
         list with subjects IDs to be excluded
     index_name : str, optional
         name of dataframe index level with subject IDs. Default: "subject"
-    kwargs :
+    **kwargs :
         data to be cleaned as key-value pairs
 
     Returns
     -------
     :class:`~pandas.DataFrame` or dict of such
-        dictionary with cleaned versions of the dataframes passed to the function via **kwargs
+        dictionary with cleaned versions of the dataframes passed to the function via \*\*kwargs
         or dataframe if function was only called with one single dataframe
 
     """
@@ -185,8 +188,8 @@ def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.
 
     Parameters
     ----------
-    subject_data_dict : :class:`~biopsykit.utils.datatype_helper.SubjectsDict`
-        ``SubjectsDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.PhaseDict` for each subject
+    subject_data_dict : :class:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+        ``SubjectDataDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.PhaseDict` for each subject
     phase : str or :class:`~pandas.DataFrame`
         phase to normalize all other data to. If ``phase`` is a string then it is interpreted as the name of a phase
         present in ``subject_data_dict``. If ``phase`` is a DataFrame then the data will be normalized (per subject)
@@ -277,7 +280,7 @@ def resample_dict_sec(
 
     See Also
     --------
-    `~biopsykit.utils.data_processing.resample_sec`
+    :func:`~biopsykit.utils.data_processing.resample_sec`
         resample dataframe to 1 Hz
 
     """
@@ -293,7 +296,7 @@ def resample_dict_sec(
 
 
 def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Sequence[str]) -> SubjectDataDict:
-    """Select specific phases from ``SubjectDataDict``.
+    """Select specific phases from :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`.
 
     Parameters
     ----------
@@ -317,27 +320,27 @@ def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Sequence[str]
 def rearrange_subject_data_dict(
     subject_data_dict: SubjectDataDict,
 ) -> StudyDataDict:
-    """Rearrange ``SubjectDataDict`` to ``StudyDataDict``.
+    """Rearrange :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` to :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`.
 
     A ``StudyDataDict`` is constructed from a ``SubjectDataDict`` by swapping outer (subject IDs) and inner
     (phase names) dictionary keys.
 
-    The **input** needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
+    The \*\*input\*\* needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
     a nested dictionary in the following format:
 
-    {
-        "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        ...
-    }
+    | {
+    |   "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+    |   "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+    |   ...
+    | }
 
-    The **output** format will be the following:
+    The \*\*output\*\* format will be the following:
 
-    {
-        "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-        "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-        ...
-    }
+    | {
+    |   "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+    |   "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+    |   ...
+    | }
 
 
     Parameters
@@ -406,7 +409,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 
 
 def merge_study_data_dict(study_data_dict: StudyDataDict) -> MergedStudyDataDict:
-    """Merge inner dictionary level of ``StudyDataDict`` into one dataframe.
+    """Merge inner dictionary level of :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into one dataframe.
 
     This function removes the inner level of the nested ``StudyDataDict`` by merging data from all subjects
     into one dataframe for each phase.
@@ -532,8 +535,8 @@ def add_subject_conditions(
     data : :class:`~pandas.DataFrame`
         dataframe where new index level ``condition`` with subject conditions should be added to
     condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
-        :class:`~biopsykit.datatype_helper.SubjectConditionDict` or
-        :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` or
+        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
         which condition
 
 
@@ -564,8 +567,8 @@ def split_subject_conditions(
     data_dict : dict
         (nested) dictionary with data which should be split based on the conditions subjects belong to
     condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
-        :class:`~biopsykit.datatype_helper.SubjectConditionDict` or
-        :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` or
+        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
         which condition
 
 
@@ -747,12 +750,12 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
     ----------
     data: dict
         nested dictionary with data on which mean should be computed. The number of nested levels must match the
-        number of levels specified in ``dict_levels``
+        number of levels specified in ``dict_levels``.
     dict_levels : list of str
         list with names of dictionary levels.
     param_name : str
         type of data of which mean values will be computed from.
-        This will also be the column name in the resulting dataframe
+        This will also be the column name in the resulting dataframe.
 
 
     Returns

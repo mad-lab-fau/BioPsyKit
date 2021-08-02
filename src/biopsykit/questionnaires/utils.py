@@ -483,7 +483,7 @@ def bin_scale(
     ----------
     data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         data with scales to be binned
-    bins : The criteria to bin by. ``bins``can have one of the following types:
+    bins : The criteria to bin by. ``bins`` can have one of the following types:
 
         * ``int`` : Defines the number of equal-width bins in the range of ``data``. The range of ``x`` is extended by
           0.1% on each side to include the minimum and maximum values of `x`.
@@ -607,8 +607,8 @@ def compute_scores(
     quest_dict : dict
         dictionary with questionnaire names to be computed (keys) and columns of the questionnaires (values)
     quest_kwargs : dict
-        dictionary with optional arguments to be passed to questionnaire functions. The dictionary is expected
-        consist of questionnaire names (keys) and ``**kwargs`` dictionaries (values) with arguments per questionnaire
+        dictionary with optional arguments to be passed to questionnaire functions. The dictionary is expected to
+        consist of questionnaire names (keys) and \*\*kwargs dictionaries (values) with arguments per questionnaire
 
     Returns
     -------

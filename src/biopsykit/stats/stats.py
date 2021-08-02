@@ -292,7 +292,7 @@ class StatsPipeline:
         **kwargs
             additional arguments to be passed to the function, such as:
 
-            * category names: ``True`` to display results of this category, ``False`` to skip displaying results
+            * ``category`` names: ``True`` to display results of this category, ``False`` to skip displaying results
               of this category. Default: show results from all categories
             * ``grouped``: ``True`` to group results by the variable "groupby" specified in the parameter
               dictionary when initializing the ``StatsPipeline`` instance.
@@ -439,7 +439,7 @@ class StatsPipeline:
 
             * ``str``: only one feature is plotted in the boxplot
               (returns significance brackets of only one feature)
-            * ``list``: multiple features are combined into *one* :class:`matplotlib.axes.Axes` object
+            * ``list``: multiple features are combined into *one* :class:`~matplotlib.axes.Axes` object
               (returns significance brackets of multiple features)
             * ``dict``: dictionary with feature (or list of features) per subplot if boxplots are structured in
               subplots (``subplots`` is ``True``) (returns dictionary with significance brackets per subplot)
