@@ -11,7 +11,7 @@ from biopsykit.utils.datatype_helper import is_sleep_endpoint_dataframe, is_slee
 __all__ = ["save_sleep_endpoints"]
 
 
-def save_sleep_endpoints(file_path: path_t, df_or_dict: Union[pd.DataFrame, Dict]) -> None:
+def save_sleep_endpoints(file_path: path_t, df_or_dict: Union[pd.DataFrame, Dict]):
     """Save sleep endpoints as csv or json file.
 
     Parameters

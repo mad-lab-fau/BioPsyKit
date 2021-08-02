@@ -11,6 +11,7 @@ from biopsykit.utils.datatype_helper import (
     SalivaMeanSeDataFrame,
     HeartRatePhaseDict,
     SleepEndpointDataFrame,
+    _SalivaMeanSeDataFrame,
 )
 from biopsykit.io import load_subject_condition_list, load_time_log, load_questionnaire_data
 from biopsykit.io.carwatch_logs import load_log_one_subject
@@ -119,11 +120,11 @@ def get_saliva_mean_se_example() -> Dict[str, SalivaMeanSeDataFrame]:
         dictionary with :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame` from different saliva types
 
     """
-    data = pd.read_excel(_EXAMPLE_DATA_PATH.joinpath("saliva_sample_mean_se.xlsx"), sheet_name=None)
-    for key in data:
-        data[key] = data[key].set_index(["sample", "time"])
-        is_saliva_mean_se_dataframe(data[key])
-    return data
+    data_dict = pd.read_excel(_EXAMPLE_DATA_PATH.joinpath("saliva_sample_mean_se.xlsx"), sheet_name=None)
+    for key in data_dict:
+        data_dict[key] = _SalivaMeanSeDataFrame(data_dict[key].set_index(["sample", "time"]))
+        is_saliva_mean_se_dataframe(data_dict[key])
+    return data_dict
 
 
 def get_mist_hr_example() -> HeartRatePhaseDict:

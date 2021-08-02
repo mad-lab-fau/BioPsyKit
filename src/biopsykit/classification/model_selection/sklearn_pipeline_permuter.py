@@ -172,7 +172,7 @@ class SklearnPipelinePermuter:
         Returns
         -------
         :class:`~biopsykit.classification.model_selection.sklearn_pipeline_permuter.SklearnPipelinePermuter`
-            ``SklearnPipelinePermuter`` object
+            ``SklearnPipelinePermuter`` instance with results from csv file
 
         """
         # assert pathlib
@@ -193,8 +193,8 @@ class SklearnPipelinePermuter:
     ):
         """Run fit for all pipeline combinations and sets of parameters.
 
-        This function calls :func:`~biopsykit.model_selection.nested_cv.nested_cv_grid_search` for all
-        Pipeline combinations and stores the results in the :.
+        This function calls :func:`~biopsykit.classification.model_selection.nested_cv.nested_cv_grid_search` for all
+        Pipeline combinations and stores the results in the ``grid_searches`` attribute.
 
         Parameters
         ----------
@@ -202,15 +202,16 @@ class SklearnPipelinePermuter:
             Training vector, where `n_samples` is the number of samples and `n_features` is the number of features.
         y : array-like of shape (`n_samples`, `n_output`) or (`n_samples`,)
             Target (i.e., class labels) relative to X for classification or regression.
-        outer_cv : :class:`sklearn.model_selection._split.BaseCrossValidator`
+        outer_cv : `CV splitter`_
             Cross-validation object determining the cross-validation splitting strategy of the outer cross-validation.
-        inner_cv : :class:`sklearn.model_selection._split.BaseCrossValidator`
+        inner_cv : `CV splitter`_
             Cross-validation object determining the cross-validation splitting strategy of the grid-search.
         scoring : str, optional
             A str specifying the scoring metric to use for evaluation.
-        kwargs : additional arguments that are passed to
-            :func:`~biopsykit.model_selection.nested_cv.nested_cv_grid_search` and
-            :class:`sklearn.model_selection.GridSearchCV`
+        **kwargs :
+            additional arguments that are passed to
+            :func:`~biopsykit.classification.model_selection.nested_cv.nested_cv_grid_search` and
+            :class:`~sklearn.model_selection.GridSearchCV`
 
         """
         self.results = None

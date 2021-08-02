@@ -338,10 +338,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         sample_times : list of int or dict, optional
             list of sample times in minutes. Sample times are expected to be provided *relative* to the psychological
             test in the protocol (if present). Per convention, a sample collected **directly before** was collected at
-            time point $t = -1$, a sample collected **directly after** the test was collected at time point $t = 0$.
+            time point :math:`t = -1`, a sample collected **directly after** the test was collected at time point
+            :math`t = 0`.
         test_times : list of int, optional
             list with start and end time of psychological test in minutes. Per convention, the start of the test
-            should be at time point $t = 0$. ``test_times`` is also used to compute the **absolute** sample times
+            should be at time point :math:`t = 0`. ``test_times`` is also used to compute the **absolute** sample times
 
         """
         if isinstance(saliva_data, dict):
@@ -1072,7 +1073,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
               Default: 0.05
             * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
               or "Phases" (if only phases are present)
-            * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+            * ``ylabel``: label of y axis. Default: ":math:`\Delta HR [%]`"
             * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
               (see :meth:`~matplotlib.Axes.margin()` for further information), or ``None`` to automatically infer
               y axis limits

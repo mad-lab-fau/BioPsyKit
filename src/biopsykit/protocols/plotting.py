@@ -143,16 +143,16 @@ def hr_ensemble_plot(
 
         To style axes:
 
-        * ``xlabel``: label of x axis. Default: "Time [s]"
+        * ``xlabel``: label of x axis. Default: ":math:`Time [s]`"
         * ``xaxis_minor_tick_locator``: locator object to style x axis minor ticks. Default: 60 sec
-        * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+        * ``ylabel``: label of y axis. Default: ":math:`\Delta HR [\%]`"
         * ``ylims``: y axis limits. Default: ``None`` to automatically infer limits
 
         To style the annotations at the end of each phase:
 
         * ``end_phase_text``: string pattern to customize text at the end of phase with placeholder for phase name.
           Default: "{}"
-        * ``end_phase_line_color``: line color of vertical lines used to indicate end of phase. Default: #e0e0e0
+        * ``end_phase_line_color``: line color of vertical lines used to indicate end of phase. Default: "#e0e0e0"
         * ``end_phase_line_width``: line width of vertical lines used  to indicate end of phase. Default: 2.0
 
         To style legend:
@@ -163,9 +163,9 @@ def hr_ensemble_plot(
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
 
@@ -357,7 +357,7 @@ def hr_mean_plot(
     * only ``phase`` index level: plot phases over x axis
     * ``phase`` and ``subphase`` index levels: plot subphases over x axis, highlight phases as vertical spans
     * additionally: ``condition`` level: plot data of different conditions individually
-      (corresponds to ``hue`` parameter in :func:`biopsykit.plotting.lineplot`)
+      (corresponds to ``hue`` parameter in :func:`~biopsykit.plotting.lineplot`)
 
     Parameters
     ----------
@@ -374,7 +374,7 @@ def hr_mean_plot(
           Default: 0.05
         * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
           or "Phases" (if only phases are present).
-        * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+        * ``ylabel``: label of y axis. Default: ":math:`\Delta HR [%]`"
         * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
           (see :meth:`~matplotlib.axes.Axes.margins()` for further information), or ``None`` to automatically infer
           y axis limits.
@@ -387,9 +387,9 @@ def hr_mean_plot(
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
     See Also
@@ -518,7 +518,7 @@ def _hr_mean_style_x_axis(ax: plt.Axes, phase_dict: Dict[str, Sequence[str]], nu
 
     Parameters
     ----------
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
     phase_dict : dict
         dictionary with phase names (keys) and dict of subphases (values)
@@ -639,8 +639,8 @@ def saliva_plot(
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`,
-        :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`, or dict of such
+    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`, \
+           :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`, or dict of such
         Saliva data to plot. Must either be provided as ``SalivaRawDataFrame`` with raw saliva data per subject or
         as ``SalivaMeanSeDataFrame`` with columns ``mean`` and ``se`` computed per saliva sample. To plot data from
         multiple saliva types (maximum: 2) a dict can be passed (keys: saliva types, values: saliva data).
@@ -677,7 +677,7 @@ def saliva_plot(
           Default: 0.05
         * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present).
           or "Phases" (if only phases are present)
-        * ``ylabel``: label of y axis. Default: "$\Delta$HR [%]"
+        * ``ylabel``: label of y axis. Default: ":math:`\Delta HR [%]`"
         * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
           (see :meth:`~matplotlib.axes.Axes.margins()` for further information), or ``None`` to automatically infer
           y axis limits.
@@ -690,9 +690,9 @@ def saliva_plot(
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
     See Also
@@ -963,9 +963,9 @@ def saliva_feature_boxplot(
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matp~lotlib.axes.Axes`
         axes object
 
 
@@ -1026,7 +1026,7 @@ def saliva_multi_feature_boxplot(
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
     axs : list of :class:`matplotlib.axes.Axes`
         list of subplot axes objects

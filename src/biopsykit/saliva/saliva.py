@@ -19,6 +19,8 @@ from biopsykit.utils.datatype_helper import (
     SalivaFeatureDataFrame,
     is_saliva_mean_se_dataframe,
     SalivaMeanSeDataFrame,
+    _SalivaFeatureDataFrame,
+    _SalivaMeanSeDataFrame,
 )
 from biopsykit.utils.exceptions import DataFrameTransformationError
 from biopsykit.utils.functions import se
@@ -352,7 +354,7 @@ def auc(
     # check output
     is_saliva_feature_dataframe(out, saliva_type)
 
-    return out
+    return _SalivaFeatureDataFrame(out)
 
 
 def _auc_compute_auc_post(
@@ -466,7 +468,7 @@ def slope(
     # check output
     is_saliva_feature_dataframe(out, saliva_type)
 
-    return out
+    return _SalivaFeatureDataFrame(out)
 
 
 def standard_features(
@@ -568,7 +570,7 @@ def standard_features(
     # check output
     is_saliva_feature_dataframe(out, saliva_type)
 
-    return out
+    return _SalivaFeatureDataFrame(out)
 
 
 def mean_se(
@@ -630,7 +632,8 @@ def mean_se(
 
     data_mean_se = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
     is_saliva_mean_se_dataframe(data_mean_se)
-    return data_mean_se
+
+    return _SalivaMeanSeDataFrame(data_mean_se)
 
 
 def _mean_se_assert_group_cols(data: pd.DataFrame, group_cols: Sequence[str]):

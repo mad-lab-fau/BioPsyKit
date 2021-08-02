@@ -12,6 +12,8 @@ from biopsykit.utils.datatype_helper import (
     is_saliva_raw_dataframe,
     is_subject_condition_dataframe,
     SubjectConditionDataFrame,
+    _SubjectConditionDataFrame,
+    _SalivaRawDataFrame,
 )
 
 __all__ = ["load_saliva_plate", "save_saliva", "load_saliva_wide_format"]
@@ -143,7 +145,7 @@ def load_saliva_plate(
 
     is_saliva_raw_dataframe(df_saliva, saliva_type)
 
-    return df_saliva
+    return _SalivaRawDataFrame(df_saliva)
 
 
 def save_saliva(
@@ -151,7 +153,7 @@ def save_saliva(
     data: SalivaRawDataFrame,
     saliva_type: Optional[str] = "cortisol",
     as_wide_format: Optional[bool] = False,
-) -> None:
+):
     """Save saliva data to csv file.
 
     Parameters
@@ -280,7 +282,7 @@ def load_saliva_wide_format(
 
     is_saliva_raw_dataframe(data, saliva_type)
 
-    return data
+    return _SalivaRawDataFrame(data)
 
 
 def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_index_cols: Sequence[str]):
@@ -301,7 +303,7 @@ def _read_dataframe(file_path: Path, **kwargs):
     return pd.read_excel(file_path, **kwargs)
 
 
-def _check_num_samples(num_samples: int, num_subjects: int) -> None:
+def _check_num_samples(num_samples: int, num_subjects: int):
     """Check that number of imported samples is the same for all subjects.
 
     Parameters
@@ -325,7 +327,7 @@ def _check_num_samples(num_samples: int, num_subjects: int) -> None:
         )
 
 
-def _check_sample_times(num_samples: int, num_subjects: int, sample_times: Sequence[int]) -> None:
+def _check_sample_times(num_samples: int, num_subjects: int, sample_times: Sequence[int]):
     """Check that sample times have the correct number of samples and are monotonously increasing.
 
     Parameters
@@ -372,7 +374,7 @@ def _parse_condition_list(
         condition_list = condition_list.reset_index().set_index("subject")
 
     is_subject_condition_dataframe(condition_list)
-    return condition_list
+    return _SubjectConditionDataFrame(condition_list)
 
 
 def _apply_condition_list(

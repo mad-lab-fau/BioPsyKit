@@ -22,6 +22,8 @@ from biopsykit.utils.datatype_helper import (
     is_subject_condition_dataframe,
     CodebookDataFrame,
     is_codebook_dataframe,
+    _SubjectConditionDataFrame,
+    _CodebookDataFrame,
 )
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dtype
@@ -48,7 +50,7 @@ def load_time_log(
 ) -> pd.DataFrame:
     """Load time log information from file.
 
-    This function can be used to load a file containing 'time logs', i.e.,
+    This function can be used to load a file containing "time logs", i.e.,
     information about start and stop times of recordings or recording phases per subject.
 
     Parameters
@@ -80,9 +82,9 @@ def load_time_log(
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.FileExtensionError`
-        if file format is none of [.xls, .xlsx, .csv]
+        if file format is none of [".xls", ".xlsx", ".csv"]
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if ``continuous_time`` is ``False``, but 'start' and 'end' time columns of each phase do not match or
+        if ``continuous_time`` is ``False``, but "start" and "end" time columns of each phase do not match or
         none of these columns were found in the dataframe
 
     Examples
@@ -266,7 +268,7 @@ def load_subject_condition_list(
         is_subject_condition_dict(data)
         return data
     is_subject_condition_dataframe(data)
-    return data
+    return _SubjectConditionDataFrame(data)
 
 
 def _get_subject_col(data: pd.DataFrame, subject_col: str):
@@ -328,7 +330,7 @@ def load_questionnaire_data(
     Raises
     ------
     :class:`~biopsykit.utils.exceptions.FileExtensionError`
-        if file format is none of [.xls, .xlsx, .csv]
+        if file format is none of [".xls", ".xlsx", ".csv"]
 
     """
     # ensure pathlib
@@ -405,7 +407,7 @@ def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
     data = data.set_index("variable")
     is_codebook_dataframe(data)
 
-    return data
+    return _CodebookDataFrame(data)
 
 
 # def load_stroop_inquisit_data(folder_path: path_t, cols: Optional[Sequence[str]] = None) -> Dict[str, pd.DataFrame]:
@@ -555,7 +557,7 @@ def load_pandas_dict_excel(
     Raises
     ------
     :class:`~biopsykit.utils.exceptions.FileExtensionError`
-        if file is no Excel file (.xls or .xlsx)
+        if file is no Excel file (".xls" or ".xlsx")
 
     See Also
     --------
@@ -582,7 +584,7 @@ def write_pandas_dict_excel(
     data_dict: Dict[str, pd.DataFrame],
     file_path: path_t,
     index_col: Optional[bool] = True,
-) -> None:
+):
     """Write a dictionary with pandas dataframes to an Excel file.
 
     Parameters
@@ -618,7 +620,7 @@ def write_result_dict(
     result_dict: Dict[str, pd.DataFrame],
     file_path: path_t,
     index_name: Optional[str] = "subject",
-) -> None:
+):
     """Write dictionary with processing results (e.g. HR, HRV, RSA) to csv file.
 
     The keys in the dictionary should be the subject IDs (or any other identifier),

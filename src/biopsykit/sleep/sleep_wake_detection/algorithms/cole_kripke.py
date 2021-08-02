@@ -4,7 +4,7 @@ import pandas as pd
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.datatype_helper import SleepWakeDataFrame
+from biopsykit.utils.datatype_helper import SleepWakeDataFrame, _SleepWakeDataFrame
 
 
 class ColeKripke(_SleepWakeBase):
@@ -76,7 +76,7 @@ class ColeKripke(_SleepWakeBase):
         scores = self._rescore(scores)
 
         scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
-        return scores
+        return _SleepWakeDataFrame(scores)
 
     @staticmethod
     def _rescore(predictions: np.array) -> np.array:

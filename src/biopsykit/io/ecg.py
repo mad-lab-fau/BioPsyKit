@@ -41,7 +41,7 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
         if file in ``file_path`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         (if ``assert_format`` is ``True``)
     :exc:`~biopsykit.utils.exceptions.FileExtensionError`
-        if file is no Excel file (.xls or .xlsx)
+        if file is no Excel file (`.xls` or ``.xlsx``)
 
     See Also
     --------
@@ -198,7 +198,7 @@ def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str)
     return None
 
 
-def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t) -> None:
+def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t):
     """Write :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` to an Excel file.
 
     The :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` is a dictionary with heart rate time

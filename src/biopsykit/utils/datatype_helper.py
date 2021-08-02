@@ -125,6 +125,10 @@ class _SleepWakeDataFrame(pd.DataFrame):
     pass
 
 
+class _SleepEndpointDataFrame(pd.DataFrame):
+    pass
+
+
 SubjectConditionDataFrame = Union[_SubjectConditionDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
 
@@ -227,7 +231,7 @@ The following entries are, for instance, further possible:
 
 """
 
-SleepEndpointDataFrame = pd.DataFrame
+SleepEndpointDataFrame = Union[_SleepEndpointDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing sleep endpoints in a standardized format.
 
 The resulting dataframe must at least have a ``date`` index level,

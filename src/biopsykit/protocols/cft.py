@@ -48,7 +48,7 @@ class CFT(BaseProtocol):
             The duration of each phase is specified in seconds.
             Typical durations are: 60s for *Baseline*, 120s for *CFT*, 60s for *Recovery*
 
-            The start and duration of the CFT Exposure (``cft_start`` and ``cft_duration`` will be automatically
+            The start and duration of the CFT Exposure (``cft_start`` and ``cft_duration``) will be automatically
             extracted from the structure dictionary.
         **kwargs :
             additional parameters to be passed to ``CFT`` and its superclass, ``BaseProcessor``, such as:
@@ -163,7 +163,7 @@ class CFT(BaseProtocol):
     def baseline_hr(self, data: pd.DataFrame) -> float:
         """Compute mean heart rate during Baseline Interval.
 
-        The Baseline Interval is data in the interval [0, ``cft_start``].
+        The Baseline Interval is data in the interval [``0``, ``cft_start``].
 
         .. warning::
             If ``cft_start`` is 0, it is assumed that no Baseline is present and the first heart rate value
@@ -261,7 +261,7 @@ class CFT(BaseProtocol):
         * ``onset_hr``: heart rate at CFT onset in bpm
         * ``onset_hr_percent``: relative change of CFT onset heart rate compared to Baseline heart rate in percent.
         * ``onset_slope``: Slope between Baseline heart rate and CFT onset heart rate, computed as:
-          ``onset_slope = (onset_hr - baseline_hr) / onset_latency``
+          `onset_slope = (onset_hr - baseline_hr) / onset_latency`
 
 
         Parameters
@@ -574,9 +574,9 @@ class CFT(BaseProtocol):
 
         Returns
         -------
-        fig : :class:`matplotlib.figure.Figure`
+        fig : :class:`~matplotlib.figure.Figure`
             figure object
-        ax : :class:`matplotlib.axes.Axes`
+        ax : :class:`~matplotlib.axes.Axes`
             axes object
 
         """

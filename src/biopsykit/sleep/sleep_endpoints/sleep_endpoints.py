@@ -5,7 +5,7 @@ from numbers import Number
 
 import numpy as np
 import pandas as pd
-from biopsykit.utils.datatype_helper import SleepEndpointDict, SleepEndpointDataFrame
+from biopsykit.utils.datatype_helper import SleepEndpointDict, SleepEndpointDataFrame, _SleepEndpointDataFrame
 
 
 def compute_sleep_endpoints(
@@ -158,4 +158,4 @@ def endpoints_as_df(sleep_endpoints: SleepEndpointDict, subject_id: str) -> Opti
     df["wake_bouts"] = None
     df.at[df.index[0], "sleep_bouts"] = sleep_bouts
     df.at[df.index[0], "wake_bouts"] = wake_bouts
-    return df
+    return _SleepEndpointDataFrame(df)

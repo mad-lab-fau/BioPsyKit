@@ -17,6 +17,8 @@ from biopsykit.utils.datatype_helper import (
     is_ecg_raw_dataframe,
     is_ecg_result_dataframe,
     is_r_peak_dataframe,
+    _EcgResultDataFrame,
+    _RPeakDataFrame,
 )
 from biopsykit.utils.array_handling import (
     find_extrema_in_radius,
@@ -295,7 +297,9 @@ class EcgProcessor(_BaseProcessor):
             self.heart_rate[name] = heart_rate
             self.rpeaks[name] = rpeaks
 
-    def _ecg_process(self, data: EcgRawDataFrame, method: Optional[str] = None) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def _ecg_process(
+        self, data: EcgRawDataFrame, method: Optional[str] = None
+    ) -> Tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Private method for ECG processing.
 
         Parameters
@@ -353,7 +357,7 @@ class EcgProcessor(_BaseProcessor):
         is_ecg_result_dataframe(ecg_result)
         is_r_peak_dataframe(rpeaks)
 
-        return ecg_result, rpeaks
+        return _EcgResultDataFrame(ecg_result), _RPeakDataFrame(rpeaks)
 
     @classmethod
     def outlier_corrections(cls) -> Sequence[str]:
@@ -577,7 +581,7 @@ class EcgProcessor(_BaseProcessor):
 
         _check_dataframe_format(ecg_signal, rpeaks)
 
-        return ecg_signal, rpeaks
+        return _EcgResultDataFrame(ecg_signal), _RPeakDataFrame(rpeaks)
 
     @classmethod
     def correct_rpeaks(
@@ -602,7 +606,7 @@ class EcgProcessor(_BaseProcessor):
             :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg` since R peak indices won't match.
 
         .. note ::
-            In BioPsyKit this function is **not** applied to the detected R peaks during ECG signal processing but
+            In `BioPsyKit` this function is **not** applied to the detected R peaks during ECG signal processing but
             **only** used right before passing R peaks to :meth:`~biopsykit.signals.ecg.EcgProcessor.hrv_process()`.
 
 
@@ -1117,7 +1121,7 @@ def _correct_outlier_correlation(rpeaks: pd.DataFrame, bool_mask: np.array, corr
     corr_thres : float
         threshold for cross-correlation coefficient. Beats below that threshold will be marked as outlier
     **kwargs : additional parameters required for this outlier function, such as:
-    
+
         * ecg_signal :class:`~pandas.DataFrame`
           dataframe with processed ECG signal. Output from :meth:`biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         * sampling_rate : float

@@ -27,6 +27,9 @@ from biopsykit.utils.datatype_helper import (
     is_merged_study_data_dict,
     is_subject_data_dict,
     is_study_data_dict,
+    MeanSeDataFrame,
+    _MeanSeDataFrame,
+    is_mean_se_dataframe,
 )
 
 
@@ -786,7 +789,7 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
     return ret
 
 
-def mean_se_per_phase(data: pd.DataFrame) -> pd.DataFrame:
+def mean_se_per_phase(data: pd.DataFrame) -> MeanSeDataFrame:
     """Compute mean and standard error over all subjects in a dataframe.
 
     .. note::
@@ -812,4 +815,7 @@ def mean_se_per_phase(data: pd.DataFrame) -> pd.DataFrame:
     group_cols = list(data.index.names)
     group_cols.remove("subject")
 
-    return data.groupby(group_cols).agg([np.mean, se])
+    data = data.groupby(group_cols).agg([np.mean, se])
+    is_mean_se_dataframe(data)
+
+    return _MeanSeDataFrame(data)

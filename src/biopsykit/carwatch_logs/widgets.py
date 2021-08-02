@@ -29,7 +29,7 @@ def log_file_subject_dropdown(
     ----------
     base_path : :class:`pathlib.Path` or str
         base path to log files from all subjects. log files are expected to be either stored in one folder
-        (``input_type`` "file") or in subfolders per subject (``input_type`` "folder")
+        (``input_type`` == "file") or in subfolders per subject (``input_type`` == "folder")
     input_type : {"file", "folder"}, optional
         string specifying how log data is present: .csv files, all in one folder ("file") or .csv files, all in
         separate subfolders per subject ("folder")
@@ -44,7 +44,7 @@ def log_file_subject_dropdown(
 
     Returns
     -------
-    :class:`ipywidgets.widgets.widget_selection.Dropdown`
+    :class:`~ipywidgets.widgets.widget_selection.Dropdown`
         dropdown widget
 
     """
@@ -98,14 +98,14 @@ def action_dropdown_widget(
 
     Parameters
     ----------
-    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class`~pandas.DataFrame`
+    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class:`~pandas.DataFrame`
         log data as ``LogData`` object or as dataframe
     callback : function, optional
         function reference to be used as callback function or ``None`` for no callback. Default: ``None``
 
     Returns
     -------
-    :class:`ipywidgets.widgets.widget_selection.Dropdown`
+    :class:`~ipywidgets.widgets.widget_selection.Dropdown`
         dropdown widget
 
     """
@@ -128,14 +128,14 @@ def day_dropdown_widget(data: Union[LogData, pd.DataFrame], callback: Optional[C
 
     Parameters
     ----------
-    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class`~pandas.DataFrame`
+    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class:`~pandas.DataFrame`
         log data as ``LogData`` object or as dataframe
     callback : function, optional
         function reference to be used as callback function or ``None`` for no callback. Default: ``None``
 
     Returns
     -------
-    :class:`ipywidgets.widgets.widget_selection.Dropdown`
+    :class:`~ipywidgets.widgets.widget_selection.Dropdown`
         dropdown widget
 
     """

@@ -87,9 +87,9 @@ def ecg_plot(
 
         * ``figsize``: figure size
         * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
-        * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`~matplotlib.axes.Axes.legend`.
+        * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`matplotlib.axes.Axes.legend`.
         * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` parameter to
-          :meth:`~matplotlib.axes.Axes.legend`.
+          :meth:`matplotlib.axes.Axes.legend`.
 
 
     Returns
@@ -302,9 +302,9 @@ def hr_plot(
 
         * ``figsize``: Figure size
         * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
-        * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`~matplotlib.axes.Axes.legend`.
+        * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`matplotlib.axes.Axes.legend`.
         * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` parameter to
-          :meth:`~matplotlib.axes.Axes.legend`.
+          :meth:`matplotlib.axes.Axes.legend`.
         * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
 
@@ -446,9 +446,9 @@ def hrv_plot(
 
         * ``figsize``: Figure size
         * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
-        * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`~matplotlib.axes.Axes.legend`.
+        * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`matplotlib.axes.Axes.legend`.
         * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` parameter to
-          :meth:`~matplotlib.axes.Axes.legend`.
+          :meth:`matplotlib.axes.Axes.legend`.
         * ``ax``: Pre-existing axes for the plot. Otherwise, a new figure and axes object are created and returned.
 
     Returns

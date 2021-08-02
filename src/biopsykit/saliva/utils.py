@@ -7,7 +7,7 @@ from datetime import time, datetime
 import pandas as pd
 import numpy as np
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_index_levels
-from biopsykit.utils.datatype_helper import SalivaRawDataFrame, SalivaFeatureDataFrame
+from biopsykit.utils.datatype_helper import SalivaRawDataFrame, SalivaFeatureDataFrame, _SalivaRawDataFrame
 
 __all__ = [
     "saliva_feature_wide_to_long",
@@ -250,7 +250,7 @@ def _remove_s0(data: SalivaRawDataFrame) -> SalivaRawDataFrame:
     data = data.drop(0, level="sample", errors="ignore")
     data = data.drop("0", level="sample", errors="ignore")
     data = data.drop("S0", level="sample", errors="ignore")
-    return data
+    return _SalivaRawDataFrame(data)
 
 
 def _check_sample_times(sample_times: np.array) -> None:

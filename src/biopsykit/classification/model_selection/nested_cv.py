@@ -35,11 +35,11 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
         Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values,
         or a list of such dictionaries, in which case the grids spanned by each dictionary in the list are explored.
         This enables searching over any sequence of parameter settings.
-    pipeline : :class:`sklearn.pipeline.Pipeline`
+    pipeline : :class:`~sklearn.pipeline.Pipeline`
         Pipeline of sklearn transforms and estimators to perform grid-search on.
-    outer_cv : :class:`sklearn.model_selection._split.BaseCrossValidator`
+    outer_cv : `CV splitter <https://scikit-learn.org/stable/glossary.html#term-CV-splitter>`_
         Cross-validation object determining the cross-validation splitting strategy of the outer cross-validation.
-    inner_cv : :class:`sklearn.model_selection._split.BaseCrossValidator`
+    inner_cv : `CV splitter`_
         Cross-validation object determining the cross-validation splitting strategy of the grid-search.
     groups : array-like of shape (`n_samples`,)
         Group labels for the samples used while splitting the dataset into train/test set. Only used in conjunction

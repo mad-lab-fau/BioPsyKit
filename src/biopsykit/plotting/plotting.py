@@ -19,7 +19,7 @@ def lineplot(
 ) -> Tuple[plt.Figure, plt.Axes]:
     """Draw a line plot with error bars with the possibility of several semantic groupings.
 
-    This is an extension to seaborn's lineplot function (:func:`~seaborn.lineplot`).
+    This is an extension to seaborn's lineplot function (:func:`seaborn.lineplot`).
     It offers the same interface, but several improvements:
 
     * Data points are not only connected as line, but are also drawn with marker.
@@ -75,16 +75,16 @@ def lineplot(
         * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
         * ``err_kws``: additional parameters to control the aesthetics of the error bars.
           The ``err_kws`` are passed down to :meth:`matplotlib.axes.Axes.errorbar` or
-          :meth:`matplotlib.axes.fill_between`, depending on ``err_style``. Parameters include:
+          :meth:`matplotlib.axes.Axes.fill_between`, depending on ``err_style``. Parameters include:
 
           * ``capsize``: length of error bar caps in points
 
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
 
@@ -198,9 +198,9 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
 
@@ -293,7 +293,7 @@ def feature_boxplot(
 
         * ``pvalue_thresholds``: list of p value thresholds for statistical annotations. The default annotation is:
           '*': 0.01 <= p < 0.05, '**': 0.001 <= p < 0.01, `'***'`: p < 0.001
-          (``[[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]``)
+          (:math:`[[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]`)
 
     **kwargs
         additional arguments that are passed down to :func:`~seaborn.boxplot`, for example:
@@ -304,9 +304,9 @@ def feature_boxplot(
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`matplotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
 
@@ -427,9 +427,9 @@ def multi_feature_boxplot(
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    axs : list of :class:`matplotlib.axes.Axes`
+    axs : list of :class:`~matplotlib.axes.Axes`
         list of subplot axes objects
 
 

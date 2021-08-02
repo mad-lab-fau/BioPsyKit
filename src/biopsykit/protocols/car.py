@@ -45,9 +45,9 @@ class CAR(BaseProtocol):
 
         Returns
         -------
-        fig : :class:`matplotlib.figure.Figure`
+        fig : :class:`~matplotlib.figure.Figure`
             figure object
-        ax : :class:`matplotlib.axes.Axes`
+        ax : :class:`~matplotlib.axes.Axes`
             axes object
 
 

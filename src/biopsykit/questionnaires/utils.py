@@ -351,7 +351,7 @@ def convert_scale(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame` or :class:`pandas.Series`
+    data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         questionnaire data to invert
     offset : int
         offset to add to questionnaire items
@@ -558,7 +558,7 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject.
     quest_name : str
         questionnaire name, i.e., common name for each column to be converted into long-format.
