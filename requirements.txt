@@ -16,3 +16,4 @@ setuptools >= 54.2.0
 statannot >= 0.2.3
 tqdm >= 4.55
 typing_extensions >= 3.7
+joblib >= 1.0

@@ -1,0 +1,7 @@
+﻿subject,condition,ABIMS_1_1,ABIMS_1_4,ABIMS_1_5,ABIMS_1_7
+Vp01,Control,2,2,2,2
+Vp02,Intervention,1,1,2,1
+Vp03,Control,2,1,2,1
+Vp04,Intervention,2,2,2,2
+Vp05,Control,1,1,2,1
+Vp06,Intervention,2,1,2,1

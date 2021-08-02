@@ -637,7 +637,7 @@ def saliva_plot(
 
 
     Parameters
-    ---------- 
+    ----------
     data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`,
         :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`, or dict of such
         Saliva data to plot. Must either be provided as ``SalivaRawDataFrame`` with raw saliva data per subject or
@@ -683,7 +683,7 @@ def saliva_plot(
 
         To style the vertical span highlighting the psychological test in the plot:
 
-        * ``test_text``: title of test
+        * ``test_title``: title of test
         * ``test_color``: color of vspan. Default: #9e9e9e
         * ``test_alpha``: transparency value of vspan: Default: 0.5
 
@@ -715,7 +715,7 @@ def saliva_plot(
     marker = kwargs.pop("marker", "o")
     colormap = kwargs.pop("colormap", None)
     for i, key in enumerate(data):
-        _saliva_plot_extract_style_params(key, linestyle, marker, colormap, **kwargs)
+        kwargs = _saliva_plot_extract_style_params(key, linestyle, marker, colormap, **kwargs)
         _saliva_plot(
             data=data[key],
             saliva_type=key,
@@ -752,6 +752,8 @@ def _saliva_plot_extract_style_params(
     cmap = _saliva_plot_get_plot_param(colormap, key)
     if colormap is not None:
         kwargs.setdefault("colormap", cmap)
+
+    return kwargs
 
 
 def _saliva_plot_hue_style(data: pd.DataFrame):
@@ -965,7 +967,7 @@ def saliva_feature_boxplot(
     ax : :class:`matplotlib.axes.Axes`
         axes object
 
-    
+
     See Also
     --------
     :func:`~biopsykit.plotting.plotting.feature_boxplot`

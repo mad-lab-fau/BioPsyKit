@@ -5,6 +5,7 @@ from unittest import TestCase
 
 import pytest
 import pandas as pd
+from biopsykit.questionnaires.questionnaires import resilience, ie_4, tb, wpi, idq_pre_scan, idq_post_scan
 from biopsykit.questionnaires.utils import convert_scale
 from biopsykit.utils.exceptions import ValidationError, ValueRangeError
 
@@ -111,13 +112,13 @@ class TestQuestionnaires:
     @pytest.mark.parametrize(
         "data, columns, result",
         [
-            (data_filtered_correct(regex=r"ABI\d"), None, result_filtered("ABI_")),
+            (data_filtered_correct(regex=r"ABI\d"), None, result_filtered(regex="ABI_(VIG|KOV)")),
             (
                 data_complete_correct(),
                 ["ABI{}_{}".format(i, j) for i, j in product(range(1, 9), range(1, 11))],
-                result_filtered("ABI_"),
+                result_filtered(regex="ABI_(VIG|KOV)"),
             ),
-            (convert_scale(data_filtered_wrong_range(regex=r"ABI\d"), 1), None, result_filtered("ABI_")),
+            (convert_scale(data_filtered_wrong_range(regex=r"ABI\d"), 1), None, result_filtered(regex="ABI_(VIG|KOV)")),
         ],
     )
     def test_abi(self, data, columns, result):
@@ -960,6 +961,63 @@ class TestQuestionnaires:
     )
     def test_hads(self, data, columns, subscales, result):
         data_out = hads(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("IE4"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("IE4"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("IE4"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("IE4"),
+                ["IE4_{}".format(i) for i in range(1, 4)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("IE4"),
+                ["IE4_{}".format(i) for i in range(1, 5)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("IE4"),
+                ["IE4_{:02d}".format(i) for i in range(1, 5)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+        ],
+    )
+    def test_ie_4_raises(self, data, columns, subscales, expected):
+        with expected:
+            ie_4(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("IE4"), None, None, result_filtered("IE4")),
+            (
+                data_filtered_correct("IE4"),
+                ["IE4_{}".format(i) for i in range(1, 5)],
+                None,
+                result_filtered("IE4"),
+            ),
+            (convert_scale(data_filtered_wrong_range("IE4"), 1), None, None, result_filtered("IE4")),
+            (
+                data_subscale("ie4"),
+                None,
+                {
+                    "Extern": [1, 2],
+                },
+                result_filtered("IE4_Extern"),
+            ),
+        ],
+    )
+    def test_ie4(self, data, columns, subscales, result):
+        data_out = ie_4(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
 
@@ -2009,6 +2067,55 @@ class TestQuestionnaires:
         assert_frame_equal(data_out, result)
 
     @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("RS_"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("RS_"), 1), None, does_not_raise()),
+            (data_filtered_correct("RS_"), None, does_not_raise()),
+            (
+                data_filtered_correct("RS_"),
+                ["RS_{:01d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("RS_"),
+                ["RS{}".format(i) for i in range(1, 12)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("RS_"),
+                ["RS_{:01d}".format(i) for i in range(1, 12)],
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_resilience_raises(self, data, columns, expected):
+        with expected:
+            resilience(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct(regex=r"^RS_\d+"), None, result_filtered(regex=r"^RS$")),
+            (
+                data_filtered_correct(regex=r"^RS_\d+"),
+                ["RS_{:01d}".format(i) for i in range(1, 12)],
+                result_filtered(regex=r"^RS$"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range(regex=r"^RS_\d+"), 1),
+                None,
+                result_filtered(regex=r"^RS$"),
+            ),
+        ],
+    )
+    def test_resilience(self, data, columns, result):
+        data_out = resilience(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
         "data, columns, subscales, expected",
         [
             (data_complete_correct(), None, None, pytest.raises(ValidationError)),
@@ -2868,6 +2975,78 @@ class TestQuestionnaires:
         assert_frame_equal(data_out, result)
 
     @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("TB"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("TB"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("TB"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("TB"),
+                ["TB_{}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("TB"),
+                ["TB{:02d}".format(i) for i in range(1, 13)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("TB"),
+                ["TB_{}".format(i) for i in range(1, 13)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("TB"),
+                None,
+                {"TechComp": [5, 6, 7, 8]},
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_tb_raises(self, data, columns, subscales, expected):
+        with expected:
+            tb(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("TB"), None, None, result_filtered("TB")),
+            (
+                data_filtered_correct("TB"),
+                ["TB_{}".format(i) for i in range(1, 13)],
+                None,
+                result_filtered("TB"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("TB"), 1),
+                None,
+                None,
+                result_filtered("TB"),
+            ),
+            (
+                data_filtered_correct("TB"),
+                None,
+                {"TechAcc": [1, 2, 3, 4], "TechComp": [5, 6, 7, 8], "TechControl": [9, 10, 11, 12]},
+                result_filtered("TB"),
+            ),
+            (
+                data_subscale("tb"),
+                None,
+                {"TechComp": [1, 2, 3, 4]},
+                result_filtered(regex="TB_TechComp"),
+            ),
+        ],
+    )
+    def test_tb(self, data, columns, subscales, result):
+        data_out = tb(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
         "data, columns, expected",
         [
             (data_complete_correct(), None, pytest.raises(ValidationError)),
@@ -3109,19 +3288,19 @@ class TestQuestionnaires:
             (data_filtered_correct("SAI"), None, ["state"], does_not_raise()),
             (
                 data_filtered_correct("SAI"),
-                ["T0_SAI_{:01d}".format(i) for i in range(1, 15)],
+                ["SAI_{:01d}".format(i) for i in range(1, 15)],
                 ["state"],
                 pytest.raises(ValidationError),
             ),
             (
                 data_filtered_correct("SAI"),
-                ["T0_SAI_{:01d}".format(i) for i in range(1, 11)],
+                ["SAI_{:01d}".format(i) for i in range(1, 11)],
                 ["state"],
                 does_not_raise(),
             ),
             (
                 data_filtered_correct("SAI"),
-                ["T0_SAI_{:02d}".format(i) for i in range(1, 10)],
+                ["SAI_{:02d}".format(i) for i in range(1, 10)],
                 ["state"],
                 pytest.raises(ValidationError),
             ),
@@ -3143,7 +3322,7 @@ class TestQuestionnaires:
             (data_filtered_correct("SAI"), None, result_filtered("SAI"), ["state"]),
             (
                 data_filtered_correct("SAI"),
-                ["T0_SAI_{:01d}".format(i) for i in range(1, 11)],
+                ["SAI_{:01d}".format(i) for i in range(1, 11)],
                 result_filtered("SAI"),
                 ["state"],
             ),
@@ -3169,19 +3348,19 @@ class TestQuestionnaires:
             (data_filtered_correct("TAI"), None, ["trait"], does_not_raise()),
             (
                 data_filtered_correct("TAI"),
-                ["T2_TAI_{:01d}".format(i) for i in range(1, 15)],
+                ["TAI_{:01d}".format(i) for i in range(1, 15)],
                 ["trait"],
                 pytest.raises(ValidationError),
             ),
             (
                 data_filtered_correct("TAI"),
-                ["T2_TAI_{:01d}".format(i) for i in range(1, 11)],
+                ["TAI_{:01d}".format(i) for i in range(1, 11)],
                 ["trait"],
                 does_not_raise(),
             ),
             (
                 data_filtered_correct("TAI"),
-                ["T2_TAI_{:02d}".format(i) for i in range(1, 10)],
+                ["TAI_{:02d}".format(i) for i in range(1, 10)],
                 ["trait"],
                 pytest.raises(ValidationError),
             ),
@@ -3203,7 +3382,7 @@ class TestQuestionnaires:
             (data_filtered_correct("TAI"), None, result_filtered("TAI"), ["trait"]),
             (
                 data_filtered_correct("TAI"),
-                ["T2_TAI_{:01d}".format(i) for i in range(1, 11)],
+                ["TAI_{:01d}".format(i) for i in range(1, 11)],
                 result_filtered("TAI"),
                 ["trait"],
             ),
@@ -3220,904 +3399,1022 @@ class TestQuestionnaires:
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
 
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, expected",
-    #     [
-    #         (data_complete_correct(), None, None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("CLQ"), None, None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("CLQ"), 1), None, None, does_not_raise()),
-    #         (data_filtered_correct("CLQ"), None, None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("CLQ"),
-    #             ["T2_CLQ_{:01d}".format(i) for i in range(1, 28)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("CLQ"), ["T2_CLQ_{:01d}".format(i) for i in range(1, 27)], None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("CLQ"),
-    #             ["T2_CLQ_{:02d}".format(i) for i in range(1, 27)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("CLQ"),
-    #             None,
-    #             {
-    #                 "SS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-    #             },
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_clq_raises(self, data, columns, subscales, expected):
-    #     with expected:
-    #         clq(data, columns, subscales)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, result",
-    #     [
-    #         (data_filtered_correct("CLQ"), None, None, result_filtered("CLQ")),
-    #         (
-    #             data_filtered_correct("CLQ"),
-    #             ["T2_CLQ_{:01d}".format(i) for i in range(1, 27)],
-    #             None,
-    #             result_filtered("CLQ"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("CLQ"), 1),
-    #             None,
-    #             None,
-    #             result_filtered("CLQ"),
-    #         ),
-    #         (
-    #             data_subscale("CLQ"),
-    #             None,
-    #             {"SS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]},
-    #             result_filtered("CLQ_SS"),
-    #         ),
-    #     ],
-    # )
-    # def test_clq(self, data, columns, subscales, result):
-    #     data_out = clq(data, columns, subscales)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, expected",
-    #     [
-    #         (data_complete_correct(), None, None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("SOP"), None, None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("SOP"), 1), None, None, does_not_raise()),
-    #         (data_filtered_correct("SOP"), None, None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("SOP"),
-    #             ["T2_SOP_{:01d}".format(i) for i in range(1, 11)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("SOP"), ["T2_SOP_{:01d}".format(i) for i in range(1, 10)], None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("SOP"),
-    #             ["T2_SOP_{:02d}".format(i) for i in range(1, 11)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("SOP"),
-    #             None,
-    #             {
-    #                 "SW": [1, 3, 5, 7, 8],
-    #             },
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_sop_raises(self, data, columns, subscales, expected):
-    #     with expected:
-    #         sop(data, columns, subscales)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, result",
-    #     [
-    #         (data_filtered_correct("SOP"), None, None, result_filtered("SOP")),
-    #         (
-    #             data_filtered_correct("SOP"),
-    #             ["T2_SOP_{:01d}".format(i) for i in range(1, 10)],
-    #             None,
-    #             result_filtered("SOP"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("SOP"), 1),
-    #             None,
-    #             None,
-    #             result_filtered("SOP"),
-    #         ),
-    #         (
-    #             data_subscale("SOP"),
-    #             None,
-    #             {"SW": [1, 2, 3, 4, 5]},
-    #             result_filtered("SOP_SW"),
-    #         ),
-    #     ],
-    # )
-    # def test_sop(self, data, columns, subscales, result):
-    #     data_out = sop(data, columns, subscales)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, expected",
-    #     [
-    #         (data_complete_correct(), None, None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("T2_BFI"), None, None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("T2_BFI"), 1), None, None, does_not_raise()),
-    #         (data_filtered_correct("T2_BFI"), None, None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("T2_BFI"),
-    #             ["T2_BFI_{:01d}".format(i) for i in range(1, 12)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("T2_BFI"),
-    #             [f"T2_BFI_{l}{i}" for l in ["N", "O", "E", "V", "G"] for i in range(1, 3)],
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #         (
-    #             data_filtered_correct("T2_BFI"),
-    #             ["T2_BFI_{:02d}".format(i) for i in range(1, 11)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("T2_BFI"),
-    #             None,
-    #             {
-    #                 "E": [1, 2],
-    #             },
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_bfi_10_raises(self, data, columns, subscales, expected):
-    #     with expected:
-    #         bfi_10(data, columns, subscales)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, result",
-    #     [
-    #         (data_filtered_correct("T2_BFI"), None, None, result_filtered("BFI10")),
-    #         (
-    #             data_filtered_correct("T2_BFI"),
-    #             [f"T2_BFI_{l}{i}" for i in range(1, 3) for l in ["E", "V", "G", "N", "O"]],
-    #             None,
-    #             result_filtered("BFI10"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("T2_BFI"), 1),
-    #             None,
-    #             None,
-    #             result_filtered("BFI10"),
-    #         ),
-    #         (
-    #             data_subscale("BFI10"),
-    #             None,
-    #             {"E": [1, 2]},
-    #             result_filtered("BFI10_E"),
-    #         ),
-    #     ],
-    # )
-    # def test_bfi_10(self, data, columns, subscales, result):
-    #     data_out = bfi_10(data, columns, subscales)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, expected",
-    #     [
-    #         (data_complete_correct(), None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("MKHAI"), None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("MKHAI"), 1), None, does_not_raise()),
-    #         (data_filtered_correct("MKHAI"), None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("MKHAI"),
-    #             ["T2_MKAHI_{:01d}".format(i) for i in range(1, 16)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("MKHAI"), ["T2_MKHAI_{:01d}".format(i) for i in range(1, 15)], does_not_raise()),
-    #         (
-    #             data_filtered_correct("MKHAI"),
-    #             ["T2_MKHAI_{:02d}".format(i) for i in range(1, 15)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("MKHAI"),
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_mk_hai_raises(self, data, columns, expected):
-    #     with expected:
-    #         data = convert_scale(data, offset=1)
-    #         mk_hai(data, columns)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, result",
-    #     [
-    #         (data_filtered_correct("MKHAI"), None, result_filtered("MKHAI")),
-    #         (
-    #             data_filtered_correct("MKHAI"),
-    #             ["T2_MKHAI_{:01d}".format(i) for i in range(1, 15)],
-    #             result_filtered("MKHAI"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("MKHAI"), 1),
-    #             None,
-    #             result_filtered("MKHAI"),
-    #         ),
-    #     ],
-    # )
-    # def test_mk_hai(self, data, columns, result):
-    #     data = convert_scale(data, offset=1)
-    #     data_out = mk_hai(data, columns)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, expected",
-    #     [
-    #         (data_complete_correct(), None, None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("SWB"), None, None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("SWB"), 1), None, None, does_not_raise()),
-    #         (data_filtered_correct("SWB"), None, None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("SWB"),
-    #             ["T2_SWB_{:01d}".format(i) for i in range(1, 15)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("SWB"), ["T2_SWB_{:01d}".format(i) for i in range(1, 14)], None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("SWB"),
-    #             ["T2_SWB_{:02d}".format(i) for i in range(1, 14)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("SWB"),
-    #             None,
-    #             {
-    #                 "SN": [2, 5, 8, 10, 11, 13],
-    #             },
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_swb_raises(self, data, columns, subscales, expected):
-    #     with expected:
-    #         swb(data, columns, subscales)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, result",
-    #     [
-    #         (data_filtered_correct("SWB"), None, None, result_filtered("SWB")),
-    #         (
-    #             data_filtered_correct("SWB"),
-    #             ["T2_SWB_{:01d}".format(i) for i in range(1, 14)],
-    #             None,
-    #             result_filtered("SWB"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("SWB"), 1),
-    #             None,
-    #             None,
-    #             result_filtered("SWB"),
-    #         ),
-    #         (
-    #             data_subscale("SWB"),
-    #             None,
-    #             {"SN": [1, 2, 3, 4, 5, 6]},
-    #             result_filtered("SWB_SN"),
-    #         ),
-    #     ],
-    # )
-    # def test_swb(self, data, columns, subscales, result):
-    #     data_out = swb(data, columns, subscales)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, expected",
-    #     [
-    #         (data_complete_correct(), None, None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("ABIMS"), None, None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("ABIMS"), 1), None, None, does_not_raise()),
-    #         (data_filtered_correct("ABIMS"), None, None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("ABIMS"),
-    #             ["T2_ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 6) for j in range(1, 9)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("ABIMS"),
-    #             ["T2_ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 5) for j in range(1, 9)],
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #         (
-    #             data_filtered_correct("ABIMS"),
-    #             ["T2_ABIMS_{:02d}_{:01d}".format(i, j) for i in range(1, 6) for j in range(1, 9)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("ABIMS"),
-    #             None,
-    #             {
-    #                 "1_K": [1, 4, 5, 7],
-    #             },
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_abi_ms_raises(self, data, columns, subscales, expected):
-    #     with expected:
-    #         data = convert_scale(data, offset=1)
-    #         abi_ms(data, columns, subscales)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, result",
-    #     [
-    #         (data_filtered_correct("ABIMS"), None, None, result_filtered("ABIMS")),
-    #         (
-    #             data_filtered_correct("ABIMS"),
-    #             ["T2_ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 5) for j in range(1, 9)],
-    #             None,
-    #             result_filtered("ABIMS"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("ABIMS"), 1),
-    #             None,
-    #             None,
-    #             result_filtered("ABIMS"),
-    #         ),
-    #         (
-    #             data_subscale("ABIMS"),
-    #             None,
-    #             {"1_K": [1, 2, 3, 4]},
-    #             result_filtered("ABIMS_1_K"),
-    #         ),
-    #     ],
-    # )
-    # def test_abims(self, data, columns, subscales, result):
-    #     data.replace({1.5: 1}, inplace=True)
-    #     data = convert_scale(data, offset=1)
-    #     data_out = abi_ms(data, columns, subscales)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, expected",
-    #     [
-    #         (data_complete_correct(), None, None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("ASI"), None, None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("ASI"), 1), None, None, does_not_raise()),
-    #         (data_filtered_correct("ASI"), None, None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("ASI"),
-    #             ["T2_ASI_{:01d}".format(i) for i in range(1, 14)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("ASI"), ["T2_ASI_{:01d}".format(i) for i in range(1, 13)], None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("ASI"),
-    #             ["T2_ASI_{:02d}".format(i) for i in range(1, 13)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("ASI"),
-    #             None,
-    #             {
-    #                 "BSM": [3, 4, 7, 8, 12],
-    #             },
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_asi_raises(self, data, columns, subscales, expected):
-    #     with expected:
-    #         data = convert_scale(data, offset=1)
-    #         asi(data, columns, subscales)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, result",
-    #     [
-    #         (data_filtered_correct("ASI"), None, None, result_filtered("ASI")),
-    #         (
-    #             data_filtered_correct("ASI"),
-    #             ["T2_ASI_{:01d}".format(i) for i in range(1, 13)],
-    #             None,
-    #             result_filtered("ASI"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("ASI"), 1),
-    #             None,
-    #             None,
-    #             result_filtered("ASI"),
-    #         ),
-    #         (
-    #             data_subscale("ASI"),
-    #             None,
-    #             {"BSM": [1, 2, 3, 4, 5]},
-    #             result_filtered("ASI_BSM"),
-    #         ),
-    #     ],
-    # )
-    # def test_asi(self, data, columns, subscales, result):
-    #     data = convert_scale(data, offset=1)
-    #     data_out = asi(data, columns, subscales)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, expected",
-    #     [
-    #         (data_complete_correct(), None, None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("SCI"), None, None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("SCI"), 1), None, None, does_not_raise()),
-    #         (data_filtered_correct("SCI"), None, None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("SCI"),
-    #             ["T2_SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 6) for j in range(1, 8)]
-    #             + ["T2_SCI_4_{:01d}".format(i) for i in range(8, 14)]
-    #             + ["T2_SCI_5_{:01d}".format(i) for i in range(1, 21)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("SCI"),
-    #             ["T2_SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 5) for j in range(1, 8)]
-    #             + ["T2_SCI_4_{:01d}".format(i) for i in range(8, 14)]
-    #             + ["T2_SCI_5_{:01d}".format(i) for i in range(1, 21)],
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #         (
-    #             data_filtered_correct("SCI"),
-    #             ["T2_SCI_{:01d}_{:02d}".format(i, j) for i in range(1, 5) for j in range(1, 8)]
-    #             + ["T2_SCI_4_{:01d}".format(i) for i in range(8, 14)]
-    #             + ["T2_SCI_5_{:01d}".format(i) for i in range(1, 21)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("SCI"),
-    #             None,
-    #             {
-    #                 "Uncertainty": [1, 2, 3, 4, 5, 6, 7],
-    #             },
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_strategies_questionnaire_raises(self, data, columns, subscales, expected):
-    #     with expected:
-    #         strategies_questionnaire(data, columns, subscales)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, result",
-    #     [
-    #         (data_filtered_correct("SCI"), None, None, result_filtered("SCI")),
-    #         (
-    #             data_filtered_correct("SCI"),
-    #             ["T2_SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 5) for j in range(1, 8)]
-    #             + ["T2_SCI_4_{:01d}".format(i) for i in range(8, 14)]
-    #             + ["T2_SCI_5_{:01d}".format(i) for i in range(1, 21)],
-    #             None,
-    #             result_filtered("SCI"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("SCI"), 1),
-    #             None,
-    #             None,
-    #             result_filtered("SCI"),
-    #         ),
-    #         (
-    #             data_subscale("SCI"),
-    #             None,
-    #             {"1_ges": [1, 2, 3, 4, 5, 6, 7]},
-    #             result_filtered("SCI_1_ges"),
-    #         ),
-    #     ],
-    # )
-    # def test_strategies_questionnaire(self, data, columns, subscales, result):
-    #     data_out = strategies_questionnaire(data, columns, subscales)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, expected",
-    #     [
-    #         (data_complete_correct(), None, None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("T2_ERQ"), None, None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("T2_ERQ"), 1), None, None, does_not_raise()),
-    #         (data_filtered_correct("T2_ERQ"), None, None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("T2_ERQ"),
-    #             ["T2_ERQ_{:01d}".format(i) for i in range(1, 12)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("T2_ERQ"),
-    #             ["T2_ERQ_{:01d}".format(i) for i in range(1, 11)],
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #         (
-    #             data_filtered_correct("T2_ERQ"),
-    #             ["T2_ERQ_{:02d}".format(i) for i in range(1, 11)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("T2_ERQ"),
-    #             None,
-    #             {
-    #                 "S": [2, 4, 6, 9],
-    #             },
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_erq_raises(self, data, columns, subscales, expected):
-    #     with expected:
-    #         erq(data, columns, subscales)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, result",
-    #     [
-    #         (data_filtered_correct("T2_ERQ"), None, None, result_filtered("ERQ")),
-    #         (
-    #             data_filtered_correct("T2_ERQ"),
-    #             ["T2_ERQ_{:01d}".format(i) for i in range(1, 11)],
-    #             None,
-    #             result_filtered("ERQ"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("T2_ERQ"), 1),
-    #             None,
-    #             None,
-    #             result_filtered("ERQ"),
-    #         ),
-    #         (
-    #             data_subscale("ERQ"),
-    #             None,
-    #             {"S": [1, 2, 3, 4]},
-    #             result_filtered("ERQ_S"),
-    #         ),
-    #     ],
-    # )
-    # def test_erq(self, data, columns, subscales, result):
-    #     data_out = erq(data, columns, subscales)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, expected",
-    #     [
-    #         (data_complete_correct(), None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("PHQ"), None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("PHQ"), 1), None, does_not_raise()),
-    #         (data_filtered_correct("PHQ"), None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("PHQ"),
-    #             ["T2_PHQ_{:01d}".format(i) for i in range(1, 11)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("PHQ"), ["T2_PHQ_{:01d}".format(i) for i in range(1, 10)], does_not_raise()),
-    #         (
-    #             data_filtered_correct("PHQ"),
-    #             ["T2_PHQ_{:02d}".format(i) for i in range(1, 10)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("PHQ"),
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_phq_raises(self, data, columns, expected):
-    #     with expected:
-    #         phq(data, columns)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, result",
-    #     [
-    #         (data_filtered_correct("PHQ"), None, result_filtered("PHQ")),
-    #         (
-    #             data_filtered_correct("PHQ"),
-    #             ["T2_PHQ_{:01d}".format(i) for i in range(1, 10)],
-    #             result_filtered("PHQ"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("PHQ"), 1),
-    #             None,
-    #             result_filtered("PHQ"),
-    #         ),
-    #     ],
-    # )
-    # def test_phq(self, data, columns, result):
-    #     data_out = phq(data, columns)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, expected",
-    #     [
-    #         (data_complete_correct(), None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("SE_"), None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("SE_"), 1), None, does_not_raise()),
-    #         (data_filtered_correct("SE_"), None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("SE_"),
-    #             ["T2_SE_{:01d}".format(i) for i in range(1, 6)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("SE_"), ["T2_SE_{:01d}".format(i) for i in range(1, 5)], does_not_raise()),
-    #         (
-    #             data_filtered_correct("SE_"),
-    #             ["T2_SE_{:02d}".format(i) for i in range(1, 5)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("SE_"),
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_social_desirability_raises(self, data, columns, expected):
-    #     with expected:
-    #         social_desirability(data, columns)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, result",
-    #     [
-    #         (data_filtered_correct("SE_"), None, result_filtered("SocDes")),
-    #         (
-    #             data_filtered_correct("SE_"),
-    #             ["T2_SE_{:01d}".format(i) for i in range(1, 5)],
-    #             result_filtered("SocDes"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("SE_"), 1),
-    #             None,
-    #             result_filtered("SocDes"),
-    #         ),
-    #     ],
-    # )
-    # def test_social_desirability(self, data, columns, result):
-    #     data_out = social_desirability(data, columns)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, expected",
-    #     [
-    #         (data_complete_correct(), None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("EV_"), None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("EV_"), 1), None, does_not_raise()),
-    #         (data_filtered_correct("EV_"), None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("EV_"),
-    #             ["T1_EV_{:01d}".format(i) for i in range(1, 5)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("EV_"), ["T1_EV_{:01d}".format(i) for i in range(1, 4)], does_not_raise()),
-    #         (
-    #             data_filtered_correct("EV_"),
-    #             ["T1_EV_{:02d}".format(i) for i in range(1, 4)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("EV_"),
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_eval_clinic_raises(self, data, columns, expected):
-    #     with expected:
-    #         eval_clinic(data, columns)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, result",
-    #     [
-    #         (data_filtered_correct("EV_"), None, result_filtered("EV")),
-    #         (
-    #             data_filtered_correct("EV_"),
-    #             ["T1_EV_{:01d}".format(i) for i in range(1, 4)],
-    #             result_filtered("EV"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("EV_"), 1),
-    #             None,
-    #             result_filtered("EV"),
-    #         ),
-    #     ],
-    # )
-    # def test_eval_clinic(self, data, columns, result):
-    #     data_out = eval_clinic(data, columns)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, expected",
-    #     [
-    #         (data_complete_correct(), None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("ASKU"), None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("ASKU"), 1), None, does_not_raise()),
-    #         (data_filtered_correct("ASKU"), None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("ASKU"),
-    #             ["T2_ASKU_{:01d}".format(i) for i in range(1, 5)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("ASKU"), ["T2_ASKU_{:01d}".format(i) for i in range(1, 4)], does_not_raise()),
-    #         (
-    #             data_filtered_correct("ASKU"),
-    #             ["T2_ASKU_{:02d}".format(i) for i in range(1, 4)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("ASKU"),
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_asku_raises(self, data, columns, expected):
-    #     with expected:
-    #         asku(data, columns)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, result",
-    #     [
-    #         (data_filtered_correct("ASKU"), None, result_filtered("ASKU")),
-    #         (
-    #             data_filtered_correct("ASKU"),
-    #             ["T2_ASKU_{:01d}".format(i) for i in range(1, 4)],
-    #             result_filtered("ASKU"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("ASKU"), 1),
-    #             None,
-    #             result_filtered("ASKU"),
-    #         ),
-    #     ],
-    # )
-    # def test_asku(self, data, columns, result):
-    #     data_out = asku(data, columns)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, expected",
-    #     [
-    #         (data_complete_correct(), None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("LZ"), None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("LZ"), 1), None, does_not_raise()),
-    #         (data_filtered_correct("LZ"), None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("LZ"),
-    #             ["T2_LZ_{:01d}".format(i) for i in range(1, 7)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("LZ"), ["T2_LZ_{:01d}".format(i) for i in range(1, 6)], does_not_raise()),
-    #         (
-    #             data_filtered_correct("LZ"),
-    #             ["T2_LZ_{:02d}".format(i) for i in range(1, 6)],
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("LZ"),
-    #             None,
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_swls_raises(self, data, columns, expected):
-    #     with expected:
-    #         swls(data, columns)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, result",
-    #     [
-    #         (data_filtered_correct("LZ"), None, result_filtered("SWLS")),
-    #         (
-    #             data_filtered_correct("LZ"),
-    #             ["T2_LZ_{:01d}".format(i) for i in range(1, 6)],
-    #             result_filtered("SWLS"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("LZ"), 1),
-    #             None,
-    #             result_filtered("SWLS"),
-    #         ),
-    #     ],
-    # )
-    # def test_swls(self, data, columns, result):
-    #     data_out = swls(data, columns)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, expected",
-    #     [
-    #         (data_complete_correct(), None, None, pytest.raises(ValidationError)),
-    #         (data_filtered_wrong_range("T2_PZ"), None, None, pytest.raises(ValueRangeError)),
-    #         (convert_scale(data_filtered_wrong_range("T2_PZ"), 1), None, None, does_not_raise()),
-    #         (data_filtered_correct("T2_PZ"), None, None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("T2_PZ"),
-    #             ["T2_PZ_{:01d}".format(i) for i in range(1, 37)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (data_filtered_correct("T2_PZ"), ["T2_PZ_{:01d}".format(i) for i in range(1, 36)], None, does_not_raise()),
-    #         (
-    #             data_filtered_correct("T2_PZ"),
-    #             ["T2_PZ_{:02d}".format(i) for i in range(1, 36)],
-    #             None,
-    #             pytest.raises(ValidationError),
-    #         ),
-    #         (
-    #             data_filtered_correct("PZ"),
-    #             None,
-    #             {
-    #                 "Z": [2, 3, 4, 5, 6],
-    #             },
-    #             does_not_raise(),
-    #         ),
-    #     ],
-    # )
-    # def test_seop_raises(self, data, columns, subscales, expected):
-    #     with expected:
-    #         seop(data, columns, subscales)
-    #
-    # @pytest.mark.parametrize(
-    #     "data, columns, subscales, result",
-    #     [
-    #         (data_filtered_correct("T2_PZ"), None, None, result_filtered("PZ_")),
-    #         (
-    #             data_filtered_correct("T2_PZ"),
-    #             ["T2_PZ_{:01d}".format(i) for i in range(1, 36)],
-    #             None,
-    #             result_filtered("PZ_"),
-    #         ),
-    #         (
-    #             convert_scale(data_filtered_wrong_range("T2_PZ"), 1),
-    #             None,
-    #             None,
-    #             result_filtered("PZ_"),
-    #         ),
-    #         (
-    #             data_subscale("PS"),
-    #             None,
-    #             {"Zugang": [1, 2, 3, 4, 5]},
-    #             result_filtered("PZ_Zugang"),
-    #         ),
-    #     ],
-    # )
-    # def test_seop(self, data, columns, subscales, result):
-    #     data_out = seop(data, columns, subscales)
-    #     TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-    #     assert_frame_equal(data_out, result)
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("CLQ"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("CLQ"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("CLQ"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("CLQ"),
+                ["CLQ_{:01d}".format(i) for i in range(1, 28)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("CLQ"), ["CLQ_{:01d}".format(i) for i in range(1, 27)], None, does_not_raise()),
+            (
+                data_filtered_correct("CLQ"),
+                ["CLQ_{:02d}".format(i) for i in range(1, 27)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("CLQ"),
+                None,
+                {
+                    "SS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_clq_raises(self, data, columns, subscales, expected):
+        with expected:
+            clq(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("CLQ"), None, None, result_filtered("CLQ")),
+            (
+                data_filtered_correct("CLQ"),
+                ["CLQ_{:01d}".format(i) for i in range(1, 27)],
+                None,
+                result_filtered("CLQ"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("CLQ"), 1),
+                None,
+                None,
+                result_filtered("CLQ"),
+            ),
+            (
+                data_subscale("clq"),
+                None,
+                {"SS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]},
+                result_filtered("CLQ_SS"),
+            ),
+        ],
+    )
+    def test_clq(self, data, columns, subscales, result):
+        data_out = clq(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SOP"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SOP"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("SOP"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("SOP"),
+                ["SOP_{:01d}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("SOP"), ["SOP_{:01d}".format(i) for i in range(1, 10)], None, does_not_raise()),
+            (
+                data_filtered_correct("SOP"),
+                ["SOP_{:02d}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SOP"),
+                None,
+                {
+                    "SW": [1, 3, 5, 7, 8],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_sop_raises(self, data, columns, subscales, expected):
+        with expected:
+            sop(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("SOP"), None, None, result_filtered("SOP")),
+            (
+                data_filtered_correct("SOP"),
+                ["SOP_{:01d}".format(i) for i in range(1, 10)],
+                None,
+                result_filtered("SOP"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("SOP"), 1),
+                None,
+                None,
+                result_filtered("SOP"),
+            ),
+            (
+                data_subscale("sop"),
+                None,
+                {"SE": [1, 2, 3, 4, 5]},
+                result_filtered("SOP_SE"),
+            ),
+        ],
+    )
+    def test_sop(self, data, columns, subscales, result):
+        data_out = sop(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("BFI10"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("BFI10"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("BFI10"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("BFI10"),
+                ["BFI10_{:01d}".format(i) for i in range(1, 12)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("BFI10"),
+                ["BFI10_{}{}".format(l, i) for l in ["N", "O", "E", "V", "G"] for i in range(1, 3)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("BFI10"),
+                ["BFI10_{:02d}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("BFI10"),
+                None,
+                {
+                    "E": [1, 2],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_bfi_10_raises(self, data, columns, subscales, expected):
+        with expected:
+            bfi_10(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("BFI10"), None, None, result_filtered("BFI_10")),
+            (
+                data_filtered_correct("BFI10"),
+                ["BFI10_{}{}".format(l, i) for i in range(1, 3) for l in ["E", "V", "G", "N", "O"]],
+                None,
+                result_filtered("BFI_10"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("BFI10"), 1),
+                None,
+                None,
+                result_filtered("BFI_10"),
+            ),
+            (
+                data_subscale("bfi10"),
+                None,
+                {"E": [1, 2]},
+                result_filtered("BFI_10_E"),
+            ),
+        ],
+    )
+    def test_bfi_10(self, data, columns, subscales, result):
+        data_out = bfi_10(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("MKHAI"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("MKHAI"), -1), None, does_not_raise()),
+            (data_filtered_correct("MKHAI"), None, does_not_raise()),
+            (
+                data_filtered_correct("MKHAI"),
+                ["MKAHI_{:01d}".format(i) for i in range(1, 16)],
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("MKHAI"), ["MKHAI_{:01d}".format(i) for i in range(1, 15)], does_not_raise()),
+            (
+                data_filtered_correct("MKHAI"),
+                ["MKHAI_{:02d}".format(i) for i in range(1, 15)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("MKHAI"),
+                None,
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_mkhai_raises(self, data, columns, expected):
+        with expected:
+            mkhai(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("MKHAI"), None, result_filtered("MKHAI")),
+            (
+                data_filtered_correct("MKHAI"),
+                ["MKHAI_{:01d}".format(i) for i in range(1, 15)],
+                result_filtered("MKHAI"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("MKHAI"), -1),
+                None,
+                result_filtered("MKHAI"),
+            ),
+        ],
+    )
+    def test_mkhai(self, data, columns, result):
+        data_out = mkhai(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SWB"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SWB"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("SWB"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("SWB"),
+                ["SWB_{:01d}".format(i) for i in range(1, 15)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("SWB"), ["SWB_{:01d}".format(i) for i in range(1, 14)], None, does_not_raise()),
+            (
+                data_filtered_correct("SWB"),
+                ["SWB_{:02d}".format(i) for i in range(1, 14)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SWB"),
+                None,
+                {
+                    "SN": [2, 5, 8, 10, 11, 13],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_swb_raises(self, data, columns, subscales, expected):
+        with expected:
+            swb(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, invert_score, result",
+        [
+            (data_filtered_correct("SWB"), None, None, False, result_filtered(regex="SWB_(SN|ALZ)$")),
+            (
+                data_filtered_correct("SWB"),
+                ["SWB_{:01d}".format(i) for i in range(1, 14)],
+                None,
+                False,
+                result_filtered(regex="SWB_(SN|ALZ)$"),
+            ),
+            (
+                data_filtered_correct("SWB"),
+                ["SWB_{:01d}".format(i) for i in range(1, 14)],
+                None,
+                True,
+                result_filtered(regex=r"SWB_inv_(SN|ALZ)$"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("SWB"), 1),
+                None,
+                None,
+                False,
+                result_filtered(regex="SWB_(SN|ALZ)$"),
+            ),
+            (
+                data_subscale("swb"),
+                None,
+                {"SN": [1, 2, 3, 4, 5, 6]},
+                False,
+                result_filtered("SWB_SN"),
+            ),
+        ],
+    )
+    def test_swb(self, data, columns, subscales, invert_score, result):
+        data_out = swb(data, columns, subscales, invert_score)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("ABIMS"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("ABIMS"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("ABIMS"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("ABIMS"),
+                ["ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 6) for j in range(1, 9)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ABIMS"),
+                ["ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 5) for j in range(1, 9)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("ABIMS"),
+                ["ABIMS_{:02d}_{:01d}".format(i, j) for i in range(1, 6) for j in range(1, 9)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ABIMS"),
+                None,
+                {
+                    "KOV1": [1, 4, 5, 7],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_abi_ms_raises(self, data, columns, subscales, expected):
+        with expected:
+            abi_ms(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("ABIMS"), None, None, result_filtered("ABI_MS")),
+            (
+                data_filtered_correct("ABIMS"),
+                ["ABIMS_{:01d}_{:01d}".format(i, j) for i in range(1, 5) for j in range(1, 9)],
+                None,
+                result_filtered("ABI_MS"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("ABIMS"), 1),
+                None,
+                None,
+                result_filtered("ABI_MS"),
+            ),
+            (
+                data_subscale("abims"),
+                None,
+                {"KOV1": [1, 2, 3, 4]},
+                result_filtered("ABI_MS_KOV1"),
+            ),
+        ],
+    )
+    def test_abi_ms(self, data, columns, subscales, result):
+        data_out = abi_ms(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("ASI"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("ASI"), -1), None, None, does_not_raise()),
+            (data_filtered_correct("ASI"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("ASI"),
+                ["ASI_{:01d}".format(i) for i in range(1, 14)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("ASI"), ["ASI_{:01d}".format(i) for i in range(1, 13)], None, does_not_raise()),
+            (
+                data_filtered_correct("ASI"),
+                ["ASI_{:02d}".format(i) for i in range(1, 13)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ASI"),
+                None,
+                {
+                    "BSM": [3, 4, 7, 8, 12],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_asi_raises(self, data, columns, subscales, expected):
+        with expected:
+            asi(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("ASI"), None, None, result_filtered("ASI")),
+            (
+                data_filtered_correct("ASI"),
+                ["ASI_{:01d}".format(i) for i in range(1, 13)],
+                None,
+                result_filtered("ASI"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("ASI"), -1),
+                None,
+                None,
+                result_filtered("ASI"),
+            ),
+            (
+                data_subscale("asi"),
+                None,
+                {"BSM": [1, 2, 3, 4, 5]},
+                result_filtered("ASI_BSM"),
+            ),
+        ],
+    )
+    def test_asi(self, data, columns, subscales, result):
+        data_out = asi(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SCI"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SCI"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("SCI"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("SCI"),
+                ["SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 6) for j in range(1, 8)]
+                + ["SCI_4_{:01d}".format(i) for i in range(8, 14)]
+                + ["SCI_5_{:01d}".format(i) for i in range(1, 21)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SCI"),
+                ["SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 5) for j in range(1, 8)]
+                + ["SCI_4_{:01d}".format(i) for i in range(8, 14)]
+                + ["SCI_5_{:01d}".format(i) for i in range(1, 21)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("SCI"),
+                ["SCI_{:01d}_{:02d}".format(i, j) for i in range(1, 5) for j in range(1, 8)]
+                + ["SCI_4_{:01d}".format(i) for i in range(8, 14)]
+                + ["SCI_5_{:01d}".format(i) for i in range(1, 21)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SCI"),
+                None,
+                {
+                    "Stress2": [1, 2, 3, 4, 5, 6, 7],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_sci_raises(self, data, columns, subscales, expected):
+        with expected:
+            sci(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("SCI"), None, None, result_filtered("SCI")),
+            (
+                data_filtered_correct("SCI"),
+                ["SCI_{:01d}_{:1d}".format(i, j) for i in range(1, 5) for j in range(1, 8)]
+                + ["SCI_4_{:01d}".format(i) for i in range(8, 14)]
+                + ["SCI_5_{:01d}".format(i) for i in range(1, 21)],
+                None,
+                result_filtered("SCI"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("SCI"), 1),
+                None,
+                None,
+                result_filtered("SCI"),
+            ),
+            (
+                data_subscale("sci"),
+                None,
+                {"Stress2": [1, 2, 3, 4, 5, 6, 7]},
+                result_filtered("SCI_Stress2"),
+            ),
+        ],
+    )
+    def test_sci(self, data, columns, subscales, result):
+        data_out = sci(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("ERQ"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("ERQ"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("ERQ"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("ERQ"),
+                ["ERQ_{:01d}".format(i) for i in range(1, 12)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ERQ"),
+                ["ERQ_{:01d}".format(i) for i in range(1, 11)],
+                None,
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("ERQ"),
+                ["ERQ_{:02d}".format(i) for i in range(1, 11)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ERQ"),
+                None,
+                {
+                    "Suppr": [2, 4, 6, 9],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_erq_raises(self, data, columns, subscales, expected):
+        with expected:
+            erq(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("ERQ"), None, None, result_filtered("ERQ")),
+            (
+                data_filtered_correct("ERQ"),
+                ["ERQ_{:01d}".format(i) for i in range(1, 11)],
+                None,
+                result_filtered("ERQ"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("ERQ"), 1),
+                None,
+                None,
+                result_filtered("ERQ"),
+            ),
+            (
+                data_subscale("erq"),
+                None,
+                {"Suppr": [1, 2, 3, 4]},
+                result_filtered("ERQ_Suppr"),
+            ),
+        ],
+    )
+    def test_erq(self, data, columns, subscales, result):
+        data_out = erq(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("PHQ"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("PHQ"), 1), None, does_not_raise()),
+            (data_filtered_correct("PHQ"), None, does_not_raise()),
+            (
+                data_filtered_correct("PHQ"),
+                ["PHQ_{:01d}".format(i) for i in range(1, 11)],
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("PHQ"), ["PHQ_{:01d}".format(i) for i in range(1, 10)], does_not_raise()),
+            (
+                data_filtered_correct("PHQ"),
+                ["PHQ_{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("PHQ"),
+                None,
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_phq_raises(self, data, columns, expected):
+        with expected:
+            phq(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("PHQ"), None, result_filtered("PHQ")),
+            (
+                data_filtered_correct("PHQ"),
+                ["PHQ_{:01d}".format(i) for i in range(1, 10)],
+                result_filtered("PHQ"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("PHQ"), 1),
+                None,
+                result_filtered("PHQ"),
+            ),
+        ],
+    )
+    def test_phq(self, data, columns, result):
+        data_out = phq(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SDS_"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SDS_"), 1), None, does_not_raise()),
+            (data_filtered_correct("SDS_"), None, does_not_raise()),
+            (
+                data_filtered_correct("SDS_"),
+                ["SDS_{:01d}".format(i) for i in range(1, 6)],
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("SDS_"), ["SDS_{:01d}".format(i) for i in range(1, 5)], does_not_raise()),
+            (
+                data_filtered_correct("SDS_"),
+                ["SDS_{:02d}".format(i) for i in range(1, 5)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SDS_"),
+                None,
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_sds_raises(self, data, columns, expected):
+        with expected:
+            sds(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("SDS_"), None, result_filtered("SDS")),
+            (
+                data_filtered_correct("SDS_"),
+                ["SDS_{:01d}".format(i) for i in range(1, 5)],
+                result_filtered("SDS"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("SDS_"), 1),
+                None,
+                result_filtered("SDS"),
+            ),
+        ],
+    )
+    def test_sds(self, data, columns, result):
+        data_out = sds(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("EV_"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("EV_"), 1), None, does_not_raise()),
+            (data_filtered_correct("EV_"), None, does_not_raise()),
+            (
+                data_filtered_correct("EV_"),
+                ["EV_{:01d}".format(i) for i in range(1, 5)],
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("EV_"), ["EV_{:01d}".format(i) for i in range(1, 4)], does_not_raise()),
+            (
+                data_filtered_correct("EV_"),
+                ["EV_{:02d}".format(i) for i in range(1, 4)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("EV_"),
+                None,
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_eval_clinic_raises(self, data, columns, expected):
+        with expected:
+            eval_clinic(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("EV_"), None, result_filtered("EvalClinic")),
+            (
+                data_filtered_correct("EV_"),
+                ["EV_{:01d}".format(i) for i in range(1, 4)],
+                result_filtered("EvalClinic"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("EV_"), 1),
+                None,
+                result_filtered("EvalClinic"),
+            ),
+        ],
+    )
+    def test_eval_clinic(self, data, columns, result):
+        data_out = eval_clinic(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("ASKU"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("ASKU"), 1), None, does_not_raise()),
+            (data_filtered_correct("ASKU"), None, does_not_raise()),
+            (
+                data_filtered_correct("ASKU"),
+                ["ASKU_{:01d}".format(i) for i in range(1, 5)],
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("ASKU"), ["ASKU_{:01d}".format(i) for i in range(1, 4)], does_not_raise()),
+            (
+                data_filtered_correct("ASKU"),
+                ["ASKU_{:02d}".format(i) for i in range(1, 4)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ASKU"),
+                None,
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_asku_raises(self, data, columns, expected):
+        with expected:
+            asku(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("ASKU"), None, result_filtered("ASKU")),
+            (
+                data_filtered_correct("ASKU"),
+                ["ASKU_{:01d}".format(i) for i in range(1, 4)],
+                result_filtered("ASKU"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("ASKU"), 1),
+                None,
+                result_filtered("ASKU"),
+            ),
+        ],
+    )
+    def test_asku(self, data, columns, result):
+        data_out = asku(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("SWLS"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("SWLS"), 1), None, does_not_raise()),
+            (data_filtered_correct("SWLS"), None, does_not_raise()),
+            (
+                data_filtered_correct("SWLS"),
+                ["SWLS_{:01d}".format(i) for i in range(1, 7)],
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("SWLS"), ["SWLS_{:01d}".format(i) for i in range(1, 6)], does_not_raise()),
+            (
+                data_filtered_correct("SWLS"),
+                ["SWLS_{:02d}".format(i) for i in range(1, 6)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("SWLS"),
+                None,
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_swls_raises(self, data, columns, expected):
+        with expected:
+            swls(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("SWLS"), None, result_filtered("SWLS")),
+            (
+                data_filtered_correct("SWLS"),
+                ["SWLS_{:01d}".format(i) for i in range(1, 6)],
+                result_filtered("SWLS"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("SWLS"), 1),
+                None,
+                result_filtered("SWLS"),
+            ),
+        ],
+    )
+    def test_swls(self, data, columns, result):
+        data_out = swls(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, expected",
+        [
+            (data_complete_correct(), None, None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("WPI"), None, None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("WPI"), 1), None, None, does_not_raise()),
+            (data_filtered_correct("WPI"), None, None, does_not_raise()),
+            (
+                data_filtered_correct("WPI"),
+                ["WPI_{}".format(i) for i in range(1, 30)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (data_filtered_correct("WPI"), ["WPI_{}".format(i) for i in range(1, 36)], None, does_not_raise()),
+            (
+                data_filtered_correct("WPI"),
+                ["WPI{:02d}".format(i) for i in range(1, 36)],
+                None,
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("WPI"),
+                None,
+                {
+                    "AccessTreatment": [2, 3, 4, 5, 6],
+                    "StaffCompetence": [11, 12],
+                    "EffectTreatment": [22, 23, 24],
+                    "StationEquipment": [8, 9, 10],
+                    "Relation": [7, 15, 16, 17, 18, 19, 21],
+                    "Information": [13, 14, 20],
+                    "OverallSatisfaction": [1],
+                    "TreatmentInterventions": [25, 28, 29, 30, 31],
+                    "Education": [26, 27],
+                    "Support": [32, 33, 34, 35],
+                },
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("WPI"),
+                None,
+                {
+                    "Information": [13, 14, 20],
+                },
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_wpi_raises(self, data, columns, subscales, expected):
+        with expected:
+            wpi(data, columns, subscales)
+
+    @pytest.mark.parametrize(
+        "data, columns, subscales, result",
+        [
+            (data_filtered_correct("WPI"), None, None, result_filtered("WPI")),
+            (
+                data_filtered_correct("WPI"),
+                ["WPI_{}".format(i) for i in range(1, 36)],
+                None,
+                result_filtered("WPI"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("WPI"), 1),
+                None,
+                None,
+                result_filtered("WPI"),
+            ),
+            (
+                data_subscale("wpi"),
+                None,
+                {"Relation": [1, 2, 3, 4, 5, 6, 7]},
+                result_filtered("WPI_Relation"),
+            ),
+        ],
+    )
+    def test_wpi(self, data, columns, subscales, result):
+        data_out = wpi(data, columns, subscales)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("IDQ_PRE"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("IDQ_PRE"), 1), None, does_not_raise()),
+            (data_filtered_correct("IDQ_PRE"), None, does_not_raise()),
+            (
+                data_filtered_correct("IDQ_PRE"),
+                ["IDQ_PRE{:02d}".format(i) for i in range(1, 6)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("IDQ_PRE"),
+                ["IDQ_PRE_{}".format(i) for i in range(1, 4)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("IDQ_PRE"),
+                ["IDQ_PRE_{}".format(i) for i in range(1, 6)],
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_idq_pre_scan_raises(self, data, columns, expected):
+        with expected:
+            idq_pre_scan(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("IDQ_PRE"), None, result_filtered("IDQ_PRE")),
+            (
+                data_filtered_correct("IDQ_PRE"),
+                ["IDQ_PRE_{}".format(i) for i in range(1, 6)],
+                result_filtered("IDQ_PRE"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("IDQ_PRE"), 1),
+                None,
+                result_filtered("IDQ_PRE"),
+            ),
+        ],
+    )
+    def test_idq_pre_scan(self, data, columns, result):
+        data_out = idq_pre_scan(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("IDQ_POST"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("IDQ_POST"), 1), None, does_not_raise()),
+            (data_filtered_correct("IDQ_POST"), None, does_not_raise()),
+            (
+                data_filtered_correct("IDQ_POST"),
+                ["IDQ_POST{:02d}".format(i) for i in range(1, 8)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("IDQ_POST"),
+                ["IDQ_POST_{}".format(i) for i in range(1, 4)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("IDQ_POST"),
+                ["IDQ_POST_{}".format(i) for i in range(1, 8)],
+                does_not_raise(),
+            ),
+        ],
+    )
+    def test_idq_post_scan_raises(self, data, columns, expected):
+        with expected:
+            idq_post_scan(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("IDQ_POST"), None, result_filtered("IDQ_POST")),
+            (
+                data_filtered_correct("IDQ_POST"),
+                ["IDQ_POST_{}".format(i) for i in range(1, 8)],
+                result_filtered("IDQ_POST"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("IDQ_POST"), 1),
+                None,
+                result_filtered("IDQ_POST"),
+            ),
+        ],
+    )
+    def test_idq_post_scan(self, data, columns, result):
+        data_out = idq_post_scan(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)

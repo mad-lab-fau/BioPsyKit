@@ -75,9 +75,7 @@ _sig_cols = ["p-corr", "p-tukey", "p-unc", "pval"]
 
 
 class StatsPipeline:
-    """Class to set up a pipeline for statistical analysis.
-    
-    """
+    """Class to set up a pipeline for statistical analysis."""
 
     def __init__(self, steps: Sequence[Tuple[str, str]], params: Dict[str, str]):
         """Class to set up a pipeline for statistical analysis.
@@ -289,7 +287,7 @@ class StatsPipeline:
             * ``list``: list of categories whose results should be filtered by statistical significance
             * ``dict``: dictionary with category names and bool values to filter (or not) for statistical
               significance
-                
+
             Default: ``None`` (no filtering)
         **kwargs
             additional arguments to be passed to the function, such as:
