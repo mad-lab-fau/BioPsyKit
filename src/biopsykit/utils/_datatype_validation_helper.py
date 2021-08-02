@@ -123,7 +123,7 @@ def _assert_has_multiindex(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     expected : bool, optional
         Whether the df is expected to have a MultiIndex index or not
@@ -166,7 +166,7 @@ def _assert_has_index_levels(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     index_levels : list
         Set of index level names to check
@@ -207,7 +207,7 @@ def _assert_has_columns(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     columns_sets : list
         Column set of list of column sets to check
@@ -261,7 +261,7 @@ def _assert_has_column_multiindex(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     expected : bool, optional
         Whether the df is expected to have MultiIndex column or not
@@ -304,7 +304,7 @@ def _assert_has_column_levels(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     column_levels : list
         Set of column level names to check

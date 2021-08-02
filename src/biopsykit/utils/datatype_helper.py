@@ -64,13 +64,69 @@ __all__ = [
     "is_sleep_wake_dataframe",
 ]
 
-# alias are needed because sphinx is dumb as fuck
+# these subclasses of pd.DataFrame are needed to be added to the type aliases because otherwise, autosphinx does not
+# add the docstring to the documentation of the type aliases. Additionally, they can be used internally to highlight
+# which alias types are expected at which position
+
+
 class _SubjectConditionDataFrame(pd.DataFrame):
     pass
 
 
+class _CodebookDataFrame(pd.DataFrame):
+    pass
+
+
+class _MeanSeDataFrame(pd.DataFrame):
+    pass
+
+
+class _SalivaRawDataFrame(pd.DataFrame):
+    pass
+
+
+class _SalivaFeatureDataFrame(pd.DataFrame):
+    pass
+
+
+class _SalivaMeanSeDataFrame(pd.DataFrame):
+    pass
+
+
+class _EcgRawDataFrame(pd.DataFrame):
+    pass
+
+
+class _EcgResultDataFrame(pd.DataFrame):
+    pass
+
+
+class _HeartRateDataFrame(pd.DataFrame):
+    pass
+
+
+class _RPeakDataFrame(pd.DataFrame):
+    pass
+
+
+class _AccDataFrame(pd.DataFrame):
+    pass
+
+
+class _GyrDataFrame(pd.DataFrame):
+    pass
+
+
+class _ImuDataFrame(pd.DataFrame):
+    pass
+
+
+class _SleepWakeDataFrame(pd.DataFrame):
+    pass
+
+
 SubjectConditionDataFrame = Union[_SubjectConditionDataFrame, pd.DataFrame]
-""":class:`pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
+""":class:`~pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
 
 A ``SubjectConditionDataFrame`` has an index with subject IDs named ``subject`` and a column with the condition
 assignment named ``condition``.
@@ -83,23 +139,23 @@ A ``SubjectConditionDict`` contains conditions as dictionary keys and a collecti
 (list, numpy array, pandas Index) as dictionary values.
 """
 
-CodebookDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` representing a codebook which encodes numerical and categorical values
+CodebookDataFrame = Union[_CodebookDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` representing a codebook which encodes numerical and categorical values
 in a standardized format.
 
 A ``CodebookDataFrame`` has an index level named ``variable``. The column names are the numerical values (0, 1, ...),
 the dataframe entries then represent the mapping of numerical value to categorical value for the variable.
 """
 
-MeanSeDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing mean and standard error of time-series data in a standardized format.
+MeanSeDataFrame = Union[_MeanSeDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing mean and standard error of time-series data in a standardized format.
 
 The resulting dataframe must at least have a ``phase`` index level and the two columns ``mean`` and ``se``.
 It can have additional index levels, such as ``subphase`` or ``condition``.
 """
 
-SalivaRawDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing raw saliva data in a standardized format.
+SalivaRawDataFrame = Union[_SalivaRawDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing raw saliva data in a standardized format.
 
 Data needs to be in long-format and **must** have a :class:`pandas.MultiIndex` with index level names:
 
@@ -115,16 +171,16 @@ Additionally, the following index levels can be added to identify saliva values,
 
 """
 
-SalivaFeatureDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing feature computed from saliva data in a standardized format.
+SalivaFeatureDataFrame = Union[_SalivaFeatureDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing feature computed from saliva data in a standardized format.
 
 The resulting dataframe must at least have a ``subject`` index level and all column names need to begin with
 the saliva marker type (e.g. "cortisol"), followed by the feature name, separated by underscore '_'
 Additionally, the name of the column index needs to be `saliva_feature`.
 """
 
-SalivaMeanSeDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing mean and standard error of saliva samples in a standardized format.
+SalivaMeanSeDataFrame = Union[_SalivaMeanSeDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing mean and standard error of saliva samples in a standardized format.
 
 The resulting dataframe must at least have a ``sample`` index level and the two columns ``mean`` and ``se``.
 It can have additional index levels, such as ``condition`` or ``time``.
@@ -172,7 +228,7 @@ The following entries are, for instance, further possible:
 """
 
 SleepEndpointDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing sleep endpoints in a standardized format.
+""":class:`~pandas.DataFrame` containing sleep endpoints in a standardized format.
 
 The resulting dataframe must at least have a ``date`` index level,
 and, optionally, further index levels like ``night``.
@@ -214,7 +270,7 @@ The following columns are further possible:
 """
 
 
-EcgRawDataFrame = pd.DataFrame
+EcgRawDataFrame = Union[_EcgRawDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing raw ECG data of `one` subject.
 
 The dataframe is expected to have the following columns:
@@ -223,7 +279,7 @@ The dataframe is expected to have the following columns:
 
 """
 
-EcgResultDataFrame = pd.DataFrame
+EcgResultDataFrame = Union[_EcgResultDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing processed ECG data of `one` subject.
 
 The dataframe is expected to have the following columns:
@@ -237,7 +293,7 @@ The dataframe is expected to have the following columns:
 
 """
 
-HeartRateDataFrame = pd.DataFrame
+HeartRateDataFrame = Union[_HeartRateDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing heart rate time series data of `one` subject.
 
 The dataframe is expected to have the following columns:
@@ -246,7 +302,7 @@ The dataframe is expected to have the following columns:
 
 """
 
-RPeakDataFrame = pd.DataFrame
+RPeakDataFrame = Union[_RPeakDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing R-peak locations of `one` subject extracted from ECG data.
 
 The dataframe is expected to have the following columns:
@@ -258,7 +314,7 @@ The dataframe is expected to have the following columns:
 
 """
 
-AccDataFrame = pd.DataFrame
+AccDataFrame = Union[_AccDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing 3-d acceleration data.
 
 The dataframe is expected to have one of the following column sets:
@@ -269,7 +325,7 @@ The dataframe is expected to have one of the following column sets:
 
 """
 
-GyrDataFrame = pd.DataFrame
+GyrDataFrame = Union[_GyrDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing 3-d gyroscope data.
 
 The dataframe is expected to have one of the following column sets:
@@ -280,7 +336,7 @@ The dataframe is expected to have one of the following column sets:
 
 """
 
-ImuDataFrame = pd.DataFrame
+ImuDataFrame = Union[_ImuDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing 3-d inertial measurement (IMU) (acceleration and gyroscope) data.
 
 Hence, an ``ImuDataFrame`` must both be a ``AccDataFrame`` **and** a ``GyrDataFrame``.
@@ -294,7 +350,7 @@ The dataframe is expected to have one of the following column sets:
 
 """
 
-SleepWakeDataFrame = pd.DataFrame
+SleepWakeDataFrame = Union[_SleepWakeDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing sleep/wake predictions.
 
 The dataframe is expected to have at least the following column(s):
