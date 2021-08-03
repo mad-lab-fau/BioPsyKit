@@ -28,7 +28,6 @@ from biopsykit.questionnaires.utils import (
     to_idx,
     _compute_questionnaire_subscales,
     _invert_subscales,
-    # convert_scale,
 )
 from biopsykit.utils._datatype_validation_helper import _assert_value_range, _assert_num_columns, _assert_has_columns
 from biopsykit.utils.exceptions import ValueRangeError

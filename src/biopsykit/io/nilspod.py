@@ -10,9 +10,9 @@ import pandas as pd
 
 from nilspodlib import Dataset, SyncedSession
 
+from biopsykit.utils.time import tz
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t
-from biopsykit.utils.time import tz, utc
 
 COUNTER_INCONSISTENCY_HANDLING = Literal["raise", "warn", "ignore"]
 """Available behavior types when dealing with NilsPod counter inconsistencies."""
@@ -110,16 +110,16 @@ def load_dataset_nilspod(
     >>> df, fs = load_dataset_nilspod(dataset=dataset, datastreams='acc')
 
     """
+    if timezone is None:
+        timezone = tz
+
     if file_path is not None:
         file_path = Path(file_path)
         _assert_file_extension(file_path, ".bin")
-        dataset = Dataset.from_bin_file(file_path, legacy_support=legacy_support)
+        dataset = Dataset.from_bin_file(file_path, legacy_support=legacy_support, tz=timezone)
 
     if file_path is None and dataset is None:
         raise ValueError("Either 'file_path' or 'dataset' must be supplied as parameter!")
-
-    if timezone is None:
-        timezone = tz
 
     _handle_counter_inconsistencies_dataset(dataset, handle_counter_inconsistency)
 
@@ -127,7 +127,7 @@ def load_dataset_nilspod(
         datastreams = [datastreams]
 
     # convert dataset to dataframe and localize timestamp
-    df = dataset.data_as_df(datastreams, index="utc_datetime").tz_localize(tz=utc).tz_convert(tz=timezone)
+    df = dataset.data_as_df(datastreams, index="utc_datetime")
     df.index.name = "time"
     return df, dataset.info.sampling_rate_hz
 
@@ -204,22 +204,18 @@ def load_synced_session_nilspod(
     if len(nilspod_files) == 0:
         raise ValueError("No NilsPod files found in directory!")
 
-    session = SyncedSession.from_folder_path(folder_path, legacy_support=legacy_support)
+    if timezone is None:
+        timezone = tz
+
+    session = SyncedSession.from_folder_path(folder_path, legacy_support=legacy_support, tz=timezone)
     session.align_to_syncregion(inplace=True)
 
     _handle_counter_inconsistencies_session(session, handle_counter_inconsistency)
-
-    if timezone is None:
-        timezone = tz
     if isinstance(datastreams, str):
         datastreams = [datastreams]
 
     # convert dataset to dataframe and localize timestamp
-    df = (
-        session.data_as_df(datastreams, index="utc_datetime", concat_df=True)
-        .tz_localize(tz=utc)
-        .tz_convert(tz=timezone)
-    )
+    df = session.data_as_df(datastreams, index="utc_datetime", concat_df=True)
     df.index.name = "time"
     if len(set(session.info.sampling_rate_hz)) > 1:
         raise ValueError(

@@ -79,7 +79,7 @@ class ColeKripke(_SleepWakeBase):
         return _SleepWakeDataFrame(scores)
 
     @staticmethod
-    def _rescore(predictions: np.array) -> np.array:
+    def _rescore(predictions: np.array) -> np.array:  # noqa: C901
         """Apply Webster's rescoring rules.
 
         Parameters

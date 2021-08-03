@@ -75,7 +75,7 @@ class EegProcessor(_BaseProcessor):
             title of ECG processing progress bar in Jupyter Notebooks or ``None`` to leave empty. Default: ``None``
 
         """
-        from mne.time_frequency import psd_array_welch
+        from mne.time_frequency import psd_array_welch  # pylint:disable=import-outside-toplevel
 
         eeg_result = {}
         for key, df in tqdm(self.data.items(), desc=title):
