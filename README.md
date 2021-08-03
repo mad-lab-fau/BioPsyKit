@@ -67,13 +67,7 @@ For more details, see the instructions in the `questionnaire` module.
 Install it via pip:
 
 ```
-pip install git+https://github.com/mad-lab-fau/BioPsyKit.git --upgrade
-```
-
-With ssh access:
-
-```
-pip install git+ssh://git@github.com:mad-lab-fau/BioPsyKit.git --upgrade
+pip install biopsykit
 ```
 
 
