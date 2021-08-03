@@ -260,7 +260,7 @@ def feature_boxplot(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to plot
     x : str
         column of x axis in ``data``
@@ -386,7 +386,7 @@ def multi_feature_boxplot(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to plot
     x : str
         column of x axis in ``data``

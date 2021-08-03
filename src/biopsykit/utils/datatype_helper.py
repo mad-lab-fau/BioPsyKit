@@ -1,5 +1,5 @@
 """A couple of helper functions that ease the use of the typical biopsykit data formats."""
-from typing import Dict, Optional, Union, List, Any, Type
+from typing import Dict, Optional, Union, List, Any
 
 import numpy as np
 import pandas as pd
@@ -424,7 +424,7 @@ Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
 * ``Heart_Rate`` Column: heart rate values
 
 This dictionary can, for instance, be rearranged to a :obj:`~biopsykit.utils.datatype_helper.HeartRateStudyDataDict`,
-where the level order is reversed: `phase`, `subject`. 
+where the level order is reversed: `phase`, `subject`.
 
 """
 

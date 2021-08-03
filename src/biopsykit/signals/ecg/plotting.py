@@ -295,7 +295,7 @@ def hr_plot(
         Whether to plot the mean heart rate as horizontal line or not. Default: ``True``
     plot_outlier : bool, optional
         Whether to plot ECG signal outlier as vertical outlier or not. Default: ``False``
-    outlier : :class:`numpy.ndarray`, optional
+    outlier : :class:`~numpy.ndarray`, optional
         List of outlier indices. Only needed if ``plot_outlier`` is ``True``. Default: ``None``
     **kwargs
         Additional parameters to configure the plot. Parameters include:

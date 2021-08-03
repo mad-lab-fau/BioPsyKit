@@ -175,17 +175,17 @@ def split_train_test(  # pylint:disable=invalid-name
 
     Returns
     -------
-    X_train: :class:`numpy.ndarray`
+    X_train: :class:`~numpy.ndarray`
         Training data
-    X_test: :class:`numpy.ndarray`
+    X_test: :class:`~numpy.ndarray`
         Test data
-    y_train: :class:`numpy.ndarray`
+    y_train: :class:`~numpy.ndarray`
         Targets of training data
-    y_test: :class:`numpy.ndarray`
+    y_test: :class:`~numpy.ndarray`
         Targets of test data
-    group_train: :class:`numpy.ndarray`
+    group_train: :class:`~numpy.ndarray`
         Group labels of training data (only available if ``groups`` is not ``None``)
-    group_test: :class:`numpy.ndarray`
+    group_test: :class:`~numpy.ndarray`
         Group labels of test data (only available if ``groups`` is not ``None``)
 
     """

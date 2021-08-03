@@ -192,7 +192,8 @@ def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.
     Parameters
     ----------
     subject_data_dict : :class:`~biopsykit.utils.datatype_helper.SubjectDataDict`
-        ``SubjectDataDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.PhaseDict` for each subject
+        ``SubjectDataDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.PhaseDict`
+        for each subject
     phase : str or :class:`~pandas.DataFrame`
         phase to normalize all other data to. If ``phase`` is a string then it is interpreted as the name of a phase
         present in ``subject_data_dict``. If ``phase`` is a DataFrame then the data will be normalized (per subject)
@@ -323,7 +324,8 @@ def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Sequence[str]
 def rearrange_subject_data_dict(
     subject_data_dict: SubjectDataDict,
 ) -> StudyDataDict:
-    """Rearrange :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` to :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`.
+    """Rearrange :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` to \
+    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`.
 
     A ``StudyDataDict`` is constructed from a ``SubjectDataDict`` by swapping outer (subject IDs) and inner
     (phase names) dictionary keys.

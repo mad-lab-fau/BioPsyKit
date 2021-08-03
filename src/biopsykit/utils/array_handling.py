@@ -9,7 +9,8 @@ from biopsykit.utils._types import arr_t
 
 
 def sanitize_input_1d(data: arr_t) -> np.ndarray:
-    """Convert 1-d array-like data (:class:`~numpy.ndarray`, :class:`~pandas.DataFrame`/:class:`~pandas.Series`) to a numpy array.
+    """Convert 1-d array-like data (:class:`~numpy.ndarray`, :class:`~pandas.DataFrame`/:class:`~pandas.Series`) \
+    to a numpy array.
 
     Parameters
     ----------
@@ -36,7 +37,8 @@ def sanitize_input_nd(
     data: arr_t,
     ncols: Optional[Union[int, Tuple[int, ...]]] = None,
 ) -> np.ndarray:
-    """Convert n-d array-like data (:class:`~numpy.ndarray`, :class:`~pandas.DataFrame`/:class:`~pandas.Series`) to a numpy array.
+    """Convert n-d array-like data (:class:`~numpy.ndarray`, :class:`~pandas.DataFrame`/:class:`~pandas.Series`) \
+    to a numpy array.
 
     Parameters
     ----------
