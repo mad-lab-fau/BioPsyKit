@@ -2,7 +2,15 @@
 name = "biopsykit"
 version = "0.2.0"
 description = "A python package for the analysis of biopsychological data."
-authors = ["Robert Richer <robert.richer@fau.de>"]
+authors = [
+    "Robert Richer <robert.richer@fau.de>",
+    "Arne Küderle <arne.kuederle@fau.de>",
+    "Rebecca Lennartz <rebecca.lennartz@fau.de>",
+    "Janis Zenkner <janis.zenkner@fau.de>"
+]
+readme = "README.md"
+homepage = "https://github.com/mad-lab-fau/NilsPodLib"
+repository = "https://github.com/mad-lab-fau/NilsPodLib"
 license = "MIT"
 
 [tool.poetry.dependencies]

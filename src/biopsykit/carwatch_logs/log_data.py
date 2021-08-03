@@ -2,9 +2,9 @@
 import json
 import warnings
 from typing import Dict, Sequence, Optional, Union
-from typing_extensions import Literal
-
 from datetime import datetime
+
+from typing_extensions import Literal
 
 import numpy as np
 import pandas as pd

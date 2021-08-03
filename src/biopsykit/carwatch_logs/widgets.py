@@ -1,9 +1,9 @@
 """Module providing interactive widgets to select and display log data from the *CARWatch App*."""
 from pathlib import Path
 from typing import Optional, Union, Callable, Tuple, List
-from typing_extensions import Literal
-
 import re
+
+from typing_extensions import Literal
 
 import pandas as pd
 

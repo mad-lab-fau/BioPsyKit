@@ -2,10 +2,12 @@
 import datetime
 from pathlib import Path
 from typing import Optional, Sequence, Union, Tuple, Dict
-from typing_extensions import Literal
 
 import re
 import warnings
+
+from typing_extensions import Literal
+
 import numpy as np
 import pandas as pd
 

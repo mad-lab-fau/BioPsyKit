@@ -3,9 +3,9 @@ import warnings
 import re
 
 from typing import Optional, Union, Sequence, Tuple, Dict, Any
-from typing_extensions import Literal
-
 from inspect import getmembers, isfunction
+
+from typing_extensions import Literal
 
 import numpy as np
 import pandas as pd
