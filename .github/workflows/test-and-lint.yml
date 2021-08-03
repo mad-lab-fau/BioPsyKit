@@ -36,7 +36,7 @@ jobs:
         git config --global user.email 'github-actions@users.noreply.github.com'
         git
         git add coverage-badge.svg
-        git commit -am "added coverage badge"
+        git commit -m "added coverage badge"
     - name: Push changes
       uses: ad-m/github-push-action@master
       if: ${{ matrix.python-version == 3.8 }}
