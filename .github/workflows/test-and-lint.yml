@@ -29,7 +29,7 @@ jobs:
     - name: Testing
       run: |
         poetry run doit test
-        poetry run coverage-badge -o coverage-badge.svg
+        poetry run coverage-badge -o -f coverage-badge.svg
     - name: Commit Coverage Badge
       run: |
         git config --global user.name 'GitHub Actions'
