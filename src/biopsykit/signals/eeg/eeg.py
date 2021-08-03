@@ -7,8 +7,6 @@ import numpy as np
 
 from tqdm.notebook import tqdm
 
-from mne.time_frequency import psd_array_welch
-
 from biopsykit.signals._base import _BaseProcessor
 
 
@@ -77,6 +75,8 @@ class EegProcessor(_BaseProcessor):
             title of ECG processing progress bar in Jupyter Notebooks or ``None`` to leave empty. Default: ``None``
 
         """
+        from mne.time_frequency import psd_array_welch
+
         eeg_result = {}
         for key, df in tqdm(self.data.items(), desc=title):
 

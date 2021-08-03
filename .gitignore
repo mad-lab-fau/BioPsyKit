@@ -5,6 +5,9 @@ docs/readme.md
 docs/authors.md
 docs/changelog.md
 
+# ignore poetry.lock file for library
+poetry.lock
+
 
 # Created by .ignore support plugin (hsz.mobi)
 ### JupyterNotebooks template

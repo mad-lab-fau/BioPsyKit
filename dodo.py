@@ -1,4 +1,6 @@
+import re
 import shutil
+import subprocess
 from pathlib import Path
 import platform
 
@@ -20,13 +22,13 @@ def task_format_check():
     return {"actions": [["black", HERE, "--check"]], "verbosity": 1}
 
 
-# def task_test():
-#     """Run Pytest with coverage."""
-#     return {
-#         "actions": ["pytest --cov=biopsykit %(paras)s"],
-#         "params": [{"name": "paras", "short": "p", "long": "paras", "default": ""}],
-#         "verbosity": 2,
-#     }
+def task_test():
+    """Run Pytest with coverage."""
+    return {
+        "actions": ["pytest --cov=biopsykit %(paras)s"],
+        "params": [{"name": "paras", "short": "p", "long": "paras", "default": ""}],
+        "verbosity": 2,
+    }
 
 
 def task_lint():
@@ -54,4 +56,40 @@ def task_register_ipykernel():
         "actions": [
             ["python", "-m", "ipykernel", "install", "--user", "--name", "biopsykit", "--display-name", "biopsykit"]
         ]
+    }
+
+
+def update_version_strings(file_path, new_version):
+    # taken from:
+    # https://stackoverflow.com/questions/57108712/replace-updated-version-strings-in-files-via-python
+    version_regex = re.compile(r"(^_*?version_*?\s*=\s*\")(\d+\.\d+\.\d+-?\S*)\"", re.M)
+    with open(file_path, "r+") as f:
+        content = f.read()
+        f.seek(0)
+        f.write(
+            re.sub(
+                version_regex,
+                lambda match: '{}{}"'.format(match.group(1), new_version),
+                content,
+            )
+        )
+        f.truncate()
+
+
+def update_version(version):
+    subprocess.run(["poetry", "version", version], shell=False, check=True)
+    new_version = (
+        subprocess.run(["poetry", "version"], shell=False, check=True, capture_output=True)
+        .stdout.decode()
+        .strip()
+        .split(" ", 1)[1]
+    )
+    update_version_strings(HERE / "src/biopsykit/__init__.py", new_version)
+
+
+def task_update_version():
+    """Bump the version in pyproject.toml and gaitmap.__init__ ."""
+    return {
+        "actions": [(update_version,)],
+        "params": [{"name": "version", "short": "v", "default": None}],
     }
