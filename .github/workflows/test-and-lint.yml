@@ -31,12 +31,18 @@ jobs:
         mkdir output
         poetry run doit test
         poetry run coverage-badge -o coverage-badge.svg
+    - name: Commit Coverage Badge
+      run: |
+        git config --global user.name 'Coverage Badge'
+        git config --global user.email 'coverage-badge@users.noreply.github.com'
+        git commit -am "Added Coverage Badge"
+        git push
     - name: Linting
       run: |
         poetry run doit -v 0 --continue format_check lint
-    - name: Publish Coverage Badge
-      uses: actions/upload-artifact@v2
-      with:
-        name: coverage-badge
-        path: coverage-badge.svg
+#    - name: Publish Coverage Badge
+#      uses: actions/upload-artifact@v2
+#      with:
+#        name: coverage-badge
+#        path: coverage-badge.svg
 
