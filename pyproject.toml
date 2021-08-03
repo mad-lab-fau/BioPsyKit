@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopsykit"
-version = "0.2.0"
+version = "0.2.1"
 description = "A python package for the analysis of biopsychological data."
 authors = [
     "Robert Richer <robert.richer@fau.de>",
