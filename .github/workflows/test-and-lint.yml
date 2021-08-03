@@ -28,8 +28,9 @@ jobs:
         poetry install -E mne
     - name: Testing
       run: |
+        mkdir output
         poetry run doit test
-        poetry run coverage-badge -o output/test/coverage-badge.svg
+        poetry run coverage-badge -o coverage-badge.svg
     - name: Linting
       run: |
         poetry run doit -v 0 --continue format_check lint
@@ -37,5 +38,5 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: coverage-badge
-        path: output/test/coverage-badge.svg
+        path: coverage-badge.svg
 
