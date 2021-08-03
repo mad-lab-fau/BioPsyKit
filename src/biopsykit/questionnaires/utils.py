@@ -2,7 +2,8 @@
 import warnings
 import re
 
-from typing import Optional, Union, Sequence, Tuple, Dict, Literal, Any
+from typing import Optional, Union, Sequence, Tuple, Dict, Any
+from typing_extensions import Literal
 
 from inspect import getmembers, isfunction
 

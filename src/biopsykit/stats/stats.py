@@ -1,6 +1,7 @@
 """Module for setting up a pipeline for statistical analysis."""
 from pathlib import Path
-from typing import Dict, Sequence, Union, Tuple, Literal, Optional, List
+from typing import Dict, Sequence, Union, Tuple, Optional, List
+from typing_extensions import Literal
 
 import pandas as pd
 import pingouin as pg

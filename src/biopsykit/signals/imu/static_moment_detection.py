@@ -1,5 +1,6 @@
 """A set of util functions to detect static regions in a IMU signal given certain constrains."""
-from typing import Sequence, Tuple, Optional, Union, Literal
+from typing import Sequence, Tuple, Optional, Union
+from typing_extensions import Literal
 
 import numpy as np
 from numpy.linalg import norm

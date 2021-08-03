@@ -17,7 +17,8 @@ with subscale names as keys and the corresponding column names (as list of str) 
     questionnaire item columns, which typically also start with index 1!
 
 """
-from typing import Optional, Sequence, Union, Dict, Literal
+from typing import Optional, Sequence, Union, Dict
+from typing_extensions import Literal
 
 import numpy as np
 import pandas as pd

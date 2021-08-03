@@ -1,7 +1,8 @@
 """Module for importing data recorded by NilsPod sensors."""
 import datetime
 from pathlib import Path
-from typing import Optional, Sequence, Union, Tuple, Dict, Literal
+from typing import Optional, Sequence, Union, Tuple, Dict
+from typing_extensions import Literal
 
 import re
 import warnings

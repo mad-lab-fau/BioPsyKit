@@ -1,7 +1,8 @@
 """Module providing classes and utility functions for handling log data from *CARWatch App*."""
 import json
 import warnings
-from typing import Dict, Sequence, Optional, Union, Literal
+from typing import Dict, Sequence, Optional, Union
+from typing_extensions import Literal
 
 from datetime import datetime
 
