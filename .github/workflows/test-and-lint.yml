@@ -24,13 +24,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install poetry
-        pip install coverage-badge
         poetry config virtualenvs.in-project true
         poetry install -E mne
     - name: Testing
       run: |
         poetry run doit test
-        coverage-badge -o coverage.svg
+        poetry run coverage-badge -o coverage.svg
     - name: Linting
       run: |
         poetry run doit -v 0 --continue format_check lint
