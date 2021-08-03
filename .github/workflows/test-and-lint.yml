@@ -34,18 +34,9 @@ jobs:
       uses: stefanzweifel/git-auto-commit-action@v4
       if: ${{ matrix.python-version == 3.8 }}
       with:
-        # Optional, but recommended
         commit_message: added coverage badge
-        # Optional commit user and author settings
         commit_user_name: GitHub Actions
         commit_user_email: github-actions@users.noreply.github.com
-#    - name: Commit Coverage Badge
-#      if: ${{ matrix.python-version == 3.8 }}
-#      run: |
-#        git config --global user.name 'GitHub Actions'
-#        git config --global user.email 'github-actions@users.noreply.github.com'
-#        git add coverage-badge.svg
-#        git commit -m "added coverage badge"
     - name: Push changes
       uses: ad-m/github-push-action@master
       if: ${{ matrix.python-version == 3.8 }}
