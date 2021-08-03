@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/biopsykit)](https://pypi.org/project/biopsykit/)
 ![GitHub](https://img.shields.io/github/license/mad-lab-fau/biopsykit)
-![Coverage](./coverage.svg)
+![Coverage](./coverage-badge.svg)
 [![Test and Lint](https://github.com/mad-lab-fau/BioPsyKit/actions/workflows/test-and-lint.yml/badge.svg)](https://github.com/mad-lab-fau/BioPsyKit/actions/workflows/test-and-lint.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/biopsykit)
