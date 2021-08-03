@@ -68,12 +68,28 @@ With ssh access:
 pip install git+ssh://git@github.com:mad-lab-fau/BioPsyKit.git --upgrade
 ```
 
-For development:
 
-```
+## For developer
+
+```bash
 git clone https://github.com/mad-lab-fau/BioPsyKit.git
-cd BioPsyKit
-pip install -r requirements-dev.txt -e . --upgrade
+cd biopsykit
+poetry install
+```
+Install Python >3.8 and [poetry](https://python-poetry.org).
+Then run the commands below to get the latest source and install the dependencies:
+
+
+To run any of the tools required for the development workflow, use the doit commands:
+
+```bash
+$ poetry run doit list
+docs                 Build the html docs using Sphinx.
+format               Reformat all files using black.
+format_check         Check, but not change, formatting using black.
+lint                 Lint all files with Prospector.
+test                 Run Pytest with coverage.
+update_version       Bump the version in pyproject.toml and biopsykit.__init__ .
 ```
 
 
