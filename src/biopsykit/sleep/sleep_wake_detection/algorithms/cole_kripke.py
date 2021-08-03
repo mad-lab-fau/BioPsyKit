@@ -78,8 +78,8 @@ class ColeKripke(_SleepWakeBase):
         scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
         return _SleepWakeDataFrame(scores)
 
-    @staticmethod
-    def _rescore(predictions: np.array) -> np.array:  # noqa: C901
+    @classmethod
+    def _rescore(cls, predictions: np.array) -> np.array:
         """Apply Webster's rescoring rules.
 
         Parameters
@@ -94,8 +94,20 @@ class ColeKripke(_SleepWakeBase):
 
         """
         rescored = predictions.copy()
-
         # rules a through c
+        rescored = cls._apply_recording_rules_a_c(rescored)
+        # rules d and e
+        rescored = cls._apply_recording_rules_d_e(rescored)
+
+        # wake phases of 1 minute, surrounded by sleep, get rescored
+        for t in range(1, len(rescored) - 1):  # pylint:disable=consider-using-enumerate
+            if rescored[t] == 1 and rescored[t - 1] == 0 and rescored[t + 1] == 0:
+                rescored[t] = 0
+
+        return rescored
+
+    @classmethod
+    def _apply_recording_rules_a_c(cls, rescored: np.ndarray):  # pylint:disable=too-many-branches
         wake_bin = 0
         for t in range(len(rescored)):  # pylint:disable=consider-using-enumerate
             if rescored[t] == 1:
@@ -112,10 +124,13 @@ class ColeKripke(_SleepWakeBase):
                     rescored[t] = 1.0
                 wake_bin = 0
 
+        return rescored
+
+    @classmethod
+    def _apply_recording_rules_d_e(cls, rescored: np.ndarray):  # pylint:disable=too-many-branches
         # rule d/e: 6/10 minutes or less of sleep surrounded by at least 10/20 minutes of wake on each side get rescored
         sleep_rules = [6, 10]
         wake_rules = [10, 20]
-
         for sleep_thres, wake_thres in zip(sleep_rules, wake_rules):
             sleep_bin = 0
             start_ind = 0
@@ -130,10 +145,5 @@ class ColeKripke(_SleepWakeBase):
                     if 0 < sleep_bin <= sleep_thres and sum1 == wake_thres and sum2 == wake_thres:
                         rescored[start_ind:t] = 1.0
                 sleep_bin = 0
-
-        # wake phases of 1 minute, surrounded by sleep, get rescored
-        for t in range(1, len(rescored) - 1):  # pylint:disable=consider-using-enumerate
-            if rescored[t] == 1 and rescored[t - 1] == 0 and rescored[t + 1] == 0:
-                rescored[t] = 0
 
         return rescored
