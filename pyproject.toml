@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopsykit"
-version = "0.1.1"
+version = "0.2.0"
 description = "A python package for the analysis of biopsychological data."
 authors = ["Robert Richer <robert.richer@fau.de>"]
 license = "MIT"
@@ -22,6 +22,12 @@ tqdm = "^4.62.0"
 joblib = "^1.0.0"
 scikit-learn = "^0.24.2"
 nilspodlib = "^3.2.2"
+openpyxl = "^3.0.7"
+XlsxWriter = "^1.4.5"
+mne = {version = "^0.23.0", optional = true}
+
+[tool.poetry.extras]
+mne = ["mne"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
