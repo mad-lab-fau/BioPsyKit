@@ -24,6 +24,7 @@ scikit-learn = "^0.24.2"
 nilspodlib = "^3.2.2"
 openpyxl = "^3.0.7"
 XlsxWriter = "^1.4.5"
+xlrd = "^2.0.1"
 mne = {version = "^0.23.0", optional = true}
 
 [tool.poetry.extras]
