@@ -79,7 +79,7 @@ class SklearnPipelinePermuter:
         >>>     },
         >>>     "reduce_dim": {
         >>>         "SelectKBest": SelectKBest(),
-        >>>         "RFE": RFE()
+        >>>         "RFE": RFE(SVC(kernel="linear", C=1))
         >>>     },
         >>>     "clf" : {
         >>>         "KNeighborsClassifier": KNeighborsClassifier(),
