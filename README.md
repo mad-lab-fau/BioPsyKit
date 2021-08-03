@@ -1,5 +1,8 @@
 # BioPsyKit
 
+[![Test and Lint](https://github.com/mad-lab-fau/BioPsyKit/actions/workflows/test-and-lint.yml/badge.svg)](https://github.com/mad-lab-fau/BioPsyKit/actions/workflows/test-and-lint.yml)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 A Python package for the analysis of biopsychological data.
 
 With this package you have everything you need for analyzing biopsychological data, including:
