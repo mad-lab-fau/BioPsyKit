@@ -199,7 +199,7 @@ class TestSalivaUtils:
         "data_in, saliva_type, expected",
         [
             (None, "cortisol", pytest.raises(ValidationError)),
-            (pd.Series(), "cortisol", pytest.raises(ValidationError)),
+            (pd.Series(dtype="float64"), "cortisol", pytest.raises(ValidationError)),
             (None, "adrenaline", pytest.raises(ValidationError)),
             (pd.DataFrame(), "adrenaline", pytest.raises(ValueError)),
             (pd.DataFrame(), "cortisol", does_not_raise()),
