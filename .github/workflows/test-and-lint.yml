@@ -29,7 +29,13 @@ jobs:
     - name: Testing
       run: |
         poetry run doit test
-        poetry run coverage-badge -o coverage.svg
+        poetry run coverage-badge -o output/test/coverage-badge.svg
     - name: Linting
       run: |
         poetry run doit -v 0 --continue format_check lint
+    - name: Publish Coverage Badge
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-badge
+        path: output/test/coverage-badge.svg
+

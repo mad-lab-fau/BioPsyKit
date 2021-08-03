@@ -49,6 +49,7 @@ pydata-sphinx-theme = "^0.6.2"
 recommonmark = "^0.6.0"
 toml = "^0.10.1"
 memory_profiler = "^0.57.0"
+coverage-badge = "^1.0.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
