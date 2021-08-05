@@ -176,8 +176,8 @@ def _sample_times_datetime_to_minute_apply(
 def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]) -> Union[pd.Series, pd.DataFrame]:
     """Convert sample times from datetime or timedelta objects into minutes.
 
-    In order to compute certain saliva features (such as :func:`~biopsykit.saliva.saliva.auc` or
-    :func:`~biopsykit.saliva.saliva.slope`) the saliva sampling times are needed.
+    In order to compute certain saliva features (such as :func:`~biopsykit.saliva.auc` or
+    :func:`~biopsykit.saliva.slope`) the saliva sampling times are needed.
     This function can be used to convert sampling times into minutes relative to the first saliva sample.
 
     Parameters

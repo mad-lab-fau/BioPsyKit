@@ -50,11 +50,11 @@ class MIST(BaseProtocol):
             additional parameters to be passed to ``MIST`` and its superclass, ``BaseProtocol``, such as:
 
             * ``saliva_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
+              :meth:`~biopsykit.protocols.BaseProtocol.saliva_plot`
             * ``hr_mean_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
+              :meth:`~biopsykit.protocols.BaseProtocol.hr_mean_plot`
             * ``hr_ensemble_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+              :meth:`~biopsykit.protocols.BaseProtocol.hr_ensemble_plot`
 
 
         Examples
@@ -115,7 +115,7 @@ class MIST(BaseProtocol):
         ----------
         ensemble_id : str
             identifier of the ensemble data to be plotted.
-            Ensemble data needs to be computed using :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_ensemble`
+            Ensemble data needs to be computed using :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_ensemble`
             first.
         subphases : dict, optional
             dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
@@ -123,7 +123,7 @@ class MIST(BaseProtocol):
             it is assumed that the study part containing the MIST is named ``MIST``.
         **kwargs : dict, optional
             optional arguments for plot configuration to be passed to
-            :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+            :meth:`~biopsykit.protocols.BaseProtocol.hr_ensemble_plot`
 
 
         Returns
@@ -136,7 +136,7 @@ class MIST(BaseProtocol):
 
         See Also
         --------
-        :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_ensemble`
+        :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_ensemble`
             compute heart rate ensemble data
         :func:`~biopsykit.protocols.plotting.hr_ensemble_plot`
             Heart rate ensemble plot

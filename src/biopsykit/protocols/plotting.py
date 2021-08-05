@@ -394,7 +394,7 @@ def hr_mean_plot(
 
     See Also
     --------
-    :func:`~biopsykit.plotting.plotting.lineplot`
+    :func:`~biopsykit.plotting.lineplot`
         Plot data as lineplot with mean and standard error
 
     """
@@ -697,7 +697,7 @@ def saliva_plot(
 
     See Also
     --------
-    :func:`~biopsykit.plotting.plotting.lineplot`
+    :func:`~biopsykit.plotting.lineplot`
         Plot data as lineplot with mean and standard error
 
     """
@@ -971,7 +971,7 @@ def saliva_feature_boxplot(
 
     See Also
     --------
-    :func:`~biopsykit.plotting.plotting.feature_boxplot`
+    :func:`~biopsykit.plotting.feature_boxplot`
         plot features as boxplot
     :class:`~biopsykit.stats.stats.StatsPipeline`
         class to create statistical analysis pipelines and get parameter for plotting significance brackets
@@ -1034,7 +1034,7 @@ def saliva_multi_feature_boxplot(
 
     See Also
     --------
-    :func:`~biopsykit.plotting.plotting.multi_feature_boxplot`
+    :func:`~biopsykit.plotting.multi_feature_boxplot`
         plot multiple features as boxplots
     :class:`~biopsykit.stats.stats.StatsPipeline`
         class to create statistical analysis pipelines and get parameter for plotting significance brackets

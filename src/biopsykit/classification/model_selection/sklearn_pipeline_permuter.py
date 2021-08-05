@@ -171,7 +171,7 @@ class SklearnPipelinePermuter:
 
         Returns
         -------
-        :class:`~biopsykit.classification.model_selection.sklearn_pipeline_permuter.SklearnPipelinePermuter`
+        :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter`
             ``SklearnPipelinePermuter`` instance with results from csv file
 
         """
@@ -193,7 +193,7 @@ class SklearnPipelinePermuter:
     ):
         """Run fit for all pipeline combinations and sets of parameters.
 
-        This function calls :func:`~biopsykit.classification.model_selection.nested_cv.nested_cv_grid_search` for all
+        This function calls :func:`~biopsykit.classification.model_selection.nested_cv_grid_search` for all
         Pipeline combinations and stores the results in the ``grid_searches`` attribute.
 
         Parameters
@@ -210,7 +210,7 @@ class SklearnPipelinePermuter:
             A str specifying the scoring metric to use for evaluation.
         **kwargs :
             additional arguments that are passed to
-            :func:`~biopsykit.classification.model_selection.nested_cv.nested_cv_grid_search` and
+            :func:`~biopsykit.classification.model_selection.nested_cv_grid_search` and
             :class:`~sklearn.model_selection.GridSearchCV`
 
         """

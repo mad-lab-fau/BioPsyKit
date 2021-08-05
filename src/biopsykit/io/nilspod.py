@@ -242,7 +242,7 @@ def _handle_counter_inconsistencies_dataset(
             warnings.warn(
                 "Counter not monotonously increasing. This might indicate that the dataset is corrupted or "
                 "that the dataset was recorded as part of a synchronized session and might need to be loaded "
-                "using `biopsykit.io.load_synced_session_nilspod()`. "
+                "using `biopsykit.io.nilspod.load_synced_session_nilspod()`. "
                 "Check the counter of the DataFrame manually!"
             )
 

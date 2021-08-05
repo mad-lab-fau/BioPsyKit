@@ -20,7 +20,7 @@ class CAR(BaseProtocol):
         **kwargs
             additional parameters to be passed to ``CAR`` and its superclass, ``BaseProtocol``, such as:
 
-            * ``car_saliva_plot_params``: parameters to style :meth:`~biopsykit.protocols.car.CAR.car_saliva_plot`
+            * ``car_saliva_plot_params``: parameters to style :meth:`~biopsykit.protocols.CAR.car_saliva_plot`
 
         """
         if name is None:

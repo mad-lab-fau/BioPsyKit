@@ -90,11 +90,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             additional parameters to be passed to ``BaseProtocol``, such as:
 
             * ``saliva_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
+              :meth:`~biopsykit.protocols.BaseProtocol.saliva_plot`
             * ``hr_mean_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
+              :meth:`~biopsykit.protocols.BaseProtocol.hr_mean_plot`
             * ``hr_ensemble_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+              :meth:`~biopsykit.protocols.BaseProtocol.hr_ensemble_plot`
 
 
         Examples
@@ -158,7 +158,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """Dictionary with sample times of saliva samples (in minutes).
 
         Sample times are either provided explicitly using the ``sample_times`` parameter in
-        :meth:`~biopsykit.protocols.base.BaseProtocol.add_saliva_data` or by extracting it from the saliva data
+        :meth:`~biopsykit.protocols.BaseProtocol.add_saliva_data` or by extracting it from the saliva data
         (if a ``time`` column is present).
         """
 
@@ -166,7 +166,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """Dictionary with saliva data collected during the study.
 
         Data in :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame` format can be added using
-        :meth:`~biopsykit.protocols.base.BaseProtocol.add_saliva_data`.
+        :meth:`~biopsykit.protocols.BaseProtocol.add_saliva_data`.
         """
 
         self.hr_data: Dict[str, HeartRateSubjectDataDict] = {}
@@ -176,7 +176,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         defaults to ``Study`` (to ensure consistent dictionary structure).
 
         Data in :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict` format can be added using
-        :meth:`~biopsykit.protocols.base.BaseProtocol.add_hr_data`.
+        :meth:`~biopsykit.protocols.BaseProtocol.add_hr_data`.
         """
 
         self.rpeak_data: Dict[str, SubjectDataDict] = {}
@@ -186,21 +186,21 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         defaults to ``Study`` (to ensure consistent dictionary structure).
 
         Data in :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` format can be added using
-        :meth:`~biopsykit.protocols.base.BaseProtocol.add_hr_data`.
+        :meth:`~biopsykit.protocols.BaseProtocol.add_hr_data`.
         """
 
         self.hr_results: Dict[str, pd.DataFrame] = {}
         """Dictionary with heart rate results.
 
         Dict keys are the identifiers that are specified when computing results from ``hr_data`` using
-        :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_results`.
+        :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_results`.
         """
 
         self.hrv_results: Dict[str, pd.DataFrame] = {}
         """Dictionary with heart rate variability ensemble.
 
         Dict keys are the identifiers that are specified when computing ensemble from ``rpeak_data`` using
-        :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hrv_results`.
+        :meth:`~biopsykit.protocols.BaseProtocol.compute_hrv_results`.
         """
 
         self.hr_ensemble: Dict[str, Dict[str, pd.DataFrame]] = {}
@@ -208,11 +208,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
 
         Dict keys are the identifiers that are specified when computing ensemble HR data from ``hr_data`` using
-        :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_ensemble`.
+        :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_ensemble`.
 
         See Also
         --------
-        :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+        :meth:`~biopsykit.protocols.BaseProtocol.hr_ensemble_plot`
             heart rate ensemble plot
         """
 
@@ -221,7 +221,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
+        :meth:`~biopsykit.protocols.BaseProtocol.saliva_plot`
             saliva plot
         """
 
@@ -230,7 +230,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
+        :meth:`~biopsykit.protocols.BaseProtocol.hr_mean_plot`
             HR mean plot
         """
 
@@ -239,7 +239,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+        :meth:`~biopsykit.protocols.BaseProtocol.hr_ensemble_plot`
             HR ensemble plot
         """
 
@@ -308,7 +308,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         Returns
         -------
-        instance of :class:`~biopsykit.protocols.base.BaseProtocol`
+        instance of :class:`~biopsykit.protocols.BaseProtocol`
             ``Protocol`` instance
 
         """
@@ -555,7 +555,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             or ["subject", "phase", "subphase"] (if ``split_into_subphases`` is ``True``).
         hrv_params : dict, optional
             dictionary with parameters to configure HRV processing or ``None`` to use default parameter.
-            See :func:`~biopsykit.signals.ecg.ecg.EcgProcessor.hrv_process` for an overview on available parameters.
+            See :func:`~biopsykit.signals.ecg.EcgProcessor.hrv_process` for an overview on available parameters.
         params : dict, optional
             dictionary with parameters provided to the different processing steps.
 
@@ -717,13 +717,13 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def get_hr_results(self, result_id: str) -> pd.DataFrame:
         """Return heart rate processing results.
 
-        Heart rate results can be computed by calling :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_results`.
+        Heart rate results can be computed by calling :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_results`.
 
         Parameters
         ----------
         result_id : str
             identifier of result parameters specified when computing results via
-            :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_results`
+            :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_results`
 
         Returns
         -------
@@ -787,13 +787,13 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """Return heart rate variability processing ensemble.
 
         Heart rate variability ensemble can be computed by calling
-        :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hrv_results`.
+        :meth:`~biopsykit.protocols.BaseProtocol.compute_hrv_results`.
 
         Parameters
         ----------
         result_id : str
             identifier of result parameters specified when computing ensemble via
-            :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hrv_results`
+            :meth:`~biopsykit.protocols.BaseProtocol.compute_hrv_results`
 
         Returns
         -------
@@ -823,7 +823,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         ----------
         ensemble_id : str
             identifier of ensemble parameters specified when computing ensemble parameters via
-            :meth:`~biopsykit.protocols.base.BaseProtocol.compute_hr_ensemble`
+            :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_ensemble`
 
         Returns
         -------
@@ -1014,7 +1014,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         ----------
         ensemble_id : str
             identifier of the ensemble data to be plotted.
-            Ensemble data needs to be computed using :meth:`~biopsykit.protocols.base.compute_hr_ensemble` first
+            Ensemble data needs to be computed using :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_ensemble`
+            first
         subphases : dict, optional
             dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
             ``None`` if no subphases are present. Default: ``None``
@@ -1033,7 +1034,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
-        :meth:`~biopsykit.protocols.base.compute_hr_ensemble`
+        :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_ensemble`
             compute heart rate ensemble data
         :func:`~biopsykit.protocols.plotting.hr_ensemble_plot`
             Heart rate ensemble plot

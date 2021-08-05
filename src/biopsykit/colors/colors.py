@@ -350,7 +350,7 @@ def fau_color(color: str) -> str:
     Parameters
     ----------
     color : str
-        Color key. Must be one of :const:`biopsykit.colors.colors.FAU_COLORS`
+        Color key. Must be one of :const:`biopsykit.colors.FAU_COLORS`
 
     Returns
     -------

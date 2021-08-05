@@ -45,11 +45,11 @@ class TSST(BaseProtocol):
             additional parameters to be passed to ``MIST`` and its superclass, ``BaseProtocol``, such as:
 
             * ``saliva_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.base.BaseProtocol.saliva_plot`
+              :meth:`~biopsykit.protocols.BaseProtocol.saliva_plot`
             * ``hr_mean_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_mean_plot`
+              :meth:`~biopsykit.protocols.BaseProtocol.hr_mean_plot`
             * ``hr_ensemble_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.base.BaseProtocol.hr_ensemble_plot`
+              :meth:`~biopsykit.protocols.BaseProtocol.hr_ensemble_plot`
 
 
         Examples

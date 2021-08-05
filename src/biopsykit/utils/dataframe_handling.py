@@ -316,7 +316,7 @@ def apply_codebook(codebook: CodebookDataFrame, data: pd.DataFrame) -> pd.DataFr
 
     See Also
     --------
-    :func:`~biopsykit.io.io.load_codebook`
+    :func:`~biopsykit.io.load_codebook`
         load Codebook
 
     Examples

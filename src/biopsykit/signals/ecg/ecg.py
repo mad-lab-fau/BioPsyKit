@@ -382,9 +382,9 @@ class EcgProcessor(_BaseProcessor):
 
         See Also
         --------
-        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.correct_outlier`
+        :meth:`~biopsykit.signals.ecg.EcgProcessor.correct_outlier`
             function to perform R peak outlier correction
-        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_params_default`
+        :meth:`~biopsykit.signals.ecg.EcgProcessor.outlier_params_default`
             dictionary with default parameters for outlier correction
 
         Returns
@@ -411,9 +411,9 @@ class EcgProcessor(_BaseProcessor):
 
         See Also
         --------
-        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.correct_outlier`
+        :meth:`~biopsykit.signals.ecg.EcgProcessor.correct_outlier`
             function to perform R peak outlier correction
-        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections`
+        :meth:`~biopsykit.signals.ecg.EcgProcessor.outlier_corrections`
             list with available outlier correction methods
 
         Returns
@@ -439,7 +439,7 @@ class EcgProcessor(_BaseProcessor):
         """Perform outlier correction on the detected R peaks.
 
         Different methods for outlier detection are available (see
-        :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections()` to get a list of possible outlier
+        :meth:`~biopsykit.signals.ecg.EcgProcessor.outlier_corrections()` to get a list of possible outlier
         correction methods). All outlier methods work independently on the detected R peaks, the results will be
         combined by a logical 'or'.
 
@@ -464,7 +464,7 @@ class EcgProcessor(_BaseProcessor):
         outlier_correction : list, optional
             List containing the outlier correction methods to be applied.
             Pass ``None`` to not apply any outlier correction, ``all`` to apply all available outlier correction
-            methods. See :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.outlier_corrections` to get a list of possible
+            methods. See :meth:`~biopsykit.signals.ecg.EcgProcessor.outlier_corrections` to get a list of possible
             outlier correction methods. Default: ``all``
         outlier_params: dict, optional
             Dict of parameters to be passed to the outlier correction methods or ``None``

@@ -58,21 +58,21 @@ def ecg_plot(
     * `bottom right`: heart rate distribution (histogram)
 
 
-    To use this function, either simply pass an :class:`~biopsykit.signals.ecg.ecg.EcgProcessor` object together with
+    To use this function, either simply pass an :class:`~biopsykit.signals.ecg.EcgProcessor` object together with
     a ``key`` indicating which phase needs to be processed should be processed or the two dataframes ``ecg_signal``
-    and ``heart_rate`` resulting from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+    and ``heart_rate`` resulting from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
 
 
     Parameters
     ----------
-    ecg_processor : :class:`~biopsykit.signals.ecg.ecg.EcgProcessor`, optional
+    ecg_processor : :class:`~biopsykit.signals.ecg.EcgProcessor`, optional
         ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
     key : str, optional
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
     ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
-        Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+        Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     heart_rate : :class:`~pandas.DataFrame`, optional
-        Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+        Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
         Default: 256
@@ -290,7 +290,7 @@ def hr_plot(
     Parameters
     ----------
     heart_rate : :class:`~pandas.DataFrame`
-        Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+        Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     plot_mean : bool, optional
         Whether to plot the mean heart rate as horizontal line or not. Default: ``True``
     plot_outlier : bool, optional
@@ -420,21 +420,21 @@ def hrv_plot(
     * `bottom left`: Power Spectral Density (PSD) plot of RR intervals
     * `right`: Poincaré plot of RR intervals
 
-    To use this function, either simply pass an :class:`~biopsykit.signals.ecg.ecg.EcgProcessor` object together with
+    To use this function, either simply pass an :class:`~biopsykit.signals.ecg.EcgProcessor` object together with
     a ``key`` indicating which phase needs to be processed should be processed or the two dataframes ``ecg_signal``
-    and ``heart_rate`` resulting from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+    and ``heart_rate`` resulting from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
 
 
     Parameters
     ----------
-    ecg_processor : :class:`~biopsykit.signals.ecg.ecg.EcgProcessor`, optional
+    ecg_processor : :class:`~biopsykit.signals.ecg.EcgProcessor`, optional
         ``EcgProcessor`` object. If this argument is passed, the ``key`` argument needs to be supplied as well.
     key : str, optional
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
     ecg_signal : :class:`~pandas.DataFrame`, optional
-        dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+        dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
-        Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+        Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
         Default: 256
@@ -524,7 +524,7 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, **kwargs) -> Tuple[plt.Figure
     Parameters
     ----------
     heart_rate : :class:`~pandas.DataFrame`, optional
-        dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`
+        dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
     **kwargs
         Additional parameters to configure the plot. Parameters include:
 
@@ -579,7 +579,7 @@ def rr_distribution_plot(
     Parameters
     ----------
     rpeaks : :class:`~pandas.DataFrame`, optional
-        dataframe with R peaks. Output of :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+        dataframe with R peaks. Output of :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
     **kwargs
@@ -660,7 +660,7 @@ def individual_beats_plot(
     Parameters
     ----------
     ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
-        Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+        Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
         Dataframe with detected R peaks or ``None`` to infer R peaks from ``ecg_signal``. Default: ``None``
     sampling_rate : float, optional
@@ -736,7 +736,7 @@ def hrv_poincare_plot(
     Parameters
     ----------
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
-            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
     **kwargs
@@ -904,7 +904,7 @@ def hrv_frequency_plot(
     Parameters
     ----------
     rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
-            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.ecg.EcgProcessor.ecg_process()`.
+            Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
     **kwargs

@@ -54,7 +54,7 @@ class CFT(BaseProtocol):
             additional parameters to be passed to ``CFT`` and its superclass, ``BaseProcessor``, such as:
 
             * ``cft_plot_params``: dictionary with parameters to style
-              :meth:`~biopsykit.protocols.cft.CFT.cft_plot`
+              :meth:`~biopsykit.protocols.CFT.cft_plot`
 
 
         Examples
@@ -112,11 +112,11 @@ class CFT(BaseProtocol):
         This function computes the following CFT parameter and returns the result in a dataframe
         (or, optionally, as dictionary):
 
-        * Baseline Heart Rate (see :meth:`~biopsykit.protocols.cft.CFT.baseline_hr` for further information)
-        * CFT Onset (see :meth:`~biopsykit.protocols.cft.CFT.onset` for further information)
-        * Peak Bradycardia (see :meth:`~biopsykit.protocols.cft.CFT.peak_bradycardia` for further information)
-        * Mean Bradycardia (see :meth:`~biopsykit.protocols.cft.CFT.mean_bradycardia` for further information)
-        * Polynomial Fit on CFT Reaction (see :meth:`~biopsykit.protocols.cft.CFT.poly_fit` for further information)
+        * Baseline Heart Rate (see :meth:`~biopsykit.protocols.CFT.baseline_hr` for further information)
+        * CFT Onset (see :meth:`~biopsykit.protocols.CFT.onset` for further information)
+        * Peak Bradycardia (see :meth:`~biopsykit.protocols.CFT.peak_bradycardia` for further information)
+        * Mean Bradycardia (see :meth:`~biopsykit.protocols.CFT.mean_bradycardia` for further information)
+        * Polynomial Fit on CFT Reaction (see :meth:`~biopsykit.protocols.CFT.poly_fit` for further information)
 
 
         Parameters

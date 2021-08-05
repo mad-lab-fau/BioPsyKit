@@ -150,7 +150,7 @@ def var_norm_windows(data: Union[AccDataFrame, GyrDataFrame]) -> pd.DataFrame:
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
-        input data, split into windows using :func:`~biopsykit.signals.imu.imu.sliding_windows_imu`
+        input data, split into windows using :func:`~biopsykit.signals.imu.sliding_windows_imu`
 
     Returns
     -------
