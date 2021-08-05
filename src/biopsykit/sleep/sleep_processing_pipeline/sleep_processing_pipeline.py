@@ -47,6 +47,7 @@ def predict_pipeline_acceleration(
         dictionary with Sleep Processing Pipeline results.
 
     """
+    # TODO: add entries of result dictionary to docstring and add possibility to specify sleep/wake prediction algorithm
     ac = ActivityCounts(sampling_rate)
     wd = WearDetection(sampling_rate=sampling_rate)
     rp = RestPeriods(sampling_rate=sampling_rate)
