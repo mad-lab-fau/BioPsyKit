@@ -14,7 +14,7 @@ from matplotlib.legend_handler import HandlerTuple
 
 import biopsykit.colors as colors
 from biopsykit.plotting import lineplot, multi_feature_boxplot, feature_boxplot
-from biopsykit.protocols.utils import _get_sample_times
+from biopsykit.protocols._utils import _get_sample_times
 from biopsykit.utils.exceptions import ValidationError
 from biopsykit.utils.data_processing import get_subphase_durations
 from biopsykit.utils.datatype_helper import (

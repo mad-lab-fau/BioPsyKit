@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import biopsykit.protocols.plotting as plot
-from biopsykit.protocols.utils import _check_sample_times_match, _get_sample_times
+from biopsykit.protocols._utils import _check_sample_times_match, _get_sample_times
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_file_extension
 from biopsykit.utils._types import path_t, T
