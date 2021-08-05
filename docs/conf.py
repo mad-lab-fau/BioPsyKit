@@ -84,7 +84,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
     # "sphinx_gallery.gen_gallery"
-    "sphinx_rtd_theme",
+    # "sphinx_rtd_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -197,17 +197,22 @@ copyright = (
 HERE = Path(__file__).parent
 with (HERE.parent.joinpath("README.md")).open() as f:
     out = f.read()
-with (HERE.joinpath("readme.md")).open("w+") as f:
+with (HERE.joinpath("README.md")).open("w+") as f:
+    f.write(out)
+
+with (HERE.parent.joinpath("coverage-badge.svg")).open() as f:
+    out = f.read()
+with (HERE.joinpath("coverage-badge.svg")).open("w+") as f:
     f.write(out)
 
 with (HERE.parent.joinpath("CHANGELOG.md")).open() as f:
     out = f.read()
-with (HERE.joinpath("changelog.md")).open("w+") as f:
+with (HERE.joinpath("CHANGELOG.md")).open("w+") as f:
     f.write(out)
 
 with (HERE.parent.joinpath("AUTHORS.md")).open() as f:
     out = f.read()
-with (HERE.joinpath("authors.md")).open("w+") as f:
+with (HERE.joinpath("source/about/AUTHORS.md")).open("w+") as f:
     f.write(out)
 
 
