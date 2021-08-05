@@ -5,10 +5,13 @@ Machine Learning and Data Analytics Lab (MaD Lab) and the Chair of Health Psycho
 
 ## Authors
 * Robert Richer <robert.richer@fau.de>
+* Arne Küderle <arne.kuederle@fau.de>
 
 ## Contributors
+* Rebecca Lennartz <rebecca.lennartz@fau.de>
+* Daniel Krauß <daniel.k.krauss@fau.de>
+* Janis Zenkner <janis.zenkner@fau.de>
 * Victoria Müller <victoria.m.mueller@fau.de>
-* Arne Küderle <arne.kuederle@fau.de>
 
 ## Contact
 Robert Richer <robert.richer@fau.de>

@@ -6,7 +6,9 @@ authors = [
     "Robert Richer <robert.richer@fau.de>",
     "Arne Küderle <arne.kuederle@fau.de>",
     "Rebecca Lennartz <rebecca.lennartz@fau.de>",
-    "Janis Zenkner <janis.zenkner@fau.de>"
+    "Janis Zenkner <janis.zenkner@fau.de>",
+    "Daniel Krauß <daniel.k.krauss@fau.de>",
+    "Victoria Müller <victoria.m.mueller@fau.de>"
 ]
 readme = "README.md"
 homepage = "https://github.com/mad-lab-fau/biopsykit"
