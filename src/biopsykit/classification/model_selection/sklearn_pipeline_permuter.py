@@ -381,8 +381,12 @@ class SklearnPipelinePermuter:
         for param_key in self.grid_searches:
             param_dict = {"pipeline_{}".format(key): val for key, val in param_key}
             conf_matrix = np.sum(self.grid_searches[param_key]["conf_matrix"], axis=0)
+            true_labels = np.array(self.grid_searches[param_key]["true_labels"]).ravel()
+            predicted_labels = np.array(self.grid_searches[param_key]["predicted_labels"]).ravel()
             df_metric = pd.DataFrame(param_dict, index=[0])
             df_metric["conf_matrix"] = [list(conf_matrix.flatten())]
+            df_metric["true_labels"] = [true_labels]
+            df_metric["predicted_labels"] = [predicted_labels]
 
             for key in self.grid_searches[param_key]:
                 if "test" in key:

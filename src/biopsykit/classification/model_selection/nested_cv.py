@@ -75,7 +75,7 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
     scoring_dict.setdefault(scoring, scoring)
     kwargs["refit"] = scoring
 
-    cols = ["grid_search", "cv_results", "best_estimator", "conf_matrix"]
+    cols = ["grid_search", "cv_results", "best_estimator", "conf_matrix", "predicted_labels", "true_labels"]
     for scorer in scoring_dict:
         cols.append("test_{}".format(scorer))
     results_dict = {key: [] for key in cols}
@@ -103,6 +103,8 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
             if scorer == scoring:
                 continue
             results_dict["test_{}".format(scorer)].append(get_scorer(scorer)._score_func(y_test, grid.predict(x_test)))
+        results_dict["predicted_labels"].append(grid.predict(x_test))
+        results_dict["true_labels"].append(y_test)
         results_dict["cv_results"].append(grid.cv_results_)
         results_dict["best_estimator"].append(grid.best_estimator_)
         results_dict["conf_matrix"].append(confusion_matrix(y_test, grid.predict(x_test), normalize=None))
