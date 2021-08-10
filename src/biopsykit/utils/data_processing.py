@@ -41,7 +41,7 @@ def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_st
     else:
         if include_start:
             time_intervals["Start"] = data.index[0].to_pydatetime().time()
-        time_intervals.sort_values(inplace=True)
+        # time_intervals.sort_values(inplace=True)
         time_intervals = {
             name: (start, end)
             for name, start, end in zip(time_intervals.index, time_intervals[:-1], time_intervals[1:])
@@ -117,6 +117,7 @@ def split_data(
             )
 
     data_dict = {name: data.between_time(*start_end) for name, start_end in time_intervals.items()}
+    data_dict = {name: data for name, data in data_dict.items() if not data.empty}
     return data_dict
 
 
