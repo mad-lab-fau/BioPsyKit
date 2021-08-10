@@ -349,18 +349,18 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             saliva_type = list(saliva_data.keys())
         if isinstance(saliva_type, str):
             saliva_type = [saliva_type]
-        self.saliva_types = saliva_type
 
         if test_times is not None:
             self.test_times = test_times
 
         if saliva_data is not None:
             if not isinstance(sample_times, dict):
-                sample_times = {key: sample_times for key in self.saliva_types}
+                sample_times = {key: sample_times for key in saliva_type}
             if not isinstance(saliva_data, dict):
-                saliva_data = {key: saliva_data for key in self.saliva_types}
+                saliva_data = {key: saliva_data for key in saliva_type}
             self.sample_times.update(_get_sample_times(saliva_data, sample_times, self.test_times))
-            self.saliva_data.update(self._add_saliva_data(saliva_data, self.saliva_types, self.sample_times))
+            self.saliva_data.update(self._add_saliva_data(saliva_data, saliva_type, self.sample_times))
+            self.saliva_types = list(self.saliva_data.keys())
 
     def _add_saliva_data(
         self,
