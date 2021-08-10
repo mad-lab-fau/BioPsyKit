@@ -84,7 +84,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
     # "sphinx_gallery.gen_gallery"
-    "sphinx_rtd_theme",
+    # "sphinx_rtd_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -102,6 +102,10 @@ autodoc_member_order = "bysource"
 
 # This value controls how to represent typehints
 autodoc_typehints = "description"
+
+# This value selects what content will be inserted into the main body of an autoclass directive.
+autoclass_content = "init"
+
 
 # Taken from sklearn config
 # For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
@@ -189,21 +193,26 @@ copyright = (
     "Erlangen-Nürnberg (FAU)".format(datetime.now().year)
 )
 
-# -- Copy the README and Changelog and fix image path --------------------------------------
+# -- Copy the README and Changelog --------------------------------------
 HERE = Path(__file__).parent
 with (HERE.parent.joinpath("README.md")).open() as f:
     out = f.read()
-with (HERE.joinpath("readme.md")).open("w+") as f:
+with (HERE.joinpath("README.md")).open("w+") as f:
+    f.write(out)
+
+with (HERE.parent.joinpath("coverage-badge.svg")).open() as f:
+    out = f.read()
+with (HERE.joinpath("coverage-badge.svg")).open("w+") as f:
     f.write(out)
 
 with (HERE.parent.joinpath("CHANGELOG.md")).open() as f:
     out = f.read()
-with (HERE.joinpath("changelog.md")).open("w+") as f:
+with (HERE.joinpath("CHANGELOG.md")).open("w+") as f:
     f.write(out)
 
 with (HERE.parent.joinpath("AUTHORS.md")).open() as f:
     out = f.read()
-with (HERE.joinpath("authors.md")).open("w+") as f:
+with (HERE.joinpath("source/about/AUTHORS.md")).open("w+") as f:
     f.write(out)
 
 
@@ -254,7 +263,8 @@ html_theme = "pydata_sphinx_theme"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {"sidebar_width": "300px", "page_width": "1200px", "show_toc_level": 3}
+# html_theme_options = {"sidebar_width": "300px", "page_width": "1200px", "show_toc_level": 3}
+html_theme_options = {"show_toc_level": 3}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []

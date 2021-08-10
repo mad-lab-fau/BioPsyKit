@@ -1,0 +1,49 @@
+name: Test and Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test_lint:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry config virtualenvs.in-project true
+        poetry install -E mne
+    - name: Testing
+      run: |
+        poetry run doit test
+        poetry run coverage-badge -o coverage-badge.svg -f
+    - name: Commit Coverage Badge
+      uses: stefanzweifel/git-auto-commit-action@v4
+      if: ${{ matrix.python-version == 3.8 }}
+      with:
+        commit_message: added coverage badge
+        commit_user_name: GitHub Actions
+        commit_user_email: github-actions@users.noreply.github.com
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      if: ${{ matrix.python-version == 3.8 }}
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
+    - name: Linting
+      run: |
+        poetry run doit -v 0 --continue format_check lint
+

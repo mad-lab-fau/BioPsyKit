@@ -2,9 +2,10 @@
 import warnings
 import re
 
-from typing import Optional, Union, Sequence, Tuple, Dict, Literal, Any
-
+from typing import Optional, Union, Sequence, Tuple, Dict, Any
 from inspect import getmembers, isfunction
+
+from typing_extensions import Literal
 
 import numpy as np
 import pandas as pd
@@ -24,6 +25,7 @@ __all__ = [
     "invert",
     "to_idx",
     "wide_to_long",
+    "get_supported_questionnaires",
 ]
 
 
@@ -39,9 +41,10 @@ def find_cols(
 
     This function is useful to find all columns that belong to a questionnaire. Column names can be filtered based on
     one (or a combination of) the following criteria:
-        * ``starts_with``: columns have to start with the specified string
-        * ``ends_with``: columns have to end with the specified string
-        * ``contains``: columns have to contain the specified string
+
+    * ``starts_with``: columns have to start with the specified string
+    * ``ends_with``: columns have to end with the specified string
+    * ``contains``: columns have to contain the specified string
 
     Optionally, the item numbers in the matching column names can be zero-padded, if they are not already.
 
@@ -49,10 +52,10 @@ def find_cols(
         If ``zero_pad_numbers`` is ``True`` then the column names returned by this function will be renamed and might
         thus not match the column names of the original dataframe. To solve this, make sure your orignal dataframe
         already has zero-padded columns (by manually renaming them) or convert column names using
-        :func:`biopsykit.questionnaires.utils.zero_pad_columns`.
+        :func:`~biopsykit.questionnaires.utils.zero_pad_columns`.
 
     .. warning::
-        Zero-padding using :func:`biopsykit.questionnaires.utils.zero_pad_columns` assumes, by default, that numbers
+        Zero-padding using :func:`~biopsykit.questionnaires.utils.zero_pad_columns` assumes, by default, that numbers
         are *at the end* of column names. If you want to change that behavior
         (e.g., because the column names have string suffixes), you might need to apply zero-padding manually.
 
@@ -139,16 +142,16 @@ def find_cols(
 def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Optional[pd.DataFrame]:
     r"""Add zero-padding to numbers at the **end** of column names in a dataframe.
 
+    .. warning::
+        By default, this function assumes that numbers are **at the end** of column names. If you need to change that
+        behavior (e.g., because the column names have string suffixes), you might need to apply zero-padding manually.
+
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
         dataframe with columns to zero-pad
     inplace : bool, optional
         whether to perform the operation inplace or not. Default: ``False``
-
-    .. warning::
-        By default, this function assumes that numbers are **at the end** of column names. If you need to change that
-        behavior (e.g., because the column names have string suffixes), you might need to apply zero-padding manually.
 
     Returns
     -------
@@ -160,14 +163,20 @@ def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Opt
     if not inplace:
         data = data.copy()
 
-    data.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(2), c) for c in data.columns]
+    nums = [re.findall(r"(\d+)$", c) for c in data.columns]
+    nums = [c[0] if len(c) > 0 else "" for c in nums]
+    if len(nums) == 0:
+        return pd.DataFrame()
+    zfill_num = max(max(list(map(len, nums))), 2)
+
+    data.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(zfill_num), c) for c in data.columns]
 
     if inplace:
         return None
     return data
 
 
-def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
+def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.ndarray:
     """Convert questionnaire item indices into array indices.
 
     In questionnaires, items indices start at 1. To avoid confusion in the implementation of questionnaires
@@ -181,7 +190,7 @@ def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
 
     Returns
     -------
-    :class:`numpy.array`
+    :class:`~numpy.ndarray`
         array with converted indices
 
     """
@@ -191,7 +200,7 @@ def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.array:
 def invert(
     data: Union[pd.DataFrame, pd.Series],
     score_range: Sequence[int],
-    cols: Optional[Union[Sequence[int], Sequence[str]]] = None,
+    cols: Optional[Union[np.array, Sequence[int], Sequence[str]]] = None,
     inplace: Optional[bool] = False,
 ) -> Optional[Union[pd.DataFrame, pd.Series]]:
     """Invert questionnaire scores.
@@ -202,7 +211,7 @@ def invert(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame` or :class:`pandas.Series`
+    data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         questionnaire data to invert
     score_range : list of int
         possible score range of the questionnaire items
@@ -219,10 +228,10 @@ def invert(
 
     Raises
     ------
-    :exc:`~biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if ``data`` is no dataframe or series
         if ``score_range`` does not have length 2
-    :exc:`~biopsykit.exceptions.ValueRangeError`
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values in ``data`` are not in ``score_range``
 
 
@@ -268,22 +277,30 @@ def invert(
         data = data.copy()
 
     if isinstance(data, pd.DataFrame):
-        if cols is not None:
-            if isinstance(cols[0], str):
-                _assert_value_range(data[cols], score_range)
-                data.loc[:, cols] = score_range[1] - data.loc[:, cols] + score_range[0]
-            else:
-                _assert_value_range(data.iloc[:, cols], score_range)
-                data.iloc[:, cols] = score_range[1] - data.iloc[:, cols] + score_range[0]
-        else:
-            _assert_value_range(data, score_range)
-            data.iloc[:, :] = score_range[1] - data.iloc[:, :] + score_range[0]
+        data = _invert_dataframe(data, cols, score_range)
     else:
         _assert_value_range(data, score_range)
         data.iloc[:] = score_range[1] - data.iloc[:] + score_range[0]
 
     if inplace:
         return None
+    return data
+
+
+def _invert_dataframe(
+    data: pd.DataFrame, cols: Union[Sequence[str], Sequence[int]], score_range: Sequence[int]
+) -> pd.DataFrame:
+    if cols is not None:
+        if isinstance(cols[0], str):
+            _assert_value_range(data[cols], score_range)
+            data.loc[:, cols] = score_range[1] - data.loc[:, cols] + score_range[0]
+        else:
+            _assert_value_range(data.iloc[:, cols], score_range)
+            data.iloc[:, cols] = score_range[1] - data.iloc[:, cols] + score_range[0]
+    else:
+        _assert_value_range(data, score_range)
+        data.iloc[:, :] = score_range[1] - data.iloc[:, :] + score_range[0]
+
     return data
 
 
@@ -335,7 +352,7 @@ def convert_scale(
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame` or :class:`pandas.Series`
+    data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         questionnaire data to invert
     offset : int
         offset to add to questionnaire items
@@ -352,7 +369,7 @@ def convert_scale(
 
     Raises
     ------
-    :exc:`~biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if ``data`` is no dataframe or series
 
     Examples
@@ -384,18 +401,26 @@ def convert_scale(
         data = data.copy()
 
     if isinstance(data, pd.DataFrame):
-        if cols is None:
-            data.iloc[:, :] = data.iloc[:, :] + offset
-        else:
-            if isinstance(cols[0], int):
-                data.iloc[:, cols] = data.iloc[:, cols] + offset
-            elif isinstance(cols[0], str):
-                data.loc[:, cols] = data.loc[:, cols] + offset
+        data = _convert_scale_dataframe(data, cols, offset)
     else:
         data.iloc[:] = data.iloc[:] + offset
 
     if inplace:
         return None
+    return data
+
+
+def _convert_scale_dataframe(
+    data: pd.DataFrame, cols: Union[Sequence[int], Sequence[str]], offset: int
+) -> pd.DataFrame:
+    if cols is None:
+        data.iloc[:, :] = data.iloc[:, :] + offset
+    else:
+        if isinstance(cols[0], int):
+            data.iloc[:, cols] = data.iloc[:, cols] + offset
+        elif isinstance(cols[0], str):
+            data.loc[:, cols] = data.loc[:, cols] + offset
+
     return data
 
 
@@ -412,7 +437,7 @@ def crop_scale(
     data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         data to be cropped
     score_range : list of int
-        possible score range of the questionnaire items. Values out of ``score_range`` are cropped
+        possible score range of the questionnaire items. Values out of ``score_range`` are cropped.
     set_nan : bool, optional
         whether to set values out of range to NaN or to the values specified by ``score_range``. Default: ``False``
     inplace : bool, optional
@@ -459,13 +484,16 @@ def bin_scale(
     ----------
     data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         data with scales to be binned
-    bins : The criteria to bin by.
-        * ``int`` : Defines the number of equal-width bins in the range of ``data``. The range of ``x`` is extended by
-        0.1% on each side to include the minimum and maximum values of `x`.
+    bins : int or list of float or :class:`~pandas.IntervalIndex``
+        The criteria to bin by. ``bins`` can have one of the following types:
+
+        * ``int`` : Defines the number of equal-width bins in the range of ``data``. The range of ``data`` is extended
+          by 0.1% on each side to include the minimum and maximum values of ``data``.
         * sequence of scalars : Defines the bin edges allowing for non-uniform width. No extension of the range of
-        ``x`` is done.
-        * ``IntervalIndex`` : Defines the exact bins to be used. Note that IntervalIndex for ``bins`` must be
-        non-overlapping.
+          ``data`` is done.
+        * :class:`~pandas.IntervalIndex` : Defines the exact bins to be used. Note that the ``IntervalIndex`` for
+          ``bins`` must be non-overlapping.
+
     cols : list of str or list of int, optional
         column name/index (or list of such) to be binned or ``None`` to use all columns (or if ``data`` is a series).
         Default: ``None``
@@ -524,27 +552,29 @@ def bin_scale(
 def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
     """Convert a dataframe wide-format into long-format.
 
+    .. warning::
+        This function is deprecated and will be removed in the future!
+        Please use :func:`~biopsykit.utils.dataframe_handling.wide_to_long` instead.
+
+
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
-        pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject
+    data : :class:`~pandas.DataFrame`
+        pandas DataFrame containing saliva data in wide-format, i.e. one column per saliva sample, one row per subject.
     quest_name : str
         questionnaire name, i.e., common name for each column to be converted into long-format.
     levels : str or list of str
         index levels of the resulting long-format dataframe.
 
-    .. warning::
-        This function is deprecated and will be removed in the future!
-        Please use :func:`biopsykit.utils.dataframe_handling.wide_to_long` instead.
 
     Returns
     -------
-    :class:`pandas.DataFrame`
+    :class:`~pandas.DataFrame`
         pandas DataFrame in long-format
 
     See Also
     --------
-    :func:`biopsykit.utils.dataframe_handling.wide_to_long`
+    :func:`~biopsykit.utils.dataframe_handling.wide_to_long`
         convert dataframe from wide to long format
 
     """
@@ -580,7 +610,7 @@ def compute_scores(
         dictionary with questionnaire names to be computed (keys) and columns of the questionnaires (values)
     quest_kwargs : dict
         dictionary with optional arguments to be passed to questionnaire functions. The dictionary is expected
-        consist of questionnaire names (keys) and **kwargs dictionaries (values) with arguments per questionnaire
+        consist of questionnaire names (keys) and ``**kwargs`` dictionaries (values) with arguments per questionnaire
 
     Returns
     -------
@@ -620,17 +650,14 @@ def compute_scores(
                 "'biopsykit.questionnaires.utils.get_supported_questionnaires()' "
                 "to get a list of all supported questionnaires.".format(score)
             )
-        kwargs = quest_kwargs.get(score_orig, None)
-        if kwargs is None:
-            df = quest_funcs[score](data[columns])
-        else:
-            try:
-                df = quest_funcs[score](data[columns], **kwargs)
-            except TypeError as e:
-                raise TypeError(
-                    "Error computing questionnaire '{}'. The computation failed with the following "
-                    "error: \n\n{}.".format(score, str(e))
-                ) from e
+        kwargs = quest_kwargs.get(score_orig, {})
+        try:
+            df = quest_funcs[score](data[columns], **kwargs)
+        except TypeError as e:
+            raise TypeError(
+                "Error computing questionnaire '{}'. The computation failed with the following "
+                "error: \n\n{}.".format(score, str(e))
+            ) from e
 
         if suffix is not None:
             df.columns = ["{}_{}".format(col, suffix) for col in df.columns]
@@ -694,16 +721,10 @@ def _compute_questionnaire_subscales(
     for key, items in subscales.items():
         if all(np.issubdtype(type(i), np.integer) for i in items):
             # assume column indices, starting at 1 (-> convert to 0-indexed indices first)
-            if agg_type == "sum":
-                score = data.iloc[:, to_idx(items)].sum(axis=1)
-            else:
-                score = data.iloc[:, to_idx(items)].mean(axis=1)
+            score = _compute_questionnaire_scores_int(data, items, agg_type)
         elif all(isinstance(i, str) for i in items):
             # assume column names
-            if agg_type == "sum":
-                score = data.loc[:, items].sum(axis=1)
-            else:
-                score = data.loc[:, items].mean(axis=1)
+            score = _compute_questionnaire_scores_str(data, items, agg_type)
         else:
             raise ValueError(
                 "Subscale columns are either expected as column names (list of strings) or "
@@ -713,6 +734,18 @@ def _compute_questionnaire_subscales(
         out["{}_{}".format(score_name, key)] = score
 
     return out
+
+
+def _compute_questionnaire_scores_int(data: pd.DataFrame, items: Sequence[int], agg_type: str):
+    if agg_type == "sum":
+        return data.iloc[:, to_idx(items)].sum(axis=1)
+    return data.iloc[:, to_idx(items)].mean(axis=1)
+
+
+def _compute_questionnaire_scores_str(data: pd.DataFrame, items: Sequence[str], agg_type: str):
+    if agg_type == "sum":
+        return data.loc[:, items].sum(axis=1)
+    return data.loc[:, items].mean(axis=1)
 
 
 def _get_cols(
@@ -742,25 +775,29 @@ def _get_bins(
     bins = list(bins)
 
     if first_min:
-        if isinstance(col, int):
-            min_val = data.iloc[:, col].min()
-        elif isinstance(col, str):
-            min_val = data[col].min()
-        else:
-            min_val = data.min()
-
+        min_val = _bin_scale_get_min_val(data, col)
         if min_val < min(bins):
             bins = [min_val - 0.01] + bins
 
     if last_max:
-        if isinstance(col, int):
-            max_val = data.iloc[:, col].max()
-        elif isinstance(col, str):
-            max_val = data[col].max()
-        else:
-            max_val = data.max()
-
+        max_val = _bin_scale_get_max_val(data, col)
         if max_val > max(bins):
             bins = bins + [max_val + 0.01]
 
     return bins
+
+
+def _bin_scale_get_min_val(data: Union[pd.DataFrame, pd.Series], col: Union[int, str]) -> float:
+    if isinstance(col, int):
+        return data.iloc[:, col].min()
+    if isinstance(col, str):
+        return data[col].min()
+    return data.min()
+
+
+def _bin_scale_get_max_val(data: Union[pd.DataFrame, pd.Series], col: Union[int, str]) -> float:
+    if isinstance(col, int):
+        return data.iloc[:, col].max()
+    if isinstance(col, str):
+        return data[col].max()
+    return data.max()

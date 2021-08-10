@@ -1,14 +1,15 @@
 """Module representing the Stroop Test protocol."""
-from typing import Dict, Tuple, Union, Optional, Sequence
+# from typing import Dict, Tuple, Union, Optional, Sequence
+from typing import Optional, Sequence
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.ticker as mticks
-import seaborn as sns
-
-import biopsykit.colors as colors
-import biopsykit.protocols.plotting as plot
+# import pandas as pd
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib.ticker as mticks
+# import seaborn as sns
+#
+# import biopsykit.colors as colors
+# import biopsykit.protocols.plotting as plot
 from biopsykit.protocols import BaseProtocol
 
 
@@ -101,9 +102,11 @@ class Stroop(BaseProtocol):
     #     **kwargs,
     # ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     #     """
-    #     Plots the course of heart rate during each Stroop subphase continuously as ensemble plot (mean ± standard error).
+    #     Plots the course of heart rate during each Stroop subphase continuously as ensemble plot
+    #     (mean ± standard error).
     #     Simply pass a 'Stroop dict' dictionary with one pandas heart rate dataframe per Stroop subphase
-    #     (see ``Stroop.concat_stroop_dicts`` for further explanation), i.e. heart rate data with one column per subject.
+    #     (see ``Stroop.concat_stroop_dicts`` for further explanation), i.e. heart rate data with one column
+    #     per subject.
     #
     #     Parameters
     #     ----------
@@ -337,8 +340,8 @@ class Stroop(BaseProtocol):
     #     is_group_dict: Optional[bool] = False,
     # ) -> pd.DataFrame:
     #     """
-    #     Converts the dictionary into one dataframe with a MultiIndex (subject, phase). The structure needs to be the same
-    #     as derived from load_stroop_inquisit_data.
+    #     Converts the dictionary into one dataframe with a MultiIndex (subject, phase). The structure needs to
+    #     be the same as derived from load_stroop_inquisit_data.
     #
     #     The dictionary can also be a group dictionary. In this case, the MultiIndex is expanded with 'group'.
     #
@@ -346,7 +349,8 @@ class Stroop(BaseProtocol):
     #     ----------
     #     dict_stroop : dict
     #         dictionary which should be converted into a dataframe. The structure should be as followed:
-    #         {'subject': {'subphase' : data,...},..} or as group_dict {'group':{'subject': {'subphase' : data,...},..},..}
+    #         {'subject': {'subphase' : data,...},..} or as group_dict
+    #         {'group':{'subject': {'subphase' : data,...},..},..}
     #     columns : str
     #         column names which should be used.
     #         Default: ``None`` -> all existing columns are used.
@@ -421,12 +425,13 @@ class Stroop(BaseProtocol):
     #     **kwargs,
     # ) -> Union[Tuple[plt.Figure, plt.Axes], None]:
     #     """
-    #     Plots the mean response time or correct answers during the different Stroop task (mean ± standard error per phase).
+    #     Plots the mean response time or correct answers during the different Stroop task
+    #     (mean ± standard error per phase).
     #
     #     In case of only one group a pandas dataframe can be passed.
     #
-    #     In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
-    #     to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
+    #     In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe
+    #     belongs to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
     #
     #     Regardless of the kind of input the dataframes need to be in the format of a 'mean dataframe', as returned
     #     by ``stroop_mean`` (see ``Stroop.stroop_mean`` for further information).
@@ -633,8 +638,8 @@ class Stroop(BaseProtocol):
     #
     #     In case of only one group a pandas dataframe can be passed.
     #
-    #     In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe belongs
-    #     to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
+    #     In case of multiple groups either a dictionary of pandas dataframes can be passed, where each dataframe
+    #     belongs to one group, or one dataframe with a column indicating group membership (parameter ``group_col``).
     #
     #     Regardless of the kind of input the dataframes need to be in the format of a 'mse dataframe', as returned
     #     by ``stroop.hr_course_mist`` (see ``MIST.hr_course_mist`` for further information).

@@ -25,7 +25,7 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to file
     assert_format : bool, optional
         whether to check if the imported dict is in the right format or not
@@ -37,11 +37,11 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if file in ``file_path`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         (if ``assert_format`` is ``True``)
-    :class:`~biopsykit.exceptions.FileExtensionError`
-        if file is no Excel file (.xls or .xlsx)
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
+        if file is no Excel file (`.xls` or ``.xlsx``)
 
     See Also
     --------
@@ -67,11 +67,9 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 
 
 def load_hr_phase_dict_folder(
-    base_path: path_t,
-    filename_pattern: str,
-    subfolder_pattern: Optional[str] = None,
+    base_path: path_t, filename_pattern: str, subfolder_pattern: Optional[str] = None
 ) -> HeartRateSubjectDataDict:
-    r"""Load a folder with multiple ``HeartRatePhaseDict``s and concatenate them into a ``HeartRateSubjectDict``.
+    r"""Load a folder with multiple ``HeartRatePhaseDict`` and concatenate them into a ``HeartRateSubjectDataDict``.
 
     This functions looks for all files that match the ``file_pattern`` in the folder specified by ``base_path``
     and loads the files that are all expected to be :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
@@ -82,7 +80,7 @@ def load_hr_phase_dict_folder(
     Alternatively, if the files are stored in subfolders, the name pattern of these subfolders can be specified by
     ``subject_folder_pattern``. Then, it is expected that the subfolder names correspond to the subject IDs.
 
-    The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDict`
+    The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
     with the following format:
 
     { ``subject_id`` : :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` }
@@ -90,7 +88,7 @@ def load_hr_phase_dict_folder(
 
     Parameters
     ----------
-    base_path : :any:`pathlib.Path` or str
+    base_path : :class: `~pathlib.Path` or str
         path to top-level folder containing all subject folders
     filename_pattern : str
         filename pattern of exported :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
@@ -103,13 +101,13 @@ def load_hr_phase_dict_folder(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDict`
-        ``HeartRateSubjectDict``, i.e., a dictionary with :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+        ``HeartRateSubjectDataDict``, i.e., a dictionary with :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         of multiple subjects
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if any file that matches ``filename_pattern`` is not a
         :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
     :exc:`FileNotFoundError`
@@ -156,44 +154,51 @@ def load_hr_phase_dict_folder(
         file_list = [f for f in file_list if re.search(filename_pattern, f.name)]
         if len(file_list) == 0:
             raise FileNotFoundError(
-                'No files matching the pattern "{}" found in {}.'.format(filename_pattern, base_path)
+                "No files matching the pattern '{}' found in {}.".format(filename_pattern, base_path)
             )
         for file in file_list:
             subject_id = re.findall(filename_pattern, file.name)[0]
             dict_hr_subjects[subject_id] = load_hr_phase_dict(file)
     else:
         subject_dirs = get_subject_dirs(base_path, subfolder_pattern)
-        if len(subject_dirs) == 0:
-            raise FileNotFoundError(
-                'No subfolders matching the pattern "{}" found in {}.'.format(subfolder_pattern, base_path)
-            )
+
         for subject_dir in subject_dirs:
             subject_id = subject_dir.name
-            # first try to search for files with glob (assuming that a regex string without capture group was passed),
-            # then try to search via regex search (assuming that a regex string with capture group was passed,
-            # which should actually not be done if subfolder_pattern is passed)
-            file_list = list(sorted(subject_dir.glob(filename_pattern)))
-            if len(file_list) == 0:
-                file_list = sorted(subject_dir.glob("*"))
-                # then extract the ones that match
-                file_list = [f for f in file_list if re.search(filename_pattern, f.name)]
-            if len(file_list) == 1:
-                dict_hr_subjects[subject_id] = load_hr_phase_dict(file_list[0])
-            elif len(file_list) > 1:
-                warnings.warn(
-                    'More than one file matching file pattern "{}" found in folder {}. '
-                    "Trying to merge these files into one HeartRatePhaseDict".format(filename_pattern, subject_dir)
-                )
-                dict_hr = {}
-                for file in file_list:
-                    dict_hr.update(load_hr_phase_dict(file))
-                dict_hr_subjects[subject_id] = dict_hr
-            else:
-                print("No Heart Rate data for subject {}".format(subject_id))
+            hr_phase_dict = _load_hr_phase_dict_single_subject(subject_dir, filename_pattern)
+            if hr_phase_dict is None:
+                continue
+            dict_hr_subjects[subject_id] = hr_phase_dict
     return dict_hr_subjects
 
 
-def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t) -> None:
+def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str) -> Optional[HeartRatePhaseDict]:
+    subject_id = subject_dir.name
+    # first try to search for files with glob (assuming that a regex string without capture group was passed),
+    # then try to search via regex search (assuming that a regex string with capture group was passed,
+    # which should actually not be done if subfolder_pattern is passed)
+    file_list = list(sorted(subject_dir.glob(filename_pattern)))
+    if len(file_list) == 0:
+        file_list = sorted(subject_dir.glob("*"))
+        # then extract the ones that match
+        file_list = [f for f in file_list if re.search(filename_pattern, f.name)]
+
+    if len(file_list) == 1:
+        return load_hr_phase_dict(file_list[0])
+    if len(file_list) > 1:
+        warnings.warn(
+            'More than one file matching file pattern "{}" found in folder {}. '
+            "Trying to merge these files into one HeartRatePhaseDict".format(filename_pattern, subject_dir)
+        )
+        dict_hr = {}
+        for file in file_list:
+            dict_hr.update(load_hr_phase_dict(file))
+        return dict_hr
+
+    print("No Heart Rate data for subject {}".format(subject_id))
+    return None
+
+
+def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t):
     """Write :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` to an Excel file.
 
     The :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` is a dictionary with heart rate time
@@ -206,7 +211,7 @@ def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t) ->
     hr_phase_dict : :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` containing pandas dataframes
         with heart rate data
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to export file
 
     See Also

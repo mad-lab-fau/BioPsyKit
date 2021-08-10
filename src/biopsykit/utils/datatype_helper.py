@@ -36,6 +36,7 @@ __all__ = [
     "SubjectDataDict",
     "HeartRatePhaseDict",
     "HeartRateSubjectDataDict",
+    "HeartRateStudyDataDict",
     "StudyDataDict",
     "MergedStudyDataDict",
     "is_subject_condition_dataframe",
@@ -63,8 +64,73 @@ __all__ = [
     "is_sleep_wake_dataframe",
 ]
 
-SubjectConditionDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
+# these subclasses of pd.DataFrame are needed to be added to the type aliases because otherwise, autosphinx does not
+# add the docstring to the documentation of the type aliases. Additionally, they can be used internally to highlight
+# which alias types are expected at which position
+
+
+class _SubjectConditionDataFrame(pd.DataFrame):
+    pass
+
+
+class _CodebookDataFrame(pd.DataFrame):
+    pass
+
+
+class _MeanSeDataFrame(pd.DataFrame):
+    pass
+
+
+class _SalivaRawDataFrame(pd.DataFrame):
+    pass
+
+
+class _SalivaFeatureDataFrame(pd.DataFrame):
+    pass
+
+
+class _SalivaMeanSeDataFrame(pd.DataFrame):
+    pass
+
+
+class _EcgRawDataFrame(pd.DataFrame):
+    pass
+
+
+class _EcgResultDataFrame(pd.DataFrame):
+    pass
+
+
+class _HeartRateDataFrame(pd.DataFrame):
+    pass
+
+
+class _RPeakDataFrame(pd.DataFrame):
+    pass
+
+
+class _AccDataFrame(pd.DataFrame):
+    pass
+
+
+class _GyrDataFrame(pd.DataFrame):
+    pass
+
+
+class _ImuDataFrame(pd.DataFrame):
+    pass
+
+
+class _SleepWakeDataFrame(pd.DataFrame):
+    pass
+
+
+class _SleepEndpointDataFrame(pd.DataFrame):
+    pass
+
+
+SubjectConditionDataFrame = Union[_SubjectConditionDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
 
 A ``SubjectConditionDataFrame`` has an index with subject IDs named ``subject`` and a column with the condition
 assignment named ``condition``.
@@ -77,46 +143,48 @@ A ``SubjectConditionDict`` contains conditions as dictionary keys and a collecti
 (list, numpy array, pandas Index) as dictionary values.
 """
 
-CodebookDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` representing a codebook which encodes numerical and categorical values
+CodebookDataFrame = Union[_CodebookDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` representing a codebook which encodes numerical and categorical values
 in a standardized format.
 
 A ``CodebookDataFrame`` has an index level named ``variable``. The column names are the numerical values (0, 1, ...),
 the dataframe entries then represent the mapping of numerical value to categorical value for the variable.
 """
 
-MeanSeDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing mean and standard error of time-series data in a standardized format.
+MeanSeDataFrame = Union[_MeanSeDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing mean and standard error of time-series data in a standardized format.
 
 The resulting dataframe must at least have a ``phase`` index level and the two columns ``mean`` and ``se``.
 It can have additional index levels, such as ``subphase`` or ``condition``.
 """
 
-SalivaRawDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing raw saliva data in a standardized format.
+SalivaRawDataFrame = Union[_SalivaRawDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing raw saliva data in a standardized format.
 
 Data needs to be in long-format and **must** have a :class:`pandas.MultiIndex` with index level names:
-    * ``subject``: subject ID; can be number or string
-    * ``sample``: saliva sample ID; can be number or string
+
+* ``subject``: subject ID; can be number or string
+* ``sample``: saliva sample ID; can be number or string
 
 Additionally, the following index levels can be added to identify saliva values, such as:
-    * ``condition``: subject condition during the study (e.g., "Control" vs. "Condition")
-    * ``day``: day ID, if saliva samples were collected over multiple days
-    * ``night``: night ID, if saliva samples were collected over multiple night
-    * ...
+
+* ``condition``: subject condition during the study (e.g., "Control" vs. "Condition")
+* ``day``: day ID, if saliva samples were collected over multiple days
+* ``night``: night ID, if saliva samples were collected over multiple night
+* ...
 
 """
 
-SalivaFeatureDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing feature computed from saliva data in a standardized format.
+SalivaFeatureDataFrame = Union[_SalivaFeatureDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing feature computed from saliva data in a standardized format.
 
 The resulting dataframe must at least have a ``subject`` index level and all column names need to begin with
 the saliva marker type (e.g. "cortisol"), followed by the feature name, separated by underscore '_'
 Additionally, the name of the column index needs to be `saliva_feature`.
 """
 
-SalivaMeanSeDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing mean and standard error of saliva samples in a standardized format.
+SalivaMeanSeDataFrame = Union[_SalivaMeanSeDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing mean and standard error of saliva samples in a standardized format.
 
 The resulting dataframe must at least have a ``sample`` index level and the two columns ``mean`` and ``se``.
 It can have additional index levels, such as ``condition`` or ``time``.
@@ -129,39 +197,42 @@ The dict entries represent the sleep endpoints and should follow a standardized 
 regardless of the origin (IMU sensor, sleep mattress, psg, etc.).
 
 Required are the entries:
-    * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
-    * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
-    * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset, in minutes
+
+* ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
+* ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
+* ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset, in minutes
 
 The following entries are common, but not required:
-    * ``total_duration``: Total recording time, in minutes
-    * ``net_sleep_duration``: Net duration spent sleeping, in minutes
-    * ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
-    * ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
-    * ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
-      in percent
-    * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
-    * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
-    * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in minutes
-    * ``sleep_bouts``: List with start and end times of sleep bouts
-    * ``wake_bouts``: List with start and end times of wake bouts
-    * ``number_wake_bouts``: Total number of wake bouts
+
+* ``total_duration``: Total recording time, in minutes
+* ``net_sleep_duration``: Net duration spent sleeping, in minutes
+* ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
+* ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
+* ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
+  in percent
+* ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
+* ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
+* ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in minutes
+* ``sleep_bouts``: List with start and end times of sleep bouts
+* ``wake_bouts``: List with start and end times of wake bouts
+* ``number_wake_bouts``: Total number of wake bouts
 
 The following entries are, for instance, further possible:
-    * ``total_time_light_sleep``: Total time of light sleep, in minutes
-    * ``total_time_deep_sleep``: Total time of deep sleep, in minutes
-    * ``total_time_rem_sleep``: Total time of REM sleep, in minutes
-    * ``total_time_awake``: Total time of being awake, in minutes
-    * ``count_snoring_episodes``: Total number of snoring episodes
-    * ``total_time_snoring``: Total time of snoring, in minutes
-    * ``heart_rate_avg``: Average heart rate during recording, in bpm
-    * ``heart_rate_min``: Minimum heart rate during recording, in bpm
-    * ``heart_rate_max``: Maximum heart rate during recording, in bpm
+
+* ``total_time_light_sleep``: Total time of light sleep, in minutes
+* ``total_time_deep_sleep``: Total time of deep sleep, in minutes
+* ``total_time_rem_sleep``: Total time of REM sleep, in minutes
+* ``total_time_awake``: Total time of being awake, in minutes
+* ``count_snoring_episodes``: Total number of snoring episodes
+* ``total_time_snoring``: Total time of snoring, in minutes
+* ``heart_rate_avg``: Average heart rate during recording, in bpm
+* ``heart_rate_min``: Minimum heart rate during recording, in bpm
+* ``heart_rate_max``: Maximum heart rate during recording, in bpm
 
 """
 
-SleepEndpointDataFrame = pd.DataFrame
-""":class:`pandas.DataFrame` containing sleep endpoints in a standardized format.
+SleepEndpointDataFrame = Union[_SleepEndpointDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing sleep endpoints in a standardized format.
 
 The resulting dataframe must at least have a ``date`` index level,
 and, optionally, further index levels like ``night``.
@@ -170,113 +241,125 @@ The columns defining the sleep endpoints should follow a standardized naming con
 (IMU sensor, sleep mattress, psg, etc.).
 
 Required are the columns:
-    * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
-    * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
-    * ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset, in minutes
+
+* ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
+* ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
+* ``total_sleep_duration``: Total sleep duration, i.e., time between Sleep Onset and Wake Onset, in minutes
 
 The following columns are common, but not required:
-    * ``total_duration``: Total recording time, in minutes
-    * ``net_sleep_duration``: Net duration spent sleeping, in minutes
-    * ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
-    * ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
-    * ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
-      in percent
-    * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
-    * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
-    * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in minutes
-    * ``number_wake_bouts``: Total number of wake bouts
+
+* ``total_duration``: Total recording time, in minutes
+* ``net_sleep_duration``: Net duration spent sleeping, in minutes
+* ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
+* ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
+* ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
+  in percent
+* ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
+* ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
+* ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in minutes
+* ``number_wake_bouts``: Total number of wake bouts
 
 The following columns are further possible:
-    * ``total_time_light_sleep``: Total time of light sleep, in minutes
-    * ``total_time_deep_sleep``: Total time of deep sleep, in minutes
-    * ``total_time_rem_sleep``: Total time of REM sleep, in minutes
-    * ``total_time_awake``: Total time of being awake, in minutes
-    * ``count_snoring_episodes``: Total number of snoring episodes
-    * ``total_time_snoring``: Total time of snoring, in minutes
-    * ``heart_rate_avg``: Average heart rate during recording, in bpm
-    * ``heart_rate_min``: Minimum heart rate during recording, in bpm
-    * ``heart_rate_max``: Maximum heart rate during recording, in bpm
+
+* ``total_time_light_sleep``: Total time of light sleep, in minutes
+* ``total_time_deep_sleep``: Total time of deep sleep, in minutes
+* ``total_time_rem_sleep``: Total time of REM sleep, in minutes
+* ``total_time_awake``: Total time of being awake, in minutes
+* ``count_snoring_episodes``: Total number of snoring episodes
+* ``total_time_snoring``: Total time of snoring, in minutes
+* ``heart_rate_avg``: Average heart rate during recording, in bpm
+* ``heart_rate_min``: Minimum heart rate during recording, in bpm
+* ``heart_rate_max``: Maximum heart rate during recording, in bpm
+
 """
 
 
-EcgRawDataFrame = pd.DataFrame
+EcgRawDataFrame = Union[_EcgRawDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing raw ECG data of `one` subject.
 
 The dataframe is expected to have the following columns:
-    * ``ecg``: Raw ECG signal
+
+* ``ecg``: Raw ECG signal
 
 """
 
-EcgResultDataFrame = pd.DataFrame
+EcgResultDataFrame = Union[_EcgResultDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing processed ECG data of `one` subject.
 
 The dataframe is expected to have the following columns:
-    * ``ECG_Raw``: Raw ECG signal
-    * ``ECG_Clean``: Cleaned (filtered) ECG signal
-    * ``ECG_Quality``: ECG signal quality indicator in the range of [0, 1]
-    * ``ECG_R_Peaks``: 1.0 where R peak was detected in the ECG signal, 0.0 else
-    * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
-    * ``Heart_Rate``: Computed Heart rate interpolated to signal length
+
+* ``ECG_Raw``: Raw ECG signal
+* ``ECG_Clean``: Cleaned (filtered) ECG signal
+* ``ECG_Quality``: ECG signal quality indicator in the range of [0, 1]
+* ``ECG_R_Peaks``: 1.0 where R peak was detected in the ECG signal, 0.0 else
+* ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
+* ``Heart_Rate``: Computed Heart rate interpolated to signal length
 
 """
 
-HeartRateDataFrame = pd.DataFrame
+HeartRateDataFrame = Union[_HeartRateDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing heart rate time series data of `one` subject.
 
 The dataframe is expected to have the following columns:
-    * ``Heart_Rate``: Heart rate data. Can either be instantaneous heart rate or resampled heart rate 
+
+* ``Heart_Rate``: Heart rate data. Can either be instantaneous heart rate or resampled heart rate
 
 """
 
-RPeakDataFrame = pd.DataFrame
+RPeakDataFrame = Union[_RPeakDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing R-peak locations of `one` subject extracted from ECG data.
 
 The dataframe is expected to have the following columns:
-    * ``R_Peak_Quality``: Signal quality indicator (of the raw ECG signal) in the range of [0, 1]
-    * ``R_Peak_Idx``: Array index of detected R peak in the raw ECG signal
-    * ``RR_Interval``: Interval between the current and the successive R peak in seconds
-    * ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
+
+* ``R_Peak_Quality``: Signal quality indicator (of the raw ECG signal) in the range of [0, 1]
+* ``R_Peak_Idx``: Array index of detected R peak in the raw ECG signal
+* ``RR_Interval``: Interval between the current and the successive R peak in seconds
+* ``R_Peak_Outlier``: 1.0 when a detected R peak was classified as outlier, 0.0 else
 
 """
 
-AccDataFrame = pd.DataFrame
+AccDataFrame = Union[_AccDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing 3-d acceleration data.
 
 The dataframe is expected to have one of the following column sets:
-    * ["acc_x", "acc_y", "acc_z"]: one level column index
-    * [("acc", "x"), ("acc", "y"), ("acc", "z")]: two-level column index, first level specifying the channel
-      (acceleration), second level specifying the axes
+
+* ["acc_x", "acc_y", "acc_z"]: one level column index
+* [("acc", "x"), ("acc", "y"), ("acc", "z")]: two-level column index, first level specifying the channel
+  (acceleration), second level specifying the axes
 
 """
 
-GyrDataFrame = pd.DataFrame
+GyrDataFrame = Union[_GyrDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing 3-d gyroscope data.
 
 The dataframe is expected to have one of the following column sets:
-    * ["gyr_x", "gyr_y", "gyr_z"]: one level column index
-    * [("gyr", "x"), ("gyr", "y"), ("gyr", "z")]: two-level column index, first level specifying the channel
-      (gyroscope), second level specifying the axes
+
+* ["gyr_x", "gyr_y", "gyr_z"]: one level column index
+* [("gyr", "x"), ("gyr", "y"), ("gyr", "z")]: two-level column index, first level specifying the channel
+  (gyroscope), second level specifying the axes
 
 """
 
-ImuDataFrame = pd.DataFrame
+ImuDataFrame = Union[_ImuDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing 3-d inertial measurement (IMU) (acceleration and gyroscope) data.
 
 Hence, an ``ImuDataFrame`` must both be a ``AccDataFrame`` **and** a ``GyrDataFrame``.
 
 The dataframe is expected to have one of the following column sets:
-    * ["acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z"]: one level column index
-    * [("acc", "x"), ("acc", "y"), ("acc", "z"), ("gyr", "x"), ("gyr", "y"), ("gyr", "z")]:
-      two-level column index, first level specifying the channel (acceleration and gyroscope),
-      second level specifying the axes
+
+* ["acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z"]: one level column index
+* [("acc", "x"), ("acc", "y"), ("acc", "z"), ("gyr", "x"), ("gyr", "y"), ("gyr", "z")]:
+  two-level column index, first level specifying the channel (acceleration and gyroscope),
+  second level specifying the axes
 
 """
 
-SleepWakeDataFrame = pd.DataFrame
+SleepWakeDataFrame = Union[_SleepWakeDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing sleep/wake predictions.
 
 The dataframe is expected to have at least the following column(s):
-    * ["sleep_wake"]: sleep/wake predictions where 0 indicates sleep and 1 indicates wake
+
+* ["sleep_wake"]: sleep/wake predictions where 0 indicates sleep and 1 indicates wake
 
 """
 
@@ -287,8 +370,9 @@ A ``PhaseDict`` is a dictionary with the following format:
 
 { "phase_1" : dataframe, "phase_2" : dataframe, ... }
 
-Each ``dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * Index: :class:`pandas.DatetimeIndex` with timestamps, name of index level: ``time``
+Each ``dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* Index: :class:`pandas.DatetimeIndex` with timestamps, name of index level: ``time``
 
 """
 
@@ -299,9 +383,10 @@ A ``HeartRatePhaseDict`` is a dictionary with the following format:
 
 { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... }
 
-Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
-    * ``Heart_Rate`` Column: heart rate values
+Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
+* ``Heart_Rate`` Column: heart rate values
 
 """
 
@@ -310,11 +395,12 @@ SubjectDataDict = Dict[str, PhaseDict]
 
 A ``SubjectDataDict`` is a nested dictionary with time-series data from multiple subjects, each containing data
 from different phases. It is expected to have the level order `subject`, `phase`:
-    {
-        "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        ...
-    }
+
+| {
+|     "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+|     "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+|     ...
+| }
 
 This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.StudyDataDict`,
 where the level order is reversed: `phase`, `subject`.
@@ -325,18 +411,21 @@ HeartRateSubjectDataDict = Union[Dict[str, HeartRatePhaseDict], Dict[str, Dict[s
 
 A ``HeartRateSubjectDataDict`` is a nested dictionary with time-series heart rate data from multiple subjects,
 each containing data from different phases. It is expected to have the level order `subject`, `phase`:
-  {
-      "subject1" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
-      "subject2" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
-      ...
-  }
 
-Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
-    * ``Heart_Rate`` Column: heart rate values
+| {
+|     "subject1" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+|     "subject2" : { "phase_1" : hr_dataframe, "phase_2" : hr_dataframe, ... },
+|     ...
+| }
 
-This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.HeartRateStudyDataDict`,
+Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
+* ``Heart_Rate`` Column: heart rate values
+
+This dictionary can, for instance, be rearranged to a :obj:`~biopsykit.utils.datatype_helper.HeartRateStudyDataDict`,
 where the level order is reversed: `phase`, `subject`.
+
 """
 
 StudyDataDict = Dict[str, Dict[str, pd.DataFrame]]
@@ -344,11 +433,12 @@ StudyDataDict = Dict[str, Dict[str, pd.DataFrame]]
 
 A ``StudyDataDict`` is a nested dictionary with time-series data from multiple phases, each phase containing data
 from different subjects. It is expected to have the level order `phase`, `subject`:
-  {
-      "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-      "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-      ...
-  }
+
+| {
+|     "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+|     "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+|     ...
+| }
 
 This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.SubjectDataDict` by calling
 :func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
@@ -360,30 +450,32 @@ HeartRateStudyDataDict = Dict[str, Dict[str, HeartRateDataFrame]]
 
 A ``HeartRateStudyDataDict`` is a nested dictionary with time-series heart rate data from multiple phases,
 each phase containing data from different subjects. It is expected to have the level order `phase`, `subject`:
-  {
-      "phase_1" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
-      "phase_2" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
-      ...
-  }
 
-Each ``hr_dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
-    * ``Heart_Rate`` Column: heart rate values
+| {
+|     "phase_1" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
+|     "phase_2" : { "subject1" : hr_dataframe, "subject2" : hr_dataframe, ... },
+|     ...
+| }
 
-This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.HeartRateSubjectDataDict` by calling
+Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
+* ``Heart_Rate`` Column: heart rate values
+
+This dict results from rearranging a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict` by calling
 :func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
 """
 
 MergedStudyDataDict = Dict[str, pd.DataFrame]
 """Dictionary with merged time-series data of **multiple subjects**, split into **different phases**.
 
-A ``MergedSubjectsDict`` is a dictionary with the following format:
+A ``MergedStudyDataDict`` is a dictionary with the following format:
 
-{
-    "phase_1" : merged_dataframe,
-    "phase_2" : merged_dataframe,
-    ...
-}
+| {
+|     "phase_1" : merged_dataframe,
+|     "phase_2" : merged_dataframe,
+|     ...
+| }
 
 This dict results from merging the inner dictionary into one dataframe by calling
 :func:`~biopsykit.utils.data_processing.merge_study_data_dict`.
@@ -391,29 +483,30 @@ This dict results from merging the inner dictionary into one dataframe by callin
 .. note::
     Merging the inner dictionaries requires that the dataframes of all subjects have same length within each phase.
 
-Each ``merged_dataframe`` is a :class:`pandas.DataFrame` with the following format:
-    * Index: time. Name of index level: ``time``
-    * Columns: time series data per subject, each subject has its own column.
-      Name of the column index level: ``subject``
+Each ``merged_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
+
+* Index: time. Name of index level: ``time``
+* Columns: time series data per subject, each subject has its own column.
+  Name of the column index level: ``subject``
 """
 
 
 def is_subject_condition_dataframe(
     data: SubjectConditionDataFrame, raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a ``SubjectConditionDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SubjectConditionDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``SubjectConditionDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``SubjectConditionDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -422,7 +515,7 @@ def is_subject_condition_dataframe(
 
     See Also
     --------
-    ``SubjectConditionDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`
         dataframe format
 
     """
@@ -442,7 +535,7 @@ def is_subject_condition_dataframe(
 
 
 def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``SubjectConditionDict``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict`.
 
     Parameters
     ----------
@@ -453,8 +546,8 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
 
     Returns
     -------
-    ``True`` if ``data`` is a ``SubjectConditionDict``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``SubjectConditionDict``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -463,7 +556,7 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
 
     See Also
     --------
-    ``SubjectConditionDict``
+    :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
         dictionary format
 
     """
@@ -482,11 +575,11 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
 
 
 def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``CodebookDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``CodebookDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
@@ -494,8 +587,8 @@ def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[boo
 
     Returns
     -------
-    ``True`` if ``data`` is a ``CodebookDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``CodebookDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
 
     Raises
@@ -506,7 +599,7 @@ def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[boo
 
     See Also
     --------
-    ``CodebookDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame`
         dataframe format
 
     """
@@ -530,19 +623,19 @@ def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[boo
 
 
 def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``MeanSeDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``MeanSeDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``MeanSeDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``MeanSeDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -551,7 +644,7 @@ def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] 
 
     See Also
     --------
-    ``MeanSeDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`
         dataframe format
 
     """
@@ -570,7 +663,7 @@ def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] 
 
 
 def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a ``HeartRatePhaseDict``.
+    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
 
     Parameters
     ----------
@@ -581,8 +674,8 @@ def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] =
 
     Returns
     -------
-    ``True`` if ``data`` is a ``HeartRatePhaseDict``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``HeartRatePhaseDict``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -591,7 +684,7 @@ def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] =
 
     See Also
     --------
-    ``HeartRatePhaseDict``
+    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         dictionary format
 
     """
@@ -612,7 +705,7 @@ def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] =
 
 
 def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a ``PhaseDict``.
+    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.PhaseDict`.
 
     Parameters
     ----------
@@ -623,8 +716,8 @@ def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Op
 
     Returns
     -------
-    ``True`` if ``data`` is a ``PhaseDict``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``PhaseDict``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -633,7 +726,7 @@ def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Op
 
     See Also
     --------
-    ``PhaseDict``
+    :obj:`~biopsykit.utils.datatype_helper.PhaseDict`
         dictionary format
 
     """
@@ -655,7 +748,7 @@ def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Op
 
 
 def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a ``HeartRateSubjectDataDict``.
+    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`.
 
     Parameters
     ----------
@@ -666,8 +759,8 @@ def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Opt
 
     Returns
     -------
-    ``True`` if ``data`` is a ``HeartRateSubjectDataDict``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``HeartRateSubjectDataDict``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -676,7 +769,7 @@ def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Opt
 
     See Also
     --------
-    ``HeartRateSubjectDataDict``
+    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
         dictionary format
 
     """
@@ -695,7 +788,7 @@ def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Opt
 
 
 def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a ``StudyDataDict``.
+    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`.
 
     Parameters
     ----------
@@ -706,8 +799,8 @@ def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = Tr
 
     Returns
     -------
-    ``True`` if ``data`` is a ``StudyDataDict``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``StudyDataDict``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -716,7 +809,7 @@ def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = Tr
 
     See Also
     --------
-    ``StudyDataDict``
+    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
         dictionary format
 
     """
@@ -737,7 +830,7 @@ def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = Tr
 
 
 def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a ``SubjectDataDict``.
+    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`.
 
     Parameters
     ----------
@@ -748,8 +841,8 @@ def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] 
 
     Returns
     -------
-    ``True`` if ``data`` is a ``SubjectDataDict``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``SubjectDataDict```
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -758,7 +851,7 @@ def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] 
 
     See Also
     --------
-    ``SubjectDataDict``
+    :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict``
         dictionary format
 
     """
@@ -779,7 +872,7 @@ def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] 
 
 
 def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a ``MergedStudyDataDict``.
+    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`.
 
     Parameters
     ----------
@@ -790,8 +883,8 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
 
     Returns
     -------
-    ``True`` if ``data`` is a ``MergedStudyDataDict``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``MergedStudyDataDict``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -800,7 +893,7 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
 
     See Also
     --------
-    ``MergedStudyDataDict``
+    :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
         dictionary format
 
     """
@@ -825,11 +918,11 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
 def is_saliva_raw_dataframe(
     data: SalivaRawDataFrame, saliva_type: Union[str, List[str]], raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a ``SalivaRawDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SalivaRawDataFrame``
     saliva_type : str or list of str
         type of saliva data (or list of saliva types) in the dataframe, e.g., "cortisol" or "amylase"
@@ -838,8 +931,8 @@ def is_saliva_raw_dataframe(
 
     Returns
     -------
-    ``True`` if ``data`` is a ``SalivaRawDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``SalivaRawDataFrame```
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -848,7 +941,7 @@ def is_saliva_raw_dataframe(
 
     See Also
     --------
-    ``SalivaRawDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
         dataframe format
 
     """
@@ -874,11 +967,11 @@ def is_saliva_raw_dataframe(
 def is_saliva_feature_dataframe(
     data: SalivaFeatureDataFrame, saliva_type: str, raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a ``SalivaFeatureDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SalivaFeatureDataFrame``
     saliva_type : str or list of str
         type of saliva data in the dataframe, e.g., "cortisol" or "amylase"
@@ -887,8 +980,8 @@ def is_saliva_feature_dataframe(
 
     Returns
     -------
-    ``True`` if ``data`` is a ``SalivaFeatureDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``SalivaFeatureDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -897,7 +990,7 @@ def is_saliva_feature_dataframe(
 
     See Also
     --------
-    ``SalivaFeatureDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
         dataframe format
 
     """
@@ -906,7 +999,7 @@ def is_saliva_feature_dataframe(
             raise ValidationError("`saliva_type` is None!")
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_index_levels(data, index_levels="subject", match_atleast=True, match_order=False)
-        _assert_has_column_levels(data, column_levels="saliva_feature", match_atleast=True, match_order=False)
+        # _assert_has_column_levels(data, column_levels="saliva_feature", match_atleast=True, match_order=False)
         _assert_has_column_prefix(data.columns, prefix=saliva_type)
     except ValidationError as e:
         if raise_exception is True:
@@ -919,19 +1012,19 @@ def is_saliva_feature_dataframe(
 
 
 def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``SalivaMeanSeDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SalivaMeanSeDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``SalivaMeanSeDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``SalivaMeanSeDataFrame```
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -940,7 +1033,7 @@ def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: O
 
     See Also
     --------
-    ``SalivaMeanSeDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame``
         dataframe format
 
     """
@@ -959,19 +1052,19 @@ def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: O
 
 
 def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``SleepEndpointDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SleepEndpointDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``SleepEndpointDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``SleepEndpointDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -980,7 +1073,7 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
 
     See Also
     --------
-    ``SleepEndpointDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDataFrame`
         dataframe format
 
     """
@@ -1000,7 +1093,7 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
 
 
 def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dictionary is a ``SleepEndpointDict``.
+    """Check whether dictionary is a :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`.
 
     Parameters
     ----------
@@ -1011,8 +1104,8 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
 
     Returns
     -------
-    ``True`` if ``data`` is a ``SleepEndpointDict``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``SleepEndpointDict``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -1021,7 +1114,7 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
 
     See Also
     --------
-    ``SleepEndpointDict``
+    :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`
         dictionary format
 
     """
@@ -1041,19 +1134,19 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
 
 
 def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``EcgRawDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.EcgRawDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``EcgRawDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``EcgRawDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``EcgRawDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -1062,7 +1155,7 @@ def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] 
 
     See Also
     --------
-    ``EcgRawDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.EcgRawDataFrame`
         dataframe format
 
     """
@@ -1080,19 +1173,19 @@ def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] 
 
 
 def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``EcgResultDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``EcgResultDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``EcgResultDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``EcgResultDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -1101,7 +1194,7 @@ def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[boo
 
     See Also
     --------
-    ``EcgResultDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`
         dataframe format
 
     """
@@ -1125,19 +1218,19 @@ def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[boo
 
 
 def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``HeartRateDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.HeartRateDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``HeartRateDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``HeartRateDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``HeartRateDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -1146,7 +1239,7 @@ def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[
 
     See Also
     --------
-    ``RPeakDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.HeartRateDataFrame`
         dataframe format
 
     """
@@ -1167,19 +1260,19 @@ def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[
 
 
 def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``RPeakDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.RPeakDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``RPeakDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``RPeakDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``RPeakDataFrame```
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -1188,7 +1281,7 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
 
     See Also
     --------
-    ``RPeakDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
         dataframe format
 
     """
@@ -1213,19 +1306,19 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
 
 
 def is_acc_dataframe(data: AccDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``AccDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.AccDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``AccDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``AccDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``AccDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -1234,7 +1327,7 @@ def is_acc_dataframe(data: AccDataFrame, raise_exception: Optional[bool] = True)
 
     See Also
     --------
-    ``AccDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.AccDataFrame`
         dataframe format
 
     """
@@ -1258,19 +1351,19 @@ def is_acc_dataframe(data: AccDataFrame, raise_exception: Optional[bool] = True)
 
 
 def is_gyr_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``GyrDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.GyrDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``GyrDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``GyrDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``GyrDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -1279,7 +1372,7 @@ def is_gyr_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True)
 
     See Also
     --------
-    ``GyrDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.GyrDataFrame`
         dataframe format
 
     """
@@ -1303,19 +1396,19 @@ def is_gyr_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True)
 
 
 def is_imu_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``ImuDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``ImuDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``ImuDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``ImuDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -1324,7 +1417,7 @@ def is_imu_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True)
 
     See Also
     --------
-    ``ImuDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`
         dataframe format
 
     """
@@ -1342,19 +1435,19 @@ def is_imu_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True)
 
 
 def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a ``SleepWakeDataFrame``.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SleepWakeDataFrame`.
 
     Parameters
     ----------
-    data : :class:`pandas.DataFrame`
+    data : :class:`~pandas.DataFrame`
         data to check if it is a ``SleepWakeDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``SleepWakeDataFrame``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``data`` is a ``SleepWakeDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
@@ -1363,7 +1456,7 @@ def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[
 
     See Also
     --------
-    ``SleepWakeDataFrame``
+    :obj:`~biopsykit.utils.datatype_helper.SleepWakeDataFrame`
         dataframe format
 
     """

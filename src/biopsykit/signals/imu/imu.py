@@ -4,25 +4,28 @@ from typing import Union, Optional
 import pandas as pd
 import numpy as np
 from biopsykit.utils._types import arr_t
-from biopsykit.utils.datatype_helper import AccDataFrame, GyrDataFrame
+from biopsykit.utils.datatype_helper import AccDataFrame, GyrDataFrame, ImuDataFrame
 
 from biopsykit.utils.time import utc
 from biopsykit.utils.array_handling import sliding_window
 
 
-def convert_acc_data_to_g(data: AccDataFrame, inplace: Optional[bool] = False) -> Optional[pd.DataFrame]:
+def convert_acc_data_to_g(
+    data: Union[AccDataFrame, ImuDataFrame], inplace: Optional[bool] = False
+) -> Optional[Union[AccDataFrame, ImuDataFrame]]:
     """Convert acceleration data from :math:`m/s^2` to g.
 
     Parameters
     ----------
-    data : :class:`~pandas.DataFrame`
-        input acceleration data
+    data : :class:`~biopsykit.utils.datatype_helper.AccDataFrame` or \
+            :class:`~biopsykit.utils.datatype_helper.ImuDataFrame`
+        dataframe containing acceleration data.
     inplace : bool, optional
         whether to perform the operation inplace or not. Default: ``False``
 
     Returns
     -------
-    :class:`~pandas.DataFrame`
+    :class:`~biopsykit.utils.datatype_helper.AccDataFrame` or :class:`~biopsykit.utils.datatype_helper.ImuDataFrame`
         acceleration data converted to g
 
     """
@@ -89,7 +92,7 @@ def sliding_windows_imu(
 
     See Also
     --------
-    `sliding_window_view`
+    :func:`~biopsykit.utils.array_handling.sliding_window_view`
         create sliding window of input array. low-level function with less input parameter configuration possibilities
 
     """
@@ -140,13 +143,14 @@ def var_norm_windows(data: Union[AccDataFrame, GyrDataFrame]) -> pd.DataFrame:
     This function computes the norm of variance according to:
 
     .. math::
-        var_norm = \sqrt{var_x^2 + var_y^2 + var_z^2}
+        var_{norm} = \sqrt{var_x^2 + var_y^2 + var_z^2}
+
     where :math:`var_i` is the variance of axis :math:`i` in the window
 
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
-        input data, split into windows using :func:`~biopsykit.signals.imu.imu.sliding_windows_imu`
+        input data, split into windows using :func:`~biopsykit.signals.imu.sliding_windows_imu`
 
     Returns
     -------

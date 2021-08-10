@@ -12,6 +12,8 @@ from biopsykit.utils.datatype_helper import (
     is_saliva_raw_dataframe,
     is_subject_condition_dataframe,
     SubjectConditionDataFrame,
+    _SubjectConditionDataFrame,
+    _SalivaRawDataFrame,
 )
 
 __all__ = ["load_saliva_plate", "save_saliva", "load_saliva_wide_format"]
@@ -37,18 +39,19 @@ def load_saliva_plate(
 
     Here are some examples on how sample identifiers might look like and what the corresponding
     ``regex_str`` would output:
+
         * "Vp01 S1"
-            => ``r"(Vp\d+) (S\d)"`` (this is the default pattern, you can also just set ``regex_str`` to ``None``)
-            => data ``[Vp01, S1]`` in two columns: ``subject``, ``sample``
-            (unless column names are explicitly specified in ``data_col_names``)
+          => ``r"(Vp\d+) (S\d)"`` (this is the default pattern, you can also just set ``regex_str`` to ``None``)
+          => data ``[Vp01, S1]`` in two columns: ``subject``, ``sample``
+          (unless column names are explicitly specified in ``data_col_names``)
         * "Vp01 T1 S1" ... "Vp01 T1 S5" (only *numeric* characters in day/sample)
-            => ``r"(Vp\d+) (T\d) (S\d)"``
-            => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
-            (unless column names are explicitly specified in ``data_col_names``)
+          => ``r"(Vp\d+) (T\d) (S\d)"``
+          => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
+          (unless column names are explicitly specified in ``data_col_names``)
         * "Vp01 T1 S1" ... "Vp01 T1 SA" (also *letter* characters in day/sample)
-            => ``r"(Vp\d+) (T\w) (S\w)"``
-            => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
-            (unless column names are explicitly specified in ``data_col_names``)
+          => ``r"(Vp\d+) (T\w) (S\w)"``
+          => three columns: ``subject``, ``sample`` with data ``[Vp01, T1, S1]``
+          (unless column names are explicitly specified in ``data_col_names``)
 
     If you **don't** want to extract the 'S' or 'T' prefixes in saliva or day IDs, respectively,
     you have to move it **out** of the capture group in the ``regex_str`` (round brackets), like this:
@@ -58,7 +61,7 @@ def load_saliva_plate(
 
     Parameters
     ----------
-    file_path: :any:`pathlib.Path` or str
+    file_path: :class:`~pathlib.Path` or str
         path to the Excel sheet in 'plate' format containing saliva data
     saliva_type: str
         saliva type to load from file
@@ -86,11 +89,11 @@ def load_saliva_plate(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no Excel file (.xls or .xlsx)
     ValueError
         if any saliva sample can not be converted into a float (e.g. because there was text in one of the columns)
-    :exc:`biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if imported data can not be parsed to a SalivaRawDataFrame
 
     """
@@ -142,26 +145,34 @@ def load_saliva_plate(
 
     is_saliva_raw_dataframe(df_saliva, saliva_type)
 
-    return df_saliva
+    return _SalivaRawDataFrame(df_saliva)
 
 
-def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Optional[str] = "cortisol") -> None:
+def save_saliva(
+    file_path: path_t,
+    data: SalivaRawDataFrame,
+    saliva_type: Optional[str] = "cortisol",
+    as_wide_format: Optional[bool] = False,
+):
     """Save saliva data to csv file.
 
     Parameters
     ----------
-    file_path: :any:`pathlib.Path` or str
+    file_path: :class:`~pathlib.Path` or str
         file path to export. Must be a csv or an Excel file
     data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str
         type of saliva data in the dataframe
+    as_wide_format : bool, optional
+        ``True`` to save data in wide format (and flatten all index levels), ``False`` to save data in long-format.
+        Default: ``False``
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
         if ``data`` is not a SalivaRawDataFrame
-    :exc:`biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if ``file_path`` is not a csv or Excel file
 
     """
@@ -171,7 +182,12 @@ def save_saliva(file_path: path_t, data: SalivaRawDataFrame, saliva_type: Option
 
     is_saliva_raw_dataframe(data, saliva_type)
     data = data[saliva_type]
-    data = data.unstack(level="sample")
+    if as_wide_format:
+        levels = list(data.index.names)
+        levels.remove("subject")
+        data = data.unstack(level=levels)
+        data.columns = ["_".join(col) for col in data.columns]
+
     if file_path.suffix in [".csv"]:
         data.to_csv(file_path)
     else:
@@ -197,7 +213,7 @@ def load_saliva_wide_format(
 
     Parameters
     ----------
-    file_path: :any:`pathlib.Path` or str
+    file_path: :class:`~pathlib.Path` or str
         path to file
     saliva_type: str
         saliva type to load from file. Example: ``cortisol``
@@ -228,17 +244,14 @@ def load_saliva_wide_format(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no csv or Excel file
 
     """
     # ensure pathlib
     file_path = Path(file_path)
     _assert_file_extension(file_path, [".csv", ".xls", ".xlsx"])
-    if file_path.suffix in [".csv"]:
-        data = pd.read_csv(file_path, **kwargs)
-    else:
-        data = pd.read_excel(file_path, **kwargs)
+    data = _read_dataframe(file_path, **kwargs)
 
     if subject_col is None:
         subject_col = "subject"
@@ -254,15 +267,7 @@ def load_saliva_wide_format(
 
     data, condition_col = _get_condition_col(data, condition_col)
 
-    if condition_col is not None:
-        index_cols = [condition_col] + index_cols
-
-    if additional_index_cols is None:
-        additional_index_cols = []
-    if isinstance(additional_index_cols, str):
-        additional_index_cols = [additional_index_cols]
-
-    index_cols = index_cols + additional_index_cols
+    index_cols = _get_index_cols(condition_col, index_cols, additional_index_cols)
     data = _apply_index_cols(data, index_cols=index_cols)
 
     num_subjects = len(data)
@@ -277,10 +282,28 @@ def load_saliva_wide_format(
 
     is_saliva_raw_dataframe(data, saliva_type)
 
-    return data
+    return _SalivaRawDataFrame(data)
 
 
-def _check_num_samples(num_samples: int, num_subjects: int) -> None:
+def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_index_cols: Sequence[str]):
+    if condition_col is not None:
+        index_cols = [condition_col] + index_cols
+
+    if additional_index_cols is None:
+        additional_index_cols = []
+    if isinstance(additional_index_cols, str):
+        additional_index_cols = [additional_index_cols]
+
+    return index_cols + additional_index_cols
+
+
+def _read_dataframe(file_path: Path, **kwargs):
+    if file_path.suffix in [".csv"]:
+        return pd.read_csv(file_path, **kwargs)
+    return pd.read_excel(file_path, **kwargs)
+
+
+def _check_num_samples(num_samples: int, num_subjects: int):
     """Check that number of imported samples is the same for all subjects.
 
     Parameters
@@ -304,7 +327,7 @@ def _check_num_samples(num_samples: int, num_subjects: int) -> None:
         )
 
 
-def _check_sample_times(num_samples: int, num_subjects: int, sample_times: Sequence[int]) -> None:
+def _check_sample_times(num_samples: int, num_subjects: int, sample_times: Sequence[int]):
     """Check that sample times have the correct number of samples and are monotonously increasing.
 
     Parameters
@@ -351,7 +374,7 @@ def _parse_condition_list(
         condition_list = condition_list.reset_index().set_index("subject")
 
     is_subject_condition_dataframe(condition_list)
-    return condition_list
+    return _SubjectConditionDataFrame(condition_list)
 
 
 def _apply_condition_list(

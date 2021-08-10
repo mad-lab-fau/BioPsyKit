@@ -1,4 +1,5 @@
 """Module providing functions to plot data collected during sleep studies."""
+import datetime
 from typing import Union, Optional, Dict, Tuple, Sequence, List, Iterable
 
 import pandas as pd
@@ -39,10 +40,10 @@ def sleep_imu_plot(
 
     Parameters
     ----------
-    data : :class:`~pandas.DataFrame´
+    data : :class:`~pandas.DataFrame`
         data to plot. Data must either be acceleration data (:obj:`~biopsykit.utils.datatype_helper.AccDataFrame`),
         gyroscope data (:obj:`~biopsykit.utils.datatype_helper.GyrDataFrame`), or IMU data
-        (:obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`)
+        (:obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`).
     datastreams : str or list of str, optional
         list of datastreams indicating which type of data should be plotted or ``None`` to only plot acceleration data.
         If more than one type of datastream is specified each datastream is plotted row-wise in its own subplot.
@@ -52,42 +53,45 @@ def sleep_imu_plot(
     downsample_factor : int, optional
         downsample factor to apply to raw input data before plotting or ``None`` to not downsample data before
         plotting (downsample factor 1). Default: ``None``
-    kwargs
+    **kwargs
         optional arguments for plot configuration.
-
         To configure which type of sleep endpoint annotations to plot:
-            * ``plot_sleep_onset``: whether to plot sleep onset annotations or not: Default: ``True``
-            * ``plot_wake_onset``: whether to plot wake onset annotations or not: Default: ``True``
-            * ``plot_bed_start``: whether to plot bed interval start annotations or not: Default: ``True``
-            * ``plot_bed_end``: whether to plot bed interval end annotations or not: Default: ``True``
-            * ``plot_sleep_wake``: whether to plot vspans of detected sleep/wake phases or not: Default: ``True``
+
+        * ``plot_sleep_onset``: whether to plot sleep onset annotations or not: Default: ``True``
+        * ``plot_wake_onset``: whether to plot wake onset annotations or not: Default: ``True``
+        * ``plot_bed_start``: whether to plot bed interval start annotations or not: Default: ``True``
+        * ``plot_bed_end``: whether to plot bed interval end annotations or not: Default: ``True``
+        * ``plot_sleep_wake``: whether to plot vspans of detected sleep/wake phases or not: Default: ``True``
 
         To style general plot appearance:
-            * ``axs``: pre-existing axes for the plot. Otherwise, a new figure and axes objects are created and
-              returned.
-            * ``colormap``: colormap to plot different axes from input data
-            * ``figsize``: tuple specifying figure dimensions
+
+        * ``axs``: pre-existing axes for the plot. Otherwise, a new figure and axes objects are created and
+          returned.
+        * ``colormap``: colormap to plot different axes from input data
+        * ``figsize``: tuple specifying figure dimensions
 
         To style axes:
-            * ``xlabel``: label of x axis. Default: "Time"
-            * ``ylabel``: label of y axis. Default: "Acceleration [$m/s^2$]" for acceleration data and
-              "Angular Velocity [$°/s$]" for gyroscope data
+
+        * ``xlabel``: label of x axis. Default: "Time"
+        * ``ylabel``: label of y axis. Default: "Acceleration :math:`[m/s^2]`" for acceleration data and
+          "Angular Velocity :math:`[°/s]`" for gyroscope data
 
         To style legend:
-            * ``legend_loc``: location of legend. Default: "lower left"
-            * ``legend_fontsize``: font size of legend labels. Default: "smaller"
+
+        * ``legend_loc``: location of legend. Default: "lower left"
+        * ``legend_fontsize``: font size of legend labels. Default: "smaller"
 
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
         figure object
-    axs : list of :class:`matplotlib.axes.Axes`
+    axs : list of :class:`~matplotlib.axes.Axes`
         list of subplot axes objects
 
     """
-    axs: List[plt.Axes] = kwargs.get("ax", kwargs.get("axs", None))
-    figsize = kwargs.get("figsize", None)
+    axs: List[plt.Axes] = kwargs.pop("ax", kwargs.pop("axs", None))
+
     sns.set_palette(kwargs.get("colormap", colors.fau_palette_blue("line_3")))
 
     if datastreams is None:
@@ -96,25 +100,9 @@ def sleep_imu_plot(
         # ensure list
         datastreams = [datastreams]
 
-    if isinstance(axs, plt.Axes):
-        # ensure list
-        axs = [axs]
+    fig, axs = _sleep_imu_plot_get_fig_axs(axs, len(datastreams), **kwargs)
 
-    if axs is None:
-        fig, axs = plt.subplots(figsize=figsize, nrows=len(datastreams))
-    else:
-        fig = axs[0].get_figure()
-
-    if downsample_factor is None:
-        downsample_factor = 1
-    # ensure int
-    downsample_factor = int(downsample_factor)
-    if downsample_factor < 1:
-        raise ValueError("'downsample_factor' must be >= 1!")
-
-    if isinstance(axs, plt.Axes):
-        # ensure list (if nrows == 1 only one axes object will be created, not a list of axes)
-        axs = [axs]
+    downsample_factor = _sleep_imu_plot_get_downsample_factor(downsample_factor)
 
     if len(datastreams) != len(axs):
         raise ValueError(
@@ -129,6 +117,7 @@ def sleep_imu_plot(
             datastream=ds,
             downsample_factor=downsample_factor,
             sleep_endpoints=sleep_endpoints,
+            ax=ax,
             **kwargs,
         )
 
@@ -137,14 +126,41 @@ def sleep_imu_plot(
     return fig, axs
 
 
+def _sleep_imu_plot_get_fig_axs(axs: List[plt.Axes], nrows: int, **kwargs):
+    figsize = kwargs.get("figsize", None)
+
+    if isinstance(axs, plt.Axes):
+        # ensure list (if only one Axes object is passed to sleep_imu_plot() instead of a list of Axes objects)
+        axs = [axs]
+    if axs is None:
+        fig, axs = plt.subplots(figsize=figsize, nrows=nrows)
+    else:
+        fig = axs[0].get_figure()
+    if isinstance(axs, plt.Axes):
+        # ensure list (if nrows == 1 only one axes object will be created, not a list of axes)
+        axs = [axs]
+
+    return fig, axs
+
+
+def _sleep_imu_plot_get_downsample_factor(downsample_factor: int):
+    if downsample_factor is None:
+        downsample_factor = 1
+    # ensure int
+    downsample_factor = int(downsample_factor)
+    if downsample_factor < 1:
+        raise ValueError("'downsample_factor' must be >= 1!")
+    return downsample_factor
+
+
 def _sleep_imu_plot(
     data: pd.DataFrame,
     datastream: str,
     downsample_factor: int,
     sleep_endpoints: SleepEndpointDict,
+    ax: plt.Axes,
     **kwargs,
 ):
-    ax = kwargs.get("ax")
     legend_loc = kwargs.get("legend_loc", "lower left")
     legend_fontsize = kwargs.get("legend_fontsize", "smaller")
     ylabel = kwargs.get("ylabel", {"acc": "Acceleration [$m/s^2$]", "gyr": "Angular Velocity [$°/s$]"})
@@ -156,7 +172,7 @@ def _sleep_imu_plot(
     data_plot = data.filter(like=datastream)[::downsample_factor]
     data_plot.plot(ax=ax)
     if sleep_endpoints is not None:
-        kwargs["ax"] = ax
+        kwargs.setdefault("ax", ax)
         _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints=sleep_endpoints, **kwargs)
 
     if isinstance(data_plot.index, pd.DatetimeIndex):
@@ -170,21 +186,12 @@ def _sleep_imu_plot(
 
 
 def _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints: SleepEndpointDict, **kwargs):
-    legend_loc = "lower right"
-    legend_fontsize = kwargs.get("legend_fontsize", "smaller")
-
     bed_start = pd.to_datetime(sleep_endpoints["bed_interval_start"])
     bed_end = pd.to_datetime(sleep_endpoints["bed_interval_end"])
     sleep_onset = pd.to_datetime(sleep_endpoints["sleep_onset"])
     wake_onset = pd.to_datetime(sleep_endpoints["wake_onset"])
 
     ax = kwargs.get("ax")
-
-    plot_sleep_onset = kwargs.get("plot_sleep_onset", True)
-    plot_wake_onset = kwargs.get("plot_wake_onset", True)
-    plot_bed_start = kwargs.get("plot_bed_start", True)
-    plot_bed_end = kwargs.get("plot_bed_end", True)
-    plot_sleep_wake = kwargs.get("plot_sleep_wake", True)
 
     if isinstance(sleep_endpoints, dict):
         sleep_bouts = sleep_endpoints["sleep_bouts"]
@@ -210,6 +217,40 @@ def _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints: SleepEndpointDict, **kw
             zorder=0,
         )
 
+    _sleep_imu_plot_add_annotations(sleep_onset, wake_onset, bed_start, bed_end, sleep_bouts, wake_bouts, ax, **kwargs)
+
+    # wear_time['end'] = wear_time.index.shift(1, freq=pd.Timedelta("15M"))
+    # wear_time = wear_time[wear_time['wear'] == 0.0]
+    # wear_time = wear_time.reset_index()
+    #
+    # handle = None
+    # for idx, row in wear_time.iterrows():
+    #     handle = ax.axvspan(row['index'], row['end'], color=colors.fau_color('wiso'), alpha=0.5, lw=0)
+    # if handle is not None:
+    #     handles['non-wear'] = handle
+
+    ax.set_title("Sleep IMU Data: {} – {}".format(date.date(), (date + pd.Timedelta("1d")).date()))
+
+
+def _sleep_imu_plot_add_annotations(
+    sleep_onset: datetime.datetime,
+    wake_onset: datetime.datetime,
+    bed_start: datetime.datetime,
+    bed_end: datetime.datetime,
+    sleep_bouts,
+    wake_bouts,
+    ax: plt.Axes,
+    **kwargs,
+):
+    legend_loc = "lower right"
+    legend_fontsize = kwargs.get("legend_fontsize", "smaller")
+
+    plot_sleep_onset = kwargs.get("plot_sleep_onset", True)
+    plot_wake_onset = kwargs.get("plot_wake_onset", True)
+    plot_bed_start = kwargs.get("plot_bed_start", True)
+    plot_bed_end = kwargs.get("plot_bed_end", True)
+    plot_sleep_wake = kwargs.get("plot_sleep_wake", True)
+
     if plot_sleep_onset:
         _sleep_imu_plot_add_sleep_onset(sleep_onset, **kwargs)
     if plot_wake_onset:
@@ -228,18 +269,6 @@ def _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints: SleepEndpointDict, **kw
             framealpha=1.0,
         )
         ax.add_artist(legend)
-
-    # wear_time['end'] = wear_time.index.shift(1, freq=pd.Timedelta("15M"))
-    # wear_time = wear_time[wear_time['wear'] == 0.0]
-    # wear_time = wear_time.reset_index()
-    #
-    # handle = None
-    # for idx, row in wear_time.iterrows():
-    #     handle = ax.axvspan(row['index'], row['end'], color=colors.fau_color('wiso'), alpha=0.5, lw=0)
-    # if handle is not None:
-    #     handles['non-wear'] = handle
-
-    ax.set_title("Sleep IMU Data: {} – {}".format(date.date(), (date + pd.Timedelta("1d")).date()))
 
 
 def _sleep_imu_plot_add_sleep_onset(sleep_onset, **kwargs):

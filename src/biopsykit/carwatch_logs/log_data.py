@@ -1,9 +1,10 @@
 """Module providing classes and utility functions for handling log data from *CARWatch App*."""
 import json
 import warnings
-from typing import Dict, Sequence, Optional, Union, Literal
-
+from typing import Dict, Sequence, Optional, Union
 from datetime import datetime
+
+from typing_extensions import Literal
 
 import numpy as np
 import pandas as pd
@@ -221,9 +222,11 @@ class LogData:
         data : :class:`~pandas.DataFrame`
             log data as dataframe
         error_handling : {"ignore", "warn"}
-            how to handle error when parse log data. "warn" to issue warning when no "Subject ID Set" action was found
-            in the data (indicating that participant did not correctly register itself for the study or that log data
-            is corrupted), "ignore" to ignore warning.
+            how to handle error when parse log data. ``error_handling`` can be one of the following:
+
+            * "warn" to issue warning when no "Subject ID Set" action was found in the data (indicating that a
+              participant did not correctly register itself for the study or that log data is corrupted)
+            * "ignore" to ignore warning.
 
         """
         self.data: pd.DataFrame = data
@@ -441,7 +444,7 @@ def get_logs_for_date(data: Union[LogData, pd.DataFrame], date: Union[str, datet
 
     Parameters
     ----------
-    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class`~pandas.DataFrame`
+    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class:`~pandas.DataFrame`
         log data as ``LogData`` object or as dataframe
     date : :class:`datetime.date` or str
         date to filter log data for
@@ -500,7 +503,7 @@ def get_logs_for_action(
 
     Parameters
     ----------
-    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class`~pandas.DataFrame`
+    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class:`~pandas.DataFrame`
         log data as ``LogData`` object or as dataframe
     log_action : :class:`datetime.date` or str
         action to filter log data for
@@ -539,7 +542,7 @@ def get_extras_for_log(data: Union[LogData, pd.DataFrame], log_action: str) -> D
 
     Parameters
     ----------
-    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class`~pandas.DataFrame`
+    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class:`~pandas.DataFrame`
         log data as ``LogData`` object or as dataframe
     log_action : :class:`datetime.date` or str
         action to filter log data

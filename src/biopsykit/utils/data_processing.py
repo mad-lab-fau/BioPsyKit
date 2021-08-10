@@ -27,7 +27,26 @@ from biopsykit.utils.datatype_helper import (
     is_merged_study_data_dict,
     is_subject_data_dict,
     is_study_data_dict,
+    MeanSeDataFrame,
+    _MeanSeDataFrame,
+    is_mean_se_dataframe,
 )
+
+
+def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_start: bool) -> Dict[str, pd.DataFrame]:
+    if time_intervals.index.nlevels > 1:
+        # multi-index series => second level contains start/end times of phases
+        time_intervals = time_intervals.unstack().T
+        time_intervals = {key: tuple(value.values()) for key, value in time_intervals.to_dict().items()}
+    else:
+        if include_start:
+            time_intervals["Start"] = data.index[0].to_pydatetime().time()
+        # time_intervals.sort_values(inplace=True)
+        time_intervals = {
+            name: (start, end)
+            for name, start, end in zip(time_intervals.index, time_intervals[:-1], time_intervals[1:])
+        }
+    return time_intervals
 
 
 def split_data(
@@ -45,12 +64,14 @@ def split_data(
     ----------
     data : :class:`~pandas.DataFrame`
         data to be split
-    time_intervals : dict or pd.Series or pd.DataFrame
+    time_intervals : dict or :class:`~pandas.Series` or :class:`~pandas.DataFrame`
         time intervals indicating where the data should be split. This can be:
-            * :class:`~pandas.Series` object or 1 row of a :class:`~pandas.DataFrame` with `start` times each phase.
-              The phase names are then derived from the `index` names in case of a :class:`~pandas.Series` or from the
-              `columns` names in case of a :class:`~pandas.DataFrame`
-            * dictionary with phase names (keys) and tuples with start and end times of the phase (values)
+
+        * :class:`~pandas.Series` object or 1 row of a :class:`~pandas.DataFrame` with `start` times of each phase.
+          The phase names are then derived from the `index` names in case of a :class:`~pandas.Series` or from the
+          `columns` names in case of a :class:`~pandas.DataFrame`.
+        * dictionary with phase names (keys) and tuples with start and end times of the phase (values)
+
     include_start: bool, optional
         ``True`` to include data from the beginning of the recording to the start of the first phase as the
         first phase (this phase will be named "Start"), ``False`` to discard this data. Default: ``False``
@@ -79,31 +100,24 @@ def split_data(
     >>> print(data_dict['Part2'])
 
     """
-    data_dict: Dict[str, pd.DataFrame] = {}
+    _assert_is_dtype(time_intervals, (pd.DataFrame, pd.Series, dict))
+
     if isinstance(time_intervals, pd.DataFrame):
         if len(time_intervals) > 1:
             raise ValueError("Only dataframes with 1 row allowed!")
         time_intervals = time_intervals.iloc[0]
 
     if isinstance(time_intervals, pd.Series):
-        if time_intervals.index.nlevels > 1:
-            # multi-index series => second level contains start/end times of phases
-            time_intervals = time_intervals.unstack().T
-            time_intervals = {key: tuple(value.values()) for key, value in time_intervals.to_dict().items()}
-        else:
-            if include_start:
-                time_intervals["Start"] = data.index[0].to_pydatetime().time()
-            time_intervals.sort_values(inplace=True)
-            for name, start, end in zip(time_intervals.index, np.pad(time_intervals, (0, 1)), time_intervals[1:]):
-                data_dict[name] = data.between_time(start, end)
-
-    if isinstance(time_intervals, dict):
+        time_intervals = _split_data_series(data, time_intervals, include_start)
+    else:
         if include_start:
             time_intervals["Start"] = (
                 data.index[0].to_pydatetime().time(),
                 list(time_intervals.values())[0][0],
             )
-        data_dict = {name: data.between_time(*start_end) for name, start_end in time_intervals.items()}
+
+    data_dict = {name: data.between_time(*start_end) for name, start_end in time_intervals.items()}
+    data_dict = {name: data for name, data in data_dict.items() if not data.empty}
     return data_dict
 
 
@@ -113,13 +127,14 @@ def exclude_subjects(
     """Exclude subjects from dataframes.
 
     This function can be used to exclude subject IDs for later analysis from different kinds of dataframes, such as:
-        * dataframes with subject condition information
-          (:obj:`biopsykit.utils.datatype_helper.SubjectConditionDataFrame`)
-        * dataframes with time log information
-        * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.datatype_helper.SalivaRawDataFrame` or
-          :obj:`biopsykit.utils.datatype_helper.MeanSeDataFrame`)
 
-    All dataframes can be supplied at once via **kwargs.
+    * dataframes with subject condition information
+      (:obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`)
+    * dataframes with time log information
+    * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.datatype_helper.SalivaRawDataFrame` or
+      :obj:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`)
+
+    All dataframes can be supplied at once via ``**kwargs``.
 
     Parameters
     ----------
@@ -127,13 +142,13 @@ def exclude_subjects(
         list with subjects IDs to be excluded
     index_name : str, optional
         name of dataframe index level with subject IDs. Default: "subject"
-    kwargs :
+    **kwargs :
         data to be cleaned as key-value pairs
 
     Returns
     -------
     :class:`~pandas.DataFrame` or dict of such
-        dictionary with cleaned versions of the dataframes passed to the function via **kwargs
+        dictionary with cleaned versions of the dataframes passed to the function via ``**kwargs``
         or dataframe if function was only called with one single dataframe
 
     """
@@ -142,30 +157,32 @@ def exclude_subjects(
     for key, data in kwargs.items():
         _assert_is_dtype(data, pd.DataFrame)
         if index_name in data.index.names:
-            if (
-                data.index.get_level_values(index_name).dtype == np.object
-                and all([isinstance(s, str) for s in excluded_subjects])
-            ) or (
-                data.index.get_level_values(index_name).dtype == np.int
-                and all([isinstance(s, int) for s in excluded_subjects])
+            level_values = data.index.get_level_values(index_name)
+            if (level_values.dtype == np.object and all([isinstance(s, str) for s in excluded_subjects])) or (
+                level_values.dtype == np.int and all([isinstance(s, int) for s in excluded_subjects])
             ):
-                # dataframe index and subjects are both strings or both integers
-                try:
-                    if isinstance(data.index, pd.MultiIndex):
-                        # MultiIndex => specify index level
-                        cleaned_data[key] = data.drop(index=excluded_subjects, level=index_name)
-                    else:
-                        # Regular Index
-                        cleaned_data[key] = data.drop(index=excluded_subjects)
-                except KeyError:
-                    warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
-            else:
-                raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
-        else:
-            raise ValueError("No '{}' level in index!".format(index_name))
+                cleaned_data[key] = _exclude_single_subject(data, excluded_subjects, index_name)
+            raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
+        raise ValueError("No '{}' level in index!".format(index_name))
     if len(cleaned_data) == 1:
         cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data
+
+
+def _exclude_single_subject(
+    data: pd.DataFrame,
+    excluded_subjects: Union[Sequence[str], Sequence[int]],
+    index_name: str,
+):
+    # dataframe index and subjects are both strings or both integers
+    try:
+        if isinstance(data.index, pd.MultiIndex):
+            # MultiIndex => specify index level
+            return data.drop(index=excluded_subjects, level=index_name)
+        # Regular Index
+        return data.drop(index=excluded_subjects)
+    except KeyError:
+        warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
 
 
 def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.DataFrame]) -> SubjectDataDict:
@@ -175,8 +192,9 @@ def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.
 
     Parameters
     ----------
-    subject_data_dict : :class:`~biopsykit.utils.datatype_helper.SubjectsDict`
-        ``SubjectsDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.PhaseDict` for each subject
+    subject_data_dict : :class:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+        ``SubjectDataDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.PhaseDict`
+        for each subject
     phase : str or :class:`~pandas.DataFrame`
         phase to normalize all other data to. If ``phase`` is a string then it is interpreted as the name of a phase
         present in ``subject_data_dict``. If ``phase`` is a DataFrame then the data will be normalized (per subject)
@@ -267,7 +285,7 @@ def resample_dict_sec(
 
     See Also
     --------
-    `~biopsykit.utils.data_processing.resample_sec`
+    :func:`~biopsykit.utils.data_processing.resample_sec`
         resample dataframe to 1 Hz
 
     """
@@ -283,7 +301,7 @@ def resample_dict_sec(
 
 
 def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Sequence[str]) -> SubjectDataDict:
-    """Select specific phases from ``SubjectDataDict``.
+    """Select specific phases from :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`.
 
     Parameters
     ----------
@@ -307,7 +325,8 @@ def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Sequence[str]
 def rearrange_subject_data_dict(
     subject_data_dict: SubjectDataDict,
 ) -> StudyDataDict:
-    """Rearrange ``SubjectDataDict`` to ``StudyDataDict``.
+    """Rearrange :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` to \
+    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`.
 
     A ``StudyDataDict`` is constructed from a ``SubjectDataDict`` by swapping outer (subject IDs) and inner
     (phase names) dictionary keys.
@@ -315,19 +334,19 @@ def rearrange_subject_data_dict(
     The **input** needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
     a nested dictionary in the following format:
 
-    {
-        "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
-        ...
-    }
+    | {
+    |   "subject1" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+    |   "subject2" : { "phase_1" : dataframe, "phase_2" : dataframe, ... },
+    |   ...
+    | }
 
     The **output** format will be the following:
 
-    {
-        "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-        "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
-        ...
-    }
+    | {
+    |   "phase_1" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+    |   "phase_2" : { "subject1" : dataframe, "subject2" : dataframe, ... },
+    |   ...
+    | }
 
 
     Parameters
@@ -396,7 +415,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 
 
 def merge_study_data_dict(study_data_dict: StudyDataDict) -> MergedStudyDataDict:
-    """Merge inner dictionary level of ``StudyDataDict`` into one dataframe.
+    """Merge inner dictionary level of :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into one dataframe.
 
     This function removes the inner level of the nested ``StudyDataDict`` by merging data from all subjects
     into one dataframe for each phase.
@@ -522,8 +541,8 @@ def add_subject_conditions(
     data : :class:`~pandas.DataFrame`
         dataframe where new index level ``condition`` with subject conditions should be added to
     condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
-        :class:`~biopsykit.datatype_helper.SubjectConditionDict` or
-        :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` or
+        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
         which condition
 
 
@@ -554,8 +573,8 @@ def split_subject_conditions(
     data_dict : dict
         (nested) dictionary with data which should be split based on the conditions subjects belong to
     condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
-        :class:`~biopsykit.datatype_helper.SubjectConditionDict` or
-        :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` or
+        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
         which condition
 
 
@@ -737,12 +756,12 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
     ----------
     data: dict
         nested dictionary with data on which mean should be computed. The number of nested levels must match the
-        number of levels specified in ``dict_levels``
+        number of levels specified in ``dict_levels``.
     dict_levels : list of str
         list with names of dictionary levels.
     param_name : str
         type of data of which mean values will be computed from.
-        This will also be the column name in the resulting dataframe
+        This will also be the column name in the resulting dataframe.
 
 
     Returns
@@ -773,7 +792,7 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
     return ret
 
 
-def mean_se_per_phase(data: pd.DataFrame) -> pd.DataFrame:
+def mean_se_per_phase(data: pd.DataFrame) -> MeanSeDataFrame:
     """Compute mean and standard error over all subjects in a dataframe.
 
     .. note::
@@ -799,4 +818,7 @@ def mean_se_per_phase(data: pd.DataFrame) -> pd.DataFrame:
     group_cols = list(data.index.names)
     group_cols.remove("subject")
 
-    return data.groupby(group_cols).agg([np.mean, se])
+    data = data.groupby(group_cols).agg([np.mean, se])
+    is_mean_se_dataframe(data)
+
+    return _MeanSeDataFrame(data)

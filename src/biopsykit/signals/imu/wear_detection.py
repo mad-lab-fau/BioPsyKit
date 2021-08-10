@@ -69,24 +69,7 @@ class WearDetection:
         }
 
         if index is not None:
-            index_resample = sliding_window(
-                np.arange(0, len(index)),
-                window_sec=window * 60,
-                sampling_rate=self.sampling_rate,
-                overlap_percent=overlap_percent,
-            )[:, :]
-            start_end = index_resample[:, [0, -1]]
-            if np.isnan(start_end[-1, -1]):
-                last_idx = index_resample[-1, np.where(~np.isnan(index_resample[-1, :]))[0][-1]]
-                start_end[-1, -1] = last_idx
-
-            start_end = start_end.astype(int)
-
-            if isinstance(index, pd.DatetimeIndex):
-                index_resample = pd.DataFrame(index.values[start_end], columns=["start", "end"])
-                index_resample = index_resample.apply(
-                    lambda df: pd.to_datetime(df).dt.tz_localize("UTC").dt.tz_convert(index.tzinfo)
-                )
+            index_resample = self._resample_index(index, window, overlap_percent)
 
         acc_std = pd.DataFrame({axis: np.nanstd(acc_sliding[axis], ddof=1, axis=1) for axis in acc_sliding})
 
@@ -115,6 +98,27 @@ class WearDetection:
         wear = self._rescore_wear_detection(wear)
 
         return wear
+
+    def _resample_index(self, index: pd.Index, window: int, overlap_percent: float):
+        index_resample = sliding_window(
+            np.arange(0, len(index)),
+            window_sec=window * 60,
+            sampling_rate=self.sampling_rate,
+            overlap_percent=overlap_percent,
+        )[:, :]
+        start_end = index_resample[:, [0, -1]]
+        if np.isnan(start_end[-1, -1]):
+            last_idx = index_resample[-1, np.where(~np.isnan(index_resample[-1, :]))[0][-1]]
+            start_end[-1, -1] = last_idx
+
+        start_end = start_end.astype(int)
+
+        if isinstance(index, pd.DatetimeIndex):
+            index_resample = pd.DataFrame(index.values[start_end], columns=["start", "end"])
+            index_resample = index_resample.apply(
+                lambda df: pd.to_datetime(df).dt.tz_localize("UTC").dt.tz_convert(index.tzinfo)
+            )
+        return index_resample
 
     @staticmethod
     def _rescore_wear_detection(data: pd.DataFrame) -> pd.DataFrame:
@@ -148,13 +152,13 @@ class WearDetection:
         Parameters
         ----------
         data : :class:`~pandas.DataFrame`
-            data with wear detection applied. The dataframe is expected to have a "wear" column
+            data with wear detection applied. The dataframe is expected to have a "wear" column.
 
         Returns
         -------
-        start : :class:`datetime.datetime` or int
+        start : :class:`~datetime.datetime` or int
             start of major wear block as datetime or int index
-        end : :class:`datetime.datetime` or int
+        end : :class:`~datetime.datetime` or int
             end of major wear block as datetime or int index
 
         See Also
@@ -183,7 +187,7 @@ class WearDetection:
         data : :class:`~pandas.DataFrame`
             input data that contains wear block
         wear_block : tuple
-            tuple with start and end times of wear block. The type of ``wear_block`` depends on the index of ``data``
+            tuple with start and end times of wear block. The type of ``wear_block`` depends on the index of ``data``.
             (datetime or int)
 
         Returns

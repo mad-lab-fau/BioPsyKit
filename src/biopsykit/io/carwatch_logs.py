@@ -1,5 +1,5 @@
 """Module providing functions to load and save logs from the *CARWatch* app."""
-from typing import Optional, Dict, Union
+from typing import Optional, Dict, Union, Sequence
 import re
 import json
 import warnings
@@ -27,7 +27,7 @@ def load_logs_all_subjects(
     """Load log files from all subjects in a folder.
 
     This function iterates through the base folder and looks for subfolders
-    (if ``has_has_subject_folders`` is ``True``), or for .csv files or .zip files matching the log file name pattern.
+    (if ``has_subject_folders`` is ``True``), or for .csv files or .zip files matching the log file name pattern.
 
     Files from all subjects are then loaded and returned as one :class:`~pandas.DataFrame`
     (if ``return_df`` is ``True``) or a dictionary (if ``return_df`` is ``False``).
@@ -51,43 +51,61 @@ def load_logs_all_subjects(
     Returns
     -------
     :class:`~pandas.DataFrame` or dict
-        dataframe with log data for all subjects (if ``return_df `` is ``True``)
+        dataframe with log data for all subjects (if ``return_df`` is ``True``).
         or dictionary with log data per subject
 
     """
     # ensure pathlib
     base_folder = Path(base_folder)
 
-    dict_log_files = {}
     if has_subject_folders:
         folder_list = [p for p in sorted(base_folder.glob("*")) if p.is_dir() and not p.name.startswith(".")]
-        for folder in tqdm(folder_list):
-            subject_id = folder.name
-            dict_log_files[subject_id] = load_log_one_subject(folder)
+        dict_log_files = _load_log_file_folder(folder_list)
     else:
         # first, look for available csv files
         file_list = list(sorted(base_folder.glob("*.csv")))
         if len(file_list) > 0:
-            if log_filename_pattern is None:
-                log_filename_pattern = LOG_FILENAME_PATTERN + ".csv"
-            for file in tqdm(file_list):
-                subject_id = re.search(log_filename_pattern, file.name).group(1)
-                df = pd.read_csv(file, sep=";")
-                df["time"] = pd.to_datetime(df["time"])
-                df.set_index("time", inplace=True)
-                dict_log_files[subject_id] = df
+            dict_log_files = _load_log_file_csv(file_list, log_filename_pattern)
         else:
             # fallback: look for zip files
             file_list = list(sorted(base_folder.glob("*.zip")))
-            if len(file_list) > 0:
-                if log_filename_pattern is None:
-                    log_filename_pattern = LOG_FILENAME_PATTERN + ".zip"
-                for file in tqdm(file_list):
-                    subject_id = re.search(log_filename_pattern, file.name).group(1)
-                    dict_log_files[subject_id] = load_log_one_subject(file)
+            dict_log_files = _load_log_file_zip(file_list, log_filename_pattern)
 
     if return_df:
         return pd.concat(dict_log_files, names=["subject_id"])
+    return dict_log_files
+
+
+def _load_log_file_folder(folder_list: Sequence[Path]):
+    dict_log_files = {}
+    for folder in tqdm(folder_list):
+        subject_id = folder.name
+        dict_log_files[subject_id] = load_log_one_subject(folder)
+
+    return dict_log_files
+
+
+def _load_log_file_csv(file_list: Sequence[Path], log_filename_pattern: str):
+    dict_log_files = {}
+    if log_filename_pattern is None:
+        log_filename_pattern = LOG_FILENAME_PATTERN + ".csv"
+    for file in tqdm(file_list):
+        subject_id = re.search(log_filename_pattern, file.name).group(1)
+        df = pd.read_csv(file, sep=";")
+        df["time"] = pd.to_datetime(df["time"])
+        df.set_index("time", inplace=True)
+        dict_log_files[subject_id] = df
+    return dict_log_files
+
+
+def _load_log_file_zip(file_list: Sequence[Path], log_filename_pattern: str) -> Dict[str, pd.DataFrame]:
+    dict_log_files = {}
+    if log_filename_pattern is None:
+        log_filename_pattern = LOG_FILENAME_PATTERN + ".zip"
+    for file in tqdm(file_list):
+        subject_id = re.search(log_filename_pattern, file.name).group(1)
+        dict_log_files[subject_id] = load_log_one_subject(file)
+
     return dict_log_files
 
 
@@ -103,7 +121,7 @@ def load_log_one_subject(
     path : :class:`~pathlib.Path` or str
         path to folder containing log files from subject or path to log file from subject
     log_filename_pattern : str, optional
-        file name pattern of log files as regex string or ``None`` if file hase default filename
+        file name pattern of log files as regex string or ``None`` if file has default filename
         pattern: "logs_(.*?)". A custom filename pattern needs to contain a capture group to extract the subject ID
     overwrite_unzipped_logs : bool, optional
         ``True`` to overwrite already unzipped log files, ``False`` to not overwrite.
@@ -178,10 +196,11 @@ def save_log_data(
     """Save log data for a single subject or for all subjects at once.
 
     The behavior of this function depends on the input passed to ``log_data``:
-        * If ``log_data`` is a :class:`~pandas.DataFrame` with a :class:`~pandas.MultiIndex` it is assumed that
-          the dataframe contains data from multiple subjects and will be exported accordingly as one combined csv file.
-        * If ``log_data`` is a :class:`~pandas.DataFrame` without :class:`~pandas.MultiIndex` it is assumed that the
-          dataframe only contains data from one single subject and will be exported accordingly as csv file.
+
+    * If ``log_data`` is a :class:`~pandas.DataFrame` with a :class:`~pandas.MultiIndex` it is assumed that
+      the dataframe contains data from multiple subjects and will be exported accordingly as one combined csv file.
+    * If ``log_data`` is a :class:`~pandas.DataFrame` without :class:`~pandas.MultiIndex` it is assumed that the
+      dataframe only contains data from one single subject and will be exported accordingly as csv file.
 
     Parameters
     ----------
@@ -189,10 +208,12 @@ def save_log_data(
         log data to save
     path : :class:`~pathlib.Path` or str
         path for export. The expected format of ``path`` depends on ``log_data``:
-            * If ``log_data`` is log data from a single subject ``path`` needs to specify a **folder**.
-              The log data will then be exported to "path/logs_<subject_id>.csv"
-            * If ``log_data`` is log data from multiple subjects ``path`` needs to specify a **file**.
-            The combined log data of all subjects will then be exported to "path".
+
+        * If ``log_data`` is log data from a single subject ``path`` needs to specify a **folder**.
+          The log data will then be exported to "path/logs_<subject_id>.csv".
+        * If ``log_data`` is log data from multiple subjects ``path`` needs to specify a **file**.
+          The combined log data of all subjects will then be exported to "path".
+
     subject_id : str, optional
         subject ID or ``None`` to get subject ID from ``LogData`` object
     overwrite : bool, optional

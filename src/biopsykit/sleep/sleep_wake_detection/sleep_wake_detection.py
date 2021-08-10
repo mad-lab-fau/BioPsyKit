@@ -2,7 +2,7 @@
 from typing import Optional
 
 from biopsykit.utils._types import arr_t
-from biopsykit.utils.datatype_helper import SleepWakeDataFrame
+from biopsykit.utils.datatype_helper import SleepWakeDataFrame, _SleepWakeDataFrame
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke
 from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke_alternative import ColeKripkeAlternative
@@ -76,5 +76,4 @@ class SleepWakeDetection:
             dataframe with sleep/wake predictions
 
         """
-        return getattr(self.sleep_wake_algo, "predict")(data, rescore)
-
+        return _SleepWakeDataFrame(getattr(self.sleep_wake_algo, "predict")(data, rescore))

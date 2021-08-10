@@ -15,25 +15,7 @@ from biopsykit.utils.exceptions import FeatureComputationError
 
 
 class CFT(BaseProtocol):
-    """Class representing the Cold Face Test (CFT) and data collected while conducting the CFT.
-
-    The typical structure of the CFT consists of three phases:
-        * "Baseline": Time at rest before applying cold face stimulus
-        * "CFT": Application of cold face stimulus
-        * "Recovery": Time at rest after applying cold face stimulus
-
-    Examples
-    --------
-    >>> from biopsykit.protocols import CFT
-    >>> # Example: MIST study consisting of three parts. Only the MIST part consists of different phases and subphases
-    >>> structure = {
-    >>>     "Baseline": 60,
-    >>>     "CFT": 120,
-    >>>     "Recovery": 60
-    >>> }
-    >>> CFT(name="CFT", structure=structure)
-
-    """
+    """Class representing the Cold Face Test (CFT) and data collected while conducting the CFT."""
 
     def __init__(
         self,
@@ -41,7 +23,14 @@ class CFT(BaseProtocol):
         structure: Optional[Dict[str, int]] = None,
         **kwargs,
     ):
-        """Initialize a new ``CFT`` instance.
+        """Class representing the Cold Face Test (CFT) and data collected while conducting the CFT.
+
+        The typical structure of the CFT consists of three phases:
+
+          * "Baseline": Time at rest before applying cold face stimulus
+          * "CFT": Application of cold face stimulus
+          * "Recovery": Time at rest after applying cold face stimulus
+
 
         Parameters
         ----------
@@ -51,19 +40,34 @@ class CFT(BaseProtocol):
             nested dictionary specifying the structure of the CFT.
 
             The typical structure of the CFT consists of three phases:
-                * "Baseline": Time at rest before applying cold face stimulus
-                * "CFT": Application of cold face stimulus
-                * "Recovery": Time at rest after applying cold face stimulus
+
+            * "Baseline": Time at rest before applying cold face stimulus
+            * "CFT": Application of cold face stimulus
+            * "Recovery": Time at rest after applying cold face stimulus
 
             The duration of each phase is specified in seconds.
             Typical durations are: 60s for *Baseline*, 120s for *CFT*, 60s for *Recovery*
 
-            The start and duration of the CFT Exposure (``cft_start`` and ``cft_duration``` will be automatically
+            The start and duration of the CFT Exposure (``cft_start`` and ``cft_duration``) will be automatically
             extracted from the structure dictionary.
-        **kwargs
+        **kwargs :
             additional parameters to be passed to ``CFT`` and its superclass, ``BaseProcessor``, such as:
-                * ``cft_plot_params``: dictionary with parameters to style
-                  :meth:`~biopsykit.protocols.cft.CFT.cft_plot`
+
+            * ``cft_plot_params``: dictionary with parameters to style
+              :meth:`~biopsykit.protocols.CFT.cft_plot`
+
+
+        Examples
+        --------
+        >>> from biopsykit.protocols import CFT
+        >>> # Example: CFT procedure consisting of three parts.
+        >>>
+        >>> structure = {
+        >>>     "Baseline": 60,
+        >>>     "CFT": 120,
+        >>>     "Recovery": 60
+        >>> }
+        >>> CFT(name="CFT", structure=structure)
 
         """
         if name is None:
@@ -107,11 +111,12 @@ class CFT(BaseProtocol):
 
         This function computes the following CFT parameter and returns the result in a dataframe
         (or, optionally, as dictionary):
-            * Baseline Heart Rate (see :meth:`~biopsykit.protocols.cft.CFT.baseline_hr` for further information)
-            * CFT Onset (see :meth:`~biopsykit.protocols.cft.CFT.onset` for further information)
-            * Peak Bradycardia (see :meth:`~biopsykit.protocols.cft.CFT.peak_bradycardia` for further information)
-            * Mean Bradycardia (see :meth:`~biopsykit.protocols.cft.CFT.mean_bradycardia` for further information)
-            * Polynomial Fit on CFT Reaction (see :meth:`~biopsykit.protocols.cft.CFT.poly_fit` for further information)
+
+        * Baseline Heart Rate (see :meth:`~biopsykit.protocols.CFT.baseline_hr` for further information)
+        * CFT Onset (see :meth:`~biopsykit.protocols.CFT.onset` for further information)
+        * Peak Bradycardia (see :meth:`~biopsykit.protocols.CFT.peak_bradycardia` for further information)
+        * Mean Bradycardia (see :meth:`~biopsykit.protocols.CFT.mean_bradycardia` for further information)
+        * Polynomial Fit on CFT Reaction (see :meth:`~biopsykit.protocols.CFT.poly_fit` for further information)
 
 
         Parameters
@@ -119,7 +124,7 @@ class CFT(BaseProtocol):
         data : :class:`~pandas.DataFrame`
             input data
         index : str, optional
-            index value of resulting dataframe. Not needed if dictionary should be returned
+            index value of resulting dataframe. Not needed if dictionary should be returned.
         return_dict : bool, optional
             ``True`` to return a dictionary with CFT parameters, ``False`` to return a dataframe. Default: ``False``
 
@@ -158,10 +163,10 @@ class CFT(BaseProtocol):
     def baseline_hr(self, data: pd.DataFrame) -> float:
         """Compute mean heart rate during Baseline Interval.
 
-        The Baseline Interval is data in the interval [0, ``cft_start``].
+        The Baseline Interval is data in the interval [``0``, ``cft_start``].
 
         .. warning::
-            If ``cft_start`` is 0 it's assumed that no Baseline is present and the first heart rate value
+            If ``cft_start`` is 0, it is assumed that no Baseline is present and the first heart rate value
             in the dataframe is used as CFT Baseline.
 
 
@@ -179,7 +184,7 @@ class CFT(BaseProtocol):
 
         Raises
         ------
-        :ex:`~biopsykit.exceptions.FeatureComputationError`
+        :ex:`~biopsykit.utils.exceptions.FeatureComputationError`
             if data is shorter than the expected duration of the Baseline interval
 
         """
@@ -247,15 +252,16 @@ class CFT(BaseProtocol):
         heart beats are lower than the Baseline heart rate (typically the Interval directly before the CFT).
 
         This function computes the following CFT onset parameter:
-            * ``onset``: location of CFT onset. This value is the same datatype as the index of ``data``
-              (i.e., either a absolute datetime timestamp or a relative timestamp in time since recording)
-            * ``onset_latency``: CFT onset latency, i.e., the duration between beginning of the CFT Interval and
-              CFT onset in seconds
-            * ``onset_idx``: location of CFT onset as array index
-            * ``onset_hr``: heart rate at CFT onset in bpm
-            * ``onset_hr_percent``: relative change of CFT onset heart rate compared to Baseline heart rate in percent
-            * ``onset_slope``: Slope between Baseline heart rate and CFT onset heart rate, computed as:
-              ``onset_slope = (onset_hr - baseline_hr) / onset_latency``
+
+        * ``onset``: location of CFT onset. This value is the same datatype as the index of ``data``
+          (i.e., either a absolute datetime timestamp or a relative timestamp in time since recording).
+        * ``onset_latency``: CFT onset latency, i.e., the duration between beginning of the CFT Interval and
+          CFT onset in seconds.
+        * ``onset_idx``: location of CFT onset as array index
+        * ``onset_hr``: heart rate at CFT onset in bpm
+        * ``onset_hr_percent``: relative change of CFT onset heart rate compared to Baseline heart rate in percent.
+        * ``onset_slope``: Slope between Baseline heart rate and CFT onset heart rate, computed as:
+          `onset_slope = (onset_hr - baseline_hr) / onset_latency`
 
 
         Parameters
@@ -318,16 +324,17 @@ class CFT(BaseProtocol):
         during the CFT Interval.
 
         This function computes the following CFT peak bradycardia parameter:
-            * ``peak_brady``: location of CFT peak bradycardia. This value is the same datatype as the index of ``data``
-              (i.e., either a absolute datetime timestamp or a relative timestamp in time since recording)
-            * ``peak_brady_latency``: CFT peak bradycardia latency, i.e., the duration between beginning of the
-              CFT Interval and CFT peak bradycardia in seconds
-            * ``peak_brady_idx``: location of CFT peak bradycardia as array index
-            * ``peak_brady_bpm``: CFT peak bradycardia in bpm
-            * ``peak_brady_percent``: relative change of CFT peak bradycardia heart rate compared to Baseline
-              heart rate in percent
-            * ``peak_brady_slope``: Slope between Baseline heart rate and CFT peak bradycardia heart rate, computed as:
-              ``peak_brady_slope = (peak_brady_bpm - baseline_hr) / peak_brady_latency``
+
+        * ``peak_brady``: location of CFT peak bradycardia. This value is the same datatype as the index of ``data``
+          (i.e., either a absolute datetime timestamp or a relative timestamp in time since recording).
+        * ``peak_brady_latency``: CFT peak bradycardia latency, i.e., the duration between beginning of the
+          CFT Interval and CFT peak bradycardia in seconds.
+        * ``peak_brady_idx``: location of CFT peak bradycardia as array index
+        * ``peak_brady_bpm``: CFT peak bradycardia in bpm
+        * ``peak_brady_percent``: Relative change of CFT peak bradycardia heart rate compared to Baseline
+          heart rate in percent.
+        * ``peak_brady_slope``: Slope between Baseline heart rate and CFT peak bradycardia heart rate, computed as:
+          ``peak_brady_slope = (peak_brady_bpm - baseline_hr) / peak_brady_latency``
 
 
         Parameters
@@ -380,11 +387,12 @@ class CFT(BaseProtocol):
         during the CFT Interval.
 
         This function computes the following CFT mean bradycardia parameter:
-            * ``mean_hr_bpm``: average heart rate during CFT Interval in bpm
-            * ``mean_brady_bpm``: average bradycardia during CFT Interval, computed as:
-              ``mean_brady_bpm = mean_hr_bpm - hr_baseline``
-            * ``mean_brady_percent``: relative change of CFT mean bradycardia heart rate compared to Baseline
-              heart rate in percent
+
+        * ``mean_hr_bpm``: average heart rate during CFT Interval in bpm
+        * ``mean_brady_bpm``: average bradycardia during CFT Interval, computed as:
+          ``mean_brady_bpm = mean_hr_bpm - hr_baseline``
+        * ``mean_brady_percent``: relative change of CFT mean bradycardia heart rate compared to Baseline
+          heart rate in percent
 
 
         Parameters
@@ -433,7 +441,8 @@ class CFT(BaseProtocol):
         a polynomial function.
 
         This function computes the following CFT polynomial fit parameter:
-            * ``poly_fit_a{0-2}``: constants of the polynomial ``p(x) = p[2] * x**deg + p[1]* x + p[0]``
+
+        * ``poly_fit_a{0-2}``: constants of the polynomial ``p(x) = p[2] * x**deg + p[1]* x + p[0]``
 
 
         Parameters
@@ -479,13 +488,14 @@ class CFT(BaseProtocol):
         """Sanitize CFT input.
 
         Most functions for computing CFT parameter expect multiple possible combinations of input parameter:
-            * Either data over the whole duration of the CFT procedure (Baseline, CFT, Recovery):
-              Then, the CFT Interval will be extracted and Baseline heart rate will be computed based on the
-              ``cft_start`` and ``cft_duration`` parameters of the ``CFT`` object
-              (``compute_baseline`` must then be set to ``True`` – the default)
-            * Or only data during the CFT interval (``is_cft_interval`` must be set to ``True``).
-              Then, the Baseline heart rate muse be explicitly provided via ``hr_baseline`` parameter and
-              ``compute_baseline`` must be set to ``False``
+
+        * Either data over the whole duration of the CFT procedure (Baseline, CFT, Recovery):
+          Then, the CFT Interval will be extracted and Baseline heart rate will be computed based on the
+          ``cft_start`` and ``cft_duration`` parameters of the ``CFT`` object
+          (``compute_baseline`` must then be set to ``True`` – the default)
+        * Or only data during the CFT interval (``is_cft_interval`` must be set to ``True``).
+          Then, the Baseline heart rate muse be explicitly provided via ``hr_baseline`` parameter and
+          ``compute_baseline`` must be set to ``False``
 
         This function sanitizes the input and, independent from the input, always returns a tuple with the data cut
         to the CFT Interval and the mean heart rate during the Baseline Interval.
@@ -541,31 +551,32 @@ class CFT(BaseProtocol):
         ----------
         data : :class:`~pandas.DataFrame`
             input data
-        kwargs: dict, optional
+        **kwargs: dict, optional
             optional parameters to be passed to the plot, such as:
-                * ``time_baseline`` : duration of Baseline Interval to include in plot or ``None`` to include the
-                  whole Baseline Interval in the plot.
-                * ``time_recovery`` : duration of Recovery Interval to include in plot or ``None`` to include the
-                  whole Recovery Interval in the plot.
-                * ``plot_datetime_index`` : ``True`` to plot x axis with absolute time (:class:`~pandas.DatetimeIndex`),
-                  or ``False`` to plot data with relative time (starting from second 0). Default: ``False``
-                * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and
-                    returned.
-                * ``figsize``: tuple specifying figure dimensions
-                * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
-                  (see :meth:`~matplotlib.Axes.margin()` for further information), or ``None`` to automatically
-                  infer y axis limits
-                * ``plot_onset``: whether to plot CFT onset annotations or not: Default: ``True``
-                * ``plot_peak_brady``: whether to plot CFT peak bradycardia annotations or not: Default: ``True``
-                * ``plot_mean``: whether to plot CFT mean bradycardia annotations or not. Default: ``True``
-                * ``plot_baseline``: whether to plot heart rate baseline annotations or not. Default: ``True``
-                * ``plot_poly_fit``: whether to plot CFT polynomial fit annotations or not. Default: ``True``
+
+            * ``time_baseline`` : duration of Baseline Interval to include in plot or ``None`` to include the
+              whole Baseline Interval in the plot.
+            * ``time_recovery`` : duration of Recovery Interval to include in plot or ``None`` to include the
+              whole Recovery Interval in the plot.
+            * ``plot_datetime_index`` : ``True`` to plot x axis with absolute time (:class:`~pandas.DatetimeIndex`),
+              or ``False`` to plot data with relative time (starting from second 0). Default: ``False``
+            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and
+              returned.
+            * ``figsize``: tuple specifying figure dimensions
+            * ``ylims``: list to manually specify y axis limits, float to specify y axis margin
+              (see :meth:`matplotlib.axes.Axes.margins` for further information), or ``None`` to automatically
+              infer y axis limits.
+            * ``plot_onset``: whether to plot CFT onset annotations or not: Default: ``True``
+            * ``plot_peak_brady``: whether to plot CFT peak bradycardia annotations or not: Default: ``True``
+            * ``plot_mean``: whether to plot CFT mean bradycardia annotations or not. Default: ``True``
+            * ``plot_baseline``: whether to plot heart rate baseline annotations or not. Default: ``True``
+            * ``plot_poly_fit``: whether to plot CFT polynomial fit annotations or not. Default: ``True``
 
         Returns
         -------
-        fig : :class:`matplotlib.figure.Figure`
+        fig : :class:`~matplotlib.figure.Figure`
             figure object
-        ax : :class:`matplotlib.axes.Axes`
+        ax : :class:`~matplotlib.axes.Axes`
             axes object
 
         """
@@ -598,6 +609,14 @@ class CFT(BaseProtocol):
         self._cft_plot_add_phase_annotations(ax, times_dict, **kwargs)
         self._cft_plot_add_param_annotations(data, cft_params, times_dict, ax, bbox, **kwargs)
 
+        self._cft_plot_style_axis(data, ax, **kwargs)
+
+        fig.tight_layout()
+        fig.autofmt_xdate(rotation=0, ha="center")
+        return fig, ax
+
+    @staticmethod
+    def _cft_plot_style_axis(data: pd.DataFrame, ax: plt.Axes, **kwargs):
         ylims = kwargs.get("ylims", None)
         if isinstance(ylims, (tuple, list)):
             ax.set_ylim(ylims)
@@ -611,10 +630,6 @@ class CFT(BaseProtocol):
             ax.set_xlabel("Time")
         else:
             ax.set_xlabel("Time [s]")
-
-        fig.tight_layout()
-        fig.autofmt_xdate(rotation=0, ha="center")
-        return fig, ax
 
     def _cft_plot_get_cft_times(
         self, data: pd.DataFrame, time_baseline: int, time_recovery: int

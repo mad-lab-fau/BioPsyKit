@@ -60,7 +60,8 @@ def data_compute_scores() -> pd.DataFrame:
 
 class TestQuestionnairesUtils:
     @pytest.mark.parametrize(
-        "data, expected", [(pd.Series(), pytest.raises(ValidationError)), (pd.DataFrame(), does_not_raise())]
+        "data, expected",
+        [(pd.Series(dtype="float64"), pytest.raises(ValidationError)), (pd.DataFrame(), does_not_raise())],
     )
     def test_find_cols_raise(self, data, expected):
         with expected:

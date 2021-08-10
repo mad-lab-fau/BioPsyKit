@@ -4,7 +4,7 @@ import pandas as pd
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.datatype_helper import SleepWakeDataFrame
+from biopsykit.utils.datatype_helper import SleepWakeDataFrame, _SleepWakeDataFrame
 
 
 class ColeKripke(_SleepWakeBase):
@@ -21,6 +21,8 @@ class ColeKripke(_SleepWakeBase):
 
     """
 
+    scale_factor: float
+
     def __init__(self, **kwargs):
         """Initialize a new ``ColeKripke`` instance.
 
@@ -33,16 +35,15 @@ class ColeKripke(_SleepWakeBase):
             desired, and possibly the population being observed.
 
         """
-
         self.scale_factor: float = kwargs.pop("scale_factor", None)
-
-        if self.scale_factor is None:
-            self.scale_factor = 0.193125
         """Scale factor to use for the predictions (default corresponds to scale factor optimized for use with the
         activity index, if other activity measures are desired the scale factor can be modified or optimized).
         The recommended range for the scale factor is between 0.1 and 0.25 depending on the sensitivity to activity
         desired, and possibly the population being observed.
         """
+
+        if self.scale_factor is None:
+            self.scale_factor = 0.193125
         super().__init__(**kwargs)
 
     def predict(self, data: arr_t, **kwargs) -> SleepWakeDataFrame:
@@ -77,10 +78,10 @@ class ColeKripke(_SleepWakeBase):
         scores = self._rescore(scores)
 
         scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
-        return scores
+        return _SleepWakeDataFrame(scores)
 
-    @staticmethod
-    def _rescore(predictions: np.array) -> np.array:
+    @classmethod
+    def _rescore(cls, predictions: np.array) -> np.array:
         """Apply Webster's rescoring rules.
 
         Parameters
@@ -95,8 +96,20 @@ class ColeKripke(_SleepWakeBase):
 
         """
         rescored = predictions.copy()
-
         # rules a through c
+        rescored = cls._apply_recording_rules_a_c(rescored)
+        # rules d and e
+        rescored = cls._apply_recording_rules_d_e(rescored)
+
+        # wake phases of 1 minute, surrounded by sleep, get rescored
+        for t in range(1, len(rescored) - 1):  # pylint:disable=consider-using-enumerate
+            if rescored[t] == 1 and rescored[t - 1] == 0 and rescored[t + 1] == 0:
+                rescored[t] = 0
+
+        return rescored
+
+    @classmethod
+    def _apply_recording_rules_a_c(cls, rescored: np.ndarray):  # pylint:disable=too-many-branches
         wake_bin = 0
         for t in range(len(rescored)):  # pylint:disable=consider-using-enumerate
             if rescored[t] == 1:
@@ -113,10 +126,13 @@ class ColeKripke(_SleepWakeBase):
                     rescored[t] = 1.0
                 wake_bin = 0
 
+        return rescored
+
+    @classmethod
+    def _apply_recording_rules_d_e(cls, rescored: np.ndarray):  # pylint:disable=too-many-branches
         # rule d/e: 6/10 minutes or less of sleep surrounded by at least 10/20 minutes of wake on each side get rescored
         sleep_rules = [6, 10]
         wake_rules = [10, 20]
-
         for sleep_thres, wake_thres in zip(sleep_rules, wake_rules):
             sleep_bin = 0
             start_ind = 0
@@ -131,10 +147,5 @@ class ColeKripke(_SleepWakeBase):
                     if 0 < sleep_bin <= sleep_thres and sum1 == wake_thres and sum2 == wake_thres:
                         rescored[start_ind:t] = 1.0
                 sleep_bin = 0
-
-        # wake phases of 1 minute, surrounded by sleep, get rescored
-        for t in range(1, len(rescored) - 1):  # pylint:disable=consider-using-enumerate
-            if rescored[t] == 1 and rescored[t - 1] == 0 and rescored[t + 1] == 0:
-                rescored[t] = 0
 
         return rescored

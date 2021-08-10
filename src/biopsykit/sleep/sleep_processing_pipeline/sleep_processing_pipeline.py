@@ -16,13 +16,14 @@ def predict_pipeline_acceleration(
     """Apply sleep processing pipeline on raw acceleration data.
 
     This function processes raw acceleration data collected during sleep. The pipeline consists of the following steps:
-        * *Activity Count Conversion*: Convert raw acceleration data into activity counts. Most sleep/wake detection
-          algorithms use activity counts (as typically provided by Actigraphs) as input data
-        * *Wear Detection*: Detect wear and non-wear periods. Cut data to longest continuous wear block
-        * *Rest Periods*: Detect rest periods, i.e., periods with large physical inactivity. The longest continuous
-          rest period (*Major Rest Period*) is used to determine the *Bed Interval*, i.e., the period spent in bed
-        * *Sleep/Wake Detection*: Apply sleep/wake detection algorithm to classify phases of sleep and wake.
-        * *Sleep Endpoint Computation*: Compute Sleep Endpoints from sleep/wake detection results and bed interval
+
+    * *Activity Count Conversion*: Convert raw acceleration data into activity counts. Most sleep/wake detection
+      algorithms use activity counts (as typically provided by Actigraphs) as input data.
+    * *Wear Detection*: Detect wear and non-wear periods. Cut data to longest continuous wear block.
+    * *Rest Periods*: Detect rest periods, i.e., periods with large physical inactivity. The longest continuous
+      rest period (*Major Rest Period*) is used to determine the *Bed Interval*, i.e., the period spent in bed.
+    * *Sleep/Wake Detection*: Apply sleep/wake detection algorithm to classify phases of sleep and wake.
+    * *Sleep Endpoint Computation*: Compute Sleep Endpoints from sleep/wake detection results and bed interval.
 
     Parameters
     ----------
@@ -34,10 +35,10 @@ def predict_pipeline_acceleration(
         ``True`` if input data is provided in :math:`m/s^2` and should be converted in :math:`g`, ``False`` if input
         data is already in :math:`g` and does not need to be converted.
         Default: ``True``
-    kwargs :
+    **kwargs :
         additional parameters to configure sleep/wake detection. The possible parameters depend on the selected
         sleep/wake detection algorithm and are passed to
-        :class:`~biopsykit.sleep.sleep_wake_detection.SleepWakeDetection`
+        :class:`~biopsykit.sleep.sleep_wake_detection.SleepWakeDetection`.
 
 
     Returns
@@ -46,6 +47,7 @@ def predict_pipeline_acceleration(
         dictionary with Sleep Processing Pipeline results.
 
     """
+    # TODO: add entries of result dictionary to docstring and add possibility to specify sleep/wake prediction algorithm
     ac = ActivityCounts(sampling_rate)
     wd = WearDetection(sampling_rate=sampling_rate)
     rp = RestPeriods(sampling_rate=sampling_rate)

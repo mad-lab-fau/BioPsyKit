@@ -36,7 +36,7 @@ def mkdirs(dir_list: Union[path_t, Sequence[path_t]]) -> None:
         directory.mkdir(exist_ok=True, parents=True)
 
 
-def get_subject_dirs(base_path: path_t, pattern: str) -> Sequence[Path]:
+def get_subject_dirs(base_path: path_t, pattern: str) -> Optional[Sequence[Path]]:
     """Filter for subject directories using a name pattern.
 
     Parameters
@@ -49,7 +49,12 @@ def get_subject_dirs(base_path: path_t, pattern: str) -> Sequence[Path]:
     Returns
     -------
     list of path
-        a list of path or an empty list if no subfolders matched the``pattern``
+        a list of path or an empty list if no subfolders matched the ``pattern``
+
+    Raises
+    ------
+    FileNotFoundError
+        if no subfolders in ``base_path`` match ``pattern``.
 
     Examples
     --------
@@ -60,7 +65,10 @@ def get_subject_dirs(base_path: path_t, pattern: str) -> Sequence[Path]:
     """
     # ensure pathlib
     base_path = Path(base_path)
-    return [p for p in sorted(base_path.glob(pattern)) if p.is_dir()]
+    subject_dirs = [p for p in sorted(base_path.glob(pattern)) if p.is_dir()]
+    if len(subject_dirs) == 0:
+        raise FileNotFoundError("No subfolders matching the pattern '{}' found in {}.".format(pattern, base_path))
+    return subject_dirs
 
 
 def export_figure(
@@ -139,15 +147,15 @@ def is_excel_file(file_name: path_t, raise_exception: Optional[bool] = True) -> 
 
     Parameters
     ----------
-    file_name : :any:`pathlib.Path` or str
+    file_name : :class:`~pathlib.Path` or str
         file name to check
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``file_name`` is an Excel file, i.e. has the suffix ``.xlsx``, ``False`` otherwise
-    (if ``raise_exception`` is ``False``)
+    ``True`` if ``file_name`` is an Excel file, i.e. has the suffix ``.xlsx``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------

@@ -22,6 +22,8 @@ from biopsykit.utils.datatype_helper import (
     is_subject_condition_dataframe,
     CodebookDataFrame,
     is_codebook_dataframe,
+    _SubjectConditionDataFrame,
+    _CodebookDataFrame,
 )
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dtype
@@ -48,12 +50,12 @@ def load_time_log(
 ) -> pd.DataFrame:
     """Load time log information from file.
 
-    This function can be used to load a file containing 'time logs', i.e.,
+    This function can be used to load a file containing "time logs", i.e.,
     information about start and stop times of recordings or recording phases per subject.
 
     Parameters
     ----------
-    file_path : :any:`pathlib.path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to time log file. Must either be an Excel or csv file
     index_cols : str, list of str or dict, optional
         specifies dataframe index. Can either be a string or a list of strings to indicate column name(s) from the
@@ -79,10 +81,10 @@ def load_time_log(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
-        if file format is none of [.xls, .xlsx, .csv]
-    :class:`~biopsykit.exceptions.ValidationError`
-        if ``continuous_time`` is ``False``, but 'start' and 'end' time columns of each phase do not match or
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
+        if file format is none of [".xls", ".xlsx", ".csv"]
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``continuous_time`` is ``False``, but "start" and "end" time columns of each phase do not match or
         none of these columns were found in the dataframe
 
     Examples
@@ -98,7 +100,7 @@ def load_time_log(
     >>> data = bp.io.load_time_log(file_path, index_cols="subject_id")
     >>> # Example 3:
     >>> # load time log file into a pandas dataframe, specify the columns "subject_id" and "condition"
-    >>> # to be the new index, and the columns 'Phase1' 'Phase2' and 'Phase3' to be the used
+    >>> # to be the new index, and the columns 'Phase1' 'Phase2' and 'Phase3' to be used
     >>> # for extracting time information
     >>> data = bp.io.load_time_log(
     >>>     file_path, index_cols=["subject_id", "condition"], phase_cols=["Phase1", "Phase2", "Phase3"]
@@ -116,15 +118,26 @@ def load_time_log(
     file_path = Path(file_path)
 
     _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
-    if file_path.suffix in [".xls", ".xlsx"]:
-        # assert times in the excel sheet are imported as strings,
-        # not to be automatically converted into datetime objects
-        data = pd.read_excel(file_path, dtype=str, **kwargs)
-    else:
-        data = pd.read_csv(file_path, dtype=str, **kwargs)
+    # assert times in the excel sheet are imported as strings,
+    # not to be automatically converted into datetime objects
+    kwargs["dtype"] = str
+    data = _load_dataframe(file_path, **kwargs)
 
-    data = _apply_index_cols(data, index_cols=index_cols)
+    data = _apply_index_cols(data, index_cols)
+    data = _apply_phase_cols(data, phase_cols)
 
+    if not continuous_time:
+        data = _parse_time_log_not_continuous(data, index_cols)
+
+    for val in data.values.flatten():
+        if val is np.nan:
+            continue
+        _assert_is_dtype(val, str)
+
+    return data
+
+
+def _apply_phase_cols(data: pd.DataFrame, phase_cols: Union[Dict[str, Sequence[str]], Sequence[str]]) -> pd.DataFrame:
     new_phase_cols = None
     if isinstance(phase_cols, dict):
         new_phase_cols = phase_cols
@@ -135,14 +148,6 @@ def load_time_log(
         data = data.loc[:, phase_cols]
     if new_phase_cols:
         data = data.rename(columns=new_phase_cols)
-
-    if not continuous_time:
-        data = _parse_time_log_not_continuous(data, index_cols)
-
-    for val in data.values.flatten():
-        if val is np.nan:
-            continue
-        _assert_is_dtype(val, str)
 
     return data
 
@@ -167,9 +172,13 @@ def _parse_time_log_not_continuous(
         index_cols = data.index.names
 
     data = pd.wide_to_long(
-        data.reset_index(), stubnames=start_cols, i=index_cols, j="time", sep="_", suffix="(start|end)"
+        data.reset_index(),
+        stubnames=start_cols,
+        i=index_cols,
+        j="time",
+        sep="_",
+        suffix="(start|end)",
     )
-    data.columns = data.columns.set_names("phase")
 
     # ensure that "start" is always before "end"
     data = data.reindex(["start", "end"], level=-1)
@@ -193,7 +202,7 @@ def load_subject_condition_list(
 
     Parameters
     ----------
-    file_path : :any:`pathlib.path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to time log file. Must either be an Excel or csv file
     subject_col : str, optional
         name of column containing subject IDs or ``None`` to use default column name ``subject``.
@@ -209,32 +218,29 @@ def load_subject_condition_list(
         whether to return a dict with subject IDs per condition (``True``) or a dataframe (``False``).
         Default: ``False``
     **kwargs
-        Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
+        Additional parameters that are passed tos :func:`pandas.read_csv` or :func:`pandas.read_excel`
 
     Returns
     -------
-    :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` or
-    :class:`~biopsykit.datatype_helper.SubjectConditionDict`
+    :class:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
+    :class:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
         a standardized pandas dataframe with subject IDs and condition assignments (if ``return_dict`` is ``False``) or
         a standardized dict with subject IDs per group (if ``return_dict`` is ``True``)
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is not a csv or Excel file
-    :class:`~biopsykit.exceptions.ValidationError`
-        if result is not a :class:`~biopsykit.datatype_helper.SubjectConditionDataFrame` or a
-        :class:`~biopsykit.datatype_helper.SubjectConditionDict`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if result is not a :class:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or a
+        :class:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
 
     """
     # ensure pathlib
     file_path = Path(file_path)
-
     _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
-    if file_path.suffix in [".xls", ".xlsx"]:
-        data = pd.read_excel(file_path, **kwargs)
-    else:
-        data = pd.read_csv(file_path, **kwargs)
+
+    data = _load_dataframe(file_path, **kwargs)
 
     if subject_col is None:
         subject_col = "subject"
@@ -262,7 +268,14 @@ def load_subject_condition_list(
         is_subject_condition_dict(data)
         return data
     is_subject_condition_dataframe(data)
-    return data
+    return _SubjectConditionDataFrame(data)
+
+
+def _get_subject_col(data: pd.DataFrame, subject_col: str):
+    if subject_col is None:
+        subject_col = "subject"
+    _assert_has_columns(data, [[subject_col]])
+    return subject_col
 
 
 def load_questionnaire_data(
@@ -282,7 +295,7 @@ def load_questionnaire_data(
 
     Parameters
     ----------
-    file_path : :any:`pathlib.path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to time log file. Must either be an Excel or csv file
     subject_col : str, optional
         name of column containing subject IDs or ``None`` to use default column name ``subject``.
@@ -300,7 +313,8 @@ def load_questionnaire_data(
         or ``None`` for no additional index levels. Default: ``None``
     replace_missing_vals : bool, optional
         ``True`` to replace encoded "missing values" from software like SPSS (e.g. -77, -99, or -66)
-         to "actual" missing values (NaN). Default: ``True``
+        to "actual" missing values (NaN).
+        Default: ``True``
     remove_nan_rows : bool, optional
         ``True`` to remove rows that only contain NaN values (except the index cols), ``False`` to keep NaN rows.
         Default: ``True``
@@ -315,28 +329,21 @@ def load_questionnaire_data(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
-        if file format is none of [.xls, .xlsx, .csv]
+    :class:`~biopsykit.utils.exceptions.FileExtensionError`
+        if file format is none of [".xls", ".xlsx", ".csv"]
 
     """
     # ensure pathlib
     file_path = Path(file_path)
 
     _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
-    if file_path.suffix in [".xls", ".xlsx"]:
-        data = pd.read_excel(file_path, sheet_name=sheet_name, **kwargs)
-    else:
-        data = pd.read_csv(file_path, **kwargs)
+    if file_path.suffix != ".csv":
+        kwargs["sheet_name"] = sheet_name
+    data = _load_dataframe(file_path, **kwargs)
 
-    if subject_col is None:
-        subject_col = "subject"
-
-    _assert_has_columns(data, [[subject_col]])
-
-    if subject_col != "subject":
-        data = data.rename(columns={subject_col: "subject"})
-        subject_col = "subject"
-
+    subject_col = _get_subject_col(data, subject_col)
+    data = data.rename(columns={subject_col: "subject"})
+    subject_col = "subject"
     index_cols = [subject_col]
 
     if condition_col is not None:
@@ -372,13 +379,13 @@ def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
     file_path : :class:`~pathlib.Path` or str
         file path to codebook
     **kwargs
-        additional arguments to pass to :func:`~pandas.read_csv` or :func:`~pandas.read_excel`
+        additional arguments to pass to :func:`pandas.read_csv` or :func:`pandas.read_excel`
 
 
     Returns
     -------
     :class:`~pandas.DataFrame`
-        :obj:`biopsykit.utils.datatype_helper.CodebookDataFrame`, a dataframe in a standardized format
+        :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame`, a dataframe in a standardized format
 
 
     See Also
@@ -400,7 +407,7 @@ def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
     data = data.set_index("variable")
     is_codebook_dataframe(data)
 
-    return data
+    return _CodebookDataFrame(data)
 
 
 # def load_stroop_inquisit_data(folder_path: path_t, cols: Optional[Sequence[str]] = None) -> Dict[str, pd.DataFrame]:
@@ -452,62 +459,51 @@ def convert_time_log_datetime(
     dataset: Optional[Dataset] = None,
     df: Optional[pd.DataFrame] = None,
     date: Optional[Union[str, datetime.datetime]] = None,
-    timezone: Optional[Union[str, pytz.tzinfo.tzinfo]] = None,
+    timezone: Optional[Union[str, datetime.tzinfo]] = None,
 ) -> pd.DataFrame:
     """Convert the time log information into datetime objects.
 
     This function converts time log information (containing only time, but no date)
     into datetime objects, thus, adds the `start date` of the recording. To specify the recording date,
-    either a NilsPod :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DateTimeIndex`
+    either a NilsPod :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DatetimeIndex`
     must be supplied from which the recording date can be extracted.
     As an alternative, the date can be specified explicitly via ``date`` parameter.
 
     Parameters
     ----------
-    time_log : pd.DataFrame
+    time_log : :class:`~pandas.DataFrame`
         pandas dataframe with time log information
     dataset : :class:`~nilspodlib.dataset.Dataset`, optional
         NilsPod Dataset object extract time and date information. Default: ``None``
     df : :class:`~pandas.DataFrame`, optional
-        dataframe with :class:`pandas.DateTimeIndex` to extract time and date information. Default: ``None``
+        dataframe with :class:`~pandas.DatetimeIndex` to extract time and date information. Default: ``None``
     date : str or datetime, optional
         datetime object or date string used to convert time log information into datetime.
         If ``date`` is a string, it must be supplied in a common date format, e.g. "dd.mm.yyyy" or "dd/mm/yyyy".
         Default: ``None``
-    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
-        timezone of the acquired data to convert, either as string of as pytz object.
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the acquired data to convert, either as string of as tzinfo object.
         Default: "Europe/Berlin"
 
     Returns
     -------
-    pd.DataFrame
+    :class:`~pandas.DataFrame`
         pandas dataframe with log time converted into datetime
 
     Raises
     ------
     ValueError
         if none of ``dataset``, ``df`` and ``date`` are supplied as argument,
-        or if index of ``df`` is not a :class:`pandas.DatetimeIndex`
+        or if index of ``df`` is not a :class:`~pandas.DatetimeIndex`
 
     """
     if dataset is None and date is None and df is None:
         raise ValueError("Either `dataset`, `df` or `date` must be supplied as argument to retrieve date information!")
 
+    date = _extract_date(dataset, df, date)
+
     if timezone is None:
         timezone = tz
-
-    if dataset is not None:
-        date = dataset.info.utc_datetime_start.date()
-    if df is not None:
-        if isinstance(df.index, pd.DatetimeIndex):
-            date = df.index.normalize().unique()[0]
-            date = date.to_pydatetime()
-        else:
-            raise ValueError("Index of 'df' must be DatetimeIndex!")
-    if isinstance(date, str):
-        # ensure datetime
-        date = pd.to_datetime(date)
-        date = date.date()
     if isinstance(timezone, str):
         timezone = pytz.timezone(timezone)
 
@@ -520,20 +516,37 @@ def convert_time_log_datetime(
     return time_log
 
 
+def _extract_date(dataset: Dataset, df: pd.DataFrame, date: Union[str, datetime.datetime]) -> datetime.datetime:
+    if dataset is not None:
+        date = dataset.info.utc_datetime_start.date()
+    if df is not None:
+        if isinstance(df.index, pd.DatetimeIndex):
+            date = df.index.normalize().unique()[0]
+            date = date.to_pydatetime()
+        else:
+            raise ValueError("'df' must have a DatetimeIndex!")
+    if isinstance(date, str):
+        # ensure datetime
+        date = pd.to_datetime(date)
+        date = date.date()
+
+    return date
+
+
 def load_pandas_dict_excel(
-    file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, pytz.tzinfo.tzinfo]] = None
+    file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, datetime.tzinfo]] = None
 ) -> Dict[str, pd.DataFrame]:
     """Load Excel file containing pandas dataframes with time series data of one subject.
 
     Parameters
     ----------
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to file
     index_col : str, optional
         name of index columns of dataframe or ``None`` if no index column is present. Default: "time"
-    timezone : str or :class:`pytz.tzinfo.tzinfo`, optional
+    timezone : str or :class:`datetime.tzinfo`, optional
         timezone of the acquired data for localization (since Excel does not support localized timestamps),
-        either as string of as pytz object.
+        either as string of as tzinfo object.
         Default: "Europe/Berlin"
 
     Returns
@@ -543,8 +556,8 @@ def load_pandas_dict_excel(
 
     Raises
     ------
-    :class:`~biopsykit.exceptions.FileExtensionError`
-        if file is no Excel file (.xls or .xlsx)
+    :class:`~biopsykit.utils.exceptions.FileExtensionError`
+        if file is no Excel file (".xls" or ".xlsx")
 
     See Also
     --------
@@ -571,21 +584,21 @@ def write_pandas_dict_excel(
     data_dict: Dict[str, pd.DataFrame],
     file_path: path_t,
     index_col: Optional[bool] = True,
-) -> None:
+):
     """Write a dictionary with pandas dataframes to an Excel file.
 
     Parameters
     ----------
     data_dict : dict
         dictionary with pandas dataframes
-    file_path : :any:`pathlib.Path` or str
+    file_path : :class:`~pathlib.Path` or str
         path to exported Excel file
     index_col : bool, optional
         ``True`` to include dataframe index in Excel export, ``False`` otherwise. Default: ``True``
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if ``file_path`` is not an Excel file
 
     """
@@ -607,10 +620,10 @@ def write_result_dict(
     result_dict: Dict[str, pd.DataFrame],
     file_path: path_t,
     index_name: Optional[str] = "subject",
-) -> None:
+):
     """Write dictionary with processing results (e.g. HR, HRV, RSA) to csv file.
 
-    The keys in the dictionary should be the subject IDs (or any other identifier),´
+    The keys in the dictionary should be the subject IDs (or any other identifier),
     the values should be :class:`~pandas.DataFrame`. The index level(s) of the exported dataframe can be specified
     by the ``index_col`` parameter.
 
@@ -621,14 +634,14 @@ def write_result_dict(
     result_dict : dict
         Dictionary containing processing results for all subjects. The keys in the dictionary should be the Subject IDs
         (or any other identifier), the values should be pandas dataframes
-    file_path : path, str
+    file_path : :class:`~pathlib.Path`, str
         path to file
     index_name : str, optional
         name of the index resulting from concatenting dataframes. Default: ``subject``
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.FileExtensionError`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if ``file_path`` is not a csv or Excel file
 
     Examples
@@ -657,6 +670,12 @@ def write_result_dict(
         writer = pd.ExcelWriter(file_path, engine="xlsxwriter")  # pylint:disable=abstract-class-instantiated
         df_result_concat.to_excel(writer)
         writer.close()
+
+
+def _load_dataframe(file_path, **kwargs):
+    if file_path.suffix in [".csv"]:
+        return pd.read_csv(file_path, **kwargs)
+    return pd.read_excel(file_path, **kwargs)
 
 
 def _apply_index_cols(

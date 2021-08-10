@@ -627,7 +627,9 @@ params_mean_se = [
                 "mean": [3.0, 0.57142857, 3.25, 2.75, 3.75],
                 "se": [2.06155281, 1.1153688264639723, 0.86085506, 0.55901699, 0.94017476],
             },
-            index=pd.Index([(i, k) for i, k in enumerate([-10, 0, 10, 20, 30])], names=["sample", "time"]),
+            index=pd.MultiIndex.from_tuples(
+                [(i, k) for i, k in enumerate([-10, 0, 10, 20, 30])], names=["sample", "time"]
+            ),
         ),
     ),
     (
@@ -638,7 +640,9 @@ params_mean_se = [
                 "mean": [0.57142857, 3.25, 2.75, 3.75],
                 "se": [1.1153688264639723, 0.86085506, 0.55901699, 0.94017476],
             },
-            index=pd.Index([(i, k) for i, k in zip(range(1, 5), [0, 10, 20, 30])], names=["sample", "time"]),
+            index=pd.MultiIndex.from_tuples(
+                [(i, k) for i, k in zip(range(1, 5), [0, 10, 20, 30])], names=["sample", "time"]
+            ),
         ),
     ),
 ]

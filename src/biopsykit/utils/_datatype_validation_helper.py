@@ -1,6 +1,6 @@
 """Internal helpers for dataset validation."""
 from pathlib import Path
-from typing import Union, Tuple, Sequence, List, Iterable, Optional
+from typing import Union, Tuple, Sequence, List, Iterable, Optional, Any
 
 import pandas as pd
 import numpy as np
@@ -9,7 +9,7 @@ from biopsykit.utils._types import _Hashable, path_t
 from biopsykit.utils.exceptions import ValidationError, FileExtensionError, ValueRangeError
 
 
-def _assert_is_dir(path: path_t, raise_exception: Optional[bool] = True):
+def _assert_is_dir(path: path_t, raise_exception: Optional[bool] = True) -> Optional[bool]:
     """Check if a path is a directory.
 
     Parameters
@@ -123,7 +123,7 @@ def _assert_has_multiindex(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     expected : bool, optional
         Whether the df is expected to have a MultiIndex index or not
@@ -166,7 +166,7 @@ def _assert_has_index_levels(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     index_levels : list
         Set of index level names to check
@@ -207,7 +207,7 @@ def _assert_has_columns(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     columns_sets : list
         Column set of list of column sets to check
@@ -261,7 +261,7 @@ def _assert_has_column_multiindex(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     expected : bool, optional
         Whether the df is expected to have MultiIndex column or not
@@ -304,7 +304,7 @@ def _assert_has_column_levels(
 
     Parameters
     ----------
-    df : :class:`pandas.DataFrame`
+    df : :class:`~pandas.DataFrame`
         The dataframe to check
     column_levels : list
         Set of column level names to check
@@ -380,7 +380,7 @@ def _assert_value_range(
 
 def _assert_num_columns(
     data: pd.DataFrame, num_cols: Union[int, Sequence[int]], raise_exception: Optional[bool] = True
-):
+) -> Optional[bool]:
     """Check if dataframe has (any of) the required number of columns.
 
     Parameters
@@ -415,7 +415,7 @@ def _assert_num_columns(
     return True
 
 
-def _assert_len_list(data: Sequence, length: int, raise_exception: Optional[bool] = True):
+def _assert_len_list(data: Sequence, length: int, raise_exception: Optional[bool] = True) -> Optional[bool]:
     """Check if a list has the required length.
 
     Parameters
@@ -448,7 +448,9 @@ def _assert_len_list(data: Sequence, length: int, raise_exception: Optional[bool
     return True
 
 
-def _assert_dataframes_same_length(df_list: Sequence[pd.DataFrame], raise_exception: Optional[bool] = True):
+def _assert_dataframes_same_length(
+    df_list: Sequence[pd.DataFrame], raise_exception: Optional[bool] = True
+) -> Optional[bool]:
     """Check if all dataframes have same length.
 
     Parameters
@@ -476,6 +478,27 @@ def _assert_dataframes_same_length(df_list: Sequence[pd.DataFrame], raise_except
     return True
 
 
+def _multiindex_level_names_helper_get_expected_levels(
+    ac_levels: Sequence[str],
+    ex_levels: Sequence[str],
+    match_atleast: Optional[bool] = False,
+    match_order: Optional[bool] = False,
+) -> bool:
+    if match_order:
+        if match_atleast:
+            ac_levels_slice = ac_levels[: len(ex_levels)]
+            expected = ex_levels == ac_levels_slice
+        else:
+            expected = ex_levels == ac_levels
+    else:
+        if match_atleast:
+            expected = all(level in ac_levels for level in ex_levels)
+        else:
+            expected = sorted(ex_levels) == sorted(ac_levels)
+
+    return expected
+
+
 def _multiindex_level_names_helper(
     df: pd.DataFrame,
     level_names: Iterable[_Hashable],
@@ -493,17 +516,8 @@ def _multiindex_level_names_helper(
         ac_levels = list(df.index.names)
     else:
         ac_levels = list(df.columns.names)
-    if match_order:
-        if match_atleast:
-            ac_levels_slice = ac_levels[: len(ex_levels)]
-            expected = ex_levels == ac_levels_slice
-        else:
-            expected = ex_levels == ac_levels
-    else:
-        if match_atleast:
-            expected = all(level in ac_levels for level in ex_levels)
-        else:
-            expected = sorted(ex_levels) == sorted(ac_levels)
+
+    expected = _multiindex_level_names_helper_get_expected_levels(ac_levels, ex_levels, match_atleast, match_order)
 
     if not expected:
         if raise_exception:
@@ -523,27 +537,12 @@ def _multiindex_check_helper(
     nlevels_atleast: Optional[int] = False,
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
-    if idx_or_col == "index":
-        has_multiindex = isinstance(df.index, pd.MultiIndex)
-        nlevels_act = df.index.nlevels
-    else:
-        has_multiindex = isinstance(df.columns, pd.MultiIndex)
-        nlevels_act = df.columns.nlevels
+
+    has_multiindex, nlevels_act = _multiindex_check_helper_get_levels(df, idx_or_col)
 
     if has_multiindex is not expected:
-        if not expected:
-            if raise_exception:
-                raise ValidationError(
-                    "The dataframe is expected to have a single level as {0}. "
-                    "But it has a MultiIndex with {1} {0} levels.".format(idx_or_col, nlevels_act)
-                )
-            return False
-        if raise_exception:
-            raise ValidationError(
-                "The dataframe is expected to have a MultiIndex with {0} {1} levels. "
-                "It has just a single normal {1} level.".format(nlevels, idx_or_col)
-            )
-        return False
+        return _multiindex_check_helper_not_expected(idx_or_col, nlevels, nlevels_act, expected, raise_exception)
+
     if has_multiindex is True:
         if nlevels_atleast:
             expected = nlevels_act >= nlevels
@@ -557,6 +556,35 @@ def _multiindex_check_helper(
                 )
             return False
     return True
+
+
+def _multiindex_check_helper_get_levels(df: pd.DataFrame, idx_or_col: str) -> Tuple[bool, int]:
+    if idx_or_col == "index":
+        has_multiindex = isinstance(df.index, pd.MultiIndex)
+        nlevels_act = df.index.nlevels
+    else:
+        has_multiindex = isinstance(df.columns, pd.MultiIndex)
+        nlevels_act = df.columns.nlevels
+
+    return has_multiindex, nlevels_act
+
+
+def _multiindex_check_helper_not_expected(
+    idx_or_col: str, nlevels: int, nlevels_act: int, expected: bool, raise_exception: bool
+) -> Optional[bool]:
+    if not expected:
+        if raise_exception:
+            raise ValidationError(
+                "The dataframe is expected to have a single level as {0}. "
+                "But it has a MultiIndex with {1} {0} levels.".format(idx_or_col, nlevels_act)
+            )
+        return False
+    if raise_exception:
+        raise ValidationError(
+            "The dataframe is expected to have a MultiIndex with {0} {1} levels. "
+            "It has just a single normal {1} level.".format(nlevels, idx_or_col)
+        )
+    return False
 
 
 def _assert_has_column_prefix(
@@ -589,15 +617,22 @@ def _assert_has_column_prefix(
         return False
 
     for col in columns:
-        if not _assert_is_dtype(col, str, raise_exception=False):
-            if raise_exception:
-                raise ValidationError("Column '{}' from {} is not a string!".format(col, columns))
-            return False
-        if not col.startswith(prefix):
-            if raise_exception:
-                raise ValidationError(
-                    "Column '{}' from {} are starting with the required prefix '{}'!".format(col, columns, prefix)
-                )
-            return False
+        return _check_has_column_prefix_single_col(columns, col, prefix, raise_exception)
 
+    return True
+
+
+def _check_has_column_prefix_single_col(
+    columns: Sequence[str], col: Any, prefix: str, raise_exception: bool
+) -> Optional[bool]:
+    if not _assert_is_dtype(col, str, raise_exception=False):
+        if raise_exception:
+            raise ValidationError("Column '{}' from {} is not a string!".format(col, columns))
+        return False
+    if not col.startswith(prefix):
+        if raise_exception:
+            raise ValidationError(
+                "Column '{}' from {} are starting with the required prefix '{}'!".format(col, columns, prefix)
+            )
+        return False
     return True

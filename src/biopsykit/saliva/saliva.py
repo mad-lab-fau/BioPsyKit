@@ -1,6 +1,6 @@
 """Functions for processing saliva data and computing established features (AUC, slope, maximum increase, ...)."""
 import warnings
-from typing import Optional, Sequence, Tuple, Union, Dict
+from typing import Optional, Sequence, Tuple, Union, Dict, List
 
 import pandas as pd
 import numpy as np
@@ -19,6 +19,8 @@ from biopsykit.utils.datatype_helper import (
     SalivaFeatureDataFrame,
     is_saliva_mean_se_dataframe,
     SalivaMeanSeDataFrame,
+    _SalivaFeatureDataFrame,
+    _SalivaMeanSeDataFrame,
 )
 from biopsykit.utils.exceptions import DataFrameTransformationError
 from biopsykit.utils.functions import se
@@ -50,8 +52,8 @@ def max_value(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     """
     # check input
@@ -118,8 +120,8 @@ def initial_value(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     """
     # check input
@@ -196,8 +198,8 @@ def max_increase(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     """
     # check input
@@ -254,8 +256,9 @@ def auc(
     parameter (``sample_times``).
 
     Pruessner defined two types of AUC, which are computed by default:
-        * AUC with respect to `ground` (:math:`AUC_{G}`), and
-        * AUC with respect to the first sample, i.e., AUC with respect to `increase` (:math:`AUC_{I}`)
+
+    * AUC with respect to `ground` (:math:`AUC_{G}`), and
+    * AUC with respect to the first sample, i.e., AUC with respect to `increase` (:math:`AUC_{I}`)
 
     If the first sample should be excluded from computation, e.g., because the first sample was just collected for
     controlling against high initial saliva levels, ``remove_s0`` needs to set to ``True``.
@@ -300,8 +303,8 @@ def auc(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     References
     ----------
@@ -343,17 +346,7 @@ def auc(
     }
 
     if compute_auc_post:
-        idxs_post = None
-        if sample_times.ndim == 1:
-            idxs_post = np.where(sample_times >= 0)[0]
-        elif sample_times.ndim == 2:
-            warnings.warn(
-                "Not computing `auc_i_post` values because this is only implemented if `saliva_times` "
-                "are the same for all subjects."
-            )
-        if idxs_post is not None:
-            data_post = data.iloc[:, idxs_post]
-            auc_data["auc_i_post"] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
+        auc_data = _auc_compute_auc_post(data, auc_data, sample_times)
 
     out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(saliva_type))
     out.columns.name = "saliva_feature"
@@ -361,7 +354,24 @@ def auc(
     # check output
     is_saliva_feature_dataframe(out, saliva_type)
 
-    return out
+    return _SalivaFeatureDataFrame(out)
+
+
+def _auc_compute_auc_post(
+    data: SalivaRawDataFrame, auc_data: Dict[str, np.ndarray], sample_times: np.ndarray
+) -> Dict[str, np.ndarray]:
+    idxs_post = None
+    if sample_times.ndim == 1:
+        idxs_post = np.where(sample_times >= 0)[0]
+    elif sample_times.ndim == 2:
+        warnings.warn(
+            "Not computing `auc_i_post` values because this is only implemented if `saliva_times` "
+            "are the same for all subjects."
+        )
+    if idxs_post is not None:
+        data_post = data.iloc[:, idxs_post]
+        auc_data["auc_i_post"] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
+    return auc_data
 
 
 def slope(
@@ -389,7 +399,7 @@ def slope(
     sample_labels : list or tuple
         pair of saliva sample labels to compute slope between.
         Labels correspond to the names in the `sample` column of the dataframe.
-        An error will the raised if not exactly 2 samples are specified
+        An error will the raised if not exactly 2 samples are specified.
     sample_idx : list or tuple
         pair of saliva sample indices to compute slope between.
         An error will the raised if not exactly 2 sample are specified
@@ -411,8 +421,8 @@ def slope(
     ------
     IndexError
         if invalid `sample_labels` or `sample_idx` is provided
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
 
     """
     # check input
@@ -458,7 +468,7 @@ def slope(
     # check output
     is_saliva_feature_dataframe(out, saliva_type)
 
-    return out
+    return _SalivaFeatureDataFrame(out)
 
 
 def standard_features(
@@ -470,15 +480,16 @@ def standard_features(
     """Compute a set of `standard features` on saliva data.
 
     The following list of features is computed:
-        * ``argmax``: Argument (=index) of the maximum value
-        * ``mean``: Mean value
-        * ``std``: Standard deviation
-        * ``skew``: Skewness
-        * ``kurt``: Kurtosis
 
-    For all features the built-in pandas functions (e.g. :func:`pandas.DataFrame.mean`) will be used,
+    * ``argmax``: Argument (=index) of the maximum value
+    * ``mean``: Mean value
+    * ``std``: Standard deviation
+    * ``skew``: Skewness
+    * ``kurt``: Kurtosis
+
+    For all features the built-in pandas functions (e.g. :meth:`pandas.DataFrame.mean`) will be used,
     except for ``argmax``, which will use numpy's function (:func:`numpy.argmax`). The functions will be applied on the
-    dataframe using the `aggregate` functions from pandas (:func:`pandas.DataFrame.agg`).
+    dataframe using the `aggregate` functions from pandas (:meth:`pandas.DataFrame.agg`).
 
     The output feature names will be ``argmax``, ``mean``, ``std``, ``skew``, ``kurt``, preceded by the name of the
     saliva type to allow better conversion into long-format later on (if desired).
@@ -506,9 +517,9 @@ def standard_features(
 
     Raises
     ------
-    ValidationError
-        if ``data`` is not a SalivaRawDataFrame
-    :exc:`biopsykit.exceptions.DataFrameTransformationError`
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    :exc:`~biopsykit.utils.exceptions.DataFrameTransformationError`
         if ``keep_index`` is ``True``, but applying the old index fails
 
     """
@@ -559,13 +570,13 @@ def standard_features(
     # check output
     is_saliva_feature_dataframe(out, saliva_type)
 
-    return out
+    return _SalivaFeatureDataFrame(out)
 
 
 def mean_se(
     data: SalivaRawDataFrame,
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    group_cols: Optional[Union[str, Sequence[str]]] = None,
+    group_cols: Optional[Union[str, List[str]]] = None,
     remove_s0: Optional[bool] = False,
 ) -> Union[SalivaMeanSeDataFrame, Dict[str, SalivaMeanSeDataFrame]]:
     """Compute mean and standard error per saliva sample.
@@ -590,8 +601,9 @@ def mean_se(
 
     Raises
     ------
-    :exc:`biopsykit.exceptions.ValidationError`
-        if ``data`` is not a SalivaRawDataFrame
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+
 
     """
     # check input
@@ -611,7 +623,20 @@ def mean_se(
         data = _remove_s0(data)
 
     group_cols = _get_group_cols(data, group_cols, "subject", "mean_se")
+    _mean_se_assert_group_cols(data, group_cols)
 
+    if "time" in data.columns and "time" not in group_cols:
+        # add 'time' column to grouper if it's in the data and wasn't added yet because otherwise
+        # we would loose this column
+        group_cols = group_cols + ["time"]
+
+    data_mean_se = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
+    is_saliva_mean_se_dataframe(data_mean_se)
+
+    return _SalivaMeanSeDataFrame(data_mean_se)
+
+
+def _mean_se_assert_group_cols(data: pd.DataFrame, group_cols: Sequence[str]):
     if group_cols == list(data.index.names):
         # if data should be grouped by *all* index levels we can not compute an aggregation
         raise DataFrameTransformationError(
@@ -622,12 +647,3 @@ def mean_se(
         raise DataFrameTransformationError(
             "Error computing mean and standard error on data: 'sample' index level needs to be added as group column!"
         )
-
-    if "time" in data.columns and "time" not in group_cols:
-        # add 'time' column to grouper if it's in the data and wasn't added yet because otherwise
-        # we would loose this column
-        group_cols = group_cols + ["time"]
-
-    data_mean_se = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
-    is_saliva_mean_se_dataframe(data_mean_se)
-    return data_mean_se

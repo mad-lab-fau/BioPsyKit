@@ -1,8 +1,9 @@
 """Module providing interactive widgets to select and display log data from the *CARWatch App*."""
 from pathlib import Path
-from typing import Optional, Union, Callable, Literal
-
+from typing import Optional, Union, Callable, Tuple, List
 import re
+
+from typing_extensions import Literal
 
 import pandas as pd
 
@@ -29,7 +30,7 @@ def log_file_subject_dropdown(
     ----------
     base_path : :class:`pathlib.Path` or str
         base path to log files from all subjects. log files are expected to be either stored in one folder
-        (``input_type`` "file") or in subfolders per subject (``input_type`` "folder")
+        (``input_type`` == "file") or in subfolders per subject (``input_type`` == "folder")
     input_type : {"file", "folder"}, optional
         string specifying how log data is present: .csv files, all in one folder ("file") or .csv files, all in
         separate subfolders per subject ("folder")
@@ -44,15 +45,11 @@ def log_file_subject_dropdown(
 
     Returns
     -------
-    :class:`ipywidgets.widgets.widget_selection.Dropdown`
+    :class:`~ipywidgets.widgets.widget_selection.Dropdown`
         dropdown widget
 
     """
-    if input_type not in INPUT_TYPES:
-        raise ValueError("Invalid input_type! Expected one of {}, got {}.".format(INPUT_TYPES, input_type))
-
-    if value_type not in VALUE_TYPES:
-        raise ValueError("Invalid value_type! Expected one of {}, got {}.".format(VALUE_TYPES, value_type))
+    _log_file_subject_dropdown_check_input(input_type, value_type)
 
     # ensure pathlib
     base_path = Path(base_path)
@@ -67,7 +64,24 @@ def log_file_subject_dropdown(
         ]
         subject_list = [folder.name for folder in log_file_list]
 
-    option_list = [("Select Subject", None)]
+    option_list = _log_file_subject_dropdown_get_option_list(subject_list, log_file_list, value_type)
+
+    widget = ipywidgets.Dropdown(options=option_list, description="Subject ID")
+    if callback:
+        widget.observe(callback, names="value")
+    return widget
+
+
+def _log_file_subject_dropdown_check_input(input_type: str, value_type: str):
+    if input_type not in INPUT_TYPES:
+        raise ValueError("Invalid input_type! Expected one of {}, got {}.".format(INPUT_TYPES, input_type))
+
+    if value_type not in VALUE_TYPES:
+        raise ValueError("Invalid value_type! Expected one of {}, got {}.".format(VALUE_TYPES, value_type))
+
+
+def _log_file_subject_dropdown_get_option_list(subject_list: List[str], log_file_list: List[Path], value_type: str):
+    option_list: List[Tuple[str, Optional[Union[Path, str]]]] = [("Select Subject", None)]
     if value_type == "file_path":
         option_list = option_list + list(zip(subject_list, log_file_list))
     elif value_type in ["folder_name", "subject_id"]:
@@ -75,10 +89,7 @@ def log_file_subject_dropdown(
     else:
         option_list = option_list + list(zip(subject_list, [log_file.name for log_file in log_file_list]))
 
-    widget = ipywidgets.Dropdown(options=option_list, description="Subject ID")
-    if callback:
-        widget.observe(callback, names="value")
-    return widget
+    return option_list
 
 
 def action_dropdown_widget(
@@ -88,14 +99,14 @@ def action_dropdown_widget(
 
     Parameters
     ----------
-    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class`~pandas.DataFrame`
+    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class:`~pandas.DataFrame`
         log data as ``LogData`` object or as dataframe
     callback : function, optional
         function reference to be used as callback function or ``None`` for no callback. Default: ``None``
 
     Returns
     -------
-    :class:`ipywidgets.widgets.widget_selection.Dropdown`
+    :class:`~ipywidgets.widgets.widget_selection.Dropdown`
         dropdown widget
 
     """
@@ -118,14 +129,14 @@ def day_dropdown_widget(data: Union[LogData, pd.DataFrame], callback: Optional[C
 
     Parameters
     ----------
-    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class`~pandas.DataFrame`
+    data : :class:`~biopsykit.carwatch_logs.log_data.LogData` or :class:`~pandas.DataFrame`
         log data as ``LogData`` object or as dataframe
     callback : function, optional
         function reference to be used as callback function or ``None`` for no callback. Default: ``None``
 
     Returns
     -------
-    :class:`ipywidgets.widgets.widget_selection.Dropdown`
+    :class:`~ipywidgets.widgets.widget_selection.Dropdown`
         dropdown widget
 
     """
