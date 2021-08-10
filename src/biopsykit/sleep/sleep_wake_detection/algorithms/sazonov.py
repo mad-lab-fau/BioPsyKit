@@ -34,7 +34,7 @@ class Sazonov(_SleepWakeBase):
         scores = np.array(1.727  - 0.256 * w0 - 0.154 * w1 - 0.136 * w2 - 0.140 * w3 - 0.176 * w4)
 
 
-        scores = expit(scores)  # 1/(1+np.exp(-scores))
+        scores = expit(scores)
 
         scores[scores >= 0.5] = 1
         scores[scores < 0.5] = 0
