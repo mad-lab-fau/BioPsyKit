@@ -14,7 +14,7 @@ import pandas as pd
 from nilspodlib import Dataset, SyncedSession
 
 from biopsykit.utils.time import tz
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dtype
 from biopsykit.utils._types import path_t
 
 COUNTER_INCONSISTENCY_HANDLING = Literal["raise", "warn", "ignore"]
@@ -489,6 +489,7 @@ def get_nilspod_dataset_corrupted_info(dataset: Dataset, file_path: path_t) -> D
         dictionary with corruption information
 
     """
+    _assert_is_dtype(dataset, Dataset)
     nilspod_file_pattern = r"NilsPodX-\w{4}_(.*?).bin"
     # ensure pathlib
     file_path = Path(file_path)
