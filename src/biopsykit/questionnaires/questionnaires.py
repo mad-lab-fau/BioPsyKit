@@ -424,8 +424,8 @@ def pss(
     The PSS consists of the subscales with the item indices
     (count-by-one, i.e., the first question has the index 1!):
 
-    * Helplessness (Hilflosigkeit): [1, 2, 3, 6, 9, 10]
-    * Self-Efficacy (Selbstwirksamkeit): [4, 5, 7, 8]
+    * Perceived Helplessness (Hilflosigkeit - ``Helpness``): [1, 2, 3, 6, 9, 10]
+    * Perceived Self-Efficacy (Selbstwirksamkeit - ``SelfEff``): [4, 5, 7, 8]
 
     .. note::
         This implementation assumes a score range of [0, 4].
@@ -481,7 +481,7 @@ def pss(
 
     if subscales is None:
         _assert_num_columns(data, 10)
-        subscales = {"H": [1, 2, 3, 6, 9, 10], "S": [4, 5, 7, 8]}
+        subscales = {"Helpless": [1, 2, 3, 6, 9, 10], "SelfEff": [4, 5, 7, 8]}
 
     _assert_value_range(data, score_range)
 
@@ -489,7 +489,7 @@ def pss(
     data = invert(data, cols=to_idx([4, 5, 7, 8]), score_range=score_range)
 
     pss_data = _compute_questionnaire_subscales(data, score_name, subscales)
-    pss_data[score_name] = data.sum(axis=1)
+    pss_data["{}_Total".format(score_name)] = data.sum(axis=1)
 
     return pd.DataFrame(pss_data, index=data.index)
 
@@ -2570,7 +2570,7 @@ def svf_120(
         "Pos1": ("Bag", "Her", "Schab"),
         "Pos2": ("Abl", "Ers", "Sebest", "Entsp"),
         "Pos3": ("Sitkon", "Rekon", "Posi"),
-        "Pos_Gesamt": (
+        "PosGesamt": (
             "Bag",
             "Her",
             "Schab",
@@ -2582,7 +2582,7 @@ def svf_120(
             "Rekon",
             "Posi",
         ),
-        "Neg_Gesamt": ("Flu", "Soza", "Gedw", "Res", "Selmit", "Sesch"),
+        "NegGesamt": ("Flu", "Soza", "Gedw", "Res", "Selmit", "Sesch"),
     }
 
     for name, scale_items in meta_scales.items():
@@ -2657,7 +2657,7 @@ def svf_42(
     Returns
     -------
     :class:`~pandas.DataFrame`
-        SFV120 score
+        SFV42 score
 
 
     Raises

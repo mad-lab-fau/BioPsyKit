@@ -2665,7 +2665,7 @@ class TestQuestionnaires:
                     "Posi": [15, 37, 56, 71, 83, 96],  # Positive Selbstinstruktion
                 },
                 result_filtered(
-                    regex="SVF120_(Bag|Her|Schab|Abl|Ers|Sebest|Entsp|Sitkon|Rekon|Posi|Pos1|Pos2|Pos3|Pos_Gesamt)"
+                    regex="SVF120_(Bag|Her|Schab|Abl|Ers|Sebest|Entsp|Sitkon|Rekon|Posi|Pos1|Pos2|Pos3|PosGesamt)"
                 ),
             ),
             (
@@ -3523,7 +3523,7 @@ class TestQuestionnaires:
     def test_sop(self, data, columns, subscales, result):
         data_out = sop(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-        assert_frame_equal(data_out, result)
+        assert_frame_equal(data_out, result, check_dtype=False)
 
     @pytest.mark.parametrize(
         "data, columns, subscales, expected",
@@ -4319,7 +4319,7 @@ class TestQuestionnaires:
     def test_wpi(self, data, columns, subscales, result):
         data_out = wpi(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-        assert_frame_equal(data_out, result)
+        assert_frame_equal(data_out, result, check_dtype=False)
 
     @pytest.mark.parametrize(
         "data, columns, expected",
