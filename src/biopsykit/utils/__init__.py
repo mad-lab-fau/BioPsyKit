@@ -9,7 +9,6 @@ from biopsykit.utils import (
     datatype_helper,
     exceptions,
     legacy_helper,
-    rescore,
 )
 
 __all__ = [
@@ -22,5 +21,4 @@ __all__ = [
     "exceptions",
     "data_processing",
     "legacy_helper",
-    "rescore"
 ]

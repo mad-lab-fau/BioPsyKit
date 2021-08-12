@@ -359,7 +359,7 @@ SleepWakeDataFrame = Union[_SleepWakeDataFrame, pd.DataFrame]
 
 The dataframe is expected to have at least the following column(s):
 
-* ["sleep_wake"]: sleep/wake predictions where 0 indicates sleep and 1 indicates wake
+* ["sleep_wake"]: sleep/wake predictions where 1 indicates sleep and 0 indicates wake
 
 """
 
