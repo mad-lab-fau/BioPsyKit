@@ -27,7 +27,16 @@ class TestIoNilspod:
         "file_path, dataset, expected",
         [
             (TEST_FILE_PATH.joinpath("test_dataset.bin"), None, does_not_raise()),
-            (None, Dataset.from_bin_file(TEST_FILE_PATH.joinpath("test_dataset.bin")), does_not_raise()),
+            (
+                None,
+                Dataset.from_bin_file(TEST_FILE_PATH.joinpath("test_dataset.bin"), tz="Europe/Berlin"),
+                does_not_raise(),
+            ),
+            (
+                None,
+                Dataset.from_bin_file(TEST_FILE_PATH.joinpath("test_dataset.bin")),
+                pytest.raises(ValueError),
+            ),
             (None, None, pytest.raises(ValueError)),
         ],
     )
