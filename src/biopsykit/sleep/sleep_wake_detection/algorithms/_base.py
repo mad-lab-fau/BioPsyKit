@@ -1,5 +1,6 @@
 """Module for sleep/wake detection base class."""
 from biopsykit.utils._types import arr_t
+from biopsykit.utils.datatype_helper import SleepWakeDataFrame
 
 
 class _SleepWakeBase:
@@ -8,7 +9,7 @@ class _SleepWakeBase:
     def __init__(self, **kwargs):
         pass
 
-    def fit(self, data: arr_t, **kwargs) -> arr_t:
+    def fit(self, data: arr_t, **kwargs):
         """Fit sleep/wake detection algorithm to input data.
 
         .. note::
@@ -23,7 +24,7 @@ class _SleepWakeBase:
         """
         raise NotImplementedError("Needs to be implemented by child class.")
 
-    def predict(self, data: arr_t, **kwargs) -> arr_t:
+    def predict(self, data: arr_t, **kwargs) -> SleepWakeDataFrame:
         """Apply sleep/wake prediction algorithm on input data.
 
         Parameters

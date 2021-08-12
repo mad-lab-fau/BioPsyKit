@@ -1,5 +1,8 @@
 """Functions to process sleep data from raw IMU data or Actigraph data."""
-from typing import Dict, Optional, Any, Union
+from typing import Dict, Optional, Any, Union, Sequence
+
+import numpy as np
+
 from biopsykit.signals.imu import convert_acc_data_to_g
 from biopsykit.signals.imu.rest_periods import RestPeriods
 from biopsykit.signals.imu.wear_detection import WearDetection
@@ -7,8 +10,7 @@ from biopsykit.signals.imu.activity_counts import ActivityCounts
 from biopsykit.sleep.sleep_wake_detection.sleep_wake_detection import SleepWakeDetection
 from biopsykit.sleep.sleep_endpoints import compute_sleep_endpoints
 from biopsykit.utils._types import arr_t
-import pandas as pd
-import numpy as np
+
 
 def predict_pipeline_acceleration(
     data: arr_t, sampling_rate: float, convert_to_g: Optional[bool] = True, **kwargs
@@ -87,22 +89,41 @@ def predict_pipeline_acceleration(
     return dict_result
 
 
-def predict_pipeline_actigraph(data: Union[pd.DataFrame, np.array], algorithm: str, bed_interval_index, **kwargs) -> Dict:
+def predict_pipeline_actigraph(
+    data: arr_t, algorithm_type: str, bed_interval: Sequence[Union[str, int, np.datetime64]], **kwargs
+) -> Dict[str, Any]:
+    """Apply sleep processing pipeline on actigraph data.
+
+    This function processes actigraph data collected during sleep and performs sleep/wake detection.
+
+    Parameters
+    ----------
+    data : array_like with shape (n,3)
+        input data. Must be a 3-d acceleration signal
+    algorithm_type : str
+        name of sleep/wake detection algorithm to internally use for sleep/wake detection
+    bed_interval : array_like
+        beginning and end of bed interval, i.e., the time spent in bed
+
+    **kwargs :
+        additional parameters to configure sleep/wake detection. The possible parameters depend on the selected
+        sleep/wake detection algorithm and are passed to
+        :class:`~biopsykit.sleep.sleep_wake_detection.SleepWakeDetection`.
 
 
+    Returns
+    -------
+    dict
+        dictionary with Sleep Processing Pipeline results.
 
-    sw = SleepWakeDetection(algorithm_type=algorithm, **kwargs)
-    df_sw = sw.predict(data[['activity']])
+    """
+    # TODO: add entries of result dictionary to docstring and add possibility to specify sleep/wake prediction algorithm
+    sw = SleepWakeDetection(algorithm_type=algorithm_type, **kwargs)
+    df_sw = sw.predict(data[["activity"]])
 
-    #df_sw = pd.DataFrame({'sleep_wake':df_sw})
+    # df_sw = pd.DataFrame({'sleep_wake':df_sw})
 
-    sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval_index)
+    sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval)
 
-    dict_result = {
-        "sleep_wake_prediction": df_sw,
-        "sleep_endpoints": sleep_endpoints
-    }
-
-
+    dict_result = {"sleep_wake_prediction": df_sw, "sleep_endpoints": sleep_endpoints}
     return dict_result
-
