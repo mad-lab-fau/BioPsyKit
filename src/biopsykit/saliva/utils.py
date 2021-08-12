@@ -6,8 +6,10 @@ from datetime import time, datetime
 
 import pandas as pd
 import numpy as np
+
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_index_levels
 from biopsykit.utils.datatype_helper import SalivaRawDataFrame, SalivaFeatureDataFrame, _SalivaRawDataFrame
+from biopsykit.utils._types import arr_t
 
 __all__ = [
     "saliva_feature_wide_to_long",
@@ -268,7 +270,7 @@ def _check_sample_times(sample_times: np.array) -> None:
 
     """
     if np.any(np.diff(sample_times) <= 0):
-        raise ValueError("`sample_times` must be increasing!")
+        raise ValueError("'sample_times' must be increasing!")
 
 
 def _get_sample_times(
@@ -278,6 +280,9 @@ def _get_sample_times(
     remove_s0: Optional[bool] = False,
 ) -> np.array:
     if sample_times is None:
+        # check if dataframe has 'time' index
+        if "time" in data.index.names:
+            data = data.reset_index("time")
         # check if dataframe has 'time' column
         if "time" in data.columns:
             sample_times = np.array(data.unstack(level="sample")["time"])
@@ -292,6 +297,7 @@ def _get_sample_times(
 
     # check whether we have the same saliva times for all subjects (1d array) or not (2d array)
     # and whether the input format is correct
+    sample_times = _sample_times_sanitize(data, sample_times, saliva_type)
     _get_sample_times_check_dims(data, sample_times, saliva_type)
 
     if remove_s0:
@@ -299,7 +305,17 @@ def _get_sample_times(
     return sample_times
 
 
-def _get_sample_times_check_dims(data: pd.DataFrame, sample_times, saliva_type):
+def _sample_times_sanitize(data: pd.DataFrame, sample_times: arr_t, saliva_type: str) -> arr_t:
+    if sample_times.ndim == 1:
+        exp_shape = data.unstack(level="sample")[saliva_type].shape[1]
+        act_shape = sample_times.shape[0]
+        if act_shape != exp_shape and (act_shape % exp_shape) == 0:
+            # saliva times are in long-format => number of sample times corresponds to 2nd dimension
+            sample_times = np.array(sample_times.unstack("sample").squeeze())
+    return sample_times
+
+
+def _get_sample_times_check_dims(data: pd.DataFrame, sample_times: arr_t, saliva_type: str):
     if sample_times.ndim == 1:
         exp_shape = data.unstack(level="sample")[saliva_type].shape[1]
         act_shape = sample_times.shape[0]
