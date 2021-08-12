@@ -5,7 +5,7 @@ from typing import Optional, Dict, Sequence, Union
 import pandas as pd
 import numpy as np
 
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 from biopsykit.signals._base import _BaseProcessor
 

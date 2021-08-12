@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, get_scorer
 from sklearn.model_selection import BaseCrossValidator, GridSearchCV
 from sklearn.pipeline import Pipeline
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 from biopsykit.classification.utils import split_train_test
 
