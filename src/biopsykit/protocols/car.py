@@ -62,6 +62,11 @@ class CAR(BaseProtocol):
 
         kwargs.setdefault("x", "sample")
         kwargs.setdefault("y", saliva_type)
-        kwargs.setdefault("xticklabels", self.sample_times[saliva_type])
+        kwargs.setdefault("xticklabels", kwargs.get("sample_times", self.sample_times[saliva_type]))
+        if len(data.index.get_level_values(kwargs.get("x")).unique()) != len(kwargs.get("xticklabels")):
+            raise ValueError(
+                "If samples have individual sample times for each subject, sample times for plotting must "
+                "explicitely be provided by the 'sample_times' argument!"
+            )
         kwargs.update(self.car_plot_params)
         return lineplot(data, **kwargs)

@@ -1,8 +1,11 @@
 """Utility functions for the ``biopsykit.protocols`` module."""
 from typing import Sequence, Union, Dict, Optional
 
+
 import numpy as np
 import pandas as pd
+from pandas._libs.lib import is_timedelta_or_timedelta64_array
+
 from biopsykit.utils._datatype_validation_helper import _assert_len_list
 from biopsykit.utils.datatype_helper import SalivaMeanSeDataFrame
 from biopsykit.utils.exceptions import ValidationError
@@ -34,7 +37,12 @@ def _get_sample_times(
     sample_times = np.array(sample_times)
 
     if not sample_times_absolute:
-        index_post = np.where(sample_times >= test_times[0])[0]
+        if is_timedelta_or_timedelta64_array(sample_times.flatten()):
+            # convert into minutes
+            sample_times_idx = sample_times.astype(float) / (1e9 * 60)
+        else:
+            sample_times_idx = sample_times
+        index_post = np.where(sample_times_idx >= test_times[0])[0]
         sample_times[index_post] = sample_times[index_post] + (test_times[1] - test_times[0])
     return list(sample_times)
 
@@ -49,7 +57,7 @@ def _get_sample_times_extract(saliva_data: pd.DataFrame):
 
 
 def _check_sample_times_match(data: SalivaMeanSeDataFrame, sample_times: Sequence[int]) -> None:
-    if len(data.index.get_level_values("sample").unique()) != len(sample_times):
+    if not any(len(sample_times) == s for s in [len(data.index.get_level_values("sample").unique()), len(data)]):
         raise ValidationError(
             "Number of saliva samples in data does not match number of samples in 'sample_times'. "
             "Expected {}, got {}.".format(len(data), len(sample_times))
