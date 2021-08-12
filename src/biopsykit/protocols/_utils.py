@@ -37,14 +37,19 @@ def _get_sample_times(
     sample_times = np.array(sample_times)
 
     if not sample_times_absolute:
-        if is_timedelta_or_timedelta64_array(sample_times.flatten()):
-            # convert into minutes
-            sample_times_idx = sample_times.astype(float) / (1e9 * 60)
-        else:
-            sample_times_idx = sample_times
-        index_post = np.where(sample_times_idx >= test_times[0])[0]
-        sample_times[index_post] = sample_times[index_post] + (test_times[1] - test_times[0])
+        sample_times = _get_sample_times_absolute(sample_times, test_times)
     return list(sample_times)
+
+
+def _get_sample_times_absolute(sample_times: np.ndarray, test_times: Sequence[int]):
+    if is_timedelta_or_timedelta64_array(sample_times.flatten()):
+        # convert into minutes
+        sample_times_idx = sample_times.astype(float) / (1e9 * 60)
+    else:
+        sample_times_idx = sample_times
+    index_post = np.where(sample_times_idx >= test_times[0])[0]
+    sample_times[index_post] = sample_times[index_post] + (test_times[1] - test_times[0])
+    return sample_times
 
 
 def _get_sample_times_extract(saliva_data: pd.DataFrame):
