@@ -29,10 +29,13 @@ jobs:
     - name: Testing
       run: |
         poetry run doit test
+    - name: Create Coverage Badge
+      if: ${{ matrix.python-version == 3.8 }}
+      run: |
         poetry run coverage-badge -o coverage-badge.svg -f
     - name: Commit Coverage Badge
       uses: stefanzweifel/git-auto-commit-action@v4
-      if: ${{ matrix.python-version == 3.8 }}
+      if: ${{ github.event_name == 'push' }} && ${{ matrix.python-version == 3.8 }}
       with:
         commit_message: added coverage badge
         commit_user_name: GitHub Actions
