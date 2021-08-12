@@ -153,12 +153,20 @@ pip install biopsykit
 
 ### For Developer
 
+#### Without Extras
 ```bash
 git clone https://github.com/mad-lab-fau/BioPsyKit.git
 cd biopsykit
 poetry install
 ```
-Install Python >3.7 and [poetry](https://python-poetry.org).
+
+#### With all Extras (e.g., extended functionalities for IPython/Jupyter Notebooks)
+```bash
+git clone https://github.com/mad-lab-fau/BioPsyKit.git
+cd biopsykit
+poetry install -E mne -E jupyter 
+```
+Install Python >=3.7 and [poetry](https://python-poetry.org).
 Then run the commands below to get the latest source and install the dependencies:
 
 
