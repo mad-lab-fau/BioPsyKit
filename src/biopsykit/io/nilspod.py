@@ -130,7 +130,7 @@ def load_dataset_nilspod(
         datastreams = [datastreams]
 
     # convert dataset to dataframe and localize timestamp
-    df = dataset.data_as_df(datastreams, index="utc_datetime")
+    df = dataset.data_as_df(datastreams, index="local_datetime")
     df.index.name = "time"
     return df, dataset.info.sampling_rate_hz
 
@@ -218,7 +218,7 @@ def load_synced_session_nilspod(
         datastreams = [datastreams]
 
     # convert dataset to dataframe and localize timestamp
-    df = session.data_as_df(datastreams, index="utc_datetime", concat_df=True)
+    df = session.data_as_df(datastreams, index="local_datetime", concat_df=True)
     df.index.name = "time"
     if len(set(session.info.sampling_rate_hz)) > 1:
         raise ValueError(
