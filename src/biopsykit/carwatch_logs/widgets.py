@@ -1,16 +1,18 @@
 """Module providing interactive widgets to select and display log data from the *CARWatch App*."""
+from __future__ import annotations
 from pathlib import Path
-from typing import Optional, Union, Callable, Tuple, List
-import re
+from typing import TYPE_CHECKING, Optional, Union, Callable, Tuple, List
 
+import re
 from typing_extensions import Literal
 
 import pandas as pd
 
-import ipywidgets.widgets
-
 from biopsykit.utils._types import path_t
 from biopsykit.carwatch_logs import LogData
+
+if TYPE_CHECKING:
+    import ipywidgets.widgets
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
 
@@ -49,6 +51,13 @@ def log_file_subject_dropdown(
         dropdown widget
 
     """
+    try:
+        import ipywidgets.widgets  # pylint:disable=import-outside-toplevel
+    except ImportError as e:
+        raise ImportError(
+            "Creating widget failed because ipywidgets cannot be imported. Install it via 'pip install ipywidgets'."
+        ) from e
+
     _log_file_subject_dropdown_check_input(input_type, value_type)
 
     # ensure pathlib
@@ -94,7 +103,7 @@ def _log_file_subject_dropdown_get_option_list(subject_list: List[str], log_file
 
 def action_dropdown_widget(
     data: Union[LogData, pd.DataFrame], callback: Optional[Callable] = None
-) -> ipywidgets.Dropdown:
+) -> "ipywidgets.Dropdown":
     """Create dropdown widget to filter log data by a specific action.
 
     Parameters
@@ -110,6 +119,13 @@ def action_dropdown_widget(
         dropdown widget
 
     """
+    try:
+        import ipywidgets.widgets  # pylint:disable=import-outside-toplevel
+    except ImportError as e:
+        raise ImportError(
+            "Creating widget failed because ipywidgets cannot be imported. Install it via 'pip install ipywidgets'."
+        ) from e
+
     options = [("Select Action", None)]
 
     if isinstance(data, LogData):
@@ -124,7 +140,9 @@ def action_dropdown_widget(
     return widget
 
 
-def day_dropdown_widget(data: Union[LogData, pd.DataFrame], callback: Optional[Callable] = None) -> ipywidgets.Dropdown:
+def day_dropdown_widget(
+    data: Union[LogData, pd.DataFrame], callback: Optional[Callable] = None
+) -> "ipywidgets.Dropdown":
     """Create dropdown widget to filter log data by a specific day.
 
     Parameters
@@ -140,6 +158,13 @@ def day_dropdown_widget(data: Union[LogData, pd.DataFrame], callback: Optional[C
         dropdown widget
 
     """
+    try:
+        import ipywidgets.widgets  # pylint:disable=import-outside-toplevel
+    except ImportError as e:
+        raise ImportError(
+            "Creating widget failed because ipywidgets cannot be imported. Install it via 'pip install ipywidgets'."
+        ) from e
+
     options = [("Select Day", None)]
 
     if isinstance(data, LogData):

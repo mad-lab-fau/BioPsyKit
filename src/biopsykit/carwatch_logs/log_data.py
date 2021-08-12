@@ -9,8 +9,6 @@ from typing_extensions import Literal
 import numpy as np
 import pandas as pd
 
-from IPython.display import display, Markdown
-
 import biopsykit.carwatch_logs.log_actions as log_actions
 import biopsykit.carwatch_logs.log_extras as log_extras
 from biopsykit.utils.time import tz
@@ -278,6 +276,14 @@ class LogData:
 
     def print_info(self):
         """Display Markdown-formatted log data information."""
+        try:
+            from IPython.core.display import display, Markdown  # pylint:disable=import-outside-toplevel
+        except ImportError as e:
+            raise ImportError(
+                "Displaying LogData information failed because "
+                "IPython cannot be imported. Install it via 'pip install ipython'."
+            ) from e
+
         display(Markdown("Subject ID: **{}**".format(self.subject_id)))
         display(Markdown("Condition: **{}**".format(self.condition)))
         display(Markdown("App Version: **{}**".format(self.app_version)))

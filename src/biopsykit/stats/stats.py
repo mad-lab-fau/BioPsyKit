@@ -5,9 +5,8 @@ from typing_extensions import Literal
 
 import pandas as pd
 import pingouin as pg
-from IPython.core.display import display, Markdown
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t
 
 MAP_STAT_TESTS = {
@@ -262,6 +261,14 @@ class StatsPipeline:
         return {}
 
     def _ipython_display_(self):
+        try:
+            from IPython.core.display import display  # pylint:disable=import-outside-toplevel
+        except ImportError as e:
+            raise ImportError(
+                "Displaying statistics results failed because "
+                "IPython cannot be imported. Install it via 'pip install ipython'."
+            ) from e
+
         display(self._param_df().T)
         display(self._result_df().T)
 
@@ -298,8 +305,15 @@ class StatsPipeline:
             * ``grouped``: ``True`` to group results by the variable "groupby" specified in the parameter
               dictionary when initializing the ``StatsPipeline`` instance.
 
-
         """
+        try:
+            from IPython.core.display import display, Markdown  # pylint:disable=import-outside-toplevel
+        except ImportError as e:
+            raise ImportError(
+                "Displaying statistics results failed because "
+                "IPython cannot be imported. Install it via 'pip install ipython'."
+            ) from e
+
         sig_only = self._get_sig_only(sig_only)
         grouped = kwargs.pop("grouped", False)
 
@@ -331,22 +345,19 @@ class StatsPipeline:
     def _display_results(
         self, sig_only: Dict[str, bool], groupby: Optional[str] = None, group_key: Optional[str] = None, **kwargs
     ):
+        try:
+            from IPython.core.display import display, Markdown  # pylint:disable=import-outside-toplevel
+        except ImportError as e:
+            raise ImportError(
+                "Displaying statistics results failed because "
+                "IPython cannot be imported. Install it via 'pip install ipython'."
+            ) from e
+
         display(Markdown("""<font size="3"><b> Overview </b></font>"""))
         display(self)
         for category, steps in self.category_steps.items():
             if kwargs.get(category, True):
-                display(Markdown("""<font size="3"><b> {} </b></font>""".format(MAP_CATEGORIES[category])))
-                for step in steps:
-                    display(Markdown("**{}**".format(MAP_NAMES[step])))
-                    df = self.results[step]
-                    if groupby:
-                        df = df.xs(group_key, level=groupby)
-                    if sig_only.get(category, False):
-                        df = self._filter_sig(df)
-                        if df.empty:
-                            display(Markdown("*No significant p-values.*"))
-                            continue
-                    display(df)
+                self._display_category(category, steps, sig_only, groupby, group_key)
 
     @staticmethod
     def _filter_sig(data: pd.DataFrame) -> Optional[pd.DataFrame]:
@@ -656,3 +667,26 @@ class StatsPipeline:
             raise ValueError("'x' must be specified when 'plot_type' is 'multi'!")
         stats_data = stats_data.set_index(x)
         return stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
+
+    def _display_category(
+        self, category: str, steps: Sequence[str], sig_only: Dict[str, bool], groupby: str, group_key: str
+    ):
+        try:
+            from IPython.core.display import display, Markdown  # pylint:disable=import-outside-toplevel
+        except ImportError as e:
+            raise ImportError(
+                "Displaying statistics results failed because "
+                "IPython cannot be imported. Install it via 'pip install ipython'."
+            ) from e
+        display(Markdown("""<font size="3"><b> {} </b></font>""".format(MAP_CATEGORIES[category])))
+        for step in steps:
+            display(Markdown("**{}**".format(MAP_NAMES[step])))
+            df = self.results[step]
+            if groupby is not None:
+                df = df.xs(group_key, level=groupby)
+            if sig_only.get(category, False):
+                df = self._filter_sig(df)
+                if df.empty:
+                    display(Markdown("*No significant p-values.*"))
+                    continue
+            display(df)
