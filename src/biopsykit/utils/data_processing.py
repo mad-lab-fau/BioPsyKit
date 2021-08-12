@@ -2,7 +2,7 @@
 import warnings
 from typing import Sequence, Union, Dict, Optional, Tuple, Any
 
-# from tqdm.notebook import tqdm
+# from tqdm.auto import tqdm
 
 import numpy as np
 import pandas as pd

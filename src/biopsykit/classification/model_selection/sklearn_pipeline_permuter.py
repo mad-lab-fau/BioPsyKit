@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.pipeline import Pipeline
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 from biopsykit.classification.utils import _PipelineWrapper
 from biopsykit.classification.model_selection import nested_cv_grid_search

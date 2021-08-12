@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from scipy.stats import iqr
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.datatype_helper import (

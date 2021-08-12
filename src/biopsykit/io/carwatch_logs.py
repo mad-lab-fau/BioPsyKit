@@ -8,7 +8,7 @@ import zipfile
 from pathlib import Path
 
 import pandas as pd
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 from biopsykit.carwatch_logs import LogData
 from biopsykit.utils._types import path_t
