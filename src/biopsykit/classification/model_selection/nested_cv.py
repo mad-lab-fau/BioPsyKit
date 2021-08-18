@@ -1,9 +1,11 @@
 """Module with functions for model selection using "nested" cross-validation."""
-from typing import Any, Dict, Optional
+from typing import Dict, Any, Optional
 
 import numpy as np
+
+import sklearn
 from sklearn.metrics import confusion_matrix, get_scorer
-from sklearn.model_selection import BaseCrossValidator, GridSearchCV
+from sklearn.model_selection import BaseCrossValidator, GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
 
@@ -82,7 +84,11 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
     for train, test in tqdm(list(outer_cv.split(X, y, groups)), desc="Outer CV"):
         if groups is None:
             x_train, x_test, y_train, y_test = split_train_test(X, y, train, test)
-            grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
+            if isinstance(pipeline.steps[2][1], sklearn.ensemble.RandomForestClassifier):
+                grid = RandomizedSearchCV(pipeline, param_distributions=param_dict, cv=inner_cv,
+                                          scoring=scoring_dict, n_iter=10, **kwargs)
+            else:
+                grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
             grid.fit(x_train, y_train)
         else:
             (  # pylint:disable=unbalanced-tuple-unpacking
