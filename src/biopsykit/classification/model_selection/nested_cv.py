@@ -69,7 +69,7 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
         sklearn grid-search
 
     """
-    scoring_dict = {"accuracy": "accuracy", "precision": "precision", "recall": "recall", "f1": "f1"}
+    scoring_dict = {"accuracy": "accuracy"}
     scoring = kwargs.pop("scoring")
     scoring_dict.setdefault(scoring, scoring)
     kwargs["refit"] = scoring
