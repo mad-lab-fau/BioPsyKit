@@ -1,0 +1,27 @@
+# YAML 1.2
+---
+abstract: "BioPsyKit is an open source Python package for the analysis of biopsychological data."
+authors: 
+  -
+    affiliation: "Machine Learning and Data Analytics Lab (MaD Lab), Department Artificial Intelligence in Biomedical Engineering, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)"
+    family-names: Richer
+    given-names: Robert
+    orcid: "https://orcid.org/0000-0003-0272-5403"
+  -
+    affiliation: "Machine Learning and Data Analytics Lab (MaD Lab), Department Artificial Intelligence in Biomedical Engineering, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)"
+    family-names: "Küderle"
+    given-names: Arne
+  -
+    affiliation: "Chair of Health Psychology, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)"
+    family-names: Rohleder
+    given-names: Nicolas
+  -
+    affiliation: "Machine Learning and Data Analytics Lab (MaD Lab), Department Artificial Intelligence in Biomedical Engineering, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)"
+    family-names: Eskofier
+    given-names: "Bjoern M."
+cff-version: "1.1.0"
+license: MIT
+message: "If you use this software, please cite it as below."
+repository-code: "https://github.com/mad-lab-fau/BioPsyKit"
+title: BioPsyKit
+...
