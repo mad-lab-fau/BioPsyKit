@@ -82,16 +82,16 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
     results_dict = {key: [] for key in cols}
 
     for train, test in tqdm(list(outer_cv.split(X, y, groups)), desc="Outer CV"):
+        if isinstance(pipeline.steps[2][1], sklearn.ensemble.RandomForestClassifier) or isinstance(
+                pipeline.steps[2][1], sklearn.ensemble.GradientBoostingClassifier
+        ):
+            grid = RandomizedSearchCV(
+                pipeline, param_distributions=param_dict, cv=inner_cv, scoring=scoring_dict, n_iter=10, **kwargs
+            )
+        else:
+            grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
         if groups is None:
             x_train, x_test, y_train, y_test = split_train_test(X, y, train, test)
-            if isinstance(pipeline.steps[2][1], sklearn.ensemble.RandomForestClassifier) or isinstance(
-                pipeline.steps[2][1], sklearn.ensemble.GradientBoostingClassifier
-            ):
-                grid = RandomizedSearchCV(
-                    pipeline, param_distributions=param_dict, cv=inner_cv, scoring=scoring_dict, n_iter=10, **kwargs
-                )
-            else:
-                grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
             grid.fit(x_train, y_train)
         else:
             (  # pylint:disable=unbalanced-tuple-unpacking
@@ -102,7 +102,6 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
                 groups_train,
                 _,
             ) = split_train_test(X, y, train, test, groups)
-            grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
             grid.fit(x_train, y_train, groups=groups_train)
 
         results_dict["grid_search"].append(grid)
