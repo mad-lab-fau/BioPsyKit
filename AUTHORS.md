@@ -10,8 +10,9 @@ Machine Learning and Data Analytics Lab (MaD Lab) and the Chair of Health Psycho
 ## Contributors
 * Rebecca Lennartz <rebecca.lennartz@fau.de>
 * Daniel Krauß <daniel.k.krauss@fau.de>
-* Janis Zenkner <janis.zenkner@fau.de>
 * Victoria Müller <victoria.m.mueller@fau.de>
+* Martin Ullrich <martin.ullrich@fau.de>
+* Janis Zenkner <janis.zenkner@fau.de>
 
 ## Contact
 Robert Richer <robert.richer@fau.de>
