@@ -219,9 +219,10 @@ class SklearnPipelinePermuter:
         kwargs.setdefault("n_jobs", -1)
         kwargs.setdefault("verbose", 1)
         kwargs.setdefault("error_score", "raise")
+        cachedir_name = kwargs.pop("cachedir_name", "cachedir")
 
         # Create a temporary folder to store the transformers of the pipeline
-        location = "cachedir"
+        location = cachedir_name
         memory = Memory(location=location, verbose=0)
 
         for model_combination in tqdm(self.model_combinations):
