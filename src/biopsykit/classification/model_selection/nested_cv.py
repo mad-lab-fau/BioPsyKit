@@ -75,6 +75,7 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
     scoring = kwargs.pop("scoring")
     scoring_dict.setdefault(scoring, scoring)
     kwargs["refit"] = scoring
+    random_state = kwargs.pop("random_state", 1)
 
     cols = ["grid_search", "cv_results", "best_estimator", "conf_matrix", "predicted_labels", "true_labels"]
     for scorer in scoring_dict:
@@ -83,10 +84,16 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
 
     for train, test in tqdm(list(outer_cv.split(X, y, groups)), desc="Outer CV"):
         if isinstance(pipeline.steps[2][1], sklearn.ensemble.RandomForestClassifier) or isinstance(
-                pipeline.steps[2][1], sklearn.ensemble.GradientBoostingClassifier
+            pipeline.steps[2][1], sklearn.ensemble.GradientBoostingClassifier
         ):
             grid = RandomizedSearchCV(
-                pipeline, param_distributions=param_dict, cv=inner_cv, scoring=scoring_dict, n_iter=10, **kwargs
+                pipeline,
+                param_distributions=param_dict,
+                cv=inner_cv,
+                scoring=scoring_dict,
+                n_iter=10,
+                random_state=random_state,
+                **kwargs,
             )
         else:
             grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
