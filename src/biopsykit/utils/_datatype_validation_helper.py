@@ -293,6 +293,60 @@ def _assert_has_column_multiindex(
     )
 
 
+def _assert_has_columns_any_level(
+    df: pd.DataFrame,
+    columns_sets: Sequence[Union[List[_Hashable], List[str], pd.Index]],
+    raise_exception: Optional[bool] = True,
+) -> Optional[bool]:
+    """Check if the dataframe has the expected set of column names at any level of a :any:`pandas.MultiIndex`.
+
+    Parameters
+    ----------
+    df : :class:`~pandas.DataFrame`
+        The dataframe to check
+    columns_sets : list
+        Column set of list of column sets to check
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``df`` has the expected column names at any :any:`pandas.MultiIndex` level,
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    :exc:`~biopsykit.exceptions.ValidationError`
+        if ``raise_exception`` is ``True`` and ``df`` does not have the expected column names
+
+    Examples
+    --------
+    >>> df = pd.DataFrame()
+    >>> df.columns = pd.MultiIndex.from_tuples([("Name", "col1"), ("Name", "col2")])
+    >>> _assert_has_columns_any_level(df, [["col1", "col2"]])
+    >>> # This raises no error, as df contains all columns in the seconds level
+
+    """
+    _assert_has_column_multiindex(df, expected=True, nlevels_atleast=True)
+    column_levels = [np.array(df.columns.get_level_values(i)) for i in range(df.columns.nlevels)]
+    result = False
+    for columns in column_levels:
+        for col_set in columns_sets:
+            result = result or all(v in columns for v in col_set)
+
+    if result is False:
+        if len(columns_sets) == 1:
+            helper_str = "the following columns: {}".format(columns_sets[0])
+        else:
+            helper_str = "one of the following sets of columns: {}".format(columns_sets)
+        if raise_exception:
+            raise ValidationError(
+                "The dataframe is expected to have {} at any level of the MultiIndex. Instead it has the "
+                "following MultiIndex columns: {}".format(helper_str, column_levels)
+            )
+    return result
+
+
 def _assert_has_column_levels(
     df: pd.DataFrame,
     column_levels: Iterable[_Hashable],

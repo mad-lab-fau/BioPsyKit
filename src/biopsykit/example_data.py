@@ -122,7 +122,7 @@ def get_saliva_mean_se_example() -> Dict[str, SalivaMeanSeDataFrame]:
     """
     data_dict = pd.read_excel(_EXAMPLE_DATA_PATH.joinpath("saliva_sample_mean_se.xlsx"), sheet_name=None)
     for key in data_dict:
-        data_dict[key] = _SalivaMeanSeDataFrame(data_dict[key].set_index(["sample", "time"]))
+        data_dict[key] = _SalivaMeanSeDataFrame(data_dict[key].set_index(["condition", "sample", "time"]))
         is_saliva_mean_se_dataframe(data_dict[key])
     return data_dict
 

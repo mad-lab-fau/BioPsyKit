@@ -498,8 +498,18 @@ def split_dict_into_subphases(
     return result_dict
 
 
-def get_subphase_durations(data: pd.DataFrame, subphases: Dict[str, int]) -> Sequence[Tuple[int, int]]:
+def get_subphase_durations(
+    data: pd.DataFrame, subphases: Dict[str, Union[int, Tuple[int, int]]]
+) -> Sequence[Tuple[int, int]]:
     """Compute subphase durations from dataframe.
+
+    The subphases can be specified in two different ways:
+
+    * If the dictionary entries in ``subphases`` are integer, it's assumed that subphases are consecutive,
+      i.e., each subphase begins right after the previous one, and the entries indicate the *durations* of each
+      subphase. The start and end times of each subphase will then be computed from the subphase durations.
+    * If the dictionary entries in ``subphases`` are tuples, it's assumed that the start and end times of each
+    subphase are directly provided.
 
     .. note::
         If the duration of the last subphase is unknown (e.g., because it has variable length) this can be
@@ -513,20 +523,37 @@ def get_subphase_durations(data: pd.DataFrame, subphases: Dict[str, int]) -> Seq
         dataframe with data from one phase. Used to compute the duration of the last subphase if this subphase
         is expected to have variable duration.
     subphases : dict
-        dictionary with subphase names (keys) and subphase durations (values) in seconds
+        dictionary with subphase names as keys and subphase durations (as integer) or start and end
+        times (as tuples of integer) as values in seconds
 
     Returns
     -------
     list
         list with start and end times of each subphase in seconds relative to beginning of the phase
 
+
+    Examples
+    --------
+    >>> from biopsykit.utils.data_processing import get_subphase_durations
+    >>> # Option 1: Subphases consecutive, subphase durations provided
+    >>> get_subphase_durations(data, {"Start": 60, "Middle": 120, "End": 60})
+    >>> # Option 2: Subphase start and end times provided
+    >>> get_subphase_durations(data, {"Start": (0, 50), "Middle": (60, 160), "End": (180, 240)})
+
     """
-    subphase_durations = list(subphases.values())
-    times_cum = np.cumsum(subphase_durations)
-    if subphase_durations[-1] == 0:
-        # last subphase has duration 0 => end of last subphase is length of dataframe
-        times_cum[-1] = len(data)
-    subphase_times = list(zip([0] + list(times_cum), times_cum))
+    subphase_durations = np.array(list(subphases.values()))
+    if subphase_durations.ndim == 1:
+        # 1d array => subphase values are integer => they are consecutive and each entry is the duration
+        # of the subphase, so the start and end times of each subphase must be computed
+        times_cum = np.cumsum(subphase_durations)
+        if subphase_durations[-1] == 0:
+            # last subphase has duration 0 => end of last subphase is length of dataframe
+            times_cum[-1] = len(data)
+        subphase_times = list(zip([0] + list(times_cum), times_cum))
+    else:
+        # 2d array => subphase values are tuples => start end end time of each subphase are already provided and do
+        # not need to be computed
+        subphase_times = subphase_durations
     return subphase_times
 
 
@@ -784,6 +811,7 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
             # nested dictionary
             result_data[key] = mean_per_subject_dict(value, dict_levels[1:], param_name)
         else:
+            value.columns.name = "subject"
             if len(value.columns) == 1:
                 one_col_df = True
             df = pd.DataFrame(value.mean(axis=0), columns=[param_name])

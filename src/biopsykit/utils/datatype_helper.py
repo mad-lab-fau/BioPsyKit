@@ -9,8 +9,8 @@ from biopsykit.utils._datatype_validation_helper import (
     _assert_has_column_multiindex,
     _assert_has_index_levels,
     _assert_has_columns,
-    _assert_has_column_levels,
     _assert_has_column_prefix,
+    _assert_has_columns_any_level,
 )
 from biopsykit.utils.exceptions import ValidationError
 
@@ -154,8 +154,8 @@ the dataframe entries then represent the mapping of numerical value to categoric
 MeanSeDataFrame = Union[_MeanSeDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing mean and standard error of time-series data in a standardized format.
 
-The resulting dataframe must at least have a ``phase`` index level and the two columns ``mean`` and ``se``.
-It can have additional index levels, such as ``subphase`` or ``condition``.
+The resulting dataframe must at least the two columns ``mean`` and ``se``. It can have additional index levels,
+such as ``phase``, ``subphase`` or ``condition``.
 """
 
 SalivaRawDataFrame = Union[_SalivaRawDataFrame, pd.DataFrame]
@@ -632,15 +632,18 @@ def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] 
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
+
     Returns
     -------
     ``True`` if ``data`` is a ``MeanSeDataFrame``
     ``False`` otherwise (if ``raise_exception`` is ``False``)
 
+
     Raises
     ------
     ValidationError
         if ``raise_exception`` is ``True`` and ``data`` is not a ``MeanSeDataFrame``
+
 
     See Also
     --------
@@ -650,8 +653,10 @@ def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] 
     """
     try:
         _assert_is_dtype(data, pd.DataFrame)
-        _assert_has_index_levels(data, index_levels="phase", match_atleast=True, match_order=False)
-        _assert_has_columns(data, [["mean", "se"]])
+        if data.columns.nlevels == 1:
+            _assert_has_columns(data, [["mean", "se"]])
+        else:
+            _assert_has_columns_any_level(data, [["mean", "se"]])
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(
@@ -903,7 +908,6 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
             _assert_is_dtype(df, pd.DataFrame)
             _assert_has_multiindex(df, expected=False)
             _assert_has_column_multiindex(df, expected=False)
-            _assert_has_column_levels(df, ["subject"])
             _assert_has_index_levels(df, ["time"])
     except ValidationError as e:
         if raise_exception is True:
