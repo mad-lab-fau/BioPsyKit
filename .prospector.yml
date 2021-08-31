@@ -49,4 +49,5 @@ pylint:
     - invalid-unary-operand-type
     - protected-access
     - too-many-lines
+    - useless-suppression
 
