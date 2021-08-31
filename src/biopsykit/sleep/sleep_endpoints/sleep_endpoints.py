@@ -129,15 +129,13 @@ def compute_sleep_endpoints(
     return dict_result
 
 
-def endpoints_as_df(sleep_endpoints: SleepEndpointDict, subject_id: str) -> Optional[SleepEndpointDataFrame]:
+def endpoints_as_df(sleep_endpoints: SleepEndpointDict) -> Optional[SleepEndpointDataFrame]:
     """Convert ``SleepEndpointDict`` into ``SleepEndpointDataFrame``.
 
     Parameters
     ----------
     sleep_endpoints : :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`
         dictionary with computed Sleep Endpoints
-    subject_id : str
-        Subject ID
 
     Returns
     -------
@@ -155,8 +153,10 @@ def endpoints_as_df(sleep_endpoints: SleepEndpointDict, subject_id: str) -> Opti
     sleep_bouts = [tuple(v) for v in sleep_bouts]
     wake_bouts = [tuple(v) for v in wake_bouts]
 
-    df = pd.DataFrame(sleep_endpoints, index=pd.Index([subject_id], name="subject"))
-    df.set_index("date", append=True, inplace=True)
+    index = pd.to_datetime(pd.Index([sleep_endpoints["date"]], name="date"))
+    sleep_endpoints.pop("date")
+
+    df = pd.DataFrame(sleep_endpoints, index=index)
     df.fillna(value=np.nan, inplace=True)
     df["sleep_bouts"] = None
     df["wake_bouts"] = None
