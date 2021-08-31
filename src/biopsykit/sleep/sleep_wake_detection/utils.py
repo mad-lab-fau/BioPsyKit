@@ -31,7 +31,7 @@ def rescore(predictions: np.ndarray, epoch_length: Optional[EPOCH_LENGTH] = 30) 
     rescored = _apply_recording_rules_d_e(rescored, epoch_length)
 
     # wake phases of 1 minute, surrounded by sleep, get rescored
-    for t in range(1, len(rescored) - 1):  # pylint:disable=consider-using-enumerate
+    for t in range(1, len(rescored) - 1):
         if rescored[t] == 1 and rescored[t - 1] == 0 and rescored[t + 1] == 0:
             rescored[t] = 0
 

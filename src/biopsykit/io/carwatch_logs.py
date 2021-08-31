@@ -142,7 +142,8 @@ def load_log_one_subject(
         # TODO add error messages if no log files are found (e.g. wrong folder path etc.)
         return log_folder_to_dataframe(path)
 
-    _assert_file_extension(path, [".zip", ".csv"])
+    if path.is_file():
+        _assert_file_extension(path, [".zip", ".csv"])
     if path.suffix == ".zip":
         with zipfile.ZipFile(path, "r") as zip_ref:
             export_folder = path.parent.joinpath(re.search(log_filename_pattern, path.name).group(1))

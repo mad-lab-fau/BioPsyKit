@@ -2273,8 +2273,8 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         "5": [3, 4, 5, 9, 10],
         "7": [1, 5, 6, 7, 9],
     }
-    idx_kov = {key: np.array(idx_kov[key]) for key in idx_kov}
-    idx_vig = {key: np.setdiff1d(np.arange(1, 11), np.array(idx_kov[key]), assume_unique=True) for key in idx_kov}
+    idx_kov = {key: np.array(val) for key, val in idx_kov.items()}
+    idx_vig = {key: np.setdiff1d(np.arange(1, 11), np.array(val), assume_unique=True) for key, val in idx_kov.items()}
     abi_kov, abi_vig = [
         pd.concat(
             [abi_raw.loc[:, key].iloc[:, idx[key] - 1] for key in idx],
@@ -3990,7 +3990,7 @@ def _pfb_assert_value_range(data: pd.DataFrame, subscales: Dict[str, Sequence[in
                 "which is expected to be in the range {}! "
                 "Please consider converting to the correct range using "
                 "`biopsykit.questionnaire.utils.convert_scale()`.".format(score_range, subscales["Glueck"], [1, 6])
-            )
+            ) from e
         raise e
 
 
@@ -4221,13 +4221,13 @@ def meq(
         col_mask = np.arange(0, len(data.columns))
         col_mask = col_mask[~np.isin(col_mask, col_idx)]
         _assert_value_range(data.iloc[:, col_mask], score_range)
-    except ValueRangeError:
+    except ValueRangeError as e:
         raise ValueRangeError(
             "This implementation of MEQ expects all values in the range {}, except the columns {}, "
             "which are expected to be in the range {}! "
             "Please consider converting to the correct range using "
             "`biopsykit.questionnaire.utils.convert_scale()`.".format(score_range, col_idx, [1, 5])
-        )
+        ) from e
 
     # invert items 1, 2, 10, 17, 18 (score range [1, 5])
     data = invert(data, cols=to_idx([1, 2, 10, 17, 18]), score_range=[1, 5])

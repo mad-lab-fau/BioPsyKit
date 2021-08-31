@@ -693,9 +693,9 @@ class EcgProcessor(_BaseProcessor):
         rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         hrv_types: str (or list of such), optional
-            list of HRV types to be computed. Must be a subset of ['hrv_time', 'hrv_nonlinear', 'hrv_frequency']
-            or 'all' to compute all types of HRV. Refer to :func:`neurokit2.hrv.hrv` for further information on
-            the available HRV parameters. Default: ``None`` (equals to ['hrv_time', 'hrv_nonlinear'])
+            list of HRV types to be computed. Must be a subset of ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
+            or "all" to compute all types of HRV. Refer to :func:`neurokit2.hrv.hrv` for further information on
+            the available HRV parameters. Default: ``None`` (equals to ["hrv_time", "hrv_nonlinear"])
         correct_rpeaks : bool, optional
             ``True`` to apply R peak correction (using :meth:`~biopsykit.signals.ecg.EcgProcessor.correct_rpeaks()`)
             before computing HRV parameters, ``False`` otherwise. Default: ``True``
@@ -1365,16 +1365,16 @@ def _get_outlier_params(
     elif isinstance(outlier_correction, str):
         outlier_correction = [outlier_correction]
     elif outlier_correction in ["None", None]:
-        outlier_correction = list()
+        outlier_correction = []
 
     try:
         outlier_funcs: Dict[str, Callable] = {key: _outlier_correction_methods[key] for key in outlier_correction}
-    except KeyError:
+    except KeyError as e:
         raise ValueError(
             "`outlier_correction` may only contain values from {}, None or `all`, not `{}`.".format(
                 list(_outlier_correction_methods.keys()), outlier_correction
             )
-        )
+        ) from e
 
     if outlier_params is None:
         outlier_params = {key: _outlier_correction_params_default[key] for key in outlier_funcs}

@@ -62,7 +62,7 @@ from biopsykit.questionnaires.questionnaires import (
     type_d,
     kab,
 )
-import biopsykit.questionnaires.utils as utils
+from biopsykit.questionnaires import utils
 
 __all__ = [
     "abi",

@@ -294,7 +294,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         to_export = ["name", "structure", "test_times"]
         json_dict = {key: self.__dict__[key] for key in to_export}
-        with open(file_path, "w+") as fp:
+        with open(file_path, "w+", encoding="utf-8") as fp:
             json.dump(json_dict, fp)
 
     @classmethod
@@ -315,7 +315,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         file_path = Path(file_path)
         _assert_file_extension(file_path, ".json")
 
-        with open(file_path) as fp:
+        with open(file_path, "w+", encoding="utf-8") as fp:
             json_dict = json.load(fp)
             return cls(**json_dict)
 
@@ -383,7 +383,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
                 raise ValidationError(
                     "'data' is expected to be either a SalivaRawDataFrame or a SalivaMeanSeDataFrame! "
                     "The validation raised the following error:\n\n{}".format(str(e))
-                )
+                ) from e
         _check_sample_times_match(data, sample_times)
         return data
 

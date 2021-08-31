@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def se(data: Union[np.ndarray, pd.Series]) -> Union[np.ndarray, pd.Series]:  # pylint:disable=invalid-name
+def se(data: Union[np.ndarray, pd.Series]) -> Union[np.ndarray, pd.Series]:
     """Compute standard error (SE).
 
     .. note::

@@ -5,6 +5,6 @@ from biopsykit.protocols.cft import CFT
 from biopsykit.protocols.mist import MIST
 from biopsykit.protocols.stroop import Stroop
 from biopsykit.protocols.tsst import TSST
-import biopsykit.protocols.plotting as plotting
+from biopsykit.protocols import plotting
 
 __all__ = ["BaseProtocol", "CFT", "CAR", "MIST", "TSST", "Stroop", "plotting"]

@@ -158,12 +158,14 @@ def exclude_subjects(
         _assert_is_dtype(data, pd.DataFrame)
         if index_name in data.index.names:
             level_values = data.index.get_level_values(index_name)
-            if (level_values.dtype == np.object and all([isinstance(s, str) for s in excluded_subjects])) or (
-                level_values.dtype == np.int and all([isinstance(s, int) for s in excluded_subjects])
+            if (level_values.dtype == np.object and all(isinstance(s, str) for s in excluded_subjects)) or (
+                level_values.dtype == np.int and all(isinstance(s, int) for s in excluded_subjects)
             ):
                 cleaned_data[key] = _exclude_single_subject(data, excluded_subjects, index_name)
-            raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
-        raise ValueError("No '{}' level in index!".format(index_name))
+            else:
+                raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
+        else:
+            raise ValueError("No '{}' level in index!".format(index_name))
     if len(cleaned_data) == 1:
         cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data
@@ -183,6 +185,7 @@ def _exclude_single_subject(
         return data.drop(index=excluded_subjects)
     except KeyError:
         warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
+        return None
 
 
 def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.DataFrame]) -> SubjectDataDict:

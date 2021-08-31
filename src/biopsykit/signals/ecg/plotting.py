@@ -15,7 +15,7 @@ import matplotlib.ticker as mticks
 from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
 from neurokit2.hrv.hrv_utils import _hrv_get_rri
 
-import biopsykit.colors as colors
+from biopsykit import colors
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.signals.ecg.ecg import _assert_ecg_input
 from biopsykit.utils.array_handling import sanitize_input_1d
@@ -766,7 +766,7 @@ def hrv_poincare_plot(
 
     if axs is None:
         fig = plt.figure(figsize=figsize)
-        axs = list()
+        axs = []
         # Prepare figure
         spec = gs.GridSpec(4, 4)
         axs.append(plt.subplot(spec[1:4, 0:3]))

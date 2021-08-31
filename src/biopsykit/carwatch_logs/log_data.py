@@ -9,8 +9,8 @@ from typing_extensions import Literal
 import numpy as np
 import pandas as pd
 
-import biopsykit.carwatch_logs.log_actions as log_actions
-import biopsykit.carwatch_logs.log_extras as log_extras
+from biopsykit.carwatch_logs import log_actions
+from biopsykit.carwatch_logs import log_extras
 from biopsykit.utils.time import tz
 
 subject_conditions: Dict[str, str] = {

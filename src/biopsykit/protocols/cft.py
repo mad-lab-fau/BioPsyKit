@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatch
 
-import biopsykit.colors as colors
+from biopsykit import colors
 from biopsykit.protocols import BaseProtocol
 from biopsykit.signals.ecg.plotting import hr_plot
 from biopsykit.utils.exceptions import FeatureComputationError
@@ -471,7 +471,7 @@ class CFT(BaseProtocol):
 
         # get time points in seconds
         # TODO check index type
-        idx_s = df_hr_cft.index.astype(int) / 1e9
+        idx_s = df_hr_cft.index.view(int) / 1e9
         idx_s = idx_s - idx_s[0]
 
         # apply a 2nd degree polynomial fit
@@ -594,7 +594,7 @@ class CFT(BaseProtocol):
         cft_params = self.compute_cft_parameter(data, return_dict=True)
 
         if not kwargs.get("plot_datetime_index", False):
-            data.index = (data.index - data.index[0]).astype(int) / 1e9
+            data.index = (data.index - data.index[0]).view(int) / 1e9
 
         times_dict = self._cft_plot_get_cft_times(data, time_baseline, time_recovery)
         df_plot = self._cft_plot_extract_plot_interval(data, times_dict)

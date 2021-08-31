@@ -12,7 +12,7 @@ import matplotlib.patches as mpatch
 import matplotlib.ticker as mticks
 from matplotlib.legend_handler import HandlerTuple
 
-import biopsykit.colors as colors
+from biopsykit.colors import colors
 from biopsykit.plotting import lineplot, multi_feature_boxplot, feature_boxplot
 from biopsykit.protocols._utils import _get_sample_times
 from biopsykit.utils.exceptions import ValidationError
@@ -785,7 +785,6 @@ def _saliva_plot(
     sample_times_absolute: Optional[bool] = False,
     **kwargs,
 ):
-
     ax: plt.Axes = kwargs.get("ax")
 
     test_times = test_times or [0, 0]
@@ -892,7 +891,7 @@ def saliva_plot_combine_legend(fig: plt.Figure, ax: plt.Axes, saliva_types: Sequ
     rect = kwargs.get("rect", (0, 0, 1.0, 0.95))
     labels = [ax.get_legend_handles_labels()[1] for ax in fig.get_axes()]
 
-    if all([len(label) == 1 for label in labels]):
+    if all(len(label) == 1 for label in labels):
         # only one group
         handles = [ax.get_legend_handles_labels()[0] for ax in fig.get_axes()]
         handles = [h[0] for handle in handles for h in handle]
@@ -965,7 +964,7 @@ def saliva_feature_boxplot(
     -------
     fig : :class:`~matplotlib.figure.Figure`
         figure object
-    ax : :class:`~matp~lotlib.axes.Axes`
+    ax : :class:`~matplotlib.axes.Axes`
         axes object
 
 

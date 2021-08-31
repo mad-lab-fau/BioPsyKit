@@ -141,7 +141,7 @@ def load_saliva_plate(
             and delete the values or replace them by NaN!""".format(
                 e, data_col
             )
-        )
+        ) from e
 
     is_saliva_raw_dataframe(df_saliva, saliva_type)
 

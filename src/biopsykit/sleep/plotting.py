@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticks
 
-import biopsykit.colors as colors
+from biopsykit import colors
 from biopsykit.utils.datatype_helper import (
     SleepEndpointDict,
     AccDataFrame,
