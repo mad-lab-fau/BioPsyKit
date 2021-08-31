@@ -30,9 +30,8 @@ from biopsykit.utils.datatype_helper import (
 )
 
 _hr_ensemble_plot_params = {
-    "figsize": (12, 5),
     "colormap": colors.fau_palette_blue("ensemble"),
-    "linestyles": ["-", "--", ":", "-."],
+    "linestyle": ["-", "--", ":", "-."],
     "ensemble_alpha": 0.4,
     "background_color": ["#e0e0e0", "#9e9e9e", "#808080", "#6b6b6b"],
     "background_alpha": 0.5,
@@ -49,14 +48,13 @@ _hr_ensemble_plot_params = {
 }
 
 _hr_mean_plot_params = {
-    "figsize": (12, 5),
     "colormap": colors.fau_palette_blue("line_2"),
-    "linestyles": ["-", "--"],
-    "markers": ["o", "P"],
+    "linestyle": ["-", "--"],
+    "marker": ["o", "P"],
     "background_color": ["#e0e0e0", "#bdbdbd", "#9e9e9e"],
     "background_alpha": 0.5,
     "x_offset": 0.1,
-    "ylabel": r"$\Delta$HR [%]",
+    "ylabel": r"Heart Rate [bpm]",
     "phase_text": "{}",
 }
 
@@ -68,7 +66,12 @@ _saliva_feature_params: Dict[str, Dict[str, Any]] = {
             "auc_i": r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
             "slope": r"Cortisol Change $\left[\frac{nmol}{l \cdot min} \right]$",
             "max": r"Cortisol $\left[\frac{nmol}{l} \right]$",
+            "argmax": r"Cortisol $\left[\frac{nmol}{l} \right]$",
             "max_inc": r"Cortisol $\left[\frac{nmol}{l} \right]$",
+            "mean": r"Cortisol $\left[\frac{nmol}{l} \right]$",
+            "std": r"Cortisol $\left[\frac{nmol}{l} \right]$",
+            "kurt": r"Cortisol $\left[\frac{nmol}{l} \right]$",
+            "skew": r"Cortisol $\left[\frac{nmol}{l} \right]$",
         },
         "amylase": {
             "auc_g": r"Amylase AUC $\left[\frac{U \cdot min}{l} \right]$",
@@ -76,6 +79,10 @@ _saliva_feature_params: Dict[str, Dict[str, Any]] = {
             "slope": r"Amylase Change $\left[\frac{U}{l \cdot min} \right]$",
             "max": r"Amylase $\left[\frac{U}{l} \right]$",
             "max_inc": r"Amylase $\left[\frac{U}{l} \right]$",
+            "mean": r"Amylase $\left[\frac{U}{l} \right]$",
+            "std": r"Amylase $\left[\frac{U}{l} \right]$",
+            "kurt": r"Amylase $\left[\frac{U}{l} \right]$",
+            "skew": r"Amylase $\left[\frac{U}{l} \right]$",
         },
     },
     "xticklabels": {
@@ -85,13 +92,18 @@ _saliva_feature_params: Dict[str, Dict[str, Any]] = {
         "slope": r"$a_{§}$",
         "max_inc": r"$\Delta c_{max}$",
         "cmax": r"$c_{max}$",
+        "argmax": r"$argmax(c)$",
+        "mean": r"$\mu(c)$",
+        "std": r"$\sigma(c)$",
+        "skew": r"$skew(c)$",
+        "kurt": r"$kurt(c)$",
     },
 }
 
 _saliva_plot_params: Dict = {
     "colormap": colors.fau_palette_blue("line_2"),
-    "linestyles": ["-", "--"],
-    "markers": ["o", "P"],
+    "linestyle": ["-", "--"],
+    "marker": ["o", "P"],
     "test_title": "",
     "test_color": "#9e9e9e",
     "test_alpha": 0.5,
@@ -137,7 +149,7 @@ def hr_ensemble_plot(
         * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
         * ``colormap``: colormap to plot data from different phases
         * ``ensemble_alpha``: transparency value for ensemble plot errorband (around mean). Default: 0.4
-        * ``linestyles``: list of line styles for ensemble plots. Must match the number of phases to plot
+        * ``linestyle``: list of line styles for ensemble plots. Must match the number of phases to plot
         * ``phase_text``: string pattern to customize phase name shown in legend with placeholder for subphase name.
           Default: "{}"
 
@@ -198,7 +210,7 @@ def hr_ensemble_plot(
 
     colormap = kwargs.get("colormap", _hr_ensemble_plot_params.get("colormap"))
     sns.set_palette(colormap)
-    linestyles = kwargs.get("linestyles", _hr_ensemble_plot_params.get("linestyles"))
+    linestyle = kwargs.get("linestyle", _hr_ensemble_plot_params.get("linestyle"))
 
     xlabel = kwargs.get("xlabel", _hr_ensemble_plot_params.get("xlabel"))
     ylabel = kwargs.get("ylabel", _hr_ensemble_plot_params.get("ylabel"))
@@ -219,7 +231,7 @@ def hr_ensemble_plot(
         x = df_hr_phase.index
         hr_mean = df_hr_phase.mean(axis=1)
         hr_stderr = df_hr_phase.std(axis=1) / np.sqrt(df_hr_phase.shape[1])
-        ax.plot(x, hr_mean, zorder=2, label=phase_text.format(phase), linestyle=linestyles[i])
+        ax.plot(x, hr_mean, zorder=2, label=phase_text.format(phase), linestyle=linestyle[i])
         ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
         _hr_ensemble_plot_end_phase_annotation(ax, df_hr_phase, phase, i, **kwargs)
 
@@ -370,6 +382,8 @@ def hr_mean_plot(
         * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
         * ``colormap``: colormap to plot data from different phases
         * ``figsize``: tuple specifying figure dimensions
+        * ``is_relative``: boolean indicating whether heart rate data is relative (in % relative to baseline)
+          or absolute (in bpm). Default: ``False``
         * ``x_offset``: offset value to move different groups along the x axis for better visualization.
           Default: 0.05
         * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
@@ -405,7 +419,10 @@ def hr_mean_plot(
     # get all plot parameter
     sns.set_palette(kwargs.get("colormap", _hr_mean_plot_params.get("colormap")))
 
-    ylabel = kwargs.get("ylabel", _hr_mean_plot_params.get("ylabel"))
+    ylabel_default = _hr_mean_plot_params.get("ylabel")
+    if kwargs.get("is_relative", False):
+        ylabel_default = r"$\Delta$ HR [%]"
+    ylabel = kwargs.get("ylabel", ylabel_default)
     ylims = kwargs.get("ylims", None)
 
     phase_dict = _hr_mean_get_phases_subphases(data)
@@ -463,14 +480,14 @@ def _hr_mean_plot_set_axis_lims(ylims: Union[Sequence[float], float], ax: plt.Ax
 def _hr_mean_plot(data: MeanSeDataFrame, x_vals: np.array, key: str, index: int, **kwargs):
     ax: plt.Axes = kwargs.get("ax")
     x_offset = kwargs.get("x_offset", _hr_mean_plot_params.get("x_offset"))
-    markers = kwargs.get("markers", _hr_mean_plot_params.get("markers"))
-    linestyles = kwargs.get("linestyles", _hr_mean_plot_params.get("linestyles"))
+    marker = kwargs.get("marker", _hr_mean_plot_params.get("marker"))
+    linestyle = kwargs.get("linestyle", _hr_mean_plot_params.get("linestyle"))
 
-    if isinstance(markers, list):
-        markers = markers[index]
+    if isinstance(marker, list):
+        marker = marker[index]
 
-    if isinstance(linestyles, list):
-        linestyles = linestyles[index]
+    if isinstance(linestyle, list):
+        linestyle = linestyle[index]
 
     is_mean_se_dataframe(data)
     if isinstance(data.columns, pd.MultiIndex):
@@ -484,8 +501,8 @@ def _hr_mean_plot(data: MeanSeDataFrame, x_vals: np.array, key: str, index: int,
         label=key,
         yerr=data["se"],
         capsize=3,
-        marker=markers,
-        linestyle=linestyles,
+        marker=marker,
+        linestyle=linestyle,
     )
 
 
@@ -553,6 +570,10 @@ def _hr_mean_plot_subphase_annotations(phase_dict: Dict[str, Sequence[str]], xli
 
     num_phases = len(phase_dict)
     num_subphases = [len(arr) for arr in phase_dict.values()]
+
+    if num_phases > len(bg_colors):
+        # repeat the background colors if there are more phases than available colors
+        bg_colors = bg_colors * ((num_phases // len(bg_colors)) + 1)
 
     x_spans = _hr_mean_get_x_spans(num_phases, num_subphases)
 
@@ -665,8 +686,8 @@ def saliva_plot(
         * ``colormap``: colormap to plot data from different phases
         * ``figsize``: tuple specifying figure dimensions
         * ``marker``: string or list of strings to specify marker style.
-          If ``marker`` is a string, then marker of each line will have the same style.
-          If ``marker`` is a list, then marker of each line will have a different style.
+          If ``marker`` is a string, then the markers of each line will have the same style.
+          If ``marker`` is a list, then the markers of each line will have a different style.
         * ``linestyle``: string or list of strings to specify line style.
           If ``linestyle`` is a string, then each line will have the same style.
           If ``linestyle`` is a list, then each line will have a different style.
@@ -715,8 +736,9 @@ def saliva_plot(
     linestyle = kwargs.pop("linestyle", None)
     marker = kwargs.pop("marker", "o")
     colormap = kwargs.pop("colormap", None)
+
     for i, key in enumerate(data):
-        kwargs = _saliva_plot_extract_style_params(key, linestyle, marker, colormap, **kwargs)
+        kwargs_copy = _saliva_plot_extract_style_params(key, linestyle, marker, colormap, **kwargs)
         _saliva_plot(
             data=data[key],
             saliva_type=key,
@@ -724,7 +746,7 @@ def saliva_plot(
             sample_times=sample_times[key],
             test_times=test_times,
             sample_times_absolute=sample_times_absolute,
-            **kwargs,
+            **kwargs_copy,
         )
 
     if len(data) > 1:
@@ -813,7 +835,7 @@ def _saliva_plot(
         x = "time"
 
     hue, style = _saliva_plot_hue_style(data)
-    kwargs.setdefault("markers", "o")
+    kwargs.setdefault("marker", "o")
 
     if counter == 0 and len(ax.lines) == 0:
         kwargs.setdefault("colormap", colors.fau_palette_blue("line_2"))
@@ -931,6 +953,7 @@ def saliva_feature_boxplot(
     data: SalivaFeatureDataFrame,
     x: str,
     saliva_type: str,
+    hue: Optional[str] = None,
     feature: Optional[str] = None,
     stats_kwargs: Optional[Dict[str, Any]] = None,
     **kwargs,
@@ -952,6 +975,8 @@ def saliva_feature_boxplot(
         column of x axis in ``data``
     saliva_type : str
         type of saliva data to plot
+    hue : str, optional
+        column name of grouping variable. Default: ``None``
     feature : str, optional
         name of feature to plot or ``None``
     stats_kwargs : dict, optional
@@ -977,13 +1002,20 @@ def saliva_feature_boxplot(
 
     """
     is_saliva_feature_dataframe(data, saliva_type)
+
     if feature is not None:
         if isinstance(feature, str):
             feature = [feature]
         ylabel = _saliva_feature_boxplot_get_ylabels(saliva_type, feature)
         ylabel = [ylabel[f] for f in feature]
         if len(set(ylabel)) == 1:
-            kwargs["ylabel"] = ylabel[0]
+            kwargs.setdefault("ylabel", ylabel[0])
+
+        if hue is not None:
+            xticklabels = list(_saliva_feature_boxplot_get_xticklabels({f: f for f in feature}).values())
+            xticklabels = [x[0] for x in xticklabels]
+            kwargs.setdefault("xticklabels", xticklabels)
+
     return feature_boxplot(data=data, x=x, y=saliva_type, stats_kwargs=stats_kwargs, **kwargs)
 
 
@@ -1044,6 +1076,8 @@ def saliva_multi_feature_boxplot(
     if isinstance(features, str):
         # ensure list
         features = [features]
+    if isinstance(features, list):
+        features = {f: f for f in features}
 
     kwargs.setdefault("xticklabels", _saliva_feature_boxplot_get_xticklabels(features))
     kwargs.setdefault("ylabels", _saliva_feature_boxplot_get_ylabels(saliva_type, features))
@@ -1092,8 +1126,7 @@ def _saliva_feature_boxplot_get_ylabels(saliva_type: str, features: Union[str, S
 def _plot_get_fig_ax(**kwargs):
     ax: plt.Axes = kwargs.get("ax", None)
     if ax is None:
-        figsize = kwargs.get("figsize", _hr_mean_plot_params.get("figsize"))
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:
         fig = ax.get_figure()
     return fig, ax
