@@ -4,10 +4,11 @@
 from ast import literal_eval
 import datetime
 from pathlib import Path
-from typing import Optional, Union, Sequence
+from typing import Optional, Union, Sequence, Dict
 
 import re
 
+import numpy as np
 import pandas as pd
 
 from biopsykit.sleep.utils import split_nights
@@ -105,11 +106,17 @@ def load_withings_sleep_analyzer_raw_folder(
         if data_source in WITHINGS_RAW_DATA_SOURCES
     ]
     if split_into_nights:
-        # "transpose" nested list.
-        # before: outer lists = data source, inner lists = nights.
-        # after: outer lists = nights, inner lists = data source
-        list_data = list(map(list, zip(*list_data)))
-        data = [pd.concat(list_nights, axis=1) for list_nights in list_data]
+        # "transpose" list of dictionaries.
+        # before: outer list = data sources, inner dict = nights.
+        # after: outer dict = nights, inner list = data sources
+        keys = np.unique(np.array([sorted(data.keys()) for data in list_data]).flatten())
+        dict_nights = {}
+        for key in keys:
+            dict_nights.setdefault(key, [])
+            for data in list_data:
+                dict_nights[key].append(data[key])
+
+        data = {key: pd.concat(data, axis=1) for key, data in dict_nights.items()}
     else:
         data = pd.concat(list_data, axis=1)
     return data
@@ -120,7 +127,7 @@ def load_withings_sleep_analyzer_raw_file(
     data_source: str,
     timezone: Optional[Union[datetime.tzinfo, str]] = None,
     split_into_nights: Optional[bool] = True,
-) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
+) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """Load single Withings Sleep Analyzer raw data file and convert into time-series data.
 
     Parameters
@@ -133,13 +140,14 @@ def load_withings_sleep_analyzer_raw_file(
         timezone of recorded data, either as string or as tzinfo object.
         Default: 'Europe/Berlin'
     split_into_nights : bool, optional
-        whether to split the dataframe into the different recording nights (and return a list of dataframes) or not.
+        whether to split the dataframe into the different recording nights (and return a dictionary of dataframes)
+        or not.
         Default: ``True``
 
     Returns
     -------
-    :class:`~pandas.DataFrame` or list of such
-        dataframe (or list of dataframes, if ``split_into_nights`` is ``True``) with Sleep Analyzer data
+    :class:`~pandas.DataFrame` or dict of such
+        dataframe (or dict of dataframes, if ``split_into_nights`` is ``True``) with Sleep Analyzer data
 
     Raises
     ------
@@ -192,7 +200,7 @@ def load_withings_sleep_analyzer_raw_file(
 
     if split_into_nights:
         data_explode = split_nights(data_explode)
-        data_explode = [d.resample("1min").interpolate() for d in data_explode]
+        data_explode = {key: d.resample("1min").interpolate() for key, d in data_explode.items()}
     return data_explode
 
 

@@ -173,19 +173,20 @@ def get_ecg_example_02() -> Tuple[pd.DataFrame, float]:
 
 def get_sleep_analyzer_raw_example(
     split_into_nights: Optional[bool] = True,
-) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
+) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """Return Withings Sleep Analyzer example raw data.
 
     Parameters
     ----------
     split_into_nights : bool, optional
-        ``True`` to split data into single dataframes, one dataframe per night,
-        ``False`` to keep all data in one dataframe. Default: ``True``
+        ``True`` to split data into single dataframes per recording night, and return a dict of dataframes,
+        ``False`` to keep all data in one dataframe.
+        Default: ``True``
 
     Returns
     -------
-    :class:`~pandas.DataFrame` or list
-        dataframe with raw sleep analyzer data or a list of such if ``split_into_nights`` is ``True``
+    :class:`~pandas.DataFrame` or dict
+        dataframe with raw sleep analyzer data or a dict of such if ``split_into_nights`` is ``True``
 
     """
     return load_withings_sleep_analyzer_raw_folder(
@@ -242,7 +243,7 @@ def get_car_watch_log_data_example() -> pd.DataFrame:
         dataframe with example log data from the *CARWatch* app
 
     """
-    return load_log_one_subject(_EXAMPLE_DATA_PATH.joinpath("log_data").joinpath("AB12C"))
+    return load_log_one_subject(_EXAMPLE_DATA_PATH.joinpath("log_data").joinpath("DE34F"))
 
 
 def get_time_log_example() -> pd.DataFrame:

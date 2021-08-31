@@ -156,12 +156,14 @@ class TestIoSleep:
             TEST_FILE_PATH.joinpath("sleep_analyzer").joinpath(file_path),
             data_source=data_source,
         )
-        assert all(isinstance(d.index, pd.DatetimeIndex) for d in data)
+        # TODO: add further checks to sleep analyzer import, such as checking if night splitting works correctly
+        assert all(isinstance(d.index, pd.DatetimeIndex) for d in data.values())
         # only 1 night
         assert len(data) == 1
+        TestCase().assertListEqual(list(data.keys()), ["2020-10-23"])
         # data has a duration of 16 minutes (after interpolating to 1 min equidistant index)
-        assert all(len(d.index) == 16 for d in data)
-        assert all(str(d.index.tz) == "Europe/Berlin" for d in data)
+        assert all(len(d.index) == 16 for d in data.values())
+        assert all(str(d.index.tz) == "Europe/Berlin" for d in data.values())
 
     @pytest.mark.parametrize(
         "file_path, data_source",
@@ -201,10 +203,12 @@ class TestIoSleep:
     def test_load_withings_sleep_analyzer_raw_folder(self, folder_path):
         data = load_withings_sleep_analyzer_raw_folder(TEST_FILE_PATH.joinpath(folder_path))
         # data has a duration of 16 minutes
-        assert isinstance(data, list)
+        assert isinstance(data, dict)
         assert len(data) == 1
-        assert len(data[0].index) == 16
-        TestCase().assertListEqual(list(data[0].columns), ["heart_rate", "respiration_rate", "sleep_state", "snoring"])
+        assert len(list(data.values())[0].index) == 16
+        TestCase().assertListEqual(
+            list(list(data.values())[0].columns), ["heart_rate", "respiration_rate", "sleep_state", "snoring"]
+        )
 
     @pytest.mark.parametrize(
         "folder_path",
