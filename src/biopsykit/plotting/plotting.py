@@ -319,6 +319,7 @@ def feature_boxplot(
 
     """
     fig, ax = _plot_get_fig_ax(**kwargs)
+    kwargs.update({"ax": ax})
 
     if stats_kwargs is None:
         stats_kwargs = {}
@@ -332,7 +333,7 @@ def feature_boxplot(
     if len(box_pairs) == 0:
         stats_kwargs = {}
 
-    sns.boxplot(data=data.reset_index(), x=x, y=y, ax=ax, order=order, hue=hue, hue_order=hue_order, **kwargs)
+    sns.boxplot(data=data.reset_index(), x=x, y=y, order=order, hue=hue, hue_order=hue_order, **kwargs)
     if len(box_pairs) > 0:
         add_stat_annotation(
             data=data.reset_index(), ax=ax, x=x, y=y, order=order, hue=hue, hue_order=hue_order, **stats_kwargs
