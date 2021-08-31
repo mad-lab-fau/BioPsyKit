@@ -33,29 +33,101 @@ bibliography: paper.bib
 
 # Summary
 
-Summary goes here.
+Biopsychology is a field of psychology that analyzes how biological processes interact with behaviour, emotion, 
+cognition, and other mental processes. Biopsychology covers, among others, the topics of sensation and perception, 
+emotion regulation, movement (and control of such), sleep and biological rhythms, as well as acute and chronic stress.
+
+To assess the interaction between biological and mental processes a variety of different methods are used in the 
+field of biopsychology, such as _electrophysiology_, assessed via biosignals like electrocardiogram (ECG), 
+electrodermal activity (EDA), electromyogram (EMG), or electroencephalogram (EEG), _neuroendocrine and inflammatory 
+biomarker_, assessed via saliva- and blood-based samples, _self-reports_, assessed via psychological questionnaires, 
+as well as _sleep, activity and movement_, assessed via inertial measurement units (IMUs).
+
+These methods are used to collect data either during standardized procedures in the laboratory or in the wild. 
+The collected data are typically analyzed using statistical methods, or, more recently, using machine learning methods.
+
+In order to combine all these tools necessary for a researcher in the field of biopsychology into 
+one single Python package we developed `BioPsyKit`.
+
 
 # Statement of need
+Researchers in biopsychology often combine different assessment modalities during experiments in order to capture the 
+interaction between biological and mental processes. One example might be collecting salivary biomarker 
+(e.g., cortisol) during an acute stress protocol and investigating the correlation between biomarker and psychometric 
+data assessed via self-reports, such as perceived stress, state anxiety, or positive/negative affect. 
+However, currently, there exist no Python package that allows to systematically combine, process, and analyze these 
+different data modalities out of one hand by using one common API. For that reason `BioPsyKit` enables researchers to 
+write cleaner and reproducible analysis code, export analysis results in a standardized format, and create high 
+quality figures with for scientific publications. 
 
-Statement of need goes here.
+# BioPsyKit Structure
 
-# Citations
+The following section describes the structure and the core modules of `BioPsyKit`. **TODO: Overview figure**
 
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
 
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
+## Physiological Signal Analysis 
+The module `biopsykit.signals` allows for the analysis of various (electro)physiological signals 
+(ECG, EEG, Respiration, Motion, ...). This includes:
 
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
+- Classes to create processing pipelines for various physiological signals and for extracting relevant parameters 
+  from these signals. For physiological signal processing, `BioPsyKit` internally heavily relies on the `neurokit2`
+  Python library [@Makowski2021]  
+- Plotting functions specialized for visualizing different physiological signals
+
+
+## Sleep Analysis
+The module `biopsykit.sleep` allows for the analysis of sleep. This includes:
+
+- Different algorithms for sleep/wake detection from wrist-worn activity or IMU data, such as the Cole/Kripke
+  [@Cole1992] or Sadeh algorithm [@Sadeh1994]
+- Computation of sleep endpoints from detected sleep and wake phases
+- Functions to import and process data from commercially available sleep trackers (e.g., Withings Sleep Analyzer)
+
+
+## Biomarker Analysis
+The module `biopsykit.saliva` allows for the analysis of saliva-based biomarker, such as cortisol and alpha-amylase. 
+This also includes the extraction of relevant parameters characterizing salivary biomarker (e.g., area under the 
+curve [@Pruessner2003], slope, maximum increase, ...).
+
+
+## Self-report Analysis
+The module `biopsykit.questionnaires` allows for the analysis of psychometric self-reports, assessed via 
+questionnaires. This includes:
+
+- Functions to convert, clean, and impute tabular data from questionnaire studies 
+- Implementation of various established psychological questionnaires, such as Perceived Stress Scale
+  (PSS) [@Cohen1983], Primary Appraisal Secondary Appraisal Scale (PASA) [@Gaab2005] and functions to compute scores 
+  from questionnaire data 
+
+
+## Support for Psychological Protocols
+The module `biopsykit.protocols` allows for analyzing data collected during various psychological protocols.
+This includes:
+
+- Protocols for the assessment of acute stress in the laboratory, e.g., Trier Social Stress Test (TSST) 
+  [@Kirschbaum1993], Montreal Imaging Stress Task (MIST) [@Dedovic2005] 
+- Protocols for the assessment of biological rhythms in the wild (e.g., Cortisol Awakening Response (CAR))
+- Specialized plotting functions for standardized visualization of data collected during these psychological protocols
+
+
+## Simplified Evaluation
+The module `biopsykit.stats` and `biopsykit.classification` provide functions for simplified evaluation of 
+statistical analyses and machine learning pipelines that are frequently used in biopsychological research. 
+`biopsykit.stats` allows to easily set up statistical analysis pipelines (using `pingouin` [@Vallat2018]) and to 
+export statistical analysis results in a standardized way. `biopsykit.classification` provides functions to set up, 
+optimize and evaluate different machine learning pipelines for biopsychological problems.
+
+
+# Availability
+The software is available as a pip installable package (`pip install biopsykit`), as well as on GitHub at: 
+https://github.com/mad-lab-fau/BioPsyKit.
 
 
 # Acknowledgements
-
 We acknowledge contributions from Rebecca Lennartz, Daniel Krauß, Victoria Müller, Martin Ullrich, and Janis Zenkner.
+Bjoern M. Eskofier gratefully acknowledges the support of the German Research Foundation (DFG) within the framework of 
+the Heisenberg professorship programme (grant number ES 434/8-1). Furthermore, this work was partly supported by the 
+DFG collaborative research center EmpkinS (CRC 1483).
+
 
 # References
