@@ -210,7 +210,7 @@ def _assert_has_columns(
     df : :class:`~pandas.DataFrame`
         The dataframe to check
     columns_sets : list
-        Column set of list of column sets to check
+        Column set or list of column sets to check
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 

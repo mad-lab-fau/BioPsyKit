@@ -20,15 +20,19 @@ def compute_sleep_endpoints(
       be set to the day before (because this night is assumed to "belong" to the day before).
     * ``sleep_onset``: Sleep Onset, i.e., time of falling asleep, in absolute time
     * ``wake_onset``: Wake Onset, i.e., time of awakening, in absolute time
+    * ``total_sleep_duration``: Total duration spent sleeping, i.e., the duration between the beginning of the first
+      sleep interval and the end of the last sleep interval, in minutes
     * ``net_sleep_duration``: Net duration spent sleeping, in minutes
-    * ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
-    * ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
-    * ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
+    * ``bed_interval_start``: Bed Interval Start, i.e., time when participant went to bed, in absolute time
+    * ``bed_interval_end``: Bed Interval End, i.e., time when participant left bed, in absolute time
+    * ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and total sleep duration
       in percent
-    * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
-    * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
-    * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep, in
-      minutes
+    * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep
+      (difference between *Sleep Onset* and *Bed Interval Start*), in minutes
+    * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up (difference between
+      *Bed Interval End* and *Wake Onset*), in minutes
+    * ``wake_after_sleep_onset``: Wake After Sleep Onset (WASO), i.e., total time awake after falling asleep
+      (after *Sleep Onset* and before *Wake Onset*), in minutes
     * ``sleep_bouts``: List with start and end times of sleep bouts
     * ``wake_bouts``: List with start and end times of wake bouts
     * ``number_wake_bouts``: Total number of wake bouts

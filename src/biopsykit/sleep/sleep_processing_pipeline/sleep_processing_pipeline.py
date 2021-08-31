@@ -19,8 +19,8 @@ def predict_pipeline_acceleration(
 
     This function processes raw acceleration data collected during sleep. The pipeline consists of the following steps:
 
-    * *Activity Count Conversion*: Convert raw acceleration data into activity counts. Most sleep/wake detection
-      algorithms use activity counts (as typically provided by Actigraphs) as input data.
+    * *Activity Count Conversion*: Convert (3-axis) raw acceleration data into activity counts. Most sleep/wake
+      detection algorithms use activity counts (as typically provided by Actigraphs) as input data.
     * *Wear Detection*: Detect wear and non-wear periods. Cut data to longest continuous wear block.
     * *Rest Periods*: Detect rest periods, i.e., periods with large physical inactivity. The longest continuous
       rest period (*Major Rest Period*) is used to determine the *Bed Interval*, i.e., the period spent in bed.
