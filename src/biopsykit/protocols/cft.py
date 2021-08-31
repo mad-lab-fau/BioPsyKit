@@ -605,7 +605,7 @@ class CFT(BaseProtocol):
             boxstyle="round",
         )
 
-        hr_plot(heart_rate=df_plot, ax=ax, plot_mean=False, show_legend=False)
+        hr_plot(heart_rate=df_plot, ax=ax, plot_mean=False)
         self._cft_plot_add_phase_annotations(ax, times_dict, **kwargs)
         self._cft_plot_add_param_annotations(data, cft_params, times_dict, ax, bbox, **kwargs)
 

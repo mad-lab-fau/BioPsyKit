@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union, Callable, Tuple, List
 
 import re
-from typing_extensions import Literal
+from typing_extensions import Literal, get_args
 
 import pandas as pd
 
@@ -82,10 +82,10 @@ def log_file_subject_dropdown(
 
 
 def _log_file_subject_dropdown_check_input(input_type: str, value_type: str):
-    if input_type not in INPUT_TYPES:
+    if input_type not in get_args(INPUT_TYPES):
         raise ValueError("Invalid input_type! Expected one of {}, got {}.".format(INPUT_TYPES, input_type))
 
-    if value_type not in VALUE_TYPES:
+    if value_type not in get_args(VALUE_TYPES):
         raise ValueError("Invalid value_type! Expected one of {}, got {}.".format(VALUE_TYPES, value_type))
 
 

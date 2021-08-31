@@ -318,16 +318,13 @@ def feature_boxplot(
         class to create statistical analysis pipelines
 
     """
-    ax: plt.Axes = kwargs.pop("ax", None)
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.get_figure()
+    fig, ax = _plot_get_fig_ax(**kwargs)
 
     if stats_kwargs is None:
         stats_kwargs = {}
 
     ylabel = kwargs.pop("ylabel", None)
+    xticklabels = kwargs.pop("xticklabels", None)
 
     stats_kwargs = _feature_boxplot_sanitize_stats_kwargs(stats_kwargs)
 
@@ -343,6 +340,9 @@ def feature_boxplot(
 
     if ylabel is not None:
         ax.set_ylabel(ylabel)
+
+    if xticklabels is not None:
+        ax.set_xticklabels(xticklabels)
 
     fig.tight_layout()
     return fig, ax
@@ -455,7 +455,8 @@ def multi_feature_boxplot(
     if isinstance(features, list):
         features = {f: f for f in features}
 
-    fig, axs = _plot_get_fig_ax_list(features, **kwargs)
+    axs: List[plt.Axes] = kwargs.pop("axs", kwargs.pop("ax", None))
+    fig, axs = _plot_get_fig_ax_list(features, axs, **kwargs)
 
     if stats_kwargs is None:
         stats_kwargs = {}
@@ -514,9 +515,10 @@ def _get_df_lineplot(data: pd.DataFrame, x: str, y: str, hue: str, order: Sequen
         m_se = data
     else:
         if hue is None:
-            m_se = data.groupby([x]).agg([np.mean, se])[y]
+            group_cols = [x]
         else:
-            m_se = data.groupby([x, hue]).agg([np.mean, se])[y]
+            group_cols = [x, hue]
+        m_se = data[group_cols + [y]].groupby(group_cols).agg([np.mean, se])[y]
     if order is not None:
         m_se = m_se.reindex(order, level=0)
     return m_se
@@ -664,19 +666,16 @@ def _style_xaxis_multi_feature_boxplot(
 def _plot_get_fig_ax(**kwargs):
     ax: plt.Axes = kwargs.get("ax", None)
     if ax is None:
-        figsize = kwargs.get("figsize")
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:
         fig = ax.get_figure()
     return fig, ax
 
 
 def _plot_get_fig_ax_list(
-    features: Dict[str, Union[str, Sequence[str]]], **kwargs
+    features: Dict[str, Union[str, Sequence[str]]], axs: List[plt.Axes], **kwargs
 ) -> Tuple[plt.Figure, List[plt.Axes]]:
-    axs: List[plt.Axes] = kwargs.pop("axs", kwargs.pop("ax", None))
-    figsize = kwargs.pop("figsize", (15, 5))
-
+    figsize = kwargs.get("figsize")
     if axs is None:
         fig, axs = plt.subplots(figsize=figsize, ncols=len(features))
     else:

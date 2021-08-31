@@ -498,7 +498,10 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             data_dict = split_dict_into_subphases(data_dict, param)
 
         if mean_per_subject:
-            param = params.get("mean_per_subject", ["subject", "phase"])
+            if split_into_subphases:
+                param = params.get("mean_per_subject", ["subject", "phase", "subphase"])
+            else:
+                param = params.get("mean_per_subject", ["subject", "phase"])
             data_dict = mean_per_subject_dict(data_dict, param, "Heart_Rate")
 
         if add_conditions:
@@ -513,9 +516,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         study_part: Optional[str] = None,
         select_phases: Optional[bool] = False,
         split_into_subphases: Optional[bool] = False,
-        add_conditions: Optional[bool] = False,
         dict_levels: Sequence[str] = None,
         hrv_params: Optional[Dict[str, Any]] = None,
+        add_conditions: Optional[bool] = False,
         params: Optional[Dict[str, Any]] = None,
     ):
         """Compute heart rate variability ensemble from one study part.
@@ -543,12 +546,6 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             dictionary (keys: subphase names, values: subphase durations in seconds) in the ``params`` dictionary
             (key: ``split_into_subphases``).
             Default: ``False``
-        add_conditions : bool, optional
-            ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
-            (key: ``add_conditions``).
-            Default: ``False``
         dict_levels : list, optional
             list with names of dictionary levels which will also be the index level names of the resulting dataframe
             or ``None`` to use default level names: ["subject", "phase"] (if ``split_into_subphases`` is ``False``)
@@ -556,6 +553,12 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         hrv_params : dict, optional
             dictionary with parameters to configure HRV processing or ``None`` to use default parameter.
             See :func:`~biopsykit.signals.ecg.EcgProcessor.hrv_process` for an overview on available parameters.
+        add_conditions : bool, optional
+            ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
+            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            (key: ``add_conditions``).
+            Default: ``False``
         params : dict, optional
             dictionary with parameters provided to the different processing steps.
 
@@ -676,11 +679,16 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             study_part = "Study"
         data_dict = self.hr_data[study_part].copy()
 
+        if params is None:
+            params = {}
+
         if resample_sec:
             data_dict = resample_dict_sec(data_dict)
 
         if normalize_to:
             param = params.get("normalize_to", None)
+            if param is None:
+                raise ValueError("When 'normalize_to' is 'True' a phase name must be specified!")
             data_dict = normalize_to_phase(data_dict, param)
 
         data_dict = rearrange_subject_data_dict(data_dict)
@@ -810,8 +818,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         ----------
         ensemble_id : str
             identifier of ensemble parameters used to store dictionary in ``hr_ensemble`` dictionary
-        ensemble : :class:`~pandas.DataFrame`
-            dataframe with computed heart rate ensemble data
+        ensemble : :class:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
+            ensemble data as ``MergedStudyDataDict``
 
         """
         self.hr_ensemble[ensemble_id] = ensemble
@@ -865,7 +873,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         if len(self.saliva_types) == 0:
             raise ValueError("No saliva data to plot!")
 
-        self.saliva_plot_params.update(**kwargs)
+        for key, val in self.saliva_plot_params.items():
+            kwargs.setdefault(key, val)
 
         if isinstance(saliva_type, str):
             saliva_type = [saliva_type]
@@ -948,8 +957,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         :func:`~biopsykit.plotting.feature_boxplot`
             plot features as boxplot
 
-
         """
+        # TODO: add support for computing saliva features
         return plot.saliva_feature_boxplot(
             self.saliva_data[saliva_type], x, saliva_type, feature, stats_kwargs, **kwargs
         )
