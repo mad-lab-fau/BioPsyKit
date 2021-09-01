@@ -154,7 +154,7 @@ https://github.com/mad-lab-fau/BioPsyKit.
 
 
 # Acknowledgements
-We acknowledge contributions from Rebecca Lennartz, Daniel Krauß, Victoria Müller, Martin Ullrich, and Janis Zenkner.
+We acknowledge contributions from Rebecca Lennartz, Daniel Krauß, Victoria Müller, and Janis Zenkner.
 Bjoern M. Eskofier gratefully acknowledges the support of the German Research Foundation (DFG) within the framework of 
 the Heisenberg professorship programme (grant number ES 434/8-1). Furthermore, this work was partly supported by the 
 DFG collaborative research center EmpkinS (CRC 1483).
