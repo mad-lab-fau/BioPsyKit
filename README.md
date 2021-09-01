@@ -87,16 +87,14 @@ print(auc)
 ```
 
 ### Questionnaires
-`BioPsyKit` implements various established psychological and HCI-related questionnaires, such as:
+`BioPsyKit` implements various established psychological (state and trait) questionnaires, such as:
 * Perceived Stress Scale (PSS)
-* Positive Appraisal Negative Appraisal Scale (PANAS)
+* Positive and Negative Affect Schedule (PANAS)
 * Self-Compassion Scale (SCS)
 * Big Five Inventory (BFI)
 * State Trait Depression and Anxiety Questionnaire (STADI)
 * Trier Inventory for Chronic Stress (TICS)
-* System Usability Scale (SUS)
-* NASA Task Load Index (NASA-TLX)
-* Short Stress State Questionnaire (SSSQ)
+* Primary Appraisal Secondary Appraisal Scale (PASA)
 * ...
 
 #### Quick Example
@@ -110,6 +108,13 @@ pss_data = data.filter(like="PSS")
 pss_result = bp.questionnaires.pss(pss_data)
 
 print(pss_result)
+```
+
+#### List Supported Questionnaires
+```python
+import biopsykit as bp
+
+print(bp.questionnaires.utils.get_supported_questionnaires())
 ```
 
 ### Psychological Protocols
@@ -146,7 +151,7 @@ tsst.add_hr_data(hr_data, study_part="TSST")
 ```
 
 ## Installation
-```
+```bash
 pip install biopsykit
 ```
 
