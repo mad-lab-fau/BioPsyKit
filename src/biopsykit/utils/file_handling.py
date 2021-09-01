@@ -1,4 +1,5 @@
 """Helper functions for file handling."""
+import re
 from pathlib import Path
 from typing import Sequence, Optional, Union
 
@@ -65,7 +66,8 @@ def get_subject_dirs(base_path: path_t, pattern: str) -> Optional[Sequence[Path]
     """
     # ensure pathlib
     base_path = Path(base_path)
-    subject_dirs = [p for p in sorted(base_path.glob(pattern)) if p.is_dir()]
+    subject_dirs = [p for p in sorted(base_path.glob("*")) if p.is_dir()]
+    subject_dirs = list(filter(lambda s: len(re.findall(pattern, s.name)) > 0, subject_dirs))
     if len(subject_dirs) == 0:
         raise FileNotFoundError("No subfolders matching the pattern '{}' found in {}.".format(pattern, base_path))
     return subject_dirs
