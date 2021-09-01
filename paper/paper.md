@@ -10,11 +10,14 @@ tags:
   - Sleep
   - Cortisol
 authors:
-  - name: Robert Richer  
+  - name: Robert Richer^[corresponding author]  
     orcid: 0000-0003-0272-5403  
     affiliation: 1
   - name: Arne Küderle  
     orcid: 0000-0002-5686-281X  
+    affiliation: 1
+  - name: Martin Ullrich  
+    orcid: 0000-0001-7348-6097  
     affiliation: 1
   - name: Nicolas Rohleder  
     orcid: 0000-0003-2602-517X    
@@ -27,7 +30,7 @@ affiliations:
     index: 1
   - name: Chair of Health Psychology, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)  
     index: 2
-date: xx August 2021
+date: 01 September 2021
 bibliography: paper.bib
 ---
 
