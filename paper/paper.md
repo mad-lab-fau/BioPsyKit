@@ -66,7 +66,7 @@ quality figures with for scientific publications.
 # BioPsyKit Structure
 
 The following section describes the structure and the core modules of `BioPsyKit`. 
-An overview is also provided in Figure \autoref{fig:overview}.
+An overview is also provided in \autoref{fig:overview}.
 
 ![Overview of BioPsyKit.\label{fig:overview}](img/biopsykit_overview_figure.pdf)
 
@@ -88,7 +88,7 @@ The module `biopsykit.sleep` can be used for the analysis of motion data collect
 - Different algorithms for sleep/wake detection from wrist-worn activity or IMU data, such as the Cole/Kripke
   [@Cole1992] or the Sadeh algorithm [@Sadeh1994].
 - Computation of sleep endpoints from detected sleep and wake phases and functions for plotting sleep processing 
-  results (e.g., Figure \autoref{fig:sleep_plot}).
+  results (e.g., \autoref{fig:sleep_plot}).
 - Functions to import and process data from commercially available sleep trackers (e.g., Withings Sleep Analyzer). 
 
 ![Example plot for visualizing computed sleep endpoints on IMU data.\label{fig:sleep_plot}](img/img_sleep_imu_plot.pdf){ width=90% }
@@ -117,7 +117,7 @@ This includes:
   [@Kirschbaum1993], Montreal Imaging Stress Task (MIST) [@Dedovic2005]. 
 - Protocols for the assessment of biological rhythms in the wild (e.g., Cortisol Awakening Response (CAR)).
 - Specialized plotting functions for standardized visualization of data collected during these psychological protocols 
-  (such as, heart rate data: Figure \autoref{fig:hr_mist}, saliva data: Figure \autoref{fig:saliva_tsst_mist}).
+  (such as, heart rate data: \autoref{fig:hr_mist}, saliva data: \autoref{fig:saliva_tsst_mist}).
 
 \begin{figure}[!h]
 \includegraphics[width=0.5\textwidth]{img/img_ensemble_plot.pdf}
@@ -139,8 +139,7 @@ This includes:
 The module `biopsykit.stats` and `biopsykit.classification` can be used for simplified evaluation of 
 statistical analyses and machine learning pipelines that are frequently used in biopsychological research. 
 `biopsykit.stats` provides functions to easily set up statistical analysis pipelines (using `pingouin` [@Vallat2018]) 
-and to visualize and export statistical analysis results in a standardized way (see, for example, 
-Figure \autoref{fig:stats_boxplot}). 
+and to visualize and export statistical analysis results in a standardized way (see, for example, \autoref{fig:stats_boxplot}). 
 
 `biopsykit.classification` provides functions to set up, optimize and evaluate different machine learning pipelines 
 for biopsychological problems.
