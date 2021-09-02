@@ -4007,7 +4007,7 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : :class:`~pandas.DataFrame`
         dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
         a complete dataframe if `columns` parameter is supplied
     columns : list of string, optional
@@ -4016,7 +4016,7 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 
     Returns
     -------
-    pd.DataFrame
+    :class:`~pandas.DataFrame`
         ASQ score
 
 
@@ -4034,7 +4034,64 @@ def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
         _assert_has_columns(data, [columns])
         data = data.loc[:, columns]
 
-    _assert_num_columns(data, 10)
+    _assert_num_columns(data, 4)
+    _assert_value_range(data, score_range)
+
+    # Reverse scores items 2, 3
+    data = invert(data, cols=to_idx([2, 3]), score_range=score_range)
+
+    # ASQ is a mean, not a sum score!
+    return pd.DataFrame(data.mean(axis=1), columns=[score_name])
+
+
+def asq_mod(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+    """Compute the **Modified version of the Anticipatory Stress Questionnaire (ASQ_MOD)**.
+
+    The ASQ_MOD measures anticipation of stress on the upcoming day and was modified by (Kramer et al., 2019).
+
+    .. note::
+        This implementation assumes a score range of [1, 7].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if `columns` parameter is supplied
+    columns : list of string, optional
+        list with column names to use for computing this score if a complete dataframe is supplied.
+        See :func:`~biopsykit.questionnaires.utils.convert_scale()`
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        ASQ_MOD score
+
+
+    References
+    ----------
+    Modified version:
+    Kramer, A. C., Neubauer, A. B., Stoffel, M., Voss, A., & Ditzen, B. (2019). Tomorrow’s gonna suck:
+    Today’s stress anticipation predicts tomorrow’s post-awakening cortisol increase. Psychoneuroendocrinology, 106,
+    38–46. https://doi.org/10.1016/j.psyneuen.2019.03.024
+
+    Original paper:
+    Powell, D. J., & Schlotz, W. (2012). Daily Life Stress and the Cortisol Awakening Response:
+    Testing the Anticipation Hypothesis. *PLoS ONE*, 7(12), e52067. https://doi.org/10.1371/journal.pone.0052067
+
+    """
+    score_name = "ASQ_MOD"
+    score_range = [1, 7]
+
+    if columns is not None:
+        # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
+        data = data.loc[:, columns]
+
+    _assert_num_columns(data, 4)
     _assert_value_range(data, score_range)
 
     # Reverse scores items 2, 3

@@ -5,12 +5,11 @@ from unittest import TestCase
 
 import pytest
 import pandas as pd
-from biopsykit.questionnaires.questionnaires import resilience, ie_4, tb, wpi, idq_pre_scan, idq_post_scan
+from biopsykit.questionnaires import *
 from biopsykit.questionnaires.utils import convert_scale
 from biopsykit.utils.exceptions import ValidationError, ValueRangeError
 
 from pandas._testing import assert_frame_equal
-from biopsykit.questionnaires import *
 
 from itertools import product
 
@@ -174,22 +173,22 @@ class TestQuestionnaires:
         "data, columns, expected",
         [
             (data_complete_correct(), None, pytest.raises(ValidationError)),
-            (data_filtered_wrong_range("ASQ"), None, pytest.raises(ValueRangeError)),
-            (convert_scale(data_filtered_wrong_range("ASQ"), -1), None, does_not_raise()),
-            (data_filtered_correct("ASQ"), None, does_not_raise()),
+            (data_filtered_wrong_range(regex=r"ASQ\d{2}"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range(regex=r"ASQ\d{2}"), -1), None, does_not_raise()),
+            (data_filtered_correct(regex=r"ASQ\d{2}"), None, does_not_raise()),
             (
-                data_filtered_correct("ASQ"),
-                ["ASQ{:02d}".format(i) for i in range(1, 10)],
+                data_filtered_correct(regex=r"ASQ\d{2}"),
+                ["ASQ{:02d}".format(i) for i in range(1, 4)],
                 pytest.raises(ValidationError),
             ),
             (
-                data_filtered_correct("ASQ"),
-                ["ASQ{:02d}".format(i) for i in range(1, 11)],
+                data_filtered_correct(regex=r"ASQ\d{2}"),
+                ["ASQ{:02d}".format(i) for i in range(1, 5)],
                 does_not_raise(),
             ),
             (
-                data_filtered_correct("ASQ"),
-                ["ASQ_{}".format(i) for i in range(1, 11)],
+                data_filtered_correct(regex=r"ASQ\d{2}"),
+                ["ASQ_{}".format(i) for i in range(1, 5)],
                 pytest.raises(ValidationError),
             ),
         ],
@@ -201,21 +200,70 @@ class TestQuestionnaires:
     @pytest.mark.parametrize(
         "data, columns, result",
         [
-            (data_filtered_correct("ASQ"), None, result_filtered("ASQ")),
+            (data_filtered_correct(regex=r"ASQ\d{2}"), None, result_filtered(regex=r"ASQ$")),
             (
-                data_filtered_correct("ASQ"),
-                ["ASQ{:02d}".format(i) for i in range(1, 11)],
-                result_filtered("ASQ"),
+                data_filtered_correct(regex=r"ASQ\d{2}"),
+                ["ASQ{:02d}".format(i) for i in range(1, 5)],
+                result_filtered(regex=r"ASQ$"),
             ),
             (
-                convert_scale(data_filtered_wrong_range("ASQ"), -1),
+                convert_scale(data_filtered_wrong_range(regex=r"ASQ\d{2}"), -1),
                 None,
-                result_filtered("ASQ"),
+                result_filtered(regex=r"ASQ$"),
             ),
         ],
     )
     def test_asq(self, data, columns, result):
         data_out = asq(data, columns)
+        TestCase().assertListEqual(list(data_out.columns), list(result.columns))
+        assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        "data, columns, expected",
+        [
+            (data_complete_correct(), None, pytest.raises(ValidationError)),
+            (data_filtered_wrong_range("ASQ_MOD"), None, pytest.raises(ValueRangeError)),
+            (convert_scale(data_filtered_wrong_range("ASQ_MOD"), -1), None, does_not_raise()),
+            (data_filtered_correct("ASQ_MOD"), None, does_not_raise()),
+            (
+                data_filtered_correct("ASQ_MOD"),
+                ["ASQ_MOD{:02d}".format(i) for i in range(1, 10)],
+                pytest.raises(ValidationError),
+            ),
+            (
+                data_filtered_correct("ASQ_MOD"),
+                ["ASQ_MOD{:02d}".format(i) for i in range(1, 5)],
+                does_not_raise(),
+            ),
+            (
+                data_filtered_correct("ASQ_MOD"),
+                ["ASQ_MOD_{}".format(i) for i in range(1, 5)],
+                pytest.raises(ValidationError),
+            ),
+        ],
+    )
+    def test_asq_mod_raises(self, data, columns, expected):
+        with expected:
+            asq_mod(data, columns)
+
+    @pytest.mark.parametrize(
+        "data, columns, result",
+        [
+            (data_filtered_correct("ASQ_MOD"), None, result_filtered("ASQ_MOD")),
+            (
+                data_filtered_correct("ASQ_MOD"),
+                ["ASQ_MOD{:02d}".format(i) for i in range(1, 5)],
+                result_filtered("ASQ_MOD"),
+            ),
+            (
+                convert_scale(data_filtered_wrong_range("ASQ_MOD"), -1),
+                None,
+                result_filtered("ASQ_MOD"),
+            ),
+        ],
+    )
+    def test_asq_mod(self, data, columns, result):
+        data_out = asq_mod(data, columns)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
 
@@ -1019,7 +1067,7 @@ class TestQuestionnaires:
     def test_ie4(self, data, columns, subscales, result):
         data_out = ie_4(data, columns, subscales)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
-        assert_frame_equal(data_out, result)
+        assert_frame_equal(data_out, result, check_dtype=False)
 
     @pytest.mark.parametrize(
         "data, columns, subscales, expected",
