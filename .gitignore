@@ -3,6 +3,7 @@ examples/results/
 
 docs/readme.md
 docs/source/about/authors.md
+docs/source/contributing/changelog.md
 docs/changelog.md
 
 # ignore poetry.lock file for library

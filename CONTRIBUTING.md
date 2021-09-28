@@ -5,8 +5,6 @@ This document contains information for developers that want to contribute to ``B
 It includes further in-depth information on how to set up and use required tools
 and learn about programing methods used in the development of this project.
 
-[comment]: <> (If you are looking for a higher level overview over the guiding ideas and structure of this project, please visit the)
-[comment]: <> ([Project Structure document]&#40;project_structure.md&#41;.)
 
 ## Contributing Guidelines
 
@@ -310,14 +308,6 @@ The upcoming minor release for which new features are developed at the moment.
 
 Note that we will not support old minor releases after the release of the next minor release to keep things simple.
 We expect users to update to the new minor release, if they want to get new features and bugfixes.
-
-[comment]: <> (To make such an update model go smoothly for all users, we keep an active changelog, that should be modified a feature)
-
-[comment]: <> (is merged, or a bug fixed.)
-
-[comment]: <> (In particular changes that require updates to feature code should be prominently highlighted in the "Migration Guide")
-
-[comment]: <> (section.)
 
 There is no fixed timeline for a release, but rather a list of features we will plan to include in every release.
 Releases can often happen and even with small added features.
