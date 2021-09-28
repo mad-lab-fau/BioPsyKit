@@ -1,4 +1,5 @@
 """Module providing functions to load different example data."""
+import re
 from pathlib import Path
 from typing import Sequence, Dict, Optional, Tuple, Union
 
@@ -10,6 +11,7 @@ from biopsykit.utils.datatype_helper import (
     SalivaRawDataFrame,
     SalivaMeanSeDataFrame,
     HeartRatePhaseDict,
+    HeartRateSubjectDataDict,
     SleepEndpointDataFrame,
     _SalivaMeanSeDataFrame,
 )
@@ -31,6 +33,7 @@ __all__ = [
     "get_saliva_example",
     "get_saliva_mean_se_example",
     "get_mist_hr_example",
+    "get_hr_subject_data_dict_example",
     "get_ecg_example",
     "get_ecg_example_02",
     "get_sleep_analyzer_raw_example",
@@ -125,6 +128,22 @@ def get_saliva_mean_se_example() -> Dict[str, SalivaMeanSeDataFrame]:
         data_dict[key] = _SalivaMeanSeDataFrame(data_dict[key].set_index(["condition", "sample", "time"]))
         is_saliva_mean_se_dataframe(data_dict[key])
     return data_dict
+
+
+def get_hr_subject_data_dict_example() -> HeartRateSubjectDataDict:
+    """Return heart rate example data in the form of a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`.
+
+    Returns
+    -------
+    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+        dictionary with heart rate time-series data from multiple subjects, each containing data from different phases.
+
+    """
+    study_data_dict_hr = {}
+    for file in sorted(_EXAMPLE_DATA_PATH.joinpath("ecg_results").glob("hr_result_*.xlsx")):
+        subject_id = re.findall(r"hr_result_(Vp\w+).xlsx", file.name)[0]
+        study_data_dict_hr[subject_id] = pd.read_excel(file, sheet_name=None, index_col="time")
+    return study_data_dict_hr
 
 
 def get_mist_hr_example() -> HeartRatePhaseDict:
