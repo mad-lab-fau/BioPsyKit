@@ -50,4 +50,5 @@ pylint:
     - protected-access
     - too-many-lines
     - useless-suppression
+    - consider-using-f-string
 
