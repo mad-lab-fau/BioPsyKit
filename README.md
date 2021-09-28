@@ -32,7 +32,7 @@ With this package you have everything you need for analyzing biopsychological da
     * Generic `.csv` files
     * NilsPod binary (`.bin`) files (requires `NilsPodLib`: https://github.com/mad-lab-fau/NilsPodLib)
     * Other sensor types (_coming soon_)
-* Splitting data into single parts (based on time intervals) that will be analyzed separately
+* Splitting data into single study parts (based on time intervals) that will be analyzed separately
 * Perform ECG processing, including:
     * R peak detection (using `Neurokit`: https://github.com/neuropsychology/NeuroKit)
     * R peak outlier removal and interpolation
@@ -40,7 +40,7 @@ With this package you have everything you need for analyzing biopsychological da
     * ECG-derived respiration (EDR) estimation for respiration rate and respiratory sinus arrhythmia (RSA) 
       (_experimental_)
     * Resample instantaneous heart rate data 
-    * Compute aggregated results (e.g., mean and standard error) per part
+    * Compute aggregated results (e.g., mean and standard error) per study part
 * Create plots for visualizing processing results
 
 ... more biosignals coming soon!
@@ -151,26 +151,43 @@ tsst.add_hr_data(hr_data, study_part="TSST")
 ```
 
 ## Installation
+
+``BioPsyKit`` requires Python >=3.7. First, install a compatible version of Python. Then install ``BioPsyKit`` via pip. 
+
+Installation from [PyPi](https://pypi.org/): 
 ```bash
 pip install biopsykit
 ```
 
+Installation from local repository copy:
+```bash
+git clone https://github.com/mad-lab-fau/BioPsyKit.git
+cd BioPsyKit
+pip install .
+```
+
 
 ### For Developer
+
+If you are a developer and want to contribute to ``BioPsyKit`` you can install a editable version of the package from 
+a local copy of the repository.
+
+BioPsyKit uses [poetry](https://python-poetry.org) to manage dependencies and packaging. Once you installed poetry, 
+run the following commands to get the latest source, initialize a virtual env and install all development dependencies:
 
 Install Python >=3.7 and [poetry](https://python-poetry.org).
 Then run the commands below to get the latest source and install the dependencies:
 #### Without Extras
 ```bash
 git clone https://github.com/mad-lab-fau/BioPsyKit.git
-cd biopsykit
+cd BioPsyKit
 poetry install
 ```
 
 #### With all Extras (e.g., extended functionalities for IPython/Jupyter Notebooks)
 ```bash
 git clone https://github.com/mad-lab-fau/BioPsyKit.git
-cd biopsykit
+cd BioPsyKit
 poetry install -E mne -E jupyter 
 ```
 
@@ -185,6 +202,9 @@ lint                 Lint all files with Prospector.
 test                 Run Pytest with coverage.
 update_version       Bump the version in pyproject.toml and biopsykit.__init__ .
 ```
+
+See the [Development and Contributing Guide]() for further information.
+
 
 
 ## Examples
