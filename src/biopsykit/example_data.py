@@ -42,7 +42,7 @@ __all__ = [
 ]
 
 
-def get_file_path(file_name: path_t) -> Path:
+def get_file_path(file_name: path_t) -> Optional[Path]:
     """Return path to example data file.
 
     Parameters
@@ -259,6 +259,25 @@ def get_time_log_example() -> pd.DataFrame:
     return load_time_log(_EXAMPLE_DATA_PATH.joinpath("ecg_time_log.xlsx"))
 
 
+def get_questionnaire_example_wrong_range() -> pd.DataFrame:
+    """Return questionnaire example data with score in the wrong range.
+
+    In this example the items of the "PSS" questionnaire are coded in the wrong range ([1, 5] instead of [0, 4])
+    originally defined in the paper.
+
+    This example data is used to demonstrate BioPsyKit's feature of asserting that questionnaire score items are
+    provided in the correct score range according to the original definition of the questionnaire.
+
+
+    Returns
+    -------
+    data : :class:`~pandas.DataFrame`
+        dataframe with questionnaire data where the items of the PSS questionnaire are coded in the wrong range
+
+    """
+    return load_questionnaire_data(_EXAMPLE_DATA_PATH.joinpath("questionnaire_sample_wrong_range.csv"))
+
+
 def get_questionnaire_example() -> pd.DataFrame:
     """Return questionnaire example data.
 
@@ -268,4 +287,4 @@ def get_questionnaire_example() -> pd.DataFrame:
         dataframe with questionnaire data
 
     """
-    return load_questionnaire_data(_EXAMPLE_DATA_PATH.joinpath("questionnaire_sample.csv"), index_col=["subject"])
+    return load_questionnaire_data(_EXAMPLE_DATA_PATH.joinpath("questionnaire_sample.csv"))
