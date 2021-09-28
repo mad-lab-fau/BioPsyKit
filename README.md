@@ -170,7 +170,7 @@ pip install .
 
 ### For Developer
 
-If you are a developer and want to contribute to ``BioPsyKit`` you can install a editable version of the package from 
+If you are a developer and want to contribute to ``BioPsyKit`` you can install an editable version of the package from 
 a local copy of the repository.
 
 BioPsyKit uses [poetry](https://python-poetry.org) to manage dependencies and packaging. Once you installed poetry, 
