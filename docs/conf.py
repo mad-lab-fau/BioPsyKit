@@ -193,7 +193,7 @@ copyright = (
     "Erlangen-Nürnberg (FAU)".format(datetime.now().year)
 )
 
-# -- Copy the README and Changelog --------------------------------------
+# -- Copy README, Changelog, etc. --------------------------------------
 HERE = Path(__file__).parent
 with (HERE.parent.joinpath("README.md")).open() as f:
     out = f.read()
@@ -213,6 +213,11 @@ with (HERE.joinpath("CHANGELOG.md")).open("w+") as f:
 with (HERE.parent.joinpath("AUTHORS.md")).open() as f:
     out = f.read()
 with (HERE.joinpath("source/about/AUTHORS.md")).open("w+") as f:
+    f.write(out)
+
+with (HERE.parent.joinpath("CONTRIBUTING.md")).open() as f:
+    out = f.read()
+with (HERE.joinpath("source/contributing/CONTRIBUTING.md")).open("w+") as f:
     f.write(out)
 
 
