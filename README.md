@@ -31,11 +31,11 @@ With this package you have everything you need for analyzing biopsychological da
 `BioPsyKit` provides a whole ECG data processing pipeline, consisting of:
 * Loading ECG data from:
     * Generic `.csv` files
-    * NilsPod binary (`.bin`) files (requires `NilsPodLib`: https://github.com/mad-lab-fau/NilsPodLib)
+    * NilsPod binary (`.bin`) files (requires [`NilsPodLib`](https://github.com/mad-lab-fau/NilsPodLib))
     * Other sensor types (_coming soon_)
 * Splitting data into single study parts (based on time intervals) that will be analyzed separately
 * Perform ECG processing, including:
-    * R peak detection (using `Neurokit`: https://github.com/neuropsychology/NeuroKit)
+    * R peak detection (using [`Neurokit`](https://github.com/neuropsychology/NeuroKit))
     * R peak outlier removal and interpolation
     * HRV feature computation
     * ECG-derived respiration (EDR) estimation for respiration rate and respiratory sinus arrhythmia (RSA) 
@@ -130,7 +130,7 @@ protocols, such as:
 ```python
 from biopsykit.protocols import TSST
 from biopsykit.example_data import get_saliva_example
-from biopsykit.example_data import get_mist_hr_example
+from biopsykit.example_data import get_hr_subject_data_dict_example
 # specify TSST structure and the durations of the single phases
 structure = {
    "Pre": None,
@@ -144,11 +144,11 @@ structure = {
 tsst = TSST(name="TSST", structure=structure)
 
 saliva_data = get_saliva_example(sample_times=[-20, 0, 10, 20, 30, 40, 50])
-hr_data = get_mist_hr_example()
+hr_subject_data_dict = get_hr_subject_data_dict_example()
 # add saliva data collected during the whole TSST procedure
 tsst.add_saliva_data(saliva_data, saliva_type="cortisol")
 # add heart rate data collected during the "TSST" study part
-tsst.add_hr_data(hr_data, study_part="TSST")
+tsst.add_hr_data(hr_subject_data_dict, study_part="TSST")
 ```
 
 ## Installation
@@ -204,7 +204,7 @@ test                 Run Pytest with coverage.
 update_version       Bump the version in pyproject.toml and biopsykit.__init__ .
 ```
 
-See the [Development and Contributing Guide]() for further information.
+See the [Contributing Guidelines](https://biopsykit.readthedocs.io/en/latest/source/contributing/CONTRIBUTING.html) for further information.
 
 
 
