@@ -4,7 +4,7 @@ import pytest
 from biopsykit.io.eeg import load_eeg_raw_muse
 from biopsykit.utils.exceptions import ValidationError
 
-from biopsykit.example_data import _EXAMPLE_DATA_PATH
+from biopsykit.example_data import _get_data
 
 
 @contextmanager
@@ -16,10 +16,10 @@ class TestIoEeg:
     @pytest.mark.parametrize(
         "file_path, expected",
         [
-            ("eeg_muse_example.csv", does_not_raise()),
-            ("cortisol_sample.csv", pytest.raises(ValidationError)),
+            (_get_data("eeg_muse_example.csv"), does_not_raise()),
+            (_get_data("cortisol_sample.csv"), pytest.raises(ValidationError)),
         ],
     )
     def test_load_eeg_raw_muse(self, file_path, expected):
         with expected:
-            load_eeg_raw_muse(_EXAMPLE_DATA_PATH.joinpath(file_path))
+            load_eeg_raw_muse(file_path)
