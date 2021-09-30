@@ -161,7 +161,7 @@ def exclude_subjects(
             if (level_values.dtype == np.object and all(isinstance(s, str) for s in excluded_subjects)) or (
                 level_values.dtype == np.int and all(isinstance(s, int) for s in excluded_subjects)
             ):
-                cleaned_data[key] = _exclude_single_subject(data, excluded_subjects, index_name)
+                cleaned_data[key] = _exclude_single_subject(data, excluded_subjects, index_name, key)
             else:
                 raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
         else:
@@ -172,10 +172,8 @@ def exclude_subjects(
 
 
 def _exclude_single_subject(
-    data: pd.DataFrame,
-    excluded_subjects: Union[Sequence[str], Sequence[int]],
-    index_name: str,
-):
+    data: pd.DataFrame, excluded_subjects: Union[Sequence[str], Sequence[int]], index_name: str, dataset_name: str
+) -> pd.DataFrame:
     # dataframe index and subjects are both strings or both integers
     try:
         if isinstance(data.index, pd.MultiIndex):
@@ -184,8 +182,8 @@ def _exclude_single_subject(
         # Regular Index
         return data.drop(index=excluded_subjects)
     except KeyError:
-        warnings.warn("Not all subjects of {} exist in the dataset!".format(excluded_subjects))
-        return None
+        warnings.warn("Not all subjects of {} exist in '{}'!".format(excluded_subjects, dataset_name))
+        return data
 
 
 def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.DataFrame]) -> SubjectDataDict:
@@ -493,7 +491,13 @@ def split_dict_into_subphases(
             subphase_times = get_subphase_durations(value, subphases)
             subphase_dict = {}
             for subphase, times in zip(subphases.keys(), subphase_times):
-                subphase_dict[subphase] = value.iloc[times[0] : times[1]]
+                if isinstance(value.index, pd.DatetimeIndex):
+                    # slice the current subphase by dropping the preceding subphases
+                    value_cpy = value.drop(value.first("{}s".format(times[0])).index)
+                    value_cpy = value_cpy.first("{}s".format(times[1] - times[0]))
+                    subphase_dict[subphase] = value_cpy
+                else:
+                    subphase_dict[subphase] = value.iloc[times[0] : times[1]]
             result_dict[key] = subphase_dict
     return result_dict
 
@@ -703,7 +707,7 @@ def mean_se_per_phase(data: pd.DataFrame) -> MeanSeDataFrame:
     group_cols = list(data.index.names)
     group_cols.remove("subject")
 
-    data = data.groupby(group_cols).agg([np.mean, se])
+    data = data.groupby(group_cols, sort=False).agg([np.mean, se])
     is_mean_se_dataframe(data)
 
     return _MeanSeDataFrame(data)
