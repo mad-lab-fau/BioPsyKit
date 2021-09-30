@@ -30,6 +30,7 @@ from biopsykit.utils._datatype_validation_helper import _assert_file_extension, 
 from biopsykit.utils._types import path_t
 
 __all__ = [
+    "load_long_format_csv",
     "load_time_log",
     "load_subject_condition_list",
     "load_questionnaire_data",
@@ -39,6 +40,37 @@ __all__ = [
     "write_pandas_dict_excel",
     "write_result_dict",
 ]
+
+
+def load_long_format_csv(file_path: path_t, index_cols: Optional[Union[str, Sequence[str]]] = None) -> pd.DataFrame:
+    """Load dataframe stored as long-format from file.
+
+    Parameters
+    ----------
+    file_path : :class:`~pathlib.Path` or str
+        path to file. Must be a csv file
+    index_cols : str or list of str, optional
+        column name (or list of such) of index columns to be used as MultiIndex in the resulting long-format
+        dataframe or ``None`` to use all columns except the last one as index columns.
+        Default: ``None``
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        dataframe in long-format
+
+    """
+    # ensure pathlib
+    file_path = Path(file_path)
+    _assert_file_extension(file_path, expected_extension=[".csv"])
+
+    data = pd.read_csv(file_path)
+
+    if index_cols is None:
+        index_cols = list(data.columns)[:-1]
+    _assert_has_columns(data, [index_cols])
+
+    return data.set_index(index_cols)
 
 
 def load_time_log(
