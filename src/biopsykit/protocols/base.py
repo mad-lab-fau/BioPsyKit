@@ -7,7 +7,10 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from tqdm.auto import tqdm
+
 import biopsykit.protocols.plotting as plot
+from biopsykit.io import write_pandas_dict_excel
 from biopsykit.protocols._utils import _check_sample_times_match, _get_sample_times
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_file_extension
@@ -27,12 +30,13 @@ from biopsykit.utils.data_processing import (
 )
 from biopsykit.utils.datatype_helper import (
     HeartRateSubjectDataDict,
-    is_study_data_dict,
     SalivaRawDataFrame,
     is_saliva_raw_dataframe,
     SubjectDataDict,
     SalivaFeatureDataFrame,
     is_saliva_mean_se_dataframe,
+    is_subject_data_dict,
+    is_hr_subject_data_dict,
 )
 from biopsykit.utils.exceptions import ValidationError
 
@@ -315,7 +319,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         file_path = Path(file_path)
         _assert_file_extension(file_path, ".json")
 
-        with open(file_path, "w+", encoding="utf-8") as fp:
+        with open(file_path, encoding="utf-8") as fp:
             json_dict = json.load(fp)
             return cls(**json_dict)
 
@@ -407,11 +411,12 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             Default: ``None``
 
         """
-        is_study_data_dict(hr_data)
+        is_hr_subject_data_dict(hr_data)
         if study_part is None:
             study_part = "Study"
         self.hr_data[study_part] = hr_data
         if rpeak_data is not None:
+            is_subject_data_dict(rpeak_data)
             self.rpeak_data[study_part] = rpeak_data
 
     def compute_hr_results(  # pylint:disable=too-many-branches
@@ -598,7 +603,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self, rpeak_dict: Dict[str, Any], hrv_params: Dict[str, Any], dict_levels: Sequence[str]
     ) -> pd.DataFrame:
         result_dict = {}
-        for key, value in rpeak_dict.items():
+        for key, value in tqdm(list(rpeak_dict.items()), desc=dict_levels[0]):
             _assert_is_dtype(value, (dict, pd.DataFrame))
             if isinstance(value, dict):
                 # nested dictionary
@@ -720,6 +725,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             dataframe with computed heart rate processing ensemble
 
         """
+        _assert_is_dtype(results, pd.DataFrame)
         self.hr_results[result_id] = results
 
     def get_hr_results(self, result_id: str) -> pd.DataFrame:
@@ -767,6 +773,19 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """
         self._export_results(base_path, prefix, self.hr_results)
 
+    def export_hr_ensemble(self, base_path: path_t, prefix: Optional[str] = None):
+        """Export all heart rate ensemble data to Excel files.
+
+        Parameters
+        ----------
+        base_path : :class:`~pathlib.Path` or str
+            folder path to export all heart rate ensemble files to
+        prefix : str, optional
+            prefix to add to file name or ``None`` to use ``name`` attribute (in lowercase) as prefix
+
+        """
+        self._export_ensemble(base_path, prefix, self.hr_ensemble)
+
     def export_hrv_results(self, base_path: path_t, prefix: Optional[str] = None):
         """Export all heart rate variability results to csv files.
 
@@ -790,6 +809,17 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         for key, data in result_dict.items():
             file_name = "{}_{}.csv".format(prefix, key)
             data.to_csv(base_path.joinpath(file_name))
+
+    def _export_ensemble(self, base_path: path_t, prefix: str, result_dict: Dict[str, Dict[str, pd.DataFrame]]):
+        # ensure pathlib
+        base_path = Path(base_path)
+        if not base_path.is_dir():
+            raise ValueError("'base_path' must be a directory!")
+        if prefix is None:
+            prefix = self.name.lower().replace(" ", "_")
+        for key, data in result_dict.items():
+            file_name = "{}_{}.xlsx".format(prefix, key)
+            write_pandas_dict_excel(data, base_path.joinpath(file_name))
 
     def get_hrv_results(self, result_id: str) -> pd.DataFrame:
         """Return heart rate variability processing ensemble.
@@ -822,6 +852,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             ensemble data as ``MergedStudyDataDict``
 
         """
+        _assert_is_dtype(ensemble, dict)
         self.hr_ensemble[ensemble_id] = ensemble
 
     def get_hr_ensemble(self, ensemble_id: str):
@@ -1017,7 +1048,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def hr_ensemble_plot(
         self, ensemble_id: str, subphases: Optional[Dict[str, Dict[str, int]]] = None, **kwargs
     ) -> Tuple[plt.Figure, plt.Axes]:
-        """Draw heart rate ensemble plot.
+        r"""Draw heart rate ensemble plot.
 
         Parameters
         ----------
@@ -1108,6 +1139,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created
               and returned.
             * ``figsize``: tuple specifying figure dimensions
+            * ``palette``: color palette to plot data from different conditions. If ``palette`` is a str then it is
+              assumed to be the name of a BioPsyKit palette (:const:`biopsykit.colors.FAU_COLORS`).
+            * ``is_relative``: boolean indicating whether heart rate data is relative (in % relative to baseline)
+              or absolute (in bpm). Default: ``False``
+            * ``order``: list specifying the order of categorical values (i.e., conditions) along the x axis.
             * ``x_offset``: offset value to move different groups along the x axis for better visualization.
               Default: 0.05
             * ``xlabel``: label of x axis. Default: "Subphases" (if subphases are present)
