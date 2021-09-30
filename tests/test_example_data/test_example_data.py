@@ -27,7 +27,9 @@ def does_not_raise():
     yield
 
 
-# TODO add new Test Class with pre-and post-test hook that allows to test example data downloading (by modifying example_data.__init__() so that it can't be found anymore, pretending the package wasn't installed manually and data is downloaded from remote)
+# TODO add new Test Class with pre-and post-test hook that allows to test example data downloading
+#  (by modifying example_data.__init__() so that it can't be found anymore, pretending the package wasn't installed
+#  manually and data is downloaded from remote)
 
 
 class TestExampleData:
@@ -229,3 +231,7 @@ class TestExampleData:
         # this should throw an error because the PSS values have the wrong value range
         with pytest.raises(ValueRangeError):
             pss(find_cols(data, starts_with="PSS")[0])
+
+    def test_get_stats_example(self):
+        data = get_stats_example()
+        _assert_is_dtype(data, pd.DataFrame)

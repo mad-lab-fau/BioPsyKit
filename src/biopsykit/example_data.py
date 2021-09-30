@@ -69,6 +69,7 @@ __all__ = [
     "get_car_watch_log_data_example",
     "get_time_log_example",
     "get_questionnaire_example",
+    "get_stats_example",
 ]
 
 # TODO add SHA256 check to assert whether remote example data was changed and should be re-downloaded.
@@ -608,7 +609,7 @@ def get_questionnaire_example_wrong_range() -> pd.DataFrame:
     Returns
     -------
     data : :class:`~pandas.DataFrame`
-        dataframe with questionnaire data where the items of the PSS questionnaire are coded in the wrong range
+        dataframe with questionnaire example data where the items of the PSS questionnaire are coded in the wrong range
 
     """
     return load_questionnaire_data(_get_data("questionnaire_sample_wrong_range.csv"))
@@ -620,7 +621,19 @@ def get_questionnaire_example() -> pd.DataFrame:
     Returns
     -------
     data : :class:`~pandas.DataFrame`
-        dataframe with questionnaire data
+        dataframe with questionnaire example data
 
     """
     return load_questionnaire_data(_get_data("questionnaire_sample.csv"))
+
+
+def get_stats_example() -> pd.DataFrame:
+    """Return example data for statistical analysis.
+
+    Returns
+    -------
+    data : :class:`~pandas.DataFrame`
+        dataframe with example data that can be used for statistical analysis
+
+    """
+    return load_long_format_csv(_get_data("stats_sample.csv"))
