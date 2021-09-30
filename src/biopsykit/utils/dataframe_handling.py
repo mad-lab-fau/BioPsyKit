@@ -211,11 +211,11 @@ def convert_nan(
 
 
 def multi_xs(
-    data: pd.DataFrame,
+    data: Union[pd.DataFrame, pd.Series],
     keys: Union[str, Sequence[str]],
     level: Union[str, int, Sequence[str], Sequence[int]],
     drop_level: Optional[bool] = True,
-) -> pd.DataFrame:
+) -> Union[pd.DataFrame, pd.Series]:
     """Return cross-section of multiple keys from the dataframe.
 
     This function internally calls the :meth:`pandas.DataFrame.xs` method, but it can take a list of key arguments
@@ -225,7 +225,7 @@ def multi_xs(
 
     Parameters
     ----------
-    data : :class:`~pandas.DataFrame`
+    data : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
         input data to get cross-section from
     keys : str or list of str
         label(s) contained in the index, or partially in a :class:`~pandas.MultiIndex`
@@ -238,11 +238,11 @@ def multi_xs(
 
     Returns
     -------
-    :class:`~pandas.DataFrame`
-        cross-section from the original dataframe
+    :class:`~pandas.DataFrame` or :class:`~pandas.Series`
+        cross-section from the original dataframe or series
 
     """
-    _assert_is_dtype(data, pd.DataFrame)
+    _assert_is_dtype(data, (pd.DataFrame, pd.Series))
     if isinstance(keys, str):
         keys = [keys]
     levels = data.index.names
@@ -294,7 +294,7 @@ def stack_groups_percent(
     return data_grouped["data"]
 
 
-def apply_codebook(codebook: CodebookDataFrame, data: pd.DataFrame) -> pd.DataFrame:
+def apply_codebook(data: pd.DataFrame, codebook: CodebookDataFrame) -> pd.DataFrame:
     """Apply codebook to convert numerical to categorical values.
 
     The codebook is expected to be a dataframe in a standardized format
@@ -339,6 +339,10 @@ def apply_codebook(codebook: CodebookDataFrame, data: pd.DataFrame) -> pd.DataFr
     for col in data.index.names:
         if col in codebook.index:
             data.rename(index=codebook.loc[col], level=col, inplace=True)
+
+    for col in data.columns:
+        if col in codebook.index:
+            data.loc[:, col].replace(codebook.loc[col], inplace=True)
 
     return data
 
