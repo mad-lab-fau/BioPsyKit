@@ -100,7 +100,7 @@ def lineplot(
     marker = kwargs.get("marker", None)
     linestyle = kwargs.get("linestyle", None)
     hue_order = kwargs.get("hue_order")
-    colormap = kwargs.get("colormap")
+    palette = kwargs.get("palette")
     show_legend = kwargs.get("show_legend", True)
 
     data = data.reset_index()
@@ -134,7 +134,7 @@ def lineplot(
         err_kws = kwargs.get("err_kws", {})
         m = marker[i] if marker is not None else None
         ls = linestyle[i] if linestyle is not None else "-"
-        c = colormap[i] if colormap is not None else None
+        c = palette[i] if palette is not None else None
 
         ax.errorbar(
             x=x_vals + multi_x_offset * span + x_offset * i,
@@ -326,6 +326,11 @@ def feature_boxplot(
 
     ylabel = kwargs.pop("ylabel", None)
     xticklabels = kwargs.pop("xticklabels", None)
+    show_legend = kwargs.pop("show_legend", True)
+    legend_fontsize = kwargs.pop("legend_fontsize", None)
+    legend_loc = kwargs.pop("legend_loc", "upper right")
+    legend_orientation = kwargs.pop("legend_orientation", "vertical")
+    rect = kwargs.pop("rect", (0, 0, 0.825, 1.0) if legend_orientation == "vertical" else (0, 0, 1, 0.925))
 
     stats_kwargs = _feature_boxplot_sanitize_stats_kwargs(stats_kwargs)
 
@@ -344,6 +349,20 @@ def feature_boxplot(
 
     if xticklabels is not None:
         ax.set_xticklabels(xticklabels)
+
+    handles, labels = ax.get_legend_handles_labels()
+    if show_legend:
+        _feature_boxplot_add_legend(
+            fig,
+            ax,
+            hue,
+            handles,
+            labels,
+            rect=rect,
+            legend_loc=legend_loc,
+            legend_fontsize=legend_fontsize,
+            legend_orientation=legend_orientation,
+        )
 
     fig.tight_layout()
     return fig, ax
@@ -448,10 +467,10 @@ def multi_feature_boxplot(
     ylabels = kwargs.pop("ylabels", {})
     xticklabels = kwargs.pop("xticklabels", {})
     show_legend = kwargs.pop("show_legend", True)
-    rect = kwargs.pop("rect", (0, 0, 0.825, 1.0))
     legend_fontsize = kwargs.pop("legend_fontsize", None)
     legend_loc = kwargs.pop("legend_loc", "upper right")
     legend_orientation = kwargs.pop("legend_orientation", "vertical")
+    rect = kwargs.pop("rect", (0, 0, 0.825, 1.0) if legend_orientation == "vertical" else (0, 0, 1, 0.925))
 
     if isinstance(features, list):
         features = {f: f for f in features}
@@ -490,7 +509,7 @@ def multi_feature_boxplot(
             ax.legend().remove()
 
     if show_legend:
-        _add_legend_multi_feature_boxplot(
+        _multi_feature_boxplot_add_legend(
             fig,
             hue,
             handles,
@@ -634,7 +653,26 @@ def _add_stat_annot_multi_feature_boxplot(
         )
 
 
-def _add_legend_multi_feature_boxplot(fig: plt.Figure, hue: str, handles: Sequence, labels: Sequence, **kwargs):
+def _feature_boxplot_add_legend(fig: plt.Figure, ax: plt.Axes, hue: str, handles: Sequence, labels: Sequence, **kwargs):
+    legend_fontsize = kwargs.get("legend_fontsize")
+    legend_loc = kwargs.get("legend_loc")
+    legend_orientation = kwargs.get("legend_orientation")
+    rect = kwargs.get("rect")
+
+    if hue is not None:
+        ncol = len(handles) if legend_orientation == "horizontal" else 1
+
+        ax.legend(
+            handles,
+            labels,
+            loc=legend_loc,
+            ncol=ncol,
+            fontsize=legend_fontsize,
+        )
+    fig.tight_layout(pad=0.5, rect=rect)
+
+
+def _multi_feature_boxplot_add_legend(fig: plt.Figure, hue: str, handles: Sequence, labels: Sequence, **kwargs):
     legend_fontsize = kwargs.get("legend_fontsize")
     legend_loc = kwargs.get("legend_loc")
     legend_orientation = kwargs.get("legend_orientation")

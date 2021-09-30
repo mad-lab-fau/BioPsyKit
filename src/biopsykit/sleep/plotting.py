@@ -67,8 +67,8 @@ def sleep_imu_plot(
 
         * ``axs``: pre-existing axes for the plot. Otherwise, a new figure and axes objects are created and
           returned.
-        * ``colormap``: colormap to plot different axes from input data
         * ``figsize``: tuple specifying figure dimensions
+        * ``palette``: color palette to plot different axes from input data
 
         To style axes:
 
@@ -92,7 +92,7 @@ def sleep_imu_plot(
     """
     axs: List[plt.Axes] = kwargs.pop("ax", kwargs.pop("axs", None))
 
-    sns.set_palette(kwargs.get("colormap", colors.fau_palette_blue("line_3")))
+    sns.set_palette(kwargs.get("palette", colors.fau_palette_blue(3)))
 
     if datastreams is None:
         datastreams = ["acc"]

@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatch
+import seaborn as sns
 
 from biopsykit import colors
 from biopsykit.protocols import BaseProtocol
@@ -92,9 +93,10 @@ class CFT(BaseProtocol):
         """Duration of the Cold Face Exposure in seconds. Default: 120 seconds"""
 
         cft_plot_params = {
-            "background_color": ["#e0e0e0", "#9e9e9e", "#757575"],
-            "background_alpha": [0.5, 0.5, 0.5],
-            "phase_names": ["Baseline", "Cold Face Test", "Recovery"],
+            "background_color": None,
+            "background_base_color": "#e0e0e0",
+            "background_alpha": 0.2,
+            "phase_names": list(structure.keys()),
         }
         cft_plot_params.update(kwargs.get("cft_plot_params", {}))
         self.cft_plot_params: Dict[str, Any] = cft_plot_params
@@ -588,8 +590,8 @@ class CFT(BaseProtocol):
         else:
             fig = ax.get_figure()
 
-        time_baseline = kwargs.get("time_baseline", self.structure["Baseline"])
-        time_recovery = kwargs.get("time_recovery", self.structure["Recovery"])
+        time_baseline = kwargs.get("time_baseline", self.structure.get("Baseline", 0))
+        time_recovery = kwargs.get("time_recovery", self.structure.get("Recovery", 0))
 
         data = data.copy()
         cft_params = self.compute_cft_parameter(data, return_dict=True)
@@ -622,7 +624,7 @@ class CFT(BaseProtocol):
         if isinstance(ylims, (tuple, list)):
             ax.set_ylim(ylims)
         else:
-            ymargin = 0.1
+            ymargin = 0.2
             if isinstance(ylims, float):
                 ymargin = ylims
             ax.margins(x=0, y=ymargin)
@@ -670,8 +672,15 @@ class CFT(BaseProtocol):
         self, ax: plt.Axes, times_dict: Dict[str, Union[int, datetime.datetime]], **kwargs
     ):
         times = list(zip(list(times_dict.values()), list(times_dict.values())[1:]))
-        bg_colors = kwargs.get("background_color", self.cft_plot_params["background_color"])
-        bg_alphas = kwargs.get("background_alpha", self.cft_plot_params["background_alpha"])
+        # filter empty phases, e.g., when no baseline or no recovery phase is present
+        times = list(filter(lambda t: (t[-1] - t[0]) != 0, times))
+
+        bg_colors = kwargs.get("background_color", self.cft_plot_params.get("background_color"))
+        if bg_colors is None:
+            bg_color_base = kwargs.get("background_base_color", self.cft_plot_params.get("background_base_color"))
+            bg_colors = list(sns.dark_palette(bg_color_base, n_colors=len(times), reverse=True))
+        bg_alphas = kwargs.get("background_alpha", self.cft_plot_params.get("background_alpha"))
+        bg_alphas = [bg_alphas] * len(times)
         names = kwargs.get("phase_names", self.cft_plot_params["phase_names"])
 
         for (start, end), bg_color, bg_alpha, name in zip(times, bg_colors, bg_alphas, names):
@@ -885,10 +894,10 @@ class CFT(BaseProtocol):
         ax.annotate(
             "$Mean_{CFT}$: " + "{:.1f} %".format(cft_params["mean_brady_percent"]),
             xy=(x_offset, mean_hr),
-            xytext=(10, -5),
+            xytext=(-5, -5),
             textcoords="offset points",
             bbox=bbox,
-            ha="left",
+            ha="right",
             va="top",
         )
 

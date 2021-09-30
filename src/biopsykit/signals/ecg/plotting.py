@@ -120,12 +120,11 @@ def ecg_plot(
 
     sns.set_palette(colors.fau_palette)
 
-    figsize = kwargs.get("figsize", (15, 5))
     title = kwargs.get("title", None)
     _set_plt_rcparams(ecg_signal)
 
     # Prepare figure and set axes
-    fig = plt.figure(figsize=figsize, constrained_layout=False)
+    fig = plt.figure(figsize=kwargs.get("figsize"), constrained_layout=False)
     axs = _get_ecg_plot_specs(fig, plot_ecg_signal, plot_individual_beats, plot_distribution)
     _ecg_plot_set_title(fig, title)
 
@@ -323,7 +322,6 @@ def hr_plot(
 
     """
     ax: plt.Axes = kwargs.pop("ax", None)
-    figsize = kwargs.get("figsize", (15, 5))
     title: str = kwargs.get("title", None)
     legend_loc = kwargs.get("legend_loc", "upper right")
     legend_fontsize = kwargs.get("legend_fontsize", "small")
@@ -333,7 +331,7 @@ def hr_plot(
     mean_color = kwargs.pop("mean_color", colors.adjust_color("wiso", 1.5))
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:
         fig = ax.get_figure()
 
@@ -471,7 +469,6 @@ def hrv_plot(
     """
     _assert_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
 
-    figsize = kwargs.get("figsize", (14, 7))
     title = kwargs.get("title", None)
     plt.rcParams["mathtext.default"] = "regular"
 
@@ -482,7 +479,7 @@ def hrv_plot(
     # perform R peak correction before computing HRV measures
     rpeaks = EcgProcessor.correct_rpeaks(rpeaks=rpeaks, sampling_rate=sampling_rate)
 
-    fig = plt.figure(constrained_layout=False, figsize=figsize)
+    fig = plt.figure(constrained_layout=False, figsize=kwargs.get("figsize", (14, 7)))
 
     if plot_psd:
         spec = gs.GridSpec(ncols=2, nrows=2, height_ratios=[1, 1], width_ratios=[1, 1])
@@ -546,11 +543,10 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, **kwargs) -> Tuple[plt.Figure
 
     """
     ax: plt.Axes = kwargs.get("ax", None)
-    figsize = kwargs.get("figsize", (15, 5))
     plt.rcParams["mathtext.default"] = "regular"
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:
         fig = ax.get_figure()
 
@@ -602,17 +598,16 @@ def rr_distribution_plot(
 
     """
     ax: plt.Axes = kwargs.get("ax", None)
-    figsize = kwargs.get("figsize", (15, 5))
     plt.rcParams["mathtext.default"] = "regular"
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:
         fig = ax.get_figure()
 
     rri = _get_rr_intervals(rpeaks, sampling_rate)
 
-    sns.set_palette(colors.fau_palette_blue("box_2"))
+    sns.set_palette(colors.fau_palette_blue(2))
     sns.histplot(rri, ax=ax, bins=10, kde=False, alpha=0.5, zorder=1)
     sns.rugplot(rri, ax=ax, lw=1.5, height=0.05, zorder=2)
     ax2 = ax.twinx()
@@ -687,11 +682,10 @@ def individual_beats_plot(
 
     """
     ax: plt.Axes = kwargs.get("ax", None)
-    figsize = kwargs.get("figsize", (15, 5))
     plt.rcParams["mathtext.default"] = "regular"
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:
         fig = ax.get_figure()
 
@@ -761,11 +755,10 @@ def hrv_poincare_plot(
 
     """
     axs: List[plt.Axes] = kwargs.get("axs", None)
-    figsize = kwargs.get("figsize", (8, 8))
     plt.rcParams["mathtext.default"] = "regular"
 
     if axs is None:
-        fig = plt.figure(figsize=figsize)
+        fig = plt.figure(figsize=kwargs.get("figsize", (8, 8)))
         axs = []
         # Prepare figure
         spec = gs.GridSpec(4, 4)
@@ -786,7 +779,7 @@ def hrv_poincare_plot(
 
     area = np.pi * sd1 * sd2
 
-    sns.set_palette(colors.fau_palette_blue("box_2"))
+    sns.set_palette(colors.fau_palette_blue(2))
     sns.kdeplot(
         x=rri[:-1],
         y=rri[1:],
@@ -929,11 +922,10 @@ def hrv_frequency_plot(
 
     """
     ax: plt.Axes = kwargs.get("ax", None)
-    figsize = kwargs.get("figsize", (15, 5))
     plt.rcParams["mathtext.default"] = "regular"
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:
         fig = ax.get_figure()
 
