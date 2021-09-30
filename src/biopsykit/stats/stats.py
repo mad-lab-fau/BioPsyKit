@@ -6,7 +6,7 @@ from typing_extensions import Literal
 import pandas as pd
 import pingouin as pg
 
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_index_levels
 from biopsykit.utils._types import path_t
 
 MAP_STAT_TESTS = {
@@ -188,7 +188,7 @@ class StatsPipeline:
         pipeline_results = {}
         data = data.reset_index()
 
-        for step in self.steps:
+        for i, step in enumerate(self.steps):
             general_params = {key: value for key, value in self.params.items() if len(key.split("__")) == 1}
             specific_params = {
                 key.split("__")[1]: value
@@ -206,17 +206,19 @@ class StatsPipeline:
 
             test_func = MAP_STAT_TESTS[step[1]]
             if len(grouper) > 0:
-                result = data.groupby(grouper).apply(
+                result = data.groupby(grouper, sort=False).apply(
                     lambda df: test_func(data=df, **specific_params, **params)  # pylint:disable=cell-var-from-loop
                 )
             else:
                 result = test_func(data=data, **specific_params, **params)
 
-            if step[0] == "posthoc" and "padjust" in general_params and "padjust" not in params:
-                # apply p-adjustment for posthoc testing if it was specified in the pipeline
-                # but do it only manually if it's not supported by the test function
-                # (otherwise it would be in the 'params' dict)
-                result = self.multicomp(result, method=general_params["padjust"])
+            if i == len(self.steps) - 1 and "multicomp" in general_params:
+                # apply multi-comparison correction (p-adjustment) for the last analysis step in the pipeline
+                # if it was enabled
+                multicomp_dict = general_params.get("multicomp")
+                if multicomp_dict is None:
+                    multicomp_dict = {}
+                result = self.multicomp(result, **multicomp_dict)
 
             pipeline_results[step[1]] = result
 
@@ -566,15 +568,26 @@ class StatsPipeline:
         df = df.rename(columns=MAP_LATEX).reindex(index_labels.keys()).rename(index=index_labels)
         return df
 
-    def multicomp(self, stats_data: pd.DataFrame, method: Optional[str] = "bonf") -> pd.DataFrame:
-        """Apply multi-test comparison to results from statistical analysis.
+    def multicomp(
+        self,
+        stats_category_or_data: Union[STATS_CATEGORY, pd.DataFrame],
+        levels: Optional[Union[bool, str, Sequence[str]]] = False,
+        method: Optional[str] = "bonf",
+    ) -> pd.DataFrame:
+        """Apply multi-comparison correction to results from statistical analysis.
 
-        This function will add a new column ``p-corr`` to the dataframe which contains the adjusted p values.
+        This function will add a new column ``p-corr`` to the dataframe which contains the adjusted p-values.
+        The level(s) on which to perform multi-comparison correction on can be specified by the ``levels`` parameter.
 
         Parameters
         ----------
-        stats_data : :class:`~pandas.DataFrame`
+        stats_category_or_data : :class:`~pandas.DataFrame`
             dataframe with results from statistical analysis
+        levels: bool, str, or list of str, optional
+            index level(s) on which to perform multi-comparison correction on, ``True`` to perform multi-comparison
+            correction on the *whole* dataset (i.e., on *no* particular index level), or ``False`` or ``None`` to
+            perform multi-comparison correction on **all** index levels.
+            Default: ``False``
         method : str, optional
             method used for testing and adjustment of p-values. See :func:`~pingouin.multicomp` for the
             available methods. Default: "bonf"
@@ -582,14 +595,37 @@ class StatsPipeline:
         Returns
         -------
         :class:`~pandas.DataFrame`
-            dataframe with adjusted p values
+            dataframe with adjusted p-values
 
         """
-        data = stats_data
-        if stats_data.index.nlevels > 1:
-            data = stats_data.groupby(list(stats_data.index.names)[:-1])
-            return data.apply(lambda df: self._multicomp_lambda(df, method=method))
-        return self._multicomp_lambda(data, method=method)
+        if isinstance(stats_category_or_data, pd.DataFrame):
+            data = stats_category_or_data
+        else:
+            data = self.results_cat(stats_category_or_data)
+
+        levels = self._multicomp_get_levels(levels, data)
+
+        _assert_has_index_levels(data, levels, match_atleast=True)
+
+        group_cols = list(data.index.names)[:-1]
+        group_cols = list(set(group_cols) - set(levels))
+
+        if len(group_cols) == 0:
+            return self._multicomp_lambda(data, method=method)
+        return data.groupby(group_cols).apply(lambda df: self._multicomp_lambda(df, method=method))
+
+    @classmethod
+    def _multicomp_get_levels(cls, levels: Union[bool, str, Sequence[str]], data: pd.DataFrame) -> Sequence[str]:
+        if levels is None:
+            levels = []
+        elif isinstance(levels, bool):
+            if levels:
+                levels = list(data.index.names)[:-1]
+            else:
+                levels = []
+        elif isinstance(levels, str):
+            levels = [levels]
+        return levels
 
     @staticmethod
     def _multicomp_lambda(data: pd.DataFrame, method: str) -> pd.DataFrame:
@@ -640,6 +676,7 @@ class StatsPipeline:
 
             stats_data = pd.concat([stats_data.filter(like=f, axis=0) for f in features])
 
+        stats_data = stats_data.drop_duplicates()
         stats_data = stats_data.reset_index()
         if plot_type == "single":
             box_pairs = self._get_box_pairs_single(stats_data)
@@ -650,6 +687,7 @@ class StatsPipeline:
 
     def _get_stats_data_box_pairs_interaction(self, stats_data: pd.DataFrame):
         stats_data = stats_data.reset_index()
+        stats_data = stats_data[stats_data[self.params["within"]] != "-"]
         index = stats_data[self.params.get("groupby", [])]
         stats_data = stats_data.set_index(self.params["within"])
 
