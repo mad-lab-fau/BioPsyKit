@@ -165,6 +165,100 @@ tsst.add_hr_data(hr_subject_data_dict, study_part="TSST")
 ```
 
 ### Statistical Analysis
+`BioPsyKit` implements methods for simplified statistical analysis of biopsychological data by offering an 
+object-oriented interface for setting up statistical analysis pipelines, displaying the results, and adding 
+statistical significance brackets to plots.
+
+#### Quick Example
+```python
+import matplotlib.pyplot as plt
+from biopsykit.stats import StatsPipeline
+from biopsykit.plotting import multi_feature_boxplot
+from biopsykit.example_data import get_stats_example
+
+data = get_stats_example()
+
+# configure statistical analysis pipeline which consists of checking for normal distribution and performing paired 
+# t-tests (within-variable: time) on each questionnaire subscale separately (grouping data by subscale).
+pipeline = StatsPipeline(
+    steps=[("prep", "normality"), ("test", "pairwise_ttests")],
+    params={"dv": "PANAS", "groupby": "subscale", "subject": "subject", "within": "time"}
+)
+
+# apply statistics pipeline on data
+pipeline.apply(data)
+
+# plot data and add statistical significance brackets from statistical analysis pipeline
+fig, axs = plt.subplots(ncols=3)
+features = ["NegativeAffect", "PositiveAffect", "Total"]
+# generate statistical significance brackets
+box_pairs, pvalues = pipeline.sig_brackets(
+  "test", stats_type="within", plot_type="single", x="time", features=features, subplots=True
+)
+# plot data
+multi_feature_boxplot(
+    data=data, x="time", y="PANAS", features=features, group="subscale", order=["pre", "post"], 
+    stats_kwargs={"box_pairs": box_pairs, "pvalues": pvalues}, ax=axs
+)
+```
+
+
+### Machine Learning Analysis
+`BioPsyKit` implements methods for simplified and systematic evaluation of different machine learning pipelines.
+
+#### Quick Example
+```python
+# Utils
+from sklearn.datasets import load_breast_cancer
+# Preprocessing & Feature Selection
+from sklearn.feature_selection import SelectKBest
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+# Classification
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+# Cross-Validation
+from sklearn.model_selection import KFold
+
+from biopsykit.classification.model_selection import SklearnPipelinePermuter
+
+# load example dataset
+breast_cancer = load_breast_cancer()
+X = breast_cancer.data
+y = breast_cancer.target
+
+# specify estimator combinations
+model_dict = {
+    "scaler": {
+        "StandardScaler": StandardScaler(),
+        "MinMaxScaler": MinMaxScaler()
+    },
+    "reduce_dim": {
+        "SelectKBest": SelectKBest(),
+    },
+    "clf" : {
+        "KNeighborsClassifier": KNeighborsClassifier(),
+        "DecisionTreeClassifier": DecisionTreeClassifier(),
+    }
+}
+# specify hyperparameter for grid search
+params_dict = {
+    "StandardScaler": None,
+    "MinMaxScaler": None,
+    "SelectKBest": { "k": [2, 4, "all"] },
+    "KNeighborsClassifier": { "n_neighbors": [2, 4], "weights": ["uniform", "distance"] },
+    "DecisionTreeClassifier": {"criterion": ['gini', 'entropy'], "max_depth": [2, 4] },
+}
+
+pipeline_permuter = SklearnPipelinePermuter(model_dict, params_dict)
+pipeline_permuter.fit(X, y, outer_cv=KFold(5), inner_cv=KFold(5))
+
+# print mean performance scores for each pipeline and parameter combinations, averaged over all outer CV folds
+print(pipeline_permuter.mean_pipeline_score_results())
+# print overall best-performing pipeline and the performances over all outer CV folds
+print(pipeline_permuter.best_pipeline())
+# print summary of all relevant metrics for the best pipeline for each evaluated pipeline combination
+print(pipeline_permuter.metric_summary())
+```
 
 
 ## Installation
