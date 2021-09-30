@@ -259,7 +259,8 @@ class CFT(BaseProtocol):
           CFT onset in seconds.
         * ``onset_idx``: location of CFT onset as array index
         * ``onset_hr``: heart rate at CFT onset in bpm
-        * ``onset_hr_percent``: relative change of CFT onset heart rate compared to Baseline heart rate in percent.
+        * ``onset_hr_brady_percent``: bradycardia at CFT onset, i.e., relative change of CFT onset heart rate compared
+          to Baseline heart rate in percent.
         * ``onset_slope``: Slope between Baseline heart rate and CFT onset heart rate, computed as:
           `onset_slope = (onset_hr - baseline_hr) / onset_latency`
 
@@ -581,9 +582,9 @@ class CFT(BaseProtocol):
 
         """
         ax: plt.Axes = kwargs.pop("ax", None)
-        figsize = kwargs.get("figsize", (12, 5))
+
         if ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
+            fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
         else:
             fig = ax.get_figure()
 

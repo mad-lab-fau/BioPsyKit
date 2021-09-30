@@ -123,7 +123,7 @@ class MIST(BaseProtocol):
             it is assumed that the study part containing the MIST is named ``MIST``.
         **kwargs : dict, optional
             optional arguments for plot configuration to be passed to
-            :meth:`~biopsykit.protocols.BaseProtocol.hr_ensemble_plot`
+            :meth:`~biopsykit.protocols.BaseProtocol.hr_ensemble_plot`.
 
 
         Returns

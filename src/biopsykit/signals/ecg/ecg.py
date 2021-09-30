@@ -31,6 +31,7 @@ __all__ = ["EcgProcessor"]
 
 def _hrv_process_get_hrv_types(hrv_types: Union[str, Sequence[str]]) -> Sequence[str]:
     if hrv_types is None:
+        # TODO: change default parameter to 'all'
         hrv_types = ["hrv_time", "hrv_nonlinear"]
     if hrv_types == "all":
         hrv_types = list(_hrv_methods.keys())

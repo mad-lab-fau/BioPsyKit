@@ -30,7 +30,7 @@ MAP_STAT_PARAMS = {
     "rm_anova": ["dv", "within", "subject"],
     "mixed_anova": ["dv", "between", "within", "subject"],
     "kruskal": ["dv", "between"],
-    "pairwise_ttests": ["dv", "between", "within", "subject", "effsize", "tail", "padjust", "parametric"],
+    "pairwise_ttests": ["dv", "between", "within", "subject", "effsize", "tail", "parametric", "padjust"],
     "pairwise_tukey": ["dv", "between", "effsize"],
     "pairwise_gameshowell": ["dv", "between", "effsize"],
 }
@@ -77,7 +77,7 @@ _sig_cols = ["p-corr", "p-tukey", "p-unc", "pval"]
 class StatsPipeline:
     """Class to set up a pipeline for statistical analysis."""
 
-    def __init__(self, steps: Sequence[Tuple[str, str]], params: Dict[str, str]):
+    def __init__(self, steps: Sequence[Tuple[str, str]], params: Dict[str, str], **kwargs):
         """Class to set up a pipeline for statistical analysis.
 
         The purpose of such a pipeline is to assemble several steps of a typical statistical analysis procedure while
@@ -85,12 +85,12 @@ class StatsPipeline:
         It enables setting parameters of the various steps using their names and the parameter name separated by a "__",
         as in the examples below.
 
-        The interface of this class is inspired by the scikit-learn Pipeline for ML tasks
+        The interface of this class is inspired by the scikit-learn Pipeline for machine learning tasks
         (:class:`~sklearn.pipeline.Pipeline`).
 
-        All functions methods used are from the Pingouin library (https://pingouin-stats.org/) for statistical analysis.
+        All functions used are from the ``pingouin`` library (https://pingouin-stats.org/) for statistical analysis.
 
-        The different steps of statistical analysis is divided into different categories:
+        The different steps of statistical analysis can be divided into categories:
 
         * *Preparatory Analysis* (``prep``): Analyses applied to the data before performing the actual statistical
           analysis. Currently supported functions are:
@@ -126,21 +126,24 @@ class StatsPipeline:
           * ``pairwise_gameshowell``: Pairwise Games-Howell post-hoc test.
             See :func:`~pingouin.pairwise_gameshowell` for further information.
 
-        Initialize new ``StatsPipeline`` instance.
-
         A ``StatsPipeline`` consists of a list of tuples specifying the individual ``steps`` of the pipeline.
         The first value of each tuple indicates the category this step belongs to (``prep``, ``test``, or ``posthoc``),
         the second value indicates the analysis function to use in this step (e.g., ``normality``, or ``rm_anova``).
 
         Furthermore, a ``params`` dictionary specifying the parameters and variables for statistical analysis
         needs to be supplied. Parameters can either be specified *globally*, i.e., for all steps in the pipeline
-        (the default), or *locally*, i.e., only for one specific category, by prepending the category,
-        separated by a "__". The parameters depend on the type of analysis used in the pipeline. Examples are:
+        (the default), or *locally*, i.e., only for one specific category, by prepending the category and separating it
+        from the parameter name by a `__`. The parameters depend on the type of analysis used in the pipeline.
+
+        Examples are:
 
         * ``dv``: column name of the dependent variable
         * ``between``: column name of the between-subject factor
         * ``within``: column name of the within-subject factor
         * ``effsize``: type of effect size to compute (if applicable)
+        * ``multicomp``: whether (and how) to apply multi-comparison correction of p-values to the *last* step in the
+          pipeline (either "test" or "posthoc") using :meth:`~biopsykit.stats.StatsPipeline.multicomp`.
+          The arguments for the call to :meth:`~biopsykit.stats.StatsPipeline.multicomp` are supplied via dictionary.
         * ...
 
         Parameters
@@ -149,6 +152,12 @@ class StatsPipeline:
             list of tuples specifying statistical analysis pipeline
         params : dict
             dictionary with parameter names and their values
+        **kwargs : dict
+            additional arguments, such as:
+
+            * ``round``: Set the default decimal rounding of the output dataframes or ``None`` to disable rounding.
+              Default: Rounding to 4 digits on p-value columns only. See :meth:`~pandas.DataFrame.round` for further
+              options.
 
         """
         self.steps = steps

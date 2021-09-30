@@ -1029,8 +1029,37 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
             ``None`` if no subphases are present. Default: ``None``
         **kwargs : dict, optional
-            optional arguments for plot configuration to be passed to
-            :func:`~biopsykit.protocols.plotting.hr_ensemble_plot`
+            additional parameters to be passed to :func:`~biopsykit.protocols.plotting.hr_ensemble_plot` for
+            plot configuration, such as:
+
+            * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+            * ``palette``: color palette to plot data from different phases. If ``palette`` is a str then it is
+              assumed to be the name of a BioPsyKit palette (:const:`biopsykit.colors.FAU_COLORS`).
+            * ``figsize``: tuple specifying figure dimensions
+            * ``ensemble_alpha``: transparency value for ensemble plot errorband (around mean). Default: 0.3
+            * ``background_alpha``: transparency value for background spans (if subphases are present). Default: 0.2
+            * ``linestyle``: list of line styles for ensemble plots. Must match the number of phases to plot
+            * ``phase_text``: string pattern to customize phase name shown in legend with placeholder for subphase name.
+              Default: "{}"
+
+            To style axes:
+
+            * ``xlabel``: label of x axis. Default: ":math:`Time [s]`"
+            * ``xaxis_minor_tick_locator``: locator object to style x axis minor ticks. Default: 60 sec
+            * ``ylabel``: label of y axis. Default: ":math:`\Delta HR [\%]`"
+            * ``ylims``: y axis limits. Default: ``None`` to automatically infer limits
+
+            To style the annotations at the end of each phase:
+
+            * ``end_phase_text``: string pattern to customize text at the end of phase with placeholder for phase name.
+              Default: "{}"
+            * ``end_phase_line_color``: line color of vertical lines used to indicate end of phase. Default: "#e0e0e0"
+            * ``end_phase_line_width``: line width of vertical lines used  to indicate end of phase. Default: 2.0
+
+            To style legend:
+
+            * ``legend_loc``: location of legend. Default: "lower right"
+            * ``legend_bbox_to_anchor``: box that is used to position the legend in conjunction with ``legend_loc``
 
 
         Returns
@@ -1073,11 +1102,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         result_id : str
             identifier of the heart rate result data to be plotted
         **kwargs
-            additional  parameters to be passed to the plot, such as:
+            additional parameters to be passed to :func:`~biopsykit.protocols.plotting.hr_mean_plot` for
+            plot configuration, such as:
 
             * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created
               and returned.
-            * ``colormap``: colormap to plot data from different phases
             * ``figsize``: tuple specifying figure dimensions
             * ``x_offset``: offset value to move different groups along the x axis for better visualization.
               Default: 0.05
@@ -1105,8 +1134,10 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         See Also
         --------
+        :func:`~biopsykit.protocols.plotting.hr_mean_plot`
+            Plot heart rate data as lineplot with mean and standard error
         :func:`~biopsykit.plotting.lineplot`
-            Plot data as lineplot with mean and standard error
+            Plot generic data as lineplot with mean and standard error
 
         """
         data = mean_se_per_phase(self.hr_results[result_id])

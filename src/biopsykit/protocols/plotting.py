@@ -64,6 +64,7 @@ _saliva_feature_params: Dict[str, Dict[str, Any]] = {
             "auc": r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
             "auc_g": r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
             "auc_i": r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
+            "auc_i_post": r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
             "slope": r"Cortisol Change $\left[\frac{nmol}{l \cdot min} \right]$",
             "max": r"Cortisol $\left[\frac{nmol}{l} \right]$",
             "argmax": r"Cortisol $\left[\frac{nmol}{l} \right]$",

@@ -85,7 +85,7 @@ def ecg_plot(
     **kwargs
         Additional parameters to configure the plot. Parameters include:
 
-        * ``figsize``: figure size
+        * ``figsize``: Figure size
         * ``title``: Optional name to add to plot title (after "Electrocardiogram (ECG)")
         * ``legend_loc``: Location of legend in plot. Passed as `loc` parameter to :meth:`matplotlib.axes.Axes.legend`.
         * ``legend_fontsize``: Fontsize of legend text. Passed as `fontsize` parameter to

@@ -135,7 +135,8 @@ def load_withings_sleep_analyzer_raw_file(
     file_path : :class:`~pathlib.Path` or str
         path to file
     data_source : str
-        data source of file specified by ``file_path``
+        data source of file specified by ``file_path``. Must be one of
+        ['heart_rate', 'respiration_rate', 'sleep_state', 'snoring'].
     timezone : str or :class:`datetime.tzinfo`, optional
         timezone of recorded data, either as string or as tzinfo object.
         Default: 'Europe/Berlin'

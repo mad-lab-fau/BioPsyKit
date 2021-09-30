@@ -38,10 +38,7 @@ def load_eeg_raw_muse(file_path: path_t) -> Tuple[pd.DataFrame, float]:
     fs = MUSE_EEG_SAMPLING_RATE
     data = pd.read_csv(file_path)
 
-    _assert_has_columns(
-        data,
-        [["timestamps", "TP9", "AF7", "AF8", "TP10"]],
-    )
+    _assert_has_columns(data, [["timestamps", "TP9", "AF7", "AF8", "TP10"]])
     # convert timestamps to datetime object, set as dataframe index
     data["timestamps"] = pd.to_datetime(data["timestamps"], unit="s")
     data = data.set_index("timestamps")
