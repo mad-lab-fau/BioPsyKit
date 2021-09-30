@@ -2,14 +2,17 @@
 
 For most plots, BioPsyKit uses FAU's colors scheme.
 """
-from typing import Union, Sequence, Optional, Dict
+from typing import Sequence, Optional, Dict, Callable
 
 from colorsys import rgb_to_hls, hls_to_rgb
+from typing_extensions import Literal, get_args
+
 from matplotlib.colors import to_hex, to_rgb
 import seaborn as sns
 
 __all__ = [
     "FAU_COLORS",
+    "fau_palette_by_name",
     "fau_color_dict",
     "fau_palette",
     "fau_palette_blue",
@@ -22,7 +25,7 @@ __all__ = [
     "adjust_color",
 ]
 
-FAU_COLORS = ["fau", "tech", "phil", "med", "nat", "wiso"]
+FAU_COLORS = Literal["fau", "tech", "phil", "med", "nat", "wiso"]
 """
 Available color keys.
 """
@@ -43,22 +46,40 @@ fau_palette = sns.color_palette(fau_color_dict.values())  #: :meta hide-value:
 """FAU color palette that can be used with seaborn and matplotlib."""
 
 
-def fau_palette_blue(palette_type: Optional[str] = None) -> Sequence[str]:
+def fau_palette_by_name(name: FAU_COLORS) -> Callable:
+    """Return the function to create a FAU color palette by the name the color.
+
+    Parameters
+    ----------
+    name : str
+        Color name. Must be one of :const:`biopsykit.colors.FAU_COLORS`.
+
+    Returns
+    -------
+    function
+        function to create FAU color palette with
+
+    Examples
+    --------
+    >>> from biopsykit.colors import fau_palette_by_name
+    >>> fau_palette_by_name("tech")
+    <function biopsykit.colors.colors.fau_palette_tech()>
+
+    """
+    if name not in get_args(FAU_COLORS):
+        raise ValueError("'name' must be one of {}, got '{}'!".format(get_args(FAU_COLORS), name))
+    if name == "fau":
+        name = "blue"
+    return globals()["fau_palette_{}".format(name)]
+
+
+def fau_palette_blue(n_colors: Optional[int] = 8) -> Sequence[str]:
     """Return a seaborn palette with fau-blue color nuances.
 
-    By default, a palette with 10 color nuances is generated.
-    Using the ``palette_type`` parameter specialized palettes can be generated.
-
     Parameters
     ----------
-    palette_type : str, optional
-        Specify specialized color palette (or ``None`` to return default palette). Default: ``None``.
-        Available palette types:
-
-        * ``line_2``: For line plots with two elements
-        * ``line_3``: For line plots with three elements
-        * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
-        * ``box_2``: For boxplots with two elements
+    n_colors : int
+        number of colors in the palette. Default: 8
 
     Returns
     -------
@@ -66,250 +87,22 @@ def fau_palette_blue(palette_type: Optional[str] = None) -> Sequence[str]:
         list of RGB tuples
 
     """
-    # generated using this link: https://noeldelgado.github.io/shadowlord
-    fau_blue = sns.color_palette(
-        [
-            "#001628",
-            "#001c33",
-            "#002747",
-            "#002d51",
-            "#003865",
-            "#194c74",
-            "#336084",
-            "#4d7493",
-            "#809cb2",
-            "#b3c3d1",
-            "#e6ebf0",
-        ]
-    )
-    if palette_type == "line_3":
-        return [fau_blue[4], fau_blue[7], fau_blue[9]]
-    if palette_type == "ensemble":
-        return fau_blue[1::2]
-    if palette_type == "box_2":
-        return fau_blue[5::4]
-    if palette_type == "line_2":
-        return fau_blue[2::5]
-    return fau_blue
+    palette = sns.light_palette("#003865", n_colors=10, reverse=True)[:-2]
+    if n_colors <= 4:
+        palette = palette[:: len(palette) - (n_colors + 2)]
+    else:
+        palette = palette[:n_colors]
+
+    return palette
 
 
-def fau_palette_wiso(palette_type: Optional[str] = None) -> Sequence[str]:
-    """Return a seaborn palette with fau-wiso-red color nuances.
-
-    By default, a palette with 10 color nuances is generated.
-    Using the ``palette_type`` parameter specialized palettes can be generated.
-
-    Parameters
-    ----------
-    palette_type : str, optional
-        Specify specialized color palette (or ``None`` to return default palette). Default: ``None``.
-        Available palette types:
-
-        * ``line_2``: For line plots with two elements
-        * ``line_3``: For line plots with three elements
-        * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
-        * ``box_2``: For boxplots with two elements
-
-    Returns
-    -------
-    list of tuple
-        list of RGB tuples
-
-    """
-    # generated using this link: https://noeldelgado.github.io/shadowlord
-    fau_wiso = sns.color_palette(
-        [
-            "#1c0408",
-            "#2a060c",
-            "#380810",
-            "#470a15",
-            "#550c19",
-            "#711021",
-            "#8d1429",
-            "#a44354",
-            "#bb727f",
-            "#d1a1a9",
-            "#e8d0d4",
-        ]
-    )
-
-    if palette_type == "line_3":
-        return [fau_wiso[4], fau_wiso[7], fau_wiso[9]]
-    if palette_type == "ensemble_3":
-        return [fau_wiso[3], fau_wiso[5], fau_wiso[8]]
-    if palette_type == "box_2":
-        return fau_wiso[5::4]
-    if palette_type == "line_2":
-        return fau_wiso[2::5]
-    return fau_wiso
-
-
-def fau_palette_phil(palette_type: Union[str, None]) -> Sequence[str]:
-    """Return a seaborn palette with fau-phil-yellow color nuances.
-
-    By default, a palette with 10 color nuances is generated.
-    Using the ``palette_type`` parameter specialized palettes can be generated.
-
-    Parameters
-    ----------
-    palette_type : str, optional
-        Specify specialized color palette (or ``None`` to return default palette). Default: ``None``.
-        Available palette types:
-
-        * ``line_2``: For line plots with two elements
-        * ``line_3``: For line plots with three elements
-        * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
-        * ``box_2``: For boxplots with two elements
-
-    Returns
-    -------
-    list of tuple
-        list of RGB tuples
-
-    """
-    # generated using this link: https://noeldelgado.github.io/shadowlord
-    fau_phil = sns.color_palette(
-        [
-            "#3c2c06",
-            "#503b08",
-            "#654a0a",
-            "#79580b",
-            "#a1760f",
-            "#c99313",
-            "#d4a942",
-            "#dfbe71",
-            "#e4c989",
-            "#e9d4a1",
-            "#f4e9d0",
-        ]
-    )
-    if palette_type == "line_3":
-        return [fau_phil[4], fau_phil[7], fau_phil[9]]
-    if palette_type == "ensemble_3":
-        return [fau_phil[3], fau_phil[5], fau_phil[8]]
-    if palette_type == "box_2":
-        return fau_phil[5::4]
-    if palette_type == "line_2":
-        return fau_phil[2::5]
-    return fau_phil
-
-
-def fau_palette_med(palette_type: Union[str, None]) -> Sequence[str]:
-    """Return a seaborn palette with fau-med-light-blue color nuances.
-
-    By default, a palette with 10 color nuances is generated.
-    Using the ``palette_type`` parameter specialized palettes can be generated.
-
-    Parameters
-    ----------
-    palette_type : str, optional
-        Specify specialized color palette (or ``None`` to return default palette). Default: ``None``.
-        Available palette types:
-
-        * ``line_2``: For line plots with two elements
-        * ``line_3``: For line plots with three elements
-        * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
-        * ``box_2``: For boxplots with two elements
-
-    Returns
-    -------
-    list of tuple
-        list of RGB tuples
-
-    """
-    # generated using this link: https://noeldelgado.github.io/shadowlord
-    fau_med = sns.color_palette(
-        [
-            "#00232f",
-            "#003547",
-            "#00475e",
-            "#005976",
-            "#006a8d",
-            "#008ebc",
-            "#00b1eb",
-            "#33c1ef",
-            "#66d0f3",
-            "#99e0f7",
-            "#cceffb",
-        ]
-    )
-    if palette_type == "line_3":
-        return [fau_med[4], fau_med[7], fau_med[9]]
-    if palette_type == "ensemble_3":
-        return [fau_med[3], fau_med[5], fau_med[8]]
-    if palette_type == "box_2":
-        return fau_med[5::4]
-    if palette_type == "line_2":
-        return fau_med[2::5]
-    return fau_med
-
-
-def fau_palette_nat(palette_type: Union[str, None]) -> Sequence[str]:
-    """Return a seaborn palette with fau-med-light-blue color nuances.
-
-    By default, a palette with 10 color nuances is generated.
-    Using the ``palette_type`` parameter specialized palettes can be generated.
-
-    Parameters
-    ----------
-    palette_type : str, optional
-        Specify specialized color palette (or ``None`` to return default palette). Default: ``None``.
-        Available palette types:
-
-        * ``line_2``: For line plots with two elements
-        * ``line_3``: For line plots with three elements
-        * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
-        * ``box_2``: For boxplots with two elements
-
-    Returns
-    -------
-    list of tuple
-        list of RGB tuples
-
-    """
-    # generated using this link: https://noeldelgado.github.io/shadowlord
-    fau_nat = sns.color_palette(
-        [
-            "#001f18",
-            "#002f24",
-            "#003e30",
-            "#004e3c",
-            "#005d47",
-            "#007c5f",
-            "#009b77",
-            "#33af92",
-            "#66c3ad",
-            "#99d7c9",
-            "#ccebe4",
-        ]
-    )
-    if palette_type == "line_3":
-        return [fau_nat[4], fau_nat[7], fau_nat[9]]
-    if palette_type == "ensemble_3":
-        return [fau_nat[3], fau_nat[5], fau_nat[8]]
-    if palette_type == "box_2":
-        return fau_nat[5::4]
-    if palette_type == "line_2":
-        return fau_nat[2::5]
-    return fau_nat
-
-
-def fau_palette_tech(palette_type: Union[str, None]) -> Sequence[str]:
+def fau_palette_tech(n_colors: Optional[int] = 8) -> Sequence[str]:
     """Return a seaborn palette with fau-tech-grey color nuances.
 
-    By default, a palette with 10 color nuances is generated.
-    Using the ``palette_type`` parameter specialized palettes can be generated.
-
     Parameters
     ----------
-    palette_type : str, optional
-        Specify specialized color palette (or ``None`` to return default palette). Default: ``None``.
-        Available palette types:
-
-        * ``line_2``: For line plots with two elements
-        * ``line_3``: For line plots with three elements
-        * ``ensemble_3``: For ensemble plots (mean ± std) with three elements
-        * ``box_2``: For boxplots with two elements
+    n_colors : int
+        number of colors in the palette. Default: 8
 
     Returns
     -------
@@ -317,40 +110,114 @@ def fau_palette_tech(palette_type: Union[str, None]) -> Sequence[str]:
         list of RGB tuples
 
     """
-    # generated using this link: https://noeldelgado.github.io/shadowlord
-    fau_tech = sns.color_palette(
-        [
-            "#1e2123",
-            "#2e3134",
-            "#3d4246",
-            "#5b6268",
-            "#6a737a",
-            "#7a838b",
-            "#98a4ae",
-            "#adb6be",
-            "#b7bfc6",
-            "#c1c8ce",
-            "#d6dbdf",
-        ]
-    )
-    if palette_type == "line_3":
-        return [fau_tech[4], fau_tech[7], fau_tech[9]]
-    if palette_type == "ensemble_3":
-        return [fau_tech[3], fau_tech[5], fau_tech[8]]
-    if palette_type == "box_2":
-        return fau_tech[4::4]
-    if palette_type == "line_2":
-        return fau_tech[3::4][::-1]
-    return fau_tech
+    palette = sns.dark_palette("#98a4ae", n_colors=10, reverse=True)[:-2]
+    if n_colors <= 4:
+        palette = palette[:: len(palette) - (n_colors + 2)]
+    else:
+        palette = palette[:n_colors]
+
+    return palette
 
 
-def fau_color(color: str) -> str:
+def fau_palette_phil(n_colors: Optional[int] = 8) -> Sequence[str]:
+    """Return a seaborn palette with fau-phil-yellow color nuances.
+
+    Parameters
+    ----------
+    n_colors : int
+        number of colors in the palette. Default: 8
+
+    Returns
+    -------
+    list of tuple
+        list of RGB tuples
+
+    """
+    palette = sns.dark_palette("#c99313", n_colors=10, reverse=True)[:-2]
+    if n_colors <= 4:
+        palette = palette[:: len(palette) - (n_colors + 2)]
+    else:
+        palette = palette[:n_colors]
+
+    return palette
+
+
+def fau_palette_med(n_colors: Optional[int] = 8) -> Sequence[str]:
+    """Return a seaborn palette with fau-med-light-blue color nuances.
+
+    Parameters
+    ----------
+    n_colors : int
+        number of colors in the palette. Default: 8
+
+    Returns
+    -------
+    list of tuple
+        list of RGB tuples
+
+    """
+    palette = sns.dark_palette("#00b1eb", n_colors=10, reverse=True)[:-2]
+    if n_colors <= 4:
+        palette = palette[:: len(palette) - (n_colors + 2)]
+    else:
+        palette = palette[:n_colors]
+
+    return palette
+
+
+def fau_palette_nat(n_colors: Optional[int] = 8) -> Sequence[str]:
+    """Return a seaborn palette with fau-nat-green color nuances.
+
+    Parameters
+    ----------
+    n_colors : int
+        number of colors in the palette. Default: 8
+
+    Returns
+    -------
+    list of tuple
+        list of RGB tuples
+
+    """
+    palette = sns.dark_palette("#009b77", n_colors=10, reverse=True)[:-2]
+    if n_colors <= 4:
+        palette = palette[:: len(palette) - (n_colors + 2)]
+    else:
+        palette = palette[:n_colors]
+
+    return palette
+
+
+def fau_palette_wiso(n_colors: Optional[int] = 8) -> Sequence[str]:
+    """Return a seaborn palette with fau-wiso-red color nuances.
+
+    Parameters
+    ----------
+    n_colors : int
+        number of colors in the palette. Default: 8
+
+    Returns
+    -------
+    list of tuple
+        list of RGB tuples
+
+    """
+    palette = sns.light_palette("#8d1429", n_colors=10, reverse=True)[:-2]
+    if n_colors <= 4:
+        palette = palette[:: len(palette) - (n_colors + 2)]
+    else:
+        palette = palette[:n_colors]
+
+    return palette
+
+
+def fau_color(color: FAU_COLORS) -> str:
     """Return the color specified by ``color`` as hex string.
 
     Parameters
     ----------
     color : str
-        Color key. Must be one of :const:`biopsykit.colors.FAU_COLORS`
+        Color key. Must be one of :const:`biopsykit.colors.FAU_COLORS`.
 
     Returns
     -------
@@ -358,16 +225,18 @@ def fau_color(color: str) -> str:
         color as hex string
 
     """
+    if color not in get_args(FAU_COLORS):
+        raise ValueError("'color' must be one of {}, got '{}'!".format(get_args(FAU_COLORS), color))
     return fau_color_dict[color]
 
 
-def adjust_color(key: str, amount: Optional[float] = 1.5) -> str:
+def adjust_color(key: FAU_COLORS, amount: Optional[float] = 1.5) -> str:
     """Adjust a FAU color in its brightness.
 
     Parameters
     ----------
     key : str
-        color string
+        Color key. Must be one of :const:`biopsykit.colors.FAU_COLORS`.
     amount : float, optional
         Parameter to adjust brightness. An ``amount`` value < 1 results in a darker color,
         an ``amount`` value > 1 results in a brighter color.
@@ -375,7 +244,7 @@ def adjust_color(key: str, amount: Optional[float] = 1.5) -> str:
     Returns
     -------
     str
-        adjusted color as hex code
+        adjusted FAU color as hex code
 
     """
     c = rgb_to_hls(*to_rgb(fau_color(key)))
