@@ -53,6 +53,7 @@ def strip_labels(data: Union[pd.DataFrame, pd.Series], label_col: Optional[str] 
         array with labels
 
     """
+    # TODO change to dataframe column
     if label_col is None:
         label_col = "label"
     if isinstance(data, pd.DataFrame):
