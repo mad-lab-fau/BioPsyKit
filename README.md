@@ -34,15 +34,28 @@ With this package you have everything you need for analyzing biopsychological da
     * NilsPod binary (`.bin`) files (requires [`NilsPodLib`](https://github.com/mad-lab-fau/NilsPodLib))
     * Other sensor types (_coming soon_)
 * Splitting data into single study parts (based on time intervals) that will be analyzed separately
-* Perform ECG processing, including:
+* Performing ECG processing, including:
     * R peak detection (using [`Neurokit`](https://github.com/neuropsychology/NeuroKit))
     * R peak outlier removal and interpolation
     * HRV feature computation
     * ECG-derived respiration (EDR) estimation for respiration rate and respiratory sinus arrhythmia (RSA) 
       (_experimental_)
-    * Resample instantaneous heart rate data 
-    * Compute aggregated results (e.g., mean and standard error) per study part
-* Create plots for visualizing processing results
+    * Instantaneous heart rate resampling 
+    * Computing aggregated results (e.g., mean and standard error) per study part
+* Creating plots for visualizing processing results
+
+#### Quick Example
+```python
+from biopsykit.signals.ecg import EcgProcessor
+from biopsykit.example_data import get_ecg_example
+
+ecg_data, sampling_rate = get_ecg_example()
+
+ep = EcgProcessor(ecg_data, sampling_rate)
+ep.ecg_process()
+
+print(ep.ecg_result)
+```
 
 ... more biosignals coming soon!
 
@@ -150,6 +163,9 @@ tsst.add_saliva_data(saliva_data, saliva_type="cortisol")
 # add heart rate data collected during the "TSST" study part
 tsst.add_hr_data(hr_subject_data_dict, study_part="TSST")
 ```
+
+### Statistical Analysis
+
 
 ## Installation
 
