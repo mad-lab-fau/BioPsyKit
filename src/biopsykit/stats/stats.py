@@ -165,6 +165,7 @@ class StatsPipeline:
         self.data: Optional[pd.DataFrame] = None
         self.results: Dict[str, pd.DataFrame] = {}
         self.category_steps = {}
+        self.round = kwargs.get("round", {col: 4 for col in _sig_cols})
         for step in self.steps:
             self.category_steps.setdefault(step[0], [])
             self.category_steps[step[0]].append(step[1])
@@ -677,7 +678,7 @@ class StatsPipeline:
         stats_data = stats_data.set_index(x)
         return stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
 
-    def _display_category(
+    def _display_category(  # pylint:disable=too-many-branches
         self, category: str, steps: Sequence[str], sig_only: Dict[str, bool], groupby: str, group_key: str
     ):
         try:
@@ -698,4 +699,7 @@ class StatsPipeline:
                 if df.empty:
                     display(Markdown("*No significant p-values.*"))
                     continue
-            display(df)
+            if self.round is None:
+                display(df)
+            else:
+                display(df.round(self.round))
