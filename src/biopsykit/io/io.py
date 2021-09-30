@@ -1,7 +1,7 @@
 """Module containing different I/O functions to load time log data, subject condition lists, questionnaire data, etc."""
 
 from pathlib import Path
-from typing import Optional, Union, Sequence, Dict
+from typing import Optional, Union, Sequence, Dict, Tuple
 
 import datetime
 import pytz
@@ -43,7 +43,9 @@ __all__ = [
 
 def load_time_log(
     file_path: path_t,
-    index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None,
+    subject_col: Optional[str] = None,
+    condition_col: Optional[str] = None,
+    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
     phase_cols: Optional[Union[Sequence[str], Dict[str, str]]] = None,
     continuous_time: Optional[bool] = True,
     **kwargs,
@@ -57,11 +59,20 @@ def load_time_log(
     ----------
     file_path : :class:`~pathlib.Path` or str
         path to time log file. Must either be an Excel or csv file
-    index_cols : str, list of str or dict, optional
-        specifies dataframe index. Can either be a string or a list of strings to indicate column name(s) from the
-        dataframe that should be used as index level(s), or ``None`` for no index.
-        If the index levels of the time log dataframe should have different names than the columns in the file,
-        a dict specifying the mapping (column_name : new_index_name) can be passed. Default: ``None``
+    subject_col : str, optional
+        name of column containing subject IDs or ``None`` to use default column name ``subject``.
+        According to BioPsyKit's convention, the subject ID column is expected to have the name ``subject``.
+        If the subject ID column in the file has another name, the column will be renamed in the dataframe
+        returned by this function.
+    condition_col : str, optional
+        name of column containing condition assignments or ``None`` to use default column name ``condition``.
+        According to BioPsyKit's convention, the condition column is expected to have the name ``condition``.
+        If the condition column in the file has another name, the column will be renamed in the dataframe
+        returned by this function.
+    additional_index_cols : str, list of str, optional
+        additional index levels to be added to the dataframe.
+        Can either be a string or a list strings to indicate column name(s) that should be used as index level(s),
+        or ``None`` for no additional index levels. Default: ``None``
     phase_cols : list of str or dict, optional
         list of column names that contain time log information or ``None`` to use all columns.
         If the column names of the time log dataframe should have different names than the columns in the file,
@@ -95,21 +106,22 @@ def load_time_log(
     >>> # load time log file into a pandas dataframe
     >>> data = bp.io.load_time_log(file_path)
     >>> # Example 2:
-    >>> # load time log file into a pandas dataframe and specify the 'subject_id' column
-    >>> # in the time log file to be the index of the dataframe
-    >>> data = bp.io.load_time_log(file_path, index_cols="subject_id")
+    >>> # load time log file into a pandas dataframe and specify the "ID" column
+    >>> # (instead of the default "subject" column) in the time log file to be the index of the dataframe
+    >>> data = bp.io.load_time_log(file_path, subject_col="ID")
     >>> # Example 3:
-    >>> # load time log file into a pandas dataframe, specify the columns "subject_id" and "condition"
-    >>> # to be the new index, and the columns 'Phase1' 'Phase2' and 'Phase3' to be used
-    >>> # for extracting time information
+    >>> # load time log file into a pandas dataframe and specify the columns "Phase1", "Phase2", and "Phase3"
+    >>> # to be used for extracting time information
     >>> data = bp.io.load_time_log(
-    >>>     file_path, index_cols=["subject_id", "condition"], phase_cols=["Phase1", "Phase2", "Phase3"]
+    >>>     file_path, phase_cols=["Phase1", "Phase2", "Phase3"]
     >>> )
     >>> # Example 4:
-    >>> # load time log file into a pandas dataframe and specify the column "subject_id" as index, but the index name
-    >>> # in the dataframe should be "subject"
+    >>> # load time log file into a pandas dataframe and specify the column "ID" as subject column, the column "Group"
+    >>> # as condition column, as well as the column "Time" as additional index column.
     >>> data = bp.io.load_time_log(file_path,
-    >>>     index_cols={"subject_id": "subject"},
+    >>>     subject_col="ID",
+    >>>     condition_col="Group",
+    >>>     additional_index_cols=["Time"],
     >>>     phase_cols=["Phase1", "Phase2", "Phase3"]
     >>> )
 
@@ -123,8 +135,9 @@ def load_time_log(
     kwargs["dtype"] = str
     data = _load_dataframe(file_path, **kwargs)
 
-    data = _apply_index_cols(data, index_cols)
-    data = _apply_phase_cols(data, phase_cols)
+    data, index_cols = _sanitize_index_cols(data, subject_col, condition_col, additional_index_cols)
+    data = _apply_index_cols(data, index_cols=index_cols)
+    data = _apply_phase_cols(data, phase_cols=phase_cols)
 
     if not continuous_time:
         data = _parse_time_log_not_continuous(data, index_cols)
@@ -274,8 +287,38 @@ def load_subject_condition_list(
 def _get_subject_col(data: pd.DataFrame, subject_col: str):
     if subject_col is None:
         subject_col = "subject"
+    _assert_is_dtype(subject_col, str)
     _assert_has_columns(data, [[subject_col]])
     return subject_col
+
+
+def _sanitize_index_cols(
+    data: pd.DataFrame,
+    subject_col: str,
+    condition_col: Optional[str],
+    additional_index_cols: Optional[Union[str, Sequence[str]]],
+) -> Tuple[pd.DataFrame, Sequence[str]]:
+    subject_col = _get_subject_col(data, subject_col)
+    data = data.rename(columns={subject_col: "subject"})
+    subject_col = "subject"
+    index_cols = [subject_col]
+
+    if condition_col is not None:
+        _assert_is_dtype(condition_col, str)
+        _assert_has_columns(data, [[condition_col]])
+        data = data.rename(columns={condition_col: "condition"})
+        condition_col = "condition"
+        index_cols.append(condition_col)
+    elif "condition" in data.columns:
+        index_cols.append("condition")
+
+    if additional_index_cols is None:
+        additional_index_cols = []
+    if isinstance(additional_index_cols, str):
+        additional_index_cols = [additional_index_cols]
+
+    index_cols = index_cols + additional_index_cols
+    return data, index_cols
 
 
 def load_questionnaire_data(
@@ -340,24 +383,7 @@ def load_questionnaire_data(
     if file_path.suffix != ".csv":
         kwargs["sheet_name"] = sheet_name
     data = _load_dataframe(file_path, **kwargs)
-
-    subject_col = _get_subject_col(data, subject_col)
-    data = data.rename(columns={subject_col: "subject"})
-    subject_col = "subject"
-    index_cols = [subject_col]
-
-    if condition_col is not None:
-        _assert_has_columns(data, [[condition_col]])
-        data = data.rename(columns={condition_col: "condition"})
-        condition_col = "condition"
-        index_cols.append(condition_col)
-
-    if additional_index_cols is None:
-        additional_index_cols = []
-    if isinstance(additional_index_cols, str):
-        additional_index_cols = [additional_index_cols]
-
-    index_cols = index_cols + additional_index_cols
+    data, index_cols = _sanitize_index_cols(data, subject_col, condition_col, additional_index_cols)
     data = _apply_index_cols(data, index_cols=index_cols)
 
     if replace_missing_vals:
@@ -405,6 +431,7 @@ def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
 
     _assert_has_columns(data, [["variable"]])
     data = data.set_index("variable")
+    data.columns = data.columns.astype(int)
     is_codebook_dataframe(data)
 
     return _CodebookDataFrame(data)
