@@ -162,6 +162,19 @@ hr_subject_data_dict = get_hr_subject_data_dict_example()
 tsst.add_saliva_data(saliva_data, saliva_type="cortisol")
 # add heart rate data collected during the "TSST" study part
 tsst.add_hr_data(hr_subject_data_dict, study_part="TSST")
+# compute heart rate results: normalize ECG data relative to "Preparation" phase; afterwards, use data from the 
+# "Talk" and "Math" phases and compute the average heart rate for each subject and study phase, respectively
+tsst.compute_hr_results(
+    result_id="hr_mean",
+    study_part="TSST",
+    normalize_to=True,
+    select_phases=True,
+    mean_per_subject=True,
+    params={
+        "normalize_to": "Preparation",
+        "select_phases": ["Talk", "Math"]
+    }
+)
 ```
 
 ### Statistical Analysis
