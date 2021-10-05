@@ -1,6 +1,6 @@
 # Ignore result folder in examples
 examples/results/
-example_data/log_data/AB12C
+example_data/log_data/AB12C/
 
 docs/readme.md
 docs/source/about/authors.md
