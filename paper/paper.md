@@ -35,33 +35,36 @@ bibliography: paper.bib
 ---
 
 # Summary
-
-Biopsychology is a field of psychology that analyzes how biological processes interact with behaviour, emotion, 
+_Biopsychology_ is a field of psychology that analyzes how biological processes interact with behaviour, emotion, 
 cognition, and other mental processes. Biopsychology covers, among others, the topics of sensation and perception, 
 emotion regulation, movement (and control of such), sleep and biological rhythms, as well as acute and chronic stress.
 
-To assess the interaction between biological and mental processes a variety of different methods are used in the 
-field of biopsychology, such as _electrophysiology_, assessed via biosignals like electrocardiogram (ECG), 
-electrodermal activity (EDA), electromyogram (EMG), or electroencephalogram (EEG), _neuroendocrine and inflammatory 
-biomarker_, assessed via saliva- and blood-based samples, _self-reports_, assessed via psychological questionnaires, 
-as well as _sleep, activity and movement_, assessed via inertial measurement units (IMUs).
+To assess the interaction between biological and mental processes a variety of different modalities are used in the 
+field of biopsychology, such as _electrophysiology_, assessed, for instance, via electrocardiography (ECG), 
+electrodermal activity (EDA), or electroencephalography (EEG), _sleep, activity and movement_, assessed via inertial measurement units (IMUs), _neuroendocrine and inflammatory 
+biomarker_, assessed by saliva and blood samples, as well as _self-reports_, assessed via psychological questionnaires. 
 
-These methods are used to collect data either during standardized procedures in the laboratory or in the wild. 
+These different modalities are collected either "in the lab", during standardized laboratory protocols, or "in the wild", during unsupervised protocols in home environments. 
 The collected data are typically analyzed using statistical methods, or, more recently, using machine learning methods.
 
-In order to combine all these tools necessary for a researcher in the field of biopsychology into 
-one single Python package we developed `BioPsyKit`.
+
+While some software packages exist that allow for the analysis of single data modalities, such as electrophysiological data, or sleep, activity and movement data, no packages are available for the analysis of other modalities, such as neuroendocrine and inflammatory biomarker, and self-reports. In order to fill this gap, and, simultaneously, to combine all required tools analyzing biopsychological data from beginning to end into one single Python package, we developed `BioPsyKit`.
 
 
 # Statement of need
-Researchers in biopsychology often combine different assessment modalities during experiments in order to capture the 
-interaction between biological and mental processes. One example might be collecting salivary biomarker 
-(e.g., cortisol) during an acute stress protocol and investigating the correlation between biomarker and psychometric 
-data assessed via self-reports, such as perceived stress, state anxiety, or positive/negative affect. 
-However, currently, there exist no Python package that allows to systematically combine, process, and analyze these 
-different data modalities out of one hand by using one common API. For that reason `BioPsyKit` enables researchers to 
-write cleaner and reproducible analysis code, export analysis results in a standardized format, and create high 
-quality figures with for scientific publications. 
+Researchers in biopsychology often face the challenge to analyze data from different assessment modalities during experiments in order to capture the 
+complex interaction between biological and mental processes. 
+
+One example might be collecting (electro)physiological (e.g., ECG) or 
+salivary biomarkers (e.g., cortisol) during an acute stress protocol, and investigating the correlation 
+between biomarkers and psychometric data assessed via self-reports, such as perceived stress, state anxiety, 
+or positive/negative affect. Another example is the assessment of relationships between sleep and neuroendocrine responses in the morning. To assess the 
+beginning and end of sleep periods, as well as other sleep-related parameters, researchers typically use inertial measurement units (IMUs) or activity trackers. These data are then combined with psychometric data from self-reports (e.g., sleep quality, stress coping, etc.) and data from saliva samples to assess the cortisol awakening response (CAR) in the morning.
+
+While some packages already address a subset of these different applications, such as `Neurokit2` [@Makowski2021] for the analysis of (electro)physiological data, `SleepPy` (Python) [@Christakis2019] or GGIR (R) [@Migueles2019] for sleep analysis from accelerometer data, no software package exists that unites all these different, heterogeneous data modalities under one umbrella. Furthermore, and to the best of our knowledge, no software packages exist that allow a standardized analysis of neuroendocrine biomarker without the requirement to write analysis code from scratch. Likewise, no software packages that implement established psychological questionnaires, allowing to compute questionnaire (sub)scales from raw questionnaire items, have been published to date.  
+
+For that reason `BioPsyKit` addresses these limitations and offers all necessary building blocks for the analysis of biopsychological data. Our software package allows to systematically combine, process, and analyze data from different modalities using one common API. This enables researchers to write cleaner and better to reproduce analysis code, to export results in a 
+standardized format, and to create high quality figures with for scientific publications. 
 
 # BioPsyKit Structure
 
@@ -77,7 +80,7 @@ The module `biopsykit.signals` can be used for the analysis of various (electro)
 (ECG, EEG, Respiration, Motion, and more). This includes:
 
 - Classes to create processing pipelines for various physiological signals and for extracting relevant parameters 
-  from these signals. For physiological signal processing, `BioPsyKit` internally relies on the `neurokit2` 
+  from these signals. For physiological signal processing, `BioPsyKit` internally relies on the `Neurokit2` 
   Python library [@Makowski2021], but offers further functionalities (e.g., the possibility to apply different outlier 
   removal techniques R peaks extracted from ECG data).  
 - Plotting functions specialized for visualizing different physiological signals.
@@ -110,12 +113,10 @@ questionnaires. This includes:
 
 
 ## Support for Psychological Protocols
-The module `biopsykit.protocols` can be used for analyzing data collected during various psychological protocols.
-This includes:
+The module `biopsykit.protocols` provides an object-oriented interface for psychological protocols. On the one hand, it serves as data structure to store and access data collected during this psychological protocol from different modalities. On the other hand, the object-oriented interface allows to conveniently compute analysis results from the data added to the particular protocol instance, to export results, and to create plots for data visualization. This includes:
 
-- Protocols for the assessment of acute stress in the laboratory, e.g., Trier Social Stress Test (TSST) 
-  [@Kirschbaum1993], Montreal Imaging Stress Task (MIST) [@Dedovic2005]. 
-- Protocols for the assessment of biological rhythms in the wild (e.g., Cortisol Awakening Response (CAR)).
+- Protocols for the assessment of biological rhythms, especially acute stress, in the laboratory, e.g., Trier Social Stress Test (TSST) [@Kirschbaum1993] or Montreal Imaging Stress Task (MIST) [@Dedovic2005]. 
+- Protocols for the assessment of biological rhythms in the wild, e.g., Cortisol Awakening Response (CAR).
 - Specialized plotting functions for standardized visualization of data collected during these psychological protocols 
   (such as, heart rate data: \autoref{fig:hr_mist}, saliva data: \autoref{fig:saliva_tsst_mist}).
 
@@ -144,8 +145,13 @@ and to visualize and export statistical analysis results in a standardized way (
 `biopsykit.classification` provides functions to set up, optimize and evaluate different machine learning pipelines 
 for biopsychological problems.
 
-![Example plot for adding statistical analysis results to boxplots.\label{fig:stats_boxplot}](img/img_questionnaire_panas.pdf){ width=60% }
 
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.6\textwidth]{img/img_questionnaire_panas.pdf}
+\caption{Example plot for adding statistical analysis results to boxplots.}
+\label{fig:stats_boxplot}
+\end{figure}
 
 
 # Availability
