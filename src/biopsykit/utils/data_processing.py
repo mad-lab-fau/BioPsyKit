@@ -513,7 +513,7 @@ def get_subphase_durations(
       i.e., each subphase begins right after the previous one, and the entries indicate the *durations* of each
       subphase. The start and end times of each subphase will then be computed from the subphase durations.
     * If the dictionary entries in ``subphases`` are tuples, it's assumed that the start and end times of each
-    subphase are directly provided.
+      subphase are directly provided.
 
     .. note::
         If the duration of the last subphase is unknown (e.g., because it has variable length) this can be

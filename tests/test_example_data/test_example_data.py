@@ -1,11 +1,12 @@
+import unittest.mock
 from contextlib import contextmanager
-from pathlib import Path
+from inspect import getmembers, isfunction
 
 import pandas as pd
 import pytest
 
+import biopsykit.example_data
 from biopsykit.example_data import *
-from biopsykit.example_data import get_eeg_example, get_questionnaire_example_wrong_range
 from biopsykit.questionnaires import pss
 from biopsykit.questionnaires.utils import find_cols
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns, _assert_has_index_levels
@@ -27,32 +28,20 @@ def does_not_raise():
     yield
 
 
-# TODO add new Test Class with pre-and post-test hook that allows to test example data downloading
-#  (by modifying example_data.__init__() so that it can't be found anymore, pretending the package wasn't installed
-#  manually and data is downloaded from remote)
-
-
 class TestExampleData:
-    @pytest.mark.parametrize(
-        "file_path, expected",
-        [
-            ("condition_list.csv", does_not_raise()),
-            ("test.csv", pytest.raises(ValueError)),
-        ],
-    )
-    def test_get_file_path_raises(self, file_path, expected):
-        with expected:
-            get_file_path(file_path)
+    def test_get_data_called(self):
+        funcs = dict(getmembers(biopsykit.example_data, isfunction))
+        funcs = {k: v for k, v in funcs.items() if k.startswith("get_")}
 
-    @pytest.mark.parametrize(
-        "file_path",
-        [
-            "condition_list.csv",
-        ],
-    )
-    def test_get_file_path(self, file_path):
-        file_path = get_file_path(file_path)
-        _assert_is_dtype(file_path, Path)
+        old_get_data = biopsykit.example_data._get_data
+        with unittest.mock.patch("biopsykit.example_data._get_data") as mock:
+            for func_name, func in funcs.items():
+                mock.side_effect = old_get_data
+                if func_name in ["get_sleep_analyzer_raw_file", "get_sleep_analyzer_raw_file_unformatted"]:
+                    func("heart_rate")
+                else:
+                    func()
+                mock.assert_called()
 
     def test_get_condition_list_example(self):
         data = get_condition_list_example()
