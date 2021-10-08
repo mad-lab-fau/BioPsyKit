@@ -64,6 +64,8 @@ toml = "^0.10.1"
 memory_profiler = "^0.57.0"
 coverage-badge = "^1.0.1"
 isort = "^5.9.3"
+sphinx-copybutton = "^0.4.0"
+nbsphinx = "^0.8.7"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
