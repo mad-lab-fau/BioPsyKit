@@ -1,0 +1,21 @@
+
+.button {
+  font-size:15px;
+  text-align: center;
+  padding: 10px 0;
+  width:200px !important;
+  height:50px !important;
+  border-width:0px;
+  color:#ffffff;
+  border-color:#124d77;
+  border-top-left-radius:5px;
+  border-top-right-radius:5px;
+  border-bottom-left-radius:5px;
+  border-bottom-right-radius:5px;
+  background:rgba(17, 7, 80, 1);
+}
+
+.button:hover {
+  background: rgba(21, 9, 96, 1)
+}
+
