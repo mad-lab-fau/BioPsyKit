@@ -17,20 +17,20 @@ with subscale names as keys and the corresponding column names (as list of str) 
     questionnaire item columns, which typically also start with index 1!
 
 """
-from typing import Optional, Sequence, Union, Dict
-from typing_extensions import Literal
+from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Literal
 
 from biopsykit.questionnaires.utils import (
-    invert,
-    bin_scale,
-    to_idx,
     _compute_questionnaire_subscales,
     _invert_subscales,
+    bin_scale,
+    invert,
+    to_idx,
 )
-from biopsykit.utils._datatype_validation_helper import _assert_value_range, _assert_num_columns, _assert_has_columns
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_num_columns, _assert_value_range
 from biopsykit.utils.exceptions import ValueRangeError
 
 

@@ -1,8 +1,7 @@
 """Module with functions for model selection using "nested" cross-validation."""
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
-
 from sklearn.metrics import confusion_matrix, get_scorer
 from sklearn.model_selection import BaseCrossValidator, GridSearchCV
 from sklearn.pipeline import Pipeline

@@ -1,8 +1,8 @@
 """Extract features from static moments of IMU data."""
-from typing import Optional, Union, Tuple
+from typing import Optional, Tuple, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from scipy.stats import skew
 
 from biopsykit.utils.array_handling import sanitize_input_nd

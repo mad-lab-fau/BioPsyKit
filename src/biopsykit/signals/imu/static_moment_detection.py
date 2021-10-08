@@ -1,18 +1,18 @@
 """A set of util functions to detect static regions in a IMU signal given certain constrains."""
-from typing import Sequence, Tuple, Optional, Union
-from typing_extensions import Literal
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
-from numpy.linalg import norm
 import pandas as pd
+from numpy.linalg import norm
+from typing_extensions import Literal
 
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import (
-    sliding_window_view,
     _bool_fill,
     bool_array_to_start_end_array,
     sanitize_input_nd,
     sanitize_sliding_window_input,
+    sliding_window_view,
 )
 
 # supported metric functions

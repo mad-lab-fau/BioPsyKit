@@ -1,42 +1,40 @@
 """Module implementing a base class to represent psychological protocols."""
-from pathlib import Path
-from typing import Dict, Sequence, Union, Tuple, Optional, Any, Iterable, Type
-
 import json
+from pathlib import Path
+from typing import Any, Dict, Iterable, Optional, Sequence, Tuple, Type, Union
 
-import pandas as pd
 import matplotlib.pyplot as plt
-
+import pandas as pd
 from tqdm.auto import tqdm
 
 import biopsykit.protocols.plotting as plot
 from biopsykit.io import write_pandas_dict_excel
 from biopsykit.protocols._utils import _check_sample_times_match, _get_sample_times
 from biopsykit.signals.ecg import EcgProcessor
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_file_extension
-from biopsykit.utils._types import path_t, T
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dtype
+from biopsykit.utils._types import T, path_t
 from biopsykit.utils.data_processing import (
-    resample_dict_sec,
-    select_dict_phases,
-    normalize_to_phase,
     add_subject_conditions,
     cut_phases_to_shortest,
     mean_per_subject_dict,
-    rearrange_subject_data_dict,
-    split_dict_into_subphases,
-    merge_study_data_dict,
     mean_se_per_phase,
+    merge_study_data_dict,
+    normalize_to_phase,
+    rearrange_subject_data_dict,
+    resample_dict_sec,
+    select_dict_phases,
+    split_dict_into_subphases,
     split_subject_conditions,
 )
 from biopsykit.utils.datatype_helper import (
     HeartRateSubjectDataDict,
-    SalivaRawDataFrame,
-    is_saliva_raw_dataframe,
-    SubjectDataDict,
     SalivaFeatureDataFrame,
-    is_saliva_mean_se_dataframe,
-    is_subject_data_dict,
+    SalivaRawDataFrame,
+    SubjectDataDict,
     is_hr_subject_data_dict,
+    is_saliva_mean_se_dataframe,
+    is_saliva_raw_dataframe,
+    is_subject_data_dict,
 )
 from biopsykit.utils.exceptions import ValidationError
 

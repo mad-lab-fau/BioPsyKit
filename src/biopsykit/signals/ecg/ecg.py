@@ -1,29 +1,24 @@
 """Module for processing ECG data."""
-from typing import Optional, Dict, Tuple, Union, Sequence, Callable, List
+from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-
 from scipy.stats import iqr
 from tqdm.auto import tqdm
 
 from biopsykit.signals._base import _BaseProcessor
+from biopsykit.utils.array_handling import find_extrema_in_radius, remove_outlier_and_interpolate, sanitize_input_1d
 from biopsykit.utils.datatype_helper import (
-    HeartRatePhaseDict,
     EcgRawDataFrame,
     EcgResultDataFrame,
+    HeartRatePhaseDict,
     RPeakDataFrame,
+    _EcgResultDataFrame,
+    _RPeakDataFrame,
     is_ecg_raw_dataframe,
     is_ecg_result_dataframe,
     is_r_peak_dataframe,
-    _EcgResultDataFrame,
-    _RPeakDataFrame,
-)
-from biopsykit.utils.array_handling import (
-    find_extrema_in_radius,
-    remove_outlier_and_interpolate,
-    sanitize_input_1d,
 )
 
 __all__ = ["EcgProcessor"]

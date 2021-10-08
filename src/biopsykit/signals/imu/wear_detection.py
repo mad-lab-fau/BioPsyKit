@@ -1,12 +1,12 @@
 """Module for detection non-wear times from raw acceleration signals."""
 import datetime
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns
 from biopsykit.utils._types import arr_t
-
 from biopsykit.utils.array_handling import sliding_window
 
 

@@ -1,8 +1,9 @@
 from __future__ import absolute_import
-from docutils import nodes
+
 import jinja2
-from docutils.parsers.rst.directives import unchanged
+from docutils import nodes
 from docutils.parsers.rst import Directive
+from docutils.parsers.rst.directives import unchanged
 
 BUTTON_TEMPLATE = jinja2.Template(
     """

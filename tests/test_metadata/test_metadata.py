@@ -2,9 +2,10 @@ from contextlib import contextmanager
 
 import pandas as pd
 import pytest
+from pandas._testing import assert_frame_equal
+
 from biopsykit.metadata import bmi, whr
 from biopsykit.utils.exceptions import ValueRangeError
-from pandas._testing import assert_frame_equal
 
 
 @contextmanager

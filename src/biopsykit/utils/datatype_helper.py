@@ -1,16 +1,17 @@
 """A couple of helper functions that ease the use of the typical biopsykit data formats."""
-from typing import Dict, Optional, Union, List, Any
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import (
-    _assert_is_dtype,
-    _assert_has_multiindex,
     _assert_has_column_multiindex,
-    _assert_has_index_levels,
-    _assert_has_columns,
     _assert_has_column_prefix,
+    _assert_has_columns,
     _assert_has_columns_any_level,
+    _assert_has_index_levels,
+    _assert_has_multiindex,
+    _assert_is_dtype,
 )
 from biopsykit.utils.exceptions import ValidationError
 

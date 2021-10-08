@@ -1,17 +1,16 @@
 from contextlib import contextmanager
+from itertools import product
 from pathlib import Path
 from typing import Optional
 from unittest import TestCase
 
-import pytest
 import pandas as pd
+import pytest
+from pandas._testing import assert_frame_equal
+
 from biopsykit.questionnaires import *
 from biopsykit.questionnaires.utils import convert_scale
 from biopsykit.utils.exceptions import ValidationError, ValueRangeError
-
-from pandas._testing import assert_frame_equal
-
-from itertools import product
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/questionnaires")
 

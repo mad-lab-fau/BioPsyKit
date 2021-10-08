@@ -4,15 +4,16 @@ from unittest import TestCase
 
 import pandas as pd
 import pytest
+from nilspodlib import Dataset
+
 from biopsykit.io.nilspod import (
-    load_dataset_nilspod,
-    load_synced_session_nilspod,
-    load_folder_nilspod,
     check_nilspod_dataset_corrupted,
     get_nilspod_dataset_corrupted_info,
     load_csv_nilspod,
+    load_dataset_nilspod,
+    load_folder_nilspod,
+    load_synced_session_nilspod,
 )
-from nilspodlib import Dataset
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/nilspod")
 

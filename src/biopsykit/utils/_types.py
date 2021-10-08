@@ -4,7 +4,7 @@ For user facing type declarations, please see :py:func:`biopsykit.utils.datatype
 """
 
 from pathlib import Path
-from typing import TypeVar, Union, Hashable
+from typing import Hashable, TypeVar, Union
 
 import numpy as np
 import pandas as pd

@@ -1,21 +1,15 @@
 """Module providing functions to plot data collected during sleep studies."""
 import datetime
-from typing import Union, Optional, Dict, Tuple, Sequence, List, Iterable
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticks
 import pandas as pd
 import seaborn as sns
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import matplotlib.ticker as mticks
-
 from biopsykit import colors
-from biopsykit.utils.datatype_helper import (
-    SleepEndpointDict,
-    AccDataFrame,
-    GyrDataFrame,
-    ImuDataFrame,
-)
+from biopsykit.utils.datatype_helper import AccDataFrame, GyrDataFrame, ImuDataFrame, SleepEndpointDict
 
 _sleep_imu_plot_params = {
     "background_color": ["#e0e0e0", "#9e9e9e"],

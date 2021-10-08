@@ -1,14 +1,14 @@
 """Module containing various utility functions (time, dataframe, array, file handling, ...)."""
 from biopsykit.utils import (
-    time,
-    functions,
-    file_handling,
     array_handling,
-    dataframe_handling,
     data_processing,
+    dataframe_handling,
     datatype_helper,
     exceptions,
+    file_handling,
+    functions,
     legacy_helper,
+    time,
 )
 
 __all__ = [

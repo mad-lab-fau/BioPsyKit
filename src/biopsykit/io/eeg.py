@@ -2,11 +2,10 @@
 from typing import Tuple
 
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns
-
 from biopsykit.utils._types import path_t
-from biopsykit.utils.time import utc, tz
-
+from biopsykit.utils.time import tz, utc
 
 __all__ = ["load_eeg_raw_muse"]
 

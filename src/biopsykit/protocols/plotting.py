@@ -1,36 +1,33 @@
 """Module providing some standard plots for visualizing data collected during a psychological protocol."""
-from typing import Union, Dict, Optional, Sequence, Tuple, Any, Iterable
-
 import re
+from typing import Any, Dict, Iterable, Optional, Sequence, Tuple, Union
 
+import matplotlib.patches as mpatch
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticks
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from matplotlib.legend_handler import HandlerTuple
 from typing_extensions import get_args
 
-import pandas as pd
-import numpy as np
-import seaborn as sns
-
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatch
-import matplotlib.ticker as mticks
-from matplotlib.legend_handler import HandlerTuple
-
 from biopsykit.colors import colors
-from biopsykit.plotting import lineplot, multi_feature_boxplot, feature_boxplot
+from biopsykit.plotting import feature_boxplot, lineplot, multi_feature_boxplot
 from biopsykit.protocols._utils import _get_sample_times
 from biopsykit.saliva.utils import _remove_s0
-from biopsykit.utils.exceptions import ValidationError
 from biopsykit.utils.data_processing import get_subphase_durations
 from biopsykit.utils.datatype_helper import (
+    MeanSeDataFrame,
+    MergedStudyDataDict,
+    SalivaFeatureDataFrame,
+    SalivaMeanSeDataFrame,
+    SalivaRawDataFrame,
+    is_mean_se_dataframe,
+    is_saliva_feature_dataframe,
     is_saliva_mean_se_dataframe,
     is_saliva_raw_dataframe,
-    SalivaRawDataFrame,
-    SalivaMeanSeDataFrame,
-    MergedStudyDataDict,
-    MeanSeDataFrame,
-    is_mean_se_dataframe,
-    SalivaFeatureDataFrame,
-    is_saliva_feature_dataframe,
 )
+from biopsykit.utils.exceptions import ValidationError
 
 _hr_ensemble_plot_params = {
     "linestyle": ["solid", "dashed", "dotted", "dashdot"],

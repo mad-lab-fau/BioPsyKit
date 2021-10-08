@@ -1,13 +1,13 @@
 """Module for processing Respiration data."""
-from typing import Optional, Union, Dict, Sequence
+from typing import Dict, Optional, Sequence, Union
 
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import scipy.signal as ss
+
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.array_handling import sanitize_input_1d
-
 
 __all__ = ["RspProcessor"]
 

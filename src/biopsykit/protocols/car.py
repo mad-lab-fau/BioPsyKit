@@ -2,6 +2,7 @@
 from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
+
 from biopsykit.plotting import lineplot
 from biopsykit.protocols import BaseProtocol
 from biopsykit.utils.datatype_helper import is_saliva_raw_dataframe

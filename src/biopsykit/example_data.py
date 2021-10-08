@@ -3,43 +3,43 @@
 The data is either taken from the local file system in case biopsykit was installed manually or the example data is
 downloaded into the local user folder.
 """
-from typing import Sequence, Dict, Optional, Tuple, Union
-from urllib.request import urlretrieve
 from pathlib import Path
-from tqdm.auto import tqdm
+from typing import Dict, Optional, Sequence, Tuple, Union
+from urllib.request import urlretrieve
 
 import pandas as pd
+from tqdm.auto import tqdm
 
-from biopsykit.utils.datatype_helper import (
-    is_saliva_mean_se_dataframe,
-    SubjectConditionDataFrame,
-    SalivaRawDataFrame,
-    SalivaMeanSeDataFrame,
-    HeartRatePhaseDict,
-    HeartRateSubjectDataDict,
-    SleepEndpointDataFrame,
-    _SalivaMeanSeDataFrame,
-)
-from biopsykit.utils.file_handling import mkdirs
 from biopsykit.io import (
-    load_subject_condition_list,
-    load_time_log,
-    load_questionnaire_data,
     load_long_format_csv,
     load_pandas_dict_excel,
+    load_questionnaire_data,
+    load_subject_condition_list,
+    load_time_log,
 )
 from biopsykit.io.carwatch_logs import load_log_one_subject
-from biopsykit.io.eeg import load_eeg_raw_muse
 from biopsykit.io.ecg import load_hr_phase_dict
+from biopsykit.io.eeg import load_eeg_raw_muse
 from biopsykit.io.nilspod import load_dataset_nilspod
-from biopsykit.io.saliva import load_saliva_wide_format, load_saliva_plate
+from biopsykit.io.saliva import load_saliva_plate, load_saliva_wide_format
 from biopsykit.io.sleep_analyzer import (
-    load_withings_sleep_analyzer_raw_folder,
     WITHINGS_RAW_DATA_SOURCES,
     load_withings_sleep_analyzer_raw_file,
+    load_withings_sleep_analyzer_raw_folder,
+    load_withings_sleep_analyzer_summary,
 )
-from biopsykit.io.sleep_analyzer import load_withings_sleep_analyzer_summary
 from biopsykit.utils._types import path_t
+from biopsykit.utils.datatype_helper import (
+    HeartRatePhaseDict,
+    HeartRateSubjectDataDict,
+    SalivaMeanSeDataFrame,
+    SalivaRawDataFrame,
+    SleepEndpointDataFrame,
+    SubjectConditionDataFrame,
+    _SalivaMeanSeDataFrame,
+    is_saliva_mean_se_dataframe,
+)
+from biopsykit.utils.file_handling import mkdirs
 
 _EXAMPLE_DATA_PATH_LOCAL = Path(__file__).parent.parent.parent.joinpath("example_data")
 _EXAMPLE_DATA_PATH_HOME = Path.home().joinpath(".biopsykit_data")

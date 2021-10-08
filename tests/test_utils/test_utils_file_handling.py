@@ -2,8 +2,9 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
+
 from biopsykit.utils.exceptions import FileExtensionError
-from biopsykit.utils.file_handling import mkdirs, get_subject_dirs, is_excel_file
+from biopsykit.utils.file_handling import get_subject_dirs, is_excel_file, mkdirs
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/load_hr_subject_dict_folder")
 

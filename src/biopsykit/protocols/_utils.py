@@ -1,6 +1,5 @@
 """Utility functions for the ``biopsykit.protocols`` module."""
-from typing import Sequence, Union, Dict, Optional
-
+from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd

@@ -1,30 +1,28 @@
 from contextlib import contextmanager
+from itertools import product
 from pathlib import Path
 from typing import Optional
 from unittest import TestCase
 
 import numpy as np
-import pytest
 import pandas as pd
-from biopsykit.utils.exceptions import ValidationError, ValueRangeError
-
-from biopsykit.questionnaires.utils import (
-    find_cols,
-    zero_pad_columns,
-    to_idx,
-    invert,
-    convert_scale,
-    crop_scale,
-    bin_scale,
-    wide_to_long,
-    get_supported_questionnaires,
-    compute_scores,
-)
-
-from itertools import product
-
+import pytest
 from numpy.testing import assert_array_equal
 from pandas._testing import assert_frame_equal, assert_series_equal
+
+from biopsykit.questionnaires.utils import (
+    bin_scale,
+    compute_scores,
+    convert_scale,
+    crop_scale,
+    find_cols,
+    get_supported_questionnaires,
+    invert,
+    to_idx,
+    wide_to_long,
+    zero_pad_columns,
+)
+from biopsykit.utils.exceptions import ValidationError, ValueRangeError
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/questionnaires")
 

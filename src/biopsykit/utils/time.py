@@ -1,12 +1,12 @@
 """Module containing helper functions to handle time data."""
 
+import datetime
 from typing import Optional, Union
 
-import datetime
+import numpy as np
+import pandas as pd
 import pytz
 
-import pandas as pd
-import numpy as np
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 
 tz = pytz.timezone("Europe/Berlin")

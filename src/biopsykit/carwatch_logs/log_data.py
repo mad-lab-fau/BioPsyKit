@@ -1,16 +1,14 @@
 """Module providing classes and utility functions for handling log data from *CARWatch App*."""
 import json
 import warnings
-from typing import Dict, Sequence, Optional, Union
 from datetime import datetime
-
-from typing_extensions import Literal
+from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Literal
 
-from biopsykit.carwatch_logs import log_actions
-from biopsykit.carwatch_logs import log_extras
+from biopsykit.carwatch_logs import log_actions, log_extras
 from biopsykit.utils.time import tz
 
 subject_conditions: Dict[str, str] = {
@@ -277,7 +275,7 @@ class LogData:
     def print_info(self):
         """Display Markdown-formatted log data information."""
         try:
-            from IPython.core.display import display, Markdown  # pylint:disable=import-outside-toplevel
+            from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
                 "Displaying LogData information failed because "

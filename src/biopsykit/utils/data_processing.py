@@ -1,36 +1,38 @@
 """Module providing various functions for processing more complex structured data (e.g., collected during a study)."""
 import warnings
-from typing import Sequence, Union, Dict, Optional, Tuple, Any
-
-# from tqdm.auto import tqdm
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from scipy import interpolate
 
 from biopsykit.utils._datatype_validation_helper import (
-    _assert_is_dtype,
     _assert_dataframes_same_length,
     _assert_has_index_levels,
     _assert_has_multiindex,
+    _assert_is_dtype,
 )
-from biopsykit.utils.functions import se
 from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.datatype_helper import (
-    SubjectConditionDict,
-    SubjectConditionDataFrame,
-    is_subject_condition_dataframe,
-    is_subject_condition_dict,
-    SubjectDataDict,
-    StudyDataDict,
-    MergedStudyDataDict,
-    is_merged_study_data_dict,
-    is_subject_data_dict,
-    is_study_data_dict,
     MeanSeDataFrame,
+    MergedStudyDataDict,
+    StudyDataDict,
+    SubjectConditionDataFrame,
+    SubjectConditionDict,
+    SubjectDataDict,
     _MeanSeDataFrame,
     is_mean_se_dataframe,
+    is_merged_study_data_dict,
+    is_study_data_dict,
+    is_subject_condition_dataframe,
+    is_subject_condition_dict,
+    is_subject_data_dict,
 )
+from biopsykit.utils.functions import se
+
+# from tqdm.auto import tqdm
+
+
 
 
 def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_start: bool) -> Dict[str, pd.DataFrame]:

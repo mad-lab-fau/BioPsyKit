@@ -1,13 +1,13 @@
 """Module with functions to process IMU data."""
-from typing import Union, Optional
+from typing import Optional, Union
 
-import pandas as pd
 import numpy as np
-from biopsykit.utils._types import arr_t
-from biopsykit.utils.datatype_helper import AccDataFrame, GyrDataFrame, ImuDataFrame
+import pandas as pd
 
-from biopsykit.utils.time import utc
+from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import sliding_window
+from biopsykit.utils.datatype_helper import AccDataFrame, GyrDataFrame, ImuDataFrame
+from biopsykit.utils.time import utc
 
 
 def convert_acc_data_to_g(

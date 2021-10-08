@@ -1,19 +1,18 @@
 """Module providing functions to load and save logs from the *CARWatch* app."""
-from typing import Optional, Dict, Union, Sequence
-import re
 import json
+import re
 import warnings
 import zipfile
-
 from pathlib import Path
+from typing import Dict, Optional, Sequence, Union
 
 import pandas as pd
 from tqdm.auto import tqdm
 
 from biopsykit.carwatch_logs import LogData
-from biopsykit.utils._types import path_t
-from biopsykit.utils.time import utc, tz
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils._types import path_t
+from biopsykit.utils.time import tz, utc
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
 

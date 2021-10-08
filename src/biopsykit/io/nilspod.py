@@ -1,21 +1,18 @@
 """Module for importing data recorded by NilsPod sensors."""
 import datetime
-from pathlib import Path
-from typing import Optional, Sequence, Union, Tuple, Dict
-
 import re
 import warnings
-
-from typing_extensions import Literal
+from pathlib import Path
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-
 from nilspodlib import Dataset, SyncedSession
+from typing_extensions import Literal
 
-from biopsykit.utils.time import tz
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dtype
 from biopsykit.utils._types import path_t
+from biopsykit.utils.time import tz
 
 COUNTER_INCONSISTENCY_HANDLING = Literal["raise", "warn", "ignore"]
 """Available behavior types when dealing with NilsPod counter inconsistencies."""

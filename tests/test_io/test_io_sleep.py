@@ -4,23 +4,24 @@ from unittest import TestCase
 
 import pandas as pd
 import pytest
+from nilspodlib import Dataset
+from pandas._testing import assert_index_equal
+
 from biopsykit.io.nilspod import (
-    load_dataset_nilspod,
-    load_synced_session_nilspod,
-    load_folder_nilspod,
     check_nilspod_dataset_corrupted,
     get_nilspod_dataset_corrupted_info,
     load_csv_nilspod,
+    load_dataset_nilspod,
+    load_folder_nilspod,
+    load_synced_session_nilspod,
 )
 from biopsykit.io.sleep import save_sleep_endpoints
 from biopsykit.io.sleep_analyzer import (
     load_withings_sleep_analyzer_raw_file,
-    load_withings_sleep_analyzer_summary,
     load_withings_sleep_analyzer_raw_folder,
+    load_withings_sleep_analyzer_summary,
 )
-from biopsykit.utils.exceptions import ValidationError, FileExtensionError
-from nilspodlib import Dataset
-from pandas._testing import assert_index_equal
+from biopsykit.utils.exceptions import FileExtensionError, ValidationError
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/sleep_endpoints")
 

@@ -1,12 +1,12 @@
 """Internal helpers for dataset validation."""
 from pathlib import Path
-from typing import Union, Tuple, Sequence, List, Iterable, Optional, Any
+from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from biopsykit.utils._types import _Hashable, path_t
-from biopsykit.utils.exceptions import ValidationError, FileExtensionError, ValueRangeError
+from biopsykit.utils.exceptions import FileExtensionError, ValidationError, ValueRangeError
 
 
 def _assert_is_dir(path: path_t, raise_exception: Optional[bool] = True) -> Optional[bool]:

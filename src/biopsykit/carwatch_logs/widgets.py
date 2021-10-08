@@ -1,15 +1,15 @@
 """Module providing interactive widgets to select and display log data from the *CARWatch App*."""
 from __future__ import annotations
-from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union, Callable, Tuple, List
 
 import re
-from typing_extensions import Literal, get_args
+from pathlib import Path
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
 
 import pandas as pd
+from typing_extensions import Literal, get_args
 
-from biopsykit.utils._types import path_t
 from biopsykit.carwatch_logs import LogData
+from biopsykit.utils._types import path_t
 
 if TYPE_CHECKING:
     import ipywidgets.widgets

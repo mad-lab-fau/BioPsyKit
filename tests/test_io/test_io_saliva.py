@@ -4,9 +4,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-from biopsykit.io.saliva import load_saliva_plate, save_saliva, load_saliva_wide_format
+from pandas._testing import assert_frame_equal, assert_index_equal
+
+from biopsykit.io.saliva import load_saliva_plate, load_saliva_wide_format, save_saliva
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
-from pandas._testing import assert_index_equal, assert_frame_equal
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")
 

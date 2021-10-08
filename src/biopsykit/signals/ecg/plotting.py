@@ -1,17 +1,15 @@
 """Module providing functions for plotting ECG data."""
-from typing import Optional, Sequence, Tuple, Dict, List
+from typing import Dict, List, Optional, Sequence, Tuple
 
+import matplotlib as mpl
+import matplotlib.dates as mdates
+import matplotlib.gridspec as gs
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticks
+import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import neurokit2 as nk
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gs
-import matplotlib.dates as mdates
-import matplotlib.ticker as mticks
-
 from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
 from neurokit2.hrv.hrv_utils import _hrv_get_rri
 
@@ -20,7 +18,6 @@ from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.signals.ecg.ecg import _assert_ecg_input
 from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.datatype_helper import EcgResultDataFrame
-
 
 __all__ = [
     "ecg_plot",

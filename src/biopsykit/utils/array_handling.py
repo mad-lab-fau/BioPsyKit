@@ -1,10 +1,11 @@
 """Module providing various functions for low-level handling of array data."""
-from typing import Union, Optional, Tuple, List
+from typing import List, Optional, Tuple, Union
 
+import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from scipy import signal, interpolate
-import neurokit2 as nk
+from scipy import interpolate, signal
+
 from biopsykit.utils._types import arr_t
 
 

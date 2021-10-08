@@ -1,9 +1,9 @@
 """Utility functions for sleep/wake detection algorithms."""
 
 from typing import Optional
-from typing_extensions import Literal
 
 import numpy as np
+from typing_extensions import Literal
 
 EPOCH_LENGTH = Literal[30, 60]
 

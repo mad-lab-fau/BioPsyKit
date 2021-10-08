@@ -1,14 +1,14 @@
 from contextlib import contextmanager
 from typing import Optional
 
-import pytest
-
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 import scipy.stats as ss
-from biopsykit.utils.exceptions import ValidationError, DataFrameTransformationError
 from pandas.testing import assert_frame_equal
+
 import biopsykit.saliva as saliva
+from biopsykit.utils.exceptions import DataFrameTransformationError, ValidationError
 
 
 @contextmanager

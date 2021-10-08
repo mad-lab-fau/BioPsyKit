@@ -1,10 +1,9 @@
 """Module for processing EEG data."""
 
-from typing import Optional, Dict, Sequence, Union
+from typing import Dict, Optional, Sequence, Union
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from tqdm.auto import tqdm
 
 from biopsykit.signals._base import _BaseProcessor

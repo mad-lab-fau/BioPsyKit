@@ -1,7 +1,7 @@
+import platform
 import re
 import subprocess
 from pathlib import Path
-import platform
 
 DOIT_CONFIG = {
     "default_tasks": ["format", "lint", "test"],

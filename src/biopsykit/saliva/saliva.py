@@ -1,26 +1,26 @@
 """Functions for processing saliva data and computing established features (AUC, slope, maximum increase, ...)."""
 import warnings
-from typing import Optional, Sequence, Tuple, Union, Dict, List
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from biopsykit.saliva.utils import (
     _check_sample_times,
-    _get_sample_times,
-    _get_saliva_idx_labels,
-    _remove_s0,
     _get_group_cols,
+    _get_saliva_idx_labels,
+    _get_sample_times,
+    _remove_s0,
 )
 from biopsykit.utils.datatype_helper import (
-    SalivaRawDataFrame,
-    is_saliva_raw_dataframe,
-    is_saliva_feature_dataframe,
     SalivaFeatureDataFrame,
-    is_saliva_mean_se_dataframe,
     SalivaMeanSeDataFrame,
+    SalivaRawDataFrame,
     _SalivaFeatureDataFrame,
     _SalivaMeanSeDataFrame,
+    is_saliva_feature_dataframe,
+    is_saliva_mean_se_dataframe,
+    is_saliva_raw_dataframe,
 )
 from biopsykit.utils.exceptions import DataFrameTransformationError
 from biopsykit.utils.functions import se

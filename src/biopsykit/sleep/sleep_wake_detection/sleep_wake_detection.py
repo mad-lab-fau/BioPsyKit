@@ -1,15 +1,15 @@
 """General class for sleep/wake detection."""
 from typing import Optional
 
+from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke
+from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke_alternative import ColeKripkeAlternative
+from biopsykit.sleep.sleep_wake_detection.algorithms.perez_pozuelo import PerezPozuelo
+from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
+from biopsykit.sleep.sleep_wake_detection.algorithms.sazonov import Sazonov
+from biopsykit.sleep.sleep_wake_detection.algorithms.scripps_clinic import ScrippsClinic
+from biopsykit.sleep.sleep_wake_detection.algorithms.webster import Webster
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.datatype_helper import SleepWakeDataFrame, _SleepWakeDataFrame
-from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke
-from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
-from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke_alternative import ColeKripkeAlternative
-from biopsykit.sleep.sleep_wake_detection.algorithms.webster import Webster
-from biopsykit.sleep.sleep_wake_detection.algorithms.scripps_clinic import ScrippsClinic
-from biopsykit.sleep.sleep_wake_detection.algorithms.perez_pozuelo import PerezPozuelo
-from biopsykit.sleep.sleep_wake_detection.algorithms.sazonov import Sazonov
 
 
 class SleepWakeDetection:

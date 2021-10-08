@@ -1,12 +1,11 @@
 # pylint:disable=unsupported-assignment-operation
 # pylint:disable=unsubscriptable-object
 """Module containing different I/O functions to load data recorded by Withings Sleep Analyzer."""
-from ast import literal_eval
 import datetime
-from pathlib import Path
-from typing import Optional, Union, Sequence, Dict
-
 import re
+from ast import literal_eval
+from pathlib import Path
+from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -14,9 +13,8 @@ import pandas as pd
 from biopsykit.sleep.utils import split_nights
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dir
 from biopsykit.utils._types import path_t
-from biopsykit.utils.datatype_helper import is_sleep_endpoint_dataframe, SleepEndpointDataFrame
+from biopsykit.utils.datatype_helper import SleepEndpointDataFrame, is_sleep_endpoint_dataframe
 from biopsykit.utils.time import tz
-
 
 __all__ = [
     "WITHINGS_RAW_DATA_SOURCES",

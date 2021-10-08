@@ -4,9 +4,8 @@ import pandas as pd
 
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
-from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.array_handling import sliding_window
 from biopsykit.utils._types import arr_t
+from biopsykit.utils.array_handling import sanitize_input_1d, sliding_window
 from biopsykit.utils.datatype_helper import SleepWakeDataFrame, _SleepWakeDataFrame
 
 

@@ -1,19 +1,20 @@
 """Module containing different I/O functions for saliva data."""
 from pathlib import Path
-from typing import Optional, Sequence, Union, Dict, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.io.io import _apply_index_cols
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns
 from biopsykit.utils._types import path_t
 from biopsykit.utils.datatype_helper import (
     SalivaRawDataFrame,
+    SubjectConditionDataFrame,
+    _SalivaRawDataFrame,
+    _SubjectConditionDataFrame,
     is_saliva_raw_dataframe,
     is_subject_condition_dataframe,
-    SubjectConditionDataFrame,
-    _SubjectConditionDataFrame,
-    _SalivaRawDataFrame,
 )
 
 __all__ = ["load_saliva_plate", "save_saliva", "load_saliva_wide_format"]

@@ -4,8 +4,8 @@ import pandas as pd
 from statsmodels.distributions.empirical_distribution import ECDF
 
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
-from biopsykit.utils.array_handling import sanitize_input_1d, sliding_window
 from biopsykit.utils._types import arr_t
+from biopsykit.utils.array_handling import sanitize_input_1d, sliding_window
 from biopsykit.utils.datatype_helper import SleepWakeDataFrame, _SleepWakeDataFrame
 
 

@@ -1,7 +1,8 @@
 """Base class for implementing signal processing pipelines."""
-from typing import Optional, Union, Dict, Sequence
+from typing import Dict, Optional, Sequence, Union
 
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 from biopsykit.utils.data_processing import split_data
 

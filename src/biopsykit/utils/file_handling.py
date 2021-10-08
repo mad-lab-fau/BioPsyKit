@@ -1,7 +1,7 @@
 """Helper functions for file handling."""
 import re
 from pathlib import Path
-from typing import Sequence, Optional, Union
+from typing import Optional, Sequence, Union
 
 import matplotlib.pyplot as plt
 

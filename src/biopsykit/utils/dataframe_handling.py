@@ -1,12 +1,11 @@
 """Module providing various functions for advanced handling of pandas dataframes."""
-from typing import Optional, Callable, Union, Sequence
-
 import re
+from typing import Callable, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
 
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_index_levels, _assert_has_columns
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_has_index_levels, _assert_is_dtype
 from biopsykit.utils.datatype_helper import CodebookDataFrame, is_codebook_dataframe
 
 

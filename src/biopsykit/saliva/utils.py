@@ -1,15 +1,14 @@
 """Utility functions for working with saliva dataframes."""
 import re
+from datetime import datetime, time
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-from typing import Optional, Dict, Sequence, Union, Tuple, List
-from datetime import time, datetime
-
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_index_levels
-from biopsykit.utils.datatype_helper import SalivaRawDataFrame, SalivaFeatureDataFrame, _SalivaRawDataFrame
+from biopsykit.utils._datatype_validation_helper import _assert_has_index_levels, _assert_is_dtype
 from biopsykit.utils._types import arr_t
+from biopsykit.utils.datatype_helper import SalivaFeatureDataFrame, SalivaRawDataFrame, _SalivaRawDataFrame
 
 __all__ = [
     "saliva_feature_wide_to_long",

@@ -1,9 +1,8 @@
 """Module providing helper functions to convert old BioPsyKit export files to new export formats."""
 from typing import Optional
 
-from biopsykit.utils._types import path_t
-
 from biopsykit.io.ecg import load_hr_phase_dict, write_hr_phase_dict
+from biopsykit.utils._types import path_t
 
 __all__ = ["legacy_convert_hr_phase_dict"]
 

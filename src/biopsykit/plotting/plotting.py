@@ -1,12 +1,11 @@
 """Module containing several advanced plotting functions."""
-from typing import Union, Tuple, Sequence, Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from statannot import add_stat_annotation
-
 
 from biopsykit.utils.dataframe_handling import multi_xs
 from biopsykit.utils.functions import se

@@ -1,11 +1,12 @@
 """Module for generating log data statistics."""
 from pathlib import Path
-from typing import Sequence, Optional, Tuple, Dict
+from typing import Dict, Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 from biopsykit.carwatch_logs import LogData
 from biopsykit.io.carwatch_logs import load_logs_all_subjects
 from biopsykit.utils._types import path_t

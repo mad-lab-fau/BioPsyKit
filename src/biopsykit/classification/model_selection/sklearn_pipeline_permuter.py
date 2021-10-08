@@ -2,22 +2,20 @@
 from itertools import product
 from pathlib import Path
 from shutil import rmtree
-from typing import Optional, Dict, Any, Sequence, Union, Tuple
-
-from joblib import Memory
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-
+from joblib import Memory
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
 
-from biopsykit.classification.utils import _PipelineWrapper
 from biopsykit.classification.model_selection import nested_cv_grid_search
+from biopsykit.classification.utils import _PipelineWrapper
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
-from biopsykit.utils._types import path_t, T
+from biopsykit.utils._types import T, path_t
 
 __all__ = ["SklearnPipelinePermuter"]
 

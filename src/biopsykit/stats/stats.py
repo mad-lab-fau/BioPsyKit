@@ -1,10 +1,10 @@
 """Module for setting up a pipeline for statistical analysis."""
 from pathlib import Path
-from typing import Dict, Sequence, Union, Tuple, Optional, List
-from typing_extensions import Literal
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import pingouin as pg
+from typing_extensions import Literal
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_index_levels
 from biopsykit.utils._types import path_t
@@ -319,7 +319,7 @@ class StatsPipeline:
 
         """
         try:
-            from IPython.core.display import display, Markdown  # pylint:disable=import-outside-toplevel
+            from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "
@@ -358,7 +358,7 @@ class StatsPipeline:
         self, sig_only: Dict[str, bool], groupby: Optional[str] = None, group_key: Optional[str] = None, **kwargs
     ):
         try:
-            from IPython.core.display import display, Markdown  # pylint:disable=import-outside-toplevel
+            from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "
@@ -720,7 +720,7 @@ class StatsPipeline:
         self, category: str, steps: Sequence[str], sig_only: Dict[str, bool], groupby: str, group_key: str
     ):
         try:
-            from IPython.core.display import display, Markdown  # pylint:disable=import-outside-toplevel
+            from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "

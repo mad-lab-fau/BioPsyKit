@@ -2,12 +2,12 @@ import datetime
 from contextlib import contextmanager
 
 import numpy as np
-import pytest
-
 import pandas as pd
+import pytest
+from pandas._testing import assert_frame_equal, assert_series_equal
+
 import biopsykit.saliva.utils as utils
 from biopsykit.utils.exceptions import ValidationError
-from pandas._testing import assert_frame_equal, assert_series_equal
 
 
 @contextmanager

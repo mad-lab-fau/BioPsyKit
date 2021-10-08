@@ -2,13 +2,12 @@
 
 For most plots, BioPsyKit uses FAU's colors scheme.
 """
-from typing import Sequence, Optional, Dict, Callable
+from colorsys import hls_to_rgb, rgb_to_hls
+from typing import Callable, Dict, Optional, Sequence
 
-from colorsys import rgb_to_hls, hls_to_rgb
-from typing_extensions import Literal, get_args
-
-from matplotlib.colors import to_hex, to_rgb
 import seaborn as sns
+from matplotlib.colors import to_hex, to_rgb
+from typing_extensions import Literal, get_args
 
 __all__ = [
     "FAU_COLORS",

@@ -1,12 +1,12 @@
 """Module representing the Cold Face Test (CFT) protocol."""
 import datetime
 import warnings
-from typing import Optional, Tuple, Dict, Union, Any
+from typing import Any, Dict, Optional, Tuple, Union
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatch
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from biopsykit import colors
