@@ -46,7 +46,6 @@ _EXAMPLE_DATA_PATH_HOME = Path.home().joinpath(".biopsykit_data")
 _REMOTE_DATA_PATH = "https://raw.githubusercontent.com/mad-lab-fau/BioPsyKit/main/example_data/"
 
 __all__ = [
-    "get_file_path",
     "get_condition_list_example",
     "get_saliva_example_plate_format",
     "get_saliva_example",
@@ -59,6 +58,7 @@ __all__ = [
     "get_ecg_path_example",
     "get_ecg_example",
     "get_ecg_example_02",
+    "get_eeg_example",
     "get_sleep_analyzer_raw_file_unformatted",
     "get_sleep_analyzer_raw_file",
     "get_sleep_analyzer_raw_example",
@@ -70,6 +70,7 @@ __all__ = [
     "get_car_watch_log_data_example",
     "get_time_log_example",
     "get_questionnaire_example",
+    "get_questionnaire_example_wrong_range",
     "get_stats_example",
 ]
 
@@ -88,7 +89,7 @@ def _is_installed_manually() -> bool:
     return (_EXAMPLE_DATA_PATH_LOCAL / "__init__.py").is_file()
 
 
-def _get_data(file_name: str) -> path_t:
+def _get_data(file_name: str) -> path_t:  # pragma: no cover
     if _is_installed_manually():
         return _EXAMPLE_DATA_PATH_LOCAL.joinpath(file_name)
     path = _EXAMPLE_DATA_PATH_HOME.joinpath(file_name)
@@ -98,7 +99,7 @@ def _get_data(file_name: str) -> path_t:
     return _fetch_from_remote(file_name, path)
 
 
-def _fetch_from_remote(file_name: str, file_path: path_t) -> path_t:
+def _fetch_from_remote(file_name: str, file_path: path_t) -> path_t:  # pragma: no cover
     """Download remote dataset (helper function).
 
     Parameters
@@ -121,7 +122,7 @@ def _fetch_from_remote(file_name: str, file_path: path_t) -> path_t:
     return file_path
 
 
-def _tqdm_hook(t):
+def _tqdm_hook(t):  # pragma: no cover
     """Wrap tqdm instance."""
     last_b = [0]
 
@@ -134,27 +135,6 @@ def _tqdm_hook(t):
     return update_to
 
 
-def get_file_path(file_name: path_t) -> Optional[Path]:
-    """Return path to example data file.
-
-    Parameters
-    ----------
-    file_name : str or :class:`~pathlib.Path`
-        file name
-
-    Returns
-    -------
-    :class:`~pathlib.Path`
-        absolute path to file
-
-    """
-    file_path = _EXAMPLE_DATA_PATH_LOCAL.joinpath(file_name)
-    if file_path.is_file():
-        # file exists
-        return file_path
-    raise ValueError("File {} does not exist!".format(file_name))
-
-
 def get_condition_list_example() -> SubjectConditionDataFrame:
     """Return example data for subject condition assignment.
 
@@ -165,9 +145,7 @@ def get_condition_list_example() -> SubjectConditionDataFrame:
 
     """
     return load_subject_condition_list(
-        _EXAMPLE_DATA_PATH_LOCAL.joinpath("condition_list.csv"),
-        subject_col="subject",
-        condition_col="condition",
+        _get_data("condition_list.csv"), subject_col="subject", condition_col="condition"
     )
 
 
