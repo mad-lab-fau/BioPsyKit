@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
 import pandas as pd
 from typing_extensions import Literal, get_args
 
-from biopsykit.carwatch_logs import LogData
 from biopsykit.utils._types import path_t
 
 if TYPE_CHECKING:
@@ -102,8 +101,10 @@ def _log_file_subject_dropdown_get_option_list(subject_list: List[str], log_file
 
 
 def action_dropdown_widget(
-    data: Union[LogData, pd.DataFrame], callback: Optional[Callable] = None
+    data: Union["LogData", pd.DataFrame], callback: Optional[Callable] = None
 ) -> "ipywidgets.Dropdown":
+    from biopsykit.carwatch_logs import LogData  # pylint:disable=import-outside-toplevel
+
     """Create dropdown widget to filter log data by a specific action.
 
     Parameters
@@ -141,8 +142,10 @@ def action_dropdown_widget(
 
 
 def day_dropdown_widget(
-    data: Union[LogData, pd.DataFrame], callback: Optional[Callable] = None
+    data: Union["LogData", pd.DataFrame], callback: Optional[Callable] = None
 ) -> "ipywidgets.Dropdown":
+    from biopsykit.carwatch_logs import LogData  # pylint:disable=import-outside-toplevel
+
     """Create dropdown widget to filter log data by a specific day.
 
     Parameters

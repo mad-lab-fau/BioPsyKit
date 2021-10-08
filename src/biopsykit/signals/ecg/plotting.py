@@ -14,7 +14,6 @@ from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
 from neurokit2.hrv.hrv_utils import _hrv_get_rri
 
 from biopsykit import colors
-from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.signals.ecg.ecg import _assert_ecg_input
 from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.datatype_helper import EcgResultDataFrame
@@ -464,6 +463,8 @@ def hrv_plot(
         plot Power Spectral Density (PSD) of RR intervals
 
     """
+    from biopsykit.signals.ecg import EcgProcessor  # pylint:disable=import-outside-toplevel
+
     _assert_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
 
     title = kwargs.get("title", None)
