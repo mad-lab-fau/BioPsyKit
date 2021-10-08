@@ -63,6 +63,7 @@ recommonmark = "^0.6.0"
 toml = "^0.10.1"
 memory_profiler = "^0.57.0"
 coverage-badge = "^1.0.1"
+isort = "^5.9.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -88,3 +89,10 @@ exclude = '''
   )/
 )
 '''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 120
+skip_gitignore = true
+
