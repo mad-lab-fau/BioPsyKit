@@ -6,6 +6,7 @@ docs/readme.md
 docs/source/about/authors.md
 docs/source/contributing/contributing.md
 docs/changelog.md
+docs/examples/_notebooks
 
 # ignore poetry.lock file for library
 poetry.lock
