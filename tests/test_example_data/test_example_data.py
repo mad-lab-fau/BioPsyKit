@@ -133,6 +133,10 @@ class TestExampleData:
         is_ecg_raw_dataframe(data)
         assert fs == 256.0
 
+    def test_get_ecg_processing_results_path_example(self):
+        path = get_ecg_processing_results_path_example()
+        assert path.exists()
+
     @pytest.mark.parametrize(
         "data_source, expected",
         [

@@ -55,6 +55,7 @@ __all__ = [
     "get_hr_result_sample",
     "get_hr_ensemble_sample",
     "get_hr_subject_data_dict_example",
+    "get_ecg_processing_results_path_example",
     "get_ecg_path_example",
     "get_ecg_example",
     "get_ecg_example_02",
@@ -331,6 +332,24 @@ def get_ecg_path_example() -> path_t:
     # ensure that folder exists and data in folder is available
     for subject_id in subject_ids:
         file_path = _get_data(f"ecg/ecg_sample_{subject_id}.bin")
+    return file_path.parent
+
+
+def get_ecg_processing_results_path_example() -> path_t:
+    """Return folder path to ECG processing results.
+
+    Returns
+    -------
+    :class:`~pathlib.Path` or str
+        path to folder with ECG processing results
+
+    """
+    subject_ids = ["Vp01", "Vp02"]
+    file_path = None
+    # ensure that folder exists and data in folder is available
+    for subject_id in subject_ids:
+        for file_type in ["hr_result", "rpeaks_result"]:
+            file_path = _get_data(f"ecg_processing_results/{file_type}_{subject_id}.xlsx")
     return file_path.parent
 
 
