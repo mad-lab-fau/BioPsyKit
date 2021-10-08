@@ -30,10 +30,6 @@ from biopsykit.utils.datatype_helper import (
 )
 from biopsykit.utils.functions import se
 
-# from tqdm.auto import tqdm
-
-
-
 
 def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_start: bool) -> Dict[str, pd.DataFrame]:
     if time_intervals.index.nlevels > 1:
