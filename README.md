@@ -4,7 +4,7 @@
 ![GitHub](https://img.shields.io/github/license/mad-lab-fau/biopsykit)
 [![Documentation Status](https://readthedocs.org/projects/biopsykit/badge/?version=latest)](https://biopsykit.readthedocs.io/en/latest/?badge=latest)
 [![Test and Lint](https://github.com/mad-lab-fau/BioPsyKit/actions/workflows/test-and-lint.yml/badge.svg)](https://github.com/mad-lab-fau/BioPsyKit/actions/workflows/test-and-lint.yml)
-![Coverage](./coverage-badge.svg)
+[![codecov](https://codecov.io/gh/mad-lab-fau/BioPsyKit/branch/main/graph/badge.svg?token=IK0QBHQKCO)](https://codecov.io/gh/mad-lab-fau/BioPsyKit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/biopsykit)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/mad-lab-fau/biopsykit)

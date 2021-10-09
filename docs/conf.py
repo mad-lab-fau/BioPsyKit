@@ -205,7 +205,6 @@ shutil.copy(HERE.parent.joinpath("README.md"), HERE.joinpath("README.md"))
 shutil.copy(HERE.parent.joinpath("CHANGELOG.md"), HERE.joinpath("CHANGELOG.md"))
 shutil.copy(HERE.parent.joinpath("AUTHORS.md"), HERE.joinpath("source/about/AUTHORS.md"))
 shutil.copy(HERE.parent.joinpath("CONTRIBUTING.md"), HERE.joinpath("source/contributing/CONTRIBUTING.md"))
-shutil.copy(HERE.parent.joinpath("coverage-badge.svg"), HERE.joinpath("coverage-badge.svg"))
 
 
 def all_but_ipynb(dir, contents):
