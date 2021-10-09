@@ -11,6 +11,7 @@ from typing_extensions import Literal, get_args
 from biopsykit.utils._types import path_t
 
 if TYPE_CHECKING:
+    from biopsykit.carwatch_logs import LogData
     import ipywidgets.widgets
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
@@ -103,8 +104,6 @@ def _log_file_subject_dropdown_get_option_list(subject_list: List[str], log_file
 def action_dropdown_widget(
     data: Union["LogData", pd.DataFrame], callback: Optional[Callable] = None
 ) -> "ipywidgets.Dropdown":
-    from biopsykit.carwatch_logs import LogData  # pylint:disable=import-outside-toplevel
-
     """Create dropdown widget to filter log data by a specific action.
 
     Parameters
@@ -120,6 +119,8 @@ def action_dropdown_widget(
         dropdown widget
 
     """
+    from biopsykit.carwatch_logs import LogData  # pylint:disable=import-outside-toplevel
+
     try:
         import ipywidgets.widgets  # pylint:disable=import-outside-toplevel
     except ImportError as e:
@@ -144,8 +145,6 @@ def action_dropdown_widget(
 def day_dropdown_widget(
     data: Union["LogData", pd.DataFrame], callback: Optional[Callable] = None
 ) -> "ipywidgets.Dropdown":
-    from biopsykit.carwatch_logs import LogData  # pylint:disable=import-outside-toplevel
-
     """Create dropdown widget to filter log data by a specific day.
 
     Parameters
@@ -161,6 +160,8 @@ def day_dropdown_widget(
         dropdown widget
 
     """
+    from biopsykit.carwatch_logs import LogData  # pylint:disable=import-outside-toplevel
+
     try:
         import ipywidgets.widgets  # pylint:disable=import-outside-toplevel
     except ImportError as e:

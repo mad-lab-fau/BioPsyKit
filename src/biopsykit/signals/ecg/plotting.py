@@ -1,5 +1,5 @@
 """Module providing functions for plotting ECG data."""
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple
 
 import matplotlib as mpl
 import matplotlib.dates as mdates
@@ -17,6 +17,9 @@ from biopsykit import colors
 from biopsykit.signals.ecg.ecg import _assert_ecg_input
 from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.datatype_helper import EcgResultDataFrame
+
+if TYPE_CHECKING:
+    from biopsykit.signals.ecg import EcgProcessor
 
 __all__ = [
     "ecg_plot",
