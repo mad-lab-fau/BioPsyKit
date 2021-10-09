@@ -11,8 +11,9 @@ from typing_extensions import Literal, get_args
 from biopsykit.utils._types import path_t
 
 if TYPE_CHECKING:
-    from biopsykit.carwatch_logs import LogData
     import ipywidgets.widgets
+
+    from biopsykit.carwatch_logs import LogData
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
 
