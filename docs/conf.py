@@ -391,6 +391,13 @@ latex_documents = [("index", "user_guide.tex", "BioPsyKit Documentation", "Rober
 # Execute notebooks before conversion: 'always', 'never', 'auto' (default)
 nbsphinx_execute = "auto"
 
+nbsphinx_kernel_name = "python3"
+
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg'}",
+]
+
+
 nbsphinx_epilog = r"""
 
 {% set docname = env.doc2path(env.docname) %}
