@@ -24,7 +24,7 @@ def task_format_check():
 def task_test():
     """Run Pytest with coverage."""
     return {
-        "actions": ["pytest --cov=biopsykit %(paras)s"],
+        "actions": ["pytest --cov=biopsykit %(paras)s --cov-report=xml"],
         "params": [{"name": "paras", "short": "p", "long": "paras", "default": ""}],
         "verbosity": 2,
     }
