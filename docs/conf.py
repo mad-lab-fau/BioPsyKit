@@ -393,6 +393,11 @@ nbsphinx_execute = "auto"
 
 nbsphinx_kernel_name = "python3"
 
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg'}",
+]
+
+
 nbsphinx_epilog = r"""
 
 {% set docname = env.doc2path(env.docname) %}
