@@ -68,7 +68,6 @@ and how to use the ``Protocol`` API in particular.
     :name: psychological-protocols
     :glob:
 
-    _notebooks/ECG_Analysis_Example
     _notebooks/Protocol_Example
     _notebooks/CFT_Example
 
