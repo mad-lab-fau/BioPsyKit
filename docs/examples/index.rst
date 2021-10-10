@@ -16,7 +16,7 @@ These examples demonstrate how to process and analyze different types of physiol
 
     _notebooks/ECG_Processing_Example
     _notebooks/ECG_Analysis_Example
-    _notebooks/EEG_Example
+    _notebooks/EEG_Processing_Example
     _notebooks/CFT_Example
 
 
