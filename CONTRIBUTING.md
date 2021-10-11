@@ -197,7 +197,7 @@ format               Reformat all files using black.
 format_check         Check, but not change, formatting using black.
 lint                 Lint all files with Prospector.
 test                 Run Pytest with coverage.
-update_version       Bump the version in pyproject.toml and biopsykit.__init__ .
+update_version       Bump the version in pyproject.toml and biopsykit.__init__. Pass the options "major", "minor", or "patch" with the `-v` argument to bump the major, minor, or patch version, respectively.  
 ```
 
 To run one of the commands execute (e.g. the `test` command):
