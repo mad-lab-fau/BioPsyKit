@@ -66,6 +66,7 @@ coverage-badge = "^1.0.1"
 isort = "^5.9.3"
 sphinx-copybutton = "^0.4.0"
 nbsphinx = "^0.8.7"
+pandoc = "^1.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
