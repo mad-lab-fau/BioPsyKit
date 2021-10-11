@@ -327,9 +327,14 @@ test                 Run Pytest with coverage.
 update_version       Bump the version in pyproject.toml and biopsykit.__init__ .
 ```
 
+----
+**Note**: In order to build the documentation, you need to additionally install [pandoc](https://pandoc.org/installing.html).
+
+----
+
 See the [Contributing Guidelines](https://biopsykit.readthedocs.io/en/latest/source/contributing/CONTRIBUTING.html) for further information.
 
 
 
 ## Examples
-See Examples in the function documentations on how to use this library.
+See the [Examples Gallery](https://biopsykit.readthedocs.io/en/latest/examples/index.html) for example on how to use BioPsyKit.

@@ -209,7 +209,7 @@ To execute `format`, `lint`, and `test` all together, run:
 ```bash
 poetry run doit
 # or if you want less output
-petry run doit -v 0
+poetry run doit -v 0
 ```
 
 You should run this as often as possible!
@@ -230,7 +230,12 @@ other **linting** tasks. *Prospector* runs `pylint`, `pep257`, and `pyflakes` wi
 code and docstring style.
 
 For **documentation** we follow the numpy doc-string guidelines and auto-build our API documentation using *Sphinx*.
-To make your live easier, you should also set your IDE tools to support the numpy docstring conventions.
+To make your life easier, you should also set your IDE tools to support the numpy docstring conventions.
+
+----
+**Note**: In order to build the documentation, you need to additionally install [pandoc](https://pandoc.org/installing.html).
+
+----
 
 
 ### Testing and Test Data
