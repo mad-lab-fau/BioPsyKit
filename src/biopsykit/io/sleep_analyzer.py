@@ -182,6 +182,7 @@ def load_withings_sleep_analyzer_raw_file(
     data["value"] = data["value"].apply(literal_eval)
     # set index and sort
     data = data.set_index("start").sort_index()
+    data = data.loc[~data.index.duplicated()]
     # rename index
     data.index.name = "time"
     # explode data and apply timestamp explosion to groups
@@ -199,7 +200,9 @@ def load_withings_sleep_analyzer_raw_file(
 
     if split_into_nights:
         data_explode = split_nights(data_explode)
-        data_explode = {key: d.resample("1min").interpolate() for key, d in data_explode.items()}
+        data_explode = {key: _reindex_datetime_index(d) for key, d in data_explode.items()}
+    else:
+        data_explode = _reindex_datetime_index(data_explode)
     return data_explode
 
 
@@ -344,3 +347,7 @@ def _explode_timestamp(df: pd.DataFrame) -> pd.DataFrame:
     # we don't need the duration column anymore so we can drop it
     df.drop(columns="duration", inplace=True)
     return df
+
+
+def _reindex_datetime_index(df: pd.DataFrame) -> pd.DataFrame:
+    return df.reindex(df.resample("1min").bfill().index)
