@@ -1,6 +1,7 @@
 # BioPsyKit
 
 [![PyPI](https://img.shields.io/pypi/v/biopsykit)](https://pypi.org/project/biopsykit/)
+[![status](https://joss.theoj.org/papers/4769dbce3a25db943d7e3a23578becd1/status.svg)](https://joss.theoj.org/papers/4769dbce3a25db943d7e3a23578becd1)
 ![GitHub](https://img.shields.io/github/license/mad-lab-fau/biopsykit)
 [![Documentation Status](https://readthedocs.org/projects/biopsykit/badge/?version=latest)](https://biopsykit.readthedocs.io/en/latest/?badge=latest)
 [![Test and Lint](https://github.com/mad-lab-fau/BioPsyKit/actions/workflows/test-and-lint.yml/badge.svg)](https://github.com/mad-lab-fau/BioPsyKit/actions/workflows/test-and-lint.yml)
@@ -338,3 +339,16 @@ See the [Contributing Guidelines](https://biopsykit.readthedocs.io/en/latest/sou
 
 ## Examples
 See the [Examples Gallery](https://biopsykit.readthedocs.io/en/latest/examples/index.html) for example on how to use BioPsyKit.
+
+
+## Citing BioPsyKit
+
+If you use `BioPsyKit` in your work, please report the version you used in the text. Additionally, please also cite the corresponding paper:
+
+_Citation be added when available._
+
+If you use a specific algorithm please also to make sure you cite the original paper of the algorithm! We recommend the following citation style:
+
+```
+We used the algorithm proposed by Author et al. [paper-citation], implemented by the BioPsykit package [biopsykit-citation].
+```
