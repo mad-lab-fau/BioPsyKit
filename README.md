@@ -345,7 +345,10 @@ See the [Examples Gallery](https://biopsykit.readthedocs.io/en/latest/examples/i
 
 If you use `BioPsyKit` in your work, please report the version you used in the text. Additionally, please also cite the corresponding paper:
 
-_Citation be added when available._
+```
+Richer et al., (2021). BioPsyKit: A Python package for the analysis of biopsychological data. Journal of Open Source Software, 6(66), 3702, https://doi.org/10.21105/joss.03702
+```
+
 
 If you use a specific algorithm please also to make sure you cite the original paper of the algorithm! We recommend the following citation style:
 
