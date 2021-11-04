@@ -177,9 +177,9 @@ def load_withings_sleep_analyzer_raw_file(
 
     # convert string timestamps to datetime
     data["start"] = pd.to_datetime(data["start"])
-    # sort index and drop duplicate index values
+    # sort index
     data = data.set_index("start").sort_index()
-    data = data.loc[~data.index.duplicated()]
+
     # convert it into the right time zone
     data = data.groupby("start", group_keys=False).apply(_localize_time, timezone=timezone)
     # convert strings of arrays to arrays
@@ -196,6 +196,8 @@ def load_withings_sleep_analyzer_raw_file(
     data_explode.columns = [data_source]
     # convert dtypes from object into numerical values
     data_explode = data_explode.astype(int)
+    # drop duplicate values
+    data_explode = data_explode.loc[~data_explode.index.duplicated()]
 
     if split_into_nights:
         data_explode = split_nights(data_explode)
