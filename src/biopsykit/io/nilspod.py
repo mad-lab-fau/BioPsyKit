@@ -10,7 +10,7 @@ import pandas as pd
 from nilspodlib import Dataset, SyncedSession
 from typing_extensions import Literal
 
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dtype
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dtype, _assert_is_dir
 from biopsykit.utils._types import path_t
 from biopsykit.utils.time import tz
 
@@ -414,15 +414,20 @@ def load_folder_nilspod(
     """
     # ensure pathlib
     folder_path = Path(folder_path)
+    _assert_is_dir(folder_path)
+
     # look for all NilsPod binary files in the folder
     dataset_list = list(sorted(folder_path.glob("*.bin")))
     if len(dataset_list) == 0:
-        raise ValueError("No NilsPod files found in folder!")
+        raise ValueError(f"No NilsPod files found in folder {folder_path}!")
     if phase_names is None:
-        phase_names = ["Part{}".format(i) for i in range(len(dataset_list))]
+        phase_names = [f"Part{i}" for i in range(len(dataset_list))]
 
     if len(phase_names) != len(dataset_list):
-        raise ValueError("Number of phases does not match number of datasets in the folder!")
+        raise ValueError(
+            f"Number of phases does not match number of datasets in the folder! "
+            f"Expected {len(dataset_list)}, got {len(phase_names)}."
+        )
 
     dataset_list = [load_dataset_nilspod(file_path=dataset_path, **kwargs) for dataset_path in dataset_list]
 
@@ -430,7 +435,7 @@ def load_folder_nilspod(
     fs_list = [fs for df, fs in dataset_list]
 
     if len(set(fs_list)) > 1:
-        raise ValueError("Datasets in the sessions have different sampling rates! Got: {}.".format(fs_list))
+        raise ValueError(f"Datasets in the sessions have different sampling rates! Got: {fs_list}.")
     fs = fs_list[0]
 
     dataset_dict = {phase: df for phase, (df, fs) in zip(phase_names, dataset_list)}
