@@ -29,7 +29,8 @@ jobs:
         poetry install -E mne -E jupyter
     - name: Linting
       run: |
-        poe format_check lint
+        poe format_check
+        poe lint
     - name: Testing
       run: |
         poe test
