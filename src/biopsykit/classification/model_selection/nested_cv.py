@@ -91,7 +91,7 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
                 param_distributions=param_dict,
                 cv=inner_cv,
                 scoring=scoring_dict,
-                n_iter=10,
+                n_iter=30,
                 random_state=random_state,
                 **kwargs,
             )
