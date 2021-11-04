@@ -187,10 +187,18 @@ newer versions of already installed packages exist.
 ### Tools used in BioPsyKit
 
 To make it easier to run command-line tasks this project uses [poethepoet](https://github.com/nat-n/poethepoet) to 
-provide a cross-platform CLI for common tasks. All commands need to be executed in the `venv` created by poetry, 
-but, fortunately, `poe` takes care of that!
+provide a cross-platform CLI for common tasks.
 
-To list the available tasks, run:
+Install `poethepoet` into your project (so it works inside `poetry shell`):
+```bash
+poetry add --dev poethepoet
+```
+And into your default python environment (so it works outside of `poetry shell`)
+```bash
+pip install poethepoet
+```
+
+All commands need to be executed in the `venv` created by poetry. To list the available tasks, run:
 
 ```bash
 $ poe
@@ -278,7 +286,7 @@ To set up a Jupyter environment that has ``BioPsyKit`` and all dependencies inst
 ```bash
 # poetry install including root!
 poetry install
-poe register_ipykernel
+poetry run poe register_ipykernel
 ``` 
 
 After this you can start Jupyter as always, but select "biopsykit" as a kernel when you want to run a notebook.

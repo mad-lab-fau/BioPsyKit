@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.3.3 – TBD
+- fixed bug when importing Sleep Analyzer data using `biopsykit.io.sleep_analyzer.load_withings_sleep_analyzer_raw_file()`
+- `biopsykit.io.load_time_log()`: time log dataframes imported using this function will now have "phase" as column name
+- added function `biopsykit.utils.time.extract_time_from_filename` that can parse time information from a filename
+- updated the minimum version of the `pingouin` dependency to 0.5.0 because it's strongly recommended from the authors of `pingouin` (https://pingouin-stats.org/changelog.html#v0-5-0-october-2021)
+- switched from `doit` to `poethepoet` as task runner.
+
 ## Version 0.3.2 – October 12 2021
 - final version of BioPsyKit for submission to the [Journal of Open Source Software](https://joss.theoj.org/).
 - improved documentation (e.g., included Example Gallery)
