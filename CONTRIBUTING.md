@@ -72,8 +72,9 @@ As a reminder, feature branches...
 
 As soon as your new contribution to `BioPsyKit` is ready, it's time to ensure your code passes all necessary checks, 
 such as formatting, linting, building documentation, and performing tests. To run these checks more easily this project 
-uses [doit](https://pydoit.org/contents.html) to provide a cross-platform CLI for common tasks. More details on that are 
-explained in a [later Section](#Tools-used-in-BioPsyKit).
+uses [poethepoet](https://github.com/nat-n/poethepoet), a task runner that runs well with poetry and that provides 
+a cross-platform CLI for common tasks. More details on that are explained in a 
+[later Section](#Tools-used-in-BioPsyKit).
 
 
 ##### Ask to Merge Pull Request
@@ -185,13 +186,14 @@ newer versions of already installed packages exist.
 
 ### Tools used in BioPsyKit
 
-To make it easier to run command-line tasks this project uses [doit](https://pydoit.org/contents.html) to provide a 
-cross-platform CLI for common tasks. All commands need to be executed in the `venv` created by poetry.
+To make it easier to run command-line tasks this project uses [poethepoet](https://github.com/nat-n/poethepoet) to 
+provide a cross-platform CLI for common tasks. All commands need to be executed in the `venv` created by poetry, 
+but, fortunately, `poe` takes care of that!
 
 To list the available tasks, run:
 
 ```bash
-$ poetry run doit list
+$ poe
 docs                 Build the html docs using Sphinx.
 format               Reformat all files using black.
 format_check         Check, but not change, formatting using black.
@@ -202,22 +204,16 @@ update_version       Bump the version in pyproject.toml and biopsykit.__init__. 
 
 To run one of the commands execute (e.g. the `test` command):
 ```bash
-poetry run doit test
+poe test
 ```
 
 To execute `format`, `lint`, and `test` all together, run:
 ```bash
-poetry run doit
-# or if you want less output
-poetry run doit -v 0
+poe default
 ```
 
 You should run this as often as possible!
 At least once before any `git push`.
-
-**Pro Tip**: If you do not want to type `poetry run` all the time, you can also activate the `venv` for your current
-terminal session using `poetry shell`.
-After this you can just type, for example, `doit test`.
 
 To ensure that the whole library uses a consistent **format**, we use [black](https://github.com/psf/black) to
 autoformat our code.
@@ -240,7 +236,7 @@ To make your life easier, you should also set your IDE tools to support the nump
 
 ### Testing and Test Data
 
-`BioPsyKit` uses `pytest` for **testing**. Besides using the `doit`-command, you can also use an IDE integration
+`BioPsyKit` uses `pytest` for **testing**. Besides using the `poe`-command, you can also use an IDE integration
 available for most IDEs.
 
 While all automated tests should go in the `tests` folder, it might be helpful to create some external test script 
@@ -282,7 +278,7 @@ To set up a Jupyter environment that has ``BioPsyKit`` and all dependencies inst
 ```bash
 # poetry install including root!
 poetry install
-poetry run doit register_ipykernel
+poe register_ipykernel
 ``` 
 
 After this you can start Jupyter as always, but select "biopsykit" as a kernel when you want to run a notebook.

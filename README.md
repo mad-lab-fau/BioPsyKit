@@ -316,10 +316,11 @@ cd BioPsyKit
 poetry install -E mne -E jupyter 
 ```
 
-To run any of the tools required for the development workflow, use the `doit` commands:
+To run any of the tools required for the development workflow, use the `poe` commands of the 
+[poethepoet](https://github.com/nat-n/poethepoet) task runner:
 
 ```bash
-$ poetry run doit list
+$ poe
 docs                 Build the html docs using Sphinx.
 format               Reformat all files using black.
 format_check         Check, but not change, formatting using black.
