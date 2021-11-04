@@ -461,15 +461,18 @@ class EcgProcessor(_BaseProcessor):
             List containing the outlier correction methods to be applied.
             Pass ``None`` to not apply any outlier correction, ``all`` to apply all available outlier correction
             methods. See :meth:`~biopsykit.signals.ecg.EcgProcessor.outlier_corrections` to get a list of possible
-            outlier correction methods. Default: ``all``
+            outlier correction methods.
+            Default: ``all``
         outlier_params: dict, optional
             Dict of parameters to be passed to the outlier correction methods or ``None``
             to use default parameters (see :meth:`~biopsykit.signals.ecg.EcgProcessor.outlier_params_default`
-            for more information). Default: ``None``
+            for more information).
+            Default: ``None``
         imputation_type: str, optional
             Method for outlier imputation: ``linear`` for linear interpolation between the RR intervals before and
             after R peak outlier, or ``moving_average`` for average value of the
-            10 preceding and 10 succeding RR intervals. Default: ``None`` (corresponds to ``moving_average``)
+            10 preceding and 10 succeding RR intervals.
+            Default: ``None`` (corresponds to ``moving_average``)
         sampling_rate : float, optional
             Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
             Default: 256
