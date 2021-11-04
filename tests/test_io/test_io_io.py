@@ -38,7 +38,7 @@ def time_log_correct():
             ["12:32:05", "12:33:10", "12:35:00", "12:39:45", "12:42:00"],
             ["12:54:50", "12:55:50", "12:57:55", "12:58:00", "13:02:10"],
         ],
-        columns=["Baseline", "Intervention", "Stress", "Recovery", "End"],
+        columns=pd.Index(["Baseline", "Intervention", "Stress", "Recovery", "End"], name="phase"),
         index=pd.MultiIndex.from_tuples(
             [("Vp01", "Intervention"), ("Vp02", "Control")], names=["subject", "condition"]
         ),
@@ -49,7 +49,7 @@ def time_log_correct():
 def time_log_not_continuous_correct():
     df = pd.DataFrame(
         [["12:32:05", "12:33:10", "12:35:00", "12:39:45"], ["12:54:50", "12:55:50", "12:57:55", "12:58:00"]],
-        columns=pd.MultiIndex.from_product([["phase1", "phase2"], ["start", "end"]], names=[None, "time"]),
+        columns=pd.MultiIndex.from_product([["phase1", "phase2"], ["start", "end"]], names=["phase", "time"]),
         index=pd.MultiIndex.from_tuples(
             [("Vp01", "Intervention"), ("Vp02", "Control")], names=["subject", "condition"]
         ),

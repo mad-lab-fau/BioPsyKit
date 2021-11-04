@@ -167,6 +167,7 @@ def load_time_log(
     data, index_cols = _sanitize_index_cols(data, subject_col, condition_col, additional_index_cols)
     data = _apply_index_cols(data, index_cols=index_cols)
     data = _apply_phase_cols(data, phase_cols=phase_cols)
+    data.columns.name = "phase"
 
     if not continuous_time:
         data = _parse_time_log_not_continuous(data, index_cols)
@@ -226,6 +227,9 @@ def _parse_time_log_not_continuous(
     data = data.reindex(["start", "end"], level=-1)
     # unstack start|end level
     data = data.unstack()
+    # set name of outer index level
+    data.columns = data.columns.set_names("phase", level=0)
+
     return data
 
 
