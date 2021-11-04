@@ -40,7 +40,7 @@ def update_version(version):
         .strip()
         .split(" ", 1)[1]
     )
-    update_version_strings(HERE.joinpath("empkins_io/__init__.py"), new_version)
+    update_version_strings(HERE.joinpath("src/biopsykit/__init__.py"), new_version)
 
 
 def task_update_version():
