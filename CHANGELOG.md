@@ -1,9 +1,9 @@
 # Changelog
 
-## Version 0.3.3 – November 04 2021
+## Version 0.3.4 – November 04 2021
 ### New Features
-- added function `biopsykit.utils.time.extract_time_from_filename` that can parse time information from a filename
-- added function `biopsykit.metadata.gender_counts`
+- added function `biopsykit.utils.time.extract_time_from_filename()` that can parse time information from a filename
+- added function `biopsykit.metadata.gender_counts()`
 ### Bugfixes
 - fixed bug when importing Sleep Analyzer data using `biopsykit.io.sleep_analyzer.load_withings_sleep_analyzer_raw_file()`
 - `biopsykit.io.load_time_log()`: time log dataframes imported using this function will now have "phase" as column name
