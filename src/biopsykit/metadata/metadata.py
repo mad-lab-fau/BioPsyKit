@@ -11,9 +11,65 @@ from typing import Optional, Sequence, Union
 
 import pandas as pd
 
-from biopsykit.utils._datatype_validation_helper import _assert_value_range
+from biopsykit.utils._datatype_validation_helper import (
+    _assert_has_columns,
+    _assert_has_index_levels,
+    _assert_len_list,
+    _assert_value_range,
+)
 
-__all__ = ["bmi", "whr"]
+__all__ = ["bmi", "whr", "gender_counts"]
+
+from biopsykit.utils.exceptions import ValidationError
+
+
+def gender_counts(
+    data: pd.DataFrame, gender_col: Optional[str] = None, split_condition: Optional[bool] = False
+) -> pd.DataFrame:
+    """Get statistics about gender distribution from a dataset.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe with subjects
+    gender_col : str, optional
+        column name containing gender information or ``None`` to use default name ("gender").
+    split_condition : bool, optional
+        ``True`` to split gender distribution by condition (assumes that an "condition" index level is present in
+        ``data``), ``False`` otherwise.
+        Default: ``False``
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        dataframe with absolute and relative gender distribution
+
+    """
+    if gender_col is None:
+        gender_col = "gender"
+    if isinstance(gender_col, str):
+        gender_col = [gender_col]
+
+    try:
+        _assert_len_list(gender_col, 1)
+    except ValidationError as e:
+        raise ValidationError(
+            f"'gender_col' is excepted to be only one column! Got {len(gender_col)} columns instead."
+        ) from e
+    _assert_has_columns(data, [gender_col])
+    data = data.loc[:, gender_col]
+    if split_condition:
+        _assert_has_index_levels(data, "condition", match_atleast=True)
+        return data.groupby("condition").apply(_gender_counts)
+    return _gender_counts(data)
+
+
+def _gender_counts(data: pd.DataFrame):
+    return pd.concat(
+        [data.value_counts(sort=False), data.value_counts(normalize=True, sort=False)],
+        axis=1,
+        keys=["count", "percent"],
+    )
 
 
 def bmi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
