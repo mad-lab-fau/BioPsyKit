@@ -177,26 +177,25 @@ def load_withings_sleep_analyzer_raw_file(
 
     # convert string timestamps to datetime
     data["start"] = pd.to_datetime(data["start"])
+    # sort index and drop duplicate index values
+    data = data.set_index("start").sort_index()
+    data = data.loc[~data.index.duplicated()]
+    # convert it into the right time zone
+    data = data.groupby("start", group_keys=False).apply(_localize_time, timezone=timezone)
     # convert strings of arrays to arrays
     data["duration"] = data["duration"].apply(literal_eval)
     data["value"] = data["value"].apply(literal_eval)
-    # set index and sort
-    data = data.set_index("start").sort_index()
-    data = data.loc[~data.index.duplicated()]
+
     # rename index
     data.index.name = "time"
     # explode data and apply timestamp explosion to groups
     data_explode = data.apply(pd.Series.explode)
     data_explode = data_explode.groupby("time", group_keys=False).apply(_explode_timestamp)
-    # convert it into the right time zone
-    data_explode = data_explode.tz_localize("UTC").tz_convert(timezone)
+    data_explode.index = data_explode.index.tz_localize("UTC").tz_convert(timezone)
     # rename the value column
     data_explode.columns = [data_source]
     # convert dtypes from object into numerical values
     data_explode = data_explode.astype(int)
-    # sort index and drop duplicate index values
-    data_explode = data_explode.sort_index()
-    data_explode = data_explode[~data_explode.index.duplicated()]
 
     if split_into_nights:
         data_explode = split_nights(data_explode)
@@ -329,6 +328,11 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
     is_sleep_endpoint_dataframe(data)
 
     return data
+
+
+def _localize_time(df: pd.DataFrame, timezone) -> pd.DataFrame:
+    df.index = pd.to_datetime(df.index).tz_convert(timezone)
+    return df
 
 
 def _explode_timestamp(df: pd.DataFrame) -> pd.DataFrame:
