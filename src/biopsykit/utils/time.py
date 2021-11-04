@@ -1,6 +1,8 @@
 """Module containing helper functions to handle time data."""
 
 import datetime
+import re
+from pathlib import Path
 from typing import Optional, Union
 
 import numpy as np
@@ -8,9 +10,18 @@ import pandas as pd
 import pytz
 
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
+from biopsykit.utils._types import path_t
 
 tz = pytz.timezone("Europe/Berlin")
 utc = pytz.timezone("UTC")
+
+__all__ = [
+    "check_tz_aware",
+    "extract_time_from_filename",
+    "get_time_from_date",
+    "time_to_datetime",
+    "timedelta_to_time",
+]
 
 
 def check_tz_aware(data: pd.DataFrame) -> bool:
@@ -31,6 +42,38 @@ def check_tz_aware(data: pd.DataFrame) -> bool:
     """
     _assert_is_dtype(data, pd.DataFrame)
     return isinstance(data.index, pd.DatetimeIndex) and (data.index.tzinfo is not None)
+
+
+def extract_time_from_filename(
+    file_path: path_t, filename_pattern: str, date_pattern: Optional[str] = None
+) -> datetime.datetime:
+    """Extract time information from filename.
+
+    Parameters
+    ----------
+    file_path : :class:`~pathlib.Path` or str
+        filename
+    filename_pattern : str
+        regex string indicating how to extract time information from filename
+    date_pattern : str, optional
+        date format pattern or ``None`` to use default date format pattern ("%Y%m%d_%H_%M_%S").
+
+    Returns
+    -------
+    :class:`datetime.datetime`
+        extracted date information
+
+    """
+    # ensure pathlib
+    file_path = Path(file_path)
+    if date_pattern is None:
+        date_pattern = "%Y%m%d_%H_%M_%S"
+    start_time = re.findall(filename_pattern, file_path.name)
+    if len(start_time) == 0:
+        raise ValueError(f"No valid string matching the pattern '{filename_pattern}' found in filename!")
+    start_time = start_time[0]
+    start_time = datetime.datetime.strptime(start_time, date_pattern)
+    return pd.to_datetime(start_time)
 
 
 def get_time_from_date(
