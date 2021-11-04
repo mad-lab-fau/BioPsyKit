@@ -179,8 +179,8 @@ class TestIoSleep:
             split_into_nights=False,
         )
         assert isinstance(data.index, pd.DatetimeIndex)
-        # data has a duration of 7 minutes (no interpolation when data is not split)
-        assert len(data.index) == 7
+        # data has a duration of 16 minutes
+        assert len(data.index) == 16
         assert str(data.index.tz) == "Europe/Berlin"
 
     @pytest.mark.parametrize(
@@ -220,6 +220,6 @@ class TestIoSleep:
     def test_load_withings_sleep_analyzer_raw_folder_no_split(self, folder_path):
         data = load_withings_sleep_analyzer_raw_folder(TEST_FILE_PATH.joinpath(folder_path), split_into_nights=False)
         assert isinstance(data, pd.DataFrame)
-        # data has a duration of 7 minutes (data is not interpolated, when split_into_nights is False)
-        assert len(data.index) == 7
+        # data has a duration of 16 minutes (when split_into_nights is False)
+        assert len(data.index) == 16
         TestCase().assertListEqual(list(data.columns), ["heart_rate", "respiration_rate", "sleep_state", "snoring"])
