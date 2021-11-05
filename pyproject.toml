@@ -113,4 +113,5 @@ format_check = ["_black_check", "_isort_check"]
 lint = "prospector"
 test = "pytest --cov=biopsykit --cov-report=xml"
 update_version = {"script" = "_tasks:task_update_version"}
-register_ipykernel = "python -m ipykernel install --user --name test_kernel --display-name test_kernel"
+register_ipykernel = "python -m ipykernel install --user --name biopsykit --display-name biopsykit"
+default = ["format", "lint", "test"]
