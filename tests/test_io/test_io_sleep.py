@@ -184,6 +184,24 @@ class TestIoSleep:
         assert str(data.index.tz) == "Europe/Berlin"
 
     @pytest.mark.parametrize(
+        "file_path, data_source",
+        [
+            ("raw_bed_sleep-state.csv", "sleep_state"),
+        ],
+    )
+    def test_load_withings_sleep_analyzer_raw_file_duplicate_index(self, file_path, data_source):
+        data = load_withings_sleep_analyzer_raw_file(
+            TEST_FILE_PATH.joinpath("sleep_analyzer_duplicate_index").joinpath(file_path),
+            data_source=data_source,
+        )
+        assert isinstance(data, dict)
+        data = data["2021-10-10"]
+        assert isinstance(data.index, pd.DatetimeIndex)
+        # data has a duration of 18 minutes
+        assert len(data.index) == 18
+        assert str(data.index.tz) == "Europe/Berlin"
+
+    @pytest.mark.parametrize(
         "folder_path, expected",
         [
             ("sleep_analyzer", does_not_raise()),
