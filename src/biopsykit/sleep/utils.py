@@ -1,4 +1,5 @@
 """Module with utility functions to handle sleep data."""
+import datetime
 from typing import Dict
 
 import numpy as np
@@ -40,12 +41,25 @@ def split_nights(data: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     idx_split = np.unique(np.concatenate([idx_date, idx_time]))
     data_split = np.split(data, idx_split)
 
+    time_6pm = pd.Timestamp("18:00:00").time()
+
     # concatenate data from one night (data between 6 pm and 12 am from the previous day and
     # between 12 am and 6 pm of the next day)
     for i, df in enumerate(data_split):
-        if i < (len(data_split) - 1) and df.index[0].time() > pd.Timestamp("18:00:00").time():
-            data_split[i] = pd.concat([data_split[i], data_split[i + 1]])
-            del data_split[i + 1]
+        if i < (len(data_split) - 1):
+            df_curr = df
+            df_next = data_split[i + 1]
+
+            date_curr = df_curr.index[0].date()
+            date_next = df_next.index[0].date()
+            time_curr = df_curr.index[0].time()
+            time_next = df_next.index[0].time()
+
+            # check if dates are consecutive and if first part is after 6 pm and second part is before 6 am
+            if (date_next == date_curr + datetime.timedelta(days=1)) and (time_curr > time_6pm > time_next):
+                data_split[i] = pd.concat([df_curr, df_next])
+                # delete the second part
+                del data_split[i + 1]
 
     # create dict with data from each night. dictionary keys are the dates.
     dict_data = {}

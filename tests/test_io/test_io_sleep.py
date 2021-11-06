@@ -4,17 +4,8 @@ from unittest import TestCase
 
 import pandas as pd
 import pytest
-from nilspodlib import Dataset
 from pandas._testing import assert_index_equal
 
-from biopsykit.io.nilspod import (
-    check_nilspod_dataset_corrupted,
-    get_nilspod_dataset_corrupted_info,
-    load_csv_nilspod,
-    load_dataset_nilspod,
-    load_folder_nilspod,
-    load_synced_session_nilspod,
-)
 from biopsykit.io.sleep import save_sleep_endpoints
 from biopsykit.io.sleep_analyzer import (
     load_withings_sleep_analyzer_raw_file,
@@ -112,12 +103,7 @@ class TestIoSleep:
         with expected:
             load_withings_sleep_analyzer_summary(TEST_FILE_PATH.joinpath(file_path))
 
-    @pytest.mark.parametrize(
-        "file_path",
-        [
-            ("sleep_analyzer_summary.csv"),
-        ],
-    )
+    @pytest.mark.parametrize("file_path", [("sleep_analyzer_summary.csv")])
     def test_load_withings_sleep_analyzer_summary(self, file_path):
         data = load_withings_sleep_analyzer_summary(TEST_FILE_PATH.joinpath(file_path))
         assert_index_equal(
@@ -200,6 +186,30 @@ class TestIoSleep:
         # data has a duration of 18 minutes
         assert len(data.index) == 18
         assert str(data.index.tz) == "Europe/Berlin"
+
+    @pytest.mark.parametrize(
+        "file_path, data_source",
+        [
+            ("raw_bed_sleep-state.csv", "sleep_state"),
+        ],
+    )
+    def test_load_withings_sleep_analyzer_daylight_saving_time(self, file_path, data_source):
+        data = load_withings_sleep_analyzer_raw_file(
+            TEST_FILE_PATH.joinpath("sleep_analyzer_daylight_saving_time").joinpath(file_path),
+            data_source=data_source,
+        )
+        assert isinstance(data, dict)
+        dict_reference = {
+            "2021-10-28": {"duration": 60, "start_hour": 22},
+            "2021-10-30": {"duration": 2, "start_hour": 1},
+            "2021-10-31": {"duration": 166, "start_hour": 3},
+        }
+        for key, df in data.items():
+            assert key in dict_reference
+            assert isinstance(df.index, pd.DatetimeIndex)
+            assert str(df.index.tz) == "Europe/Berlin"
+            # assert df has the correct duration
+            assert len(df.index) == dict_reference[key]["duration"]
 
     @pytest.mark.parametrize(
         "folder_path, expected",
