@@ -22,6 +22,7 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
     outer_cv: BaseCrossValidator,
     inner_cv: BaseCrossValidator,
     groups: Optional[np.ndarray] = None,
+    optimizer_setup = None,
     **kwargs,
 ):
     """Perform a cross-validated grid-search with hyperparameter optimization within a outer cross-validation.
@@ -83,18 +84,21 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
     results_dict = {key: [] for key in cols}
 
     for train, test in tqdm(list(outer_cv.split(X, y, groups)), desc="Outer CV"):
-        if isinstance(pipeline.steps[2][1], sklearn.ensemble.RandomForestClassifier) or isinstance(
-            pipeline.steps[2][1], sklearn.ensemble.GradientBoostingClassifier
-        ):
-            grid = RandomizedSearchCV(
-                pipeline,
-                param_distributions=param_dict,
-                cv=inner_cv,
-                scoring=scoring_dict,
-                n_iter=30,
-                random_state=random_state,
-                **kwargs,
-            )
+        if optimizer_setup:
+            if optimizer_setup["search_method"] == "random":
+                grid = RandomizedSearchCV(
+                    pipeline,
+                    param_distributions=param_dict,
+                    cv=inner_cv,
+                    scoring=scoring_dict,
+                    n_iter=optimizer_setup["n_iter"],
+                    random_state=random_state,
+                    **kwargs,
+                )
+            elif optimizer_setup["search_method"] == "grid":
+                grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
+            else:
+                raise ValueError("Unknown search method {}".format(optimizer_setup["search_method"]))
         else:
             grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
         if groups is None:

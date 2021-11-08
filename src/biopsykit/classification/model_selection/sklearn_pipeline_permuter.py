@@ -187,6 +187,7 @@ class SklearnPipelinePermuter:
         outer_cv: BaseCrossValidator,
         inner_cv: BaseCrossValidator,
         scoring: Optional[str] = None,
+        optimizer_setup_list = None,
         **kwargs,
     ):
         """Run fit for all pipeline combinations and sets of parameters.
@@ -225,7 +226,7 @@ class SklearnPipelinePermuter:
         location = cachedir_name
         memory = Memory(location=location, verbose=0)
 
-        for model_combination in tqdm(self.model_combinations):
+        for i, model_combination in tqdm(enumerate(self.model_combinations)):
             if model_combination in self.grid_searches:
                 # continue if we already tried this combination
                 continue
@@ -250,8 +251,13 @@ class SklearnPipelinePermuter:
                 )
             )
 
-            for i, param_dict in enumerate(pipeline_params):
-                print("Parameter grid #{}: {}".format(i, param_dict))
+            if optimizer_setup_list:
+                optimizer_setup = optimizer_setup_list[i]
+            else:
+                optimizer_setup = None
+
+            for j, param_dict in enumerate(pipeline_params):
+                print("Parameter grid #{}: {}".format(j, param_dict))
                 model_cls = [(step, self.models[step][m]) for step, m in model_combination]
                 pipeline = Pipeline(model_cls, memory=memory)
 
@@ -263,6 +269,7 @@ class SklearnPipelinePermuter:
                     outer_cv=outer_cv,
                     inner_cv=inner_cv,
                     scoring=scoring,
+                    optimizer_setup=optimizer_setup,
                     **kwargs,
                 )
 
