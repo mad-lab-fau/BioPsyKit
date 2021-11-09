@@ -2,25 +2,31 @@
 import re
 import warnings
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 import pandas as pd
 
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
 from biopsykit.utils._types import path_t
 from biopsykit.utils.datatype_helper import HeartRatePhaseDict, HeartRateSubjectDataDict, is_hr_phase_dict
 from biopsykit.utils.file_handling import get_subject_dirs, is_excel_file
 from biopsykit.utils.time import tz
 
-__all__ = ["load_hr_phase_dict", "load_hr_phase_dict_folder", "write_hr_phase_dict"]
+__all__ = [
+    "load_hr_phase_dict",
+    "load_hr_phase_dict_folder",
+    "load_hr_phase_dict_csv",
+    "write_hr_phase_dict",
+    "write_hr_phase_dict_csv",
+]
 
 
 def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) -> HeartRatePhaseDict:
     """Load Excel file containing time series heart rate data of one subject.
 
-    The returned dictionary will be a
-    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`,
-    i.e. a dict with heart rate data from one subject split into phases (as exported by :func:`write_hr_phase_dict`).
+    The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`,
+    i.e., a dict with heart rate data from one subject split into phases (as exported by :func:`write_hr_phase_dict`
+    or :func:`write_hr_phase_dict_csv`).
 
     Parameters
     ----------
@@ -228,3 +234,145 @@ def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t):
     # assert that dict is in the right format
     is_hr_phase_dict(hr_phase_dict)
     write_pandas_dict_excel(hr_phase_dict, file_path)
+
+
+def write_hr_phase_dict_csv(hr_phase_dict: HeartRatePhaseDict, folder_path: path_t, file_pattern: path_t):
+    """Write :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` to a series of csv files.
+
+    The :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` is a dictionary with heart rate time
+    series data split into phases.
+
+    Each of the phases in the dictionary will be a separate csv file.
+
+    Parameters
+    ----------
+    hr_phase_dict : :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` containing pandas dataframes
+        with heart rate data
+    folder_path : :class:`~pathlib.Path` or str
+        folder path to export csv files
+    file_pattern : :class:`~pathlib.Path` or str
+        file pattern to save. The file pattern must include a placeholder "{}" which will be filled with the
+        name of the phase.
+
+    Raises
+    ------
+    ValueError
+        if ``file_pattern`` does not include a placeholder "{}" that can be filled with the phase name
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if ``hr_phase_dict`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
+        if ``file_pattern`` is no csv file
+
+    See Also
+    --------
+    ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
+    load_hr_phase_dict_csv : Load `HeartRatePhaseDict` written to csv files
+
+    """
+    # ensure pathlib
+    folder_path = Path(folder_path)
+    _assert_is_dir(folder_path)
+
+    # check file pattern for sanity
+    file_pattern = str(file_pattern)
+    if "{}" not in file_pattern:
+        raise ValueError(
+            f"'file_pattern' must include a placeholder to be filled with the phase name!. Got {file_pattern}."
+        )
+    is_hr_phase_dict(hr_phase_dict)
+
+    for phase, data in hr_phase_dict.items():
+        file_name = Path(file_pattern.format(phase))
+        file_path = folder_path.joinpath(file_name)
+        _assert_file_extension(file_path, ".csv")
+        data.to_csv(file_path)
+
+
+def load_hr_phase_dict_csv(
+    folder_path: path_t,
+    file_pattern: path_t,
+    phase_order: Optional[Sequence[str]] = None,
+    assert_format: Optional[bool] = True,
+) -> HeartRatePhaseDict:
+    """Load csv file containing time series heart rate data of one subject from folder and combine it into a \
+    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
+
+    The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`,
+    i.e., a dict with heart rate data from one subject split into phases (as exported by :func:`write_hr_phase_dict`).
+
+    Parameters
+    ----------
+    folder_path : :class:`~pathlib.Path` or str
+        folder path to export csv files
+    file_pattern : :class:`~pathlib.Path` or str
+        file pattern of the csv files. `file_pattern` must include a regex capture group (see Examples) which is used
+        to extract the phase name from the file name.
+    phase_order : list of str, optional
+        list of phase names to order resulting :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` or ``None``
+        to order phases according to the file name ordering in ``folder_path``.
+        Default: ``None``
+    assert_format : bool, optional
+        whether to check if the imported dict is in the right format or not
+
+    Returns
+    -------
+    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        Dict with heart rate data split into phases
+
+    Raises
+    ------
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if file in ``file_path`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        (if ``assert_format`` is ``True``)
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
+        if file is no Excel file (`.xls` or ``.xlsx``)
+
+    See Also
+    --------
+    ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
+    write_hr_phase_dict_csv : Write ``HeartRatePhaseDict`` to a series of csv files
+
+    """
+    # ensure pathlib
+    folder_path = Path(folder_path)
+    _assert_is_dir(folder_path)
+
+    file_list = sorted(folder_path.glob("*.csv"))
+    if len(file_list) == 0:
+        raise ValueError(f"No csv files found in {folder_path}!")
+
+    dict_hr = {}
+    for file in file_list:
+        phase_name = re.findall(file_pattern, file.name)
+        if len(phase_name) == 0:
+            raise ValueError(f"No string matching the pattern {file_pattern} found in {file}!")
+        if len(phase_name) > 1:
+            raise ValueError(f"Too many strings matching the pattern {file_pattern} found in {file}!")
+        phase_name = phase_name[0]
+        df = pd.read_csv(file, index_col="time")
+        df.index = pd.to_datetime(df.index, errors="ignore")
+        dict_hr[phase_name] = df
+
+    if assert_format:
+        # assert that the dictionary is in the correct format
+        is_hr_phase_dict(dict_hr)
+
+    if phase_order is not None:
+        _assert_phase_names(folder_path, phase_order, dict_hr.keys())
+        dict_hr = {phase: dict_hr[phase] for phase in phase_order}
+
+    return dict_hr
+
+
+def _assert_phase_names(folder_path, phase_order, dict_keys):
+    if len(phase_order) != len(dict_keys):
+        raise ValueError(
+            f"Number of phases provided by 'phase_order' do not match. "
+            f"Expected {len(dict_keys)}, got {len(phase_order)}."
+        )
+    if set(phase_order) != set(dict_keys):
+        raise ValueError(
+            f"Phases provided by 'phase_order' do not match the phases of the files in {folder_path}. "
+            f"Expected {phase_order}, got {list(dict_keys)}."
+        )

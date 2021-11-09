@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.3.6 - xx
+### New Features
+- `biopsykit.io.ecg`: Added functions to write a dictionary of dataframes to a series of csv files (and vice versa). 
+
 ## Version 0.3.5 – November 05 2021
 ### Bugfixes
 - further bugfixes (incorrect handling of duplicate index values) for Sleep Analyzer import data using
