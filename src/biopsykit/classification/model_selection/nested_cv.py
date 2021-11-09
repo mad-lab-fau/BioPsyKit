@@ -1,9 +1,7 @@
 """Module with functions for model selection using "nested" cross-validation."""
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
-
-import sklearn
 from sklearn.metrics import confusion_matrix, get_scorer
 from sklearn.model_selection import BaseCrossValidator, GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
@@ -11,10 +9,10 @@ from tqdm.auto import tqdm
 
 from biopsykit.classification.utils import split_train_test
 
-__all__ = ["nested_cv_grid_search"]
+__all__ = ["nested_cv_param_search"]
 
 
-def nested_cv_grid_search(  # pylint:disable=invalid-name
+def nested_cv_param_search(  # pylint:disable=invalid-name
     X: np.ndarray,  # noqa
     y: np.ndarray,
     param_dict: Dict[str, Any],
@@ -22,10 +20,10 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
     outer_cv: BaseCrossValidator,
     inner_cv: BaseCrossValidator,
     groups: Optional[np.ndarray] = None,
-    optimizer_setup = None,
+    optimizer_setup: Optional[Dict[str, Any]] = None,
     **kwargs,
 ):
-    """Perform a cross-validated grid-search with hyperparameter optimization within a outer cross-validation.
+    """Perform a cross-validated parameter search with hyperparameter optimization within a outer cross-validation.
 
     Parameters
     ----------
@@ -47,6 +45,15 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
         Group labels for the samples used while splitting the dataset into train/test set. Only used in conjunction
         with a "Group"``cv`` instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         Default: ``None``
+    optimizer_setup : dict, optional
+        Dictionary specifying which optimization type to use for hyperparameter optimization. Can be one of:
+
+            * "grid" (:class:`~sklearn.model_selection.GridSearchCV`): To perform a grid-search pass a dict in the form
+              of ``{"search_method": "grid"}``.
+            * "random" (:class:`~sklearn.model_selection.RandomizedSearchCV`): To perform a randomized-search pass a
+              dict in the form of ``{"search_method": "random", "n_iter": xx}``, where ``"n_iter"`` corresponds to the
+              number of parameter settings that are samples.
+        Default: ``None`` to use grid-search
     kwargs : Additional arguments to be passed to the :class:`~sklearn.model_selection.GridSearchCV` instance.
 
 
@@ -70,13 +77,17 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
     --------
     :class:`~sklearn.model_selection.GridSearchCV`
         sklearn grid-search
+    :class:`~sklearn.model_selection.RandomizedSearchCV`
+        sklearn randomized-search
 
     """
     scoring_dict = {"accuracy": "accuracy"}
     scoring = kwargs.pop("scoring")
     scoring_dict.setdefault(scoring, scoring)
     kwargs["refit"] = scoring
-    random_state = kwargs.pop("random_state", 1)
+    kwargs.setdefault("random_state", 1)
+    if optimizer_setup is None:
+        optimizer_setup = {"search_method": "grid"}
 
     cols = ["grid_search", "cv_results", "best_estimator", "conf_matrix", "predicted_labels", "true_labels"]
     for scorer in scoring_dict:
@@ -84,26 +95,10 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
     results_dict = {key: [] for key in cols}
 
     for train, test in tqdm(list(outer_cv.split(X, y, groups)), desc="Outer CV"):
-        if optimizer_setup:
-            if optimizer_setup["search_method"] == "random":
-                grid = RandomizedSearchCV(
-                    pipeline,
-                    param_distributions=param_dict,
-                    cv=inner_cv,
-                    scoring=scoring_dict,
-                    n_iter=optimizer_setup["n_iter"],
-                    random_state=random_state,
-                    **kwargs,
-                )
-            elif optimizer_setup["search_method"] == "grid":
-                grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
-            else:
-                raise ValueError("Unknown search method {}".format(optimizer_setup["search_method"]))
-        else:
-            grid = GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
+        cv_obj = _get_cv_object(pipeline, param_dict, inner_cv, scoring_dict, optimizer_setup, **kwargs)
         if groups is None:
             x_train, x_test, y_train, y_test = split_train_test(X, y, train, test)
-            grid.fit(x_train, y_train)
+            cv_obj.fit(x_train, y_train)
         else:
             (  # pylint:disable=unbalanced-tuple-unpacking
                 x_train,
@@ -113,18 +108,41 @@ def nested_cv_grid_search(  # pylint:disable=invalid-name
                 groups_train,
                 _,
             ) = split_train_test(X, y, train, test, groups)
-            grid.fit(x_train, y_train, groups=groups_train)
+            cv_obj.fit(x_train, y_train, groups=groups_train)
 
-        results_dict["grid_search"].append(grid)
-        results_dict["test_{}".format(scoring)].append(grid.score(x_test, y_test))
+        results_dict["grid_search"].append(cv_obj)
         for scorer in scoring_dict:
-            if scorer == scoring:
-                continue
-            results_dict["test_{}".format(scorer)].append(get_scorer(scorer)._score_func(y_test, grid.predict(x_test)))
-        results_dict["predicted_labels"].append(grid.predict(x_test))
+            results_dict["test_{}".format(scorer)].append(
+                get_scorer(scorer)._score_func(y_test, cv_obj.predict(x_test))
+            )
+        results_dict["predicted_labels"].append(cv_obj.predict(x_test))
         results_dict["true_labels"].append(y_test)
-        results_dict["cv_results"].append(grid.cv_results_)
-        results_dict["best_estimator"].append(grid.best_estimator_)
-        results_dict["conf_matrix"].append(confusion_matrix(y_test, grid.predict(x_test), normalize=None))
+        results_dict["cv_results"].append(cv_obj.cv_results_)
+        results_dict["best_estimator"].append(cv_obj.best_estimator_)
+        results_dict["conf_matrix"].append(confusion_matrix(y_test, cv_obj.predict(x_test), normalize=None))
 
     return results_dict
+
+
+def _get_cv_object(
+    pipeline: Pipeline,
+    param_dict: Dict[str, Any],
+    inner_cv: BaseCrossValidator,
+    scoring_dict: Dict[str, str],
+    optimizer_setup: Dict[str, Any],
+    **kwargs,
+):
+    random_state = kwargs.pop("random_state", None)
+    if optimizer_setup["search_method"] == "random":
+        return RandomizedSearchCV(
+            pipeline,
+            param_distributions=param_dict,
+            cv=inner_cv,
+            scoring=scoring_dict,
+            n_iter=optimizer_setup["n_iter"],
+            random_state=random_state,
+            **kwargs,
+        )
+    if optimizer_setup["search_method"] == "grid":
+        return GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
+    raise ValueError("Unknown search method {}".format(optimizer_setup["search_method"]))

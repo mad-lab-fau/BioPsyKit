@@ -7,12 +7,12 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 from joblib import Memory
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
 
-from biopsykit.classification.model_selection import nested_cv_grid_search
+from biopsykit.classification.model_selection import nested_cv_param_search
 from biopsykit.classification.utils import _PipelineWrapper
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import T, path_t
@@ -27,6 +27,7 @@ class SklearnPipelinePermuter:
         self,
         model_dict: Optional[Dict[str, Dict[str, BaseEstimator]]] = None,
         param_dict: Optional[Dict[str, Optional[Union[Sequence[Dict[str, Any]], Dict[str, Any]]]]] = None,
+        optimizer_dict: Optional[Dict[str, Dict[str, Any]]] = None,
         **kwargs,
     ):
         """Class for systematically evaluating different sklearn pipeline combinations.
@@ -52,6 +53,10 @@ class SklearnPipelinePermuter:
             dictionary has parameters names (str) as keys and lists of parameter settings to try as values, or a list
             of such dictionaries, in which case the grids spanned by each dictionary in the list are explored.
             This enables searching over any sequence of parameter settings.
+        optimizer_dict : dict, optional
+            Nested dictionary specifying the method for hyperparameter optimization (e.g., whether to use "grid-search"
+            or "randomized-search") for each estimator. By default, "grid-search" is used for each estimator
+            unless individually specified otherwise.
 
         Examples
         --------
@@ -111,7 +116,13 @@ class SklearnPipelinePermuter:
         >>>         }
         >>>     ]
         >>> }
-        >>> pipeline_permuter = SklearnPipelinePermuter(model_dict, param_dict)
+        >>>
+        >>> # AdaBoost should be optimized using randomized-search, all other estimators using grid-search
+        >>> optimizer_dict = {
+        >>>     "AdaBoostClassifier": {"search_method": "random", "n_iter": 30}
+        >>> }
+        >>>
+        >>> pipeline_permuter = SklearnPipelinePermuter(model_dict, param_dict, optimizer_dict)
         >>> pipeline_permuter.fit(X, y, outer_cv=KFold(), inner_cv=KFold())
 
         """
@@ -124,6 +135,9 @@ class SklearnPipelinePermuter:
         self.model_combinations: Sequence[Tuple[Tuple[str, str], ...]] = []
         """List of model combinations, i.e. permutations of the different transformers/estimators for
         each pipeline step."""
+
+        self.optimizer_methods: Dict[str, Dict[str, Any]] = optimizer_dict.copy()
+        """Dictionary specifying the selected hyperparameter optimizer method for each estimator."""
 
         self.grid_searches: Dict[Tuple[str, str], pd.DataFrame] = {}
         """Dictionary with grid search search results for each pipeline step combination."""
@@ -140,6 +154,10 @@ class SklearnPipelinePermuter:
                 if not set(model_dict[category].keys()).issubset(set(param_dict.keys())):
                     missing_params = list(set(model_dict[category].keys()) - set(param_dict.keys()))
                     raise ValueError("Some estimators are missing parameters: {}".format(missing_params))
+
+            clf_list = model_dict[list(model_dict.keys())[-1]]
+            for clf in clf_list:
+                self.optimizer_methods.setdefault(clf, {"search_method": "grid"})
 
             model_combinations = list(
                 product(*[[(step, k) for k in list(model_dict[step].keys())] for step in model_dict])
@@ -187,7 +205,6 @@ class SklearnPipelinePermuter:
         outer_cv: BaseCrossValidator,
         inner_cv: BaseCrossValidator,
         scoring: Optional[str] = None,
-        optimizer_setup_list = None,
         **kwargs,
     ):
         """Run fit for all pipeline combinations and sets of parameters.
@@ -209,7 +226,7 @@ class SklearnPipelinePermuter:
             A str specifying the scoring metric to use for evaluation.
         **kwargs :
             additional arguments that are passed to
-            :func:`~biopsykit.classification.model_selection.nested_cv_grid_search` and
+            :func:`~biopsykit.classification.model_selection.nested_cv_parameter_search` and
             :class:`~sklearn.model_selection.GridSearchCV`
 
         """
@@ -226,7 +243,7 @@ class SklearnPipelinePermuter:
         location = cachedir_name
         memory = Memory(location=location, verbose=0)
 
-        for i, model_combination in tqdm(enumerate(self.model_combinations)):
+        for model_combination in tqdm(self.model_combinations):
             if model_combination in self.grid_searches:
                 # continue if we already tried this combination
                 continue
@@ -251,17 +268,14 @@ class SklearnPipelinePermuter:
                 )
             )
 
-            if optimizer_setup_list:
-                optimizer_setup = optimizer_setup_list[i]
-            else:
-                optimizer_setup = None
-
             for j, param_dict in enumerate(pipeline_params):
                 print("Parameter grid #{}: {}".format(j, param_dict))
-                model_cls = [(step, self.models[step][m]) for step, m in model_combination]
+
+                optimizer_setup = self.optimizer_methods[model_combination[-1][1]]
+                model_cls = [(step, clone(self.models[step][m])) for step, m in model_combination]
                 pipeline = Pipeline(model_cls, memory=memory)
 
-                result_dict = nested_cv_grid_search(
+                result_dict = nested_cv_param_search(
                     X,
                     y,
                     param_dict=param_dict,
