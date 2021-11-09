@@ -146,40 +146,45 @@ class SklearnPipelinePermuter:
         """Dataframe with parameter search results of each pipeline step combination."""
 
         self.scoring: str = ""
+        """Scoring used as metric for optimization during hyperparameter search."""
 
         self._results_set: bool = False
 
         if kwargs.get("score_summary") is not None:
             self.results = kwargs.get("score_summary")
-        else:
-            for category in model_dict:
-                if not set(model_dict[category].keys()).issubset(set(param_dict.keys())):
-                    missing_params = list(set(model_dict[category].keys()) - set(param_dict.keys()))
-                    raise ValueError("Some estimators are missing parameters: {}".format(missing_params))
+            return
 
-            if hyper_search_dict is None:
-                hyper_search_dict = {}
-            self.hyper_search_dict = hyper_search_dict.copy()
+        self._check_missing_params(model_dict, param_dict)
 
-            clf_list = model_dict[list(model_dict.keys())[-1]]
-            for clf in clf_list:
-                self.hyper_search_dict.setdefault(clf, {"search_method": "grid"})
+        if hyper_search_dict is None:
+            hyper_search_dict = {}
+        self.hyper_search_dict = hyper_search_dict.copy()
 
-            model_combinations = list(
-                product(*[[(step, k) for k in list(model_dict[step].keys())] for step in model_dict])
-            )
+        clf_list = model_dict[list(model_dict.keys())[-1]]
+        for clf in clf_list:
+            self.hyper_search_dict.setdefault(clf, {"search_method": "grid"})
 
-            # assert that all entries of the param dict are lists for uniform handling
-            for k, v in param_dict.items():
-                if isinstance(v, dict):
-                    param_dict[k] = [v]
+        model_combinations = list(product(*[[(step, k) for k in list(model_dict[step].keys())] for step in model_dict]))
 
-            self.models = model_dict
-            self.params = param_dict
-            self.model_combinations = model_combinations
+        # assert that all entries of the param dict are lists for uniform handling
+        for k, v in param_dict.items():
+            if isinstance(v, dict):
+                param_dict[k] = [v]
+
+        self.models = model_dict
+        self.params = param_dict
+        self.model_combinations = model_combinations
 
     @property
     def results(self):
+        """Parameter search results of each pipeline step combination.
+
+        Returns
+        -------
+        :class:`~pandas.DataFrame`
+            Dataframe with parameter search results of each pipeline step combination
+
+        """
         if self._results is None:
             self._results = self.pipeline_score_results()
         return self._results
@@ -476,3 +481,13 @@ class SklearnPipelinePermuter:
             be_list.append(df_be)
 
         return pd.concat(be_list)
+
+    @staticmethod
+    def _check_missing_params(
+        model_dict: Dict[str, Dict[str, BaseEstimator]],
+        param_dict: Dict[str, Optional[Union[Sequence[Dict[str, Any]], Dict[str, Any]]]],
+    ):
+        for category in model_dict:
+            if not set(model_dict[category].keys()).issubset(set(param_dict.keys())):
+                missing_params = list(set(model_dict[category].keys()) - set(param_dict.keys()))
+                raise ValueError("Some estimators are missing parameters: {}".format(missing_params))
