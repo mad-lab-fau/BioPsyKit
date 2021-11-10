@@ -162,7 +162,7 @@ class SklearnPipelinePermuter:
 
         clf_list = model_dict[list(model_dict.keys())[-1]]
         for clf in clf_list:
-            # fill the dict with the default search method (grid-search) for the classifiers that are not 
+            # fill the dict with the default search method (grid-search) for the classifiers that are not
             # specified explicitly
             self.hyper_search_dict.setdefault(clf, {"search_method": "grid"})
 
