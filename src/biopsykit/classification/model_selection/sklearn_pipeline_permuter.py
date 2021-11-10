@@ -7,12 +7,12 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 from joblib import Memory
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
 
-from biopsykit.classification.model_selection import nested_cv_grid_search
+from biopsykit.classification.model_selection import nested_cv_param_search
 from biopsykit.classification.utils import _PipelineWrapper
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import T, path_t
@@ -27,6 +27,7 @@ class SklearnPipelinePermuter:
         self,
         model_dict: Optional[Dict[str, Dict[str, BaseEstimator]]] = None,
         param_dict: Optional[Dict[str, Optional[Union[Sequence[Dict[str, Any]], Dict[str, Any]]]]] = None,
+        hyper_search_dict: Optional[Dict[str, Dict[str, Any]]] = None,
         **kwargs,
     ):
         """Class for systematically evaluating different sklearn pipeline combinations.
@@ -36,8 +37,8 @@ class SklearnPipelinePermuter:
         :class:`~sklearn.feature_selection.SequentialFeatureSelector`) with different estimators
         (e.g., :class:`~sklearn.svm.SVC`, :class:`~sklearn.tree.DecisionTreeClassifier`), any much more.
 
-        For all combinations, hyperparameter optimization can be performed in a grid-search by passing one joint
-        parameter grid (see Examples).
+        For all combinations, hyperparameter search (e.g., using grid-search or randomized-search) can be performed by
+        passing one joint parameter grid (see Examples).
 
         Parameters
         ----------
@@ -52,6 +53,10 @@ class SklearnPipelinePermuter:
             dictionary has parameters names (str) as keys and lists of parameter settings to try as values, or a list
             of such dictionaries, in which case the grids spanned by each dictionary in the list are explored.
             This enables searching over any sequence of parameter settings.
+        hyper_search_dict : dict, optional
+            Nested dictionary specifying the method for hyperparameter search (e.g., whether to use "grid" for
+            grid-search or "random" for randomized-search) for each estimator. By default, "grid-search" is used
+            for each estimator unless individually specified otherwise.
 
         Examples
         --------
@@ -111,7 +116,13 @@ class SklearnPipelinePermuter:
         >>>         }
         >>>     ]
         >>> }
-        >>> pipeline_permuter = SklearnPipelinePermuter(model_dict, param_dict)
+        >>>
+        >>> # AdaBoost hyperparameters should be optimized using randomized-search, all others using grid-search
+        >>> hyper_search_dict = {
+        >>>     "AdaBoostClassifier": {"search_method": "random", "n_iter": 30}
+        >>> }
+        >>>
+        >>> pipeline_permuter = SklearnPipelinePermuter(model_dict, param_dict, hyper_search_dict)
         >>> pipeline_permuter.fit(X, y, outer_cv=KFold(), inner_cv=KFold())
 
         """
@@ -125,34 +136,68 @@ class SklearnPipelinePermuter:
         """List of model combinations, i.e. permutations of the different transformers/estimators for
         each pipeline step."""
 
-        self.grid_searches: Dict[Tuple[str, str], pd.DataFrame] = {}
-        """Dictionary with grid search search results for each pipeline step combination."""
+        self.hyper_search_dict: Dict[str, Dict[str, Any]] = {}
+        """Dictionary specifying the selected hyperparameter search method for each estimator."""
+
+        self.param_searches: Dict[Tuple[str, str], pd.DataFrame] = {}
+        """Dictionary with parameter search results for each pipeline step combination."""
 
         self.results: Optional[pd.DataFrame] = None
         """Dataframe with parameter search results of each pipeline step combination."""
 
         self.scoring: str = ""
+        """Scoring used as metric for optimization during hyperparameter search."""
+
+        self._results_set: bool = False
 
         if kwargs.get("score_summary") is not None:
             self.results = kwargs.get("score_summary")
+            return
+
+        self._check_missing_params(model_dict, param_dict)
+
+        if hyper_search_dict is None:
+            hyper_search_dict = {}
+        self.hyper_search_dict = hyper_search_dict.copy()
+
+        clf_list = model_dict[list(model_dict.keys())[-1]]
+        for clf in clf_list:
+            # fill the dict with the default search method (grid-search) for the classifiers that are not
+            # specified explicitly
+            self.hyper_search_dict.setdefault(clf, {"search_method": "grid"})
+
+        model_combinations = list(product(*[[(step, k) for k in list(model_dict[step].keys())] for step in model_dict]))
+
+        # assert that all entries of the param dict are lists for uniform handling
+        for k, v in param_dict.items():
+            if isinstance(v, dict):
+                param_dict[k] = [v]
+
+        self.models = model_dict
+        self.params = param_dict
+        self.model_combinations = model_combinations
+
+    @property
+    def results(self):
+        """Parameter search results of each pipeline step combination.
+
+        Returns
+        -------
+        :class:`~pandas.DataFrame`
+            Dataframe with parameter search results of each pipeline step combination
+
+        """
+        if self._results is None:
+            self._results = self.pipeline_score_results()
+        return self._results
+
+    @results.setter
+    def results(self, results):
+        if results is None:
+            self._results_set = False
         else:
-            for category in model_dict:
-                if not set(model_dict[category].keys()).issubset(set(param_dict.keys())):
-                    missing_params = list(set(model_dict[category].keys()) - set(param_dict.keys()))
-                    raise ValueError("Some estimators are missing parameters: {}".format(missing_params))
-
-            model_combinations = list(
-                product(*[[(step, k) for k in list(model_dict[step].keys())] for step in model_dict])
-            )
-
-            # assert that all entries of the param dict are lists for uniform handling
-            for k, v in param_dict.items():
-                if isinstance(v, dict):
-                    param_dict[k] = [v]
-
-            self.models = model_dict
-            self.params = param_dict
-            self.model_combinations = model_combinations
+            self._results_set = True
+        self._results = results
 
     @classmethod
     def from_csv(cls: T, file_path: path_t, num_pipeline_steps: Optional[int] = 3) -> T:
@@ -191,8 +236,8 @@ class SklearnPipelinePermuter:
     ):
         """Run fit for all pipeline combinations and sets of parameters.
 
-        This function calls :func:`~biopsykit.classification.model_selection.nested_cv_grid_search` for all
-        Pipeline combinations and stores the results in the ``grid_searches`` attribute.
+        This function calls :func:`~biopsykit.classification.model_selection.nested_cv_param_search` for all
+        Pipeline combinations and stores the results in the ``param_searches`` attribute.
 
         Parameters
         ----------
@@ -203,29 +248,32 @@ class SklearnPipelinePermuter:
         outer_cv : `CV splitter`_
             Cross-validation object determining the cross-validation splitting strategy of the outer cross-validation.
         inner_cv : `CV splitter`_
-            Cross-validation object determining the cross-validation splitting strategy of the grid-search.
+            Cross-validation object determining the cross-validation splitting strategy of the hyperparameter search.
         scoring : str, optional
             A str specifying the scoring metric to use for evaluation.
         **kwargs :
-            additional arguments that are passed to
-            :func:`~biopsykit.classification.model_selection.nested_cv_grid_search` and
-            :class:`~sklearn.model_selection.GridSearchCV`
+            Additional arguments that are passed to
+            :func:`~biopsykit.classification.model_selection.nested_cv_parameter_search` and the hyperparameter search
+            class instance (e.g., :class:`~sklearn.model_selection.GridSearchCV` or
+            :class:`~sklearn.model_selection.RandomizedSearchCV`).
 
         """
         self.results = None
+
         if scoring is None:
             scoring = "accuracy"
         self.scoring = scoring
         kwargs.setdefault("n_jobs", -1)
         kwargs.setdefault("verbose", 1)
         kwargs.setdefault("error_score", "raise")
+        cachedir_name = kwargs.pop("cachedir_name", "cachedir")
 
         # Create a temporary folder to store the transformers of the pipeline
-        location = "cachedir"
+        location = cachedir_name
         memory = Memory(location=location, verbose=0)
 
         for model_combination in tqdm(self.model_combinations):
-            if model_combination in self.grid_searches:
+            if model_combination in self.param_searches:
                 # continue if we already tried this combination
                 continue
 
@@ -244,17 +292,17 @@ class SklearnPipelinePermuter:
             pipeline_params = [{k: v for x in param for k, v in x.items()} for param in pipeline_params]
 
             print(
-                "### Running GridSearchCV for pipeline: {} with {} parameter grid(s):".format(
-                    model_combination, len(pipeline_params)
-                )
+                f"### Running hyperparameter search for pipeline: "
+                f"{model_combination} with {len(pipeline_params)} parameter grid(s):"
             )
 
-            for i, param_dict in enumerate(pipeline_params):
-                print("Parameter grid #{}: {}".format(i, param_dict))
-                model_cls = [(step, self.models[step][m]) for step, m in model_combination]
+            for j, param_dict in enumerate(pipeline_params):
+                hyper_search_params = self.hyper_search_dict[model_combination[-1][1]]
+                model_cls = [(step, clone(self.models[step][m])) for step, m in model_combination]
                 pipeline = Pipeline(model_cls, memory=memory)
+                print(f"Parameter grid #{j} ({hyper_search_params}): {param_dict}")
 
-                result_dict = nested_cv_grid_search(
+                result_dict = nested_cv_param_search(
                     X,
                     y,
                     param_dict=param_dict,
@@ -262,10 +310,11 @@ class SklearnPipelinePermuter:
                     outer_cv=outer_cv,
                     inner_cv=inner_cv,
                     scoring=scoring,
+                    hyper_search_params=hyper_search_params,
                     **kwargs,
                 )
 
-                self.grid_searches[model_combination] = result_dict
+                self.param_searches[model_combination] = result_dict
                 print("")
             print("")
 
@@ -282,11 +331,15 @@ class SklearnPipelinePermuter:
             dataframe with parameter search results for each pipeline combination
 
         """
-        if self.results is not None:
+        if self._results_set:
             return self.results
+        if len(self.param_searches) == 0:
+            raise AttributeError(
+                "No results available because pipelines were not fitted! " "Call `SklearnPipelinePermuter.fit()` first."
+            )
 
         gs_param_list = []
-        for param, gs in self.grid_searches.items():
+        for param, gs in self.param_searches.items():
             dict_folds = {}
             for i, res in enumerate(gs["cv_results"]):
                 df_res = pd.DataFrame(res)
@@ -340,9 +393,8 @@ class SklearnPipelinePermuter:
         """
         score_results = self.pipeline_score_results()
         score_summary_mean = (
-            score_results.groupby(score_results.index.names[:-1])
-            .agg(["mean", "std"])
-            .sort_values(by=("mean_test_{}".format(self.scoring), "mean"), ascending=False)
+            score_results.groupby(score_results.index.names[:-1]).agg(["mean", "std"])
+            # .sort_values(by=("mean_test_{}".format(self.scoring), "mean"), ascending=False)
         )
         return score_summary_mean
 
@@ -376,7 +428,7 @@ class SklearnPipelinePermuter:
 
         """
         list_metric_summary = []
-        for param_key, param_value in self.grid_searches.items():
+        for param_key, param_value in self.param_searches.items():
             param_dict = {"pipeline_{}".format(key): val for key, val in param_key}
             conf_matrix = np.sum(param_value["conf_matrix"], axis=0)
             true_labels = np.array(param_value["true_labels"], dtype="object").ravel()
@@ -388,7 +440,7 @@ class SklearnPipelinePermuter:
 
             for key in param_value:
                 if "test" in key:
-                    test_scores = self.grid_searches[param_key][key]
+                    test_scores = self.param_searches[param_key][key]
                     df_metric["mean_{}".format(key)] = np.mean(test_scores)
                     df_metric["std_{}".format(key)] = np.std(test_scores)
                     df_metric[["{}_fold_{}".format(key, i) for i in range(len(test_scores))]] = list(test_scores)
@@ -423,7 +475,7 @@ class SklearnPipelinePermuter:
 
         """
         be_list = []
-        for param_key, param_value in self.grid_searches.items():
+        for param_key, param_value in self.param_searches.items():
             param_dict = {"pipeline_{}".format(key): val for key, val in param_key}
             df_be = pd.DataFrame(param_dict, index=[0])
             df_be["best_estimator"] = _PipelineWrapper(param_value["best_estimator"])
@@ -431,3 +483,13 @@ class SklearnPipelinePermuter:
             be_list.append(df_be)
 
         return pd.concat(be_list)
+
+    @staticmethod
+    def _check_missing_params(
+        model_dict: Dict[str, Dict[str, BaseEstimator]],
+        param_dict: Dict[str, Optional[Union[Sequence[Dict[str, Any]], Dict[str, Any]]]],
+    ):
+        for category in model_dict:
+            if not set(model_dict[category].keys()).issubset(set(param_dict.keys())):
+                missing_params = list(set(model_dict[category].keys()) - set(param_dict.keys()))
+                raise ValueError("Some estimators are missing parameters: {}".format(missing_params))
