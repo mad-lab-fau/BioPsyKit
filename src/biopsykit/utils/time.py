@@ -57,6 +57,7 @@ def extract_time_from_filename(
         regex string indicating how to extract time information from filename
     date_pattern : str, optional
         date format pattern or ``None`` to use default date format pattern ("%Y%m%d_%H_%M_%S").
+        Default: ``None``
 
     Returns
     -------
