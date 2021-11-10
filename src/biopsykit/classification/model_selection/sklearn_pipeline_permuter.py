@@ -54,8 +54,8 @@ class SklearnPipelinePermuter:
             of such dictionaries, in which case the grids spanned by each dictionary in the list are explored.
             This enables searching over any sequence of parameter settings.
         hyper_search_dict : dict, optional
-            Nested dictionary specifying the method for hyperparameter search (e.g., whether to use "grid-search"
-            or "randomized-search") for each estimator. By default, "grid-search" is used for each estimator
+            Nested dictionary specifying the method for hyperparameter search (e.g., whether to use "grid" for grid-search
+            or "random" for randomized-search) for each estimator. By default, "grid-search" is used for each estimator
             unless individually specified otherwise.
 
         Examples
@@ -162,6 +162,7 @@ class SklearnPipelinePermuter:
 
         clf_list = model_dict[list(model_dict.keys())[-1]]
         for clf in clf_list:
+            # fill the dict with the default search method (grid-search) for the classifiers that are not specified explicitly
             self.hyper_search_dict.setdefault(clf, {"search_method": "grid"})
 
         model_combinations = list(product(*[[(step, k) for k in list(model_dict[step].keys())] for step in model_dict]))
