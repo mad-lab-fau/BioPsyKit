@@ -22,7 +22,6 @@ from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.utils.time import time_to_datetime
 from typing_extensions import Literal
 
 from biopsykit.questionnaires.utils import (
@@ -34,6 +33,7 @@ from biopsykit.questionnaires.utils import (
 )
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_num_columns, _assert_value_range
 from biopsykit.utils.exceptions import ValueRangeError
+from biopsykit.utils.time import time_to_datetime
 
 
 def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
