@@ -17,10 +17,12 @@ with subscale names as keys and the corresponding column names (as list of str) 
     questionnaire item columns, which typically also start with index 1!
 
 """
+from datetime import date, datetime
 from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
+from biopsykit.utils.time import time_to_datetime
 from typing_extensions import Literal
 
 from biopsykit.questionnaires.utils import (
@@ -47,6 +49,15 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
         This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
         passed as ``data``.
 
+    ..warning::
+        The PSQI has a slightly different score name format than other questionnaires since it has several
+        subquestions (denoted "a", "b", ..., "j") for question 5, as well as one free-text question. When using this
+        function to compute the PSQI the make sure your column names adhere to the following naming convention for
+        the function to work properly:
+        * Questions 1 - 10 (except Question 5): suffix "01", "02", ..., "10"
+        * Subquestions of Question 5: suffix "05a", "05b", ..., "05j"
+        * Free-text subquestion of Question 5: suffix "05j_text"
+
     Returns
     -------
     :class:`~pandas.DataFrame`
@@ -71,39 +82,61 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
         # if columns parameter is supplied: slice columns from dataframe
         data = data.loc[:, columns]
 
+    # Bedtime Start: Question 1
+    bed_time_start = data.filter(regex="01").iloc[:, 0]
+    bed_time_start = time_to_datetime(bed_time_start)
+
+    # Bedtime End: Question 3
+    bed_time_end = data.filter(regex="03").iloc[:, 0]
+    bed_time_end = time_to_datetime(bed_time_end)
+
+    # Compute Hours in Bed (needed for habitual sleep efficiency)
+    bed_time_diff = bed_time_end - bed_time_start
+    hours_bed = ((bed_time_diff.view(int) / 1e9) / 3600) % 24
+
+    # Sleep Duration: Question 4
+    sd = data.filter(regex="04").iloc[:, 0]
+
+    # Sleep Latency: Question 2
+    sl = data.filter(regex="02").iloc[:, 0]
+    # Bin scale: 0-15 = 0, 16-30 = 1, 31-60 = 2, >=61 = 3
+    bin_scale(sl, bins=[0, 15, 30, 60], last_max=True, inplace=True)
+
+    data = data.drop(columns=data.filter(regex="0[1234]"))
+    data = data.drop(columns=data.filter(regex="05j_text"))
+
     _assert_value_range(data, score_range)
 
     # Subjective Sleep Quality
     ssq = data.filter(regex="06").iloc[:, 0]
 
-    # Sleep Latency
-    sl = data.filter(regex="02").iloc[:, 0]
-    bin_scale(sl, bins=[0, 15, 30, 60], last_max=True, inplace=True)
-
-    # Sleep Duration
-    sd = data.filter(regex="04").iloc[:, 0]
-
-    # Sleep Disturbances
+    # Sleep Disturbances: Use all questions from 5, except 05a and 05j_text
     sdist = data.filter(regex="05").iloc[:, :]
+    # 05j_text does not need to be dropped since it was already excluded previously
+    sdist = sdist.drop(columns=sdist.filter(regex="05a")).sum(axis=1)
+    # Bin scale: 0 = 0, 1-9 = 1, 10-18 = 2, 19-27 = 3
+    sdist = bin_scale(sdist, bins=[-1, 0, 9, 18, 27])
 
-    # Use of Sleep Medication
+    # Use of Sleep Medication: Use question 7
     sm = data.filter(regex="07").iloc[:, 0]
 
-    # Daytime Dysfunction
+    # Daytime Dysfunction: Sum questions 8 and 9
     dd = data.filter(regex="0[89]").sum(axis=1)
+    # Bin scale: 0 = 0, 1-2 = 1, 3-4 = 2, 5-6 = 3
     dd = bin_scale(dd, bins=[-1, 0, 2, 4], inplace=False, last_max=True)
 
+    # Sleep Latency: Question 2 and 5a, sum them
     sl = sl + data.filter(regex="05a").iloc[:, 0]
+    # Bin scale: 0 = 0, 1-2 = 1, 3-4 = 2, 5-6 = 3
+    sl = bin_scale(sl, bins=[-1, 0, 2, 4, 6])
 
     # Habitual Sleep Efficiency
-    hse = (sd / data["HoursBed"]) * 100.0
-
-    sdist = sdist.drop([sdist.columns[0], sdist.columns[-2]], axis="columns")
-
-    sd = invert(bin_scale(sd, bins=[0, 4.9, 6, 7], last_max=True), score_range=score_range)
+    hse = ((sd / hours_bed) * 100.0).round().astype(int)
+    # Bin scale: >= 85% = 0, 75%-84% = 1, 65%-74% = 2, < 65% = 3
     hse = invert(bin_scale(hse, bins=[0, 64, 74, 84], last_max=True), score_range=score_range)
-    sdist = sdist.sum(axis=1)
-    sdist = bin_scale(sdist, bins=[-1, 0, 9, 18, 27])
+
+    # Sleep Duration: Bin scale: > 7 = 0, 6-7 = 1, 5-6 = 2, < 5 = 3
+    sd = invert(bin_scale(sd, bins=[0, 4.9, 6, 7], last_max=True), score_range=score_range)
 
     psqi_data = {
         score_name + "_SubjectiveSleepQuality": ssq,
