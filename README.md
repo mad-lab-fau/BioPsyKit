@@ -298,10 +298,8 @@ If you are a developer and want to contribute to ``BioPsyKit`` you can install a
 a local copy of the repository.
 
 BioPsyKit uses [poetry](https://python-poetry.org) to manage dependencies and packaging. Once you installed poetry, 
-run the following commands to get the latest source, initialize a virtual env and install all development dependencies:
+run the following commands to clone the repository, initialize a virtual env and install all development dependencies:
 
-Install Python >=3.7 and [poetry](https://python-poetry.org).
-Then run the commands below to get the latest source and install the dependencies:
 #### Without Extras
 ```bash
 git clone https://github.com/mad-lab-fau/BioPsyKit.git

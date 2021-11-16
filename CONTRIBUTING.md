@@ -181,7 +181,7 @@ poetry install --no-root
 poetry update
 ```
 
-Running `poetry install` will only install packages that are not yet installed. `poetry update` will also check, if 
+Running `poetry install` will only install packages that are not yet installed. `poetry update` will also check if 
 newer versions of already installed packages exist.
 
 ### Tools used in BioPsyKit
@@ -207,7 +207,8 @@ format               Reformat all files using black.
 format_check         Check, but not change, formatting using black.
 lint                 Lint all files with Prospector.
 test                 Run Pytest with coverage.
-update_version       Bump the version in pyproject.toml and biopsykit.__init__. Pass the options "major", "minor", or "patch" with the `-v` argument to bump the major, minor, or patch version, respectively.  
+update_version       Bump the version in pyproject.toml and biopsykit.__init__. Pass the options "major", "minor", or "patch" with the `-v` argument to bump the major, minor, or patch version, respectively.
+register_ipykernel   Register a new IPython kernel named `biopsykit` linked to the virtual environment.  
 ```
 
 To run one of the commands execute (e.g. the `test` command):

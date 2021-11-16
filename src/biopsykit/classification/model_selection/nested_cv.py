@@ -46,16 +46,17 @@ def nested_cv_param_search(  # pylint:disable=invalid-name
         with a "Group"``cv`` instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         Default: ``None``
     hyper_search_params : dict, optional
-        Dictionary specifying which hyperparameter search method to use. Can be one of:
+        Dictionary specifying which hyperparameter search method to use (or ``None`` to use grid-search).
 
             * "grid" (:class:`~sklearn.model_selection.GridSearchCV`): To perform a grid-search pass a dict in the form
               of ``{"search_method": "grid"}``.
             * "random" (:class:`~sklearn.model_selection.RandomizedSearchCV`): To perform a randomized-search pass a
               dict in the form of ``{"search_method": "random", "n_iter": xx}``, where ``"n_iter"`` corresponds to the
               number of parameter settings that are sampled.
-        Default: ``None`` to use grid-search
+
     kwargs : Additional arguments to be passed to the hyperparameter search class instance
-    (e.g., :class:`~sklearn.model_selection.GridSearchCV` or :class:`~sklearn.model_selection.RandomizedSearchCV`).
+             (e.g., :class:`~sklearn.model_selection.GridSearchCV` or
+             :class:`~sklearn.model_selection.RandomizedSearchCV`).
 
 
     Returns
