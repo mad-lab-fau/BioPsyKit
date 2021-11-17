@@ -39,7 +39,6 @@ class SleepWakeDetection:
             "cole_kripke_alternative": ColeKripkeAlternative,
             "webster": Webster,
             "scripps_clinic": ScrippsClinic,
-            "perez_pozuelo": PerezPozuelo,
             "sazonov": Sazonov,
         }
 
