@@ -3,7 +3,6 @@ from typing import Optional
 
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke_alternative import ColeKripkeAlternative
-from biopsykit.sleep.sleep_wake_detection.algorithms.perez_pozuelo import PerezPozuelo
 from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
 from biopsykit.sleep.sleep_wake_detection.algorithms.sazonov import Sazonov
 from biopsykit.sleep.sleep_wake_detection.algorithms.scripps_clinic import ScrippsClinic
