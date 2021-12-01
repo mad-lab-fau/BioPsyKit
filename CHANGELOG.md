@@ -1,8 +1,12 @@
 # Changelog
 
-## Version 0.3.6 - xx
+## Version 0.3.6 - December 01 2021
 ### New Features
-- `biopsykit.io.ecg`: Added functions to write a dictionary of dataframes to a series of csv files (and vice versa). 
+- `biopsykit.io.ecg`: Added functions to write a dictionary of dataframes to a series of csv files (and vice versa).
+- `biopsykit.classification.model_selection`: Model selection now also supports to perform randomized-search instead 
+  of grid-search for hyperparameter optimization of machine learning pipelines 
+### Bugfixes
+- `biopsykit.questionnaires.psqi`: Fixed bug in computing Pittsburgh Sleep Quality Index (PSQI)
 
 ## Version 0.3.5 – November 05 2021
 ### Bugfixes
