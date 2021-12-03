@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.3.7 - December 03 2021
+### Misc
+- Updated dependencies: now using scikit-learn `>=1.0`
+
 ## Version 0.3.6 - December 01 2021
 ### New Features
 - `biopsykit.io.ecg`: Added functions to write a dictionary of dataframes to a series of csv files (and vice versa).
