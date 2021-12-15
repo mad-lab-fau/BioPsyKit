@@ -241,9 +241,8 @@ def find_static_moments(
         start_end = _find_static_sequences(
             data, window_length=window, overlap=overlap, inactive_signal_th=threshold, metric=metric
         )
-        if start_end[-1, -1] >= len(data):
-            # fix: handle edge case manually
-            start_end[-1, -1] = len(data) - 1
+        # end indices are *inclusive*!
+        start_end[:, 1] -= 1
     return pd.DataFrame(start_end, columns=["start", "end"])
 
 
