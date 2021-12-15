@@ -352,6 +352,8 @@ def _compute_overlap_samples(
     if overlap_samples is not None:
         overlap = int(overlap_samples)
     elif overlap_percent is not None:
+        if overlap_percent > 1:
+            overlap_percent /= 100
         overlap = int(overlap_percent * window)
     else:
         overlap = window - 1
@@ -510,7 +512,7 @@ def bool_array_to_start_end_array(bool_array: np.ndarray) -> np.ndarray:
     """Find regions in bool array and convert those to start-end indices.
 
     .. note::
-        The end index is exclusive!
+        The end index is inclusive!
 
     Parameters
     ----------
