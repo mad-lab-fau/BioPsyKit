@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.3.8 - xx
+### Bugfixes
+- `biopsykit.signals.imu.static_moment_detection`: end indices of static moments are inclusive instead of exclusive
+### Misc
+- `biopsykit.utils.array_handling`: if `overlap_percent` > 1 is is converted to a fraction [0.0, 1.0]
+
 ## Version 0.3.7 - December 03 2021
 ### Misc
 - Updated dependencies: now using scikit-learn `>=1.0`
