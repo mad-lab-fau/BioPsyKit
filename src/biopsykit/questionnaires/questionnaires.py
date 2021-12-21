@@ -91,7 +91,7 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     # Compute Hours in Bed (needed for habitual sleep efficiency)
     bed_time_diff = bed_time_end - bed_time_start
-    hours_bed = ((bed_time_diff.view(int) / 1e9) / 3600) % 24
+    hours_bed = ((bed_time_diff.view(np.int64) / 1e9) / 3600) % 24
 
     # Sleep Duration: Question 4
     sd = data.filter(regex="04").iloc[:, 0]

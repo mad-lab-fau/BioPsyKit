@@ -969,7 +969,7 @@ class CFT(BaseProtocol):
         color_key = "phil"
         df_cft = self.extract_cft_interval(data)
         if isinstance(df_cft.index, pd.DatetimeIndex):
-            x_poly = df_cft.index.astype(int) / 1e9
+            x_poly = df_cft.index.view(np.int64) / 1e9
         else:
             x_poly = df_cft.index
 
