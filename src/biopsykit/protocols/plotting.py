@@ -310,7 +310,7 @@ def _hr_ensemble_plot_end_phase_annotation(ax: plt.Axes, data: pd.DataFrame, pha
         ha="right",
         fontsize="small",
         bbox=dict(facecolor="#e0e0e0", alpha=0.7, boxstyle="round"),
-        zorder=3,
+        zorder=5,
     )
 
 
@@ -355,6 +355,7 @@ def _hr_ensemble_plot_subphase_vspans(
             x=start + 0.5 * (end - start),
             y=0.95,
             transform=ax.get_xaxis_transform(),
+            zorder=3,
             s=subphase,
             ha="center",
             va="center",
@@ -366,7 +367,7 @@ def _hr_ensemble_plot_subphase_vspans(
         transform=ax.transAxes,
         color="white",
         alpha=0.4,
-        zorder=3,
+        zorder=1,
         lw=0,
     )
     ax.add_patch(p)
@@ -618,6 +619,7 @@ def _hr_mean_plot_subphase_annotations(phase_dict: Dict[str, Sequence[str]], xli
             transform=ax.get_xaxis_transform(),
             horizontalalignment="center",
             verticalalignment="center",
+            zorder=3,
         )
 
     p = mpatch.Rectangle(
@@ -627,7 +629,7 @@ def _hr_mean_plot_subphase_annotations(phase_dict: Dict[str, Sequence[str]], xli
         transform=ax.transAxes,
         color="white",
         alpha=0.4,
-        zorder=3,
+        zorder=1,
         lw=0,
     )
     ax.add_patch(p)
