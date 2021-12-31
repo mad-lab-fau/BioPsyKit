@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from biopsykit import colors
+from fau_colors import colors_all
+
 from biopsykit.protocols import BaseProtocol
 from biopsykit.signals.ecg.plotting import hr_plot
 from biopsykit.utils.exceptions import FeatureComputationError
@@ -741,8 +742,8 @@ class CFT(BaseProtocol):
         max_hr_cft = float(self.extract_cft_interval(data).max())
         cft_start = cft_times["cft_start"]
 
-        color = colors.fau_color(color_key)
-        color_adjust = colors.adjust_color(color_key, 1.5)
+        color = getattr(colors_all, color_key)
+        color_adjust = getattr(colors_all, f"{color_key}_dark")
 
         # Peak Bradycardia vline
         ax.axvline(x=brady_x, ls="--", lw=2, alpha=0.6, color=color)
@@ -842,7 +843,7 @@ class CFT(BaseProtocol):
             xmax=cft_times["cft_end"],
             ls="--",
             lw=2,
-            color=colors.fau_color(color_key),
+            color=getattr(colors_all, color_key),
             alpha=0.6,
         )
 
@@ -867,7 +868,7 @@ class CFT(BaseProtocol):
             xmax=cft_end,
             ls="--",
             lw=2,
-            color=colors.adjust_color(color_key),
+            color=getattr(colors_all, color_key),
             alpha=0.6,
         )
 
@@ -884,7 +885,7 @@ class CFT(BaseProtocol):
             arrowprops=dict(
                 arrowstyle="<->",
                 lw=2,
-                color=colors.adjust_color(color_key, 1.5),
+                color=getattr(colors_all, f"{color_key}_dark"),
                 shrinkA=0.0,
                 shrinkB=0.0,
             ),
@@ -911,7 +912,7 @@ class CFT(BaseProtocol):
     ) -> None:
 
         color_key = "med"
-        color = colors.fau_color(color_key)
+        color = getattr(colors_all, color_key)
 
         if isinstance(data.index, pd.DatetimeIndex):
             onset_idx = cft_params["onset"]
@@ -982,7 +983,7 @@ class CFT(BaseProtocol):
             df_cft.index,
             y_poly,
             lw=2,
-            color=colors.fau_color(color_key),
+            color=getattr(colors_all, color_key),
             alpha=0.6,
             zorder=2,
         )

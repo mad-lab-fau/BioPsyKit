@@ -1314,7 +1314,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
             * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
             * ``palette``: color palette to plot data from different phases. If ``palette`` is a str then it is
-              assumed to be the name of a BioPsyKit palette (:const:`biopsykit.colors.FAU_COLORS`).
+              assumed to be the name of a ``fau_colors`` palette (``fau_colors.cmaps._fields``).
             * ``figsize``: tuple specifying figure dimensions
             * ``ensemble_alpha``: transparency value for ensemble plot errorband (around mean). Default: 0.3
             * ``background_alpha``: transparency value for background spans (if subphases are present). Default: 0.2
@@ -1389,7 +1389,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
               and returned.
             * ``figsize``: tuple specifying figure dimensions
             * ``palette``: color palette to plot data from different conditions. If ``palette`` is a str then it is
-              assumed to be the name of a BioPsyKit palette (:const:`biopsykit.colors.FAU_COLORS`).
+              assumed to be the name of a ``fau_colors`` palette (``fau_colors.cmaps._fields``).
             * ``is_relative``: boolean indicating whether heart rate data is relative (in % relative to baseline)
               or absolute (in bpm). Default: ``False``
             * ``order``: list specifying the order of categorical values (i.e., conditions) along the x axis.
