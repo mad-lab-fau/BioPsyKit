@@ -1,13 +1,14 @@
 """Module for setting up a pipeline for statistical analysis."""
+import re
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union, Any
 
 import pandas as pd
 import pingouin as pg
 from typing_extensions import Literal
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_index_levels
-from biopsykit.utils._types import path_t
+from biopsykit.utils._types import path_t, str_t
 
 MAP_STAT_TESTS = {
     "normality": pg.normality,
@@ -54,21 +55,33 @@ MAP_CATEGORIES = {
     "posthoc": "Post-Hoc Analysis",
 }
 
-MAP_LATEX_EXPORT = {
-    "anova": ["ddof1", "ddof2", "F", "p-unc", "np2"],
-    "welch_anova": ["ddof1", "ddof2", "F", "p-unc", "np2"],
-}
+# MAP_LATEX_SLICE = {
+#     "pairwise_ttests": ["T", "dof", "pcol", "hedges"],
+#     "pairwise_ttests_nonparametric": ["U-val", "pcol", "hedges"],
+#     "anova": ["F", "DF", "pcol", "np2"],
+#     "welch_anova": ["F", "ddof1", "ddof2", "pcol", "np2"],
+#     "rm_anova": ["F", "ddof1", "ddof2", "pcol", "np2"],
+#     "mixed_anova": ["F", "DF1", "DF2", "pcol", "np2"],
+# }
 
-MAP_LATEX = {
-    "ddof1": r"$\text{df}_{Num}$",
-    "ddof2": r"$\text{df}_{Den}$",
-    "F": "F",
+MAP_LATEX_EXPORT = {
+    "T": "t",
+    "T_collapse": r"$t({})$",
+    "U-val": "U",
+    "F_collapse": r"$F({}, {})$",
+    "dof": "df",
+    "df1": "$df_{Den}$",
+    "df2": "$df_{Nom}$",
     "p-unc": "p",
+    "p-corr": "p",
+    "p-tukey": "p",
+    "pval": "p",
     "np2": r"$\eta^2_p$",
+    "hedges": "Hedges' g",
 }
 
 STATS_CATEGORY = Literal["prep", "test", "posthoc"]
-STATS_TYPE = Literal["between", "within", "interaction"]
+STATS_EFFECT_TYPE = Literal["between", "within", "interaction"]
 PLOT_TYPE = Literal["single", "multi"]
 
 _sig_cols = ["p-corr", "p-tukey", "p-unc", "pval"]
@@ -206,7 +219,7 @@ class StatsPipeline:
 
             test_func = MAP_STAT_TESTS[step[1]]
             if len(grouper) > 0:
-                result = data.groupby(grouper, sort=False).apply(
+                result = data.groupby(grouper, sort=general_params.get("sort", True)).apply(
                     lambda df: test_func(data=df, **specific_params, **params)  # pylint:disable=cell-var-from-loop
                 )
             else:
@@ -384,21 +397,23 @@ class StatsPipeline:
         return None
 
     @staticmethod
-    def _filter_pcol(data: pd.DataFrame) -> Optional[pd.Series]:
+    def _filter_pcol(data: Union[pd.DataFrame, pd.Series]) -> Optional[pd.Series]:
         for col in _sig_cols:
-            if col in data.columns:
+            if isinstance(data, pd.DataFrame) and col in data.columns:
                 return data[col]
+            if isinstance(data, pd.Series) and col in data.index:
+                return data[[col]]
         return None
 
-    def _filter_effect(self, stats_category: STATS_CATEGORY, stats_type: STATS_TYPE) -> pd.DataFrame:
+    def _filter_effect(self, stats_category: STATS_CATEGORY, stats_effect_type: STATS_EFFECT_TYPE) -> pd.DataFrame:
         results = self.results_cat(stats_category)
         if len(results) == 0:
             raise ValueError("No results for category {}!".format(stats_category))
         if "Contrast" in results.columns:
-            if stats_type == "interaction":
+            if stats_effect_type == "interaction":
                 key = "{} * {}".format(self.params["within"], self.params["between"])
             else:
-                key = self.params[stats_type]
+                key = self.params[stats_effect_type]
 
             results = results[results["Contrast"] == key]
             results = results.drop(columns="Contrast")
@@ -435,7 +450,7 @@ class StatsPipeline:
     def sig_brackets(
         self,
         stats_category_or_data: Union[STATS_CATEGORY, pd.DataFrame],
-        stats_type: STATS_TYPE,
+        stats_effect_type: STATS_EFFECT_TYPE,
         plot_type: Optional[PLOT_TYPE] = "single",
         features: Optional[Union[str, Sequence[str], Dict[str, Union[str, Sequence[str]]]]] = None,
         x: Optional[str] = None,
@@ -451,8 +466,8 @@ class StatsPipeline:
         stats_category_or_data : {"prep", "test", "posthoc"} or :class:`~pandas.DataFrame`
             either a string to specify the pipeline category to use for generating significance brackets or a
             dataframe with statistical results if significance brackets should be generated from the dataframe.
-        stats_type : {"between", "within", "interaction"}
-            type of analysis performed ("between", "within", or "interaction"). Needed to extract the correct
+        stats_effect_type : {"between", "within", "interaction"}
+            type of statistical effect ("between", "within", or "interaction"). Needed to extract the correct
             information from the analysis dataframe.
         plot_type : {"single", "multi"}
             type of plot for which significance brackets are generated: "multi" if boxplots are grouped
@@ -485,9 +500,9 @@ class StatsPipeline:
         """
         features = self._sanitize_features_input(features)
 
-        stats_data = self._extract_stats_data(stats_category_or_data, stats_type)
+        stats_data = self._extract_stats_data(stats_category_or_data, stats_effect_type)
 
-        if stats_type == "interaction":
+        if stats_effect_type == "interaction":
             stats_data, box_pairs = self._get_stats_data_box_pairs_interaction(stats_data)
         else:
             stats_data, box_pairs = self._get_stats_data_box_pairs(stats_data, plot_type, features, x)
@@ -542,31 +557,192 @@ class StatsPipeline:
             columns=["parameter"],
         )
 
-    def df_to_latex(self, step: str, index_labels: Dict[str, str]):
-        """Convert result dataframe to prepare for LaTeX export.
-
-        This function converts a dataframe from an analysis step of the statistics pipeline to prepare it for the
-        export as LaTeX code using :meth:`~pandas.DataFrame.to_latex`.
+    def stats_to_latex(
+        self,
+        stats_test: Optional[str] = None,
+        index: Optional[Union[Tuple, str]] = None,
+        data: Optional[pd.Series] = None,
+    ) -> str:
+        """Generate LaTeX output from statistical results.
 
         Parameters
         ----------
-        step : str
-            step of statistical analysis pipeline
-        index_labels :
-            dictionary to rename index labels
+        stats_test : str, optional
+            name of statistical test in ``StatsPipeline``, e.g., "pairwise_ttests" or "anova" or ``None``
+            if external statistical results is provided via ``data``
+        index : str or tuple, optional
+            row indexer of statistical result or ``None`` to generate LaTeX output for all rows.
+            Default: ``None``
+        data : :class:`~pandas.DataFrame`, optional
+            dataframe with optional external statistical results
 
         Returns
         -------
-        :class:`~pandas.DataFrame`
-            converted dataframe
+        str
+            LaTeX output that can be copied and pasted into LaTeX documents
+
+        Raises
+        ------
+        ValueError
+            if both ``data`` and ``stats_test`` is ``None``
 
         """
-        # TODO continue
-        df = self.results[step]
-        df = df[MAP_LATEX_EXPORT[step]]
-        df.index = df.index.droplevel(-1)
-        df = df.rename(columns=MAP_LATEX).reindex(index_labels.keys()).rename(index=index_labels)
-        return df
+        if all(param is None for param in [stats_test, data]):
+            raise ValueError("Either 'data' or 'stats_test' must be provided!")
+        if stats_test is not None:
+            data = self.results[stats_test].copy()
+        if index is not None:
+            data = data.loc[index].squeeze()
+
+        if isinstance(data, pd.DataFrame):
+            data = self._stats_to_index_set_index(data)
+            return data.apply(self._stats_to_latex_row, axis=1)
+        return self._stats_to_latex_row(data)
+
+    def _stats_to_latex_row(self, row: pd.Series) -> str:
+        pval = self._format_pval(row)
+        if "T" in row:
+            dof = self._format_dof(row["dof"])
+            return f"$t({dof}) = {row['T']:.3f}, p {pval}, g = {row['hedges']:.3f}$"
+        if "F" in row:
+            rename_dict = {"ddof1": "df1", "ddof2": "df2", "DF": "df", "DF1": "df1", "DF2": "df2"}
+            row = row.rename(rename_dict)
+            dofs = (row["df1"], row["df2"]) if "df1" in row else (row["df"],)
+            dofs = [self._format_dof(dof) for dof in dofs]
+            dofs = ",".join(dofs)
+            return fr"$F({dofs}) = {row['F']:.3f}, p {pval}, \eta_p^2 = {row['np2']:.3f}$"
+        if "U-val" in row:
+            return f"$U = {row['U-val']}, p {pval}, g = {row['hedges']:.3f}$"
+        return ""
+
+    def _format_pval(self, row: pd.Series) -> str:
+        pval = round(self._filter_pcol(row)[0], 3)
+        if pval < 0.001:
+            pval = "< 0.001"
+        elif pval > 0.999:
+            pval = "> 0.999"
+        else:
+            pval = f"= {pval:.3f}"
+        return pval
+
+    def results_to_latex_table(
+        self,
+        stats_test: str,
+        data: Optional[pd.DataFrame] = None,
+        stats_effect_type: Optional[STATS_EFFECT_TYPE] = None,
+        unstack_levels: Optional[str_t] = None,
+        collapse_dof: Optional[bool] = True,
+        si_table_format: Optional[str] = None,
+        index_kws: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ) -> str:
+        r"""Convert statistical result dataframe to LaTeX table.
+
+        This function converts a dataframe from a statistical analysis to a LaTeX table using
+        :meth:`~pandas.DataFrame.to_latex`.
+
+        This function uses the LaTeX package ``siunitx`` to represent numbers. By default, the column format for
+        columns that contain numbers is "S" which is provided by ` ``siunitx``<https://ctan.org/pkg/siunitx?lang=en>`_.
+        The column format can be configured by the ``si_table_format`` argument.
+
+
+        Parameters
+        ----------
+        stats_test : str, optional
+            name of statistical test in ``StatsPipeline``, e.g., "pairwise_ttests" or "anova".
+        data : :class:`~pandas.DataFrame`, optional
+            dataframe with optional external statistical results
+        stats_effect_type : {"between", "within", "interaction"}
+            type of statistical effect ("between", "within", or "interaction"). Needed to extract the correct
+            information from the analysis dataframe.
+        unstack_levels : str or list of str, optional
+            name(s) of dataframe index level(s) to be unstacked in the resulting latex table or ``None``
+            to unstack no level(s)
+        collapse_dof : bool, optional
+            ``True`` to collapse degree-of-freedom (DoF) from a separate column into the column header of the
+            t- or F-value, respectively, ``False`` to keep it as separate "dof" column. This only works if
+            the degrees-of-freedom are the same for all tests in the table.
+        si_table_format : str, optional
+            table format for the numbers in the LaTeX table.
+        index_kws : dict, optional
+            dictionary containing arguments to configure how the table index is formatted. Possible arguments are:
+
+            * index_italic : bool
+              ``True`` to format index columns in italic, ``False`` otherwise. Default: ``True``
+            * index_level_order : list
+              list of index level names indicating the index level order in the LaTeX column. If ``None``
+              the index order of the dataframe will be used
+            * index_value_order :  list or dict
+                list of index values if rows in LaTeX should have a different order than the underlying dataframe or
+                if only specific rows should be exported as LaTeX table. If the table index is a multi-index then
+                ``index_value_order`` should be a dictionary with the index level names as keys and lists of
+                index values of the specific level as values
+            * index_rename_map : dict
+                mapping with dictionary with index values as keys and new index values to be exported
+            * index_level_names_tex : str of list of str
+                names of index levels in the LaTeX column or ``None`` to keep the index level names of the dataframe
+        kwargs
+            additional keywords that are passed to :meth:`~pandas.DataFrame.to_latex`.
+            The following default arguments will be passed if not specified otherwise:
+
+            * column_format: str
+              The columns format as specified in LaTeX table format e.g. "rcl" for 3 columns. By default, the column
+              format is automatically inferred from the dataframe, with index columns being formatted as "l" and
+              value columns formatted as "S". If column headers are multi-columns, "|" will be added as separators
+              between each group.
+            * multicolumn_format : str
+              The alignment for multi-columns. Default: "c"
+            * escape : bool
+              By default, the value will be read from the pandas config module. When set to ``False`` prevents from
+              escaping latex special characters in column names. Default: ``False``
+            * position : str
+              The LaTeX positional argument for tables, to be placed after ``\begin{}`` in the output. Default: "th!"
+
+
+        Returns
+        -------
+        str
+            LaTeX code of formatted table
+
+        """
+        if data is None:
+            data = self.results[stats_test].copy()
+        if stats_effect_type is not None:
+            data = data.set_index("Source", append=True).xs(stats_effect_type, level="Source")
+
+        if si_table_format is None:
+            si_table_format = "table-format = <1.3"
+
+        kwargs.setdefault("multicolumn_format", "c")
+        kwargs.setdefault("escape", False)
+        kwargs.setdefault("position", "th!")
+
+        pcol = str(self._filter_pcol(data).name)
+        if "T" in data.columns:
+            data = self._extract_data_ttest(data, pcol, collapse_dof)
+        if "F" in data.columns:
+            data = self._extract_data_anova(data, pcol, collapse_dof)
+        if "U-val" in data.columns:
+            data = self._extract_data_mwu(data, pcol)
+
+        column_map = {col: MAP_LATEX_EXPORT[col] for col in data.columns if col in MAP_LATEX_EXPORT}
+
+        data.index = data.index.droplevel(-1)
+        data.loc[:, pcol] = data.loc[:, pcol].apply(self._format_pvals_stars)
+        data = data.applymap(lambda val: "{:.3f}".format(val) if isinstance(val, float) else val)
+
+        if unstack_levels is not None:
+            data = data.stack()
+            data = data.unstack(unstack_levels)
+            data = data.unstack(-1)
+        data = data.rename(columns=column_map)
+
+        data = self._format_latex_table_index(data, index_kws)
+
+        kwargs.setdefault("column_format", self._format_latex_column_format(data))
+
+        data_latex = data.to_latex(**kwargs)
+        return self._apply_latex_code_correction(data_latex, si_table_format)
 
     def multicomp(
         self,
@@ -636,10 +812,12 @@ class StatsPipeline:
                 break
         return data
 
-    def _extract_stats_data(self, stats_category_or_data: Union[STATS_CATEGORY, pd.DataFrame], stats_type: STATS_TYPE):
+    def _extract_stats_data(
+        self, stats_category_or_data: Union[STATS_CATEGORY, pd.DataFrame], stats_effect_type: STATS_EFFECT_TYPE
+    ):
         if isinstance(stats_category_or_data, (str, pd.DataFrame)):
             if isinstance(stats_category_or_data, str):
-                stats_data = self._filter_effect(stats_category_or_data, stats_type)
+                stats_data = self._filter_effect(stats_category_or_data, stats_effect_type)
             else:
                 stats_data = stats_category_or_data
         else:
@@ -741,3 +919,148 @@ class StatsPipeline:
                 display(df)
             else:
                 display(df.round(self.round))
+
+    @staticmethod
+    def _format_pvals_stars(pval: float) -> str:
+        pstar = pd.cut([pval], [0.0, 0.001, 0.01, 0.05, 1.1], right=False, labels=["***", "**", "*", ""])
+        pstar = pstar[0]
+        ret = f"{pval:.3f}"
+        if pval == 1.0:
+            ret = ">0.999"
+        if len(pstar) >= 0:
+            if pval < 0.001:
+                ret = "<0.001"
+            ret += fr"$^{{{pstar}}}$"
+        return ret
+
+    @staticmethod
+    def _format_dof(dof: int) -> str:
+        return str(int(dof)) if dof % 1 == 0 else f"{dof:.2f}"
+
+    def _extract_data_ttest(self, data: pd.DataFrame, pcol: str, collapse_dof: bool) -> pd.DataFrame:
+        columns = ["T", "dof", pcol, "hedges"]
+        data = data[columns]
+        if collapse_dof:
+            dof = data["dof"].unique()
+            if len(dof) != 1:
+                raise ValueError(f"Cannot collapse dof in table: dof are not unique! Got {dof}")
+            data = data.rename(columns={"T": MAP_LATEX_EXPORT["T_collapse"].format(self._format_dof(dof[0]))})
+            data = data.drop(columns="dof")
+        return data
+
+    def _extract_data_anova(self, data: pd.DataFrame, pcol: str, collapse_dof: bool) -> pd.DataFrame:
+        rename_dict = {"ddof1": "df1", "ddof2": "df2", "DF": "df", "DF1": "df1", "DF2": "df2"}
+        data = data.rename(columns=rename_dict)
+        columns = []
+        if collapse_dof:
+            if "df1" in data.columns:
+                dof_cols = ["df1", "df2"]
+            else:
+                dof_cols = ["df"]
+            dofs = tuple((data[col].unique() for col in dof_cols))
+            if any(len(d) != 1 for d in dofs):
+                raise ValueError(f"Cannot collapse dof in table: dof are not unique! Got {dofs}.")
+            dofs = [self._format_dof(dof[0]) for dof in dofs]
+            f_col = MAP_LATEX_EXPORT["F_collapse"].format(*dofs)
+            columns.append(f_col)
+            data = data.rename(columns={"F": f_col})
+            data = data.drop(columns=["df1", "df2", "df"], errors="ignore")
+        else:
+            if "df1" in data.columns:
+                data["df"] = "{" + data["df1"].astype(str) + ", " + data["df2"].astype(str) + "}"
+                data = data.drop(columns=["df1", "df2"])
+            columns.append("df")
+        columns = columns + [pcol, "np2"]
+        data = data[columns]
+        return data
+
+    @staticmethod
+    def _extract_data_mwu(data: pd.DataFrame, pcol: str) -> pd.DataFrame:
+        columns = ["U-val", pcol, "hedges"]
+        data = data[columns]
+        return data
+
+    @staticmethod
+    def _format_latex_table_index(data, index_kws):
+        index_italic = index_kws.get("index_italic", True)
+        index_level_order = index_kws.get("index_level_order", None)
+        index_value_order = index_kws.get("index_value_order", None)
+        index_rename_map = index_kws.get("index_rename_map", None)
+        index_level_names_tex = index_kws.get("index_level_names_tex", None)
+
+        if isinstance(data.columns, pd.MultiIndex):
+            data.columns.names = [None for _ in data.columns.names]
+        else:
+            data.columns.name = None
+
+        if index_level_order is not None:
+            data = data.reorder_levels(index_level_order)
+
+        if index_value_order is not None:
+            data = StatsPipeline._apply_index_value_order(data, index_value_order)
+
+        if index_rename_map is not None:
+            data = data.rename(index=index_rename_map)
+        if index_level_names_tex is not None:
+            if isinstance(index_level_names_tex, str):
+                index_level_names_tex = [index_level_names_tex]
+            data.index.names = index_level_names_tex
+
+        data = data.add_prefix("{").add_suffix("}")
+
+        if index_italic:
+            data.index.names = [fr"\textit{{{s}}}" for s in data.index.names]
+            data = data.T
+            data = data.add_prefix(r"\textit{").add_suffix("}")
+            data = data.T
+        return data
+
+    @staticmethod
+    def _apply_index_value_order(
+        data: pd.DataFrame, index_value_order: Union[Sequence[str], Dict[str, Sequence[str]]]
+    ) -> pd.DataFrame:
+        if isinstance(data.index, pd.MultiIndex):
+            if isinstance(index_value_order, dict):
+                for key, val in index_value_order.items():
+                    data = data.reindex(val, level=key)
+            else:
+                raise ValueError(
+                    "'index_value_order' must be a dictionary with index level names as keys and "
+                    "index values as values."
+                )
+        else:
+            if isinstance(index_value_order, dict):
+                data = data.reindex(index_value_order[data.index.name])
+            else:
+                data = data.reindex(index_value_order)
+        return data
+
+    @staticmethod
+    def _format_latex_column_format(data: pd.DataFrame):
+        column_format = "l" * data.index.nlevels + "||"
+        if isinstance(data.columns, pd.MultiIndex):
+            ncols = len(data.columns)
+            ncols_last_level = len(data.columns.get_level_values(-1).unique())
+            column_format += ("S" * ncols_last_level + "|") * (ncols // ncols_last_level)
+            # remove the last "|"
+            column_format = column_format[:-1]
+        else:
+            column_format += "S" * len(data.columns)
+        return column_format
+
+    @staticmethod
+    def _apply_latex_code_correction(data_latex: str, si_table_format: str):
+        data_latex = data_latex.replace(r"\textasciicircum ", "^")
+        if si_table_format is not None:
+            data_latex = re.sub(r"(\\begin\{tabular\})", r"\\sisetup{" + si_table_format + r"}\n\n\1", data_latex)
+        return data_latex
+
+    @staticmethod
+    def _stats_to_index_set_index(data: pd.DataFrame) -> pd.DataFrame:
+        if "Contrast" in data.columns:
+            data = data.set_index("Contrast", append=True)
+        if "Source" in data.columns:
+            data = data.set_index("Source", append=True)
+        if "A" in data.columns:
+            data = data.set_index(["A", "B"], append=True)
+        return data
