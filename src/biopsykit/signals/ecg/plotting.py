@@ -10,10 +10,9 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from fau_colors import cmaps, colors_all
 from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
 from neurokit2.hrv.hrv_utils import _hrv_get_rri
-
-from fau_colors import colors_all, cmaps
 
 from biopsykit.signals.ecg.ecg import _assert_ecg_input
 from biopsykit.utils.array_handling import sanitize_input_1d

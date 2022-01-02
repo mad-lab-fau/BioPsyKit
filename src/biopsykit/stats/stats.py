@@ -1,7 +1,7 @@
 """Module for setting up a pipeline for statistical analysis."""
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple, Union, Any
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import pingouin as pg

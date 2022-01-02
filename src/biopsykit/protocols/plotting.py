@@ -8,6 +8,9 @@ import matplotlib.ticker as mticks
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from fau_colors import cmaps, colors_all
+from matplotlib.legend_handler import HandlerTuple
+
 from biopsykit.plotting import feature_boxplot, lineplot, multi_feature_boxplot
 from biopsykit.protocols._utils import _get_sample_times
 from biopsykit.saliva.utils import _remove_s0
@@ -24,8 +27,6 @@ from biopsykit.utils.datatype_helper import (
     is_saliva_raw_dataframe,
 )
 from biopsykit.utils.exceptions import ValidationError
-from fau_colors import colors_all, cmaps
-from matplotlib.legend_handler import HandlerTuple
 
 _hr_ensemble_plot_params = {
     "linestyle": ["solid", "dashed", "dotted", "dashdot"],

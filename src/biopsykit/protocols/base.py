@@ -1,7 +1,7 @@
 """Module implementing a base class to represent psychological protocols."""
 import json
-from pathlib import Path
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt

@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
 from fau_colors import colors_all
 
 from biopsykit.protocols import BaseProtocol

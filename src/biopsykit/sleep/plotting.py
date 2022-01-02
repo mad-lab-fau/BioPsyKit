@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticks
 import pandas as pd
 import seaborn as sns
-
 from fau_colors import colors_all
 
 from biopsykit.utils.datatype_helper import AccDataFrame, GyrDataFrame, ImuDataFrame, SleepEndpointDict
