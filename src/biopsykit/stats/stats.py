@@ -615,16 +615,22 @@ class StatsPipeline:
         pval = self._format_pval(row)
         if "T" in row:
             dof = self._format_dof(row["dof"])
-            return f"$t({dof}) = {row['T']:.3f}, p {pval}, g = {row['hedges']:.3f}$"
+            tval = self._format_number(row["T"])
+            effsize = self._format_number(row["hedges"])
+            return f"$t({dof}) = {tval}, p {pval}, g = {effsize}$"
         if "F" in row:
             rename_dict = {"ddof1": "df1", "ddof2": "df2", "DF": "df", "DF1": "df1", "DF2": "df2"}
             row = row.rename(rename_dict)
             dofs = (row["df1"], row["df2"]) if "df1" in row else (row["df"],)
             dofs = [self._format_dof(dof) for dof in dofs]
             dofs = ",".join(dofs)
-            return fr"$F({dofs}) = {row['F']:.3f}, p {pval}, \eta_p^2 = {row['np2']:.3f}$"
+            fval = self._format_number(row["F"])
+            effsize = self._format_number(row["np2"])
+            return fr"$F({dofs}) = {fval}, p {pval}, \eta_p^2 = {effsize}$"
         if "U-val" in row:
-            return f"$U = {row['U-val']}, p {pval}, g = {row['hedges']:.3f}$"
+            effsize = self._format_number(row["hedges"])
+            uval = self._format_number(row["U-val"])
+            return f"$U = {uval}, p {pval}, g = {effsize}$"
         return ""
 
     def _format_pval(self, row: pd.Series) -> str:
@@ -748,7 +754,7 @@ class StatsPipeline:
 
         data.index = data.index.droplevel(-1)
         data.loc[:, pcol] = data.loc[:, pcol].apply(self._format_pvals_stars)
-        data = data.applymap(lambda val: "{:.3f}".format(val) if isinstance(val, float) else val)
+        data = data.applymap(lambda val: self._format_number(val))
 
         if unstack_levels is not None:
             data = data.stack()
@@ -762,6 +768,14 @@ class StatsPipeline:
 
         data_latex = data.to_latex(**kwargs)
         return self._apply_latex_code_correction(data_latex, si_table_format)
+
+    @staticmethod
+    def _format_number(val):
+        if isinstance(val, float):
+            if val % 1 == 0:
+                return str(int(val))
+            return f"{val:.3f}"
+        return val
 
     def multicomp(
         self,
