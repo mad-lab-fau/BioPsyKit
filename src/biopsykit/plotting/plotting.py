@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib.patches import Rectangle
 from statannot import add_stat_annotation
 
 from biopsykit.utils.dataframe_handling import multi_xs
@@ -230,7 +229,7 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes
     return fig, ax
 
 
-def feature_boxplot(
+def feature_boxplot(  # pylint:disable=too-many-branches
     data: pd.DataFrame,
     x: Optional[str] = None,
     y: Optional[str] = None,
@@ -342,7 +341,7 @@ def feature_boxplot(
     sns.boxplot(data=data.reset_index(), x=x, y=y, order=order, hue=hue, hue_order=hue_order, **kwargs)
 
     for patch in ax.patches:
-        r, g, b, a = patch.get_facecolor()
+        r, g, b, _ = patch.get_facecolor()
         patch.set_facecolor((r, g, b, alpha))
 
     if len(box_pairs) > 0:
@@ -388,7 +387,7 @@ def _feature_boxplot_sanitize_stats_kwargs(stats_kwargs: Dict[str, Any]) -> Dict
 
 
 # TODO "group" parameter should always be "x"? check if "group" can be omitted
-def multi_feature_boxplot(
+def multi_feature_boxplot(  # pylint:disable=too-many-branches
     data: pd.DataFrame,
     x: str,
     y: str,
@@ -505,7 +504,7 @@ def multi_feature_boxplot(
         )
 
         for patch in ax.patches:
-            r, g, b, a = patch.get_facecolor()
+            r, g, b, _ = patch.get_facecolor()
             patch.set_facecolor((r, g, b, alpha))
 
         _add_stat_annot_multi_feature_boxplot(

@@ -625,7 +625,7 @@ class StatsPipeline:
             pval = f"= {pval:.3f}"
         return pval
 
-    def results_to_latex_table(
+    def results_to_latex_table(  # pylint:disable=too-many-branches
         self,
         stats_test: str,
         data: Optional[pd.DataFrame] = None,
@@ -981,7 +981,7 @@ class StatsPipeline:
         return data
 
     @staticmethod
-    def _format_latex_table_index(data, index_kws):
+    def _format_latex_table_index(data, index_kws):  # pylint:disable=too-many-branches
         index_italic = index_kws.get("index_italic", True)
         index_level_order = index_kws.get("index_level_order", None)
         index_value_order = index_kws.get("index_value_order", None)
