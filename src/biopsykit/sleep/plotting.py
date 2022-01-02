@@ -294,7 +294,7 @@ def _sleep_imu_plot_add_sleep_onset(sleep_onset, ax: plt.Axes, **kwargs):
         arrowprops=dict(
             arrowstyle="->",
             lw=2,
-            colors=getattr(colors_all, "nat"),
+            color=getattr(colors_all, "nat"),
             shrinkA=0.0,
             shrinkB=0.0,
         ),
@@ -328,7 +328,7 @@ def _sleep_imu_plot_add_wake_onset(wake_onset, ax: plt.Axes, **kwargs):
         arrowprops=dict(
             arrowstyle="->",
             lw=2,
-            colors=getattr(colors_all, "nat"),
+            color=getattr(colors_all, "nat"),
             shrinkA=0.0,
             shrinkB=0.0,
         ),
@@ -362,7 +362,7 @@ def _sleep_imu_plot_add_bed_start(sleep_onset, bed_start, ax: plt.Axes, **kwargs
         arrowprops=dict(
             arrowstyle="->",
             lw=2,
-            colors=getattr(colors_all, "med"),
+            color=getattr(colors_all, "med"),
             shrinkA=0.0,
             shrinkB=0.0,
         ),
@@ -396,7 +396,7 @@ def _sleep_imu_plot_add_bed_end(wake_onset, bed_end, ax: plt.Axes, **kwargs):
         arrowprops=dict(
             arrowstyle="->",
             lw=2,
-            colors=getattr(colors_all, "med"),
+            color=getattr(colors_all, "med"),
             shrinkA=0.0,
             shrinkB=0.0,
         ),

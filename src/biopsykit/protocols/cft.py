@@ -691,7 +691,7 @@ class CFT(BaseProtocol):
                 y=0.95,
                 transform=ax.get_xaxis_transform(),
                 s=name,
-                # bbox=bbox,
+                zorder=3,
                 ha="center",
                 va="center",
             )
@@ -701,7 +701,7 @@ class CFT(BaseProtocol):
             height=0.1,
             color="white",
             alpha=0.4,
-            zorder=3,
+            zorder=1,
             lw=0,
             transform=ax.transAxes,
         )

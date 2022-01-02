@@ -772,7 +772,8 @@ def saliva_plot(  # pylint:disable=too-many-branches
     linestyle = kwargs.pop("linestyle", None)
     marker = kwargs.pop("marker", "o")
     palette = kwargs.pop("palette", None)
-    palette = _get_palette(palette, len(data))
+    if isinstance(palette, str) and getattr(colors_all, palette, None):
+        palette = _get_palette(palette, len(data))
 
     for i, key in enumerate(data):
         df = data[key]
