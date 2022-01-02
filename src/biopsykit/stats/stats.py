@@ -1,5 +1,6 @@
 """Module for setting up a pipeline for statistical analysis."""
 import re
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
@@ -451,6 +452,7 @@ class StatsPipeline:
         self,
         stats_category_or_data: Union[STATS_CATEGORY, pd.DataFrame],
         stats_effect_type: STATS_EFFECT_TYPE,
+        stats_type: Optional[STATS_EFFECT_TYPE] = None,
         plot_type: Optional[PLOT_TYPE] = "single",
         features: Optional[Union[str, Sequence[str], Dict[str, Union[str, Sequence[str]]]]] = None,
         x: Optional[str] = None,
@@ -469,6 +471,9 @@ class StatsPipeline:
         stats_effect_type : {"between", "within", "interaction"}
             type of statistical effect ("between", "within", or "interaction"). Needed to extract the correct
             information from the analysis dataframe.
+        stats_type : {"between", "within", "interaction"}
+            .. note:: Deprecated in 0.4.0
+                `stats_type` will be removed in 0.5.0, it is replaced by `stats_effect_type`.
         plot_type : {"single", "multi"}
             type of plot for which significance brackets are generated: "multi" if boxplots are grouped
             (by ``hue`` variable), "single" (the default) otherwise.
@@ -499,6 +504,13 @@ class StatsPipeline:
 
         """
         features = self._sanitize_features_input(features)
+        if stats_type is not None:
+            warnings.warn(
+                "Argument 'stats_type' is deprecated in 0.4.0 and was replaced by 'stats_effect_type'. "
+                "It will be removed in 0.5.0.",
+                category=DeprecationWarning,
+            )
+            stats_effect_type = stats_type
 
         stats_data = self._extract_stats_data(stats_category_or_data, stats_effect_type)
 
@@ -707,6 +719,13 @@ class StatsPipeline:
         """
         if data is None:
             data = self.results[stats_test].copy()
+        if "stats_type" in kwargs:
+            warnings.warn(
+                "Argument 'stats_type' is deprecated in 0.4.0 and was replaced by 'stats_effect_type'. "
+                "It will be removed in 0.5.0.",
+                category=DeprecationWarning,
+            )
+            stats_effect_type = kwargs.get("stats_type")
         if stats_effect_type is not None:
             data = data.set_index("Source", append=True).xs(stats_effect_type, level="Source")
 
