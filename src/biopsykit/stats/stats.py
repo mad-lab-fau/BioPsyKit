@@ -754,7 +754,7 @@ class StatsPipeline:
 
         data.index = data.index.droplevel(-1)
         data.loc[:, pcol] = data.loc[:, pcol].apply(self._format_pvals_stars)
-        data = data.applymap(lambda val: self._format_number(val))
+        data = data.applymap(self._format_number)
 
         if unstack_levels is not None:
             data = data.stack()
