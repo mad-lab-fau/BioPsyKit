@@ -10,10 +10,10 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from fau_colors import cmaps, colors_all
 from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
 from neurokit2.hrv.hrv_utils import _hrv_get_rri
 
-from biopsykit import colors
 from biopsykit.signals.ecg.ecg import _assert_ecg_input
 from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.datatype_helper import EcgResultDataFrame
@@ -117,7 +117,7 @@ def ecg_plot(
         heart_rate = ecg_processor.heart_rate[key]
         sampling_rate = ecg_processor.sampling_rate
 
-    sns.set_palette(colors.fau_palette)
+    sns.set_palette(cmaps.faculties)
 
     title = kwargs.get("title", None)
     _set_plt_rcparams(ecg_signal)
@@ -222,13 +222,13 @@ def _ecg_plot(
         alpha=0.2,
         zorder=2,
         interpolate=True,
-        facecolor=colors.fau_color("med"),
+        facecolor=colors_all.med,
         label="Quality",
     )
     # Plot signals
     axs["ecg"].plot(
         ecg_clean,
-        color=colors.fau_color("fau"),
+        color=colors_all.fau,
         label="ECG (z-norm.)",
         zorder=1,
         linewidth=1.5,
@@ -236,7 +236,7 @@ def _ecg_plot(
     axs["ecg"].scatter(
         x_axis[peaks],
         ecg_clean.iloc[peaks],
-        color=colors.fau_color("nat"),
+        color=colors_all.nat,
         label="R Peaks",
         zorder=2,
     )
@@ -244,7 +244,7 @@ def _ecg_plot(
         axs["ecg"].scatter(
             x_axis[outlier],
             ecg_clean[outlier],
-            color=colors.fau_color("phil"),
+            color=colors_all.phil,
             label="Outlier",
             zorder=2,
         )
@@ -326,15 +326,15 @@ def hr_plot(
     legend_fontsize = kwargs.get("legend_fontsize", "small")
     plt.rcParams["mathtext.default"] = "regular"
 
-    color = kwargs.pop("color", colors.fau_color("wiso"))
-    mean_color = kwargs.pop("mean_color", colors.adjust_color("wiso", 1.5))
+    color = kwargs.pop("color", colors_all.wiso)
+    mean_color = kwargs.pop("mean_color", colors_all.wiso_dark)
 
     if ax is None:
         fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:
         fig = ax.get_figure()
 
-    sns.set_palette(colors.fau_palette)
+    sns.set_palette(cmaps.faculties)
 
     if title:
         ax.set_title("Heart Rate – {}".format(title))
@@ -379,7 +379,7 @@ def _hr_plot_plot_outlier(heart_rate: pd.DataFrame, outlier: np.ndarray, ax: plt
         ax.scatter(
             x=outlier,
             y=heart_rate.loc[outlier, "Heart_Rate"],
-            color=colors.fau_color("phil"),
+            color=colors_all.phil,
             zorder=3,
             label="ECG Outlier",
         )
@@ -551,7 +551,7 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, **kwargs) -> Tuple[plt.Figure
     else:
         fig = ax.get_figure()
 
-    ax = sns.histplot(heart_rate, color=colors.fau_color("tech"), ax=ax, kde=True, legend=False)
+    ax = sns.histplot(heart_rate, color=colors_all.tech, ax=ax, kde=True, legend=False)
 
     ax.set_title("Heart Rate Distribution")
     ax.set_xlabel("Heart Rate [bpm]")
@@ -608,7 +608,7 @@ def rr_distribution_plot(
 
     rri = _get_rr_intervals(rpeaks, sampling_rate)
 
-    sns.set_palette(colors.fau_palette_blue(2))
+    sns.set_palette(sns.light_palette(colors_all.fau, 3, reverse=True)[:-1])
     sns.histplot(rri, ax=ax, bins=10, kde=False, alpha=0.5, zorder=1)
     sns.rugplot(rri, ax=ax, lw=1.5, height=0.05, zorder=2)
     ax2 = ax.twinx()
@@ -621,6 +621,7 @@ def rr_distribution_plot(
     ax.set_xlabel("RR Intervals [ms]")
     ax.set_ylabel("Count")
 
+    tech_light = sns.light_palette(colors_all.tech, 3)[1]
     ax2.boxplot(
         rri,
         vert=False,
@@ -630,12 +631,12 @@ def rr_distribution_plot(
         patch_artist=True,
         boxprops=dict(
             linewidth=2.0,
-            color=colors.adjust_color("tech", 0.5),
-            facecolor=colors.fau_color("tech"),
+            color=tech_light,
+            facecolor=colors_all.tech,
         ),
-        medianprops=dict(linewidth=2.0, color=colors.adjust_color("tech", 0.5)),
-        whiskerprops=dict(linewidth=2.0, color=colors.adjust_color("tech", 0.5)),
-        capprops=dict(linewidth=2.0, color=colors.adjust_color("tech", 0.5)),
+        medianprops=dict(linewidth=2.0, color=tech_light),
+        whiskerprops=dict(linewidth=2.0, color=tech_light),
+        capprops=dict(linewidth=2.0, color=tech_light),
         zorder=4,
     )
 
@@ -780,7 +781,7 @@ def hrv_poincare_plot(
 
     area = np.pi * sd1 * sd2
 
-    sns.set_palette(colors.fau_palette_blue(2))
+    sns.set_palette(sns.light_palette(colors_all.fau, 3, reverse=True)[:-1])
     sns.kdeplot(
         x=rri[:-1],
         y=rri[1:],
@@ -790,7 +791,7 @@ def hrv_poincare_plot(
         thresh=0.05,
         alpha=0.8,
     )
-    sns.scatterplot(x=rri[:-1], y=rri[1:], ax=axs[0], alpha=0.5, edgecolor=colors.fau_color("fau"))
+    sns.scatterplot(x=rri[:-1], y=rri[1:], ax=axs[0], alpha=0.5, edgecolor=colors_all.fau)
     sns.histplot(x=rri[:-1], bins=int(len(rri) / 10), ax=axs[1], edgecolor="none")
     sns.histplot(y=rri[1:], bins=int(len(rri) / 10), ax=axs[2], edgecolor="none")
 
@@ -799,8 +800,8 @@ def hrv_poincare_plot(
         width=2 * sd2,
         height=2 * sd1,
         angle=45,
-        ec=colors.fau_color("fau"),
-        fc=colors.adjust_color("fau", 1.5),
+        ec=colors_all.fau,
+        fc=colors_all.fau_dark,
         alpha=0.8,
     )
     axs[0].add_artist(ellipse)
@@ -814,8 +815,8 @@ def hrv_poincare_plot(
         head_width=na,
         head_length=na,
         linewidth=2.0,
-        ec=colors.fau_color("phil"),
-        fc=colors.fau_color("phil"),
+        ec=colors_all.phil,
+        fc=colors_all.phil,
         zorder=4,
     )
     arr_sd2 = axs[0].arrow(
@@ -826,15 +827,15 @@ def hrv_poincare_plot(
         head_width=na,
         head_length=na,
         linewidth=2.0,
-        ec=colors.fau_color("med"),
-        fc=colors.fau_color("med"),
+        ec=colors_all.med,
+        fc=colors_all.med,
         zorder=4,
     )
     axs[0].add_line(
         mpl.lines.Line2D(
             (np.min(rri), np.max(rri)),
             (np.min(rri), np.max(rri)),
-            c=colors.fau_color("med"),
+            c=colors_all.med,
             ls=":",
             lw=2.0,
             alpha=0.8,
@@ -850,7 +851,7 @@ def hrv_poincare_plot(
                 mean_rri + sd1 * np.sin(np.deg2rad(45)) * na,
                 mean_rri - sd1 * np.sin(np.deg2rad(45)) * na,
             ),
-            c=colors.fau_color("phil"),
+            c=colors_all.phil,
             ls=":",
             lw=2.0,
             alpha=0.8,

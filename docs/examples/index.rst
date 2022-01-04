@@ -85,18 +85,6 @@ These examples demonstrate how to evaluate results either with statistical metho
     _notebooks/SklearnPipelinePermuter_Example
 
 
-Color Palettes
-==============
-This example shows how to generate color palettes used for plotting.
-
-.. nbgallery::
-    :caption: Color Palettes
-    :name: color-palettes
-    :glob:
-
-    _notebooks/Color_Example
-
-
 Miscellaneous
 =============
 .. nbgallery::

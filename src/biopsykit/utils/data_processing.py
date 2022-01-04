@@ -299,7 +299,7 @@ def resample_dict_sec(
     return result_dict
 
 
-def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Sequence[str]) -> SubjectDataDict:
+def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Union[str, Sequence[str]]) -> SubjectDataDict:
     """Select specific phases from :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`.
 
     Parameters
@@ -316,6 +316,8 @@ def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Sequence[str]
 
     """
     is_subject_data_dict(subject_data_dict)
+    if isinstance(phases, str):
+        phases = [phases]
     return {
         subject: {phase: dict_subject[phase] for phase in phases} for subject, dict_subject in subject_data_dict.items()
     }

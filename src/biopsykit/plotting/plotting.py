@@ -229,7 +229,7 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes
     return fig, ax
 
 
-def feature_boxplot(
+def feature_boxplot(  # pylint:disable=too-many-branches
     data: pd.DataFrame,
     x: Optional[str] = None,
     y: Optional[str] = None,
@@ -329,6 +329,7 @@ def feature_boxplot(
     legend_fontsize = kwargs.pop("legend_fontsize", None)
     legend_loc = kwargs.pop("legend_loc", "upper right")
     legend_orientation = kwargs.pop("legend_orientation", "vertical")
+    alpha = kwargs.pop("alpha", 0.7)
     rect = kwargs.pop("rect", (0, 0, 0.825, 1.0) if legend_orientation == "vertical" else (0, 0, 1, 0.925))
 
     stats_kwargs = _feature_boxplot_sanitize_stats_kwargs(stats_kwargs)
@@ -338,6 +339,11 @@ def feature_boxplot(
         stats_kwargs = {}
 
     sns.boxplot(data=data.reset_index(), x=x, y=y, order=order, hue=hue, hue_order=hue_order, **kwargs)
+
+    for patch in ax.patches:
+        r, g, b, _ = patch.get_facecolor()
+        patch.set_facecolor((r, g, b, alpha))
+
     if len(box_pairs) > 0:
         add_stat_annotation(
             data=data.reset_index(), ax=ax, x=x, y=y, order=order, hue=hue, hue_order=hue_order, **stats_kwargs
@@ -381,7 +387,7 @@ def _feature_boxplot_sanitize_stats_kwargs(stats_kwargs: Dict[str, Any]) -> Dict
 
 
 # TODO "group" parameter should always be "x"? check if "group" can be omitted
-def multi_feature_boxplot(
+def multi_feature_boxplot(  # pylint:disable=too-many-branches
     data: pd.DataFrame,
     x: str,
     y: str,
@@ -408,9 +414,9 @@ def multi_feature_boxplot(
     data : :class:`~pandas.DataFrame`
         data to plot
     x : str
-        column of x axis in ``data``
+        column of x-axis in ``data``
     y : str
-        column of y axis in ``data``
+        column of y-axis in ``data``
     features : list of str or dict of str
         features to plot. If ``features`` is a list, each entry must correspond to one feature category in the
         index level specified by ``group``. A separate subplot will be created for each feature.
@@ -434,11 +440,11 @@ def multi_feature_boxplot(
     **kwargs
         additional arguments that are passed down to :func:`~seaborn.boxplot`. For example:
 
-        * ``order``: specifies x axis order for subplots. Can be a list if order is the same for all subplots or a
+        * ``order``: specifies x-axis order for subplots. Can be a list if order is the same for all subplots or a
           dict if order should be individual for subplots
-        * ``xticklabels``: dictionary to set tick labels of x axis in subplots. Keys correspond to the list entries
+        * ``xticklabels``: dictionary to set tick labels of x-axis in subplots. Keys correspond to the list entries
           (or the dict keys) in ``features``. Default: ``None``
-        * ``ylabels``: dictionary to set y axis labels in subplots. Keys correspond to the list entries
+        * ``ylabels``: dictionary to set y-axis labels in subplots. Keys correspond to the list entries
           (or the dict keys) in ``features``. Default: ``None``
         * ``axs``: list of pre-existing axes for the plot. Otherwise, a new figure and axes object is created and
           returned.
@@ -469,6 +475,7 @@ def multi_feature_boxplot(
     legend_fontsize = kwargs.pop("legend_fontsize", None)
     legend_loc = kwargs.pop("legend_loc", "upper right")
     legend_orientation = kwargs.pop("legend_orientation", "vertical")
+    alpha = kwargs.pop("alpha", 0.7)
     rect = kwargs.pop("rect", (0, 0, 0.825, 1.0) if legend_orientation == "vertical" else (0, 0, 1, 0.925))
 
     if isinstance(features, list):
@@ -495,6 +502,10 @@ def multi_feature_boxplot(
         sns.boxplot(
             data=data_plot.reset_index(), x=x, y=y, order=order_list, hue=hue, hue_order=hue_order, ax=ax, **kwargs
         )
+
+        for patch in ax.patches:
+            r, g, b, _ = patch.get_facecolor()
+            patch.set_facecolor((r, g, b, alpha))
 
         _add_stat_annot_multi_feature_boxplot(
             data_plot, x, y, order_list, hue, hue_order, stats_kwargs, dict_box_pairs, dict_pvals, key, ax

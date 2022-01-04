@@ -8,10 +8,9 @@ import matplotlib.ticker as mticks
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from fau_colors import cmaps, colors_all
 from matplotlib.legend_handler import HandlerTuple
-from typing_extensions import get_args
 
-from biopsykit.colors import colors
 from biopsykit.plotting import feature_boxplot, lineplot, multi_feature_boxplot
 from biopsykit.protocols._utils import _get_sample_times
 from biopsykit.saliva.utils import _remove_s0
@@ -31,10 +30,10 @@ from biopsykit.utils.exceptions import ValidationError
 
 _hr_ensemble_plot_params = {
     "linestyle": ["solid", "dashed", "dotted", "dashdot"],
-    "ensemble_alpha": 0.3,
+    "ensemble_alpha": 0.4,
     "background_base_color": "#e0e0e0",
     "background_color": None,
-    "background_alpha": 0.2,
+    "background_alpha": 0.1,
     "xlabel": r"Time [s]",
     "xaxis_minor_tick_locator": mticks.MultipleLocator(60),
     "ylabel": r"$\Delta$HR [%]",
@@ -52,7 +51,7 @@ _hr_mean_plot_params = {
     "marker": ["o", "P", "*", "X"],
     "background_base_color": "#e0e0e0",
     "background_color": None,
-    "background_alpha": 0.2,
+    "background_alpha": 0.1,
     "x_offset": 0.1,
     "ylabel": r"Heart Rate [bpm]",
     "phase_text": "{}",
@@ -110,7 +109,7 @@ _saliva_plot_params: Dict = {
     "test_title": "",
     "test_fontsize": "medium",
     "test_color": "#9e9e9e",
-    "test_alpha": 0.5,
+    "test_alpha": 0.2,
     "multi_x_offset": 0.01,
     "xlabel": "Time [min]",
     "ylabel": {
@@ -122,13 +121,15 @@ _saliva_plot_params: Dict = {
 }
 
 
-def _get_palette(palette: Union[str, Sequence[Tuple[int]]], num_colors: int):
-    if palette is None:
-        palette = colors.fau_palette_blue(num_colors)
-    elif isinstance(palette, str) and palette in get_args(colors.FAU_COLORS):
-        palette = colors.fau_palette_by_name(palette)(num_colors)
-
-    return palette
+def _get_palette(color: Optional[Union[str, Sequence[str]]] = None, num_colors: Optional[int] = 3):
+    if isinstance(color, list):
+        return color
+    if color is None:
+        color = "fau"
+    color_val = getattr(colors_all, color, None)
+    if color_val is None:
+        return color
+    return sns.light_palette(color_val, num_colors + 1, reverse=True)[:-1]
 
 
 def hr_ensemble_plot(
@@ -303,14 +304,14 @@ def _hr_ensemble_plot_end_phase_annotation(ax: plt.Axes, data: pd.DataFrame, pha
     )
     ax.annotate(
         text=end_phase_text.format(phase),
-        xy=(len(data), 0.85 - 0.05 * i),
+        xy=(len(data), 0.85 - 0.075 * i),
         xytext=(-5, 0),
         xycoords=ax.get_xaxis_transform(),
         textcoords="offset points",
         ha="right",
         fontsize="small",
         bbox=dict(facecolor="#e0e0e0", alpha=0.7, boxstyle="round"),
-        zorder=3,
+        zorder=5,
     )
 
 
@@ -355,6 +356,7 @@ def _hr_ensemble_plot_subphase_vspans(
             x=start + 0.5 * (end - start),
             y=0.95,
             transform=ax.get_xaxis_transform(),
+            zorder=3,
             s=subphase,
             ha="center",
             va="center",
@@ -366,7 +368,7 @@ def _hr_ensemble_plot_subphase_vspans(
         transform=ax.transAxes,
         color="white",
         alpha=0.4,
-        zorder=3,
+        zorder=1,
         lw=0,
     )
     ax.add_patch(p)
@@ -397,7 +399,7 @@ def hr_mean_plot(  # pylint:disable=too-many-branches
         * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
         * ``figsize``: tuple specifying figure dimensions
         * ``palette``: color palette to plot data from different conditions. If ``palette`` is a str then it is
-          assumed to be the name of a BioPsyKit palette (:const:`biopsykit.colors.FAU_COLORS`).
+          assumed to be the name of a ``fau_colors`` palette (``fau_colors.cmaps._fields``).
         * ``is_relative``: boolean indicating whether heart rate data is relative (in % relative to baseline)
           or absolute (in bpm). Default: ``False``
         * ``order``: list specifying the order of categorical values (i.e., conditions) along the x axis.
@@ -437,7 +439,7 @@ def hr_mean_plot(  # pylint:disable=too-many-branches
         num_conditions = len(data.index.names)
 
     # get all plot parameter
-    palette = kwargs.get("palette")
+    palette = kwargs.get("palette", cmaps.faculties)
     palette = _get_palette(palette, num_conditions)
     sns.set_palette(palette)
 
@@ -618,6 +620,7 @@ def _hr_mean_plot_subphase_annotations(phase_dict: Dict[str, Sequence[str]], xli
             transform=ax.get_xaxis_transform(),
             horizontalalignment="center",
             verticalalignment="center",
+            zorder=3,
         )
 
     p = mpatch.Rectangle(
@@ -627,7 +630,7 @@ def _hr_mean_plot_subphase_annotations(phase_dict: Dict[str, Sequence[str]], xli
         transform=ax.transAxes,
         color="white",
         alpha=0.4,
-        zorder=3,
+        zorder=1,
         lw=0,
     )
     ax.add_patch(p)
@@ -770,8 +773,8 @@ def saliva_plot(  # pylint:disable=too-many-branches
     linestyle = kwargs.pop("linestyle", None)
     marker = kwargs.pop("marker", "o")
     palette = kwargs.pop("palette", None)
-    if isinstance(palette, str) and palette in get_args(colors.FAU_COLORS):
-        palette = colors.fau_palette_by_name(palette)(len(data))
+    if isinstance(palette, str) and getattr(colors_all, palette, None):
+        palette = _get_palette(palette, len(data))
 
     for i, key in enumerate(data):
         df = data[key]
@@ -893,9 +896,9 @@ def _saliva_plot(
     kwargs.setdefault("marker", "o")
 
     if counter == 0 and len(ax.lines) == 0:
-        kwargs.setdefault("palette", colors.fau_palette_blue(2))
+        kwargs.setdefault("palette", _get_palette("fau", 2))
     else:
-        kwargs.setdefault("palette", colors.fau_palette_tech(2))
+        kwargs.setdefault("palette", _get_palette("tech", 2))
         # the was already something drawn into the axis => we are using the same axis to add another feature
         ax_twin = ax.twinx()
         kwargs.update({"ax": ax_twin, "show_legend": False})

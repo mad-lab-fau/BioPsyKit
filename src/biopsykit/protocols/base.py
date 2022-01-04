@@ -1,5 +1,6 @@
 """Module implementing a base class to represent psychological protocols."""
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple, Type, Union
 
@@ -198,11 +199,25 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_results`.
         """
 
+        self.hr_above_baseline_results: Dict[str, pd.DataFrame] = {}
+        """Dictionary with heart rate above baseline results.
+
+        Dict keys are the identifiers that are specified when computing results from ``hr_data`` using
+        :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_above_baseline`.
+        """
+
         self.hrv_results: Dict[str, pd.DataFrame] = {}
         """Dictionary with heart rate variability ensemble.
 
         Dict keys are the identifiers that are specified when computing ensemble from ``rpeak_data`` using
         :meth:`~biopsykit.protocols.BaseProtocol.compute_hrv_results`.
+        """
+
+        self.hrv_above_baseline_results: Dict[str, pd.DataFrame] = {}
+        """Dictionary with heart rate variability above baseline results.
+
+        Dict keys are the identifiers that are specified when computing results from ``rpeak_data`` using
+        :meth:`~biopsykit.protocols.BaseProtocol.compute_hrv_above_baseline`.
         """
 
         self.hr_ensemble: Dict[str, Dict[str, pd.DataFrame]] = {}
@@ -347,6 +362,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             should be at time point :math:`t = 0`. ``test_times`` is also used to compute the **absolute** sample times
 
         """
+        saliva_data = deepcopy(saliva_data)
         if isinstance(saliva_data, dict):
             saliva_type = list(saliva_data.keys())
         if isinstance(saliva_type, str):
@@ -412,8 +428,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         is_hr_subject_data_dict(hr_data)
         if study_part is None:
             study_part = "Study"
-        self.hr_data[study_part] = hr_data
+        self.hr_data[study_part] = deepcopy(hr_data)
         if rpeak_data is not None:
+            rpeak_data = deepcopy(rpeak_data)
             is_subject_data_dict(rpeak_data)
             self.rpeak_data[study_part] = rpeak_data
 
@@ -712,6 +729,211 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         self.hr_ensemble[ensemble_id] = data_dict
 
+    def compute_hr_above_baseline(  # pylint:disable=too-many-branches
+        self,
+        result_id: str,
+        baseline_phase: str,
+        study_part: Optional[str] = None,
+        select_phases: Optional[bool] = False,
+        split_into_subphases: Optional[bool] = False,
+        add_conditions: Optional[bool] = False,
+        params: Optional[Dict[str, Any]] = None,
+    ):
+        """Compute the relative amount of heart rate above a specified baseline.
+
+        The different processing steps can be enabled or disabled by setting the function parameters to
+        ``True`` or ``False``, respectively. Parameters that are required for a specific processing step can be
+        provided in the ``params`` dict. The dict key must match the name of the processing step.
+
+        Parameters
+        ----------
+        result_id : str
+            Result ID, a descriptive name of the results that were computed.
+            This ID will also be used as key to store the computed results in the ``hr_above_baseline_results``
+            dictionary.
+        baseline_phase : str
+            string indicating the name of the phase that should be used as baseline for computing the relative amount
+            above the baseline.
+        study_part : str, optional
+            study part the data which should be processed belongs to or ``None`` if data has no
+            individual study parts.
+            Default: ``None``
+        select_phases : bool, optional
+            ``True`` to only select specific phases for further processing, ``False`` to use all data from
+            ``study_part``. The phases to be selected are specified in the ``params`` dictionary
+            (key: ``select_phases``).
+            Default: ``False``
+        split_into_subphases : bool, optional
+            ``True`` to further split phases into subphases, ``False`` otherwise. The subphases are provided as
+            dictionary (keys: subphase names, values: subphase durations in seconds) in the ``params`` dictionary
+            (key: ``split_into_subphases``).
+            Default: ``False``
+        add_conditions : bool, optional
+            ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
+            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            (key: ``add_conditions``).
+            Default: ``False``
+        params : dict, optional
+            dictionary with parameters provided to the different processing steps
+
+        """
+        if study_part is None:
+            study_part = "Study"
+        data_dict = self.hr_data[study_part].copy()
+
+        if params is None:
+            params = {}
+
+        data_dict = normalize_to_phase(data_dict, baseline_phase)
+
+        if select_phases:
+            param = params.get("select_phases", None)
+            data_dict = select_dict_phases(data_dict, param)
+
+        if split_into_subphases:
+            param = params.get("split_into_subphases", None)
+            data_dict = split_dict_into_subphases(data_dict, param)
+
+        data_dict = BaseProtocol._compute_hr_above_baseline(data_dict)
+
+        result_data = pd.concat(data_dict, names=["subject"]).unstack()
+
+        if add_conditions:
+            param = params.get("add_conditions")
+            result_data = result_data.join(param.set_index("condition", append=True))
+            index_levels = result_data.index.names
+            result_data = result_data.reorder_levels([index_levels[-1]] + index_levels[:-1])
+
+        self.hr_above_baseline_results[result_id] = result_data
+
+    def compute_hrv_above_baseline(  # pylint:disable=too-many-branches
+        self,
+        result_id: str,
+        baseline_phase: str,
+        continuous_hrv_data: SubjectDataDict,
+        select_phases: Optional[bool] = False,
+        split_into_subphases: Optional[bool] = False,
+        add_conditions: Optional[bool] = False,
+        hrv_columns: Optional[Sequence[str]] = None,
+        params: Optional[Dict[str, Any]] = None,
+    ):
+        """Compute the relative amount of heart rate variability above a specified baseline.
+
+        The different processing steps can be enabled or disabled by setting the function parameters to
+        ``True`` or ``False``, respectively. Parameters that are required for a specific processing step can be
+        provided in the ``params`` dict. The dict key must match the name of the processing step.
+
+        Parameters
+        ----------
+        result_id : str
+            Result ID, a descriptive name of the results that were computed.
+            This ID will also be used as key to store the computed results in the ``hrv_above_baseline_results``
+            dictionary.
+        baseline_phase : str
+            string indicating the name of the phase that should be used as baseline for computing the relative amount
+            above the baseline.
+        continuous_hrv_data : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+            dictionary with continuous HRV of all subjects collected during the protocol.
+        select_phases : bool, optional
+            ``True`` to only select specific phases for further processing, ``False`` to use all data from
+            ``study_part``. The phases to be selected are specified in the ``params`` dictionary
+            (key: ``select_phases``).
+            Default: ``False``
+        split_into_subphases : bool, optional
+            ``True`` to further split phases into subphases, ``False`` otherwise. The subphases are provided as
+            dictionary (keys: subphase names, values: subphase durations in seconds) in the ``params`` dictionary
+            (key: ``split_into_subphases``).
+            Default: ``False``
+        add_conditions : bool, optional
+            ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
+            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            (key: ``add_conditions``).
+            Default: ``False``
+        hrv_columns: list of str
+            selected column names for computing or ``None`` to compute relative amount above baseline for all columns.
+            Default: ``None``
+        params : dict, optional
+            dictionary with parameters provided to the different processing steps
+
+        """
+        data_dict = deepcopy(continuous_hrv_data)
+
+        if params is None:
+            params = {}
+
+        data_dict_baseline = select_dict_phases(data_dict, baseline_phase)
+
+        if select_phases:
+            param = params.get("select_phases", None)
+            data_dict = select_dict_phases(data_dict, param)
+
+        if split_into_subphases:
+            param = params.get("split_into_subphases", None)
+            data_dict = split_dict_into_subphases(data_dict, param)
+
+        data_dict = BaseProtocol._compute_hrv_above_baseline(data_dict, data_dict_baseline, hrv_columns)
+
+        result_data = pd.concat(data_dict, names=["subject"]).unstack()
+
+        if add_conditions:
+            param = params.get("add_conditions")
+            result_data = result_data.join(param.set_index("condition", append=True))
+            index_levels = result_data.index.names
+            result_data = result_data.reorder_levels([index_levels[-1]] + index_levels[:-1])
+
+        self.hrv_above_baseline_results[result_id] = result_data
+
+    @staticmethod
+    def _compute_hr_above_baseline(data_dict: Dict[str, Union[Dict[str, pd.DataFrame], pd.DataFrame]]):
+        result_dict = {}
+        for subject_id, hr_data_dict in data_dict.items():
+            dict_hr = {}
+            for phase, dict_hr_phase in hr_data_dict.items():
+                if isinstance(dict_hr_phase, dict):
+                    dict_hr_subphase = {}
+                    for subphase, df_hr in dict_hr_phase.items():
+                        hr_above_bl = (df_hr > 0).sum() / len(df_hr) * 100
+                        dict_hr_subphase[subphase] = hr_above_bl
+                    dict_hr[phase] = pd.concat(dict_hr_subphase, names=["subphase"])
+                else:
+                    hr_above_bl = (dict_hr_phase > 0).sum() / len(dict_hr_phase) * 100
+                    dict_hr[phase] = hr_above_bl
+
+            result_dict[subject_id] = pd.concat(dict_hr, names=["phase"])
+        return result_dict
+
+    @staticmethod
+    def _compute_hrv_above_baseline(
+        data_dict: Dict[str, Union[Dict[str, pd.DataFrame], pd.DataFrame]],
+        data_dict_baseline: Dict[str, Union[Dict[str, pd.DataFrame], pd.DataFrame]],
+        hrv_columns: Optional[Sequence[str]] = None,
+    ):
+        result_dict = {}
+        for subject_id, hrv_data_dict in data_dict.items():
+            dict_hrv = {}
+            hrv_baseline = data_dict_baseline[subject_id]
+            hrv_baseline = list(hrv_baseline.values())[0]
+            if hrv_columns is None:
+                hrv_columns = hrv_baseline.columns
+            hrv_baseline = hrv_baseline[hrv_columns]
+
+            for phase, dict_hrv_phase in hrv_data_dict.items():
+                if isinstance(dict_hrv_phase, dict):
+                    dict_hrv_subphases = {}
+                    for subphase, df_hrv in dict_hrv_phase.items():
+                        df_hrv = df_hrv[hrv_columns]
+                        hrv_above_bl = (df_hrv > hrv_baseline.mean()).sum() / len(df_hrv) * 100
+                        dict_hrv_subphases[subphase] = hrv_above_bl
+                    dict_hrv[phase] = pd.concat(dict_hrv_subphases, names=["subphase"])
+                else:
+                    hrv_above_bl = (dict_hrv_phase > hrv_baseline.mean()).sum() / len(dict_hrv_phase) * 100
+                    dict_hrv[phase] = hrv_above_bl
+
+            result_dict[subject_id] = pd.concat(dict_hrv, names=["phase"])
+        return result_dict
+
     def add_hr_results(self, result_id: str, results: pd.DataFrame):
         """Add existing heart rate processing ensemble.
 
@@ -724,6 +946,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         """
         _assert_is_dtype(results, pd.DataFrame)
+        results = deepcopy(results)
         self.hr_results[result_id] = results
 
     def get_hr_results(self, result_id: str) -> pd.DataFrame:
@@ -756,6 +979,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             dataframe with computed heart rate variability processing ensemble
 
         """
+        results = deepcopy(results)
         self.hrv_results[result_id] = results
 
     def export_hr_results(self, base_path: path_t, prefix: Optional[str] = None):
@@ -770,6 +994,19 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         """
         self._export_results(base_path, prefix, self.hr_results)
+
+    def export_hr_above_baseline_results(self, base_path: path_t, prefix: Optional[str] = None):
+        """Export all heart rate above baseline results to csv files.
+
+        Parameters
+        ----------
+        base_path : :class:`~pathlib.Path` or str
+            folder path to export all heart rate above baseline result files to
+        prefix : str, optional
+            prefix to add to file name or ``None`` to use ``name`` attribute (in lowercase) as prefix
+
+        """
+        self._export_results(base_path, prefix, self.hr_above_baseline_results)
 
     def export_hr_ensemble(self, base_path: path_t, prefix: Optional[str] = None):
         """Export all heart rate ensemble data to Excel files.
@@ -796,6 +1033,19 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         """
         self._export_results(base_path, prefix, self.hrv_results)
+
+    def export_hrv_above_baseline_results(self, base_path: path_t, prefix: Optional[str] = None):
+        """Export all heart rate variability above baseline results to csv files.
+
+        Parameters
+        ----------
+        base_path : :class:`~pathlib.Path` or str
+            folder path to export all heart rate variability above baseline result files to
+        prefix : str, optional
+            prefix to add to file name or ``None`` to use ``name`` attribute (in lowercase) as prefix
+
+        """
+        self._export_results(base_path, prefix, self.hrv_above_baseline_results)
 
     def _export_results(self, base_path: path_t, prefix: str, result_dict: Dict[str, pd.DataFrame]):
         # ensure pathlib
@@ -851,6 +1101,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         """
         _assert_is_dtype(ensemble, dict)
+        ensemble = deepcopy(ensemble)
         self.hr_ensemble[ensemble_id] = ensemble
 
     def get_hr_ensemble(self, ensemble_id: str):
@@ -1063,7 +1314,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
             * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
             * ``palette``: color palette to plot data from different phases. If ``palette`` is a str then it is
-              assumed to be the name of a BioPsyKit palette (:const:`biopsykit.colors.FAU_COLORS`).
+              assumed to be the name of a ``fau_colors`` palette (``fau_colors.cmaps._fields``).
             * ``figsize``: tuple specifying figure dimensions
             * ``ensemble_alpha``: transparency value for ensemble plot errorband (around mean). Default: 0.3
             * ``background_alpha``: transparency value for background spans (if subphases are present). Default: 0.2
@@ -1138,7 +1389,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
               and returned.
             * ``figsize``: tuple specifying figure dimensions
             * ``palette``: color palette to plot data from different conditions. If ``palette`` is a str then it is
-              assumed to be the name of a BioPsyKit palette (:const:`biopsykit.colors.FAU_COLORS`).
+              assumed to be the name of a ``fau_colors`` palette (``fau_colors.cmaps._fields``).
             * ``is_relative``: boolean indicating whether heart rate data is relative (in % relative to baseline)
               or absolute (in bpm). Default: ``False``
             * ``order``: list specifying the order of categorical values (i.e., conditions) along the x axis.

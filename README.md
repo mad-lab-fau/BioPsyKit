@@ -184,6 +184,7 @@ object-oriented interface for setting up statistical analysis pipelines, display
 statistical significance brackets to plots.
 
 #### Quick Example
+
 ```python
 import matplotlib.pyplot as plt
 from biopsykit.stats import StatsPipeline
@@ -207,11 +208,11 @@ fig, axs = plt.subplots(ncols=3)
 features = ["NegativeAffect", "PositiveAffect", "Total"]
 # generate statistical significance brackets
 box_pairs, pvalues = pipeline.sig_brackets(
-  "test", stats_type="within", plot_type="single", x="time", features=features, subplots=True
+    "test", stats_effect_type="within", plot_type="single", x="time", features=features, subplots=True
 )
 # plot data
 multi_feature_boxplot(
-    data=data, x="time", y="PANAS", features=features, group="subscale", order=["pre", "post"], 
+    data=data, x="time", y="PANAS", features=features, group="subscale", order=["pre", "post"],
     stats_kwargs={"box_pairs": box_pairs, "pvalues": pvalues}, ax=axs
 )
 ```
