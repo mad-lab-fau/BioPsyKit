@@ -660,7 +660,7 @@ class StatsPipeline:
         :meth:`~pandas.DataFrame.to_latex`.
 
         This function uses the LaTeX package ``siunitx`` to represent numbers. By default, the column format for
-        columns that contain numbers is "S" which is provided by ` ``siunitx``<https://ctan.org/pkg/siunitx?lang=en>`_.
+        columns that contain numbers is "S" which is provided by ```siunitx``<https://ctan.org/pkg/siunitx?lang=en>`_.
         The column format can be configured by the ``si_table_format`` argument.
 
 
@@ -677,9 +677,9 @@ class StatsPipeline:
             name(s) of dataframe index level(s) to be unstacked in the resulting latex table or ``None``
             to unstack no level(s)
         collapse_dof : bool, optional
-            ``True`` to collapse degree-of-freedom (DoF) from a separate column into the column header of the
+            ``True`` to collapse degree-of-freedom (dof) from a separate column into the column header of the
             t- or F-value, respectively, ``False`` to keep it as separate "dof" column. This only works if
-            the degrees-of-freedom are the same for all tests in the table.
+            the degrees-of-freedom are the same for all tests in the table. Default: ``True``
         si_table_format : str, optional
             table format for the numbers in the LaTeX table.
         index_kws : dict, optional
@@ -688,17 +688,17 @@ class StatsPipeline:
             * index_italic : bool
               ``True`` to format index columns in italic, ``False`` otherwise. Default: ``True``
             * index_level_order : list
-              list of index level names indicating the index level order in the LaTeX column. If ``None``
-              the index order of the dataframe will be used
+              list of index level names indicating the index level order of a :class:`~pandas.MultiIndex`
+              in the LaTeX table. If `None` the index order of the dataframe will be used
             * index_value_order :  list or dict
-                list of index values if rows in LaTeX should have a different order than the underlying dataframe or
-                if only specific rows should be exported as LaTeX table. If the table index is a multi-index then
-                ``index_value_order`` should be a dictionary with the index level names as keys and lists of
-                index values of the specific level as values
+              list of index values if rows in LaTeX table should have a different order than the underlying
+              dataframe or if only specific rows should be exported as LaTeX table. If the table index is a
+              :class:`~pandas.MultiIndex` then ``index_value_order`` should be a dictionary with the index level
+              names as keys and lists of index values of the specific level as values
             * index_rename_map : dict
                 mapping with dictionary with index values as keys and new index values to be exported
             * index_level_names_tex : str of list of str
-                names of index levels in the LaTeX column or ``None`` to keep the index level names of the dataframe
+                names of index levels in the LaTeX table or ``None`` to keep the index level names of the dataframe
         kwargs
             additional keywords that are passed to :meth:`~pandas.DataFrame.to_latex`.
             The following default arguments will be passed if not specified otherwise:
@@ -725,6 +725,7 @@ class StatsPipeline:
         """
         if data is None:
             data = self.results[stats_test].copy()
+
         if "stats_type" in kwargs:
             warnings.warn(
                 "Argument 'stats_type' is deprecated in 0.4.0 and was replaced by 'stats_effect_type'. "
@@ -732,11 +733,15 @@ class StatsPipeline:
                 category=DeprecationWarning,
             )
             stats_effect_type = kwargs.get("stats_type")
+
         if stats_effect_type is not None:
             data = data.set_index("Source", append=True).xs(stats_effect_type, level="Source")
 
         if si_table_format is None:
             si_table_format = "table-format = <1.3"
+
+        if index_kws is None:
+            index_kws = {}
 
         kwargs.setdefault("multicolumn_format", "c")
         kwargs.setdefault("escape", False)
