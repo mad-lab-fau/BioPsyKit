@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.4.0 - January 02, 2022
+## Version 0.4.0 - January 05, 2022
 ### New Features
 - `biopsykit.stats.StatsPipeline`:
   - added new functions `StatsPipeline.results_to_latex_table` and `StatsPipeline.stats_to_latex` 
