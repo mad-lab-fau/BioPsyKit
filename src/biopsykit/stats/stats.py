@@ -659,8 +659,8 @@ class StatsPipeline:
         This function converts a dataframe from a statistical analysis to a LaTeX table using
         :meth:`~pandas.DataFrame.to_latex`.
 
-        This function uses the LaTeX package ``siunitx`` to represent numbers. By default, the column format for
-        columns that contain numbers is "S" which is provided by ```siunitx``<https://ctan.org/pkg/siunitx?lang=en>`_.
+        This function uses the LaTeX package ``siunitx`` (https://ctan.org/pkg/siunitx?lang=en) to represent numbers.
+        By default, the column format for columns that contain numbers is "S" which is provided by ``siunitx``.
         The column format can be configured by the ``si_table_format`` argument.
 
 
