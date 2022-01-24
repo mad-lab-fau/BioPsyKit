@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.4.1 - January 24, 2022
+### Bugfixes
+- `biopsykit.signals.imu.static_moment_detection`: Now returning an empty dataframe with correct column names when 
+  detecting no static moments
+- `biopsykit.classification.model_selection.SkleanPipelinePermuter`: Pipelines are now correctly sorted by their 
+  mean test scores
+- `biopsykit.protocols.plotting.saliva_plot`: Fixed bug when attempting to plot saliva data without sample times
+_ `biopsykit.plotting.feature_boxplots`: Updated plotting color configuration: If an alpha value smaller than 1.0 is 
+  passed, the saturation is by default set to 1.0 to still have a nice color shading despite the transparency
+- `biopsykit.protocols.TSST`: Changed default TSST test time from 20 to 15 min
+
 ## Version 0.4.0 - January 05, 2022
 ### New Features
 - `biopsykit.stats.StatsPipeline`:

@@ -393,8 +393,9 @@ class SklearnPipelinePermuter:
         """
         score_results = self.pipeline_score_results()
         score_summary_mean = (
-            score_results.groupby(score_results.index.names[:-1]).agg(["mean", "std"])
-            # .sort_values(by=("mean_test_{}".format(self.scoring), "mean"), ascending=False)
+            score_results.groupby(score_results.index.names[:-1])
+            .agg(["mean", "std"])
+            .sort_values(by=("mean_test_{}".format(self.scoring), "mean"), ascending=False)
         )
         return score_summary_mean
 
