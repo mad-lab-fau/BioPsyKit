@@ -81,7 +81,9 @@ class TSST(BaseProtocol):
             structure = {"Part1": None, "TSST": {"Preparation": 300, "Talk": 300, "Math": 300}, "Part2": None}
 
         test_times = kwargs.pop("test_times", [0, 15])
+        saliva_plot_params = {"test_title": "TSST", "xlabel": "Time relative to TSST start [min]"}
+        saliva_plot_params.update(kwargs.pop("saliva_plot_params", {}))
+
+        kwargs.update({"saliva_plot_params": saliva_plot_params})
 
         super().__init__(name=name, structure=structure, test_times=test_times, **kwargs)
-
-        self.saliva_plot_params.update({"test_title": "TSST", "xlabel": "Time relative to TSST start [min]"})
