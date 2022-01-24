@@ -285,6 +285,12 @@ Installation from [PyPi](https://pypi.org/):
 pip install biopsykit
 ```
 
+Installation from [PyPi](https://pypi.org/) with extras 
+(e.g., `jupyter` to directly install all required dependencies for the use with Jupyter Lab): 
+```bash
+pip install "biopsykit[jupyter]"
+```
+
 Installation from local repository copy:
 ```bash
 git clone https://github.com/mad-lab-fau/BioPsyKit.git
