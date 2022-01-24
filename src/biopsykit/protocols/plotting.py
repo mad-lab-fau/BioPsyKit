@@ -778,10 +778,14 @@ def saliva_plot(  # pylint:disable=too-many-branches
 
     for i, key in enumerate(data):
         df = data[key]
-        st = sample_times[key]
         if remove_s0:
             df = _remove_s0(df)
-            st = st[1:]
+        if sample_times is None:
+            st = None
+        else:
+            st = sample_times[key]
+            if remove_s0:
+                st = st[1:]
         kwargs_copy = _saliva_plot_extract_style_params(key, linestyle, marker, palette, **kwargs)
         _saliva_plot(
             data=df,
