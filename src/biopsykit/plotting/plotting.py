@@ -362,7 +362,6 @@ def feature_boxplot(  # pylint:disable=too-many-branches
     if show_legend:
         _feature_boxplot_add_legend(
             fig,
-            ax,
             hue,
             handles,
             labels,
@@ -672,7 +671,7 @@ def _add_stat_annot_multi_feature_boxplot(
         )
 
 
-def _feature_boxplot_add_legend(fig: plt.Figure, ax: plt.Axes, hue: str, handles: Sequence, labels: Sequence, **kwargs):
+def _feature_boxplot_add_legend(fig: plt.Figure, hue: str, handles: Sequence, labels: Sequence, **kwargs):
     legend_fontsize = kwargs.get("legend_fontsize")
     legend_loc = kwargs.get("legend_loc")
     legend_orientation = kwargs.get("legend_orientation")

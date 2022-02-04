@@ -12,7 +12,7 @@ from biopsykit.classification.utils import split_train_test
 __all__ = ["nested_cv_param_search"]
 
 
-def nested_cv_param_search(  # pylint:disable=invalid-name
+def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-many-branches
     X: np.ndarray,  # noqa
     y: np.ndarray,
     param_dict: Dict[str, Any],
