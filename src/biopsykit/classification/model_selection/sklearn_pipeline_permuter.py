@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 from biopsykit.classification.model_selection import nested_cv_param_search
 from biopsykit.classification.utils import _PipelineWrapper
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
-from biopsykit.utils._types import T, path_t
+from biopsykit.utils._types import T, path_t, str_t
 
 __all__ = ["SklearnPipelinePermuter"]
 
@@ -145,8 +145,10 @@ class SklearnPipelinePermuter:
         self.results: Optional[pd.DataFrame] = None
         """Dataframe with parameter search results of each pipeline step combination."""
 
-        self.scoring: str = ""
+        self.scoring: str_t = ""
         """Scoring used as metric for optimization during hyperparameter search."""
+
+        self.refit: str = ""
 
         self._results_set: bool = False
 
@@ -231,7 +233,7 @@ class SklearnPipelinePermuter:
         y: np.ndarray,
         outer_cv: BaseCrossValidator,
         inner_cv: BaseCrossValidator,
-        scoring: Optional[str] = None,
+        scoring: Optional[str_t] = None,
         **kwargs,
     ):
         """Run fit for all pipeline combinations and sets of parameters.
@@ -260,13 +262,19 @@ class SklearnPipelinePermuter:
         """
         self.results = None
 
-        if scoring is None:
-            scoring = "accuracy"
-        self.scoring = scoring
         kwargs.setdefault("n_jobs", -1)
         kwargs.setdefault("verbose", 1)
         kwargs.setdefault("error_score", "raise")
         cachedir_name = kwargs.pop("cachedir_name", "cachedir")
+
+        if scoring is None:
+            scoring = "accuracy"
+        self.scoring = scoring
+
+        refit = kwargs.get("refit")
+        if refit is None:
+            refit = scoring
+        self.refit = refit
 
         # Create a temporary folder to store the transformers of the pipeline
         location = cachedir_name
@@ -286,8 +294,7 @@ class SklearnPipelinePermuter:
             pipeline_params = list(product(*pipeline_params))
 
             pipeline_params = [
-                tuple({"{}__{}".format(step[0], k): v for k, v in step[1].items()} for step in combi)
-                for combi in pipeline_params
+                tuple({f"{step[0]}__{k}": v for k, v in step[1].items()} for step in combi) for combi in pipeline_params
             ]
             pipeline_params = [{k: v for x in param for k, v in x.items()} for param in pipeline_params]
 
@@ -351,7 +358,7 @@ class SklearnPipelinePermuter:
                 # best_estimator = gs["best_estimator"][i]
                 # df_res["best_estimator"] = _PipelineWrapper(best_estimator)
                 dict_folds[i] = df_res
-            param_dict = {"pipeline_{}".format(key): val for key, val in param}
+            param_dict = {f"pipeline_{key}": val for key, val in param}
             df_gs = pd.concat(dict_folds, names=["outer_fold"])
             df_gs[list(param_dict.keys())] = [list(param_dict.values())] * len(df_gs)
             df_gs = df_gs.set_index(list(df_gs.filter(like="pipeline").columns), append=True)
@@ -395,7 +402,7 @@ class SklearnPipelinePermuter:
         score_summary_mean = (
             score_results.groupby(score_results.index.names[:-1])
             .agg(["mean", "std"])
-            .sort_values(by=("mean_test_{}".format(self.scoring), "mean"), ascending=False)
+            .sort_values(by=(f"mean_test_{self.refit}", "mean"), ascending=False)
         )
         return score_summary_mean
 
@@ -430,21 +437,33 @@ class SklearnPipelinePermuter:
         """
         list_metric_summary = []
         for param_key, param_value in self.param_searches.items():
-            param_dict = {"pipeline_{}".format(key): val for key, val in param_key}
+            param_dict = {f"pipeline_{key}": val for key, val in param_key}
             conf_matrix = np.sum(param_value["conf_matrix"], axis=0)
-            true_labels = np.array(param_value["true_labels"], dtype="object").ravel()
-            predicted_labels = np.array(param_value["predicted_labels"], dtype="object").ravel()
+            true_labels = np.array(param_value["true_labels"], dtype="object")
+            predicted_labels = np.array(param_value["predicted_labels"], dtype="object")
+            train_indices = np.array(param_value["train_indices"], dtype="object")
+            test_indices = np.array(param_value["test_indices"], dtype="object")
             df_metric = pd.DataFrame(param_dict, index=[0])
             df_metric["conf_matrix"] = [list(conf_matrix.flatten())]
-            df_metric["true_labels"] = [true_labels]
-            df_metric["predicted_labels"] = [predicted_labels]
+            df_metric["conf_matrix_folds"] = [[cm.flatten() for cm in param_value["conf_matrix"]]]
+            df_metric["true_labels"] = [true_labels.flatten()]
+            df_metric["true_labels_folds"] = [true_labels]
+            df_metric["predicted_labels"] = [predicted_labels.flatten()]
+            df_metric["predicted_labels_folds"] = [predicted_labels]
+            df_metric["train_indices"] = [train_indices.flatten()]
+            df_metric["train_indices_folds"] = [train_indices]
+            df_metric["test_indices"] = [test_indices.flatten()]
+            df_metric["test_indices_folds"] = [test_indices]
 
-            for key in param_value:
-                if "test" in key:
-                    test_scores = self.param_searches[param_key][key]
-                    df_metric["mean_{}".format(key)] = np.mean(test_scores)
-                    df_metric["std_{}".format(key)] = np.std(test_scores)
-                    df_metric[["{}_fold_{}".format(key, i) for i in range(len(test_scores))]] = list(test_scores)
+            scoring = self.scoring
+            if isinstance(scoring, str):
+                scoring = [scoring]
+            for score_key in scoring:
+                key = f"test_{score_key}"
+                test_scores = self.param_searches[param_key][key]
+                df_metric[f"mean_{key}"] = np.mean(test_scores)
+                df_metric[f"std_{key}"] = np.std(test_scores)
+                df_metric[[f"{key}_fold_{i}" for i in range(len(test_scores))]] = list(test_scores)
 
             df_metric = df_metric.set_index(list(df_metric.columns)[: len(param_dict)])
             list_metric_summary.append(df_metric)
@@ -475,15 +494,15 @@ class SklearnPipelinePermuter:
             dataframe with `best estimator` instances
 
         """
-        be_list = []
+        best_estimator_list = []
         for param_key, param_value in self.param_searches.items():
-            param_dict = {"pipeline_{}".format(key): val for key, val in param_key}
+            param_dict = {f"pipeline_{key}": val for key, val in param_key}
             df_be = pd.DataFrame(param_dict, index=[0])
             df_be["best_estimator"] = _PipelineWrapper(param_value["best_estimator"])
             df_be = df_be.set_index(list(df_be.columns)[:-1])
-            be_list.append(df_be)
+            best_estimator_list.append(df_be)
 
-        return pd.concat(be_list)
+        return pd.concat(best_estimator_list)
 
     @staticmethod
     def _check_missing_params(
@@ -493,4 +512,4 @@ class SklearnPipelinePermuter:
         for category in model_dict:
             if not set(model_dict[category].keys()).issubset(set(param_dict.keys())):
                 missing_params = list(set(model_dict[category].keys()) - set(param_dict.keys()))
-                raise ValueError("Some estimators are missing parameters: {}".format(missing_params))
+                raise ValueError(f"Some estimators are missing parameters: {missing_params}")
