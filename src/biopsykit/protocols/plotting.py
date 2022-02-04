@@ -844,12 +844,6 @@ def _saliva_plot_extract_style_params(
     return kwargs
 
 
-def _saliva_plot_hue_style(data: pd.DataFrame):
-    hue = "condition" if "condition" in data.index.names else None
-    style = "condition" if "condition" in data.index.names else None
-    return hue, style
-
-
 def _saliva_plot_sanitize_dicts(
     data: Union[Dict[str, pd.DataFrame], pd.DataFrame], ylabel: Union[Dict[str, str], str], saliva_type: str
 ):
@@ -896,7 +890,8 @@ def _saliva_plot(
         data["time"] = sample_times * int(len(data) / len(sample_times))
         x = "time"
 
-    hue, style = _saliva_plot_hue_style(data)
+    kwargs.setdefault("hue", "condition" if "condition" in data.index.names else None)
+    kwargs.setdefault("style", kwargs.get("hue"))
     kwargs.setdefault("marker", "o")
 
     if counter == 0 and len(ax.lines) == 0:
@@ -909,7 +904,7 @@ def _saliva_plot(
 
     kwargs.update({"xlabel": xlabel, "ylabel": ylabel})
 
-    lineplot(data=data, x=x, y=saliva_type, hue=hue, style=style, **kwargs)
+    lineplot(data=data, x=x, y=saliva_type, **kwargs)
 
     _saliva_plot_style_xaxis(xticks, xaxis_tick_locator, ax)
 
