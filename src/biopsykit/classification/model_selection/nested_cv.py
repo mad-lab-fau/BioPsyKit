@@ -88,8 +88,13 @@ def nested_cv_param_search(  # pylint:disable=invalid-name
     """
     scoring_dict = {"accuracy": "accuracy"}
     scoring = kwargs.pop("scoring")
-    scoring_dict.setdefault(scoring, scoring)
-    kwargs["refit"] = scoring
+    if isinstance(scoring, str):
+        kwargs["refit"] = scoring
+        scoring = [scoring]
+
+    for score in scoring:
+        scoring_dict.setdefault(score, score)
+
     if hyper_search_params is None:
         hyper_search_params = {"search_method": "grid"}
 
@@ -100,6 +105,8 @@ def nested_cv_param_search(  # pylint:disable=invalid-name
         "conf_matrix",
         "predicted_labels",
         "true_labels",
+        "train_indices",
+        "test_indices",
     ]
     for scorer in scoring_dict:
         cols.append("test_{}".format(scorer))
@@ -128,6 +135,8 @@ def nested_cv_param_search(  # pylint:disable=invalid-name
             results_dict["test_{}".format(scorer)].append(
                 get_scorer(scorer)._score_func(y_test, cv_obj.predict(x_test))
             )
+        results_dict["train_indices"].append(train)
+        results_dict["test_indices"].append(test)
         results_dict["predicted_labels"].append(cv_obj.predict(x_test))
         results_dict["true_labels"].append(y_test)
         results_dict["cv_results"].append(cv_obj.cv_results_)
