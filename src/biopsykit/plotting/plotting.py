@@ -329,6 +329,7 @@ def feature_boxplot(  # pylint:disable=too-many-branches
     legend_fontsize = kwargs.pop("legend_fontsize", None)
     legend_loc = kwargs.pop("legend_loc", "upper right")
     legend_orientation = kwargs.pop("legend_orientation", "vertical")
+    legend_title = kwargs.pop("legend_title", None)
     alpha = kwargs.pop("alpha", 0.7)
     if alpha != 1.0:
         kwargs.setdefault("saturation", 1.0)
@@ -369,9 +370,10 @@ def feature_boxplot(  # pylint:disable=too-many-branches
             legend_loc=legend_loc,
             legend_fontsize=legend_fontsize,
             legend_orientation=legend_orientation,
+            legend_title=legend_title,
         )
-
-    fig.tight_layout()
+    else:
+        fig.tight_layout()
     return fig, ax
 
 
@@ -475,6 +477,7 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     xticklabels = kwargs.pop("xticklabels", {})
     show_legend = kwargs.pop("show_legend", True)
     legend_fontsize = kwargs.pop("legend_fontsize", None)
+    legend_title = kwargs.pop("legend_title", None)
     legend_loc = kwargs.pop("legend_loc", "upper right")
     legend_orientation = kwargs.pop("legend_orientation", "vertical")
     alpha = kwargs.pop("alpha", 0.7)
@@ -532,6 +535,7 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
             legend_loc=legend_loc,
             legend_fontsize=legend_fontsize,
             legend_orientation=legend_orientation,
+            legend_title=legend_title,
         )
 
     fig.tight_layout(rect=rect)
@@ -561,6 +565,7 @@ def _get_df_lineplot(data: pd.DataFrame, x: str, y: str, hue: str, order: Sequen
 def _set_legend_errorbar(**kwargs):
     legend_fontsize = kwargs.get("legend_fontsize", "small")
     legend_loc = kwargs.get("legend_loc", "upper left")
+    legend_title = kwargs.get("legend_title", None)
     ax = kwargs.get("ax")
 
     # get handles
@@ -568,7 +573,7 @@ def _set_legend_errorbar(**kwargs):
     # remove the errorbars
     handles = [h[0] for h in handles]
     # use them in the legend
-    ax.legend(handles, labels, loc=legend_loc, numpoints=1, fontsize=legend_fontsize)
+    ax.legend(handles, labels, numpoints=1, loc=legend_loc, title=legend_title, fontsize=legend_fontsize)
 
 
 def _get_styles(
@@ -671,18 +676,12 @@ def _feature_boxplot_add_legend(fig: plt.Figure, ax: plt.Axes, hue: str, handles
     legend_fontsize = kwargs.get("legend_fontsize")
     legend_loc = kwargs.get("legend_loc")
     legend_orientation = kwargs.get("legend_orientation")
+    legend_title = kwargs.get("legend_title")
     rect = kwargs.get("rect")
 
     if hue is not None:
         ncol = len(handles) if legend_orientation == "horizontal" else 1
-
-        ax.legend(
-            handles,
-            labels,
-            loc=legend_loc,
-            ncol=ncol,
-            fontsize=legend_fontsize,
-        )
+        fig.legend(handles, labels, loc=legend_loc, fontsize=legend_fontsize, title=legend_title, ncol=ncol)
     fig.tight_layout(pad=0.5, rect=rect)
 
 
@@ -690,18 +689,13 @@ def _multi_feature_boxplot_add_legend(fig: plt.Figure, hue: str, handles: Sequen
     legend_fontsize = kwargs.get("legend_fontsize")
     legend_loc = kwargs.get("legend_loc")
     legend_orientation = kwargs.get("legend_orientation")
+    legend_title = kwargs.get("legend_title")
     rect = kwargs.get("rect")
 
     if hue is not None:
         ncol = len(handles) if legend_orientation == "horizontal" else 1
 
-        fig.legend(
-            handles,
-            labels,
-            loc=legend_loc,
-            ncol=ncol,
-            fontsize=legend_fontsize,
-        )
+        fig.legend(handles, labels, loc=legend_loc, ncol=ncol, fontsize=legend_fontsize, title=legend_title)
     fig.tight_layout(pad=0.5, rect=rect)
 
 
