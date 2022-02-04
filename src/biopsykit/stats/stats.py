@@ -928,11 +928,13 @@ class StatsPipeline:
             box_pairs.index = index
         return box_pairs
 
-    @staticmethod
-    def _get_box_pairs_multi(stats_data: pd.DataFrame, x: str):
+    def _get_box_pairs_multi(self, stats_data: pd.DataFrame, x: str):
         if x is None:
             raise ValueError("'x' must be specified when 'plot_type' is 'multi'!")
-        stats_data = stats_data.set_index(x)
+        if x in stats_data.columns:
+            stats_data = stats_data.set_index(x)
+        else:
+            stats_data = stats_data.set_index(self.params["groupby"])
         return stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
 
     def _display_category(  # pylint:disable=too-many-branches
