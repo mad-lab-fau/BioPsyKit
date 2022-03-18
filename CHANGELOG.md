@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 0.4.2 - March 18, 2022
+### Bugfixes
+- `biopsykit.stats.StatsPipeline`: Fixed bug of failing to generate significance brackets from within-subjects 
+  stats data
+- `biopsykit.protocols.plotting.saliva_plot`: Fixed wrong plot styling
+
+### New Features
+- `biopsykit.plotting.feature_boxplot`: Added `legend_title` parameter
+- `biopsykit.classification.model_selection.nested_cv`: Train and test indices are now saved for each fold of the nested cv
+- `biopsykit.classification.model_selection.SklearnPipelinePermuter`:
+  - Updated "scoring" and "refit" behavior
+  - Added confusion matrix, true labels, predicted labels, train and test indices per fold and flattened
+
+
 ## Version 0.4.1 - January 24, 2022
 ### Bugfixes
 - `biopsykit.signals.imu.static_moment_detection`: Now returning an empty dataframe with correct column names when 
