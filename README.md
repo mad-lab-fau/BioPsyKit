@@ -1,3 +1,5 @@
+<img src="./docs/_static/logo/biopsykit_logo.png" height="200">
+
 # BioPsyKit
 
 [![PyPI](https://img.shields.io/pypi/v/biopsykit)](https://pypi.org/project/biopsykit/)
