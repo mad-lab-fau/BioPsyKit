@@ -1,3 +1,6 @@
+.. image:: https://raw.github.com/mad-lab-fau/biopsykit/master/docs/_static/logo/biopsykit_logo.png
+
+
 BioPsyKit Documentation Overview
 ================================
 

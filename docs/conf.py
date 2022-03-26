@@ -201,7 +201,12 @@ copyright = (
 HERE = Path(__file__).parent
 EXAMPLE_NOTEBOOKS_DIR = HERE.joinpath("examples/_notebooks")
 
-shutil.copy(HERE.parent.joinpath("README.md"), HERE.joinpath("README.md"))
+with (HERE.parent.joinpath("README.md")).open() as f:
+    out = f.read()
+out = out.replace("./docs/_static/logo/", "./_static/logo/")
+with (HERE.joinpath("README.md")).open("w+") as f:
+    f.write(out)
+
 shutil.copy(HERE.parent.joinpath("CHANGELOG.md"), HERE.joinpath("CHANGELOG.md"))
 shutil.copy(HERE.parent.joinpath("AUTHORS.md"), HERE.joinpath("source/about/AUTHORS.md"))
 shutil.copy(HERE.parent.joinpath("CONTRIBUTING.md"), HERE.joinpath("source/contributing/CONTRIBUTING.md"))
