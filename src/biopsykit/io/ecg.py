@@ -46,12 +46,12 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
         if file in ``file_path`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         (if ``assert_format`` is ``True``)
     :exc:`~biopsykit.utils.exceptions.FileExtensionError`
-        if file is no Excel file (`.xls` or ``.xlsx``)
+        if file is no Excel file (`.xls` or `.xlsx`)
 
     See Also
     --------
     ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
-    write_hr_phase_dict : Write ``HeartRatePhaseDict`` to file
+    write_hr_phase_dict : Write :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` to file
 
     """
     # ensure pathlib
@@ -74,7 +74,9 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 def load_hr_phase_dict_folder(
     base_path: path_t, filename_pattern: str, subfolder_pattern: Optional[str] = None
 ) -> HeartRateSubjectDataDict:
-    r"""Load a folder with multiple ``HeartRatePhaseDict`` and concatenate them into a ``HeartRateSubjectDataDict``.
+    """Load a folder with multiple :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`. and concatenate them
+    into a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`.
+
 
     This functions looks for all files that match the ``file_pattern`` in the folder specified by ``base_path``
     and loads the files that are all expected to be :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
@@ -107,7 +109,7 @@ def load_hr_phase_dict_folder(
     Returns
     -------
     :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
-        ``HeartRateSubjectDataDict``, i.e., a dictionary with :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`, i.e., a dictionary with :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         of multiple subjects
 
     Raises
@@ -120,8 +122,8 @@ def load_hr_phase_dict_folder(
 
     See Also
     --------
-    biopsykit.utils.file_handling.get_subject_dirs : Filter for subject subfolders in a given folder
-    load_hr_phase_dict : Load HeartRatePhaseDict for one subject
+    ~biopsykit.utils.file_handling.get_subject_dirs : Filter for subject subfolders in a given folder
+    load_hr_phase_dict : Load :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` for one subject
 
     Examples
     --------
@@ -222,7 +224,7 @@ def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t):
     See Also
     --------
     ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
-    load_hr_phase_dict : Load `HeartRatePhaseDict` written to file
+    load_hr_phase_dict : Load :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` written to file
     ~biopsykit.io.write_pandas_dict_excel : Write dictionary with pandas dataframes to Excel file
 
     """
@@ -267,7 +269,7 @@ def write_hr_phase_dict_csv(hr_phase_dict: HeartRatePhaseDict, folder_path: path
     See Also
     --------
     ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
-    load_hr_phase_dict_csv : Load `HeartRatePhaseDict` written to csv files
+    load_hr_phase_dict_csv : Load :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` written to csv files
 
     """
     # ensure pathlib
@@ -326,12 +328,12 @@ def load_hr_phase_dict_csv(
         if file in ``file_path`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
         (if ``assert_format`` is ``True``)
     :exc:`~biopsykit.utils.exceptions.FileExtensionError`
-        if file is no Excel file (`.xls` or ``.xlsx``)
+        if file is no Excel file (`.xls` or `.xlsx`)
 
     See Also
     --------
     ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
-    write_hr_phase_dict_csv : Write ``HeartRatePhaseDict`` to a series of csv files
+    write_hr_phase_dict_csv : Write :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` to a series of csv files
 
     """
     # ensure pathlib
