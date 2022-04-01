@@ -44,6 +44,7 @@ class ButtonDirective(Directive):
 # build phase visitor emits HTML to append to output
 def html_visit_button_node(self, node):
     html = BUTTON_TEMPLATE.render(text=node["text"], link=node["link"])
+
     self.body.append(html)
     raise nodes.SkipNode
 
