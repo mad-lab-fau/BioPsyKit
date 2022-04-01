@@ -29,6 +29,7 @@ pydocstyle:
     - D107  # Missing docstrings in __init__, we don't have them by convention
     - D203  # Blank line required before class docstring
     - D213  # Docstring Summary should start in second line
+    - D301  # Use r""" if any backslashes in a docstring
 
 
 pylint:

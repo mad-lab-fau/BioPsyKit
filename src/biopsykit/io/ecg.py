@@ -74,15 +74,14 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 def load_hr_phase_dict_folder(
     base_path: path_t, filename_pattern: str, subfolder_pattern: Optional[str] = None
 ) -> HeartRateSubjectDataDict:
-    r"""Load a folder with multiple :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`. and concatenate them \
+    """Load a folder with multiple :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` and concatenate them \
     into a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`.
-
 
     This functions looks for all files that match the ``file_pattern`` in the folder specified by ``base_path``
     and loads the files that are all expected to be :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
 
     Subject IDs are extracted from the file name. Hence, ``file_pattern`` needs to be a regex
-    including a capture group, e.g. "ecg_results_(\w+).xlsx".
+    including a capture group, e.g. "ecg_results_(\\w+).xlsx".
 
     Alternatively, if the files are stored in subfolders, the name pattern of these subfolders can be specified by
     ``subject_folder_pattern``. Then, it is expected that the subfolder names correspond to the subject IDs.
@@ -132,7 +131,7 @@ def load_hr_phase_dict_folder(
     >>> # Option 1: all files are stored in `base_path`, subject IDs are extracted from the file names
     >>> dict_hr_subjects = load_hr_phase_dict_folder(
     >>>                         base_path,
-    >>>                         filename_pattern=r"ecg_result_(\w+).xlsx")
+    >>>                         filename_pattern=r"ecg_result_(\\w+).xlsx")
     >>> print(dict_hr_subjects)
     {
          'Vp01': {}, # one single HeartRatePhaseDict
