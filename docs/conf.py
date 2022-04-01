@@ -392,7 +392,7 @@ latex_documents = [("index", "user_guide.tex", "BioPsyKit Documentation", "Rober
 # latex_domain_indices = True
 
 # Execute notebooks before conversion: 'always', 'never', 'auto' (default)
-nbsphinx_execute = "auto"
+nbsphinx_execute = "never"
 
 nbsphinx_kernel_name = "python3"
 
@@ -405,9 +405,10 @@ nbsphinx_epilog = r"""
 
 {% set docname = env.doc2path(env.docname) %}
 
+
 .. button::
-   :text: Download Notebook
-   :link: {{ docname }}
+   :text: Download Notebook</br>(Right-Click -> Save Link As...)
+   :link: https://raw.githubusercontent.com/mad-lab-fau/BioPsyKit/main/examples/{{ docname.split('/')[-1] }}
 
 """
 
