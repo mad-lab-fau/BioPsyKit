@@ -405,6 +405,8 @@ nbsphinx_epilog = r"""
 
 {% set docname = env.doc2path(env.docname) %}
 
+{{ env.doc2path(env.docname) }}
+
 .. button::
    :text: Download Notebook
    :link: {{ docname }}

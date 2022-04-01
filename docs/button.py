@@ -28,7 +28,7 @@ class ButtonDirective(Directive):
 
     # this will execute when your directive is encountered
     # it will insert a button_node into the document that will
-    # get visisted during the build phase
+    # get visited during the build phase
     def run(self):
         env = self.state.document.settings.env
         app = env.app
