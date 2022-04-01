@@ -74,7 +74,7 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 def load_hr_phase_dict_folder(
     base_path: path_t, filename_pattern: str, subfolder_pattern: Optional[str] = None
 ) -> HeartRateSubjectDataDict:
-    """Load a folder with multiple :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`. and concatenate them
+    r"""Load a folder with multiple :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`. and concatenate them \
     into a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`.
 
 
@@ -109,8 +109,8 @@ def load_hr_phase_dict_folder(
     Returns
     -------
     :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
-        :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`, i.e., a dictionary with :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
-        of multiple subjects
+        :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`, i.e., a dictionary with
+        :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` of multiple subjects
 
     Raises
     ------
