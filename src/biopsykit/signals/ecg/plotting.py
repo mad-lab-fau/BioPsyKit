@@ -777,7 +777,7 @@ def hrv_poincare_plot(
     sd = np.ediff1d(rri)
     sdsd = np.std(sd, ddof=1)
     sd1 = sdsd / np.sqrt(2)
-    sd2 = np.sqrt(2 * np.std(rri, ddof=1) ** 2 - sd1 ** 2)
+    sd2 = np.sqrt(2 * np.std(rri, ddof=1) ** 2 - sd1**2)
 
     area = np.pi * sd1 * sd2
 

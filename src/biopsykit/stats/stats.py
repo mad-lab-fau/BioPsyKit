@@ -629,7 +629,7 @@ class StatsPipeline:
             dofs = ",".join(dofs)
             fval = self._format_number(row["F"])
             effsize = self._format_number(row["np2"])
-            return fr"$F({dofs}) = {fval}, p {pval}, \eta_p^2 = {effsize}$"
+            return rf"$F({dofs}) = {fval}, p {pval}, \eta_p^2 = {effsize}$"
         if "U-val" in row:
             effsize = self._format_number(row["hedges"])
             uval = self._format_number(row["U-val"])
@@ -973,7 +973,7 @@ class StatsPipeline:
         if len(pstar) >= 0:
             if pval < 0.001:
                 ret = "<0.001"
-            ret += fr"$^{{{pstar}}}$"
+            ret += rf"$^{{{pstar}}}$"
         return ret
 
     @staticmethod
@@ -1052,7 +1052,7 @@ class StatsPipeline:
         data = data.add_prefix("{").add_suffix("}")
 
         if index_italic:
-            data.index.names = [fr"\textit{{{s}}}" for s in data.index.names]
+            data.index.names = [rf"\textit{{{s}}}" for s in data.index.names]
             data = data.T
             data = data.add_prefix(r"\textit{").add_suffix("}")
             data = data.T

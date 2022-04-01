@@ -975,7 +975,7 @@ class CFT(BaseProtocol):
 
         x_poly = x_poly - x_poly[0]
         y_poly = (
-            cft_params["poly_fit_a2"] * x_poly ** 2 + cft_params["poly_fit_a1"] * x_poly + cft_params["poly_fit_a0"]
+            cft_params["poly_fit_a2"] * x_poly**2 + cft_params["poly_fit_a1"] * x_poly + cft_params["poly_fit_a0"]
         )
 
         ax.plot(

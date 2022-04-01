@@ -120,7 +120,7 @@ class ActivityCounts:
     @staticmethod
     def _digitize_8bit(data: np.ndarray) -> np.ndarray:
         max_val = 2.13  # g
-        data //= max_val / (2 ** 7)
+        data //= max_val / (2**7)
         return data
 
     @staticmethod
