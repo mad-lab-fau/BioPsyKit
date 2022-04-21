@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.5.0 - April xx, 2022
+## Version 0.5.0 - April 21, 2022
 ### New Features
 - `biopsykit.stats`: Added new statistic features:
   - `biopsykit.stats.multicoll`: Functions to handle multicollinearity in data
