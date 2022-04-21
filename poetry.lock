@@ -2126,7 +2126,7 @@ mne = ["mne"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "985da19dbedc7812880f7172a09bcb0235716e6c47f947966319182f81115d6d"
+content-hash = "9d5a23ef4e31ec2e2a0400c7818dc2de601c889c6244592ff735245a26769200"
 
 [metadata.files]
 alabaster = [
