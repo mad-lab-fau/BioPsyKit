@@ -352,7 +352,7 @@ class StatsPipeline:
 
         if grouped and "groupby" in self.params:
             for key, _ in self.data.groupby(self.params.get("groupby")):
-                display(Markdown("""<font size="4"><b> {} </b></font>""".format(key)))
+                display(Markdown(f"""<font size="4"><b> {key} </b></font>"""))
                 self._display_results(sig_only, self.params.get("groupby"), key, **kwargs)
         else:
             self._display_results(sig_only, **kwargs)
@@ -412,10 +412,10 @@ class StatsPipeline:
     def _filter_effect(self, stats_category: STATS_CATEGORY, stats_effect_type: STATS_EFFECT_TYPE) -> pd.DataFrame:
         results = self.results_cat(stats_category)
         if len(results) == 0:
-            raise ValueError("No results for category {}!".format(stats_category))
+            raise ValueError(f"No results for category {stats_category}!")
         if "Contrast" in results.columns:
             if stats_effect_type == "interaction":
-                key = "{} * {}".format(self.params["within"], self.params["between"])
+                key = f"{self.params['within']} * {self.params['between']}"
             else:
                 key = self.params[stats_effect_type]
 
@@ -947,9 +947,9 @@ class StatsPipeline:
                 "Displaying statistics results failed because "
                 "IPython cannot be imported. Install it via 'pip install ipython'."
             ) from e
-        display(Markdown("""<font size="3"><b> {} </b></font>""".format(MAP_CATEGORIES[category])))
+        display(Markdown(f"""<font size="3"><b> {MAP_CATEGORIES[category]} </b></font>"""))
         for step in steps:
-            display(Markdown("**{}**".format(MAP_NAMES[step])))
+            display(Markdown(f"**{MAP_NAMES[step]}**"))
             df = self.results[step]
             if groupby is not None:
                 df = df.xs(group_key, level=groupby)
