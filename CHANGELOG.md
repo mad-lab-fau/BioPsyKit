@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.5.0 - April xx, 2022
+### New Features
+- `biopsykit.stats`: Added new statistic features:
+  - `biopsykit.stats.multicoll`: Functions to handle multicollinearity in data
+  - `biopsykit.stats.regression`: Functions for performing more "complex" regression analysis 
+    (currently: stepwise backward multiple linear regression)
+- `biopsykit.classification`: `SklearnPipelinePermuter` instances can now be saved as pickle files and imported again
+
 ## Version 0.4.2 - March 18, 2022
 ### Bugfixes
 - `biopsykit.stats.StatsPipeline`: Fixed bug of failing to generate significance brackets from within-subjects 

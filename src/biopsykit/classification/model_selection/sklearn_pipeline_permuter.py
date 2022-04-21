@@ -1,4 +1,5 @@
 """Module for systematically evaluating different combinations of sklearn pipelines."""
+import pickle
 from itertools import product
 from pathlib import Path
 from shutil import rmtree
@@ -513,3 +514,38 @@ class SklearnPipelinePermuter:
             if not set(model_dict[category].keys()).issubset(set(param_dict.keys())):
                 missing_params = list(set(model_dict[category].keys()) - set(param_dict.keys()))
                 raise ValueError(f"Some estimators are missing parameters: {missing_params}")
+
+    def to_pickle(self, file_path: path_t) -> None:
+        """Export the current instance as a pickle file.
+
+        Parameters
+        ----------
+        file_path : :class:`~pathlib.Path` or str
+            file path to export
+
+        """
+        file_path = Path(file_path)
+        _assert_file_extension(file_path, ".pkl")
+        with open(file_path, "wb") as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def from_pickle(file_path: path_t) -> "SklearnPipelinePermuter":
+        """Import a :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter` \
+        instance from a pickle file.
+
+        Parameters
+        ----------
+        file_path : :class:`~pathlib.Path` or str
+            file path to import
+
+        Returns
+        -------
+        :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter`
+            ``SklearnPipelinePermuter` instance
+
+        """
+        file_path = Path(file_path)
+        _assert_file_extension(file_path, ".pkl")
+        with open(file_path, "rb") as f:
+            return pickle.load(f)
