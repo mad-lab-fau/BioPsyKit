@@ -26,7 +26,6 @@ jobs:
         pip install poetry
         pip install poethepoet
         poetry config virtualenvs.in-project true
-        poetry config experimental.new-installer false
         poetry install -E mne -E jupyter
     - name: Linting
       run: |
