@@ -7,6 +7,9 @@
   - `biopsykit.stats.regression`: Functions for performing more "complex" regression analysis 
     (currently: stepwise backward multiple linear regression)
 - `biopsykit.classification`: `SklearnPipelinePermuter` instances can now be saved as pickle files and imported again
+- 
+### Bugfixes
+_ `biopsykit.utils.time`: Renamed `time_to_datetime` to `time_to_timedelta` (wrong function name)
 
 ## Version 0.4.2 - March 18, 2022
 ### Bugfixes
