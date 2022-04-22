@@ -32,7 +32,7 @@ from biopsykit.questionnaires.utils import (
 )
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_num_columns, _assert_value_range
 from biopsykit.utils.exceptions import ValueRangeError
-from biopsykit.utils.time import time_to_datetime
+from biopsykit.utils.time import time_to_timedelta
 
 
 def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
@@ -83,11 +83,11 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
     # Bedtime Start: Question 1
     bed_time_start = data.filter(regex="01").iloc[:, 0]
-    bed_time_start = time_to_datetime(bed_time_start)
+    bed_time_start = time_to_timedelta(bed_time_start)
 
     # Bedtime End: Question 3
     bed_time_end = data.filter(regex="03").iloc[:, 0]
-    bed_time_end = time_to_datetime(bed_time_end)
+    bed_time_end = time_to_timedelta(bed_time_end)
 
     # Compute Hours in Bed (needed for habitual sleep efficiency)
     bed_time_diff = bed_time_end - bed_time_start

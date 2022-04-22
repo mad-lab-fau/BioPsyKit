@@ -19,7 +19,7 @@ __all__ = [
     "check_tz_aware",
     "extract_time_from_filename",
     "get_time_from_date",
-    "time_to_datetime",
+    "time_to_timedelta",
     "timedelta_to_time",
 ]
 
@@ -123,8 +123,8 @@ def get_time_from_date(
     return data
 
 
-def time_to_datetime(data: pd.Series) -> pd.Series:
-    """Convert time information in a series into ``datetime.datetime`` data.
+def time_to_timedelta(data: pd.Series) -> pd.Series:
+    """Convert time information in a series into ``datetime.timedelta`` data.
 
     Parameters
     ----------
@@ -135,11 +135,14 @@ def time_to_datetime(data: pd.Series) -> pd.Series:
     Returns
     -------
     :class:`~pandas.Series`
-        series with data converted into :class:`datetime.datetime`
+        series with data converted into :class:`datetime.timedelta`
 
     """
-    col_data = pd.to_datetime(data.astype(str))
-    return col_data - col_data.dt.normalize()
+    _assert_is_dtype(data, pd.Series)
+    if np.issubdtype(data.dtype, np.timedelta64):
+        # data is already a timedelta
+        return data
+    return pd.to_timedelta(data.astype(str))
 
 
 def timedelta_to_time(data: pd.Series) -> pd.Series:

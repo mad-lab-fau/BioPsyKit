@@ -29,7 +29,7 @@ def sleep_endpoints_dataframe_correct():
             "wake_onset": pd.to_datetime("01.01.2021 08:00"),
             "total_sleep_duration": 8 * 60,
         },
-        index=pd.DatetimeIndex(pd.to_datetime(["31.12.2020"]), name="date"),
+        index=pd.DatetimeIndex(pd.to_datetime(["31.12.2020"], format="%d.%m.%Y"), name="date"),
     )
 
 
@@ -42,7 +42,7 @@ def sleep_endpoints_dataframe_additional_cols():
             "major_rest_period_start": pd.to_datetime("31.12.2020 23:00"),
             "major_rest_period_end": pd.to_datetime("01.01.2021 08:30"),
         },
-        index=pd.DatetimeIndex(pd.to_datetime(["31.12.2020"]), name="date"),
+        index=pd.DatetimeIndex(pd.to_datetime(["31.12.2020"], format="%d.%m.%Y"), name="date"),
     )
 
 
@@ -63,15 +63,15 @@ def sleep_endpoints_dataframe_missing_cols():
             "sleep_onset": pd.to_datetime("01.01.2021 00:00"),
             "wake_onset": pd.to_datetime("01.01.2021 08:00"),
         },
-        index=pd.DatetimeIndex(pd.to_datetime(["31.12.2020"]), name="date"),
+        index=pd.DatetimeIndex(pd.to_datetime(["31.12.2020"], format="%d.%m.%Y"), name="date"),
     )
 
 
 def sleep_endpoints_dict_correct():
     return {
-        "date": pd.to_datetime("31.12.2020"),
-        "sleep_onset": pd.to_datetime("01.01.2021 00:00"),
-        "wake_onset": pd.to_datetime("01.01.2021 08:00"),
+        "date": pd.to_datetime("31.12.2020", format="%d.%m.%Y"),
+        "sleep_onset": pd.to_datetime("01.01.2021 00:00", format="%d.%m.%Y %H:%M"),
+        "wake_onset": pd.to_datetime("01.01.2021 08:00", format="%d.%m.%Y %H:%M"),
         "total_sleep_duration": 8 * 60,
     }
 
