@@ -101,6 +101,8 @@ def lineplot(
     hue_order = kwargs.get("hue_order")
     palette = kwargs.get("palette")
     show_legend = kwargs.get("show_legend", True)
+    if style is None:
+        style = hue
 
     data = data.reset_index()
 
@@ -126,6 +128,7 @@ def lineplot(
         x_vals = np.arange(0, len(x_vals))
     span = x_vals[-1] - x_vals[0]
     x_offset = span * x_offset
+
     # iterate through groups
     for i, (key, df) in enumerate(grouped.items()):
         m_se = _get_df_lineplot(df, x, y, hue, order)

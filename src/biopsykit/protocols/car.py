@@ -67,7 +67,7 @@ class CAR(BaseProtocol):
         if len(data.index.get_level_values(kwargs.get("x")).unique()) != len(kwargs.get("xticklabels")):
             raise ValueError(
                 "If samples have individual sample times for each subject, sample times for plotting must "
-                "explicitely be provided by the 'sample_times' argument!"
+                "explicitly be provided by the 'sample_times' argument!"
             )
         kwargs.update(self.car_plot_params)
         return lineplot(data, **kwargs)
