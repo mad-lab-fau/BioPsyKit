@@ -4,15 +4,17 @@ import re
 import warnings
 import zipfile
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Dict, Optional, Sequence, Union
 
 import pandas as pd
 from tqdm.auto import tqdm
 
-from biopsykit.carwatch_logs import LogData
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t
 from biopsykit.utils.time import tz, utc
+
+if TYPE_CHECKING:
+    from biopsykit.carwatch_logs import LogData
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
 
@@ -191,7 +193,7 @@ def _load_log_file_csv(file_path: path_t) -> pd.DataFrame:
 
 
 def save_log_data(
-    log_data: Union[pd.DataFrame, LogData],
+    log_data: Union[pd.DataFrame, "LogData"],
     path: path_t,
     subject_id: Optional[str] = None,
     overwrite: Optional[bool] = False,
@@ -227,6 +229,8 @@ def save_log_data(
         Default: ``False``
 
     """
+    from biopsykit.carwatch_logs import LogData  # pylint: disable=import-outside-toplevel
+
     if isinstance(log_data, pd.DataFrame):
         if isinstance(log_data.index, pd.MultiIndex):
             # dataframe has a multiindex => it's a combined dataframe for all subjects
