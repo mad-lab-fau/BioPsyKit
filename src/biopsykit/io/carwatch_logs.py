@@ -155,8 +155,8 @@ def load_log_one_subject(
                 return log_folder_to_dataframe(export_folder)
             # folder not empty => inform user and load folder
             warnings.warn(
-                "Folder {} already contains log files which will be loaded. "
-                "Set `overwrite_logs_unzip = True` to overwrite log files.".format(export_folder.name)
+                f"Folder {export_folder.name} already contains log files which will be loaded. "
+                f"Set `overwrite_logs_unzip = True` to overwrite log files."
             )
             return log_folder_to_dataframe(export_folder)
     return _load_log_file_csv(path)
