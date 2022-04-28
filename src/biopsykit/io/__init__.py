@@ -1,5 +1,5 @@
 """Module providing input/output functions."""
-from biopsykit.io import ecg, eeg, nilspod, saliva, sleep, sleep_analyzer, carwatch_logs
+from biopsykit.io import carwatch_logs, ecg, eeg, nilspod, saliva, sleep, sleep_analyzer
 from biopsykit.io.io import (
     convert_time_log_datetime,
     load_codebook,
