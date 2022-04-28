@@ -2205,7 +2205,7 @@ mne = ["mne"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "1227adb15beb20c6d641d88f7cce02235db5a18ff0e6028c12af8fbcf0908790"
+content-hash = "e1334eded434492b751d0ba172c345ef57a7bd2872c3a62e63f94d5588b5a5ba"
 
 [metadata.files]
 aiohttp = [
