@@ -64,7 +64,7 @@ def load_logs_all_subjects(
         # first, look for available csv files
         file_list = list(sorted(base_folder.glob("*.csv")))
         if len(file_list) > 0:
-            dict_log_files = _load_log_file_csv(file_list, log_filename_pattern)
+            dict_log_files = _load_log_file_list_csv(file_list, log_filename_pattern)
         else:
             # fallback: look for zip files
             file_list = list(sorted(base_folder.glob("*.zip")))
@@ -84,7 +84,7 @@ def _load_log_file_folder(folder_list: Sequence[Path]):
     return dict_log_files
 
 
-def _load_log_file_csv(file_list: Sequence[Path], log_filename_pattern: str):
+def _load_log_file_list_csv(file_list: Sequence[Path], log_filename_pattern: str):
     dict_log_files = {}
     if log_filename_pattern is None:
         log_filename_pattern = LOG_FILENAME_PATTERN + ".csv"
@@ -157,7 +157,7 @@ def load_log_one_subject(
                 "Set `overwrite_logs_unzip = True` to overwrite log files.".format(export_folder.name)
             )
             return log_folder_to_dataframe(export_folder)
-    return log_folder_to_dataframe(path)
+    return _load_log_file_csv(path)
 
 
 def log_folder_to_dataframe(folder_path: path_t) -> pd.DataFrame:
@@ -176,12 +176,16 @@ def log_folder_to_dataframe(folder_path: path_t) -> pd.DataFrame:
 
     """
     file_list = list(sorted(folder_path.glob("*.csv")))
-    df = pd.concat([pd.read_csv(file, sep=";", header=None, names=["time", "action", "extras"]) for file in file_list])
+    return pd.concat([_load_log_file_csv(file) for file in file_list])
+
+
+def _load_log_file_csv(file_path: path_t) -> pd.DataFrame:
+    df = pd.read_csv(file_path, sep=";", header=None, names=["time", "action", "extras"])
 
     df["time"] = pd.to_datetime(df["time"], unit="ms")
-    df.set_index("time", inplace=True)
+    df = df.set_index("time")
     df.index = df.index.tz_localize(utc).tz_convert(tz)
-    df.sort_index(inplace=True)
+    df = df.sort_index()
     df = df.apply(_parse_date, axis=1)
     return df
 
