@@ -361,8 +361,10 @@ def feature_boxplot(  # pylint:disable=too-many-branches
     if xticklabels is not None:
         ax.set_xticklabels(xticklabels)
 
-    handles, labels = ax.get_legend_handles_labels()
     if show_legend:
+        if hue is not None:
+            ax.legend().remove()
+        handles, labels = ax.get_legend_handles_labels()
         _feature_boxplot_add_legend(
             fig,
             hue,
