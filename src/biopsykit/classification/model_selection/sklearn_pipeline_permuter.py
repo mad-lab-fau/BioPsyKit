@@ -140,7 +140,7 @@ class SklearnPipelinePermuter:
         self.hyper_search_dict: Dict[str, Dict[str, Any]] = {}
         """Dictionary specifying the selected hyperparameter search method for each estimator."""
 
-        self.param_searches: Dict[Tuple[str, str], pd.DataFrame] = {}
+        self.param_searches: Dict[Tuple[str, str], Dict[str, Any]] = {}
         """Dictionary with parameter search results for each pipeline step combination."""
 
         self.results: Optional[pd.DataFrame] = None
@@ -235,6 +235,7 @@ class SklearnPipelinePermuter:
         outer_cv: BaseCrossValidator,
         inner_cv: BaseCrossValidator,
         scoring: Optional[str_t] = None,
+        use_cache: Optional[bool] = True,
         **kwargs,
     ):
         """Run fit for all pipeline combinations and sets of parameters.
@@ -254,6 +255,9 @@ class SklearnPipelinePermuter:
             Cross-validation object determining the cross-validation splitting strategy of the hyperparameter search.
         scoring : str, optional
             A str specifying the scoring metric to use for evaluation.
+        use_cache : bool, optional
+            ``True`` to cache fitted transformer instances of the pipeline in a caching directory
+            (can be provided by the additional parameter ``cachedir_name``), ``False`` otherwise. Default: ``True``
         **kwargs :
             Additional arguments that are passed to
             :func:`~biopsykit.classification.model_selection.nested_cv_parameter_search` and the hyperparameter search
@@ -266,7 +270,12 @@ class SklearnPipelinePermuter:
         kwargs.setdefault("n_jobs", -1)
         kwargs.setdefault("verbose", 1)
         kwargs.setdefault("error_score", "raise")
-        cachedir_name = kwargs.pop("cachedir_name", "cachedir")
+
+        # Create a temporary folder to store the transformers of the pipeline
+        location = kwargs.pop("cachedir_name", "cachedir")
+        memory = None
+        if use_cache:
+            memory = Memory(location=location, verbose=0)
 
         if scoring is None:
             scoring = "accuracy"
@@ -276,10 +285,6 @@ class SklearnPipelinePermuter:
         if refit is None:
             refit = scoring
         self.refit = refit
-
-        # Create a temporary folder to store the transformers of the pipeline
-        location = cachedir_name
-        memory = Memory(location=location, verbose=0)
 
         for model_combination in tqdm(self.model_combinations):
             if model_combination in self.param_searches:
@@ -326,9 +331,10 @@ class SklearnPipelinePermuter:
                 print("")
             print("")
 
-        # Delete the temporary cache before exiting
-        memory.clear(warn=False)
-        rmtree(location)
+        if use_cache:
+            # Delete the temporary cache before exiting
+            memory.clear(warn=False)
+            rmtree(location)
 
     def pipeline_score_results(self) -> pd.DataFrame:
         """Return parameter search results for each pipeline combination.
@@ -397,6 +403,9 @@ class SklearnPipelinePermuter:
         :class:`~pandas.DataFrame`
             dataframe with mean score results for each pipeline combination and each parameter combination,
             sorted by the highest mean score.
+
+        .. note ::
+            The "mean_test_xx" columns
 
         """
         score_results = self.pipeline_score_results()
