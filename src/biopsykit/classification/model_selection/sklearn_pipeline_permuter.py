@@ -1,4 +1,5 @@
 """Module for systematically evaluating different combinations of sklearn pipelines."""
+import functools
 import pickle
 from itertools import product
 from pathlib import Path
@@ -336,6 +337,7 @@ class SklearnPipelinePermuter:
             memory.clear(warn=False)
             rmtree(location)
 
+    @functools.lru_cache(maxsize=None)
     def pipeline_score_results(self) -> pd.DataFrame:
         """Return parameter search results for each pipeline combination.
 
@@ -349,7 +351,7 @@ class SklearnPipelinePermuter:
             return self.results
         if len(self.param_searches) == 0:
             raise AttributeError(
-                "No results available because pipelines were not fitted! " "Call `SklearnPipelinePermuter.fit()` first."
+                "No results available because pipelines were not fitted! Call `SklearnPipelinePermuter.fit()` first."
             )
 
         gs_param_list = []
@@ -395,6 +397,7 @@ class SklearnPipelinePermuter:
         _assert_file_extension(file_path, ".csv")
         self.results.to_csv(file_path)
 
+    @functools.lru_cache(maxsize=None)
     def mean_pipeline_score_results(self) -> pd.DataFrame:
         """Compute mean score results for each pipeline combination.
 
