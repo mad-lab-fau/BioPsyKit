@@ -727,14 +727,6 @@ class StatsPipeline:
         if data is None:
             data = self.results[stats_test].copy()
 
-        if "stats_type" in kwargs:
-            warnings.warn(
-                "Argument 'stats_type' is deprecated in 0.4.0 and was replaced by 'stats_effect_type'. "
-                "It will be removed in 0.5.0.",
-                category=DeprecationWarning,
-            )
-            stats_effect_type = kwargs.get("stats_type")
-
         if stats_effect_type is not None:
             data = data.set_index("Source", append=True)
             try:
@@ -753,14 +745,7 @@ class StatsPipeline:
         kwargs.setdefault("position", "th!")
 
         pcol = str(self._filter_pcol(data).name)
-        if "anova" in stats_test:
-            data = self._extract_data_anova(data, pcol, collapse_dof)
-        if "friedman" in stats_test:
-            data = self._extract_data_friedman(data, pcol, collapse_dof)
-        if "T" in stats_test:
-            data = self._extract_data_ttest(data, pcol, collapse_dof)
-        if "U-val" in data.columns:
-            data = self._extract_data_mwu(data, pcol)
+        data = self._extract_data_latex_table(data, stats_test=stats_test, pcol=pcol, collapse_dof=collapse_dof)
 
         column_map = {col: MAP_LATEX_EXPORT[col] for col in data.columns if col in MAP_LATEX_EXPORT}
 
@@ -1143,4 +1128,18 @@ class StatsPipeline:
             data = data.set_index("Source", append=True)
         if "A" in data.columns:
             data = data.set_index(["A", "B"], append=True)
+        return data
+
+    def _extract_data_latex_table(
+        self, data: pd.DataFrame, stats_test: str, pcol: str, collapse_dof: bool
+    ) -> pd.DataFrame:
+        if "anova" in stats_test:
+            data = self._extract_data_anova(data, pcol, collapse_dof)
+        if "friedman" in stats_test:
+            data = self._extract_data_friedman(data, pcol, collapse_dof)
+        if "T" in stats_test:
+            data = self._extract_data_ttest(data, pcol, collapse_dof)
+        if "U-val" in data.columns:
+            data = self._extract_data_mwu(data, pcol)
+
         return data
