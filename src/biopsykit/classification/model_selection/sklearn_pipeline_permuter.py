@@ -337,7 +337,7 @@ class SklearnPipelinePermuter:
             memory.clear(warn=False)
             rmtree(location)
 
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache(maxsize=5)
     def pipeline_score_results(self) -> pd.DataFrame:
         """Return parameter search results for each pipeline combination.
 
@@ -397,7 +397,7 @@ class SklearnPipelinePermuter:
         _assert_file_extension(file_path, ".csv")
         self.results.to_csv(file_path)
 
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache(maxsize=5)
     def mean_pipeline_score_results(self) -> pd.DataFrame:
         """Compute mean score results for each pipeline combination.
 
