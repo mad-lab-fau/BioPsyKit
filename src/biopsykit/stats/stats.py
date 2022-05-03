@@ -20,6 +20,7 @@ MAP_STAT_TESTS = {
     "mixed_anova": pg.mixed_anova,
     "ancova": pg.ancova,
     "kruskal": pg.kruskal,
+    "friedman": pg.friedman,
     "pairwise_ttests": pg.pairwise_ttests,
     "pairwise_tukey": pg.pairwise_tukey,
     "pairwise_gameshowell": pg.pairwise_gameshowell,
@@ -34,6 +35,7 @@ MAP_STAT_PARAMS = {
     "mixed_anova": ["dv", "between", "within", "subject"],
     "ancova": ["dv", "between", "covar"],
     "kruskal": ["dv", "between"],
+    "friedman": ["dv", "within", "subject"],
     "pairwise_ttests": ["dv", "between", "within", "subject", "effsize", "tail", "parametric", "padjust"],
     "pairwise_tukey": ["dv", "between", "effsize"],
     "pairwise_gameshowell": ["dv", "between", "effsize"],
@@ -48,6 +50,7 @@ MAP_NAMES = {
     "mixed_anova": "Mixed ANOVA",
     "ancova": "ANCOVA",
     "kruskal": "Kruskal-Wallis H-test for independent samples",
+    "friedman": "Friedman test for repeated measurements",
     "pairwise_ttests": "Pairwise t-Tests",
     "pairwise_tukey": "Pairwise Tukey's HSD (Honestly Significant Differences) Test",
     "pairwise_gameshowell": "Pairwise Games-Howell post-hoc Test",
@@ -59,20 +62,12 @@ MAP_CATEGORIES = {
     "posthoc": "Post-Hoc Analysis",
 }
 
-# MAP_LATEX_SLICE = {
-#     "pairwise_ttests": ["T", "dof", "pcol", "hedges"],
-#     "pairwise_ttests_nonparametric": ["U-val", "pcol", "hedges"],
-#     "anova": ["F", "DF", "pcol", "np2"],
-#     "welch_anova": ["F", "ddof1", "ddof2", "pcol", "np2"],
-#     "rm_anova": ["F", "ddof1", "ddof2", "pcol", "np2"],
-#     "mixed_anova": ["F", "DF1", "DF2", "pcol", "np2"],
-# }
-
 MAP_LATEX_EXPORT = {
     "T": "t",
     "T_collapse": r"$t({})$",
     "U-val": "U",
     "F_collapse": r"$F({}, {})$",
+    "Q_collapse": r"$Q({})$",
     "dof": "df",
     "df1": "$df_{Den}$",
     "df2": "$df_{Nom}$",
@@ -628,8 +623,11 @@ class StatsPipeline:
             dofs = [self._format_dof(dof) for dof in dofs]
             dofs = ",".join(dofs)
             fval = self._format_number(row["F"])
-            effsize = self._format_number(row["np2"])
-            return rf"$F({dofs}) = {fval}, p {pval}, \eta_p^2 = {effsize}$"
+            ret_string = rf"$F({dofs}) = {fval}, p {pval}$"
+            if "np2" in row:
+                effsize = self._format_number(row["np2"])
+                ret_string = ret_string[:-1] + rf", \eta_p^2 = {effsize}$"
+            return ret_string
         if "U-val" in row:
             effsize = self._format_number(row["hedges"])
             uval = self._format_number(row["U-val"])
@@ -738,7 +736,11 @@ class StatsPipeline:
             stats_effect_type = kwargs.get("stats_type")
 
         if stats_effect_type is not None:
-            data = data.set_index("Source", append=True).xs(stats_effect_type, level="Source")
+            data = data.set_index("Source", append=True)
+            try:
+                data = data.xs(stats_effect_type, level="Source")
+            except KeyError:
+                data = data.xs(self.params[stats_effect_type], level="Source")
 
         if si_table_format is None:
             si_table_format = "table-format = <1.3"
@@ -751,16 +753,19 @@ class StatsPipeline:
         kwargs.setdefault("position", "th!")
 
         pcol = str(self._filter_pcol(data).name)
-        if "T" in data.columns:
-            data = self._extract_data_ttest(data, pcol, collapse_dof)
-        if "F" in data.columns:
+        if "anova" in stats_test:
             data = self._extract_data_anova(data, pcol, collapse_dof)
+        if "friedman" in stats_test:
+            data = self._extract_data_friedman(data, pcol, collapse_dof)
+        if "T" in stats_test:
+            data = self._extract_data_ttest(data, pcol, collapse_dof)
         if "U-val" in data.columns:
             data = self._extract_data_mwu(data, pcol)
 
         column_map = {col: MAP_LATEX_EXPORT[col] for col in data.columns if col in MAP_LATEX_EXPORT}
 
-        data.index = data.index.droplevel(-1)
+        if len(data.index.names) > 1:
+            data.index = data.index.droplevel(-1)
         data.loc[:, pcol] = data.loc[:, pcol].apply(self._format_pvals_stars)
         data = data.applymap(self._format_number)
 
@@ -1014,6 +1019,38 @@ class StatsPipeline:
                 data = data.drop(columns=["df1", "df2"])
             columns.append("df")
         columns = columns + [pcol, "np2"]
+        data = data[columns]
+        return data
+
+    def _extract_data_friedman(self, data: pd.DataFrame, pcol: str, collapse_dof: bool) -> pd.DataFrame:
+        rename_dict = {"ddof1": "df1", "ddof2": "df2"}
+        data = data.rename(columns=rename_dict)
+        columns = []
+        if collapse_dof:
+            if "df2" in data.columns:
+                dof_cols = ["df1", "df2"]
+            else:
+                dof_cols = ["df1"]
+            dofs = tuple((data[col].unique() for col in dof_cols))
+            if any(len(d) != 1 for d in dofs):
+                raise ValueError(f"Cannot collapse dof in table: dof are not unique! Got {dofs}.")
+            dofs = [self._format_dof(dof[0]) for dof in dofs]
+            if "F" in data.columns:
+                f_col = MAP_LATEX_EXPORT["F_collapse"].format(*dofs)
+                columns.append(f_col)
+                data = data.rename(columns={"F": f_col})
+                data = data.drop(columns=["df1", "df2", "df"], errors="ignore")
+            else:
+                q_col = MAP_LATEX_EXPORT["Q_collapse"].format(*dofs)
+                columns.append(q_col)
+                data = data.rename(columns={"Q": q_col})
+                data = data.drop(columns=["df1", "df2", "df"], errors="ignore")
+        else:
+            if "df2" in data.columns:
+                data["df"] = "{" + data["df1"].astype(str) + ", " + data["df2"].astype(str) + "}"
+                data = data.drop(columns=["df1", "df2"])
+            columns.append("df")
+        columns = columns + [pcol]
         data = data[columns]
         return data
 
