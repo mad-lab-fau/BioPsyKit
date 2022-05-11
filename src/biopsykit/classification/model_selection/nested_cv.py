@@ -142,7 +142,7 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
         results_dict["cv_results"].append(cv_obj.cv_results_)
         results_dict["best_estimator"].append(cv_obj.best_estimator_)
         if "accuarcy" in scoring_dict.keys():
-        results_dict["conf_matrix"].append(confusion_matrix(y_test, cv_obj.predict(x_test), normalize=None))
+            results_dict["conf_matrix"].append(confusion_matrix(y_test, cv_obj.predict(x_test), normalize=None))
 
     return results_dict
 
