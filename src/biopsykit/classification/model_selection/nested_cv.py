@@ -1,4 +1,5 @@
 """Module with functions for model selection using "nested" cross-validation."""
+import warnings
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -86,17 +87,11 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
         sklearn randomized-search
 
     """
-    scoring_dict = {}
-    scoring = kwargs.pop("scoring")
-    if isinstance(scoring, str):
-        kwargs["refit"] = scoring
-        scoring = [scoring]
-
-    for score in scoring:
-        scoring_dict[score] = score
-
     if hyper_search_params is None:
         hyper_search_params = {"search_method": "grid"}
+
+    scoring = kwargs.pop("scoring", None)
+    kwargs, scoring_dict = _setup_scoring_dict(scoring, **kwargs)
 
     cols = [
         "param_search",
@@ -109,16 +104,17 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
         "test_indices",
     ]
     for scorer in scoring_dict:
-        cols.append("test_{}".format(scorer))
+        cols.append(f"test_{scorer}")
     results_dict = {key: [] for key in cols}
 
     for train, test in tqdm(list(outer_cv.split(X, y, groups)), desc="Outer CV"):
         cv_obj = _get_param_search_cv_object(
             pipeline, param_dict, inner_cv, scoring_dict, hyper_search_params, **kwargs
         )
+
         if groups is None:
             x_train, x_test, y_train, y_test = split_train_test(X, y, train, test)
-            cv_obj.fit(x_train, y_train)
+            groups_train = None
         else:
             (  # pylint:disable=unbalanced-tuple-unpacking
                 x_train,
@@ -128,7 +124,8 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
                 groups_train,
                 _,
             ) = split_train_test(X, y, train, test, groups)
-            cv_obj.fit(x_train, y_train, groups=groups_train)
+
+        cv_obj = _fit_cv_obj_one_fold(cv_obj, x_train, y_train, groups_train)
 
         results_dict["param_search"].append(cv_obj)
         for scorer in scoring_dict:
@@ -141,10 +138,45 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
         results_dict["true_labels"].append(y_test)
         results_dict["cv_results"].append(cv_obj.cv_results_)
         results_dict["best_estimator"].append(cv_obj.best_estimator_)
-        if "accuarcy" in scoring_dict.keys():
+        try:
             results_dict["conf_matrix"].append(confusion_matrix(y_test, cv_obj.predict(x_test), normalize=None))
+        except ValueError as e:
+            if "Classification metrics can't handle a mix of multiclass and continuous targets" in e.args[0]:
+                warnings.warn("Cannot compute confusion matrix for regression tasks.")
 
     return results_dict
+
+
+def _setup_scoring_dict(scoring, **kwargs):
+    scoring_dict = {}
+    if scoring is not None:
+        if isinstance(scoring, str):
+            kwargs["refit"] = scoring
+            scoring = [scoring]
+
+        for score in scoring:
+            scoring_dict.setdefault(score, score)
+    return kwargs, scoring_dict
+
+
+def _fit_cv_obj_one_fold(cv_obj, x_train, y_train, groups_train):
+    try:
+        if groups_train is None:
+            cv_obj.fit(x_train, y_train)
+        else:
+            cv_obj.fit(x_train, y_train, groups=groups_train)
+    except ValueError as e:
+        if "Classification metrics can't handle a mix of multiclass and continuous targets" in e.args[0]:
+            raise ValueError(
+                "Error when attempting to fit estimator. "
+                "It seems that you are trying to fit a regression model, "
+                "but specified metrics for classification. "
+                "Please check your code and provide other evaluation metrics if necessary!"
+            ) from e
+        if "An empty dict was passed." in e.args[0]:
+            raise ValueError("No scoring metric was specified for the estimator!") from e
+        raise e
+    return cv_obj
 
 
 def _get_param_search_cv_object(
