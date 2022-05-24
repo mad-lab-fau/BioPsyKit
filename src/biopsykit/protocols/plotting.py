@@ -74,6 +74,7 @@ _saliva_feature_params: Dict[str, Dict[str, Any]] = {
             "skew": r"Cortisol $\left[\frac{nmol}{l} \right]$",
         },
         "amylase": {
+            "auc": r"Amylase AUC $\left[\frac{U \cdot min}{l} \right]$",
             "auc_g": r"Amylase AUC $\left[\frac{U \cdot min}{l} \right]$",
             "auc_i": r"Amylase AUC $\left[\frac{U \cdot min}{l} \right]$",
             "auc_i_post": r"Amylase AUC $\left[\frac{U \cdot min}{l} \right]$",
