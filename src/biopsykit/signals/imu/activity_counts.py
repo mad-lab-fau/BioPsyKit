@@ -42,6 +42,7 @@ class ActivityCounts:
             sampling rate of recorded data in Hz
         timezone: str
             timezone to which wear times will be converted
+
         """
         self.sampling_rate = sampling_rate
         if timezone:
