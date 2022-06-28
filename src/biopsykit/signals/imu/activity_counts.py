@@ -1,13 +1,14 @@
 """Module for generating Activity Counts from raw acceleration signals."""
-from typing import Union, Optional
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 import pytz
+from scipy import signal
+
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import downsample, sanitize_input_nd
 from biopsykit.utils.time import tz
-from scipy import signal
 
 
 class ActivityCounts:
