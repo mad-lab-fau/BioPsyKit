@@ -1,13 +1,13 @@
 """Module for generating Activity Counts from raw acceleration signals."""
-from typing import Union
+from typing import Union, Optional
 
 import numpy as np
 import pandas as pd
-from scipy import signal
-
+import pytz
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import downsample, sanitize_input_nd
 from biopsykit.utils.time import tz
+from scipy import signal
 
 
 class ActivityCounts:
@@ -30,17 +30,21 @@ class ActivityCounts:
     data: pd.DataFrame = None
     sampling_rate: float = None
     activity_counts_: np.ndarray = None
+    timezone = tz
 
-    def __init__(self, sampling_rate: float):
+    def __init__(self, sampling_rate: float, timezone: Optional[str] = None):
         """Initialize a new ``ActivityCounts`` instance.
 
         Parameters
         ----------
         sampling_rate : float
             sampling rate of recorded data in Hz
-
+        timezone: str
+            timezone to which wear times will be converted
         """
         self.sampling_rate = sampling_rate
+        if timezone:
+            self.timezone = pytz.timezone(timezone)
 
     @staticmethod
     def _compute_norm(data: np.ndarray) -> np.ndarray:
@@ -174,7 +178,9 @@ class ActivityCounts:
             if start_idx is not None:
                 # index das DateTimeIndex
                 start_idx = float(start_idx.to_datetime64()) / 1e9
-                arr.index = pd.to_datetime((arr.index * 60 + start_idx).astype(int), utc=True, unit="s").tz_convert(tz)
+                arr.index = pd.to_datetime((arr.index * 60 + start_idx).astype(int), utc=True, unit="s").tz_convert(
+                    self.timezone
+                )
                 arr.index.name = "time"
 
         return arr
