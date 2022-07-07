@@ -79,6 +79,7 @@ def export_figure(
     base_dir: path_t,
     formats: Optional[Sequence[str]] = None,
     use_subfolder: Optional[bool] = True,
+    **kwargs,
 ):
     """Export matplotlib figure to file(s).
 
@@ -97,6 +98,8 @@ def export_figure(
         list of file formats to export or ``None`` to export as pdf. Default: ``None``
     use_subfolder : bool, optional
         whether to create an own output subfolder per file format or not. Default: ``True``
+    **kwargs
+        additional keyword arguments to pass to :meth:`~matplotlib.figure.Figure.savefig`
 
     Examples
     --------
@@ -141,6 +144,7 @@ def export_figure(
             subfolder.joinpath(filename.name + "." + f),
             transparent=(f == "pdf"),
             format=f,
+            **kwargs,
         )
 
 
