@@ -38,7 +38,7 @@ __all__ = [
     "utils",
 ]
 
-__version__ = "0.5.2-alpha.0"
+__version__ = "0.5.2-alpha.1"
 
 
 def version() -> None:
