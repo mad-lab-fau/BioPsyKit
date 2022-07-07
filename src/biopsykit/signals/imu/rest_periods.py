@@ -117,7 +117,7 @@ class RestPeriods:
 
         # get longest block
         df_angle["block"] = (df_angle["angle"].diff().ne(0)).cumsum()
-        group = df_angle.groupby("block")
+        group = df_angle[df_angle.angle == 0].groupby("block")
         grp_max = group.get_group(group.size().idxmax())
 
         total_duration = data.index[-1] - data.index[0]
