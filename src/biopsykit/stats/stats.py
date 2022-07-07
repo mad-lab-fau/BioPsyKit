@@ -22,6 +22,7 @@ MAP_STAT_TESTS = {
     "kruskal": pg.kruskal,
     "friedman": pg.friedman,
     "pairwise_ttests": pg.pairwise_ttests,
+    "pairwise_tests": pg.pairwise_tests,
     "pairwise_tukey": pg.pairwise_tukey,
     "pairwise_gameshowell": pg.pairwise_gameshowell,
 }
@@ -37,6 +38,7 @@ MAP_STAT_PARAMS = {
     "kruskal": ["dv", "between"],
     "friedman": ["dv", "within", "subject"],
     "pairwise_ttests": ["dv", "between", "within", "subject", "effsize", "tail", "parametric", "padjust"],
+    "pairwise_tests": ["dv", "between", "within", "subject", "effsize", "tail", "parametric", "padjust"],
     "pairwise_tukey": ["dv", "between", "effsize"],
     "pairwise_gameshowell": ["dv", "between", "effsize"],
 }
@@ -52,6 +54,7 @@ MAP_NAMES = {
     "kruskal": "Kruskal-Wallis H-test for independent samples",
     "friedman": "Friedman test for repeated measurements",
     "pairwise_ttests": "Pairwise t-Tests",
+    "pairwise_tests": "Pairwise Tests",
     "pairwise_tukey": "Pairwise Tukey's HSD (Honestly Significant Differences) Test",
     "pairwise_gameshowell": "Pairwise Games-Howell post-hoc Test",
 }
@@ -115,8 +118,8 @@ class StatsPipeline:
         * *Statistical Test* (``test``): Statistical test to determine differences or similarities in the data.
           Currently supported functions are:
 
-            * ``pairwise_ttests``: Pairwise T-tests (either for independent or dependent samples).
-              See :func:`~pingouin.pairwise_ttests` for further information.
+            * ``pairwise_tests``: Pairwise tests (either for independent or dependent samples).
+              See :func:`~pingouin.pairwise_tests` for further information.
             * ``anova``: One-way or N-way ANOVA. See :func:`~pingouin.anova` for further information.
             * ``welch_anova``: One-way Welch-ANOVA. See :func:`~pingouin.welch_anova` for further
               information.
@@ -131,8 +134,8 @@ class StatsPipeline:
           groups are analyzed.
           Currently supported functions are:
 
-          * ``pairwise_ttests``: Pairwise T-tests (either for independent or dependent samples).
-            See :func:`~pingouin.pairwise_ttests` for further information.
+          * ``pairwise_tests``: Pairwise tests (either for independent or dependent samples).
+            See :func:`~pingouin.pairwise_tests` for further information.
           * ``pairwise_tukey``: Pairwise Tukey-HSD post-hoc test.
             See :func:`~pingouin.pairwise_tukey` for further information.
           * ``pairwise_gameshowell``: Pairwise Games-Howell post-hoc test.
@@ -578,7 +581,7 @@ class StatsPipeline:
         Parameters
         ----------
         stats_test : str, optional
-            name of statistical test in ``StatsPipeline``, e.g., "pairwise_ttests" or "anova" or ``None``
+            name of statistical test in ``StatsPipeline``, e.g., "pairwise_tests" or "anova" or ``None``
             if external statistical results is provided via ``data``
         index : str or tuple, optional
             row indexer of statistical result or ``None`` to generate LaTeX output for all rows.
@@ -668,7 +671,7 @@ class StatsPipeline:
         Parameters
         ----------
         stats_test : str, optional
-            name of statistical test in ``StatsPipeline``, e.g., "pairwise_ttests" or "anova".
+            name of statistical test in ``StatsPipeline``, e.g., "pairwise_tests" or "anova".
         data : :class:`~pandas.DataFrame`, optional
             dataframe with optional external statistical results
         stats_effect_type : {"between", "within", "interaction"}
