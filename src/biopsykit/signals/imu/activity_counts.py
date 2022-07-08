@@ -134,7 +134,7 @@ class ActivityCounts:
         n_samples = 10 * 60
         #  Pad data at end to "fill" last bin
         padded_data = np.pad(data, (0, n_samples - len(data) % n_samples), "constant", constant_values=0)
-        return padded_data.reshape((len(padded_data) // n_samples, -1)).mean(axis=1)
+        return padded_data.reshape((len(padded_data) // n_samples, -1)).sum(axis=1)
 
     def calculate(self, data: arr_t) -> arr_t:
         """Calculate Activity Counts from acceleration data.
