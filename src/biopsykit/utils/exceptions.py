@@ -6,6 +6,7 @@ __all__ = [
     "DataFrameTransformationError",
     "ValueRangeError",
     "FeatureComputationError",
+    "EcgProcessingError",
 ]
 
 
@@ -27,3 +28,7 @@ class ValueRangeError(Exception):
 
 class FeatureComputationError(Exception):
     """An error indicating that feature computation failed."""
+
+
+class EcgProcessingError(Exception):
+    """An error indicating that ECG processing failed."""

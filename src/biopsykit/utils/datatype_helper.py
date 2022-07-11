@@ -16,6 +16,9 @@ from biopsykit.utils._datatype_validation_helper import (
 from biopsykit.utils.exceptions import ValidationError
 
 __all__ = [
+    "ECG_RESULT_DATAFRAME_COLUMNS",
+    "HEART_RATE_DATAFRAME_COLUMNS",
+    "R_PEAK_DATAFRAME_COLUMNS",
     "CodebookDataFrame",
     "MeanSeDataFrame",
     "SalivaRawDataFrame",
@@ -64,6 +67,10 @@ __all__ = [
     "is_imu_dataframe",
     "is_sleep_wake_dataframe",
 ]
+
+ECG_RESULT_DATAFRAME_COLUMNS = ["ECG_Raw", "ECG_Clean", "ECG_Quality", "ECG_R_Peaks", "R_Peak_Outlier"]
+HEART_RATE_DATAFRAME_COLUMNS = ["Heart_Rate"]
+R_PEAK_DATAFRAME_COLUMNS = ["R_Peak_Quality", "R_Peak_Idx", "RR_Interval", "R_Peak_Outlier"]
 
 # these subclasses of pd.DataFrame are needed to be added to the type aliases because otherwise, autosphinx does not
 # add the docstring to the documentation of the type aliases. Additionally, they can be used internally to highlight
@@ -1208,8 +1215,8 @@ def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[boo
         _assert_has_columns(
             data,
             columns_sets=[
-                ["ECG_Raw", "ECG_Clean", "ECG_Quality", "ECG_R_Peaks", "R_Peak_Outlier"],
-                ["ECG_Raw", "ECG_Clean", "ECG_Quality", "ECG_R_Peaks", "R_Peak_Outlier", "Heart_Rate"],
+                ECG_RESULT_DATAFRAME_COLUMNS,
+                ECG_RESULT_DATAFRAME_COLUMNS + HEART_RATE_DATAFRAME_COLUMNS,
             ],
         )
     except ValidationError as e:
@@ -1250,7 +1257,7 @@ def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[
     """
     try:
         _assert_is_dtype(data, pd.DataFrame)
-        _assert_has_columns(data, columns_sets=[["Heart_Rate"]])
+        _assert_has_columns(data, columns_sets=[HEART_RATE_DATAFRAME_COLUMNS])
         _assert_has_multiindex(data, expected=False)
         _assert_has_column_multiindex(data, expected=False)
         _assert_has_index_levels(data, ["time"])
@@ -1297,7 +1304,7 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
             columns_sets=[
                 ["R_Peak_Idx", "RR_Interval"],
                 ["R_Peak_Quality", "R_Peak_Idx", "RR_Interval"],
-                ["R_Peak_Quality", "R_Peak_Idx", "RR_Interval", "R_Peak_Outlier"],
+                R_PEAK_DATAFRAME_COLUMNS,
             ],
         )
     except ValidationError as e:

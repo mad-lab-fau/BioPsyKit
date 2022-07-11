@@ -1,5 +1,6 @@
 """Module for processing ECG data."""
-from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
+import warnings
+from typing import Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 import neurokit2 as nk
 import numpy as np
@@ -10,6 +11,9 @@ from tqdm.auto import tqdm
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.array_handling import find_extrema_in_radius, remove_outlier_and_interpolate, sanitize_input_1d
 from biopsykit.utils.datatype_helper import (
+    ECG_RESULT_DATAFRAME_COLUMNS,
+    HEART_RATE_DATAFRAME_COLUMNS,
+    R_PEAK_DATAFRAME_COLUMNS,
     EcgRawDataFrame,
     EcgResultDataFrame,
     HeartRatePhaseDict,
@@ -22,6 +26,11 @@ from biopsykit.utils.datatype_helper import (
 )
 
 __all__ = ["EcgProcessor"]
+
+from biopsykit.utils.exceptions import EcgProcessingError
+
+ERROR_HANDLING = Literal["raise", "warn", "ignore"]
+"""Available behavior types when dealing with ECG processing errors."""
 
 
 def _hrv_process_get_hrv_types(hrv_types: Union[str, Sequence[str]]) -> Sequence[str]:
@@ -198,6 +207,7 @@ class EcgProcessor(_BaseProcessor):
         outlier_params: Optional[Dict[str, Union[float, Sequence[float]]]] = None,
         title: Optional[str] = None,
         method: Optional[str] = None,
+        errors: Optional[ERROR_HANDLING] = "raise",
     ) -> None:
         """Process ECG signal.
 
@@ -227,6 +237,12 @@ class EcgProcessor(_BaseProcessor):
             method used to clean ECG signal and perform R-peak detection as defined by the ``neurokit`` library
             (see :func:`~neurokit2.ecg.ecg_clean` and :func:`~neurokit2.ecg.ecg_peaks`) or
             ``None`` to use default method (``neurokit``).
+        errors : {'raise', 'warn', 'ignore'}, optional
+                how to handle errors during ECG processing:
+
+                * "raise" (default): raise an error
+                * "warn": issue a warning but still return a dictionary with empty results for this data
+                * "ignore": ignore errors and continue processing
 
 
         See Also
@@ -273,28 +289,40 @@ class EcgProcessor(_BaseProcessor):
             method = "neurokit"
 
         for name, df in tqdm(self.data.items(), desc=title):
-            ecg_result, rpeaks = self._ecg_process(df, method=method)
-            ecg_result, rpeaks = self.correct_outlier(
-                ecg_signal=ecg_result,
-                rpeaks=rpeaks,
-                outlier_correction=outlier_correction,
-                outlier_params=outlier_params,
-                sampling_rate=self.sampling_rate,
-            )
-            heart_rate = pd.DataFrame({"Heart_Rate": 60 / rpeaks["RR_Interval"]})
-            rpeaks.loc[:, "Heart_Rate"] = heart_rate
-            heart_rate_interpolated = nk.signal_interpolate(
-                x_values=np.squeeze(rpeaks["R_Peak_Idx"].values),
-                y_values=np.squeeze(heart_rate["Heart_Rate"].values),
-                x_new=np.arange(0, len(ecg_result["ECG_Clean"])),
-            )
-            ecg_result["Heart_Rate"] = heart_rate_interpolated
+            try:
+                ecg_result, rpeaks = self._ecg_process(df, method=method, phase=name)
+                ecg_result, rpeaks = self.correct_outlier(
+                    ecg_signal=ecg_result,
+                    rpeaks=rpeaks,
+                    outlier_correction=outlier_correction,
+                    outlier_params=outlier_params,
+                    sampling_rate=self.sampling_rate,
+                )
+                heart_rate = pd.DataFrame({"Heart_Rate": 60 / rpeaks["RR_Interval"]})
+                rpeaks.loc[:, "Heart_Rate"] = heart_rate
+                heart_rate_interpolated = nk.signal_interpolate(
+                    x_values=np.squeeze(rpeaks["R_Peak_Idx"].values),
+                    y_values=np.squeeze(heart_rate["Heart_Rate"].values),
+                    x_new=np.arange(0, len(ecg_result["ECG_Clean"])),
+                )
+                ecg_result["Heart_Rate"] = heart_rate_interpolated
+            except EcgProcessingError as e:
+                if errors == "raise":
+                    raise e
+                if errors == "warn":
+                    warnings.warn(str(e))
+                ecg_result, rpeaks, heart_rate = (
+                    pd.DataFrame(columns=ECG_RESULT_DATAFRAME_COLUMNS),
+                    pd.DataFrame(columns=R_PEAK_DATAFRAME_COLUMNS),
+                    pd.DataFrame(columns=HEART_RATE_DATAFRAME_COLUMNS),
+                )
+
             self.ecg_result[name] = ecg_result
             self.heart_rate[name] = heart_rate
             self.rpeaks[name] = rpeaks
 
     def _ecg_process(
-        self, data: EcgRawDataFrame, method: Optional[str] = None
+        self, data: EcgRawDataFrame, method: Optional[str] = None, phase: Optional[str] = None
     ) -> Tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Private method for ECG processing.
 
@@ -305,6 +333,8 @@ class EcgProcessor(_BaseProcessor):
         method : {'neurokit', 'hamilton', 'pantompkins', 'elgendi', ... }, optional
             method for cleaning the ECG signal and R peak detection as defined by 'neurokit'.
             Default: ``None`` (corresponds to ``neurokit``)
+        phase : str, optional
+            phase name of the ECG data to be processed. Default: ``None``
 
         Returns
         -------
@@ -325,6 +355,9 @@ class EcgProcessor(_BaseProcessor):
         instant_peaks, rpeak_idx = nk.ecg_peaks(ecg_cleaned, sampling_rate=int(self.sampling_rate), method=method)
         rpeak_idx = rpeak_idx["ECG_R_Peaks"]
         instant_peaks = np.squeeze(instant_peaks.values)
+
+        if len(rpeak_idx) <= 3:
+            raise EcgProcessingError(f"Too few R peaks detected for phase '{phase}'. Please check your ECG signal.")
 
         # compute quality indicator
         quality = nk.ecg_quality(ecg_cleaned, rpeaks=rpeak_idx, sampling_rate=int(self.sampling_rate))
@@ -579,6 +612,9 @@ class EcgProcessor(_BaseProcessor):
         rpeaks = rpeaks.drop_duplicates(subset="R_Peak_Idx")
 
         _check_dataframe_format(ecg_signal, rpeaks)
+
+        if len(rpeaks) <= 3:
+            raise EcgProcessingError("Too few peaks detected after outlier correction. Please check your ECG signal.")
 
         return _EcgResultDataFrame(ecg_signal), _RPeakDataFrame(rpeaks)
 
