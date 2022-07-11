@@ -30,8 +30,10 @@ __all__ = [
     "EcgResultDataFrame",
     "RPeakDataFrame",
     "HeartRateDataFrame",
-    "AccDataFrame",
-    "GyrDataFrame",
+    "Acc1dDataFrame",
+    "Acc3dDataFrame",
+    "Gyr1dDataFrame",
+    "Gyr3dDataFrame",
     "ImuDataFrame",
     "SleepWakeDataFrame",
     "SubjectConditionDataFrame",
@@ -62,8 +64,10 @@ __all__ = [
     "is_ecg_result_dataframe",
     "is_r_peak_dataframe",
     "is_heart_rate_dataframe",
-    "is_acc_dataframe",
-    "is_gyr_dataframe",
+    "is_acc1d_dataframe",
+    "is_acc3d_dataframe",
+    "is_gyr1d_dataframe",
+    "is_gyr3d_dataframe",
     "is_imu_dataframe",
     "is_sleep_wake_dataframe",
 ]
@@ -117,11 +121,19 @@ class _RPeakDataFrame(pd.DataFrame):
     pass
 
 
-class _AccDataFrame(pd.DataFrame):
+class _Acc1dDataFrame(pd.DataFrame):
     pass
 
 
-class _GyrDataFrame(pd.DataFrame):
+class _Acc3dDataFrame(pd.DataFrame):
+    pass
+
+
+class _Gyr1dDataFrame(pd.DataFrame):
+    pass
+
+
+class _Gyr3dDataFrame(pd.DataFrame):
     pass
 
 
@@ -326,7 +338,17 @@ The dataframe is expected to have the following columns:
 
 """
 
-AccDataFrame = Union[_AccDataFrame, pd.DataFrame]
+Acc1dDataFrame = Union[_Acc1dDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing 1-d acceleration data.
+
+The dataframe is expected to have one of the following column sets:
+
+* ["acc"]: one level column index
+* ["acc_norm"]: one level column index
+
+"""
+
+Acc3dDataFrame = Union[_Acc3dDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing 3-d acceleration data.
 
 The dataframe is expected to have one of the following column sets:
@@ -337,7 +359,17 @@ The dataframe is expected to have one of the following column sets:
 
 """
 
-GyrDataFrame = Union[_GyrDataFrame, pd.DataFrame]
+Gyr1dDataFrame = Union[_Gyr1dDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing 1-d gyroscope data.
+
+The dataframe is expected to have one of the following column sets:
+
+* ["gyr"]: one level column index
+* ["gyr_norm"]: one level column index
+
+"""
+
+Gyr3dDataFrame = Union[_Gyr3dDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing 3-d gyroscope data.
 
 The dataframe is expected to have one of the following column sets:
@@ -349,7 +381,7 @@ The dataframe is expected to have one of the following column sets:
 """
 
 ImuDataFrame = Union[_ImuDataFrame, pd.DataFrame]
-""":class:`~pandas.DataFrame` containing 3-d inertial measurement (IMU) (acceleration and gyroscope) data.
+""":class:`~pandas.DataFrame` containing 6-d inertial measurement (IMU) (acceleration and gyroscope) data.
 
 Hence, an ``ImuDataFrame`` must both be a ``AccDataFrame`` **and** a ``GyrDataFrame``.
 
@@ -1317,29 +1349,71 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
     return True
 
 
-def is_acc_dataframe(data: AccDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.AccDataFrame`.
+def is_acc1d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.Acc1dDataFrame`.
 
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
-        data to check if it is a ``AccDataFrame``
+        data to check if it is a ``Acc1dDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``AccDataFrame``
+    ``True`` if ``data`` is a ``Acc1dDataFrame``
     ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a ``AccDataFrame``
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``Acc1dDataFrame``
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.AccDataFrame`
+    :obj:`~biopsykit.utils.datatype_helper.Acc1dDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(
+            data,
+            columns_sets=[["acc"], ["acc_norm"]],
+        )
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a Acc1dDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_acc3d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.Acc3dDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check if it is a ``Acc3dDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``Acc3dDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``Acc3dDataFrame``
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.datatype_helper.Acc3dDataFrame`
         dataframe format
 
     """
@@ -1355,36 +1429,78 @@ def is_acc_dataframe(data: AccDataFrame, raise_exception: Optional[bool] = True)
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(
-                "The passed object does not seem to be a AccDataFrame. "
+                "The passed object does not seem to be a Acc3dDataFrame. "
                 "The validation failed with the following error:\n\n{}".format(str(e))
             ) from e
         return False
     return True
 
 
-def is_gyr_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.GyrDataFrame`.
+def is_gyr1d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.Gyr1dDataFrame`.
 
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
-        data to check if it is a ``GyrDataFrame``
+        data to check if it is a ``Gyr1dDataFrame``
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
 
     Returns
     -------
-    ``True`` if ``data`` is a ``GyrDataFrame``
+    ``True`` if ``data`` is a ``Gyr1dDataFrame``
     ``False`` otherwise (if ``raise_exception`` is ``False``)
 
     Raises
     ------
     ValidationError
-        if ``raise_exception`` is ``True`` and ``data`` is not a ``GyrDataFrame``
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``Gyr1dDataFrame``
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.GyrDataFrame`
+    :obj:`~biopsykit.utils.datatype_helper.Gyr1dDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(
+            data,
+            columns_sets=[["gyr"], ["gyr_norm"]],
+        )
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a Gyr1dDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
+def is_gyr3d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.Gyr3dDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check if it is a ``Gyr3dDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``Gyr3dDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``Gyr3dDataFrame``
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.datatype_helper.Gyr3dDataFrame`
         dataframe format
 
     """
@@ -1400,14 +1516,14 @@ def is_gyr_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True)
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(
-                "The passed object does not seem to be a GyrDataFrame. "
+                "The passed object does not seem to be a Gyr3dDataFrame. "
                 "The validation failed with the following error:\n\n{}".format(str(e))
             ) from e
         return False
     return True
 
 
-def is_imu_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_imu_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
     """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`.
 
     Parameters
@@ -1434,8 +1550,8 @@ def is_imu_dataframe(data: GyrDataFrame, raise_exception: Optional[bool] = True)
 
     """
     try:
-        is_acc_dataframe(data, raise_exception=True)
-        is_gyr_dataframe(data, raise_exception=True)
+        is_acc3d_dataframe(data, raise_exception=True)
+        is_gyr3d_dataframe(data, raise_exception=True)
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(

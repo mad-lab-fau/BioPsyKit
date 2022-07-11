@@ -6,13 +6,13 @@ import pandas as pd
 
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import sliding_window
-from biopsykit.utils.datatype_helper import AccDataFrame, GyrDataFrame, ImuDataFrame
+from biopsykit.utils.datatype_helper import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame
 from biopsykit.utils.time import utc
 
 
 def convert_acc_data_to_g(
-    data: Union[AccDataFrame, ImuDataFrame], inplace: Optional[bool] = False
-) -> Optional[Union[AccDataFrame, ImuDataFrame]]:
+    data: Union[Acc3dDataFrame, ImuDataFrame], inplace: Optional[bool] = False
+) -> Optional[Union[Acc3dDataFrame, ImuDataFrame]]:
     """Convert acceleration data from :math:`m/s^2` to g.
 
     Parameters
@@ -137,7 +137,7 @@ def sliding_windows_imu(
     return data_window
 
 
-def var_norm_windows(data: Union[AccDataFrame, GyrDataFrame]) -> pd.DataFrame:
+def var_norm_windows(data: Union[Acc3dDataFrame, Gyr3dDataFrame]) -> pd.DataFrame:
     r"""Compute the norm of the variance of each axis for a windowed signal.
 
     This function computes the norm of variance according to:
