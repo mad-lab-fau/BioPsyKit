@@ -1,4 +1,5 @@
 """Module for generating Activity Counts from raw acceleration signals."""
+import datetime
 from typing import Optional, Union
 
 import numpy as np
@@ -7,16 +8,17 @@ import pytz
 from scipy import signal
 
 from biopsykit.utils._types import arr_t
-from biopsykit.utils.array_handling import downsample, sanitize_input_nd
+from biopsykit.utils.array_handling import add_datetime_index, downsample, sanitize_input_nd
+from biopsykit.utils.datatype_helper import is_acc1d_dataframe, is_acc3d_dataframe
 from biopsykit.utils.time import tz
 
 
 class ActivityCounts:
     """Generate Activity Counts from raw acceleration signals.
 
-    ActiGraph Activity Counts are a unit used in many human activity studies.
-    However, it can only be outputted by the official ActiGraph Software.
-    The following implementation uses a reverse engineered version of the ActiGraph filter based on
+    Actigraph Activity Counts are a unit used in many human activity studies.
+    However, it can only be outputted by the official Actigraph Software.
+    The following implementation uses a reverse engineered version of the Actigraph filter based on
     (Brønd et al., 2017).
 
 
@@ -31,7 +33,7 @@ class ActivityCounts:
     data: pd.DataFrame = None
     sampling_rate: float = None
     activity_counts_: np.ndarray = None
-    timezone = tz
+    timezone: datetime.tzinfo = tz
 
     def __init__(self, sampling_rate: float, timezone: Optional[str] = None):
         """Initialize a new ``ActivityCounts`` instance.
@@ -130,11 +132,11 @@ class ActivityCounts:
         return data
 
     @staticmethod
-    def _accumulate_minute_bins(data: np.ndarray) -> np.ndarray:
-        n_samples = 10 * 60
+    def _accumulate_second_bins(data: np.ndarray) -> np.ndarray:
+        n_samples = 10
         #  Pad data at end to "fill" last bin
         padded_data = np.pad(data, (0, n_samples - len(data) % n_samples), "constant", constant_values=0)
-        return padded_data.reshape((len(padded_data) // n_samples, -1)).mean(axis=1)
+        return padded_data.reshape((len(padded_data) // n_samples, -1)).sum(axis=1)
 
     def calculate(self, data: arr_t) -> arr_t:
         """Calculate Activity Counts from acceleration data.
@@ -152,6 +154,11 @@ class ActivityCounts:
         """
         start_idx = None
         if isinstance(data, pd.DataFrame):
+            # if dataframe, assert to be a acceleration dataframe according to biopsykit's convention
+            if data.shape[1] == 3:
+                is_acc3d_dataframe(data)
+            if data.shape[1] == 1:
+                is_acc1d_dataframe(data)
             data = data.filter(like="acc")
             if isinstance(data.index, pd.DatetimeIndex):
                 start_idx = data.index[0]
@@ -160,7 +167,7 @@ class ActivityCounts:
 
         if arr.shape[1] not in (1, 3):
             raise ValueError(
-                "{} takes only 1D or 3D accelerometer data! Got {}D data.".format(self.__class__.__name__, arr.shape[1])
+                f"{self.__class__.__name__} takes only 1-d or 3-d accelerometer data! Got {arr.shape[1]}-d data."
             )
         if arr.shape[1] != 1:
             arr = self._compute_norm(arr)
@@ -172,17 +179,8 @@ class ActivityCounts:
         arr = np.abs(arr)
         arr = self._truncate(arr)
         arr = self._digitize_8bit(arr)
-        arr = self._accumulate_minute_bins(arr)
-
-        if isinstance(data, pd.DataFrame):
-            # input was dataframe
-            arr = pd.DataFrame(arr, columns=["activity_counts"])
-            if start_idx is not None:
-                # index das DateTimeIndex
-                start_idx = float(start_idx.to_datetime64()) / 1e9
-                arr.index = pd.to_datetime((arr.index * 60 + start_idx).astype(int), utc=True, unit="s").tz_convert(
-                    self.timezone
-                )
-                arr.index.name = "time"
+        arr = self._accumulate_second_bins(arr)
+        if start_idx is not None:
+            arr = add_datetime_index(arr, start_idx, 1 / 60, column_name=["activity_counts"])
 
         return arr

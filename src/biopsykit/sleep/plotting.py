@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 from fau_colors import colors_all
 
-from biopsykit.utils.datatype_helper import AccDataFrame, GyrDataFrame, ImuDataFrame, SleepEndpointDict
+from biopsykit.utils.datatype_helper import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame, SleepEndpointDict
 
 _sleep_imu_plot_params = {
     "background_color": ["#e0e0e0", "#9e9e9e"],
@@ -24,7 +24,7 @@ _bbox_default = dict(
 
 
 def sleep_imu_plot(
-    data: Union[AccDataFrame, GyrDataFrame, ImuDataFrame],
+    data: Union[Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame],
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     sleep_endpoints: Optional[SleepEndpointDict] = None,
     downsample_factor: Optional[int] = None,
