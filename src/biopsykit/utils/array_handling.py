@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy import interpolate, signal
 
-from biopsykit.utils._types import arr_t
+from biopsykit.utils._types import arr_t, str_t
 
 
 def sanitize_input_1d(data: arr_t) -> np.ndarray:
@@ -562,3 +562,69 @@ def split_array_equally(data: arr_t, n_splits: int) -> List[Tuple[int, int]]:
     idx_split = np.arange(0, n_splits + 1) * ((len(data) - 1) // n_splits)
     split_boundaries = list(zip(idx_split[:-1], idx_split[1:]))
     return split_boundaries
+
+
+def accumulate_array(data: arr_t, fs_in: float, fs_out: float) -> arr_t:
+    """Accumulate 1-d array by summing over windows.
+
+    Parameters
+    ----------
+    data : array_like
+        data to accumulate. must be 1-d array
+    fs_in : float
+        sampling rate of input data in Hz
+    fs_out : float
+        sampling rate of output data in Hz
+
+    Returns
+    -------
+    array_like
+        accumulated array
+
+    """
+    arr = sanitize_input_nd(data, ncols=1)
+    n_samples = int(fs_in // fs_out)
+    padded_arr = np.pad(arr, (0, n_samples - len(arr) % n_samples), "constant", constant_values=0)
+    out = padded_arr.reshape((len(padded_arr) // n_samples, -1)).sum(axis=1)
+    if isinstance(data, pd.DataFrame) and isinstance(data.index, pd.DatetimeIndex):
+        out = add_datetime_index(out, start_time=data.index[0], sampling_rate=fs_out, column_name=data.columns)
+    return out
+
+
+def add_datetime_index(
+    arr: arr_t, start_time: pd.Timestamp, sampling_rate: float, column_name: Optional[str_t] = None
+) -> pd.DataFrame:
+    """Add datetime index to dataframe.
+
+    Parameters
+    ----------
+    arr : array_like
+        numpy array to add index to
+    start_time : :class:`~pandas.Timestamp`
+        start time of the index
+    sampling_rate : float
+        sampling rate of input data in Hz.
+    column_name : str, optional
+        column of the resulting dataframe or ``None`` to leave it empty.
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        dataframe with datetime index
+
+    """
+    if isinstance(column_name, str):
+        # assert list
+        column_name = [column_name]
+    if column_name is not None:
+        arr = pd.DataFrame(arr, columns=column_name)
+    else:
+        arr = pd.DataFrame(arr)
+
+    start_time_s = float(start_time.to_datetime64()) / 1e9
+    arr.index = pd.to_datetime(
+        (arr.index * 1 / sampling_rate + start_time_s).astype(int), utc=True, unit="s"
+    ).tz_convert(start_time.tzinfo)
+
+    arr.index.name = "time"
+    return arr

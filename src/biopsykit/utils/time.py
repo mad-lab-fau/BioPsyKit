@@ -16,6 +16,7 @@ tz = pytz.timezone("Europe/Berlin")
 utc = pytz.timezone("UTC")
 
 __all__ = [
+    "tz",
     "check_tz_aware",
     "extract_time_from_filename",
     "get_time_from_date",
