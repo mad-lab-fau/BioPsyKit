@@ -2,7 +2,7 @@
 from typing import Optional
 
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke
-from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke_alternative import ColeKripkeAlternative
+from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke_old import ColeKripkeOld
 from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
 from biopsykit.sleep.sleep_wake_detection.algorithms.sazonov import Sazonov
 from biopsykit.sleep.sleep_wake_detection.algorithms.scripps_clinic import ScrippsClinic
@@ -36,7 +36,7 @@ class SleepWakeDetection:
         available_sleep_wake_algorithms = {
             "cole_kripke": ColeKripke,
             "sadeh": Sadeh,
-            "cole_kripke_alternative": ColeKripkeAlternative,
+            "cole_kripke_old": ColeKripkeOld,
             "webster": Webster,
             "scripps_clinic": ScrippsClinic,
             "sazonov": Sazonov,
@@ -56,14 +56,11 @@ class SleepWakeDetection:
 
         if (
             sleep_wake_cls is ColeKripke
-            or sleep_wake_cls is ColeKripkeAlternative
+            or sleep_wake_cls is ColeKripkeOld
             or sleep_wake_cls is Webster
             or sleep_wake_cls is ScrippsClinic
         ):
-            if "scale_factor" in kwargs:
-                self.sleep_wake_algo = sleep_wake_cls(scale_factor=kwargs["scale_factor"])
-            else:
-                self.sleep_wake_algo = sleep_wake_cls()
+            self.sleep_wake_algo = sleep_wake_cls(**kwargs)
 
         else:
             self.sleep_wake_algo = sleep_wake_cls()

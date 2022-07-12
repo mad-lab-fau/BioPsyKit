@@ -6,8 +6,11 @@ from biopsykit.utils.datatype_helper import SleepWakeDataFrame
 class _SleepWakeBase:
     """Base class for sleep/wake detection algorithms."""
 
+    epoch_length: int = None
+    """Epoch length in seconds."""
+
     def __init__(self, **kwargs):
-        pass
+        self.epoch_length: int = kwargs.get("epoch_length", 60)
 
     def fit(self, data: arr_t, **kwargs):
         """Fit sleep/wake detection algorithm to input data.

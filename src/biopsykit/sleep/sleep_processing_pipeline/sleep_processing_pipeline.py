@@ -10,6 +10,7 @@ from biopsykit.signals.imu.wear_detection import WearDetection
 from biopsykit.sleep.sleep_endpoints import compute_sleep_endpoints
 from biopsykit.sleep.sleep_wake_detection.sleep_wake_detection import SleepWakeDetection
 from biopsykit.utils._types import arr_t
+from biopsykit.utils.array_handling import accumulate_array
 
 
 def predict_pipeline_acceleration(
@@ -20,8 +21,8 @@ def predict_pipeline_acceleration(
     This function processes raw acceleration data collected during sleep. The pipeline consists of the following steps:
 
     * *Activity Count Conversion*: Convert (3-axis) raw acceleration data into activity counts. Most sleep/wake
-      detection algorithms use activity counts (as typically provided by Actigraphs) as input data.
-    * *Wear Detection*: Detect wear and non-wear periods. Cut data to longest continuous wear block.
+      detection algorithms use activity counts (as typically provided by Actigraph devices) as input data.
+    * *Wear Detection*: Detect wear and non-wear periods. Cut data to the longest continuous wear block.
     * *Rest Periods*: Detect rest periods, i.e., periods with large physical inactivity. The longest continuous
       rest period (*Major Rest Period*) is used to determine the *Bed Interval*, i.e., the period spent in bed.
     * *Sleep/Wake Detection*: Apply sleep/wake detection algorithm to classify phases of sleep and wake.
@@ -40,7 +41,11 @@ def predict_pipeline_acceleration(
     **kwargs :
         additional parameters to configure sleep/wake detection. The possible parameters depend on the selected
         sleep/wake detection algorithm and are passed to
-        :class:`~biopsykit.sleep.sleep_wake_detection.SleepWakeDetection`.
+        :class:`~biopsykit.sleep.sleep_wake_detection.SleepWakeDetection`. Examples are:
+
+        * *algorithm_type*: name of sleep/wake detection algorithm to internally use for sleep/wake detection.
+          Default: "Cole/Kripke"
+        * *epoch_length*: epoch length in seconds. Default: 60
 
 
     Returns
@@ -50,10 +55,12 @@ def predict_pipeline_acceleration(
 
     """
     # TODO: add entries of result dictionary to docstring and add possibility to specify sleep/wake prediction algorithm
+    kwargs.setdefault("algorithm_type", "cole_kripke")
+    kwargs.setdefault("epoch_length", 60)
     ac = ActivityCounts(sampling_rate)
     wd = WearDetection(sampling_rate=sampling_rate)
     rp = RestPeriods(sampling_rate=sampling_rate)
-    sw = SleepWakeDetection("cole_kripke", **kwargs)
+    sw = SleepWakeDetection(**kwargs)
 
     if convert_to_g:
         data = convert_acc_data_to_g(data, inplace=False)
@@ -68,6 +75,8 @@ def predict_pipeline_acceleration(
         return {}
 
     df_ac = ac.calculate(data)
+    df_ac = accumulate_array(df_ac, 1, 1 / kwargs.get("epoch_length"))
+
     df_sw = sw.predict(df_ac)
     df_rp = rp.predict(data)
     bed_interval = [df_rp["start"][0], df_rp["end"][0]]
@@ -120,8 +129,6 @@ def predict_pipeline_actigraph(
     # TODO: add entries of result dictionary to docstring and add possibility to specify sleep/wake prediction algorithm
     sw = SleepWakeDetection(algorithm_type=algorithm_type, **kwargs)
     df_sw = sw.predict(data[["activity"]])
-
-    # df_sw = pd.DataFrame({'sleep_wake':df_sw})
 
     sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval)
 
