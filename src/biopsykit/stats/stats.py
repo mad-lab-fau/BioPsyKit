@@ -656,6 +656,8 @@ class StatsPipeline:
         collapse_dof: Optional[bool] = True,
         si_table_format: Optional[str] = None,
         index_kws: Optional[Dict[str, Any]] = None,
+        column_kws: Optional[Dict[str, Any]] = None,
+        show_a_b: Optional[bool] = False,
         **kwargs,
     ) -> str:
         r"""Convert statistical result dataframe to LaTeX table.
@@ -703,6 +705,24 @@ class StatsPipeline:
                 mapping with dictionary with index values as keys and new index values to be exported
             * index_level_names_tex : str of list of str
                 names of index levels in the LaTeX table or ``None`` to keep the index level names of the dataframe
+        column_kws : dict, optional
+            dictionary containing arguments to configure how the table columns are formatted. Possible arguments are:
+
+            * column_level_order : list
+              list of column level names indicating the column level order of a :class:`~pandas.MultiIndex`
+              in the LaTeX table. If `None` the order of the dataframe will be used
+            * column_value_order :  list or dict
+              list of column values if columns in LaTeX table should have a different order than the underlying
+              dataframe or if only specific columns should be exported as LaTeX table. If the table column index is a
+              :class:`~pandas.MultiIndex` then ``column_value_order`` should be a dictionary with the column level
+              names as keys and lists of column values of the specific level as values
+            * column_rename_map : dict
+                mapping with dictionary with column values as keys and new column values to be exported
+            * column_level_names_tex : str of list of str
+                names of column levels in the LaTeX table or ``None`` to keep the column level names of the dataframe
+        show_a_b : bool, optional
+            ``True`` to add the names of the measurements (columns "A" and "B") to the output table,
+            ``False`` otherwise. Only needed for pairwise tests (:func:`~pingouin.pairwise_tests`). Default: ``False``
         kwargs
             additional keywords that are passed to :meth:`~pandas.DataFrame.to_latex`.
             The following default arguments will be passed if not specified otherwise:
@@ -742,19 +762,23 @@ class StatsPipeline:
 
         if index_kws is None:
             index_kws = {}
+        if column_kws is None:
+            column_kws = {}
 
         kwargs.setdefault("multicolumn_format", "c")
         kwargs.setdefault("escape", False)
         kwargs.setdefault("position", "th!")
 
         pcol = str(self._filter_pcol(data).name)
-        data = self._extract_data_latex_table(data, stats_test=stats_test, pcol=pcol, collapse_dof=collapse_dof)
+        data = self._extract_data_latex_table(
+            data, stats_test=stats_test, pcol=pcol, collapse_dof=collapse_dof, show_a_b=show_a_b
+        )
 
         column_map = {col: MAP_LATEX_EXPORT[col] for col in data.columns if col in MAP_LATEX_EXPORT}
 
         if len(data.index.names) > 1:
             data.index = data.index.droplevel(-1)
-        data.loc[:, pcol] = data.loc[:, pcol].apply(self._format_pvals_stars)
+        data = data.assign(**{pcol: data.loc[:, pcol].apply(self._format_pvals_stars)})
         data = data.applymap(self._format_number)
 
         if unstack_levels is not None:
@@ -763,7 +787,8 @@ class StatsPipeline:
             data = data.unstack(-1)
         data = data.rename(columns=column_map)
 
-        data = self._format_latex_table_index(data, index_kws)
+        data = self._format_latex_table_column(data, column_kws)
+        data = self._format_latex_table_index(data, index_kws, show_a_b)
 
         kwargs.setdefault("column_format", self._format_latex_column_format(data))
 
@@ -973,8 +998,11 @@ class StatsPipeline:
     def _format_dof(dof: int) -> str:
         return str(int(dof)) if dof % 1 == 0 else f"{dof:.2f}"
 
-    def _extract_data_ttest(self, data: pd.DataFrame, pcol: str, collapse_dof: bool) -> pd.DataFrame:
+    def _extract_data_ttest(self, data: pd.DataFrame, pcol: str, collapse_dof: bool, show_a_b: bool) -> pd.DataFrame:
+        nlevels_old = data.index.nlevels
         columns = ["T", "dof", pcol, "hedges"]
+        if show_a_b and "A" in data.columns:
+            columns += ["A", "B"]
         data = data[columns]
         if collapse_dof:
             dof = data["dof"].unique()
@@ -982,6 +1010,12 @@ class StatsPipeline:
                 raise ValueError(f"Cannot collapse dof in table: dof are not unique! Got {dof}")
             data = data.rename(columns={"T": MAP_LATEX_EXPORT["T_collapse"].format(self._format_dof(dof[0]))})
             data = data.drop(columns="dof")
+        if show_a_b and "A" in data.columns:
+            data = data.set_index(["A", "B"], append=True)
+            names_old = list(data.index.names)
+            names_new = names_old[: nlevels_old - 1] + names_old[nlevels_old:] + [names_old[nlevels_old - 1]]
+            # reorder levels
+            data = data.reorder_levels(names_new)
         return data
 
     def _extract_data_anova(self, data: pd.DataFrame, pcol: str, collapse_dof: bool) -> pd.DataFrame:
@@ -1049,7 +1083,9 @@ class StatsPipeline:
         return data
 
     @staticmethod
-    def _format_latex_table_index(data, index_kws):  # pylint:disable=too-many-branches
+    def _format_latex_table_index(
+        data: pd.DataFrame, index_kws: Dict[str, Any], show_a_b: Optional[bool] = False
+    ):  # pylint:disable=too-many-branches
         index_italic = index_kws.get("index_italic", True)
         index_level_order = index_kws.get("index_level_order", None)
         index_value_order = index_kws.get("index_value_order", None)
@@ -1072,15 +1108,38 @@ class StatsPipeline:
         if index_level_names_tex is not None:
             if isinstance(index_level_names_tex, str):
                 index_level_names_tex = [index_level_names_tex]
+            if show_a_b and "A" not in index_level_names_tex:
+                index_level_names_tex += ["A", "B"]
             data.index.names = index_level_names_tex
-
-        data = data.add_prefix("{").add_suffix("}")
 
         if index_italic:
             data.index.names = [rf"\textit{{{s}}}" for s in data.index.names]
             data = data.T
             data = data.add_prefix(r"\textit{").add_suffix("}")
             data = data.T
+        return data
+
+    @staticmethod
+    def _format_latex_table_column(data: pd.DataFrame, column_kws: Dict[str, Any]):  # pylint:disable=too-many-branches
+        column_level_order = column_kws.get("column_level_order", None)
+        column_value_order = column_kws.get("column_value_order", None)
+        column_rename_map = column_kws.get("column_rename_map", None)
+        column_level_names_tex = column_kws.get("column_level_names_tex", None)
+
+        if column_level_order is not None:
+            data = data.reorder_levels(column_level_order, axis=1)
+
+        if column_value_order is not None:
+            data = StatsPipeline._apply_column_value_order(data, column_value_order)
+
+        if column_rename_map is not None:
+            data = data.rename(columns=column_rename_map)
+        if column_level_names_tex is not None:
+            if isinstance(column_level_names_tex, str):
+                column_level_names_tex = [column_level_names_tex]
+            data.index.names = column_level_names_tex
+
+        data = data.add_prefix("{").add_suffix("}")
         return data
 
     @staticmethod
@@ -1101,6 +1160,26 @@ class StatsPipeline:
                 data = data.reindex(index_value_order[data.index.name])
             else:
                 data = data.reindex(index_value_order)
+        return data
+
+    @staticmethod
+    def _apply_column_value_order(
+        data: pd.DataFrame, column_value_order: Union[Sequence[str], Dict[str, Sequence[str]]]
+    ) -> pd.DataFrame:
+        if isinstance(data.columns, pd.MultiIndex):
+            if isinstance(column_value_order, dict):
+                for key, val in column_value_order.items():
+                    data = data.reindex(val, level=key, axis=1)
+            else:
+                raise ValueError(
+                    "'column_value_order' must be a dictionary with column level names as keys and "
+                    "column values as values."
+                )
+        else:
+            if isinstance(column_value_order, dict):
+                data = data.reindex(column_value_order[data.index.name], axis=1)
+            else:
+                data = data.reindex(column_value_order, axis=1)
         return data
 
     @staticmethod
@@ -1134,15 +1213,14 @@ class StatsPipeline:
         return data
 
     def _extract_data_latex_table(
-        self, data: pd.DataFrame, stats_test: str, pcol: str, collapse_dof: bool
+        self, data: pd.DataFrame, stats_test: str, pcol: str, collapse_dof: bool, show_a_b: bool
     ) -> pd.DataFrame:
         if "anova" in stats_test:
             data = self._extract_data_anova(data, pcol, collapse_dof)
         if "friedman" in stats_test:
             data = self._extract_data_friedman(data, pcol, collapse_dof)
-        if "T" in stats_test:
-            data = self._extract_data_ttest(data, pcol, collapse_dof)
+        if "T" in data.columns:
+            data = self._extract_data_ttest(data, pcol, collapse_dof, show_a_b)
         if "U-val" in data.columns:
             data = self._extract_data_mwu(data, pcol)
-
         return data
