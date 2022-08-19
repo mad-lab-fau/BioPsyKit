@@ -408,7 +408,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 
     dict_cut = {}
     for phase in phases:
-        min_dur = min([len(df) for df in study_data_dict[phase].values()])
+        min_dur = min(len(df) for df in study_data_dict[phase].values())
         dict_cut[phase] = {subject: df.iloc[0:min_dur].copy() for subject, df in study_data_dict[phase].items()}
 
     is_study_data_dict(study_data_dict)

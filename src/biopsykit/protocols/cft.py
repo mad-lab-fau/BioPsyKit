@@ -656,7 +656,7 @@ class CFT(BaseProtocol):
         }
         return cft_times
 
-    def _cft_plot_extract_plot_interval(  # pylint:disable=no-self-use
+    def _cft_plot_extract_plot_interval(
         self, data: pd.DataFrame, times_dict: Dict[str, Union[int, datetime.datetime]]
     ) -> pd.DataFrame:
         plot_start = times_dict["plot_start"]
@@ -827,7 +827,7 @@ class CFT(BaseProtocol):
             va="bottom",
         )
 
-    def _cft_plot_add_baseline(  # pylint:disable=no-self-use
+    def _cft_plot_add_baseline(
         self,
         cft_params: Dict,
         cft_times: Dict,
@@ -846,7 +846,7 @@ class CFT(BaseProtocol):
             alpha=0.6,
         )
 
-    def _cft_plot_add_mean_bradycardia(  # pylint:disable=no-self-use
+    def _cft_plot_add_mean_bradycardia(
         self,
         data: pd.DataFrame,
         cft_params: Dict,
@@ -901,7 +901,7 @@ class CFT(BaseProtocol):
             va="top",
         )
 
-    def _cft_plot_add_onset(  # pylint:disable=no-self-use
+    def _cft_plot_add_onset(
         self,
         data: pd.DataFrame,
         cft_params: Dict,

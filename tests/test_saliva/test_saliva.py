@@ -1270,8 +1270,8 @@ class TestSaliva:
                     np.nanstd([2, np.nan, 8, 4, 6], ddof=1),
                 ],
                 "cortisol_skew": [
-                    ss.skew(np.array([0, 0, 0, 0, 0]), bias=False),
-                    ss.skew(np.array([1, 1, 1, 1, 1]), bias=False),
+                    0,
+                    0,
                     ss.skew(np.array([0, 1, 2, 3, 4]), bias=False),
                     ss.skew(np.array([5, 4, 3, 2, 1]), bias=False),
                     ss.skew(np.array([10, 2, 4, 4, 6]), bias=False),
@@ -1280,8 +1280,8 @@ class TestSaliva:
                     0.0,
                 ],
                 "cortisol_kurt": [
-                    ss.kurtosis([0, 0, 0, 0, 0], fisher=False, bias=False),
-                    ss.kurtosis([1, 1, 1, 1, 1], fisher=False, bias=False),
+                    0,
+                    0,
                     ss.kurtosis([0, 1, 2, 3, 4], bias=False),
                     ss.kurtosis([5, 4, 3, 2, 1], bias=False),
                     ss.kurtosis([10, 2, 4, 4, 6], bias=False),
@@ -1358,8 +1358,8 @@ class TestSaliva:
                     np.nanstd([2, np.nan, 8, 4, 6], ddof=1),
                 ],
                 "cortisol_skew": [
-                    ss.skew(np.array([0, 0, 0, 0, 0]), bias=False),
-                    ss.skew(np.array([1, 1, 1, 1, 1]), bias=False),
+                    0,
+                    0,
                     ss.skew(np.array([0, 1, 2, 3, 4]), bias=False),
                     ss.skew(np.array([5, 4, 3, 2, 1]), bias=False),
                     ss.skew(np.array([10, 2, 4, 4, 6]), bias=False),
@@ -1368,8 +1368,8 @@ class TestSaliva:
                     0.0,
                 ],
                 "cortisol_kurt": [
-                    ss.kurtosis([0, 0, 0, 0, 0], fisher=False, bias=False),
-                    ss.kurtosis([1, 1, 1, 1, 1], fisher=False, bias=False),
+                    0,
+                    0,
                     ss.kurtosis([0, 1, 2, 3, 4], bias=False),
                     ss.kurtosis([5, 4, 3, 2, 1], bias=False),
                     ss.kurtosis([10, 2, 4, 4, 6], bias=False),
