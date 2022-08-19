@@ -333,9 +333,8 @@ def feature_boxplot(  # pylint:disable=too-many-branches
     legend_loc = kwargs.pop("legend_loc", "upper right")
     legend_orientation = kwargs.pop("legend_orientation", "vertical")
     legend_title = kwargs.pop("legend_title", None)
-    alpha = kwargs.pop("alpha", 0.7)
-    if alpha != 1.0:
-        kwargs.setdefault("saturation", 1.0)
+    alpha = kwargs.pop("alpha", 1.0)
+    kwargs.setdefault("saturation", 1.0)
     rect = kwargs.pop("rect", (0, 0, 0.825, 1.0) if legend_orientation == "vertical" else (0, 0, 1, 0.925))
 
     stats_kwargs = _feature_boxplot_sanitize_stats_kwargs(stats_kwargs)
@@ -484,9 +483,8 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     legend_title = kwargs.pop("legend_title", None)
     legend_loc = kwargs.pop("legend_loc", "upper right")
     legend_orientation = kwargs.pop("legend_orientation", "vertical")
-    alpha = kwargs.pop("alpha", 0.7)
-    if alpha != 1.0:
-        kwargs.setdefault("saturation", 1.0)
+    alpha = kwargs.pop("alpha", 1.0)
+    kwargs.setdefault("saturation", 1.0)
     rect = kwargs.pop("rect", (0, 0, 0.825, 1.0) if legend_orientation == "vertical" else (0, 0, 1, 0.925))
 
     if isinstance(features, list):

@@ -372,11 +372,11 @@ devel = ["colorama", "jsonschema", "json-spec", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "fau-colors"
-version = "1.0.5"
+version = "1.1.0"
 description = "The official colors of FAU as matplotlib/seaborn colormaps"
 category = "main"
 optional = false
-python-versions = ">=3.7.1,<3.11"
+python-versions = ">=3.8,<3.11"
 
 [package.dependencies]
 matplotlib = ">=3.4.3,<4.0.0"
@@ -666,7 +666,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "jsonschema"
-version = "4.12.1"
+version = "4.13.0"
 description = "An implementation of JSON Schema validation for Python"
 category = "main"
 optional = false
@@ -2245,7 +2245,7 @@ mne = ["mne"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "2236103d5388104423597ee0089cccd3db593c6d530678a66b1cd5554a689959"
+content-hash = "bc5d5d8f560c7067d6a917a4fbe51455209c56c7286d3b0b54f96e41579f060e"
 
 [metadata.files]
 aiohttp = [
@@ -2568,10 +2568,7 @@ execnet = [
     {file = "execnet-1.9.0.tar.gz", hash = "sha256:8f694f3ba9cc92cab508b152dcfe322153975c29bda272e2fd7f3f00f36e47c5"},
 ]
 fastjsonschema = []
-fau-colors = [
-    {file = "fau_colors-1.0.5-py3-none-any.whl", hash = "sha256:9cdf47d1ee7d6a074326b2673a67a06ab7dcadaf131984a3af9138ddc00ebeda"},
-    {file = "fau_colors-1.0.5.tar.gz", hash = "sha256:054db4d2413378ba9331ab1dbf1cfecaa866f9bf76cb1e294b747f936806aab8"},
-]
+fau-colors = []
 flake8 = [
     {file = "flake8-2.3.0-py2.py3-none-any.whl", hash = "sha256:c99cc9716d6655d9c8bcb1e77632b8615bf0abd282d7abd9f5c2148cad7fc669"},
     {file = "flake8-2.3.0.tar.gz", hash = "sha256:5ee1a43ccd0716d6061521eec6937c983efa027793013e572712c4da55c7c83e"},
