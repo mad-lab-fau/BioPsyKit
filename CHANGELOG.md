@@ -1,8 +1,12 @@
 # Changelog
 
-## Version 0.6.0 - xx, 2022
+## Version 0.6.1 - August 19, 2022
 ### Improvements
 - `biopsykit.signals.ecg.EcgProcessor`: improved handling of errors occurring during ECG processing
+- `biopsykit.plotting`: Improved boxplot behavior due to the use of the new light palettes of 
+  [`fau-colors`](https://github.com/mad-lab-fau/fau_colors). 
+  See the [`StatsPipeline & Plotting Example`](https://biopsykit.readthedocs.io/en/latest/examples/_notebooks/StatsPipeline_Plotting_Example.html)
+  for further information.
 ### Bugfixes: 
 - `biopsykit.signals.imu.ActivityCounts`: added timezone support ([PR 31](https://github.com/mad-lab-fau/BioPsyKit/pull/31))
 - `biopsykit.signals.imu.RestPeriods`: fixed bug in computing resting periods 
