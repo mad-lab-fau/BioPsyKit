@@ -79,7 +79,17 @@ MAP_LATEX_EXPORT = {
     "p-tukey": "p",
     "pval": "p",
     "np2": r"$\eta^2_p$",
+    "np2_row": r"$\eta^2_p$",
+    "ng2": r"$\eta^2_G$",
+    "ng2_row": r"$\eta^2_G$",
+    "n2": r"$\eta^2$",
+    "n2_row": r"$\eta^2$",
     "hedges": "Hedges' g",
+    "hedges_row": "g",
+    "cohen": "Cohen's d",
+    "cohen_row": "d",
+    "CLES": "CLES",
+    "CLES_row": "CLES",
 }
 
 STATS_CATEGORY = Literal["prep", "test", "posthoc"]
@@ -87,6 +97,7 @@ STATS_EFFECT_TYPE = Literal["between", "within", "interaction"]
 PLOT_TYPE = Literal["single", "multi"]
 
 _sig_cols = ["p-corr", "p-tukey", "p-unc", "pval"]
+_eff_cols = ["np2", "ng2", "n2", "hedges", "cohen", "CLES"]
 
 
 class StatsPipeline:
@@ -407,6 +418,24 @@ class StatsPipeline:
                 return data[[col]]
         return None
 
+    @staticmethod
+    def _filter_eff_col(data: Union[pd.DataFrame, pd.Series]) -> Optional[pd.Series]:
+        for col in _eff_cols:
+            if isinstance(data, pd.DataFrame) and col in data.columns:
+                return data[col]
+            if isinstance(data, pd.Series) and col in data.index:
+                return data[[col]]
+        return None
+
+    @staticmethod
+    def _get_effsize_name(data: Union[pd.DataFrame, pd.Series]) -> Optional[str]:
+        for col in _eff_cols:
+            if isinstance(data, pd.DataFrame) and col in data.columns:
+                return col
+            if isinstance(data, pd.Series) and col in data.index:
+                return col
+        return None
+
     def _filter_effect(self, stats_category: STATS_CATEGORY, stats_effect_type: STATS_EFFECT_TYPE) -> pd.DataFrame:
         results = self.results_cat(stats_category)
         if len(results) == 0:
@@ -614,11 +643,13 @@ class StatsPipeline:
 
     def _stats_to_latex_row(self, row: pd.Series) -> str:
         pval = self._format_pval(row)
+        eff_name = self._get_effsize_name(row)
+        eff_name_print = f"{eff_name}_row"
         if "T" in row:
             dof = self._format_dof(row["dof"])
             tval = self._format_number(row["T"])
-            effsize = self._format_number(row["hedges"])
-            return f"$t({dof}) = {tval}, p {pval}, g = {effsize}$"
+            effsize = self._format_number(row[eff_name])
+            return f"$t({dof}) = {tval}, p {pval}, {MAP_LATEX_EXPORT[eff_name_print]} = {effsize}$"
         if "F" in row:
             rename_dict = {"ddof1": "df1", "ddof2": "df2", "DF": "df", "DF1": "df1", "DF2": "df2"}
             row = row.rename(rename_dict)
@@ -627,14 +658,14 @@ class StatsPipeline:
             dofs = ",".join(dofs)
             fval = self._format_number(row["F"])
             ret_string = rf"$F({dofs}) = {fval}, p {pval}$"
-            if "np2" in row:
-                effsize = self._format_number(row["np2"])
-                ret_string = ret_string[:-1] + rf", \eta_p^2 = {effsize}$"
+            if eff_name is not None:
+                effsize = self._format_number(row[eff_name])
+                ret_string = ret_string[:-1] + rf", {MAP_LATEX_EXPORT[eff_name_print][1:-1]} = {effsize}$"
             return ret_string
         if "U-val" in row:
-            effsize = self._format_number(row["hedges"])
+            effsize = self._format_number(row[eff_name])
             uval = self._format_number(row["U-val"])
-            return f"$U = {uval}, p {pval}, g = {effsize}$"
+            return f"$U = {uval}, p {pval}, {MAP_LATEX_EXPORT[eff_name_print]} = {effsize}$"
         return ""
 
     def _format_pval(self, row: pd.Series) -> str:
@@ -1000,7 +1031,8 @@ class StatsPipeline:
 
     def _extract_data_ttest(self, data: pd.DataFrame, pcol: str, collapse_dof: bool, show_a_b: bool) -> pd.DataFrame:
         nlevels_old = data.index.nlevels
-        columns = ["T", "dof", pcol, "hedges"]
+        effsize_name = self._get_effsize_name(data)
+        columns = ["T", "dof", pcol, effsize_name]
         if show_a_b and "A" in data.columns:
             columns += ["A", "B"]
         data = data[columns]
@@ -1040,7 +1072,8 @@ class StatsPipeline:
                 data["df"] = "{" + data["df1"].astype(str) + ", " + data["df2"].astype(str) + "}"
                 data = data.drop(columns=["df1", "df2"])
             columns.append("df")
-        columns = columns + [pcol, "np2"]
+        eff_name = self._get_effsize_name(data)
+        columns = columns + [pcol, eff_name]
         data = data[columns]
         return data
 
@@ -1078,7 +1111,7 @@ class StatsPipeline:
 
     @staticmethod
     def _extract_data_mwu(data: pd.DataFrame, pcol: str) -> pd.DataFrame:
-        columns = ["U-val", pcol, "hedges"]
+        columns = ["U-val", pcol, StatsPipeline._get_effsize_name(data)]
         data = data[columns]
         return data
 
