@@ -1,5 +1,17 @@
 # Changelog
 
+## Version 0.6.0 - xx, 2022
+### Improvements
+- `biopsykit.signals.ecg.EcgProcessor`: improved handling of errors occurring during ECG processing
+### Bugfixes: 
+- `biopsykit.signals.imu.ActivityCounts`: added timezone support ([PR 31](https://github.com/mad-lab-fau/BioPsyKit/pull/31))
+- `biopsykit.signals.imu.RestPeriods`: fixed bug in computing resting periods 
+  (old implementation could lead to classifying a long period of activity as the main rest period.) 
+  ([PR 32](https://github.com/mad-lab-fau/BioPsyKit/pull/32))
+- `biopsykit.signals.imu.ActivityCounts`: fixed bug(s) in computing activity counts 
+  ([PR 33](https://github.com/mad-lab-fau/BioPsyKit/pull/33))
+- `biopsykit.stats.StatsPipeline`: fixed bugs in LaTeX export of result tables
+
 ## Version 0.5.1 - May 24, 2022
 ### New Features
 - `biopsykit.classification`: `SklearnPipelinePermuter` now supports regression

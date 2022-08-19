@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopsykit"
-version = "0.5.2-alpha.2"
+version = "0.6.0"
 description = "A Python package for the analysis of biopsychological data."
 authors = [
     "Robert Richer <robert.richer@fau.de>",
@@ -20,41 +20,41 @@ license = "MIT"
 python = ">=3.8,<3.11"
 numpy = "^1"
 pandas = "^1"
-matplotlib = "^3"
-seaborn = "^0.11.2"
-neurokit2 = "^0.1.3"
+matplotlib = "^3.4"
+seaborn = "^0"
+neurokit2 = "^0"
 pingouin = "^0.5.2"
-scipy = "^1.7.0"
+scipy = "^1"
 statannot = "^0.2.3"
-tqdm = "^4.62.0"
-joblib = "^1.1.0"
+tqdm = "^4"
+joblib = "^1"
 scikit-learn = "^1.0"
-nilspodlib = "^3.2.2"
-openpyxl = "^3.0.7"
-XlsxWriter = "^1.4.5"
-xlrd = "^2.0.1"
+nilspodlib = "^3"
+openpyxl = "^3"
+XlsxWriter = "^1"
+xlrd = "^2"
 statsmodels = "^0.13"
 fau-colors = "^1"
 mne = {version = "^0.23.0", optional = true}
-IPython = {version = "^7.13.0", optional = true}
-ipywidgets = {version = "^7.6.3", optional = true}
-ipympl = {version = "^0.8.0", optional = true}
+IPython = {version = "^7", optional = true}
+ipywidgets = {version = "^7", optional = true}
+ipympl = {version = "^0.9", optional = true}
 
 [tool.poetry.extras]
 mne = ["mne"]
 jupyter = ["IPython", "ipympl", "ipywidgets"]
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.1"
-pytest-cov = "^2.8.1"
-prospector = "^1.2.0"
+pytest = "^6"
+pytest-cov = "^2"
+prospector = "^1"
 black = { version="^22", extras=["jupyter", "d"] }
-coverage = "^4.5.4"
-ipykernel = "^6.2.0"
+coverage = "^4"
+ipykernel = "^6"
 mypy = "^0.790"
 pytest-xdist = "^2.2.0"
 # Doc dependencies. They also need to be updated in ./docs/requirements.txt
-sphinx = "^4.2.0"
+sphinx = "^4"
 numpydoc = "^1"
 sphinx-gallery = "^0.10.0"
 sphinx_issues = "^1.2.0"
@@ -63,7 +63,7 @@ recommonmark = "^0.6.0"
 toml = "^0.10.1"
 memory_profiler = "^0.57.0"
 coverage-badge = "^1.0.1"
-isort = "^5.9.3"
+isort = "^5"
 sphinx-copybutton = "^0.4.0"
 nbsphinx = "^0.8.7"
 poethepoet = "^0.10.0"
