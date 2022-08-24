@@ -41,7 +41,7 @@ def compute_sleep_endpoints(
     Parameters
     ----------
     sleep_wake : :class:`~pandas.DataFrame`
-        dataframe with sleep/wake scoring of night. 0 is expected to indicate *sleep*, 1 to indicate *wake*
+        dataframe with sleep/wake scoring of night. 1 is expected to indicate *sleep*, 0 to indicate *wake*
     bed_interval : array_like
         beginning and end of bed interval, i.e., the time spent in bed
 
