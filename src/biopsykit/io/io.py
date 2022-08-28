@@ -273,8 +273,8 @@ def load_atimelogger_file(file_path: path_t) -> pd.DataFrame:
     if "Aktivitätstyp" in timelog.columns:
         phase_col = "Aktivitätstyp"
         time_cols = ["Von", "Bis"]
-    elif "Activity Type" in timelog.columns:
-        phase_col = "Activity Type"
+    elif "Activity type" in timelog.columns:
+        phase_col = "Activity type"
         time_cols = ["From", "To"]
     else:
         phase_col = "phase"
