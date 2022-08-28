@@ -2,7 +2,7 @@
 
 import datetime
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -180,57 +180,153 @@ def load_time_log(
     return data
 
 
-def _apply_phase_cols(data: pd.DataFrame, phase_cols: Union[Dict[str, Sequence[str]], Sequence[str]]) -> pd.DataFrame:
-    new_phase_cols = None
-    if isinstance(phase_cols, dict):
-        new_phase_cols = phase_cols
-        phase_cols = list(phase_cols.keys())
-
-    if phase_cols:
-        _assert_has_columns(data, [phase_cols])
-        data = data.loc[:, phase_cols]
-    if new_phase_cols:
-        data = data.rename(columns=new_phase_cols)
-
-    return data
-
-
-def _parse_time_log_not_continuous(
-    data: pd.DataFrame, index_cols: Union[str, Sequence[str], Dict[str, str]]
+def convert_time_log_datetime(
+    time_log: pd.DataFrame,
+    dataset: Optional[Dataset] = None,
+    df: Optional[pd.DataFrame] = None,
+    date: Optional[Union[str, datetime.datetime]] = None,
+    timezone: Optional[Union[str, datetime.tzinfo]] = None,
 ) -> pd.DataFrame:
-    start_cols = np.squeeze(data.columns.str.extract(r"(\w+)_start").dropna().values)
-    end_cols = np.squeeze(data.columns.str.extract(r"(\w+)_end").dropna().values)
-    if start_cols.size == 0:
-        raise ValidationError(
-            "No 'start' and 'end' columns were found. "
-            "Make sure that each phase has columns with 'start' and 'end' suffixes!"
-        )
-    if not np.array_equal(start_cols, end_cols):
-        raise ValidationError("Not all phases have 'start' and 'end' columns!")
+    """Convert the time log information into datetime objects.
 
-    if index_cols is None:
-        index_cols = [s for s in ["subject", "condition"] if s in data.columns]
-        data = data.set_index(index_cols)
-    if isinstance(index_cols, dict):
-        index_cols = data.index.names
+    This function converts time log information (containing only time, but no date)
+    into datetime objects, thus, adds the `start date` of the recording. To specify the recording date,
+    either a NilsPod :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DatetimeIndex`
+    must be supplied from which the recording date can be extracted.
+    As an alternative, the date can be specified explicitly via ``date`` parameter.
 
-    data = pd.wide_to_long(
-        data.reset_index(),
-        stubnames=start_cols,
-        i=index_cols,
-        j="time",
-        sep="_",
-        suffix="(start|end)",
-    )
+    Parameters
+    ----------
+    time_log : :class:`~pandas.DataFrame`
+        pandas dataframe with time log information
+    dataset : :class:`~nilspodlib.dataset.Dataset`, optional
+        NilsPod Dataset object extract time and date information. Default: ``None``
+    df : :class:`~pandas.DataFrame`, optional
+        dataframe with :class:`~pandas.DatetimeIndex` to extract time and date information. Default: ``None``
+    date : str or datetime, optional
+        datetime object or date string used to convert time log information into datetime.
+        If ``date`` is a string, it must be supplied in a common date format, e.g. "dd.mm.yyyy" or "dd/mm/yyyy".
+        Default: ``None``
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the acquired data to convert, either as string of as tzinfo object.
+        Default: "Europe/Berlin"
 
-    # ensure that "start" is always before "end"
-    data = data.reindex(["start", "end"], level=-1)
-    # unstack start|end level
-    data = data.unstack()
-    # set name of outer index level
-    data.columns = data.columns.set_names("phase", level=0)
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        pandas dataframe with log time converted into datetime
 
-    return data
+    Raises
+    ------
+    ValueError
+        if none of ``dataset``, ``df`` and ``date`` are supplied as argument,
+        or if index of ``df`` is not a :class:`~pandas.DatetimeIndex`
+
+    """
+    if dataset is None and date is None and df is None:
+        raise ValueError("Either `dataset`, `df` or `date` must be supplied as argument to retrieve date information!")
+
+    date = _extract_date(dataset, df, date)
+
+    if timezone is None:
+        timezone = tz
+    if isinstance(timezone, str):
+        timezone = pytz.timezone(timezone)
+
+    if isinstance(time_log.values.flatten()[0], str):
+        # convert time strings into datetime.time object
+        time_log = time_log.applymap(pd.to_datetime)
+        time_log = time_log.applymap(lambda val: val.time())
+
+    time_log = time_log.applymap(lambda x: timezone.localize(datetime.datetime.combine(date, x)))
+    return time_log
+
+
+def load_atimelogger_file(file_path: path_t) -> pd.DataFrame:
+    """Load time log file exported from the aTimeLogger app.
+
+    The resulting dataframe will have one row and start and end times of the single phases as columns.
+
+    Parameters
+    ----------
+    file_path : :class:`~pathlib.Path` or str
+        path to time log file. Must a csv file
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        time log dataframe
+
+    See Also
+    --------
+    :func:`~biopsykit.utils.io.convert_time_log_datetime`
+        convert timelog dataframe into dictionary
+    `aTimeLogger app <https://play.google.com/store/apps/details?id=com.aloggers.atimeloggerapp>`_
+
+    """
+    # ensure pathlib
+    file_path = Path(file_path)
+    _assert_file_extension(file_path, expected_extension=[".csv"])
+
+    timelog = pd.read_csv(file_path)
+    # find out if file is german or english and get the right column names
+    if "Aktivitätstyp" in timelog.columns:
+        phase_col = "Aktivitätstyp"
+        time_cols = ["Von", "Bis"]
+    elif "Activity Type" in timelog.columns:
+        phase_col = "Activity Type"
+        time_cols = ["From", "To"]
+    else:
+        phase_col = "phase"
+        time_cols = ["start", "end"]
+
+    timelog = timelog.set_index(phase_col)
+    timelog = timelog[time_cols]
+
+    timelog = timelog.rename(columns={"start": time_cols[0], "end": time_cols[1]})
+    timelog.index.name = "phase"
+    timelog.columns.name = "start_end"
+
+    timelog = timelog.apply(pd.to_datetime, axis=1)
+    timelog = pd.DataFrame(timelog.T.unstack(), columns=["time"])
+    timelog = timelog.T
+    return timelog
+
+
+def convert_time_log_dict(
+    timelog: Union[pd.DataFrame, pd.Series], time_format: Optional[Literal["str", "time"]] = "time"
+) -> Dict[str, Tuple[Union[str, datetime.time]]]:
+    """Convert time log into dictionary.
+
+    The resulting dictionary will have the phase names as keys and a tuple with start and end times as values.
+
+    Parameters
+    ----------
+    timelog : :class:`~pandas.DataFrame` or :class:`~pandas.Series`
+        dataframe or series containing timelog information
+    time_format : "str" or "time", optional
+        "str" to convert entries in dictionary to string, "time" to keep them as :class:`~datetime.time` objects.
+        Default: "time"
+
+    Returns
+    -------
+    dict
+        dictionary with start and end times of each phase
+
+    See Also
+    --------
+    :func:`biopsykit.utils.data_processing.split_data`
+        split data based on time intervals
+
+    """
+    timelog = timelog.T.unstack()["time"]
+    # assert correct order
+    timelog = timelog[["start", "end"]]
+    timelog_dict = timelog.to_dict(orient="index")
+    timelog_dict = {key: tuple(v.time() for v in val.values()) for key, val in timelog_dict.items()}
+    if time_format == "str":
+        timelog_dict = {key: tuple(map(str, val)) for key, val in timelog_dict.items()}
+    return timelog_dict
 
 
 def load_subject_condition_list(
@@ -315,43 +411,6 @@ def load_subject_condition_list(
         return data
     is_subject_condition_dataframe(data)
     return _SubjectConditionDataFrame(data)
-
-
-def _get_subject_col(data: pd.DataFrame, subject_col: str):
-    if subject_col is None:
-        subject_col = "subject"
-    _assert_is_dtype(subject_col, str)
-    _assert_has_columns(data, [[subject_col]])
-    return subject_col
-
-
-def _sanitize_index_cols(
-    data: pd.DataFrame,
-    subject_col: str,
-    condition_col: Optional[str],
-    additional_index_cols: Optional[Union[str, Sequence[str]]],
-) -> Tuple[pd.DataFrame, Sequence[str]]:
-    subject_col = _get_subject_col(data, subject_col)
-    data = data.rename(columns={subject_col: "subject"})
-    subject_col = "subject"
-    index_cols = [subject_col]
-
-    if condition_col is not None:
-        _assert_is_dtype(condition_col, str)
-        _assert_has_columns(data, [[condition_col]])
-        data = data.rename(columns={condition_col: "condition"})
-        condition_col = "condition"
-        index_cols.append(condition_col)
-    elif "condition" in data.columns:
-        index_cols.append("condition")
-
-    if additional_index_cols is None:
-        additional_index_cols = []
-    if isinstance(additional_index_cols, str):
-        additional_index_cols = [additional_index_cols]
-
-    index_cols = index_cols + additional_index_cols
-    return data, index_cols
 
 
 def load_questionnaire_data(
@@ -514,85 +573,6 @@ def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
 #     return dict_stroop
 
 
-def convert_time_log_datetime(
-    time_log: pd.DataFrame,
-    dataset: Optional[Dataset] = None,
-    df: Optional[pd.DataFrame] = None,
-    date: Optional[Union[str, datetime.datetime]] = None,
-    timezone: Optional[Union[str, datetime.tzinfo]] = None,
-) -> pd.DataFrame:
-    """Convert the time log information into datetime objects.
-
-    This function converts time log information (containing only time, but no date)
-    into datetime objects, thus, adds the `start date` of the recording. To specify the recording date,
-    either a NilsPod :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DatetimeIndex`
-    must be supplied from which the recording date can be extracted.
-    As an alternative, the date can be specified explicitly via ``date`` parameter.
-
-    Parameters
-    ----------
-    time_log : :class:`~pandas.DataFrame`
-        pandas dataframe with time log information
-    dataset : :class:`~nilspodlib.dataset.Dataset`, optional
-        NilsPod Dataset object extract time and date information. Default: ``None``
-    df : :class:`~pandas.DataFrame`, optional
-        dataframe with :class:`~pandas.DatetimeIndex` to extract time and date information. Default: ``None``
-    date : str or datetime, optional
-        datetime object or date string used to convert time log information into datetime.
-        If ``date`` is a string, it must be supplied in a common date format, e.g. "dd.mm.yyyy" or "dd/mm/yyyy".
-        Default: ``None``
-    timezone : str or :class:`datetime.tzinfo`, optional
-        timezone of the acquired data to convert, either as string of as tzinfo object.
-        Default: "Europe/Berlin"
-
-    Returns
-    -------
-    :class:`~pandas.DataFrame`
-        pandas dataframe with log time converted into datetime
-
-    Raises
-    ------
-    ValueError
-        if none of ``dataset``, ``df`` and ``date`` are supplied as argument,
-        or if index of ``df`` is not a :class:`~pandas.DatetimeIndex`
-
-    """
-    if dataset is None and date is None and df is None:
-        raise ValueError("Either `dataset`, `df` or `date` must be supplied as argument to retrieve date information!")
-
-    date = _extract_date(dataset, df, date)
-
-    if timezone is None:
-        timezone = tz
-    if isinstance(timezone, str):
-        timezone = pytz.timezone(timezone)
-
-    if isinstance(time_log.values.flatten()[0], str):
-        # convert time strings into datetime.time object
-        time_log = time_log.applymap(pd.to_datetime)
-        time_log = time_log.applymap(lambda val: val.time())
-
-    time_log = time_log.applymap(lambda x: timezone.localize(datetime.datetime.combine(date, x)))
-    return time_log
-
-
-def _extract_date(dataset: Dataset, df: pd.DataFrame, date: Union[str, datetime.datetime]) -> datetime.datetime:
-    if dataset is not None:
-        date = dataset.info.utc_datetime_start.date()
-    if df is not None:
-        if isinstance(df.index, pd.DatetimeIndex):
-            date = df.index.normalize().unique()[0]
-            date = date.to_pydatetime()
-        else:
-            raise ValueError("'df' must have a DatetimeIndex!")
-    if isinstance(date, str):
-        # ensure datetime
-        date = pd.to_datetime(date)
-        date = date.date()
-
-    return date
-
-
 def load_pandas_dict_excel(
     file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, datetime.tzinfo]] = None
 ) -> Dict[str, pd.DataFrame]:
@@ -732,6 +712,60 @@ def write_result_dict(
         writer.close()
 
 
+def _extract_date(dataset: Dataset, df: pd.DataFrame, date: Union[str, datetime.datetime]) -> datetime.datetime:
+    if dataset is not None:
+        date = dataset.info.utc_datetime_start.date()
+    if df is not None:
+        if isinstance(df.index, pd.DatetimeIndex):
+            date = df.index.normalize().unique()[0]
+            date = date.to_pydatetime()
+        else:
+            raise ValueError("'df' must have a DatetimeIndex!")
+    if isinstance(date, str):
+        # ensure datetime
+        date = pd.to_datetime(date)
+        date = date.date()
+
+    return date
+
+
+def _get_subject_col(data: pd.DataFrame, subject_col: str):
+    if subject_col is None:
+        subject_col = "subject"
+    _assert_is_dtype(subject_col, str)
+    _assert_has_columns(data, [[subject_col]])
+    return subject_col
+
+
+def _sanitize_index_cols(
+    data: pd.DataFrame,
+    subject_col: str,
+    condition_col: Optional[str],
+    additional_index_cols: Optional[Union[str, Sequence[str]]],
+) -> Tuple[pd.DataFrame, Sequence[str]]:
+    subject_col = _get_subject_col(data, subject_col)
+    data = data.rename(columns={subject_col: "subject"})
+    subject_col = "subject"
+    index_cols = [subject_col]
+
+    if condition_col is not None:
+        _assert_is_dtype(condition_col, str)
+        _assert_has_columns(data, [[condition_col]])
+        data = data.rename(columns={condition_col: "condition"})
+        condition_col = "condition"
+        index_cols.append(condition_col)
+    elif "condition" in data.columns:
+        index_cols.append("condition")
+
+    if additional_index_cols is None:
+        additional_index_cols = []
+    if isinstance(additional_index_cols, str):
+        additional_index_cols = [additional_index_cols]
+
+    index_cols = index_cols + additional_index_cols
+    return data, index_cols
+
+
 def _load_dataframe(file_path, **kwargs):
     if file_path.suffix in [".csv"]:
         return pd.read_csv(file_path, **kwargs)
@@ -754,5 +788,58 @@ def _apply_index_cols(
 
     if new_index_cols is not None:
         data.index = data.index.set_names(new_index_cols)
+
+    return data
+
+
+def _apply_phase_cols(data: pd.DataFrame, phase_cols: Union[Dict[str, Sequence[str]], Sequence[str]]) -> pd.DataFrame:
+    new_phase_cols = None
+    if isinstance(phase_cols, dict):
+        new_phase_cols = phase_cols
+        phase_cols = list(phase_cols.keys())
+
+    if phase_cols:
+        _assert_has_columns(data, [phase_cols])
+        data = data.loc[:, phase_cols]
+    if new_phase_cols:
+        data = data.rename(columns=new_phase_cols)
+
+    return data
+
+
+def _parse_time_log_not_continuous(
+    data: pd.DataFrame, index_cols: Union[str, Sequence[str], Dict[str, str]]
+) -> pd.DataFrame:
+    start_cols = np.squeeze(data.columns.str.extract(r"(\w+)_start").dropna().values)
+    end_cols = np.squeeze(data.columns.str.extract(r"(\w+)_end").dropna().values)
+    if start_cols.size == 0:
+        raise ValidationError(
+            "No 'start' and 'end' columns were found. "
+            "Make sure that each phase has columns with 'start' and 'end' suffixes!"
+        )
+    if not np.array_equal(start_cols, end_cols):
+        raise ValidationError("Not all phases have 'start' and 'end' columns!")
+
+    if index_cols is None:
+        index_cols = [s for s in ["subject", "condition"] if s in data.columns]
+        data = data.set_index(index_cols)
+    if isinstance(index_cols, dict):
+        index_cols = data.index.names
+
+    data = pd.wide_to_long(
+        data.reset_index(),
+        stubnames=start_cols,
+        i=index_cols,
+        j="time",
+        sep="_",
+        suffix="(start|end)",
+    )
+
+    # ensure that "start" is always before "end"
+    data = data.reindex(["start", "end"], level=-1)
+    # unstack start|end level
+    data = data.unstack()
+    # set name of outer index level
+    data.columns = data.columns.set_names("phase", level=0)
 
     return data
