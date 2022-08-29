@@ -209,6 +209,7 @@ def load_synced_session_nilspod(
         raise ValueError("No NilsPod files found in directory!")
 
     kwargs.setdefault("tz", kwargs.pop("timezone", tz))
+    print(kwargs)
     session = SyncedSession.from_folder_path(folder_path, **kwargs)
     session.align_to_syncregion(inplace=True)
 
