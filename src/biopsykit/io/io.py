@@ -242,7 +242,7 @@ def convert_time_log_datetime(
     return time_log
 
 
-def load_atimelogger_file(file_path: path_t) -> pd.DataFrame:
+def load_atimelogger_file(file_path: path_t, timezone: Optional[Union[datetime.tzinfo, str]] = None) -> pd.DataFrame:
     """Load time log file exported from the aTimeLogger app.
 
     The resulting dataframe will have one row and start and end times of the single phases as columns.
@@ -251,6 +251,9 @@ def load_atimelogger_file(file_path: path_t) -> pd.DataFrame:
     ----------
     file_path : :class:`~pathlib.Path` or str
         path to time log file. Must a csv file
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of the time logs, either as string or as `tzinfo` object.
+        Default: 'Europe/Berlin'
 
     Returns
     -------
@@ -268,6 +271,9 @@ def load_atimelogger_file(file_path: path_t) -> pd.DataFrame:
     file_path = Path(file_path)
     _assert_file_extension(file_path, expected_extension=[".csv"])
 
+    if timezone is None:
+        timezone = tz
+
     timelog = pd.read_csv(file_path)
     # find out if file is german or english and get the right column names
     if "Aktivitätstyp" in timelog.columns:
@@ -283,12 +289,13 @@ def load_atimelogger_file(file_path: path_t) -> pd.DataFrame:
     timelog = timelog.set_index(phase_col)
     timelog = timelog[time_cols]
 
-    timelog = timelog.rename(columns={"start": time_cols[0], "end": time_cols[1]})
+    timelog = timelog.rename(columns={time_cols[0]: "start", time_cols[1]: "end"})
     timelog.index.name = "phase"
     timelog.columns.name = "start_end"
 
-    timelog = timelog.apply(pd.to_datetime, axis=1)
+    timelog = timelog.apply(pd.to_datetime, axis=1).applymap(lambda val: val.tz_localize(timezone))
     timelog = pd.DataFrame(timelog.T.unstack(), columns=["time"])
+    timelog = timelog.sort_values(by="time")
     timelog = timelog.T
     return timelog
 
