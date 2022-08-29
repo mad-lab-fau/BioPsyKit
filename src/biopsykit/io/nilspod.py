@@ -116,6 +116,7 @@ def load_dataset_nilspod(
         file_path = Path(file_path)
         _assert_file_extension(file_path, ".bin")
         kwargs.setdefault("tz", kwargs.pop("timezone", tz))
+        kwargs.setdefault("legacy_support", "resolve")
         dataset = Dataset.from_bin_file(file_path, **kwargs)
 
     if file_path is None and dataset is None:
