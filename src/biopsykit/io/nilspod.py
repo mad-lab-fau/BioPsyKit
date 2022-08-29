@@ -112,7 +112,6 @@ def load_dataset_nilspod(
     >>> df, fs = load_dataset_nilspod(dataset=dataset, datastreams='acc')
 
     """
-
     if file_path is not None:
         file_path = Path(file_path)
         _assert_file_extension(file_path, ".bin")
