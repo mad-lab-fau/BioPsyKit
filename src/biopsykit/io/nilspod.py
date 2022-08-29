@@ -32,8 +32,7 @@ def load_dataset_nilspod(
     dataset: Optional[Dataset] = None,
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
-    legacy_support: Optional[str] = "resolve",
-    timezone: Optional[Union[datetime.tzinfo, str]] = None,
+    **kwargs,
 ) -> Tuple[pd.DataFrame, float]:
     """Load NilsPod recording and convert into dataframe.
 
@@ -58,18 +57,21 @@ def load_dataset_nilspod(
         * "warn": issue a warning but still return a dataframe
         * "ignore": ignore the counter check result
 
-    legacy_support : {"error", "warn", "resolve"}, optional
-        Flag indicating how to deal with older NilsPod firmware versions:
+    **kwargs
+        optional arguments passed to :func:`~nilspodlib.Dataset.from_bin_file`, such as:
 
-        * "error": raise an error if an unsupported version is detected
-        * "warn": issue a warning and parse the file without modification
-        * "resolve" (default): perform a legacy conversion to load old files. If no suitable conversion is found,
-          an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
-          to learn more about available conversions.
+        legacy_support : {"error", "warn", "resolve"}, optional
+            Flag indicating how to deal with older NilsPod firmware versions:
 
-    timezone : str or :class:`datetime.tzinfo`, optional
-        timezone of the acquired data, either as string of as tzinfo object.
-        Default: "Europe/Berlin"
+            * "error": raise an error if an unsupported version is detected
+            * "warn": issue a warning and parse the file without modification
+            * "resolve" (default): perform a legacy conversion to load old files. If no suitable conversion is found,
+              an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
+              to learn more about available conversions.
+
+        timezone : str or :class:`datetime.tzinfo`, optional
+            timezone of the acquired data, either as string of as tzinfo object.
+            Default: "Europe/Berlin"
 
     Returns
     -------
@@ -110,13 +112,12 @@ def load_dataset_nilspod(
     >>> df, fs = load_dataset_nilspod(dataset=dataset, datastreams='acc')
 
     """
-    if timezone is None:
-        timezone = tz
 
     if file_path is not None:
         file_path = Path(file_path)
         _assert_file_extension(file_path, ".bin")
-        dataset = Dataset.from_bin_file(file_path, legacy_support=legacy_support, tz=timezone)
+        kwargs.setdefault("tz", kwargs.pop("timezone", tz))
+        dataset = Dataset.from_bin_file(file_path, **kwargs)
 
     if file_path is None and dataset is None:
         raise ValueError("Either 'file_path' or 'dataset' must be supplied as parameter!")
@@ -136,8 +137,7 @@ def load_synced_session_nilspod(
     folder_path: path_t,
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
-    legacy_support: Optional[str] = "resolve",
-    timezone: Optional[Union[datetime.tzinfo, str]] = None,
+    **kwargs,
 ) -> Tuple[pd.DataFrame, float]:
     """Load a synchronized session of NilsPod recordings and convert into dataframes.
 
@@ -158,17 +158,21 @@ def load_synced_session_nilspod(
         * "warn": issue a warning but still return a dataframe
         * "ignore": ignore the counter check result
 
-    legacy_support : {"error", "warn", "resolve"}, optional
-        Flag indicating how to deal with older NilsPod firmware versions:
+    **kwargs
+        optional arguments passed to :func:`~nilspodlib.Session.from_folder_path`, such as:
 
-        * "error": raise an error if an unsupported version is detected
-        * "warn": issue a warning and parse the file without modification
-        * "resolve" (default): perform a legacy conversion to load old files. If no suitable conversion is found,
-          an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
-          to learn more about available conversions.
-    timezone : str or :class:`datetime.tzinfo`, optional
-        timezone of the acquired data, either as string of as tzinfo object.
-        Default: "Europe/Berlin"
+        legacy_support : {"error", "warn", "resolve"}, optional
+            Flag indicating how to deal with older NilsPod firmware versions:
+
+            * "error": raise an error if an unsupported version is detected
+            * "warn": issue a warning and parse the file without modification
+            * "resolve" (default): perform a legacy conversion to load old files. If no suitable conversion is found,
+              an error is raised. See the :any:`nilspodlib.legacy` package and the README of ``nilspodlib``
+              to learn more about available conversions.
+
+        timezone : str or :class:`datetime.tzinfo`, optional
+            timezone of the acquired data, either as string of as tzinfo object.
+            Default: "Europe/Berlin"
 
     Returns
     -------
@@ -184,7 +188,7 @@ def load_synced_session_nilspod(
         if ``handle_counter_inconsistency`` is ``raise`` and counter of any dataset is inconsistent
         (not monotonously increasing).
         If ``legacy_support`` is ``raise`` and so suitable conversion can be found for the files in the session.
-        If sampling rate is not the same for all of datasets in the session
+        If sampling rate is not the same for all datasets in the session
             ValueError
         If ``folder_path`` does not contain any NilsPod files
         If the sampling rates of the files in the folder are not the same
@@ -204,10 +208,8 @@ def load_synced_session_nilspod(
     if len(nilspod_files) == 0:
         raise ValueError("No NilsPod files found in directory!")
 
-    if timezone is None:
-        timezone = tz
-
-    session = SyncedSession.from_folder_path(folder_path, legacy_support=legacy_support, tz=timezone)
+    kwargs.setdefault("tz", kwargs.pop("timezone", tz))
+    session = SyncedSession.from_folder_path(folder_path, **kwargs)
     session.align_to_syncregion(inplace=True)
 
     _handle_counter_inconsistencies_session(session, handle_counter_inconsistency)
@@ -219,7 +221,7 @@ def load_synced_session_nilspod(
     df.index.name = "time"
     if len(set(session.info.sampling_rate_hz)) > 1:
         raise ValueError(
-            "Datasets in the sessions have different sampling rates! Got: {}.".format(session.info.sampling_rate_hz)
+            f"Datasets in the sessions have different sampling rates! Got: {session.info.sampling_rate_hz}."
         )
     fs = session.info.sampling_rate_hz[0]
     return df, fs
@@ -288,7 +290,7 @@ def load_csv_nilspod(
         be silently ignored.
         Default: ``None``
     timezone : str or :class:`datetime.tzinfo`, optional
-        timezone of the acquired data, either as string of as tzinfo object.
+        timezone of the acquired data, either as string or as tzinfo object.
         Default: 'Europe/Berlin'
     filename_regex : str, optional
         regex string to extract time substring from file name or ``None`` to use default file name pattern.
