@@ -77,14 +77,26 @@ class TestIoNilspod:
             load_synced_session_nilspod(folder_path=TEST_FILE_PATH.joinpath(folder_path), legacy_support="warn")
 
     @pytest.mark.parametrize(
+        "folder_path, datastreams",
+        [
+            ("synced_sample_session", None),
+            ("synced_sample_session", "acc"),
+            ("synced_sample_session", "acc"),
+        ],
+    )
+    def test_load_synced_session_nilspod(self, folder_path, datastreams):
+        df, fs = load_synced_session_nilspod(folder_path=TEST_FILE_PATH.joinpath(folder_path), legacy_support="warn")
+        assert isinstance(df, pd.DataFrame)
+        assert isinstance(df.columns, pd.MultiIndex)
+        assert type(fs) == float
+
+    @pytest.mark.parametrize(
         "folder_path, datastreams, timezone",
         [
-            ("synced_sample_session", None, None),
-            ("synced_sample_session", "acc", None),
             ("synced_sample_session", "acc", "Europe/Berlin"),
         ],
     )
-    def test_load_synced_session_nilspod(self, folder_path, datastreams, timezone):
+    def test_load_synced_session_nilspod_timezone(self, folder_path, datastreams, timezone):
         df, fs = load_synced_session_nilspod(
             folder_path=TEST_FILE_PATH.joinpath(folder_path), timezone=timezone, legacy_support="warn"
         )
