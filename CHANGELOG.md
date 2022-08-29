@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.6.2 - xx, 2022
+### Added
+- `biopsykit.io`: Added functions to directly load aTimeLogger files (`biopsykit.io.load_atimelogger_file`) and to 
+  convert time log files into a dictionary with start/end times (`biopsykit.io.convert_time_log_dict`)
+### Bugfixes
+- some small bugfixes
+
 ## Version 0.6.1 - August 19, 2022
 ### Improvements
 - `biopsykit.signals.ecg.EcgProcessor`: improved handling of errors occurring during ECG processing

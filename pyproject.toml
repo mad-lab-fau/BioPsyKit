@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopsykit"
-version = "0.6.2-alpha.2"
+version = "0.6.2-alpha.3"
 description = "A Python package for the analysis of biopsychological data."
 authors = [
     "Robert Richer <robert.richer@fau.de>",
@@ -29,7 +29,7 @@ statannot = "^0.2.3"
 tqdm = "^4"
 joblib = "^1"
 scikit-learn = "^1.0"
-nilspodlib = ">=3.3,<4.0"
+nilspodlib = ">=3.4,<4.0"
 openpyxl = "^3"
 XlsxWriter = "^1"
 xlrd = "^2"

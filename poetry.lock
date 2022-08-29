@@ -1008,17 +1008,18 @@ test = ["astropy", "emd-signal", "pywavelets", "cvxopt", "biosppy (==0.6.1)", "n
 
 [[package]]
 name = "nilspodlib"
-version = "3.3.0"
+version = "3.4.0"
 description = "A Python library to load and convert sensor data recorded by a NilsPod by Portablies."
 category = "main"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.8,<=3.11"
 
 [package.dependencies]
 imucal = ">=2.0.0,<3.0.0"
 numpy = ">=1.19.2,<2.0.0"
 pandas = ">=1.1.3,<2.0.0"
 scipy = ">=1.5.2,<2.0.0"
+typing-extensions = ">=4.3.0,<5.0.0"
 
 [[package]]
 name = "notebook"
@@ -2247,7 +2248,7 @@ mne = ["mne"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "b2b7d272f3060a2c576cbee8fffd66dc138ce802c8a3b42103aedec414942a18"
+content-hash = "7200d1a229670bf501826e3bf1d9745aa15a97d77633e3d27d7e9b740db1389c"
 
 [metadata.files]
 aiohttp = [
