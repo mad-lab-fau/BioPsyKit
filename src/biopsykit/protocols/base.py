@@ -742,7 +742,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             data_dict = cut_phases_to_shortest(data_dict)
 
         if merge_dict:
-            data_dict = merge_study_data_dict(data_dict)
+            param = params.get("merge_dict", None)
+            data_dict = merge_study_data_dict(data_dict, param)
 
         if add_conditions:
             param = params.get("add_conditions", None)
