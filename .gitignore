@@ -1,3 +1,6 @@
+# Ignore playground folder for development
+playground/
+
 # Ignore result folder in examples
 examples/results/
 example_data/log_data/AB12C/
