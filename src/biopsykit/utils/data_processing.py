@@ -415,7 +415,9 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
     return dict_cut
 
 
-def merge_study_data_dict(study_data_dict: StudyDataDict) -> MergedStudyDataDict:
+def merge_study_data_dict(
+    study_data_dict: StudyDataDict, dict_levels: Optional[Sequence[str]] = None
+) -> MergedStudyDataDict:
     """Merge inner dictionary level of :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into one dataframe.
 
     This function removes the inner level of the nested ``StudyDataDict`` by merging data from all subjects
@@ -432,6 +434,8 @@ def merge_study_data_dict(study_data_dict: StudyDataDict) -> MergedStudyDataDict
     study_data_dict : :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
         ``StudyDataDict``, i.e. a dictionary with data from multiple phases, each phase containing data from
         different subjects.
+    dict_levels : list of str
+        list with names of dictionary levels.
 
 
     Returns
@@ -442,11 +446,14 @@ def merge_study_data_dict(study_data_dict: StudyDataDict) -> MergedStudyDataDict
     """
     is_study_data_dict(study_data_dict)
 
+    if dict_levels is None:
+        dict_levels = ["phase", "subject"]
+
     dict_merged = {}
     for phase, dict_phase in study_data_dict.items():
         _assert_dataframes_same_length(list(dict_phase.values()))
-        df_merged = pd.concat(dict_phase, names=["subject"], axis=1)
-        df_merged.columns = df_merged.columns.droplevel(1)
+        df_merged = pd.concat(dict_phase, names=dict_levels[1:], axis=1)
+        df_merged.columns = df_merged.columns.droplevel(-1)
         dict_merged[phase] = df_merged
 
     is_merged_study_data_dict(dict_merged)
@@ -667,7 +674,11 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
             if len(dict_levels) <= 1:
                 raise ValueError("Invalid number of 'dict_levels' specified!")
             # nested dictionary
-            result_data[key] = mean_per_subject_dict(value, dict_levels[1:], param_name)
+            if isinstance(key, (str, int)):
+                key_len = 1
+            else:
+                key_len = len(key)
+            result_data[key] = mean_per_subject_dict(value, dict_levels[key_len:], param_name)
         else:
             value.columns.name = "subject"
             if len(value.columns) == 1:
@@ -675,7 +686,14 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
             df = pd.DataFrame(value.mean(axis=0), columns=[param_name])
             result_data[key] = df
 
-    ret = pd.concat(result_data, names=[dict_levels[0]])
+    key_lengths = list(set(1 if isinstance(k, (str, int)) else len(k) for k in result_data))
+    if len(key_lengths) != 1:
+        raise ValueError("Inconsistent dictionary key lengths!")
+    key_lengths = key_lengths[0]
+    names = dict_levels[0:key_lengths]
+    if isinstance(names, str):
+        names = [names]
+    ret = pd.concat(result_data, names=names)
     if one_col_df:
         ret.index = ret.index.droplevel(-1)
     return ret

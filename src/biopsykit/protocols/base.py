@@ -434,7 +434,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             is_subject_data_dict(rpeak_data)
             self.rpeak_data[study_part] = rpeak_data
 
-    def compute_hr_results(  # pylint:disable=too-many-branches
+    def compute_hr_results(  # pylint:disable=too-many-branches # noqa: C901
         self,
         result_id: str,
         study_part: Optional[str] = None,
@@ -444,6 +444,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         split_into_subphases: Optional[bool] = False,
         mean_per_subject: Optional[bool] = True,
         add_conditions: Optional[bool] = False,
+        reindex: Optional[bool] = False,
         params: Optional[Dict[str, Any]] = None,
     ):
         """Compute heart rate data results from one study part.
@@ -491,6 +492,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
+        reindex : bool, optional
+            ``True`` to reindex index levels of the resulting dataframe. Reindex index levels can be provided
+            in the ``params`` dictionary as a dictionary with index levels as keys and index orders as values
+            (key: ``reindex``).
+            Default: ``False``
         params : dict, optional
             dictionary with parameters provided to the different processing steps
 
@@ -528,7 +534,22 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             param = params.get("add_conditions", None)
             data_dict = add_subject_conditions(data_dict, param)
 
+        if reindex:
+            param = params.get("reindex", None)
+            data_dict = BaseProtocol._reindex_df(data_dict, param)
+
         self.hr_results[result_id] = data_dict
+
+    @staticmethod
+    def _reindex_df(data: pd.DataFrame, param: Dict[str, Any]) -> pd.DataFrame:
+        if not isinstance(param, dict):
+            raise ValueError(
+                "If 'reindex' is 'True', a dictionary with dataframe levels as keys "
+                "and new index orders as values is expected!"
+            )
+        for level, index_values in param.items():
+            data = data.reindex(index_values, level=level)
+        return data
 
     def compute_hrv_results(  # pylint:disable=too-many-branches
         self,

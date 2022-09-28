@@ -947,7 +947,6 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
         for df in data.values():
             _assert_is_dtype(df, pd.DataFrame)
             _assert_has_multiindex(df, expected=False)
-            _assert_has_column_multiindex(df, expected=False)
             _assert_has_index_levels(df, ["time"])
     except ValidationError as e:
         if raise_exception is True:
