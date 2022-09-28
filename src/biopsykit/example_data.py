@@ -54,6 +54,7 @@ __all__ = [
     "get_hr_result_sample",
     "get_hr_ensemble_sample",
     "get_hr_subject_data_dict_example",
+    "get_hr_subject_data_dict_tuple_example",
     "get_ecg_processing_results_path_example",
     "get_ecg_path_example",
     "get_ecg_example",
@@ -251,6 +252,25 @@ def get_hr_subject_data_dict_example() -> HeartRateSubjectDataDict:
     for subject_id in subject_ids:
         file_path = _get_data(f"ecg_results/hr_result_{subject_id}.xlsx")
         study_data_dict_hr[subject_id] = pd.read_excel(file_path, sheet_name=None, index_col="time")
+    return study_data_dict_hr
+
+
+def get_hr_subject_data_dict_tuple_example() -> HeartRateSubjectDataDict:
+    """Return heart rate example data in the form of a \
+    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`, but with tuples as keys instead of strings.
+
+    Returns
+    -------
+    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+        dictionary with heart rate time-series, each containing data from different phases.
+
+    """
+    study_data_dict_hr = {}
+    subject_ids = ["Vp01", "Vp02"]
+    keys = [("Vp01", "Control"), ("Vp01", "Intervention")]
+    for subject_id, key in zip(subject_ids, keys):
+        file_path = _get_data(f"ecg_results/hr_result_{subject_id}.xlsx")
+        study_data_dict_hr[key] = pd.read_excel(file_path, sheet_name=None, index_col="time")
     return study_data_dict_hr
 
 
