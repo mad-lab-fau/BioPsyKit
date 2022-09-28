@@ -7,7 +7,6 @@ import pandas as pd
 import seaborn as sns
 from statannot import add_stat_annotation
 
-from biopsykit.utils.dataframe_handling import multi_xs
 from biopsykit.utils.functions import se
 
 _PVALUE_THRESHOLDS = [[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]
@@ -393,7 +392,6 @@ def _feature_boxplot_sanitize_stats_kwargs(stats_kwargs: Dict[str, Any]) -> Dict
     return stats_kwargs
 
 
-# TODO "group" parameter should always be "x"? check if "group" can be omitted
 def multi_feature_boxplot(  # pylint:disable=too-many-branches
     data: pd.DataFrame,
     x: str,
@@ -502,9 +500,9 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     handles = None
     labels = None
     for ax, key in zip(axs, features):
-        data_plot = multi_xs(data, features[key], level=group)
+        data_plot = data.reindex(features[key], level=group)
         if data_plot.empty:
-            raise ValueError("Empty dataframe for '{}'!".format(key))
+            raise ValueError(f"Empty dataframe for '{key}'!")
 
         order_list = _multi_feature_boxplot_get_order(order, key)
 
