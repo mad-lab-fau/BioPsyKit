@@ -1124,7 +1124,7 @@ def saliva_multi_feature_boxplot(
         # ensure list
         features = [features]
     if isinstance(features, list):
-        features = {f: f for f in features}
+        features = {f: [f] if isinstance(f, str) else f for f in features}
 
     kwargs.setdefault("xticklabels", _saliva_feature_boxplot_get_xticklabels(features))
     kwargs.setdefault("ylabels", _saliva_feature_boxplot_get_ylabels(saliva_type, features))
