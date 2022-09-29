@@ -486,7 +486,7 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     rect = kwargs.pop("rect", (0, 0, 0.825, 1.0) if legend_orientation == "vertical" else (0, 0, 1, 0.925))
 
     if isinstance(features, list):
-        features = {f: f for f in features}
+        features = {f: [f] if isinstance(f, str) else f for f in features}
 
     axs: List[plt.Axes] = kwargs.pop("axs", kwargs.pop("ax", None))
     fig, axs = _plot_get_fig_ax_list(features, axs, **kwargs)
