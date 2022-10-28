@@ -1346,6 +1346,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
             To style axes:
 
+            * ``is_relative``: boolean indicating whether heart rate data is relative (in % relative to baseline)
+              or absolute (in bpm). Default: ``True``
             * ``xlabel``: label of x axis. Default: ":math:`Time [s]`"
             * ``xaxis_minor_tick_locator``: locator object to style x axis minor ticks. Default: 60 sec
             * ``ylabel``: label of y axis. Default: ":math:`\Delta HR [\%]`"

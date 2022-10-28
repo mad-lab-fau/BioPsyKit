@@ -36,7 +36,7 @@ _hr_ensemble_plot_params = {
     "background_alpha": 0.1,
     "xlabel": r"Time [s]",
     "xaxis_minor_tick_locator": mticks.MultipleLocator(60),
-    "ylabel": r"$\Delta$HR [%]",
+    "ylabel": "Heart Rate [bpm]",
     "legend_loc": "lower right",
     "legend_bbox_to_anchor": (0.99, 0.01),
     "phase_text": "{}",
@@ -171,6 +171,8 @@ def hr_ensemble_plot(
 
         To style axes:
 
+        * ``is_relative``: boolean indicating whether heart rate data is relative (in % relative to baseline)
+          or absolute (in bpm). Default: ``True``
         * ``xlabel``: label of x axis. Default: ":math:`Time [s]`"
         * ``xaxis_minor_tick_locator``: locator object to style x axis minor ticks. Default: 60 sec
         * ``ylabel``: label of y axis. Default: ":math:`\Delta HR [\%]`"
@@ -230,7 +232,10 @@ def hr_ensemble_plot(
     linestyle = kwargs.get("linestyle", _hr_ensemble_plot_params.get("linestyle"))
 
     xlabel = kwargs.get("xlabel", _hr_ensemble_plot_params.get("xlabel"))
-    ylabel = kwargs.get("ylabel", _hr_ensemble_plot_params.get("ylabel"))
+    ylabel_default = _hr_ensemble_plot_params.get("ylabel")
+    if kwargs.get("is_relative", True):
+        ylabel_default = r"$\Delta$ HR [%]"
+    ylabel = kwargs.get("ylabel", ylabel_default)
     ylims = kwargs.get("ylims", _hr_ensemble_plot_params.get("ylims"))
     xaxis_minor_tick_locator = kwargs.get(
         "xaxis_minor_tick_locator", _hr_ensemble_plot_params.get("xaxis_minor_tick_locator")
