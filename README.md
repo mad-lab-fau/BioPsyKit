@@ -280,7 +280,7 @@ print(pipeline_permuter.metric_summary())
 
 ## Installation
 
-``BioPsyKit`` requires Python >=3.7. First, install a compatible version of Python. Then install ``BioPsyKit`` via pip. 
+``BioPsyKit`` requires Python >=3.8. First, install a compatible version of Python. Then install ``BioPsyKit`` via pip. 
 
 Installation from [PyPi](https://pypi.org/): 
 ```bash
@@ -335,6 +335,10 @@ lint                 Lint all files with Prospector.
 test                 Run Pytest with coverage.
 update_version       Bump the version in pyproject.toml and biopsykit.__init__ .
 ```
+
+**Note**: The `poe` commands are only available if you are in the virtual environment associated with this project. 
+You can either activate the virtual environment manually (e.g., `source .venv/bin/activate`) or use the `poetry shell` 
+command to spawn a new shell with the virtual environment activated.
 
 ----
 **Note**: In order to build the documentation, you need to additionally install [pandoc](https://pandoc.org/installing.html).
