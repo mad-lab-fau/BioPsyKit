@@ -578,7 +578,7 @@ class StatsPipeline:
 
             list_pairs = dict_box_pairs.setdefault(key, [])
             list_pvalues = dict_pvalues.setdefault(key, [])
-            for i, (idx, sig_pair) in enumerate(box_pairs.iteritems()):
+            for i, (idx, sig_pair) in enumerate(box_pairs.items()):
                 if idx in features_list:
                     list_pairs.append(sig_pair)
                     list_pvalues.append(pvalues[i])
@@ -878,7 +878,7 @@ class StatsPipeline:
 
         if len(group_cols) == 0:
             return self._multicomp_lambda(data, method=method)
-        return data.groupby(group_cols).apply(lambda df: self._multicomp_lambda(df, method=method))
+        return data.groupby(group_cols, group_keys=True).apply(lambda df: self._multicomp_lambda(df, method=method))
 
     @classmethod
     def _multicomp_get_levels(cls, levels: Union[bool, str, Sequence[str]], data: pd.DataFrame) -> Sequence[str]:
