@@ -932,7 +932,7 @@ def hrv_frequency_plot(
         fig = ax.get_figure()
 
     rpeaks = sanitize_input_1d(rpeaks["R_Peak_Idx"])
-    rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate, interpolate=True)[0]
+    rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate)[0]
     hrv = nk.hrv_frequency(rpeaks, sampling_rate)
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]
     out_bands.columns = [col.replace("HRV_", "") for col in out_bands.columns]
