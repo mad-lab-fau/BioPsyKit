@@ -548,6 +548,50 @@ def _multi_feature_boxplot_get_order(order: Union[Dict[str, Sequence[str]], Sequ
     return order
 
 
+def feature_pairplot(
+    data: pd.DataFrame, abbreviate_names: Optional[bool] = True, **kwargs
+) -> Union[sns.PairGrid, Tuple[sns.PairGrid, pd.DataFrame]]:
+    """Plot feature pairs of a dataset.
+
+    This function provides a convenient interface to the :func:`~seaborn.pairplot` class, with several additional
+    features, such as showing abbreviated feature names in the plot with a description below the plot.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        DataFrame with feature data to plot. Data is expected to be in wide format.
+    abbreviate_names : bool, optional
+        if ``True``, feature names are abbreviated in the plot and a description is shown below the plot.
+    **kwargs
+        additional keyword arguments are passed down to :func:`~seaborn.pairplot`
+
+    Returns
+    -------
+    :class:`~seaborn.FacetGrid`
+        :class:`~seaborn.FacetGrid` object with the pairplot in it.
+
+    See Also
+    --------
+    :class:`~seaborn.pairplot`
+        seaborn class to create pairplots
+
+    """
+    if abbreviate_names:
+        data = data.copy()
+        feature_names = data.columns
+        # assign numbers to column names
+        data.columns = range(len(data.columns))
+        data.columns = data.columns.astype(str)
+        data = data.add_prefix("feature #")
+
+        # dataframe with assignment of column names to numbers
+        feature_names_df = pd.DataFrame(feature_names, columns=["feature_name"])
+        feature_names_df.index.name = "feature_id"
+        return sns.pairplot(data=data.reset_index(), **kwargs), feature_names_df
+
+    return sns.pairplot(data=data.reset_index(), **kwargs)
+
+
 def _get_df_lineplot(data: pd.DataFrame, x: str, y: str, hue: str, order: Sequence[str]) -> pd.DataFrame:
     if "mean" in data.columns and "se" in data.columns:
         m_se = data
