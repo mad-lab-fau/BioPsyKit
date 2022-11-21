@@ -1,9 +1,17 @@
 # Changelog
 
-## Version 0.6.2 - xx, 2022
+## Version 0.6.2 - November 21, 2022
 ### Added
 - `biopsykit.io`: Added functions to directly load aTimeLogger files (`biopsykit.io.load_atimelogger_file`) and to 
   convert time log files into a dictionary with start/end times (`biopsykit.io.convert_time_log_dict`)
+- `biopsykit.plotting`: Added function to conveniently plot feature pairs (`biopsykit.plotting.feature_pairplot`), 
+  which is a wrapper function for `seaborn.pairplot`
+### Improvements
+- Adapted code to don't show pandas future warnings anymore
+- `biopsykit.plotting.hr_ensemble_plot`: Added "is_relative" argument to style y-axis accordingly
+- `biopsykit.stats.StatsPipeline`: Improved latex export for different effect sizes
+- `biopsykit.io.nilspod`: Improved handling of loading NilsPods files
+- `biopsykit.utils.data_processing`: Added support for data dicts with tuples instead of strings as keys
 ### Bugfixes
 - some small bugfixes
 
