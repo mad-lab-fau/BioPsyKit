@@ -787,7 +787,7 @@ def hrv_poincare_plot(
         y=rri[1:],
         ax=axs[0],
         n_levels=20,
-        shade=True,
+        fill=True,
         thresh=0.05,
         alpha=0.8,
     )
