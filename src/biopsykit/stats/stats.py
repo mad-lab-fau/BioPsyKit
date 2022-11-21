@@ -878,7 +878,7 @@ class StatsPipeline:
 
         if len(group_cols) == 0:
             return self._multicomp_lambda(data, method=method)
-        return data.groupby(group_cols, group_keys=True).apply(lambda df: self._multicomp_lambda(df, method=method))
+        return data.groupby(group_cols, group_keys=False).apply(lambda df: self._multicomp_lambda(df, method=method))
 
     @classmethod
     def _multicomp_get_levels(cls, levels: Union[bool, str, Sequence[str]], data: pd.DataFrame) -> Sequence[str]:
