@@ -932,11 +932,15 @@ def hrv_frequency_plot(
         fig = ax.get_figure()
 
     rpeaks = sanitize_input_1d(rpeaks["R_Peak_Idx"])
-    rri = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate)[0]
+
+    rri, rri_time, _ = _hrv_get_rri(rpeaks, sampling_rate=sampling_rate)
+    rri, rri_time, fs = nk.intervals_process(
+        rri, intervals_time=rri_time, interpolate=True, interpolation_rate=sampling_rate
+    )
     hrv = nk.hrv_frequency(rpeaks, sampling_rate)
     out_bands = hrv[["HRV_ULF", "HRV_VLF", "HRV_LF", "HRV_HF", "HRV_VHF"]]
     out_bands.columns = [col.replace("HRV_", "") for col in out_bands.columns]
-    _hrv_frequency_show(rri, out_bands, sampling_rate=256, ax=ax)
+    _hrv_frequency_show(rri, out_bands, sampling_rate=fs, ax=ax)
 
     ax.set_title("Power Spectral Density (PSD)")
     ax.set_ylabel("Spectrum $[{ms}^2/Hz]$")
