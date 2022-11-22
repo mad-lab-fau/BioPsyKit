@@ -127,7 +127,7 @@ class BiopacDataset:
 
     @property
     def event_markers(self):
-        """Event markers set in the Acqknowledge software during the recording."""
+        """Event markers set in the AcqKnowledge software during the recording."""
         return self._event_markers
 
     def data_as_df(

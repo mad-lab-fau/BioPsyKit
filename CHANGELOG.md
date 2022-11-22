@@ -1,9 +1,11 @@
 # Changelog
 
-## Version 0.6.2 - November 21, 2022
+## Version 0.7.0 - November 22, 2022
 ### Added
-- `biopsykit.io`: Added functions to directly load aTimeLogger files (`biopsykit.io.load_atimelogger_file`) and to 
-  convert time log files into a dictionary with start/end times (`biopsykit.io.convert_time_log_dict`)
+- `biopsykit.io`: 
+  - Added functions to directly load aTimeLogger files (`biopsykit.io.load_atimelogger_file`) and to 
+    convert time log files into a dictionary with start/end times (`biopsykit.io.convert_time_log_dict`)
+  - Added support for loading data acquired from the [Biopac](https://www.biopac.com/) system (`biopsykit.io.biopac`)
 - `biopsykit.plotting`: Added function to conveniently plot feature pairs (`biopsykit.plotting.feature_pairplot`), 
   which is a wrapper function for `seaborn.pairplot`
 ### Improvements
