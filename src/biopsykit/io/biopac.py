@@ -211,6 +211,7 @@ class BiopacDataset:
             return data
         if index is None:
             data = data.reset_index(drop=True)
+            data.index.name = index_name
             return data
         if index == "utc":
             # convert counter to utc timestamps
