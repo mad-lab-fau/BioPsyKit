@@ -145,6 +145,7 @@ class BiopacDataset:
         index : str, optional
             Specify which index should be used for the dataset. The options are:
             * "time": For the time in seconds since the first sample
+            * "utc": For the utc time stamp of each sample
             * "utc_datetime": for a pandas DateTime index in UTC time
             * "local_datetime": for a pandas DateTime index in the timezone set for the session
             * None: For a simple index (0...N)
