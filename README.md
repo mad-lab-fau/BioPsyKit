@@ -334,15 +334,22 @@ format_check         Check, but not change, formatting using black.
 lint                 Lint all files with Prospector.
 test                 Run Pytest with coverage.
 update_version       Bump the version in pyproject.toml and biopsykit.__init__ .
+register_ipykernel   Register a new IPython kernel named `biopsykit` linked to the virtual environment.
+remove_ipykernel     Remove the associated IPython kernel.
 ```
 
-**Note**: The `poe` commands are only available if you are in the virtual environment associated with this project. 
+----
+#### Some Notes
+
+* The `poe` commands are only available if you are in the virtual environment associated with this project. 
 You can either activate the virtual environment manually (e.g., `source .venv/bin/activate`) or use the `poetry shell` 
 command to spawn a new shell with the virtual environment activated.
 
-----
-**Note**: In order to build the documentation, you need to additionally install [pandoc](https://pandoc.org/installing.html).
+* In order to use jupyter notebooks with the project you need to register a new IPython 
+kernel associated with the venv of the project (`poe register_ipykernel` - see below). 
+When creating a notebook, make to sure to select this kernel (top right corner of the notebook).
 
+* In order to build the documentation, you need to additionally install [pandoc](https://pandoc.org/installing.html).
 ----
 
 See the [Contributing Guidelines](https://biopsykit.readthedocs.io/en/latest/source/contributing/CONTRIBUTING.html) for further information.

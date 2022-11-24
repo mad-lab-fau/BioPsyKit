@@ -111,10 +111,11 @@ _isort_check = "isort **/*.py --check-only"
 
 # Reformat all files using black and sort import
 docs = {"script" = "_tasks:task_docs"}
-format = ["_black", "_isort"]
+format = { sequence = ["_black", "_isort"], help = "Format all files." }
 format_check = ["_black_check", "_isort_check"]
-lint = "prospector"
-test = "pytest --cov=biopsykit --cov-report=xml"
+lint = {cmd = "prospector", help = "Lint all files with Prospector." }
+test = {cmd = "pytest --cov=biopsykit --cov-report=xml", help = "Run Pytest with coverage." }
 update_version = {"script" = "_tasks:task_update_version"}
-register_ipykernel = "python -m ipykernel install --user --name biopsykit --display-name biopsykit"
-default = ["format", "lint", "test"]
+register_ipykernel = { cmd = "python -m ipykernel install --user --name biopsykit --display-name biopsykit", help = "Add a new jupyter kernel for the project." }
+remove_ipykernel = { cmd = "jupyter kernelspec uninstall biopsykit", help = "Remove the project specific jupyter kernel."}
+default = {sequence = ["format", "lint", "test"], help = "Run the default pipeline, consisting of formatting, linting, and testing."}
