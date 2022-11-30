@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.7.1 - November 30, 2022
+### Bugfixes
+- `bp.io.biopac`:wrong index name for dataframe export when setting parameter `"index = None"`
+
 ## Version 0.7.0 - November 22, 2022
 ### Added
 - `biopsykit.io`: 
