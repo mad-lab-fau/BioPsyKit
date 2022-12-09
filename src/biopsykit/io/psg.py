@@ -1,11 +1,10 @@
 """Module for importing data recorded by a PSG system (expects .edf files)."""
 
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
 from biopsykit.utils._types import path_t, str_t
 from typing import Dict, Optional, Sequence, Tuple, Union, Literal
 
 import pandas as pd
-from empkins_io.sensors.psg.psg_channels import PSG_CHANNELS_MESA, PSG_CHANNELS_SOMNO
 
 import datetime
 import warnings
@@ -15,8 +14,6 @@ import mne
 
 
 __all__ = ["PSGDataset"]
-
-DATASTREAMS = Literal[PSG_CHANNELS_SOMNO, PSG_CHANNELS_MESA]
 
 
 
@@ -32,7 +29,8 @@ class PSGDataset:
         for name, data in data_dict.items():
             setattr(self, name, data)
         for name, sampling_rate in sampling_rate_dict.items():
-            setattr(self, f"sampling_rate_hz_{name}", sampling_rate)
+            #setattr(self, f"sampling_rate_hz_{name}", sampling_rate)
+            setattr(self, "sampling_rate",sampling_rate)
         setattr(self, "channels", list(self._data.keys()))
         self._sampling_rate = sampling_rate_dict
         self._start_time_unix = start_time
@@ -42,7 +40,7 @@ class PSGDataset:
     def from_edf_file(
             cls,
             path: path_t,
-            datastreams: Optional[Union[DATASTREAMS, Sequence[DATASTREAMS]]] = None,
+            datastreams: Optional[Sequence] = None,
             tz: Optional[str] = "Europe/Berlin",
     ):
 
@@ -99,7 +97,7 @@ class PSGDataset:
     @classmethod
     def load_data_folder(cls,
                          folder_path: path_t,
-                         datastreams: Optional[Union[DATASTREAMS, Sequence[DATASTREAMS]]] = None,
+                         datastreams: Optional[Sequence] = None,
                          timezone: Optional[Union[datetime.tzinfo, str]] = None,
                          ):
         _assert_is_dir(folder_path)
@@ -120,7 +118,7 @@ class PSGDataset:
     @classmethod
     def load_data(cls,
                   path: path_t,
-                  datastreams: Optional[Union[DATASTREAMS, Sequence[DATASTREAMS]]] = None,
+                  datastreams: Optional[Sequence] = None,
                   timezone: Optional[Union[datetime.tzinfo, str]] = None,
                   ):
         data_psg, fs = cls.load_data_raw(path, timezone)
