@@ -19,7 +19,7 @@ from biopsykit.io import (
 )
 from biopsykit.io.carwatch_logs import load_log_one_subject
 from biopsykit.io.ecg import load_hr_phase_dict
-from biopsykit.io.eeg import load_eeg_raw_muse
+from biopsykit.io.eeg import load_eeg_raw_muse, MuseDataset
 from biopsykit.io.nilspod import load_dataset_nilspod
 from biopsykit.io.saliva import load_saliva_plate, load_saliva_wide_format
 from biopsykit.io.sleep_analyzer import (
@@ -500,7 +500,7 @@ def get_sleep_imu_example() -> Tuple[pd.DataFrame, float]:
     return load_dataset_nilspod(file_path=_get_data("sleep_imu/sleep_imu_sample_01.bin"))
 
 
-def get_eeg_example() -> Tuple[pd.DataFrame, float]:
+def get_eeg_example() -> MuseDataset:
     """Return raw EEG example data collected from a Muse EEG headband.
 
     Returns
@@ -511,7 +511,7 @@ def get_eeg_example() -> Tuple[pd.DataFrame, float]:
         sampling rate of recorded data
 
     """
-    return load_eeg_raw_muse(_get_data("eeg_muse_example.csv"))
+    return MuseDataset.from_csv_file(_get_data("eeg_muse_example.csv"), tz="Europe/Berlin")
 
 
 def get_car_watch_log_path_example() -> path_t:
