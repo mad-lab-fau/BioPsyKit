@@ -11,6 +11,7 @@ __all__ = ["load_eeg_raw_muse", "MuseDataset"]
 
 
 class MuseDataset:
+    """Class for loading and processing EEG data from the Muse EEG wearable headband."""
 
     SAMPLING_RATE_HZ = 250.0
     _start_time_unix: pd.Timestamp
@@ -61,12 +62,12 @@ class MuseDataset:
 
     @property
     def sampling_rate_hz(self):
-        """Sampling rate of the EEG data in Hz."""
+        """Return the sampling rate of the EEG data in Hz."""
         return self.SAMPLING_RATE_HZ
 
     @property
     def timezone(self) -> str:
-        """Timezone of the recording."""
+        """Return the timezone of the recording."""
         return self._tz
 
     def data_as_df(self, index: Optional[str] = None) -> pd.DataFrame:
