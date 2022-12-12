@@ -578,7 +578,7 @@ def feature_pairplot(
     """
     if abbreviate_names:
         data = data.copy()
-        feature_names = data.columns
+        feature_names = list(data.columns)
         # assign numbers to column names
         data.columns = range(len(data.columns))
         data.columns = data.columns.astype(str)
