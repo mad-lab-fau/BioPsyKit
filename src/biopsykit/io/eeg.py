@@ -1,6 +1,6 @@
 """I/O functions for files related to EEG processing."""
 import warnings
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import pandas as pd
 

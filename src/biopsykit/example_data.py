@@ -19,7 +19,7 @@ from biopsykit.io import (
 )
 from biopsykit.io.carwatch_logs import load_log_one_subject
 from biopsykit.io.ecg import load_hr_phase_dict
-from biopsykit.io.eeg import load_eeg_raw_muse, MuseDataset
+from biopsykit.io.eeg import MuseDataset, load_eeg_raw_muse
 from biopsykit.io.nilspod import load_dataset_nilspod
 from biopsykit.io.saliva import load_saliva_plate, load_saliva_wide_format
 from biopsykit.io.sleep_analyzer import (
