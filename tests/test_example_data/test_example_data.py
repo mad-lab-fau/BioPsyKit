@@ -200,9 +200,9 @@ class TestExampleData:
         assert fs == 204.8
 
     def test_get_eeg_example(self):
-        data, fs = get_eeg_example()
-        _assert_is_dtype(data, pd.DataFrame)
-        assert fs == 250.0
+        dataset = get_eeg_example()
+        _assert_is_dtype(dataset.data_as_df(index=None), pd.DataFrame)
+        assert dataset.sampling_rate_hz == 250.0
 
     def test_get_car_watch_log_data_example(self):
         data = get_car_watch_log_data_example()
