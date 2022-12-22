@@ -87,7 +87,7 @@ class PSGDataset:
         """Load ground truth data from a .xlsx file which can be exported from the Analyse Sofeware Somnomedics.
         Other formats are not supported yet and raise a FileNotFoundError.
         path: path to the .xlsx file
-        :return: ground truth data as pandas DataFrame
+        return: ground truth data as pandas DataFrame
 """
         file_path = path.parents[1].joinpath("labels/PSG_analyse.xlsx")
         try:
