@@ -1,14 +1,14 @@
 """Module for importing data recorded by a PSG system (expects .edf files)."""
 
-from biopsykit.utils._types import path_t, str_t
-from typing import Dict, Optional, Sequence, Tuple, Union, Literal
+from biopsykit.utils._types import path_t
+from typing import Dict, Optional, Sequence, Union
 
 import pandas as pd
 
 import datetime
 import warnings
 from pathlib import Path
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir, _assert_is_file
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
 import mne
 
 __all__ = ["PSGDataset"]
@@ -117,13 +117,18 @@ class PSGDataset:
         data_dict: dict of datastreams
         fs: sampling rate
         start_time: start time of the recording
+        -------
+        Raises
+        -------
+        FileNotFoundError: if no .edf file is found in the folder
+        ValueError: if more than one .edf file is found in the folder
         """
         _assert_is_dir(folder_path)
 
         # look for all PSG .edf files in the folder
         dataset_list = list(sorted(folder_path.glob("*.edf")))
         if len(dataset_list) == 0:
-            raise ValueError(f"No PSG files found in folder {folder_path}!")
+            raise FileNotFoundError(f"No PSG files found in folder {folder_path}!")
         if len(dataset_list) > 1:
             raise ValueError(
                 f"More than one PSG files found in folder {folder_path}! This function only supports one recording per folder!"
@@ -152,18 +157,23 @@ class PSGDataset:
         data_dict: dict of datastreams
         fs: sampling rate
         start_time: start time of the recording
+        -------
+        Raises
+        -------
+        Value Error: Not all datastreams are found in the .edf file
         """
-        _assert_is_file(path)
 
+        # load raw data
         data_psg, fs = cls.load_data_raw(path, timezone)
 
+        # select datastreams to extract
         if datastreams is None:
             datastreams = data_psg.ch_names
         if isinstance(datastreams, str):
             datastreams = [datastreams]
 
+        # save extracted datastreams in dict
         result_dict = {}
-
         for datastream in datastreams:
             try:
                 time, epochs, start_time = cls._create_datetime_index(data_psg.info["meas_date"], times_array=data_psg.times)
@@ -213,8 +223,11 @@ class PSGDataset:
     def _create_datetime_index(cls, starttime, times_array):
         """Create a datetime index from the start time and the times array."""
         starttime_s = starttime.timestamp()
+        # add start time to array of timestamps
         times_array = times_array + starttime_s
+        # convert to datetime
         datetime_index = pd.to_datetime(times_array, unit="s")
+        # generate epochs from datetime index
         epochs, start_time = cls._generate_epochs(datetime_index)
         return datetime_index, epochs, start_time
 
@@ -222,7 +235,7 @@ class PSGDataset:
     def _generate_epochs(cls, datetime_index):
         """Generate epochs from a datetime index."""
         start_time = datetime_index[0]
-
+        # round to 30 second epochs
         epochs_30s = datetime_index.round("30s")
 
         epochs_clear = (epochs_30s - start_time).total_seconds()
