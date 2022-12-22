@@ -1,15 +1,15 @@
 """Module for importing data recorded by a PSG system (expects .edf files)."""
 
-from biopsykit.utils._types import path_t
-from typing import Dict, Optional, Sequence, Union
-
-import pandas as pd
-
 import datetime
 import warnings
 from pathlib import Path
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
+from typing import Dict, Optional, Sequence, Union
+
 import mne
+import pandas as pd
+
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
+from biopsykit.utils._types import path_t
 
 __all__ = ["PSGDataset"]
 
@@ -18,8 +18,11 @@ class PSGDataset:
     """Class for loading and processing PSG data."""
 
     def __init__(
-            self, data_dict: Dict[str, pd.DataFrame], sampling_rate_dict: Dict[str, int], start_time: Optional[pd.Timestamp] = None,
-            tz: Optional[str] = None,
+        self,
+        data_dict: Dict[str, pd.DataFrame],
+        sampling_rate_dict: Dict[str, int],
+        start_time: Optional[pd.Timestamp] = None,
+        tz: Optional[str] = None,
     ):
 
         self._data = data_dict
@@ -34,35 +37,33 @@ class PSGDataset:
 
     @classmethod
     def from_edf_file(
-            cls,
-            path: path_t,
-            datastreams: Optional[Sequence] = None,
-            tz: Optional[str] = "Europe/Berlin",
+        cls,
+        path: path_t,
+        datastreams: Optional[Sequence] = None,
+        tz: Optional[str] = "Europe/Berlin",
     ):
         """Create a new Dataset from a valid .edf file.
-        ----------
+
         Parameters
         ----------
-        path : path_t: Path to the .edf file
-        datastreams : Optional[Sequence], optional : List of datastreams to load, by default None. If None, all datastreams are loaded.
-        tz : Optional[str], optional : Timezone of the recording, by default "Europe/Berlin".
-        ----------
-        Returns
-        ----------
-        PSGDataset : New Dataset instance
-        """
+        path : :class:`pathlib.Path` or str
+            Path to the .edf file
+        datastreams : Optional[Sequence], optional
+            List of datastreams to load, by default None. If None, all datastreams are loaded.
+        tz : Optional[str], optional
+            Timezone of the recording, by default "Europe/Berlin".
 
+        Returns
+        -------
+        PSGDataset : New Dataset instance
+
+        """
         if path.is_dir():
             data_dict, fs, start_time = cls.load_data_folder(path, datastreams, tz)
         else:
             data_dict, fs, start_time = cls.load_data(path, datastreams, tz)
 
-        return cls(
-            data_dict=data_dict,
-            sampling_rate_dict={"sampling_rate": fs},
-            start_time=start_time,
-            tz=tz
-        )
+        return cls(data_dict=data_dict, sampling_rate_dict={"sampling_rate": fs}, start_time=start_time, tz=tz)
 
     @property
     def start_time_unix(self) -> Optional[pd.Timestamp]:
@@ -83,12 +84,21 @@ class PSGDataset:
 
         return data
 
-    def load_ground_truth(self, path: path_t, ):
+    def load_ground_truth(
+        self,
+        path: path_t,
+    ):
         """Load ground truth data from a .xlsx file which can be exported from the Analyse Sofeware Somnomedics.
-        Other formats are not supported yet and raise a FileNotFoundError.
-        path: path to the .xlsx file
-        return: ground truth data as pandas DataFrame
-"""
+
+        .. note::
+            Other formats are not supported yet and raise a FileNotFoundError.
+
+        path : :class:`pathlib.Path` or str
+            path to the .xlsx file
+        return: pd.DataFrame
+            ground truth data as pandas DataFrame
+
+        """
         file_path = path.parents[1].joinpath("labels/PSG_analyse.xlsx")
         try:
             sleep_phases = pd.read_excel(file_path, sheet_name="Schlafprofil", header=7, index_col=0)
@@ -100,29 +110,34 @@ class PSGDataset:
         # TODO: Read in excel or txt files with sleep labels
 
     @classmethod
-    def load_data_folder(cls,
-                         folder_path: path_t,
-                         datastreams: Optional[Sequence] = None,
-                         timezone: Optional[Union[datetime.tzinfo, str]] = "Europe/Berlin",
-                         ):
+    def load_data_folder(
+        cls,
+        folder_path: path_t,
+        datastreams: Optional[Sequence] = None,
+        timezone: Optional[Union[datetime.tzinfo, str]] = "Europe/Berlin",
+    ):
         """Load data from a folder containing a single .edf file.
-        ----------
+
         Parameters
         ----------
-        folder_path: path to the folder containing the .edf file
-        datastreams: list of datastreams to load. If None, all datastreams are loaded
-        timezone: timezone of the recording. If None, the timezone is set to UTC
-        -------
+        folder_path : :class:`pathlib.Path` or str
+            path to the folder containing the .edf file
+        datastreams: lst, optional
+            list of datastreams to load. If None, all datastreams are loaded
+        timezone: str, optional
+            timezone of the recording. If None, the timezone is set to UTC
+
         Returns
         -------
         data_dict: dict of datastreams
         fs: sampling rate
         start_time: start time of the recording
-        -------
+
         Raises
-        -------
+        ------
         FileNotFoundError: if no .edf file is found in the folder
         ValueError: if more than one .edf file is found in the folder
+
         """
         _assert_is_dir(folder_path)
 
@@ -132,7 +147,8 @@ class PSGDataset:
             raise FileNotFoundError(f"No PSG files found in folder {folder_path}!")
         if len(dataset_list) > 1:
             raise ValueError(
-                f"More than one PSG files found in folder {folder_path}! This function only supports one recording per folder!"
+                f"More than one PSG files found in folder {folder_path}!"
+                f"This function only supports one recording per folder!"
             )
 
         result_dict, fs, start_time = cls.load_data(path_t.joinpath(dataset_list[0]), datastreams, timezone)
@@ -140,30 +156,34 @@ class PSGDataset:
         return result_dict, fs, start_time
 
     @classmethod
-    def load_data(cls,
-                  path: path_t,
-                  datastreams: Optional[Sequence] = None,
-                  timezone: Optional[Union[datetime.tzinfo, str]] = "Europe/Berlin",
-                  ):
+    def load_data(
+        cls,
+        path: path_t,
+        datastreams: Optional[Sequence] = None,
+        timezone: Optional[Union[datetime.tzinfo, str]] = "Europe/Berlin",
+    ):
         """Load PSG data from a valid .edf file.
-        ----------
+
         Parameters
         ----------
-        path: path to the .edf file
-        datastreams: list of datastreams to load. If None, all datastreams are loaded
-        timezone: timezone of the recording. If None, the timezone is set to UTC
-        -------
+        path : :class:`pathlib.Path` or str
+            path to the .edf file
+        datastreams: lst, optional
+            list of datastreams to load. If None, all datastreams are loaded
+        timezone: str, optional
+            timezone of the recording. If None, the timezone is set to UTC
+
         Returns
         -------
         data_dict: dict of datastreams
         fs: sampling rate
         start_time: start time of the recording
-        -------
-        Raises
-        -------
-        Value Error: Not all datastreams are found in the .edf file
-        """
 
+        Raises
+        ------
+        Value Error: Not all datastreams are found in the .edf file
+
+        """
         # load raw data
         data_psg, fs = cls.load_data_raw(path, timezone)
 
@@ -177,34 +197,40 @@ class PSGDataset:
         result_dict = {}
         for datastream in datastreams:
             try:
-                time, epochs, start_time = cls._create_datetime_index(data_psg.info["meas_date"], times_array=data_psg.times)
+                time, _, start_time = cls._create_datetime_index(
+                    data_psg.info["meas_date"], times_array=data_psg.times
+                )
                 psg_datastream = data_psg.copy().pick_channels([datastream]).get_data()[0, :]
                 result_dict[datastream] = pd.DataFrame(psg_datastream, index=time, columns=[datastream])
-            except ValueError:
-                raise ValueError(
+            except ValueError as exc:
+                raise NameError(
                     "Not all channels match the selected datastreams - Following Datastreams are available: "
                     + str(data_psg.ch_names)
-                )
+                ) from exc
 
         return result_dict, fs, start_time
 
     @classmethod
     def load_data_raw(
-            cls, path: path_t, timezone: Optional[Union[datetime.tzinfo, str]] = "Europe/Berlin",
+        cls,
+        path: path_t,
+        timezone: Optional[Union[datetime.tzinfo, str]] = "Europe/Berlin",
     ):
-        """load PSG data from .edf file.
-        ----------
+        """Load PSG data from .edf file.
+
         Parameters
         ----------
-        path: path to the .edf file
-        timezone: timezone of the recording. If None, the timezone is set to UTC
-        -------
+        path : :class:`pathlib.Path` or str
+            path to the .edf file
+        timezone: str, optional
+            timezone of the recording. If None, the timezone is set to UTC
+
         Returns
         -------
         data: mne.io.Raw object
         fs: sampling rate
-        """
 
+        """
         # ensure pathlib
         path = Path(path)
         _assert_file_extension(path, ".edf")

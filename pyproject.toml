@@ -35,7 +35,7 @@ XlsxWriter = "^1"
 xlrd = "^2"
 statsmodels = "^0.13"
 fau-colors = "^1.1"
-mne = {version = "^0.23.0", optional = true}
+mne = "^0.23.0"
 IPython = {version = "^7", optional = true}
 ipywidgets = {version = "^7", optional = true}
 ipympl = {version = "^0.9", optional = true}
