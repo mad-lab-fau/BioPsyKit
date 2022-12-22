@@ -197,9 +197,7 @@ class PSGDataset:
         result_dict = {}
         for datastream in datastreams:
             try:
-                time, _, start_time = cls._create_datetime_index(
-                    data_psg.info["meas_date"], times_array=data_psg.times
-                )
+                time, _, start_time = cls._create_datetime_index(data_psg.info["meas_date"], times_array=data_psg.times)
                 psg_datastream = data_psg.copy().pick_channels([datastream]).get_data()[0, :]
                 result_dict[datastream] = pd.DataFrame(psg_datastream, index=time, columns=[datastream])
             except ValueError as exc:
