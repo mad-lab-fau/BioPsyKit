@@ -90,7 +90,23 @@ class PSGDataset:
         return self._tz
 
     def data_as_df(self, index: Optional[str] = None) -> pd.DataFrame:
-        """Return data as pandas DataFrame."""
+        """Return data as one combined pandas.DataFrame.
+
+        Parameters
+        ----------
+        index : str, optional
+            Specify which index should be used for the dataset. The options are:
+            * "time": For the time in seconds since the first sample
+            * "utc": For the utc time stamp of each sample
+            * "utc_datetime": for a pandas DateTime index in UTC time
+            * "local_datetime": for a pandas DateTime index in the timezone set for the session
+            * None: For a simple index (0...N)
+
+        Returns
+        -------
+        pd.DataFrame: Combined data as pandas DataFrame with respective index
+
+        """
         # get datastreams from dict
         datastreams = self._data.keys()
         data = [self._data[datastream] for datastream in datastreams]
