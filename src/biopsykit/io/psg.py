@@ -1,11 +1,19 @@
 """Module for importing data recorded by a PSG system (expects .edf files)."""
 
 import datetime
+import time
 import warnings
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Union
 
-import mne
+try:
+    import mne
+except ImportError as e:
+    raise ImportError(
+        "The 'mne' package is required to read edf data files. "
+        "Please install it using 'pip install mne' or 'poetry add mne'."
+    ) from e
+
 import pandas as pd
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
@@ -32,7 +40,8 @@ class PSGDataset:
             setattr(self, "sampling_rate", sampling_rate)
         setattr(self, "channels", list(self._data.keys()))
         self._sampling_rate = sampling_rate_dict
-        self._start_time_unix = start_time
+        self._start_time_datetime = pd.Timestamp(start_time)
+        self._start_time_unix = int(time.mktime(start_time.timetuple()))
         self._tz = tz
 
     @classmethod
@@ -71,16 +80,23 @@ class PSGDataset:
         return self._start_time_unix
 
     @property
+    def start_time_datetime(self) -> Optional[pd.Timestamp]:
+        """Start time of the recording in UTC time."""
+        return self._start_time_datetime
+
+    @property
     def timezone(self) -> str:
         """Timezone the dataset was recorded in."""
         return self._tz
 
-    def data_as_df(self):
+    def data_as_df(self, index: Optional[str] = None) -> pd.DataFrame:
         """Return data as pandas DataFrame."""
         # get datastreams from dict
         datastreams = self._data.keys()
         data = [self._data[datastream] for datastream in datastreams]
         data = pd.concat(data, axis=1)
+
+        data = self._add_index(data, index)
 
         return data
 
@@ -88,7 +104,7 @@ class PSGDataset:
         self,
         path: path_t,
     ):
-        """Load ground truth data from a .xlsx file which can be exported from the Analyse Sofeware Somnomedics.
+        """Load ground truth data from a .xlsx file which can be exported from the Software Somnomedics.
 
         .. note::
             Other formats are not supported yet and raise a FileNotFoundError.
@@ -197,9 +213,9 @@ class PSGDataset:
         result_dict = {}
         for datastream in datastreams:
             try:
-                time, _, start_time = cls._create_datetime_index(data_psg.info["meas_date"], times_array=data_psg.times)
+                time_idx, _, start_time = cls._create_dt_index(data_psg.info["meas_date"], times_array=data_psg.times)
                 psg_datastream = data_psg.copy().pick_channels([datastream]).get_data()[0, :]
-                result_dict[datastream] = pd.DataFrame(psg_datastream, index=time, columns=[datastream])
+                result_dict[datastream] = pd.DataFrame(psg_datastream, index=time_idx, columns=[datastream])
             except ValueError as exc:
                 raise NameError(
                     "Not all channels match the selected datastreams - Following Datastreams are available: "
@@ -245,7 +261,7 @@ class PSGDataset:
         return edf, fs
 
     @classmethod
-    def _create_datetime_index(cls, starttime, times_array):
+    def _create_dt_index(cls, starttime, times_array):
         """Create a datetime index from the start time and the times array."""
         starttime_s = starttime.timestamp()
         # add start time to array of timestamps
@@ -268,3 +284,36 @@ class PSGDataset:
         epochs_clear = epochs_clear / 30
         epochs = epochs_clear.astype(int)
         return epochs, start_time
+
+    def _add_index(self, data: pd.DataFrame, index: str) -> pd.DataFrame:
+        index_names = {
+            None: "n_samples",
+            "time": "t",
+            "utc": "utc",
+            "utc_datetime": "date",
+            "local_datetime": f"date ({self.timezone})",
+        }
+        if index and index not in index_names:
+            raise ValueError(f"Supplied value for index ({index}) is not allowed. Allowed values: {index_names.keys()}")
+        index_name = index_names[index]
+        data.index.name = index_name
+        if index is None:
+            data = data.reset_index(drop=True)
+            data.index.name = index_name
+            return data
+        if index == "utc_datetime":
+            return data
+        if index == "time":
+            data.index = data.index - self.start_time_datetime
+            data.index = data.index.total_seconds()
+            return data
+        if index == "utc":
+            # convert counter to utc timestamps i seconds
+            data = data.reset_index(drop=True)
+            data.index.astype("int64")
+            data.index += self.start_time_unix
+            return data
+        if index == "local_datetime":
+            data.index = data.index.tz_localize(self.timezone)
+            return data
+        return data
