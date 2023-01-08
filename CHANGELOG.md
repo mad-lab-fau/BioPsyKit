@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.8.0 - XX
+### Added
+- `biopsykit.classification.analysis`: Added functions to analyze classification results
+
 ## Version 0.7.1 - November 30, 2022
 ### Bugfixes
 - `bp.io.biopac`:wrong index name for dataframe export when setting parameter `"index = None"`
