@@ -198,7 +198,9 @@ def plot_conf_matrix(predictions: pd.DataFrame, labels: Sequence[str], **kwargs)
     return fig, ax
 
 
-def plot_conf_matrix_proba(predictions: pd.DataFrame, labels: Sequence[str], **kwargs) -> Tuple[plt.Figure, plt.Axes]:
+def plot_conf_matrix_proba(
+    predictions: pd.DataFrame, labels: Sequence[str], label_col: Optional[str] = "label", **kwargs
+) -> Tuple[plt.Figure, plt.Axes]:
     """Plot confusion matrix from prediction probabilities.
 
     Parameters
@@ -207,6 +209,8 @@ def plot_conf_matrix_proba(predictions: pd.DataFrame, labels: Sequence[str], **k
         dataframe with predictions as probabilities
     labels : list
         list of labels
+    label_col : str, optional
+        name of the label column in the input dataframe. Default: ``"label"``
     **kwargs
         additional keyword arguments to pass to :func:`plt.subplots`
 
@@ -222,7 +226,7 @@ def plot_conf_matrix_proba(predictions: pd.DataFrame, labels: Sequence[str], **k
     if "fau_r" not in plt.colormaps():
         _register_fau_r()
 
-    conf_matrix_proba = _conf_matrix_from_proba_df(predictions, label_order=labels)
+    conf_matrix_proba = _conf_matrix_from_proba_df(predictions, label_col=label_col, label_order=labels)
 
     sns.heatmap(conf_matrix_proba, cmap="fau_r", annot=True, cbar=False, square=True, ax=ax)
     ax.set_ylabel("True label")
