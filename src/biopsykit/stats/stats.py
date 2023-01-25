@@ -666,6 +666,10 @@ class StatsPipeline:
             effsize = self._format_number(row[eff_name])
             uval = self._format_number(row["U-val"])
             return f"$U = {uval}, p {pval}, {MAP_LATEX_EXPORT[eff_name_print]} = {effsize}$"
+        if "W-val" in row:
+            effsize = self._format_number(row[eff_name])
+            wval = self._format_number(row["W-val"])
+            return f"$W = {wval}, p {pval}, {MAP_LATEX_EXPORT[eff_name_print]} = {effsize}$"
         return ""
 
     def _format_pval(self, row: pd.Series) -> str:
