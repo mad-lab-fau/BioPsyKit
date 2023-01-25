@@ -476,7 +476,7 @@ class StatsPipeline:
             df.to_excel(writer, sheet_name=key, startrow=1)
             worksheet = writer.sheets[key]
             worksheet.write_string(0, 0, MAP_NAMES[key], header_format)
-        writer.save()
+        writer.close()
 
     def sig_brackets(
         self,
