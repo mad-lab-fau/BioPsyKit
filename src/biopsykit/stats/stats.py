@@ -579,7 +579,7 @@ class StatsPipeline:
             list_pairs = dict_box_pairs.setdefault(key, [])
             list_pvalues = dict_pvalues.setdefault(key, [])
             for i, (idx, sig_pair) in enumerate(box_pairs.items()):
-                if idx in features_list:
+                if str(idx) in str(features_list):
                     list_pairs.append(sig_pair)
                     list_pvalues.append(pvalues[i])
 
@@ -831,7 +831,7 @@ class StatsPipeline:
         return self._apply_latex_code_correction(data_latex, si_table_format)
 
     @staticmethod
-    def _format_number(val):
+    def _format_number(val) -> str:
         if isinstance(val, float):
             if val % 1 == 0:
                 return str(int(val))
@@ -1120,6 +1120,13 @@ class StatsPipeline:
         return data
 
     @staticmethod
+    def _extract_data_wilcoxon(data: pd.DataFrame, pcol: str) -> pd.DataFrame:
+        columns = ["W-val", pcol, StatsPipeline._get_effsize_name(data)]
+        data = data[columns]
+        data = data.rename(columns={"W-val": "W"})
+        return data
+
+    @staticmethod
     def _format_latex_table_index(
         data: pd.DataFrame, index_kws: Dict[str, Any], show_a_b: Optional[bool] = False
     ):  # pylint:disable=too-many-branches
@@ -1260,4 +1267,6 @@ class StatsPipeline:
             data = self._extract_data_ttest(data, pcol, collapse_dof, show_a_b)
         if "U-val" in data.columns:
             data = self._extract_data_mwu(data, pcol)
+        if "W-val" in data.columns:
+            data = self._extract_data_wilcoxon(data, pcol)
         return data
