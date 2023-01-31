@@ -35,16 +35,15 @@ XlsxWriter = "^1"
 xlrd = "^2"
 statsmodels = "^0.13"
 fau-colors = "^1.1"
+bioread = "^3"
 mne = {version = "^0.23.0", optional = true}
 IPython = {version = "^7", optional = true}
 ipywidgets = {version = "^7", optional = true}
 ipympl = {version = "^0.9", optional = true}
-bioread = {version = "^3", optional = true}
 
 [tool.poetry.extras]
 mne = ["mne"]
 jupyter = ["IPython", "ipympl", "ipywidgets"]
-biopac = ["bioread"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^6"
