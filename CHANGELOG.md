@@ -3,6 +3,9 @@
 ## Version 0.8.0 - XX
 ### Added
 - `biopsykit.classification.analysis`: Added functions to analyze classification results
+### Bugfixes and Improvements
+- `biopsykit.stats.StatsPipeline`: Improved behavior
+- `biopsykit.plotting`: Improved layout
 
 ## Version 0.7.1 - November 30, 2022
 ### Bugfixes
