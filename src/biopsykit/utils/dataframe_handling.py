@@ -134,6 +134,31 @@ def camel_to_snake(name: str, lower: Optional[bool] = True):
     return name
 
 
+def add_space_to_camel(label: str) -> str:
+    """Add space to string in "camelCase".
+
+    Parameters
+    ----------
+    label : str
+        string to transform
+
+    Returns
+    -------
+    str
+        string with space added
+
+    Examples
+    --------
+    >>> from biopsykit.utils.dataframe_handling import add_space_to_camel
+    >>> add_space_to_camel("HelloWorld")
+    Hello World
+    >>> add_space_to_camel("ABC")
+    ABC
+
+    """
+    return re.sub(r"((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))", r" \1", label)
+
+
 def replace_missing_data(
     data: pd.DataFrame,
     target_col: str,
