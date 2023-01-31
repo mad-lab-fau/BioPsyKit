@@ -8,19 +8,19 @@ import pandas as pd
 import pingouin
 import scipy
 
-import biopsykit.carwatch_logs  # noqa: F401
-import biopsykit.classification  # noqa: F401
-import biopsykit.example_data  # noqa: F401
-import biopsykit.io  # noqa: F401
-import biopsykit.metadata  # noqa: F401
-import biopsykit.plotting  # noqa: F401
-import biopsykit.protocols  # noqa: F401
-import biopsykit.questionnaires  # noqa: F401
-import biopsykit.saliva  # noqa: F401
-import biopsykit.signals  # noqa: F401
-import biopsykit.sleep  # noqa: F401
-import biopsykit.stats  # noqa: F401
-import biopsykit.utils  # noqa: F401
+import biopsykit.carwatch_logs  # pylint: disable=unused-import
+import biopsykit.classification  # pylint: disable=unused-import
+import biopsykit.example_data  # pylint: disable=unused-import
+import biopsykit.io  # pylint: disable=unused-import
+import biopsykit.metadata  # pylint: disable=unused-import
+import biopsykit.plotting  # pylint: disable=unused-import
+import biopsykit.protocols  # pylint: disable=unused-import
+import biopsykit.questionnaires  # pylint: disable=unused-import
+import biopsykit.saliva  # pylint: disable=unused-import
+import biopsykit.signals  # pylint: disable=unused-import
+import biopsykit.sleep  # pylint: disable=unused-import
+import biopsykit.stats  # pylint: disable=unused-import
+import biopsykit.utils  # pylint: disable=unused-import
 
 __all__ = [
     "carwatch_logs",

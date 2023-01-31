@@ -14,7 +14,7 @@ __all__ = ["nested_cv_param_search"]
 
 
 def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-many-branches
-    X: np.ndarray,  # noqa
+    X: np.ndarray,  # pylint:disable=invalid-name
     y: np.ndarray,
     param_dict: Dict[str, Any],
     pipeline: Pipeline,

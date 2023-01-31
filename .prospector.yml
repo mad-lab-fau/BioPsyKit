@@ -39,6 +39,7 @@ pylint:
     function-rgx: "[a-z_][a-z0-9_]{0,50}$"  # Allow for single letter function names
     argument-rgx: "[a-z_][a-z0-9_]{0,30}$"  # Allow for single letter argument names
     class-rgx: "[A-Z_][a-zA-Z0-9_]*$" # Allow for single letter class names
+  autodetect: false
   disable:
     - too-many-ancestors
     - too-few-public-methods
