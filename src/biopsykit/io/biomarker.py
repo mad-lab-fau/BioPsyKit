@@ -17,6 +17,7 @@ from biopsykit.utils.datatype_helper import (
     is_subject_condition_dataframe,
     BiomarkerRawDataFrame,
     _BiomarkerRawDataFrame,
+    is_biomarker_raw_dataframe,
 )
 
 __all__ = ["load_saliva_plate", "save_saliva", "load_saliva_wide_format", "load_dbs_results"]
@@ -39,7 +40,7 @@ def load_saliva_plate(
     condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
     **kwargs,
 ) -> SalivaRawDataFrame:
-    r"""Read saliva from an Excel sheet in 'plate' format.
+    r"""Read saliva from an Excel sheet in 'plate' format. Wraps load_biomarker_results() for compatibilty.
 
     This function automatically extracts identifier like subject, day and sample IDs from the saliva sample names.
     To extract them, a regular expression string can be passed via ``regex_str``.
@@ -104,55 +105,23 @@ def load_saliva_plate(
         if imported data can not be parsed to a SalivaRawDataFrame
 
     """
-    # ensure pathlib
-    file_path = Path(file_path)
-    _assert_file_extension(file_path, (".xls", ".xlsx"))
 
-    # TODO add remove_nan option (all or any)
-    if regex_str is None:
-        regex_str = r"(Vp\d+) (S\w)"
+    if regex_str == None:
+        regex_str = r"(Vp\d+) (S\d)"
 
-    if sample_id_col is None:
-        sample_id_col = "sample ID"
-
-    if data_col is None:
-        data_col = _DATA_COL_NAMES[saliva_type]
-
-    df_saliva = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col], **kwargs)
-    cols = df_saliva[sample_id_col].str.extract(regex_str)
-    id_col_names = _get_id_columns(id_col_names, cols)
-
-    df_saliva[id_col_names] = cols
-
-    df_saliva = df_saliva.drop(columns=[sample_id_col], errors="ignore")
-    df_saliva = df_saliva.rename(columns={data_col: saliva_type})
-    df_saliva = df_saliva.set_index(id_col_names)
-
-    if condition_list is not None:
-        df_saliva = _apply_condition_list(df_saliva, condition_list)
-
-    num_subjects = len(df_saliva.index.get_level_values("subject").unique())
-
-    _check_num_samples(len(df_saliva), num_subjects)
-
-    if sample_times:
-        _check_sample_times(len(df_saliva), num_subjects, sample_times)
-        df_saliva["time"] = np.array(sample_times * num_subjects)
-
-    try:
-        df_saliva[saliva_type] = df_saliva[saliva_type].astype(float)
-    except ValueError as e:
-        raise ValueError(
-            """Error converting all saliva values into numbers: '{}'
-            Please check your saliva values whether there is any text etc. in the column '{}'
-            and delete the values or replace them by NaN!""".format(
-                e, data_col
-            )
-        ) from e
-
-    is_saliva_raw_dataframe(df_saliva, saliva_type)
-
-    return _SalivaRawDataFrame(df_saliva)
+    return _SalivaRawDataFrame(
+        load_biomarker_results(
+            file_path,
+            biomarker_type=saliva_type,
+            sample_id_col=sample_id_col,
+            data_col=data_col,
+            id_col_names=id_col_names,
+            regex_str=regex_str,
+            sample_times=sample_times,
+            condition_list=condition_list,
+            **kwargs,
+        )
+    )
 
 
 def save_saliva(
@@ -292,9 +261,9 @@ def load_saliva_wide_format(
     return _SalivaRawDataFrame(data)
 
 
-def load_dbs_results(
+def load_biomarker_results(
     file_path: path_t,
-    dbs_type: Optional[str] = "crp",
+    biomarker_type: Optional[str] = None,
     sample_id_col: Optional[str] = None,
     data_col: Optional[str] = None,
     id_col_names: Optional[Sequence[str]] = None,
@@ -303,55 +272,93 @@ def load_dbs_results(
     condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
     **kwargs,
 ) -> BiomarkerRawDataFrame:
+    """Load biomarker results from Excel file.
+
+    Parameters:
+    -----------
+    file_path: :class:`~pathlib.Path` or str
+        path to file
+    dbs_type: str, optional
+        biomarker type to load from file. Example: ``crp``
+    sample_id_col: str, optional
+        name of column containing sample IDs or ``None`` to use the default column name ``sample ID``.
+    data_col: str, optional
+        name of column containing biomarker data or ``None`` to use the default column name.
+    id_col_names: list of str, optional
+        names of the extracted ID column names. ``None`` to use the default column names (['subject', 'day', 'sample'])
+    regex_str: str, optional
+        regular expression to extract subject, day, and sample ID from sample ID column.
+        ``None`` to use the default regular expression ``r"(VP\d+)-(T\w)-(B\w)"``.
+    sample_times: list of int, optional
+        times at which samples were collected or ``None`` if no sample times should be specified.
+        Default: ``None``
+    condition_list: list of str, dict of str to list of str, or :class:`~pandas.Index`, optional
+        list of condition names or dictionary of condition names to list of condition assignments or
+        :class:`~pandas.Index` of condition names or ``None`` if no conditions are present.
+        Default: ``None``
+    **kwargs
+        Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
+
+    Returns
+    -------
+    data : :class:`~biopsykit.utils.datatype_helper.BiomarkerRawDataFrame`
+        biomarker data in `BiomarkerRawDataFrame` format
+
+    Raises
+    ------
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
+        if file is no Excel file
+    """
+
     # ensure pathlib
     file_path = Path(file_path)
     _assert_file_extension(file_path, (".xls", ".xlsx"))
 
     # TODO add remove_nan option (all or any)
     if regex_str is None:
-        regex_str = r"(VP\d+) (B\w)"
+        regex_str = r"(VP\d+)-(T\w)-(B\w)"
 
     if sample_id_col is None:
         sample_id_col = "sample ID"
 
     if data_col is None:
-        data_col = _DATA_COL_NAMES[dbs_type]
+        data_col = _DATA_COL_NAMES[biomarker_type]
 
-    df_dbs = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col], **kwargs)
-    cols = df_dbs[sample_id_col].str.extract(regex_str)
+    df_biomarker = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col], **kwargs)
+    cols = df_biomarker[sample_id_col].str.extract(regex_str)
     id_col_names = _get_id_columns(id_col_names, cols)
 
-    df_dbs[id_col_names] = cols
+    df_biomarker[id_col_names] = cols
 
-    df_dbs = df_dbs.drop(columns=[sample_id_col], errors="ignore")
-    df_dbs = df_dbs.rename(columns={data_col: dbs_type})
-    df_dbs = df_dbs.set_index(id_col_names)
+    df_biomarker = df_biomarker.drop(columns=[sample_id_col], errors="ignore")
+    df_biomarker = df_biomarker.rename(columns={data_col: biomarker_type})
+    df_biomarker = df_biomarker.set_index(id_col_names)
 
     if condition_list is not None:
-        df_saliva = _apply_condition_list(df_dbs, condition_list)
+        df_biomarker = _apply_condition_list(df_biomarker, condition_list)
 
-    num_subjects = len(df_dbs.index.get_level_values("subject").unique())
+    num_subjects = len(df_biomarker.index.get_level_values("subject").unique())
 
-    _check_num_samples(len(df_dbs), num_subjects)
+    _check_num_samples(len(df_biomarker), num_subjects)
 
     if sample_times:
-        _check_sample_times(len(df_dbs), num_subjects, sample_times)
-        df_dbs["time"] = np.array(sample_times * num_subjects)
+        _check_sample_times(len(df_biomarker), num_subjects, sample_times)
+        df_biomarker["time"] = np.array(sample_times * num_subjects)
 
     try:
-        df_dbs[dbs_type] = df_dbs[dbs_type].astype(float)
+        df_biomarker[biomarker_type] = df_biomarker[biomarker_type].astype(float)
     except ValueError as e:
         raise ValueError(
-            """Error converting all saliva values into numbers: '{}'
-            Please check your saliva values whether there is any text etc. in the column '{}'
+            """Error converting all biomarker values into numbers: '{}'
+            Please check your biomarker values whether there is any text etc. in the column '{}'
             and delete the values or replace them by NaN!""".format(
                 e, data_col
             )
         ) from e
 
-    is_saliva_raw_dataframe(df_dbs, dbs_type)
+    is_biomarker_raw_dataframe(df_biomarker, biomarker_type=biomarker_type)
 
-    return _BiomarkerRawDataFrame(df_dbs)
+    return _BiomarkerRawDataFrame(df_biomarker)
 
 
 def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_index_cols: Sequence[str]):
