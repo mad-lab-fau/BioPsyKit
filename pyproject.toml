@@ -53,9 +53,7 @@ prospector = "^1"
 black = { version="^22", extras=["jupyter", "d"] }
 coverage = "^4"
 ipykernel = "^6"
-mypy = "^0.790"
 pytest-xdist = "^2.2.0"
-# Doc dependencies. They also need to be updated in ./docs/requirements.txt
 sphinx = "^4"
 numpydoc = "^1"
 sphinx-gallery = "^0.10.0"
