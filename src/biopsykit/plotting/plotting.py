@@ -153,7 +153,8 @@ def lineplot(
     if show_legend:
         _set_legend_errorbar(**kwargs)
 
-    fig.tight_layout()
+    if kwargs.pop("tight_layout", True):
+        fig.tight_layout()
     return fig, ax
 
 
@@ -227,7 +228,8 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes
     if ylabel:
         ax.set_ylabel(ylabel)
 
-    fig.tight_layout()
+    if kwargs.pop("tight_layout", True):
+        fig.tight_layout()
     return fig, ax
 
 
@@ -375,7 +377,8 @@ def feature_boxplot(  # pylint:disable=too-many-branches
             legend_title=legend_title,
         )
     else:
-        fig.tight_layout()
+        if kwargs.pop("tight_layout", True):
+            fig.tight_layout()
     return fig, ax
 
 
@@ -537,8 +540,8 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
             legend_orientation=legend_orientation,
             legend_title=legend_title,
         )
-
-    fig.tight_layout(rect=rect)
+    if kwargs.pop("tight_layout", True):
+        fig.tight_layout(rect=rect)
     return fig, axs
 
 
@@ -722,11 +725,13 @@ def _feature_boxplot_add_legend(fig: plt.Figure, hue: str, handles: Sequence, la
     legend_orientation = kwargs.get("legend_orientation")
     legend_title = kwargs.get("legend_title")
     rect = kwargs.get("rect")
+    tight_layout = kwargs.get("tight_layout")
 
     if hue is not None:
         ncol = len(handles) if legend_orientation == "horizontal" else 1
         fig.legend(handles, labels, loc=legend_loc, fontsize=legend_fontsize, title=legend_title, ncol=ncol)
-    fig.tight_layout(pad=0.5, rect=rect)
+    if tight_layout:
+        fig.tight_layout(pad=0.5, rect=rect)
 
 
 def _multi_feature_boxplot_add_legend(fig: plt.Figure, hue: str, handles: Sequence, labels: Sequence, **kwargs):
@@ -740,7 +745,8 @@ def _multi_feature_boxplot_add_legend(fig: plt.Figure, hue: str, handles: Sequen
         ncol = len(handles) if legend_orientation == "horizontal" else 1
 
         fig.legend(handles, labels, loc=legend_loc, ncol=ncol, fontsize=legend_fontsize, title=legend_title)
-    fig.tight_layout(pad=0.5, rect=rect)
+    if kwargs.pop("tight_layout", True):
+        fig.tight_layout(pad=0.5, rect=rect)
 
 
 def _style_xaxis_multi_feature_boxplot(
