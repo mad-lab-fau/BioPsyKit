@@ -1,5 +1,4 @@
-# YAML 1.2
----
+cff-version: 1.2.0
 abstract: "BioPsyKit is an open source Python package for the analysis of biopsychological data."
 authors: 
   -
@@ -27,9 +26,48 @@ authors:
     family-names: Eskofier
     given-names: "Bjoern M."
     orcid: "https://orcid.org/0000-0003-2602-517X"
-cff-version: "1.1.0"
 license: MIT
 message: "If you use this software, please cite it as below."
 repository-code: "https://github.com/mad-lab-fau/BioPsyKit"
 title: BioPsyKit
+doi: 10.17605/OSF.IO/EBDRT
+url: "https://github.com/mad-lab-fau/BioPsyKit"
+
+
+preferred-citation:
+  type: article
+  authors:
+  -
+    affiliation: "Machine Learning and Data Analytics Lab (MaD Lab), Department Artificial Intelligence in Biomedical Engineering, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)"
+    family-names: Richer
+    given-names: Robert
+    orcid: "https://orcid.org/0000-0003-0272-5403"
+  -
+    affiliation: "Machine Learning and Data Analytics Lab (MaD Lab), Department Artificial Intelligence in Biomedical Engineering, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)"
+    family-names: "Küderle"
+    given-names: Arne
+    orcid: "https://orcid.org/0000-0002-5686-281X"
+  -
+    affiliation: "Machine Learning and Data Analytics Lab (MaD Lab), Department Artificial Intelligence in Biomedical Engineering, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)"
+    family-names: "Ullrich"
+    given-names: Martin
+    orcid: "https://orcid.org/0000-0001-7348-6097"
+  -
+    affiliation: "Chair of Health Psychology, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)"
+    family-names: Rohleder
+    given-names: Nicolas
+    orcid: "https://orcid.org/0000-0002-0417-0336"
+  -
+    affiliation: "Machine Learning and Data Analytics Lab (MaD Lab), Department Artificial Intelligence in Biomedical Engineering, Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU)"
+    family-names: Eskofier
+    given-names: "Bjoern M."
+    orcid: "https://orcid.org/0000-0003-2602-517X"
+  doi: 10.21105/joss.03702
+  journal: "Journal of Open Source Software"
+  start: 3702
+  title: "BioPsyKit: A Python package for the analysis of biopsychological data"
+  issue: 66
+  volume: 6
+  year: 2021
+
 ...
