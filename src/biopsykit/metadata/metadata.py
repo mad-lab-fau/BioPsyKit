@@ -66,7 +66,7 @@ def gender_counts(
 
 def _gender_counts(data: pd.DataFrame):
     return pd.concat(
-        [data.value_counts(sort=False), data.value_counts(normalize=True, sort=False)],
+        [data.value_counts(sort=False), data.value_counts(normalize=True, sort=False) * 100],
         axis=1,
         keys=["count", "percent"],
     )
