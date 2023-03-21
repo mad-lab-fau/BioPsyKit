@@ -12,6 +12,7 @@ __all__ = [
     "apply_codebook",
     "add_space_to_camel",
     "camel_to_snake",
+    "snake_to_camel",
     "convert_nan",
     "int_from_str_idx",
     "int_from_str_col",
