@@ -92,6 +92,7 @@ MAP_LATEX_EXPORT = {
     "CLES_row": "CLES",
 }
 
+
 STATS_CATEGORY = Literal["prep", "test", "posthoc"]
 STATS_EFFECT_TYPE = Literal["between", "within", "interaction"]
 PLOT_TYPE = Literal["single", "multi"]
@@ -533,7 +534,6 @@ class StatsPipeline:
             ``subplots`` is ``True``)
 
         """
-        features = self._sanitize_features_input(features)
         if stats_type is not None:
             warnings.warn(
                 "Argument 'stats_type' is deprecated in 0.4.0 and was replaced by 'stats_effect_type'. "
@@ -544,6 +544,10 @@ class StatsPipeline:
 
         stats_data = self._extract_stats_data(stats_category_or_data, stats_effect_type)
 
+        # if features is None:
+        #     features = list(stats_data.index)
+        # features = self._sanitize_features_input(features)
+
         if stats_effect_type == "interaction":
             stats_data, box_pairs = self._get_stats_data_box_pairs_interaction(stats_data)
         else:
@@ -553,7 +557,6 @@ class StatsPipeline:
             return [], []
 
         pvalues = self._filter_pcol(stats_data)
-
         if subplots:
             return self._sig_brackets_dict(box_pairs, pvalues, features)
 
@@ -573,9 +576,9 @@ class StatsPipeline:
             features = {f: f for f in features}
         for key in features:
             features_list = features[key]
+
             if isinstance(features_list, str):
                 features_list = [features_list]
-
             list_pairs = dict_box_pairs.setdefault(key, [])
             list_pvalues = dict_pvalues.setdefault(key, [])
             for i, (idx, sig_pair) in enumerate(box_pairs.items()):
@@ -945,9 +948,8 @@ class StatsPipeline:
                 # flatten dict values into list of str
                 features = list(features.values())
                 features = [item for sublist in features for item in sublist]
-
             if all(isinstance(feature, str) for feature in features):
-                stats_data = pd.concat([stats_data.filter(like=f, axis=0) for f in features])
+                stats_data = pd.concat(stats_data.filter(like=f, axis=0) for f in features)
             else:
                 stats_data = stats_data.unstack().loc[features].stack()
 
@@ -1037,7 +1039,6 @@ class StatsPipeline:
         return str(int(dof)) if dof % 1 == 0 else f"{dof:.2f}"
 
     def _extract_data_ttest(self, data: pd.DataFrame, pcol: str, collapse_dof: bool, show_a_b: bool) -> pd.DataFrame:
-        nlevels_old = data.index.nlevels
         effsize_name = self._get_effsize_name(data)
         columns = ["T", "dof", pcol, effsize_name]
         if show_a_b and "A" in data.columns:
@@ -1050,11 +1051,7 @@ class StatsPipeline:
             data = data.rename(columns={"T": MAP_LATEX_EXPORT["T_collapse"].format(self._format_dof(dof[0]))})
             data = data.drop(columns="dof")
         if show_a_b and "A" in data.columns:
-            data = data.set_index(["A", "B"], append=True)
-            names_old = list(data.index.names)
-            names_new = names_old[: nlevels_old - 1] + names_old[nlevels_old:] + [names_old[nlevels_old - 1]]
-            # reorder levels
-            data = data.reorder_levels(names_new)
+            data = self._remove_a_b(data)
         return data
 
     def _extract_data_anova(self, data: pd.DataFrame, pcol: str, collapse_dof: bool) -> pd.DataFrame:
@@ -1123,11 +1120,22 @@ class StatsPipeline:
         return data
 
     @staticmethod
-    def _extract_data_wilcoxon(data: pd.DataFrame, pcol: str) -> pd.DataFrame:
+    def _extract_data_wilcoxon(data: pd.DataFrame, pcol: str, show_a_b: bool) -> pd.DataFrame:
         columns = ["W-val", pcol, StatsPipeline._get_effsize_name(data)]
         data = data[columns]
         data = data.rename(columns={"W-val": "W"})
+        if show_a_b and "A" in data.columns:
+            data = StatsPipeline._remove_a_b(data)
         return data
+
+    @staticmethod
+    def _remove_a_b(data: pd.DataFrame) -> pd.DataFrame:
+        data = data.set_index(["A", "B"], append=True)
+        names_old = list(data.index.names)
+        nlevels_old = len(names_old)
+        names_new = names_old[: nlevels_old - 1] + names_old[nlevels_old:] + [names_old[nlevels_old - 1]]
+        # reorder levels
+        return data.reorder_levels(names_new)
 
     @staticmethod
     def _format_latex_table_index(
@@ -1271,5 +1279,5 @@ class StatsPipeline:
         if "U-val" in data.columns:
             data = self._extract_data_mwu(data, pcol)
         if "W-val" in data.columns:
-            data = self._extract_data_wilcoxon(data, pcol)
+            data = self._extract_data_wilcoxon(data, pcol, show_a_b)
         return data
