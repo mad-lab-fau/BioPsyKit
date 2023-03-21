@@ -19,6 +19,14 @@ class _PipelineWrapper:
         return repr(self.pipeline)
 
 
+# TODO check if works?
+# def __getitem__(self, item):
+#     return self.pipeline[item]
+#
+# def __len__(self):
+#     return len(self.pipeline)
+
+
 def strip_df(data: pd.DataFrame) -> np.ndarray:
     """Strip dataframe from all index levels to only contain values.
 
