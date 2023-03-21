@@ -8,6 +8,19 @@ import pandas as pd
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_has_index_levels, _assert_is_dtype
 from biopsykit.utils.datatype_helper import CodebookDataFrame, is_codebook_dataframe
 
+__all__ = [
+    "apply_codebook",
+    "add_space_to_camel",
+    "camel_to_snake",
+    "convert_nan",
+    "int_from_str_idx",
+    "int_from_str_col",
+    "multi_xs",
+    "replace_missing_data",
+    "stack_groups_percent",
+    "wide_to_long",
+]
+
 
 def int_from_str_idx(
     data: pd.DataFrame,
@@ -134,12 +147,24 @@ def camel_to_snake(name: str, lower: Optional[bool] = True):
     return name
 
 
-def add_space_to_camel(label: str) -> str:
+def snake_to_camel(name: str):
+    """Convert string in "snake_case" to "camelCase".
+
+    Parameters
+    ----------
+    name : str
+        string to convert from snake_case to camelCase
+
+    """
+    return "".join(x.capitalize() or "_" for x in name.split("_"))
+
+
+def add_space_to_camel(name: str) -> str:
     """Add space to string in "camelCase".
 
     Parameters
     ----------
-    label : str
+    name : str
         string to transform
 
     Returns
@@ -156,7 +181,7 @@ def add_space_to_camel(label: str) -> str:
     ABC
 
     """
-    return re.sub(r"((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))", r" \1", label)
+    return re.sub(r"((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))", r" \1", name)
 
 
 def replace_missing_data(
