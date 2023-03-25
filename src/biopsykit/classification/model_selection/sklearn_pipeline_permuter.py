@@ -1,6 +1,8 @@
 """Module for systematically evaluating different combinations of sklearn pipelines."""
 import functools
 import pickle
+import re
+from copy import deepcopy
 from itertools import product
 from pathlib import Path
 from shutil import rmtree
@@ -15,11 +17,41 @@ from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
 
 from biopsykit.classification.model_selection import nested_cv_param_search
-from biopsykit.classification.utils import _PipelineWrapper
+from biopsykit.classification.utils import _PipelineWrapper, merge_nested_dicts
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import T, path_t, str_t
 
 __all__ = ["SklearnPipelinePermuter"]
+
+pipeline_step_map = {
+    "pipeline_scaler": "Scaler",
+    "pipeline_reduce_dim": r"\makecell[lc]{Feature\\ Selection}",
+    "pipeline_clf": "Classifier",
+}
+
+metric_map = {
+    "accuracy": r"\makecell{Accuracy [\%]}",
+    "f1": r"\makecell{F1-score [\%]}",
+    "precision": r"\makecell{Precision [\%]}",
+    "recall": r"\makecell{Recall [\%]}",
+    "auc": r"\makecell{AUC [\%]}",
+    "sensitivity": r"\makecell{Sensitivity [\%]}",
+    "specificity": r"\makecell{Specificity [\%]}",
+}
+
+clf_map = {
+    "MinMaxScaler": "Min-Max",
+    "StandardScaler": "Standard",
+    "SelectKBest": "SkB",
+    "RFE": "RFE",
+    "GaussianNB": "NB",
+    "KNeighborsClassifier": "kNN",
+    "DecisionTreeClassifier": "DT",
+    "SVC": "SVM",
+    "RandomForestClassifier": "RF",
+    "MLPClassifier": "MLP",
+    "AdaBoostClassifier": "Ada",
+}
 
 
 class SklearnPipelinePermuter:
@@ -158,6 +190,10 @@ class SklearnPipelinePermuter:
             self.results = kwargs.get("score_summary")
             return
 
+        if model_dict is None and param_dict is None:
+            # create empty instance
+            return
+
         self._check_missing_params(model_dict, param_dict)
 
         if hyper_search_dict is None:
@@ -267,6 +303,9 @@ class SklearnPipelinePermuter:
 
         """
         self.results = None
+
+        if len(self.model_combinations) == 0:
+            raise ValueError("No model combinations specified. Please specify at least one model combination.")
 
         kwargs.setdefault("n_jobs", -1)
         kwargs.setdefault("verbose", 1)
@@ -448,6 +487,10 @@ class SklearnPipelinePermuter:
             dataframe with performance metric summary the `best estimator` of each pipeline combination.
 
         """
+        if len(self.param_searches) == 0:
+            raise AttributeError(
+                "No results available because pipelines were not fitted! Call `SklearnPipelinePermuter.fit()` first."
+            )
         list_metric_summary = []
         for param_key, param_value in self.param_searches.items():
             param_dict = {f"pipeline_{key}": val for key, val in param_key}
@@ -527,6 +570,128 @@ class SklearnPipelinePermuter:
                 missing_params = list(set(model_dict[category].keys()) - set(param_dict.keys()))
                 raise ValueError(f"Some estimators are missing parameters: {missing_params}")
 
+    def metric_summary_to_latex(
+        self,
+        data: Optional[pd.DataFrame] = None,
+        metrics: Sequence[str] = None,
+        pipeline_steps: Optional[Sequence[str]] = None,
+        si_table_format: Optional[str] = None,
+        highlight_best: Optional[Union[str, bool]] = None,
+        **kwargs,
+    ) -> str:
+        """Return a latex table with the performance metrics of the pipeline combinations.
+
+        By default, this function uses the attribute of the ``SklearnPipelinePermuter`` instance.
+        If the ``data`` parameter is set, the function uses the dataframe passed as argument.
+
+        Parameters
+        ----------
+        data : :class:`~pandas.DataFrame`, optional
+            dataframe with performance metrics if custom data should be used or ``None`` to use the attribute of the
+            ``SklearnPipelinePermuter`` instance. Default: ``None``
+        metrics : list of str, optional
+            list of metrics to include in the table or ``None`` to use all available metrics in the dataframe.
+            Default: ``None``
+        pipeline_steps : list of str, optional
+            list of pipeline steps to include in the table index or ``None`` to show all available pipeline steps
+            as table index. Default: ``None``
+        si_table_format : str, optional
+            table format for the ``siunitx`` package or ``None`` to use the default format. Default: ``None``
+        highlight_best : bool or str, optional
+            Whether to highlight the pipeline with the best value in each column or not.
+            *  If ``highlight_best`` is a boolean, the best pipeline is highlighted in each column.
+            *  If ``highlight_best`` is a string, the best pipeline is highlighted in the column with the name
+        **kwargs
+            additional keyword arguments passed to :func:`~pandas.DataFrame.to_latex`
+
+        """
+        kwargs.setdefault("clines", "skip-last;data")
+        kwargs.setdefault("hrules", True)
+        kwargs.setdefault("position", "ht!")
+        kwargs.setdefault("position_float", "centering")
+        kwargs.setdefault("siunitx", True)
+        if si_table_format is None:
+            si_table_format = "table-format = 2.1(2)"
+
+        if data is None:
+            data = self.metric_summary()
+        metric_summary = data.copy()
+
+        if pipeline_steps is None:
+            if isinstance(metric_summary.index, pd.MultiIndex):
+                pipeline_steps = list(metric_summary.index.names)
+            else:
+                pipeline_steps = [metric_summary.index.name]
+
+        if metrics is None:
+            metrics = metric_summary.filter(like="mean_test").columns
+            # extract metric names
+            metrics = [m.split("_")[-1] for m in metrics]
+
+        levels_to_drop = [step for step in metric_summary.index.names if step not in pipeline_steps]
+        metric_summary = metric_summary.droplevel(levels_to_drop)
+        metric_summary = metric_summary.rename(index=clf_map)
+
+        list_metric_summary = []
+        for metric in metrics:
+            list_metric_summary.append(metric_summary.filter(regex=f"(mean|std)_test_{metric}"))
+
+        metric_summary = pd.concat(list_metric_summary, axis=1)
+
+        # convert to percent
+        metric_summary = metric_summary * 100
+        metric_summary_export = metric_summary.copy()
+
+        for metric in metrics:
+            mean_test = f"mean_test_{metric}"
+            std_test = f"std_test_{metric}"
+            m_sd = metric_summary_export.apply(
+                lambda x, m_t=mean_test, std_t=std_test: rf"{x[m_t]:.1f}({x[std_t]:.1f})", axis=1
+            )
+            metric_summary_export = metric_summary_export.assign(**{metric: m_sd})
+        metric_summary_export = metric_summary_export[metrics].copy()
+
+        if isinstance(metric_summary_export.index, pd.MultiIndex):
+            metric_summary_export.index = metric_summary_export.index.rename(pipeline_step_map)
+        metric_summary_export = metric_summary_export.rename(columns=metric_map)
+
+        kwargs.setdefault("column_format", self._format_latex_column_format(metric_summary_export))
+
+        styler = metric_summary_export.style
+        if isinstance(highlight_best, str):
+            max_metric = metric_summary[f"mean_test_{highlight_best}"].idxmax()
+            # get index of max metric
+            max_metric = metric_summary_export.index.get_loc(max_metric)
+            styler = styler.highlight_max(subset=metric_map[highlight_best], props="bfseries: ;")
+            # get maximum of metric_summary
+            # make index bold
+            styler = styler.apply_index(lambda x: np.where(x.index == max_metric, "bfseries: ;", ""))
+        elif isinstance(highlight_best, bool) and highlight_best:
+            styler = styler.highlight_max(props="bfseries: ;")
+
+        metric_summary_tex = styler.to_latex(**kwargs)
+        metric_summary_tex = self._apply_latex_code_correction(metric_summary_tex, si_table_format)
+        return metric_summary_tex
+
+    @staticmethod
+    def _format_latex_column_format(data: pd.DataFrame):
+        column_format = "l" * data.index.nlevels
+        if isinstance(data.columns, pd.MultiIndex):
+            ncols = len(data.columns)
+            ncols_last_level = len(data.columns.get_level_values(-1).unique())
+            column_format += ("S" * ncols_last_level + "|") * (ncols // ncols_last_level)
+            # remove the last "|"
+            column_format = column_format[:-1]
+        else:
+            column_format += "S" * len(data.columns)
+        return column_format
+
+    @staticmethod
+    def _apply_latex_code_correction(table: str, si_table_format: str) -> str:
+        if si_table_format is not None:
+            table = re.sub(r"(\\begin\{tabular\})", r"\\sisetup{" + si_table_format + r"}\n\n\1", table)
+        return table
+
     def to_pickle(self, file_path: path_t) -> None:
         """Export the current instance as a pickle file.
 
@@ -561,3 +726,57 @@ class SklearnPipelinePermuter:
         _assert_file_extension(file_path, ".pkl")
         with open(file_path, "rb") as f:
             return pickle.load(f)
+
+    def merge_permuter_instances(self, permuter: "SklearnPipelinePermuter") -> "SklearnPipelinePermuter":
+        """Merge two :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter` instances.
+
+        This function first performs a deep copy of the current instance and then merges all attributes of the given
+        ``permuter`` instance with the copy. The ``permuter`` instance passed to this function is not modified.
+
+        Parameters
+        ----------
+        permuter : :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter`
+            ``SklearnPipelinePermuter`` instance to merge with the current instance
+
+        Returns
+        -------
+        :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter`
+            merged ``SklearnPipelinePermuter`` instance
+
+        """
+        if self.scoring != permuter.scoring:
+            raise ValueError(
+                f"Cannot merge permuter instances with different scoring functions: "
+                f"{self.scoring} vs. {permuter.scoring}"
+            )
+        if self.refit != permuter.refit:
+            raise ValueError(
+                f"Cannot merge permuter instances with different refit options: {self.refit} vs. {permuter.refit}"
+            )
+
+        # make deep copy of current instance
+        permuter_copy = deepcopy(self)
+
+        # merge model dicts
+        permuter_copy.models = merge_nested_dicts(permuter_copy.models, permuter.models)
+        # merge hyperparameter search dicts
+        permuter_copy.hyper_search_dict = merge_nested_dicts(
+            permuter_copy.hyper_search_dict, permuter.hyper_search_dict
+        )
+        # merge hyperparameter dicts
+        permuter_copy.param_searches = merge_nested_dicts(permuter_copy.param_searches, permuter.param_searches)
+        permuter_copy.params = merge_nested_dicts(permuter_copy.params, permuter.params)
+
+        # merge results dataframes
+        results_concat = pd.concat([permuter_copy.results, permuter.results], axis=0)
+        param_cols = list(results_concat.filter(like="param_").columns)
+        # drop duplicate parameter combinations in results
+        results_concat = results_concat.reset_index("outer_fold").drop_duplicates(subset=["outer_fold"] + param_cols)
+        results_concat = results_concat.set_index("outer_fold", append=True)
+        permuter_copy.results = results_concat
+
+        # merge model combinations
+        permuter_copy.model_combinations += permuter.model_combinations
+        permuter_copy.model_combinations = list(set(permuter_copy.model_combinations))
+
+        return permuter_copy

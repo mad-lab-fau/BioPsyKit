@@ -1,5 +1,6 @@
 """Module with utility functions for machine learning and classification applications."""
-from typing import Optional, Tuple, Union
+from copy import deepcopy
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -207,3 +208,36 @@ def split_train_test(  # pylint:disable=invalid-name
     groups_train = groups[train]
     groups_test = groups[test]
     return X_train, X_test, y_train, y_test, groups_train, groups_test
+
+
+def merge_nested_dicts(dict1: Dict, dict2: Dict) -> Dict:
+    """Merge two nested dictionaries.
+
+    Parameters
+    ----------
+    dict1 : dict
+        First dictionary to merge
+    dict2 : dict
+        Second dictionary to merge
+
+    Returns
+    -------
+    dict
+        Merged dictionary
+
+    """
+    dict1 = deepcopy(dict1)
+    return _merge_nested_dicts(dict1, dict2)
+
+
+def _merge_nested_dicts(dict1: Dict, dict2: Dict) -> Dict:
+    for key, value in dict2.items():
+        if isinstance(value, dict) and key in dict1:
+            _merge_nested_dicts(dict1[key], value)
+            # check if value is list
+        elif isinstance(value, list) and key in dict1:
+            dict1[key] = value if key not in dict1 else dict1[key] + value
+        else:
+            if key not in dict1:
+                dict1[key] = value
+    return dict1

@@ -1,5 +1,4 @@
 """Functions to analyze classification results."""
-import re
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -308,88 +307,50 @@ def metric_summary_to_latex(
     highlight_best: Optional[str] = None,
     **kwargs,
 ) -> str:
-    kwargs.setdefault("clines", "skip-last;data")
-    kwargs.setdefault("hrules", True)
-    kwargs.setdefault("position", "ht!")
-    kwargs.setdefault("position_float", "centering")
-    kwargs.setdefault("siunitx", True)
-    if si_table_format is None:
-        si_table_format = "table-format = 2.1(2)"
+    """Return a latex table with the performance metrics of the pipeline combinations.
 
+    Notes
+    -----
+    This method is a legacy method that is kept for backwards compatibility with older pickled instances of the
+    :class:`SklearnPipelinePermuter` class. It is recommended to use the :meth:`SklearnPipelinePermuter.metric_summary`
+    method instead.
+
+    See Also
+    --------
+    :meth:`SklearnPipelinePermuter.metric_summary_to_latex`
+
+
+    Parameters
+    ----------
+    permuter_or_df : :class:`SklearnPipelinePermuter` or :class:`~pandas.DataFrame`
+        :class:`SklearnPipelinePermuter` instance or dataframe with performance metrics.
+    metrics : list of str, optional
+        list of metrics to include in the table or ``None`` to use all available metrics in the dataframe.
+        Default: ``None``
+    pipeline_steps : list of str, optional
+        list of pipeline steps to include in the table index or ``None`` to show all available pipeline steps
+        as table index. Default: ``None``
+    si_table_format : str, optional
+        table format for the ``siunitx`` package or ``None`` to use the default format. Default: ``None``
+    highlight_best : bool or str, optional
+        Whether to highlight the pipeline with the best value in each column or not.
+        *  If ``highlight_best`` is a boolean, the best pipeline is highlighted in each column.
+        *  If ``highlight_best`` is a string, the best pipeline is highlighted in the column with the name
+    **kwargs
+        additional keyword arguments passed to :func:`~pandas.DataFrame.to_latex`
+
+    """
+    dummy_permuter = SklearnPipelinePermuter()
     if isinstance(permuter_or_df, SklearnPipelinePermuter):
-        metric_summary = permuter_or_df.metric_summary()
+        metric_summary = permuter_or_df.metric_summary
     else:
-        metric_summary = permuter_or_df.copy()
+        metric_summary = permuter_or_df
 
-    if pipeline_steps is None:
-        if isinstance(metric_summary.index, pd.MultiIndex):
-            pipeline_steps = list(metric_summary.index.names)
-        else:
-            pipeline_steps = [metric_summary.index.name]
-
-    if metrics is None:
-        metrics = metric_summary.filter(like="mean_test").columns
-        # extract metric names
-        metrics = [m.split("_")[-1] for m in metrics]
-
-    levels_to_drop = [step for step in metric_summary.index.names if step not in pipeline_steps]
-    metric_summary = metric_summary.droplevel(levels_to_drop)
-    metric_summary = metric_summary.rename(index=clf_map)
-
-    list_metric_summary = []
-    for metric in metrics:
-        list_metric_summary.append(metric_summary.filter(regex=f"(mean|std)_test_{metric}"))
-
-    metric_summary = pd.concat(list_metric_summary, axis=1)
-
-    # convert to percent
-    metric_summary = metric_summary * 100
-    metric_summary_export = metric_summary.copy()
-
-    for metric in metrics:
-        m_sd = metric_summary_export.apply(
-            lambda x: rf"{x[f'mean_test_{metric}']:.1f}({x[f'std_test_{metric}']:.1f})", axis=1
-        )
-        metric_summary_export = metric_summary_export.assign(**{metric: m_sd})
-    metric_summary_export = metric_summary_export[metrics].copy()
-
-    if isinstance(metric_summary_export.index, pd.MultiIndex):
-        metric_summary_export.index = metric_summary_export.index.rename(pipeline_step_map)
-    metric_summary_export = metric_summary_export.rename(columns=metric_map)
-
-    kwargs.setdefault("column_format", _format_latex_column_format(metric_summary_export))
-
-    styler = metric_summary_export.style
-    if isinstance(highlight_best, str):
-        max_metric = metric_summary[f"mean_test_{highlight_best}"].idxmax()
-        # get index of max metric
-        max_metric = metric_summary_export.index.get_loc(max_metric)
-        styler = styler.highlight_max(subset=metric_map[highlight_best], props="bfseries: ;")
-        # get maximum of metric_summary
-        # make index bold
-        styler = styler.apply_index(lambda x: np.where(x.index == max_metric, "bfseries: ;", ""))
-    elif isinstance(highlight_best, bool) and highlight_best:
-        styler = styler.highlight_max(props="bfseries: ;")
-
-    metric_summary_tex = styler.to_latex(**kwargs)
-    metric_summary_tex = _apply_latex_code_correction(metric_summary_tex, si_table_format)
-    return metric_summary_tex
-
-
-def _format_latex_column_format(data: pd.DataFrame):
-    column_format = "l" * data.index.nlevels
-    if isinstance(data.columns, pd.MultiIndex):
-        ncols = len(data.columns)
-        ncols_last_level = len(data.columns.get_level_values(-1).unique())
-        column_format += ("S" * ncols_last_level + "|") * (ncols // ncols_last_level)
-        # remove the last "|"
-        column_format = column_format[:-1]
-    else:
-        column_format += "S" * len(data.columns)
-    return column_format
-
-
-def _apply_latex_code_correction(table: str, si_table_format: str) -> str:
-    if si_table_format is not None:
-        table = re.sub(r"(\\begin\{tabular\})", r"\\sisetup{" + si_table_format + r"}\n\n\1", table)
-    return table
+    return dummy_permuter.metric_summary_to_latex(
+        metric_summary,
+        metrics=metrics,
+        pipeline_steps=pipeline_steps,
+        si_table_format=si_table_format,
+        highlight_best=highlight_best,
+        **kwargs,
+    )
