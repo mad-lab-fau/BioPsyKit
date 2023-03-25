@@ -3,9 +3,13 @@
 ## Version 0.8.0 - XX
 ### Added
 - `biopsykit.classification.analysis`: Added functions to analyze classification results
+- `biopsykit.classification.model_selection.SklearnPipelinePermuter`: Added methods to export classification metrics 
+  as latex tables and to merge to different `SklearnPipelinePermuter` instances.
+- various new util functions
 ### Bugfixes and Improvements
 - `biopsykit.stats.StatsPipeline`: Improved behavior
 - `biopsykit.plotting`: Improved layout
+- minor bugfixes
 
 ## Version 0.7.1 - November 30, 2022
 ### Bugfixes
