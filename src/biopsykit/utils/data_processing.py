@@ -156,8 +156,8 @@ def exclude_subjects(
         _assert_is_dtype(data, pd.DataFrame)
         if index_name in data.index.names:
             level_values = data.index.get_level_values(index_name)
-            if (level_values.dtype == np.object and all(isinstance(s, str) for s in excluded_subjects)) or (
-                level_values.dtype == np.int and all(isinstance(s, int) for s in excluded_subjects)
+            if (level_values.dtype == object and all(isinstance(s, str) for s in excluded_subjects)) or (
+                level_values.dtype == int and all(isinstance(s, int) for s in excluded_subjects)
             ):
                 cleaned_data[key] = _exclude_single_subject(data, excluded_subjects, index_name, key)
             else:

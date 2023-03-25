@@ -503,7 +503,10 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     handles = None
     labels = None
     for ax, key in zip(axs, features):
-        data_plot = data.reindex(features[key], level=group)
+        reindex_keys = features[key]
+        if isinstance(reindex_keys, str):
+            reindex_keys = [reindex_keys]
+        data_plot = data.reindex(reindex_keys, level=group)
         if data_plot.empty:
             raise ValueError(f"Empty dataframe for '{key}'!")
 
