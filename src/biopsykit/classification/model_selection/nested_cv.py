@@ -107,6 +107,12 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
         cols.append(f"test_{scorer}")
     results_dict = {key: [] for key in cols}
 
+    # fix random states of cv objects for reproducibility
+    if hasattr(outer_cv, "random_state"):
+        outer_cv.random_state = kwargs.get("random_state", None)
+    if hasattr(inner_cv, "random_state"):
+        inner_cv.random_state = kwargs.get("random_state", None)
+
     for train, test in tqdm(list(outer_cv.split(X, y, groups)), desc="Outer CV"):
         cv_obj = _get_param_search_cv_object(
             pipeline, param_dict, inner_cv, scoring_dict, hyper_search_params, **kwargs

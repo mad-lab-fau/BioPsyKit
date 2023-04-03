@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import sklearn.metrics
 from joblib import Memory
+from numpy.random import RandomState
 from sklearn.base import BaseEstimator, clone
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.pipeline import Pipeline
@@ -64,6 +65,7 @@ class SklearnPipelinePermuter:
         model_dict: Optional[Dict[str, Dict[str, BaseEstimator]]] = None,
         param_dict: Optional[Dict[str, Optional[Union[Sequence[Dict[str, Any]], Dict[str, Any]]]]] = None,
         hyper_search_dict: Optional[Dict[str, Dict[str, Any]]] = None,
+        random_state: Optional[int] = None,
         **kwargs,
     ):
         """Class for systematically evaluating different sklearn pipeline combinations.
@@ -93,6 +95,9 @@ class SklearnPipelinePermuter:
             Nested dictionary specifying the method for hyperparameter search (e.g., whether to use "grid" for
             grid-search or "random" for randomized-search) for each estimator. By default, "grid-search" is used
             for each estimator unless individually specified otherwise.
+        random_state : int, optional
+            Controls the random seed passed to each estimator and each splitter. By default, no random seed is passed.
+            Set this to an integer for reproducible results across multiple program calls.
 
         Examples
         --------
@@ -186,6 +191,8 @@ class SklearnPipelinePermuter:
 
         self.refit: str = ""
 
+        self.random_state: Optional[RandomState] = None
+
         self._results_set: bool = False
 
         if kwargs.get("score_summary") is not None:
@@ -215,7 +222,10 @@ class SklearnPipelinePermuter:
             if isinstance(v, dict):
                 param_dict[k] = [v]
 
-        self.models = model_dict
+        self.random_state = RandomState(random_state)
+
+        model_dict = deepcopy(model_dict)
+        self.models = self._initialize_models(model_dict)
         self.params = param_dict
         self.model_combinations = model_combinations
 
@@ -366,7 +376,7 @@ class SklearnPipelinePermuter:
                     inner_cv=inner_cv,
                     scoring=scoring,
                     hyper_search_params=hyper_search_params,
-                    **kwargs,
+                    random_state=self.random_state,
                 )
 
                 self.param_searches[model_combination] = result_dict
@@ -476,12 +486,23 @@ class SklearnPipelinePermuter:
         score_summary_mean = self.mean_pipeline_score_results()
         return score_summary.loc[score_summary_mean.index[0]].dropna(how="all", axis=1)
 
-    def metric_summary(self) -> pd.DataFrame:
+    def metric_summary(
+        self, additional_metrics: Optional[str_t] = None, pos_label: Optional[str] = None
+    ) -> pd.DataFrame:
         """Return a summary with all performance metrics for the `best estimator` of each pipeline combination.
 
         The `best estimator` for each pipeline combination is the best estimator that
         :class:`~sklearn.model_selection.GridSearchCV` returns for each outer fold, i.e. the pipeline which yielded
         the highest average test score (over all inner folds).
+
+        Parameters
+        ----------
+        additional_metrics : str or list of str, optional
+            additional metrics to compute. Default: ``None``. Available metrics can be found in sckit-learn's
+            `metrics and scoring <https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter>`_
+            module.
+        pos_label : str, optional
+            positive label for binary classification, must be specified if `additional_metrics` is specified.
 
         Returns
         -------
@@ -526,7 +547,16 @@ class SklearnPipelinePermuter:
             df_metric = df_metric.set_index(list(df_metric.columns)[: len(param_dict)])
             list_metric_summary.append(df_metric)
 
-        return pd.concat(list_metric_summary)
+        metric_summary = pd.concat(list_metric_summary)
+
+        if additional_metrics is not None:
+            if pos_label is None:
+                raise ValueError("pos_label must be specified if additional_metrics are computed!")
+            metric_summary = self.compute_additional_metrics(
+                metric_summary, metrics=additional_metrics, pos_label=pos_label
+            )
+
+        return metric_summary
 
     def export_metric_summary(self, file_path: path_t) -> None:
         """Export performance metric summary as csv file.
@@ -793,11 +823,13 @@ class SklearnPipelinePermuter:
         ]
         return pd.Series(scores)
 
-    def compute_additional_metrics(self, metrics: str_t, pos_label: str):
+    def compute_additional_metrics(self, metric_summary: pd.DataFrame, metrics: str_t, pos_label: str) -> pd.DataFrame:
         """Compute additional classification metrics.
 
         Parameters
         ----------
+        metric_summary : :class:`~pandas.DataFrame`
+            metric summary from :meth:`~biopsykit.classification.model_selection.SklearnPipelinePermuter.metric_summary`
         metrics : str or list of str
             metric(s) to compute
         pos_label : str
@@ -811,7 +843,6 @@ class SklearnPipelinePermuter:
         """
         if isinstance(metrics, str):
             metrics = [metrics]
-        metric_summary = self.metric_summary()
         metric_slice = metric_summary[["true_labels_folds", "predicted_labels_folds"]].copy()
         metric_out = {}
         for metric in metrics:
@@ -834,5 +865,14 @@ class SklearnPipelinePermuter:
         metric_out = metric_out.unstack("score").sort_index(axis=1, level="score")
         metric_out.columns = metric_out.columns.map("_test_".join)
         metric_summary = metric_summary.join(metric_out)
-
         return metric_summary
+
+    def _initialize_models(self, model_dict: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+        if self.random_state is None:
+            return model_dict
+        for k, v in model_dict.items():
+            # add fixed random state to each estimator if it has a random_state parameter
+            for estimator in v.values():
+                if hasattr(estimator, "random_state"):
+                    estimator.random_state = self.random_state
+        return model_dict
