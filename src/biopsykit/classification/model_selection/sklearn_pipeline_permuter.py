@@ -377,6 +377,7 @@ class SklearnPipelinePermuter:
                     scoring=scoring,
                     hyper_search_params=hyper_search_params,
                     random_state=self.random_state,
+                    **kwargs,
                 )
 
                 self.param_searches[model_combination] = result_dict
