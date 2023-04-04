@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.8.0 - March 29, 2023
+## Version 0.8.1 - Apr 04, 2023
 ### Added
 - `biopsykit.classification.analysis`: Added functions to analyze classification results
 - `biopsykit.classification.model_selection.SklearnPipelinePermuter`: Added methods to export classification metrics 
@@ -8,6 +8,8 @@
   metrics.
 - various new util functions
 ### Bugfixes and Improvements
+- `biopsykit.classification.model_selection.SklearnPipelinePermuter`: fixing random state now works as intended and 
+  produces reproducible results for real!
 - `biopsykit.stats.StatsPipeline`: Improved behavior
 - `biopsykit.plotting`: Improved layout
 - minor bugfixes
