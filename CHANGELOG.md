@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.8.2 - XX, 2023
+### Bugfixes
+- `biopsykit.classification.model_selection.SklearnPipelinePermuter`: some bugfixes and improvements when computing 
+  additional classification metrics
+
 ## Version 0.8.1 - Apr 04, 2023
 ### Added
 - `biopsykit.classification.analysis`: Added functions to analyze classification results
