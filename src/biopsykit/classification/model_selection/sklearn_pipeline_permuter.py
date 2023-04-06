@@ -3,11 +3,11 @@ import functools
 import pickle
 import re
 from copy import deepcopy
-from inspect import getmembers
+from inspect import getmembers, signature
 from itertools import product
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Union, Callable
 
 import numpy as np
 import pandas as pd
@@ -551,8 +551,6 @@ class SklearnPipelinePermuter:
         metric_summary = pd.concat(list_metric_summary)
 
         if additional_metrics is not None:
-            if pos_label is None:
-                raise ValueError("pos_label must be specified if additional_metrics are computed!")
             metric_summary = self.compute_additional_metrics(
                 metric_summary, metrics=additional_metrics, pos_label=pos_label
             )
@@ -818,8 +816,16 @@ class SklearnPipelinePermuter:
     def _apply_score(row: pd.Series, score_func, pos_label: str):
         true_labels_folds = row[0]
         predicted_labels_folds = row[1]
+
+        kwargs = {}
+        params = signature(score_func).parameters
+        if "pos_label" in params:
+            kwargs["pos_label"] = pos_label
+        if "zero_division" in params:
+            kwargs["zero_division"] = 0
+
         scores = [
-            score_func(true_labels, predicted_labels, pos_label=pos_label)
+            score_func(true_labels, predicted_labels, **kwargs)
             for true_labels, predicted_labels in zip(true_labels_folds, predicted_labels_folds)
         ]
         return pd.Series(scores)
@@ -846,15 +852,23 @@ class SklearnPipelinePermuter:
             metrics = [metrics]
         metric_slice = metric_summary[["true_labels_folds", "predicted_labels_folds"]].copy()
         metric_out = {}
+        score_funcs = dict(getmembers(sklearn.metrics))
         for metric in metrics:
-            score_funcs = dict(getmembers(sklearn.metrics))
-            if metric in score_funcs:
-                score_func = score_funcs[f"{metric}"]
+            if not metric.endswith("_score"):
+                # name for calling sklearn metric function
+                score_name = metric + "_score"
+                # strip '_score' suffix from metric name for column name
                 metric = metric.replace("_score", "")
-            elif f"{metric}_score" in score_funcs:
-                score_func = score_funcs[f"{metric}_score"]
             else:
-                raise ValueError(f"Metric '{metric}' not found.")
+                score_name = metric
+
+            if metric in score_funcs:
+                score_func = score_funcs[score_name]
+            else:
+                raise ValueError(f"Metric '{score_name}' not found.")
+
+            # args = self._build_args_for_score_func(score_func, pos_label)
+
             metric_out[metric] = metric_slice.apply(self._apply_score, args=(score_func, pos_label), axis=1)
         metric_out = pd.concat(metric_out, names=["score", "folds"], axis=1)
 
@@ -866,6 +880,12 @@ class SklearnPipelinePermuter:
         metric_out = metric_out.unstack("score").sort_index(axis=1, level="score")
         metric_out.columns = metric_out.columns.map("_test_".join)
         metric_summary = metric_summary.join(metric_out)
+
+        # resort columns so that all "mean_test_*" and "std_test_*" columns are at the end
+        cols = list(metric_summary.filter(regex="^(?!mean_test_|std_test_).*$").columns)
+        cols += list(metric_summary.filter(regex="^(mean_test_|std_test_).*$").columns)
+        metric_summary = metric_summary[cols]
+
         return metric_summary
 
     def _initialize_models(self, model_dict: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
