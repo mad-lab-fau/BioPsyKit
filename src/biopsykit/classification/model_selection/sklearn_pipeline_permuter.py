@@ -854,13 +854,13 @@ class SklearnPipelinePermuter:
         metric_out = {}
         score_funcs = dict(getmembers(sklearn.metrics))
         for metric in metrics:
-            if not metric.endswith("_score"):
-                # name for calling sklearn metric function
-                score_name = metric + "_score"
+            if metric.endswith("_score"):
+                score_name = metric
                 # strip '_score' suffix from metric name for column name
                 metric = metric.replace("_score", "")
             else:
-                score_name = metric
+                # name for calling sklearn metric function
+                score_name = metric + "_score"
 
             if score_name in score_funcs:
                 score_func = score_funcs[score_name]
