@@ -862,12 +862,10 @@ class SklearnPipelinePermuter:
             else:
                 score_name = metric
 
-            if metric in score_funcs:
+            if score_name in score_funcs:
                 score_func = score_funcs[score_name]
             else:
-                raise ValueError(f"Metric '{score_name}' not found.")
-
-            # args = self._build_args_for_score_func(score_func, pos_label)
+                raise ValueError(f"Metric '{metric}' not found.")
 
             metric_out[metric] = metric_slice.apply(self._apply_score, args=(score_func, pos_label), axis=1)
         metric_out = pd.concat(metric_out, names=["score", "folds"], axis=1)
