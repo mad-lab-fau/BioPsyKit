@@ -449,10 +449,10 @@ def crop_scale(
         data = data.copy()
 
     if set_nan:
-        data = data.mask((data < score_range[0]) | (data > score_range[1]))
+        data.mask((data < score_range[0]) | (data > score_range[1]), inplace=True)  # noqa: PD002
     else:
-        data = data.mask((data < score_range[0]), other=score_range[0])
-        data = data.mask((data > score_range[1]), other=score_range[1])
+        data.mask((data < score_range[0]), other=score_range[0], inplace=True)  # noqa: PD002
+        data.mask((data > score_range[1]), other=score_range[1], inplace=True)  # noqa: PD002
 
     if inplace:
         return None

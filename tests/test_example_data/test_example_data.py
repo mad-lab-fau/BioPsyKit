@@ -99,18 +99,6 @@ class TestExampleData:
         path = get_ecg_path_example()
         assert path.exists()
 
-    def test_get_car_watch_log_path_example(self):
-        path = get_car_watch_log_path_example()
-        assert path.exists()
-
-    def test_get_car_watch_log_data_zip_path_example(self):
-        path = get_car_watch_log_data_zip_path_example()
-        assert path.exists()
-
-    def test_get_car_watch_log_path_all_subjects_example(self):
-        path = get_car_watch_log_path_all_subjects_example()
-        assert path.exists()
-
     def test_get_ecg_example(self):
         data, fs = get_ecg_example()
         _assert_is_dtype(data, pd.DataFrame)
@@ -203,10 +191,6 @@ class TestExampleData:
         dataset = get_eeg_example()
         _assert_is_dtype(dataset.data_as_df(index=None), pd.DataFrame)
         assert dataset.sampling_rate_hz == 250.0
-
-    def test_get_car_watch_log_data_example(self):
-        data = get_car_watch_log_data_example()
-        _assert_is_dtype(data, pd.DataFrame)
 
     def test_get_time_log_example(self):
         data = get_time_log_example()

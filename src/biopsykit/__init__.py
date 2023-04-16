@@ -9,7 +9,6 @@ import pingouin
 import scipy
 
 __all__ = [
-    "carwatch_logs",
     "classification",
     "example_data",
     "io",

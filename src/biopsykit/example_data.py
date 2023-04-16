@@ -15,7 +15,6 @@ from biopsykit.io import (
     load_subject_condition_list,
     load_time_log,
 )
-from biopsykit.io.carwatch_logs import load_log_one_subject
 from biopsykit.io.ecg import load_hr_phase_dict
 from biopsykit.io.eeg import MuseDataset
 from biopsykit.io.nilspod import load_dataset_nilspod
@@ -64,10 +63,6 @@ __all__ = [
     "get_sleep_analyzer_raw_example",
     "get_sleep_analyzer_summary_example",
     "get_sleep_imu_example",
-    "get_car_watch_log_path_example",
-    "get_car_watch_log_data_zip_path_example",
-    "get_car_watch_log_path_all_subjects_example",
-    "get_car_watch_log_data_example",
     "get_time_log_example",
     "get_questionnaire_example",
     "get_questionnaire_example_wrong_range",
@@ -510,92 +505,6 @@ def get_eeg_example() -> MuseDataset:
 
     """
     return MuseDataset.from_csv_file(_get_data("eeg_muse_example.csv"), tz="Europe/Berlin")
-
-
-def get_car_watch_log_path_example() -> path_t:
-    """Return folder path to *CARWatch App* log files from *one* subject.
-
-    Returns
-    -------
-    :class:`~pathlib.Path` or str
-        path to folder with *CARWatch App* log files.
-
-    """
-    # ensure that folder exists and data in folder is available
-    file_list = [
-        "carwatch_de34f_20191205.csv",
-        "carwatch_de34f_20191206.csv",
-        "carwatch_de34f_20191207.csv",
-        "carwatch_de34f_20191208.csv",
-    ]
-    file_path = None
-    for file in file_list:
-        file_path = _get_data(f"log_data/DE34F/{file}")
-    # get parent directory
-    return file_path.parent
-
-
-def get_car_watch_log_data_zip_path_example() -> path_t:
-    """Return path to *CARWatch App* example log data as zip file from *one* subject.
-
-    Returns
-    -------
-    :class:`~pathlib.Path` or str
-        path to *CARWatch App* example log data as zip file
-
-    """
-    return _get_data("log_data/logs_AB12C.zip")
-
-
-def get_car_watch_log_data_example() -> pd.DataFrame:
-    """Return *CARWatch App* example log data from folder from *one* subject.
-
-    Returns
-    -------
-    data : :class:`~pandas.DataFrame`
-        dataframe with example log data from the *CARWatch* app
-
-    """
-    # ensure that all files are available
-    file_list = [
-        "carwatch_de34f_20191205.csv",
-        "carwatch_de34f_20191206.csv",
-        "carwatch_de34f_20191207.csv",
-        "carwatch_de34f_20191208.csv",
-    ]
-    file_path = None
-    for file in file_list:
-        file_path = _get_data(f"log_data/DE34F/{file}")
-    # get parent directory
-    file_path = file_path.parent
-    return load_log_one_subject(file_path)
-
-
-def get_car_watch_log_path_all_subjects_example() -> path_t:
-    """Return folder path to *CARWatch App* log files for *multiple* subjects.
-
-    Returns
-    -------
-    :class:`~pathlib.Path` or str
-        path to folder with *CARWatch App* log files.
-
-    """
-    # ensure that folder exists and data in folder is available
-    file_list = [
-        "DE34F/carwatch_de34f_20191205.csv",
-        "DE34F/carwatch_de34f_20191206.csv",
-        "DE34F/carwatch_de34f_20191207.csv",
-        "DE34F/carwatch_de34f_20191208.csv",
-        "GH56I/carwatch_gh56i_20191205.csv",
-        "GH56I/carwatch_gh56i_20191206.csv",
-        "GH56I/carwatch_gh56i_20191207.csv",
-        "GH56I/carwatch_gh56i_20191208.csv",
-    ]
-    file_path = None
-    for file in file_list:
-        file_path = _get_data(f"log_data/{file}")
-    # get parent directory
-    return file_path.parent.parent
 
 
 def get_time_log_example() -> pd.DataFrame:
