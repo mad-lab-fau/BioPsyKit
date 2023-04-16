@@ -8,11 +8,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from fau_colors import colors_all
-
 from biopsykit.protocols import BaseProtocol
 from biopsykit.signals.ecg.plotting import hr_plot
 from biopsykit.utils.exceptions import FeatureComputationError
+from fau_colors import colors_all
 
 
 class CFT(BaseProtocol):
@@ -479,7 +478,7 @@ class CFT(BaseProtocol):
 
         # apply a 2nd degree polynomial fit
         poly = np.polyfit(idx_s, np.squeeze(df_hr_cft.values), deg=2)
-        return {"poly_fit_a{}".format(i): p for i, p in enumerate(reversed(poly))}
+        return {f"poly_fit_a{i}": p for i, p in enumerate(reversed(poly))}
 
     def _sanitize_cft_input(
         self,
@@ -495,7 +494,7 @@ class CFT(BaseProtocol):
         * Either data over the whole duration of the CFT procedure (Baseline, CFT, Recovery):
           Then, the CFT Interval will be extracted and Baseline heart rate will be computed based on the
           ``cft_start`` and ``cft_duration`` parameters of the ``CFT`` object
-          (``compute_baseline`` must then be set to ``True`` – the default)
+          (``compute_baseline`` must then be set to ``True`` - the default)
         * Or only data during the CFT interval (``is_cft_interval`` must be set to ``True``).
           Then, the Baseline heart rate muse be explicitly provided via ``hr_baseline`` parameter and
           ``compute_baseline`` must be set to ``False``
@@ -524,11 +523,8 @@ class CFT(BaseProtocol):
             heart rate data during CFT Interval
 
         """
-        if is_cft_interval:
-            data_cft = data
-        else:
-            # extract CFT interval
-            data_cft = self.extract_cft_interval(data)
+        # extract CFT interval if whole data is passed
+        data_cft = data if is_cft_interval else self.extract_cft_interval(data)
 
         if compute_baseline:
             if is_cft_interval:
@@ -538,7 +534,7 @@ class CFT(BaseProtocol):
                 )
             hr_baseline = self.baseline_hr(data)
         else:
-            if hr_baseline is None:
+            if hr_baseline is None:  # noqa: PLR5501
                 raise ValueError("`baseline_hr` must be supplied as parameter when `compute_baseline` is set to False!")
 
         return data_cft, hr_baseline
@@ -602,11 +598,11 @@ class CFT(BaseProtocol):
         times_dict = self._cft_plot_get_cft_times(data, time_baseline, time_recovery)
         df_plot = self._cft_plot_extract_plot_interval(data, times_dict)
 
-        bbox = dict(
-            fc=(1, 1, 1, plt.rcParams["legend.framealpha"]),
-            ec=plt.rcParams["legend.edgecolor"],
-            boxstyle="round",
-        )
+        bbox = {
+            "fc": (1, 1, 1, plt.rcParams["legend.framealpha"]),
+            "ec": plt.rcParams["legend.edgecolor"],
+            "boxstyle": "round",
+        }
 
         hr_plot(heart_rate=df_plot, ax=ax, plot_mean=False)
         self._cft_plot_add_phase_annotations(ax, times_dict, **kwargs)
@@ -757,10 +753,7 @@ class CFT(BaseProtocol):
         )
 
         # Peak Bradycardia hline
-        if isinstance(data.index, pd.DatetimeIndex):
-            xmax = brady_x + pd.Timedelta(seconds=20)
-        else:
-            xmax = brady_x + 20
+        xmax = brady_x + pd.Timedelta(seconds=20) if isinstance(data.index, pd.DatetimeIndex) else brady_x + 20
 
         ax.hlines(
             y=brady_y,
@@ -782,13 +775,13 @@ class CFT(BaseProtocol):
             "",
             xy=(brady_x_offset, brady_y),
             xytext=(brady_x_offset, hr_baseline),
-            arrowprops=dict(
-                arrowstyle="<->",
-                lw=2,
-                color=color_adjust,
-                shrinkA=0.0,
-                shrinkB=0.0,
-            ),
+            arrowprops={
+                "arrowstyle": "<->",
+                "lw": 2,
+                "color": color_adjust,
+                "shrinkA": 0.0,
+                "shrinkB": 0.0,
+            },
         )
 
         # Peak Bradycardia Text
@@ -807,13 +800,13 @@ class CFT(BaseProtocol):
             "",
             xy=(cft_start, max_hr_cft),
             xytext=(brady_x, max_hr_cft),
-            arrowprops=dict(
-                arrowstyle="<->",
-                lw=2,
-                color=color,
-                shrinkA=0.0,
-                shrinkB=0.0,
-            ),
+            arrowprops={
+                "arrowstyle": "<->",
+                "lw": 2,
+                "color": color,
+                "shrinkA": 0.0,
+                "shrinkB": 0.0,
+            },
         )
 
         # Peak Bradycardia Latency Text
@@ -871,23 +864,20 @@ class CFT(BaseProtocol):
             alpha=0.6,
         )
 
-        if isinstance(data.index, pd.DatetimeIndex):
-            x_offset = cft_end - pd.Timedelta(seconds=5)
-        else:
-            x_offset = cft_end - 5
+        x_offset = cft_end - pd.Timedelta(seconds=5) if isinstance(data.index, pd.DatetimeIndex) else cft_end - 5
 
         # Mean Bradycardia arrow
         ax.annotate(
             "",
             xy=(x_offset, mean_hr),
             xytext=(x_offset, cft_params["baseline_hr"]),
-            arrowprops=dict(
-                arrowstyle="<->",
-                lw=2,
-                color=getattr(colors_all, f"{color_key}_dark"),
-                shrinkA=0.0,
-                shrinkB=0.0,
-            ),
+            arrowprops={
+                "arrowstyle": "<->",
+                "lw": 2,
+                "color": getattr(colors_all, f"{color_key}_dark"),
+                "shrinkA": 0.0,
+                "shrinkB": 0.0,
+            },
         )
 
         # Mean Bradycardia Text
@@ -939,13 +929,13 @@ class CFT(BaseProtocol):
             "",
             xy=(onset_x, onset_y),
             xytext=(cft_times["cft_start"], onset_y),
-            arrowprops=dict(
-                arrowstyle="<->",
-                lw=2,
-                color=color,
-                shrinkA=0.0,
-                shrinkB=0.0,
-            ),
+            arrowprops={
+                "arrowstyle": "<->",
+                "lw": 2,
+                "color": color,
+                "shrinkA": 0.0,
+                "shrinkB": 0.0,
+            },
         )
 
         # CFT Onset Text

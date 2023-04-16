@@ -4,14 +4,12 @@ from typing import List, Optional, Tuple, Union
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from scipy import interpolate, signal
-
 from biopsykit.utils._types import arr_t, str_t
+from scipy import interpolate, signal
 
 
 def sanitize_input_1d(data: arr_t) -> np.ndarray:
-    """Convert 1-d array-like data (:class:`~numpy.ndarray`, :class:`~pandas.DataFrame`/:class:`~pandas.Series`) \
-    to a numpy array.
+    """Convert 1-d array-like data (:class:`~pandas.DataFrame`/:class:`~pandas.Series`) to a numpy array.
 
     Parameters
     ----------
@@ -38,8 +36,7 @@ def sanitize_input_nd(
     data: arr_t,
     ncols: Optional[Union[int, Tuple[int, ...]]] = None,
 ) -> np.ndarray:
-    """Convert n-d array-like data (:class:`~numpy.ndarray`, :class:`~pandas.DataFrame`/:class:`~pandas.Series`) \
-    to a numpy array.
+    """Convert n-d array-like data (:class:`~pandas.DataFrame`/:class:`~pandas.Series`) to a numpy array.
 
     Parameters
     ----------
@@ -61,15 +58,15 @@ def sanitize_input_nd(
         ncols = [ncols]
 
     if isinstance(data, (pd.Series, pd.DataFrame)):
-        data = data.values
+        data = data.to_numpy()
 
     if ncols is not None:
         if data.ndim == 1:
             if 1 in ncols:
                 return data
-            raise ValueError("Invalid number of columns! Expected one of {}, got 1.".format(ncols))
+            raise ValueError(f"Invalid number of columns! Expected one of {ncols}, got 1.")
         if data.shape[1] not in ncols:
-            raise ValueError("Invalid number of columns! Expected one of {}, got {}.".format(ncols, data.shape[1]))
+            raise ValueError(f"Invalid number of columns! Expected one of {ncols}, got {data.shape[1]}.")
     return data
 
 
@@ -122,7 +119,7 @@ def find_extrema_in_radius(
     extrema_funcs = {"min": np.nanargmin, "max": np.nanargmax}
 
     if extrema_type not in extrema_funcs:
-        raise ValueError("`extrema_type` must be one of {}, not {}".format(list(extrema_funcs.keys()), extrema_type))
+        raise ValueError(f"`extrema_type` must be one of {list(extrema_funcs.keys())}, not {extrema_type}")
     extrema_func = extrema_funcs[extrema_type]
 
     # ensure numpy
@@ -152,14 +149,8 @@ def find_extrema_in_radius(
 
 def _find_extrema_in_radius_get_limits(radius: Union[int, Tuple[int, int]]) -> Tuple[int, int]:
     # determine upper and lower limit
-    if isinstance(radius, tuple):
-        lower_limit = radius[0]
-    else:
-        lower_limit = radius
-    if isinstance(radius, tuple):
-        upper_limit = radius[-1]
-    else:
-        upper_limit = radius
+    lower_limit = radius[0] if isinstance(radius, tuple) else radius
+    upper_limit = radius[-1] if isinstance(radius, tuple) else radius
 
     # round up and make sure it's an integer
     lower_limit = np.ceil(lower_limit).astype(int)
@@ -219,7 +210,7 @@ def remove_outlier_and_interpolate(
     # remove outlier
     data[outlier_mask] = np.nan
     # fill outlier by linear interpolation of neighbors
-    data = pd.Series(data).interpolate(limit_direction="both").values
+    data = pd.Series(data).interpolate(limit_direction="both").to_numpy()
     # interpolate signal
     x_new = np.linspace(x_old[0], x_old[-1], desired_length)
     return nk.signal_interpolate(x_old, data, x_new, method="linear")
@@ -616,10 +607,7 @@ def add_datetime_index(
     if isinstance(column_name, str):
         # assert list
         column_name = [column_name]
-    if column_name is not None:
-        arr = pd.DataFrame(arr, columns=column_name)
-    else:
-        arr = pd.DataFrame(arr)
+    arr = pd.DataFrame(arr, columns=column_name) if column_name is not None else pd.DataFrame(arr)
 
     start_time_s = float(start_time.to_datetime64()) / 1e9
     arr.index = pd.to_datetime(

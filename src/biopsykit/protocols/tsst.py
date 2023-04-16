@@ -70,8 +70,8 @@ class TSST(BaseProtocol):
 
         References
         ----------
-        Kirschbaum, C., Pirke, K.-M., & Hellhammer, D. H. (1993). The “Trier Social Stress Test” – A Tool for
-        Investigating Psychobiological Stress Responses in a Laboratory Setting. *Neuropsychobiology*, 28, 76–81.
+        Kirschbaum, C., Pirke, K.-M., & Hellhammer, D. H. (1993). The “Trier Social Stress Test” - A Tool for
+        Investigating Psychobiological Stress Responses in a Laboratory Setting. *Neuropsychobiology*, 28, 76-81.
         https://doi.org/10.1159/000119004
 
         """

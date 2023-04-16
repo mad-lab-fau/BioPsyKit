@@ -5,9 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from statannot import add_stat_annotation
-
 from biopsykit.utils.functions import se
+from statannot import add_stat_annotation
 
 _PVALUE_THRESHOLDS = [[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]
 
@@ -112,10 +111,7 @@ def lineplot(
 
     marker, linestyle = _get_styles(data, style, hue, marker, linestyle)
 
-    if hue is not None:
-        grouped = {key: val for key, val in data.groupby(hue)}  # pylint:disable=unnecessary-comprehension
-    else:
-        grouped = {y: data}
+    grouped = dict(data.groupby(hue)) if hue is not None else {y: data}
 
     if hue_order is not None:
         # reorder group dictionary
@@ -376,9 +372,8 @@ def feature_boxplot(  # pylint:disable=too-many-branches
             legend_orientation=legend_orientation,
             legend_title=legend_title,
         )
-    else:
-        if kwargs.pop("tight_layout", True):
-            fig.tight_layout()
+    elif kwargs.pop("tight_layout", True):
+        fig.tight_layout()
     return fig, ax
 
 
@@ -602,11 +597,8 @@ def _get_df_lineplot(data: pd.DataFrame, x: str, y: str, hue: str, order: Sequen
     if "mean" in data.columns and "se" in data.columns:
         m_se = data
     else:
-        if hue is None:
-            group_cols = [x]
-        else:
-            group_cols = [x, hue]
-        m_se = data[group_cols + [y]].groupby(group_cols).agg([np.mean, se])[y]
+        group_cols = [x] if hue is None else [x, hue]
+        m_se = data[[*group_cols, y]].groupby(group_cols).agg([np.mean, se])[y]
     if order is not None:
         m_se = m_se.reindex(order, level=0)
     return m_se

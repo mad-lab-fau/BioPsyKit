@@ -4,7 +4,6 @@ from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.utils._types import _Hashable, path_t
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError, ValueRangeError
 
@@ -33,7 +32,7 @@ def _assert_is_dir(path: path_t, raise_exception: Optional[bool] = True) -> Opti
     file_name = Path(path)
     if not file_name.is_dir():
         if raise_exception:
-            raise ValueError("The path '{}' is expected to be a directory, but it's not!".format(path))
+            raise ValueError(f"The path '{path}' is expected to be a directory, but it's not!")
         return False
 
     return True
@@ -105,9 +104,7 @@ def _assert_is_dtype(
     """
     if not isinstance(obj, dtype):
         if raise_exception:
-            raise ValidationError(
-                "The data object is expected to be one of ({},). But it is a {}".format(dtype, type(obj))
-            )
+            raise ValidationError(f"The data object is expected to be one of ({dtype},). But it is a {type(obj)}")
         return False
     return True
 
@@ -238,9 +235,9 @@ def _assert_has_columns(
 
     if result is False:
         if len(columns_sets) == 1:
-            helper_str = "the following columns: {}".format(columns_sets[0])
+            helper_str = f"the following columns: {columns_sets[0]}"
         else:
-            helper_str = "one of the following sets of columns: {}".format(columns_sets)
+            helper_str = f"one of the following sets of columns: {columns_sets}"
         if raise_exception:
             raise ValidationError(
                 "The dataframe is expected to have {}. Instead it has the following columns: {}".format(
@@ -336,9 +333,9 @@ def _assert_has_columns_any_level(
 
     if result is False:
         if len(columns_sets) == 1:
-            helper_str = "the following columns: {}".format(columns_sets[0])
+            helper_str = f"the following columns: {columns_sets[0]}"
         else:
-            helper_str = "one of the following sets of columns: {}".format(columns_sets)
+            helper_str = f"one of the following sets of columns: {columns_sets}"
         if raise_exception:
             raise ValidationError(
                 "The dataframe is expected to have {} at any level of the MultiIndex. Instead it has the "
@@ -525,7 +522,7 @@ def _assert_dataframes_same_length(
         if ``raise_exception`` is ``True`` and ``data`` does not have the required length
 
     """
-    if len(set(len(df) for df in df_list)) != 1:
+    if len({len(df) for df in df_list}) != 1:
         if raise_exception:
             raise ValidationError("Not all dataframes have the same length!")
         return False
@@ -544,11 +541,10 @@ def _multiindex_level_names_helper_get_expected_levels(
             expected = ex_levels == ac_levels_slice
         else:
             expected = ex_levels == ac_levels
+    elif match_atleast:
+        expected = all(level in ac_levels for level in ex_levels)
     else:
-        if match_atleast:
-            expected = all(level in ac_levels for level in ex_levels)
-        else:
-            expected = sorted(ex_levels) == sorted(ac_levels)
+        expected = sorted(ex_levels) == sorted(ac_levels)
 
     return expected
 
@@ -566,10 +562,7 @@ def _multiindex_level_names_helper(
         level_names = [level_names]
 
     ex_levels = list(level_names)
-    if idx_or_col == "index":
-        ac_levels = list(df.index.names)
-    else:
-        ac_levels = list(df.columns.names)
+    ac_levels = list(df.index.names) if idx_or_col == "index" else list(df.columns.names)
 
     expected = _multiindex_level_names_helper_get_expected_levels(ac_levels, ex_levels, match_atleast, match_order)
 
@@ -598,10 +591,7 @@ def _multiindex_check_helper(
         return _multiindex_check_helper_not_expected(idx_or_col, nlevels, nlevels_act, expected, raise_exception)
 
     if has_multiindex is True:
-        if nlevels_atleast:
-            expected = nlevels_act >= nlevels
-        else:
-            expected = nlevels_act == nlevels
+        expected = nlevels_act >= nlevels if nlevels_atleast else nlevels_act == nlevels
         if not expected:
             if raise_exception:
                 raise ValidationError(
@@ -681,12 +671,10 @@ def _check_has_column_prefix_single_col(
 ) -> Optional[bool]:
     if not _assert_is_dtype(col, str, raise_exception=False):
         if raise_exception:
-            raise ValidationError("Column '{}' from {} is not a string!".format(col, columns))
+            raise ValidationError(f"Column '{col}' from {columns} is not a string!")
         return False
     if not col.startswith(prefix):
         if raise_exception:
-            raise ValidationError(
-                "Column '{}' from {} are starting with the required prefix '{}'!".format(col, columns, prefix)
-            )
+            raise ValidationError(f"Column '{col}' from {columns} are starting with the required prefix '{prefix}'!")
         return False
     return True

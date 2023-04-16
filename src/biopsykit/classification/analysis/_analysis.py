@@ -4,14 +4,13 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from biopsykit.classification.model_selection import SklearnPipelinePermuter
+from biopsykit.classification.utils import prepare_df_sklearn
 from fau_colors import cmaps
 from matplotlib import pyplot as plt
 from matplotlib.cm import register_cmap
 from matplotlib.colors import ListedColormap
 from sklearn.metrics import ConfusionMatrixDisplay
-
-from biopsykit.classification.model_selection import SklearnPipelinePermuter
-from biopsykit.classification.utils import prepare_df_sklearn
 
 pipeline_step_map = {
     "pipeline_scaler": "Scaler",
@@ -136,10 +135,10 @@ def predict_proba_from_estimator(
     predict_proba_labels = []
 
     for i, test_idx in enumerate(test_indices):
-        test_idx = list(test_idx)
+        test_idx_list = list(test_idx)
         pipeline_fold = best_pipeline[i]
-        predict_proba_results.append(pipeline_fold.predict_proba(x[test_idx]))
-        predict_proba_labels.append(y[test_idx])
+        predict_proba_results.append(pipeline_fold.predict_proba(x[test_idx_list]))
+        predict_proba_labels.append(y[test_idx_list])
 
     results_proba = pd.DataFrame(
         np.concatenate(predict_proba_results),

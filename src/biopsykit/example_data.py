@@ -8,8 +8,6 @@ from typing import Dict, Optional, Sequence, Tuple, Union
 from urllib.request import urlretrieve
 
 import pandas as pd
-from tqdm.auto import tqdm
-
 from biopsykit.io import (
     load_long_format_csv,
     load_pandas_dict_excel,
@@ -40,6 +38,7 @@ from biopsykit.utils.datatype_helper import (
     is_saliva_mean_se_dataframe,
 )
 from biopsykit.utils.file_handling import mkdirs
+from tqdm.auto import tqdm
 
 _EXAMPLE_DATA_PATH_LOCAL = Path(__file__).parent.parent.parent.joinpath("example_data")
 _EXAMPLE_DATA_PATH_HOME = Path.home().joinpath(".biopsykit_data")
@@ -256,8 +255,7 @@ def get_hr_subject_data_dict_example() -> HeartRateSubjectDataDict:
 
 
 def get_hr_subject_data_dict_tuple_example() -> HeartRateSubjectDataDict:
-    """Return heart rate example data in the form of a \
-    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`, but with tuples as keys instead of strings.
+    """Return HR example data as a ``HeartRateSubjectDataDict``, but with tuples as keys instead of strings.
 
     Returns
     -------

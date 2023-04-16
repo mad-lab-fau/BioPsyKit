@@ -5,9 +5,6 @@ from typing import Callable, Dict, List, Literal, Optional, Sequence, Tuple, Uni
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from scipy.stats import iqr
-from tqdm.auto import tqdm
-
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.array_handling import find_extrema_in_radius, remove_outlier_and_interpolate, sanitize_input_1d
 from biopsykit.utils.datatype_helper import (
@@ -24,6 +21,8 @@ from biopsykit.utils.datatype_helper import (
     is_ecg_result_dataframe,
     is_r_peak_dataframe,
 )
+from scipy.stats import iqr
+from tqdm.auto import tqdm
 
 __all__ = ["EcgProcessor"]
 
@@ -45,9 +44,7 @@ def _hrv_process_get_hrv_types(hrv_types: Union[str, Sequence[str]]) -> Sequence
     # check whether all supplied hrv_types are valid
     for hrv_type in hrv_types:
         if hrv_type not in _hrv_methods:
-            raise ValueError(
-                "Invalid 'hrv_types'. Must be in {}, but got {}".format(list(_hrv_methods.keys()), hrv_type)
-            )
+            raise ValueError(f"Invalid 'hrv_types'. Must be in {list(_hrv_methods.keys())}, but got {hrv_type}")
     return hrv_types
 
 
@@ -308,7 +305,7 @@ class EcgProcessor(_BaseProcessor):
                 ecg_result["Heart_Rate"] = heart_rate_interpolated
             except EcgProcessingError as e:
                 if errors == "raise":
-                    raise e
+                    raise EcgProcessingError from e
                 if errors == "warn":
                     warnings.warn(str(e))
                 ecg_result, rpeaks, heart_rate = (
@@ -345,7 +342,7 @@ class EcgProcessor(_BaseProcessor):
 
         """
         # get numpy
-        ecg_signal = data["ecg"].values
+        ecg_signal = data["ecg"].to_numpy()
         # clean (i.e. filter) the ECG signal using the specified method
         ecg_cleaned = nk.ecg_clean(ecg_signal, sampling_rate=int(self.sampling_rate), method=method)
 
@@ -376,7 +373,7 @@ class EcgProcessor(_BaseProcessor):
 
         # copy new dataframe consisting of R peaks indices (and their respective quality indicator)
         rpeaks = ecg_result.loc[ecg_result["ECG_R_Peaks"] == 1.0, ["ECG_Quality"]]
-        rpeaks.rename(columns={"ECG_Quality": "R_Peak_Quality"}, inplace=True)
+        rpeaks = rpeaks.rename(columns={"ECG_Quality": "R_Peak_Quality"})
         rpeaks.loc[:, "R_Peak_Idx"] = rpeak_idx
         # compute RR interval
         rpeaks["RR_Interval"] = np.ediff1d(rpeaks["R_Peak_Idx"], to_end=0) / self.sampling_rate
@@ -424,7 +421,7 @@ class EcgProcessor(_BaseProcessor):
         References
         ----------
         Berntson, G. G., Quigley, K. S., Jang, J. F., & Boysen, S. T. (1990). An Approach to Artifact Identification:
-        Application to Heart Period Data. *Psychophysiology*, 27(5), 586–598.
+        Application to Heart Period Data. *Psychophysiology*, 27(5), 586-598.
         https://doi.org/10.1111/j.1469-8986.1990.tb01982.x
 
         """
@@ -668,7 +665,7 @@ class EcgProcessor(_BaseProcessor):
         ----------
         Lipponen, J. A., & Tarvainen, M. P. (2019). A robust algorithm for heart rate variability time series artefact
         correction using novel beat classification. *Journal of Medical Engineering and Technology*,
-        43(3), 173–181. https://doi.org/10.1080/03091902.2019.1640306
+        43(3), 173-181. https://doi.org/10.1080/03091902.2019.1640306
 
 
         Examples
@@ -872,7 +869,7 @@ class EcgProcessor(_BaseProcessor):
         if edr_type is None:
             edr_type = "peak_trough_mean"
         if edr_type not in _edr_methods:
-            raise ValueError("`edr_type` must be one of {}, not {}".format(list(_edr_methods.keys()), edr_type))
+            raise ValueError(f"`edr_type` must be one of {list(_edr_methods.keys())}, not {edr_type}")
         edr_func = _edr_methods[edr_type]
 
         # ensure numpy
@@ -1109,9 +1106,7 @@ def _edr_peak_trough_diff(ecg: pd.Series, peaks: np.array, troughs: np.array) ->
     return peak_vals - trough_vals
 
 
-def _edr_peak_peak_interval(
-    ecg: pd.DataFrame, peaks: np.array, troughs: np.array  # pylint:disable=unused-argument
-) -> np.array:
+def _edr_peak_peak_interval(ecg: pd.DataFrame, peaks: np.array, troughs: np.array) -> np.array:  # noqa: ARG001
     """Estimate respiration signal from ECG based on `peak-peak-interval` method.
 
     The `peak-peak-interval` method is based on computing RR intervals.
@@ -1200,7 +1195,7 @@ def _correct_outlier_correlation(rpeaks: pd.DataFrame, bool_mask: np.array, corr
 
 
 def _correct_outlier_quality(
-    rpeaks: pd.DataFrame, bool_mask: np.array, quality_thres: float, **kwargs  # pylint:disable=unused-argument
+    rpeaks: pd.DataFrame, bool_mask: np.array, quality_thres: float, **kwargs  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'quality'.
 
@@ -1234,7 +1229,7 @@ def _correct_outlier_statistical_rr(
     rpeaks: pd.DataFrame,
     bool_mask: np.array,
     stat_thres: float,
-    **kwargs,  # pylint:disable=unused-argument
+    **kwargs,  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'statistical_rr'.
 
@@ -1270,7 +1265,7 @@ def _correct_outlier_statistical_rr(
 
 
 def _correct_outlier_statistical_rr_diff(
-    rpeaks: pd.DataFrame, bool_mask: np.array, stat_thres: float, **kwargs  # pylint:disable=unused-argument
+    rpeaks: pd.DataFrame, bool_mask: np.array, stat_thres: float, **kwargs  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'statistical_rr_diff'.
 
@@ -1308,8 +1303,8 @@ def _correct_outlier_statistical_rr_diff(
 def _correct_outlier_artifact(
     rpeaks: pd.DataFrame,
     bool_mask: np.array,
-    art_thres: float,  # pylint:disable=unused-argument
-    **kwargs,  # pylint:disable=unused-argument
+    art_thres: float,  # noqa: ARG001
+    **kwargs,  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'artifact'.
 
@@ -1338,7 +1333,7 @@ def _correct_outlier_artifact(
     References
     ----------
     Berntson, G. G., Quigley, K. S., Jang, J. F., & Boysen, S. T. (1990). An Approach to Artifact Identification:
-    Application to Heart Period Data. *Psychophysiology*, 27(5), 586–598.
+    Application to Heart Period Data. *Psychophysiology*, 27(5), 586-598.
     https://doi.org/10.1111/j.1469-8986.1990.tb01982.x
 
     """
@@ -1357,7 +1352,7 @@ def _correct_outlier_artifact(
 
 
 def _correct_outlier_physiological(
-    rpeaks: pd.DataFrame, bool_mask: np.array, hr_thres: Tuple[float, float], **kwargs  # pylint:disable=unused-argument
+    rpeaks: pd.DataFrame, bool_mask: np.array, hr_thres: Tuple[float, float], **kwargs  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'physiological'.
 
@@ -1521,7 +1516,7 @@ def _get_imputation_type(imputation_type: str, imputation_types: Sequence[str]) 
     if imputation_type is None:
         imputation_type = "moving_average"
     elif imputation_type not in imputation_types:
-        raise ValueError("'imputation_type' must be one of {}, not {}!".format(imputation_types, imputation_type))
+        raise ValueError(f"'imputation_type' must be one of {imputation_types}, not {imputation_type}!")
     return imputation_type
 
 

@@ -4,7 +4,6 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.saliva.utils import (
     _check_sample_times,
     _get_group_cols,
@@ -64,7 +63,7 @@ def max_value(
         for saliva in saliva_type:
             saliva_col = [saliva]
             if "time" in data:
-                saliva_col = saliva_col + ["time"]
+                saliva_col = [*saliva_col, "time"]
             dict_result[saliva] = max_value(
                 data[saliva_col],
                 saliva_type=saliva,
@@ -84,7 +83,7 @@ def max_value(
 
     out = pd.DataFrame(
         max_val,
-        columns=["{}_max_val".format(saliva_type)],
+        columns=[f"{saliva_type}_max_val"],
         index=max_val.index,
     )
     out.columns.name = "saliva_feature"
@@ -132,7 +131,7 @@ def initial_value(
         for saliva in saliva_type:
             saliva_col = [saliva]
             if "time" in data:
-                saliva_col = saliva_col + ["time"]
+                saliva_col = [*saliva_col, "time"]
             dict_result[saliva] = initial_value(
                 data[saliva_col],
                 saliva_type=saliva,
@@ -150,7 +149,7 @@ def initial_value(
 
     out = pd.DataFrame(
         ini_val.values,
-        columns=["{}_ini_val".format(saliva_type)],
+        columns=[f"{saliva_type}_ini_val"],
         index=ini_val.index,
     )
     out.columns.name = "saliva_feature"
@@ -210,7 +209,7 @@ def max_increase(
         for saliva in saliva_type:
             saliva_col = [saliva]
             if "time" in data:
-                saliva_col = saliva_col + ["time"]
+                saliva_col = [*saliva_col, "time"]
             dict_result[saliva] = max_increase(
                 data[saliva_col],
                 saliva_type=saliva,
@@ -231,7 +230,7 @@ def max_increase(
 
     out = pd.DataFrame(
         max_inc,
-        columns=["{}_max_inc_percent".format(saliva_type) if percent else "{}_max_inc".format(saliva_type)],
+        columns=[f"{saliva_type}_max_inc_percent" if percent else f"{saliva_type}_max_inc"],
         index=max_inc.index,
     )
     out.columns.name = "saliva_feature"
@@ -310,7 +309,7 @@ def auc(
     ----------
     Pruessner, J. C., Kirschbaum, C., Meinlschmid, G., & Hellhammer, D. H. (2003).
     Two formulas for computation of the area under the curve represent measures of total hormone concentration
-    versus time-dependent change. Psychoneuroendocrinology, 28(7), 916–931.
+    versus time-dependent change. Psychoneuroendocrinology, 28(7), 916-931.
     https://doi.org/10.1016/S0306-4530(02)00108-7
 
     """
@@ -322,7 +321,7 @@ def auc(
         for saliva in saliva_type:
             saliva_col = [saliva]
             if "time" in data:
-                saliva_col = saliva_col + ["time"]
+                saliva_col = [*saliva_col, "time"]
             dict_result[saliva] = auc(
                 data[saliva_col],
                 saliva_type=saliva,
@@ -348,7 +347,7 @@ def auc(
     if compute_auc_post:
         auc_data = _auc_compute_auc_post(data, auc_data, sample_times)
 
-    out = pd.DataFrame(auc_data, index=data.index).add_prefix("{}_".format(saliva_type))
+    out = pd.DataFrame(auc_data, index=data.index).add_prefix(f"{saliva_type}_")
     out.columns.name = "saliva_feature"
 
     # check output
@@ -439,7 +438,7 @@ def slope(
         for saliva in saliva_type:
             saliva_col = [saliva]
             if "time" in data:
-                saliva_col = saliva_col + ["time"]
+                saliva_col = [*saliva_col, "time"]
             dict_result[saliva] = slope(
                 data[saliva_col],
                 sample_labels=sample_labels,
@@ -531,7 +530,7 @@ def standard_features(
         for saliva in saliva_type:
             saliva_col = [saliva]
             if "time" in data:
-                saliva_col = saliva_col + ["time"]
+                saliva_col = [*saliva_col, "time"]
             dict_result[saliva] = standard_features(data[saliva_col], saliva_type=saliva)
         return dict_result
 
@@ -564,7 +563,7 @@ def standard_features(
     # drop 'saliva_type' multiindex column and add as prefix to columns to ensure consistent naming with
     # the other saliva functions
     out.columns = out.columns.droplevel(0)
-    out = out.add_prefix("{}_".format(saliva_type))
+    out = out.add_prefix(f"{saliva_type}_")
     out.columns.name = "saliva_feature"
 
     # check output
@@ -614,7 +613,7 @@ def mean_se(
         for biomarker in saliva_type:
             biomarker_cols = [biomarker]
             if "time" in data:
-                biomarker_cols = ["time"] + biomarker_cols
+                biomarker_cols = ["time", *biomarker_cols]
             dict_result[biomarker] = mean_se(data[biomarker_cols], saliva_type=biomarker, remove_s0=remove_s0)
         return dict_result
 
@@ -628,7 +627,7 @@ def mean_se(
     if "time" in data.columns and "time" not in group_cols:
         # add 'time' column to grouper if it's in the data and wasn't added yet because otherwise
         # we would loose this column
-        group_cols = group_cols + ["time"]
+        group_cols = [*group_cols, "time"]
 
     data_mean_se = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
     is_saliva_mean_se_dataframe(data_mean_se)

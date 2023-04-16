@@ -2,7 +2,6 @@
 from typing import Any, Dict, Optional, Sequence, Union
 
 import numpy as np
-
 from biopsykit.signals.imu import convert_acc_data_to_g
 from biopsykit.signals.imu.activity_counts import ActivityCounts
 from biopsykit.signals.imu.rest_periods import RestPeriods

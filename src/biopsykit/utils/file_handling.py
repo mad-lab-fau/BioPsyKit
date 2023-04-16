@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Optional, Sequence, Union
 
 import matplotlib.pyplot as plt
-
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t
 
@@ -33,8 +32,8 @@ def mkdirs(dir_list: Union[path_t, Sequence[path_t]]) -> None:
         dir_list = [dir_list]
     for directory in dir_list:
         # ensure pathlib
-        directory = Path(directory)
-        directory.mkdir(exist_ok=True, parents=True)
+        directory_path = Path(directory)
+        directory_path.mkdir(exist_ok=True, parents=True)
 
 
 def get_subject_dirs(base_path: path_t, pattern: str) -> Optional[Sequence[Path]]:
@@ -69,7 +68,7 @@ def get_subject_dirs(base_path: path_t, pattern: str) -> Optional[Sequence[Path]
     subject_dirs = [p for p in sorted(base_path.glob("*")) if p.is_dir()]
     subject_dirs = list(filter(lambda s: len(re.findall(pattern, s.name)) > 0, subject_dirs))
     if len(subject_dirs) == 0:
-        raise FileNotFoundError("No subfolders matching the pattern '{}' found in {}.".format(pattern, base_path))
+        raise FileNotFoundError(f"No subfolders matching the pattern '{pattern}' found in {base_path}.")
     return subject_dirs
 
 

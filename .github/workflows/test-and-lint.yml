@@ -29,12 +29,13 @@ jobs:
         poetry install -E mne -E jupyter
     - name: Linting
       run: |
-        poe format_check
-        poe lint
+        poetry run poe ci_check
     - name: Testing
+      if: ${{ matrix.python-version == '3.9' }}
       run: |
-        poe test
-    - name: "Check Codecov"
+        poetry run poe test
+    - name: "Upload coverage to Codecov"
+      if: ${{ matrix.python-version == '3.9' }}
       uses: codecov/codecov-action@v3
       with:
         fail_ci_if_error: true

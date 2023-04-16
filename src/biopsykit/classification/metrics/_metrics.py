@@ -4,7 +4,6 @@ from inspect import getmembers
 import numpy as np
 import pandas as pd
 import sklearn.metrics
-
 from biopsykit.utils._types import str_t
 
 
@@ -44,7 +43,7 @@ def compute_additional_metrics(metric_summary: pd.DataFrame, metrics: str_t, pos
             score_func = score_funcs[f"{metric}"]
         elif f"{metric}_score" in score_funcs:
             score_func = score_funcs[f"{metric}_score"]
-            metric = f"{metric}_score"
+            metric = f"{metric}_score"  # noqa: PLW2901
         else:
             raise ValueError(f"Metric '{metric}' not found.")
         metric_out[metric] = metric_slice.apply(_apply_score, args=(score_func, pos_label), axis=1)
@@ -52,7 +51,7 @@ def compute_additional_metrics(metric_summary: pd.DataFrame, metrics: str_t, pos
 
     metric_out = metric_out.stack(["score", "folds"])
     metric_out = metric_out.groupby(metric_out.index.names[:-1]).agg(
-        [("mean", lambda x: np.mean), ("std", lambda x: np.std(x))]  # pylint:disable=unnecessary-lambda
+        [("mean", lambda x: np.mean), ("std", lambda x: np.std(x))]  # noqa: ARG005
     )
 
     metric_out = metric_out.unstack("score").sort_index(axis=1, level="score")

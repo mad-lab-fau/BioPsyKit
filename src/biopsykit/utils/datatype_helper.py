@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import (
     _assert_has_column_multiindex,
     _assert_has_column_prefix,
@@ -996,7 +995,7 @@ def is_saliva_raw_dataframe(
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_multiindex(data, nlevels=2, nlevels_atleast=True)
         _assert_has_index_levels(data, index_levels=["subject", "sample"], match_atleast=True, match_order=False)
-        _assert_has_columns(data, [saliva_type, saliva_type + ["time"]])
+        _assert_has_columns(data, [saliva_type, [*saliva_type, "time"]])
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(
@@ -1165,7 +1164,7 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
         _assert_is_dtype(data, dict)
         expected_keys = ["date", "sleep_onset", "wake_onset", "total_sleep_duration"]
         if any(col not in list(data.keys()) for col in expected_keys):
-            raise ValidationError("Not all of {} are in the dictionary!".format(expected_keys))
+            raise ValidationError(f"Not all of {expected_keys} are in the dictionary!")
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(

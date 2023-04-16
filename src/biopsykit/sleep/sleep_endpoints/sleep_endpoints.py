@@ -4,7 +4,6 @@ from typing import Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.utils.datatype_helper import SleepEndpointDataFrame, SleepEndpointDict, _SleepEndpointDataFrame
 
 
@@ -70,11 +69,11 @@ def compute_sleep_endpoints(
     wake_after_sleep_onset = len(df_sw_sleep) - int(df_sw_sleep.sum()[0])
 
     df_sw_sleep["block"] = df_sw_sleep["sleep_wake"].diff().ne(0).cumsum()
-    df_sw_sleep.reset_index(inplace=True)
-    df_sw_sleep.rename(columns={"index": "time"}, inplace=True)
+    df_sw_sleep = df_sw_sleep.reset_index()
+    df_sw_sleep = df_sw_sleep.rename(columns={"index": "time"})
     bouts = df_sw_sleep.groupby(by="block")
     df_start_stop = bouts.first()
-    df_start_stop.rename(columns={"time": "start"}, inplace=True)
+    df_start_stop = df_start_stop.rename(columns={"time": "start"})
     df_start_stop["end"] = bouts.last()["time"]
 
     # add 1 min to end for continuous time coverage
@@ -147,8 +146,8 @@ def endpoints_as_df(sleep_endpoints: SleepEndpointDict) -> Optional[SleepEndpoin
         return None
 
     sleep_endpoints = sleep_endpoints.copy()
-    sleep_bouts = sleep_endpoints.pop("sleep_bouts", None).values.tolist()
-    wake_bouts = sleep_endpoints.pop("wake_bouts", None).values.tolist()
+    sleep_bouts = sleep_endpoints.pop("sleep_bouts", None).to_numpy().tolist()
+    wake_bouts = sleep_endpoints.pop("wake_bouts", None).to_numpy().tolist()
 
     sleep_bouts = [tuple(v) for v in sleep_bouts]
     wake_bouts = [tuple(v) for v in wake_bouts]
@@ -157,9 +156,9 @@ def endpoints_as_df(sleep_endpoints: SleepEndpointDict) -> Optional[SleepEndpoin
     sleep_endpoints.pop("date")
 
     df = pd.DataFrame(sleep_endpoints, index=index)
-    df.fillna(value=np.nan, inplace=True)
+    df = df.fillna(value=np.nan)
     df["sleep_bouts"] = None
     df["wake_bouts"] = None
-    df.at[df.index[0], "sleep_bouts"] = sleep_bouts
-    df.at[df.index[0], "wake_bouts"] = wake_bouts
+    df.loc[df.index[0], "sleep_bouts"] = sleep_bouts
+    df.loc[df.index[0], "wake_bouts"] = wake_bouts
     return _SleepEndpointDataFrame(df)

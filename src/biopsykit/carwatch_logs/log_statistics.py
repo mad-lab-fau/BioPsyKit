@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
 from biopsykit.carwatch_logs import LogData
 from biopsykit.io.carwatch_logs import load_logs_all_subjects
 from biopsykit.utils._types import path_t
@@ -61,12 +60,9 @@ class LogStatistics:
         hist = np.bincount(version_list, minlength=30)
         df = pd.DataFrame(data=hist, columns=["count"], index=range(0, len(hist)))
         # remove 1 - 20 as minimum supported android version is SDK level 21
-        df.drop(list(range(1, 21)), axis=0, inplace=True)
+        df = df.drop(list(range(1, 21)), axis=0)
 
-        if skip_na:
-            df.drop(0, axis=0, inplace=True)
-        else:
-            df.rename({0: "n/a"}, inplace=True)
+        df = df.drop(0, axis=0) if skip_na else df.rename({0: "n/a"})
 
         df = df.reset_index().rename({"index": "android_version"}, axis=1)
         return df
@@ -106,7 +102,7 @@ class LogStatistics:
             series = series[~series.str.contains("n/a")]
 
         df = series.value_counts().reset_index().rename({"index": "manufacturer"}, axis=1)
-        df.sort_values(by=["count", "manufacturer"], ascending=[False, True], inplace=True)
+        df = df.sort_values(by=["count", "manufacturer"], ascending=[False, True])
         return df
 
     def models(self, skip_na: Optional[bool] = True) -> pd.DataFrame:
@@ -130,7 +126,7 @@ class LogStatistics:
         df: pd.DataFrame = series.value_counts()
 
         df = df.reset_index().rename({"index": "model"}, axis=1)
-        df.sort_values(by=["count", "model"], ascending=[False, True], inplace=True)
+        df = df.sort_values(by=["count", "model"], ascending=[False, True])
         return df
 
     def finished_days(self) -> pd.DataFrame:
@@ -159,7 +155,7 @@ class LogStatistics:
         """
         series = pd.Series(np.concatenate([log.log_dates for log in self.log_data]), name="count")
         df = series.value_counts(sort=False)
-        df.sort_index(inplace=True)
+        df = df.sort_index()
 
         df = df.reset_index().rename({"index": "logging_days"}, axis=1)
         return df
@@ -201,7 +197,7 @@ class LogStatistics:
         elif plot_id in ["days", "logging_days"]:
             df = self.days()
         else:
-            raise ValueError("Invalid plot_id '{}'!".format(plot_id))
+            raise ValueError(f"Invalid plot_id '{plot_id}'!")
 
         palette = sns.cubehelix_palette(len(df), start=0.5, rot=-0.75)
 

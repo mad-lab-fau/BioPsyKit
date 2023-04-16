@@ -5,7 +5,6 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import _assert_has_index_levels, _assert_is_dtype
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.datatype_helper import SalivaFeatureDataFrame, SalivaRawDataFrame, _SalivaRawDataFrame
@@ -51,7 +50,7 @@ def saliva_feature_wide_to_long(
     )
 
     # reorder levels and sort
-    return data.reorder_levels(index_cols + [j]).sort_index()
+    return data.reorder_levels([*index_cols, j]).sort_index()
 
 
 def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Sequence[str]]) -> Sequence[str]:
@@ -83,9 +82,7 @@ def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Se
         return dict_result
 
     if saliva_type not in _dict_saliva_type_suggs:
-        raise ValueError(
-            "Invalid saliva type '{}'! Must be one of {}.".format(saliva_type, list(_dict_saliva_type_suggs.keys()))
-        )
+        raise ValueError(f"Invalid saliva type '{saliva_type}'! Must be one of {list(_dict_saliva_type_suggs.keys())}.")
 
     sugg_filt = list(
         filter(
@@ -116,7 +113,7 @@ def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Se
     )
     # replace il{} with il6 since this was removed out by the previous filter operation
     sugg_filt = [re.sub(r"\d", "{}", s).replace("il{}", "il6").replace("IL{}", "IL6") for s in sugg_filt]
-    sugg_filt = sorted(list(filter(lambda s: "{}" in s, set(sugg_filt))))
+    sugg_filt = sorted(filter(lambda s: "{}" in s, set(sugg_filt)))
 
     # build regex for column extraction
     sugg_filt = ["^{}$".format(s.replace("{}", r"(\d)")) for s in sugg_filt]
@@ -169,7 +166,7 @@ def extract_saliva_columns(
 def _sample_times_datetime_to_minute_apply(
     sample_times: Union[pd.DataFrame, pd.Series]
 ) -> Union[pd.DataFrame, pd.Series]:
-    if isinstance(sample_times.values.flatten()[0], (pd.Timedelta, np.timedelta64)):
+    if isinstance(sample_times.to_numpy().flatten()[0], (pd.Timedelta, np.timedelta64)):
         return sample_times.apply(pd.to_timedelta)
     return sample_times.astype(str).apply(pd.to_datetime)
 
@@ -202,11 +199,13 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
         if sample times are not in a datetime- or timedelta-related format
 
     """
-    if isinstance(sample_times.values.flatten()[0], str):
+    if isinstance(sample_times.to_numpy().flatten()[0], str):
         sample_times = _get_sample_times_str(sample_times)
 
-    if not isinstance(sample_times.values.flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64, np.datetime64)):
-        raise ValueError(
+    if not isinstance(
+        sample_times.to_numpy().flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64, np.datetime64)
+    ):
+        raise TypeError(
             "Sample times must be instance of `datetime.datetime()`, `datetime.time()`,"
             " `np.datetime64`, `np.timedelta64`, or `pd.Timedelta`!"
         )
@@ -222,7 +221,7 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
 
     sample_times = sample_times.diff(axis=1).apply(lambda s: (s.dt.total_seconds() / 60))
     sample_times = sample_times.cumsum(axis=1)
-    sample_times.iloc[:, 0].fillna(0, inplace=True)
+    sample_times.iloc[:, 0] = sample_times.iloc[:, 0].fillna(0)
     if is_series:
         sample_times = sample_times.stack()
     return sample_times
@@ -285,7 +284,7 @@ def _get_sample_times(
         # check if dataframe has 'time' column
         if "time" in data.columns:
             sample_times = np.array(data.unstack(level="sample")["time"])
-            if np.all((sample_times == sample_times[0])):
+            if np.all(sample_times == sample_times[0]):
                 # all subjects have the same saliva times
                 sample_times = sample_times[0]
         else:
@@ -335,7 +334,7 @@ def _get_sample_times_check_dims(data: pd.DataFrame, sample_times: arr_t, saliva
                 "Expected {}, got {}.".format(exp_shape, act_shape)
             )
     else:
-        raise ValueError("'sample_times' has invalid dimensions! Expected 1 or 2, got {}".format(sample_times.ndim))
+        raise ValueError(f"'sample_times' has invalid dimensions! Expected 1 or 2, got {sample_times.ndim}")
 
 
 def _get_saliva_idx_labels(
@@ -366,7 +365,7 @@ def _get_saliva_idx_labels(
         try:
             sample_idx = [columns.get_loc(label) for label in sample_labels]
         except KeyError as e:
-            raise IndexError("Invalid sample_labels `{}`".format(sample_labels)) from e
+            raise IndexError(f"Invalid sample_labels `{sample_labels}`") from e
     else:
         try:
             # ensure list
@@ -376,7 +375,7 @@ def _get_saliva_idx_labels(
             raise IndexError("`sample_idx[1]` is out of bounds!") from e
 
     if len(sample_idx) != 2:
-        raise IndexError("Exactly 2 indices needed for computing slope. Got {} indices.".format(len(sample_idx)))
+        raise IndexError(f"Exactly 2 indices needed for computing slope. Got {len(sample_idx)} indices.")
 
     sample_idx = _get_saliva_idx_labels_sanitize(sample_idx, columns)
     return sample_labels, sample_idx
@@ -392,7 +391,7 @@ def _get_saliva_idx_labels_sanitize(sample_idx: List[int], columns: Sequence[str
 
     # check that second index is bigger than first index
     if sample_idx[0] >= sample_idx[1]:
-        raise IndexError("`sample_idx[1]` must be bigger than `sample_idx[0]`. Got {}".format(sample_idx))
+        raise IndexError(f"`sample_idx[1]` must be bigger than `sample_idx[0]`. Got {sample_idx}")
     return sample_idx
 
 

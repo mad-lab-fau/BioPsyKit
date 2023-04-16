@@ -4,11 +4,9 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple, Type, Union
 
+import biopsykit.protocols.plotting as plot
 import matplotlib.pyplot as plt
 import pandas as pd
-from tqdm.auto import tqdm
-
-import biopsykit.protocols.plotting as plot
 from biopsykit.io import write_pandas_dict_excel
 from biopsykit.protocols._utils import _check_sample_times_match, _get_sample_times
 from biopsykit.signals.ecg import EcgProcessor
@@ -38,6 +36,7 @@ from biopsykit.utils.datatype_helper import (
     is_subject_data_dict,
 )
 from biopsykit.utils.exceptions import ValidationError
+from tqdm.auto import tqdm
 
 
 class BaseProtocol:  # pylint:disable=too-many-public-methods
@@ -311,7 +310,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         to_export = ["name", "structure", "test_times"]
         json_dict = {key: self.__dict__[key] for key in to_export}
-        with open(file_path, "w+", encoding="utf-8") as fp:
+        with file_path.open(mode="w+", encoding="utf-8") as fp:
             json.dump(json_dict, fp)
 
     @classmethod
@@ -332,7 +331,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         file_path = Path(file_path)
         _assert_file_extension(file_path, ".json")
 
-        with open(file_path, encoding="utf-8") as fp:
+        with file_path.open(encoding="utf-8") as fp:
             json_dict = json.load(fp)
             return cls(**json_dict)
 
@@ -543,7 +542,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     @staticmethod
     def _reindex_df(data: pd.DataFrame, param: Dict[str, Any]) -> pd.DataFrame:
         if not isinstance(param, dict):
-            raise ValueError(
+            raise TypeError(
                 "If 'reindex' is 'True', a dictionary with dataframe levels as keys "
                 "and new index orders as values is expected!"
             )
@@ -945,8 +944,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
                 if isinstance(dict_hrv_phase, dict):
                     dict_hrv_subphases = {}
                     for subphase, df_hrv in dict_hrv_phase.items():
-                        df_hrv = df_hrv[hrv_columns]
-                        hrv_above_bl = (df_hrv > hrv_baseline.mean()).sum() / len(df_hrv) * 100
+                        df_hrv_slice = df_hrv[hrv_columns]
+                        hrv_above_bl = (df_hrv_slice > hrv_baseline.mean()).sum() / len(df_hrv_slice) * 100
                         dict_hrv_subphases[subphase] = hrv_above_bl
                     dict_hrv[phase] = pd.concat(dict_hrv_subphases, names=["subphase"])
                 else:
@@ -1077,7 +1076,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         if prefix is None:
             prefix = self.name.lower().replace(" ", "_")
         for key, data in result_dict.items():
-            file_name = "{}_{}.csv".format(prefix, key)
+            file_name = f"{prefix}_{key}.csv"
             data.to_csv(base_path.joinpath(file_name))
 
     def _export_ensemble(self, base_path: path_t, prefix: str, result_dict: Dict[str, Dict[str, pd.DataFrame]]):
@@ -1088,7 +1087,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         if prefix is None:
             prefix = self.name.lower().replace(" ", "_")
         for key, data in result_dict.items():
-            file_name = "{}_{}.xlsx".format(prefix, key)
+            file_name = f"{prefix}_{key}.xlsx"
             write_pandas_dict_excel(data, base_path.joinpath(file_name))
 
     def get_hrv_results(self, result_id: str) -> pd.DataFrame:

@@ -8,9 +8,6 @@ import matplotlib.ticker as mticks
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from fau_colors import cmaps, colors_all
-from matplotlib.legend_handler import HandlerTuple
-
 from biopsykit.plotting import feature_boxplot, lineplot, multi_feature_boxplot
 from biopsykit.protocols._utils import _get_sample_times
 from biopsykit.saliva.utils import _remove_s0
@@ -27,6 +24,8 @@ from biopsykit.utils.datatype_helper import (
     is_saliva_raw_dataframe,
 )
 from biopsykit.utils.exceptions import ValidationError
+from fau_colors import cmaps, colors_all
+from matplotlib.legend_handler import HandlerTuple
 
 _hr_ensemble_plot_params = {
     "linestyle": ["solid", "dashed", "dotted", "dashdot"],
@@ -316,7 +315,7 @@ def _hr_ensemble_plot_end_phase_annotation(ax: plt.Axes, data: pd.DataFrame, pha
         textcoords="offset points",
         ha="right",
         fontsize="small",
-        bbox=dict(facecolor="#e0e0e0", alpha=0.7, boxstyle="round"),
+        bbox={"facecolor": "#e0e0e0", "alpha": 0.7, "boxstyle": "round"},
         zorder=5,
     )
 
@@ -466,7 +465,7 @@ def hr_mean_plot(  # pylint:disable=too-many-branches
     x_lims = x_lims - 0.5 * np.ediff1d(x_lims, to_end=dist)
 
     if "condition" in data.index.names:
-        data_grp = {key: df for key, df in data.groupby("condition")}  # pylint:disable=unnecessary-comprehension
+        data_grp = dict(data.groupby("condition"))  # pylint:disable=unnecessary-comprehension
         order = kwargs.get("order", list(data_grp.keys()))
         data_grp = {key: data_grp[key] for key in order}
 
@@ -644,17 +643,14 @@ def _hr_mean_plot_subphase_annotations(phase_dict: Dict[str, Sequence[str]], xli
 
 def _hr_mean_get_x_spans(num_phases: int, num_subphases: Sequence[int]):
     if sum(num_subphases) == 0:
-        x_spans = list(zip([0] + list(range(0, num_phases)), list(range(0, num_phases))))
+        x_spans = list(zip([0, *list(range(0, num_phases))], list(range(0, num_phases))))
     else:
-        x_spans = list(zip([0] + list(np.cumsum(num_subphases)), list(np.cumsum(num_subphases))))
+        x_spans = list(zip([0, *list(np.cumsum(num_subphases))], list(np.cumsum(num_subphases))))
     return x_spans
 
 
 def _hr_mean_get_x_vals(num_phases: int, num_subphases: Sequence[int]):
-    if sum(num_subphases) == 0:
-        x_vals = np.linspace(0, 10, num_phases)
-    else:
-        x_vals = np.linspace(0, 10, sum(num_subphases))
+    x_vals = np.linspace(0, 10, num_phases) if sum(num_subphases) == 0 else np.linspace(0, 10, sum(num_subphases))
     return x_vals
 
 
@@ -923,10 +919,7 @@ def _assert_saliva_data_input(data: pd.DataFrame, saliva_type: str):
 
 
 def _saliva_plot_get_plot_param(param: Union[Dict[str, str], str], key: str):
-    if isinstance(param, dict):
-        p = param[key]
-    else:
-        p = param
+    p = param[key] if isinstance(param, dict) else param
     return p
 
 
@@ -983,8 +976,8 @@ def saliva_plot_combine_legend(fig: plt.Figure, ax: plt.Axes, saliva_types: Sequ
         handles = [h[0] for handle in handles for h in handle]
         labels = [ax.get_legend_handles_labels()[1] for ax in fig.get_axes()]
         labels = [
-            "{}: {}".format(_saliva_plot_params.get("legend_title")[b], " - ".join(l))
-            for b, l in zip(saliva_types, labels)
+            "{}: {}".format(_saliva_plot_params.get("legend_title")[b], " - ".join(label))
+            for b, label in zip(saliva_types, labels)
         ]
         ncol = len(handles)
 

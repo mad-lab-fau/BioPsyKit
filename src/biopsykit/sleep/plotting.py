@@ -7,20 +7,19 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticks
 import pandas as pd
 import seaborn as sns
-from fau_colors import colors_all
-
 from biopsykit.utils.datatype_helper import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame, SleepEndpointDict
+from fau_colors import colors_all
 
 _sleep_imu_plot_params = {
     "background_color": ["#e0e0e0", "#9e9e9e"],
     "background_alpha": [0.3, 0.3],
 }
 
-_bbox_default = dict(
-    fc=(1, 1, 1, plt.rcParams["legend.framealpha"]),
-    ec=plt.rcParams["legend.edgecolor"],
-    boxstyle="round",
-)
+_bbox_default = {
+    "fc": (1, 1, 1, plt.rcParams["legend.framealpha"]),
+    "ec": plt.rcParams["legend.edgecolor"],
+    "boxstyle": "round",
+}
 
 
 def sleep_imu_plot(
@@ -86,7 +85,7 @@ def sleep_imu_plot(
     """
     axs: List[plt.Axes] = kwargs.pop("ax", kwargs.pop("axs", None))
 
-    sns.set_palette(kwargs.get("palette", sns.light_palette(getattr(colors_all, "fau"), n_colors=4, reverse=True)[:-1]))
+    sns.set_palette(kwargs.get("palette", sns.light_palette(colors_all.fau, n_colors=4, reverse=True)[:-1]))
 
     if datastreams is None:
         datastreams = ["acc"]
@@ -207,7 +206,7 @@ def _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints: SleepEndpointDict, **kw
             transform=ax.get_xaxis_transform(),
             linewidths=3,
             linestyles="dotted",
-            colors=getattr(colors_all, "tech"),
+            colors=colors_all.tech,
             zorder=0,
         )
 
@@ -223,7 +222,7 @@ def _sleep_imu_plot_add_sleep_endpoints(sleep_endpoints: SleepEndpointDict, **kw
     # if handle is not None:
     #     handles['non-wear'] = handle
 
-    ax.set_title("Sleep IMU Data: {} – {}".format(date.date(), (date + pd.Timedelta("1d")).date()))
+    ax.set_title("Sleep IMU Data: {} - {}".format(date.date(), (date + pd.Timedelta("1d")).date()))
 
 
 def _sleep_imu_plot_add_annotations(
@@ -276,7 +275,7 @@ def _sleep_imu_plot_add_sleep_onset(sleep_onset, ax: plt.Axes, **kwargs):
         transform=ax.get_xaxis_transform(),
         linewidth=3,
         linestyles="--",
-        colors=getattr(colors_all, "nat"),
+        colors=colors_all.nat,
         zorder=3,
     )
 
@@ -290,13 +289,13 @@ def _sleep_imu_plot_add_sleep_onset(sleep_onset, ax: plt.Axes, **kwargs):
         ha="left",
         va="center",
         bbox=bbox,
-        arrowprops=dict(
-            arrowstyle="->",
-            lw=2,
-            color=getattr(colors_all, "nat"),
-            shrinkA=0.0,
-            shrinkB=0.0,
-        ),
+        arrowprops={
+            "arrowstyle": "->",
+            "lw": 2,
+            "color": colors_all.nat,
+            "shrinkA": 0.0,
+            "shrinkB": 0.0,
+        },
     )
 
 
@@ -310,7 +309,7 @@ def _sleep_imu_plot_add_wake_onset(wake_onset, ax: plt.Axes, **kwargs):
         transform=ax.get_xaxis_transform(),
         linewidth=3,
         linestyles="--",
-        colors=getattr(colors_all, "nat"),
+        colors=colors_all.nat,
         zorder=3,
     )
 
@@ -324,13 +323,13 @@ def _sleep_imu_plot_add_wake_onset(wake_onset, ax: plt.Axes, **kwargs):
         ha="right",
         va="center",
         bbox=bbox,
-        arrowprops=dict(
-            arrowstyle="->",
-            lw=2,
-            color=getattr(colors_all, "nat"),
-            shrinkA=0.0,
-            shrinkB=0.0,
-        ),
+        arrowprops={
+            "arrowstyle": "->",
+            "lw": 2,
+            "color": colors_all.nat,
+            "shrinkA": 0.0,
+            "shrinkB": 0.0,
+        },
     )
 
 
@@ -345,7 +344,7 @@ def _sleep_imu_plot_add_bed_start(sleep_onset, bed_start, ax: plt.Axes, **kwargs
         transform=ax.get_xaxis_transform(),
         linewidth=3,
         linestyles="--",
-        colors=getattr(colors_all, "med"),
+        colors=colors_all.med,
         zorder=3,
     )
     # Bed Start Text + Arrow
@@ -358,13 +357,13 @@ def _sleep_imu_plot_add_bed_start(sleep_onset, bed_start, ax: plt.Axes, **kwargs
         ha="left",
         va="center",
         bbox=bbox,
-        arrowprops=dict(
-            arrowstyle="->",
-            lw=2,
-            color=getattr(colors_all, "med"),
-            shrinkA=0.0,
-            shrinkB=0.0,
-        ),
+        arrowprops={
+            "arrowstyle": "->",
+            "lw": 2,
+            "color": colors_all.med,
+            "shrinkA": 0.0,
+            "shrinkB": 0.0,
+        },
     )
 
 
@@ -379,7 +378,7 @@ def _sleep_imu_plot_add_bed_end(wake_onset, bed_end, ax: plt.Axes, **kwargs):
         transform=ax.get_xaxis_transform(),
         linewidth=3,
         linestyles="--",
-        colors=getattr(colors_all, "med"),
+        colors=colors_all.med,
         zorder=3,
     )
     # Bed End Text + Arrow
@@ -392,13 +391,13 @@ def _sleep_imu_plot_add_bed_end(wake_onset, bed_end, ax: plt.Axes, **kwargs):
         ha="right",
         va="center",
         bbox=bbox,
-        arrowprops=dict(
-            arrowstyle="->",
-            lw=2,
-            color=getattr(colors_all, "med"),
-            shrinkA=0.0,
-            shrinkB=0.0,
-        ),
+        arrowprops={
+            "arrowstyle": "->",
+            "lw": 2,
+            "color": colors_all.med,
+            "shrinkA": 0.0,
+            "shrinkB": 0.0,
+        },
     )
 
 

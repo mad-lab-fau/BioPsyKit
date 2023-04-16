@@ -10,13 +10,12 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from fau_colors import cmaps, colors_all
-from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
-from neurokit2.hrv.hrv_utils import _hrv_get_rri
-
 from biopsykit.signals.ecg.ecg import _assert_ecg_input
 from biopsykit.utils.array_handling import sanitize_input_1d
 from biopsykit.utils.datatype_helper import EcgResultDataFrame
+from fau_colors import cmaps, colors_all
+from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
+from neurokit2.hrv.hrv_utils import _hrv_get_rri
 
 if TYPE_CHECKING:
     from biopsykit.signals.ecg import EcgProcessor
@@ -163,7 +162,7 @@ def _set_plt_rcparams(ecg_signal: pd.DataFrame):
 
 def _ecg_plot_set_title(fig: plt.Figure, title: str):
     if title:
-        fig.suptitle("Electrocardiogram (ECG) – {}".format(title), fontweight="bold")
+        fig.suptitle(f"Electrocardiogram (ECG) - {title}", fontweight="bold")
     else:
         fig.suptitle("Electrocardiogram (ECG)", fontweight="bold")
 
@@ -187,11 +186,10 @@ def _get_ecg_plot_specs(  # pylint:disable=too-many-branches
             axs["beats"] = fig.add_subplot(spec[:, -1])
         elif plot_distribution:
             axs["dist"] = fig.add_subplot(spec[:, -1])
+    elif plot_ecg_signal:
+        axs = {"ecg": fig.add_subplot(2, 1, 1), "hr": fig.add_subplot(2, 1, 2)}
     else:
-        if plot_ecg_signal:
-            axs = {"ecg": fig.add_subplot(2, 1, 1), "hr": fig.add_subplot(2, 1, 2)}
-        else:
-            axs = {"hr": fig.add_subplot(1, 1, 1)}
+        axs = {"hr": fig.add_subplot(1, 1, 1)}
     return axs
 
 
@@ -254,10 +252,7 @@ def _ecg_plot(
     # Optimize legend
     handles, labels = axs["ecg"].get_legend_handles_labels()
     # order = [2, 0, 1, 3]
-    if "R_Peak_Outlier" in ecg_signal:
-        order = [0, 1, 2, 3]
-    else:
-        order = [0, 1, 2]
+    order = [0, 1, 2, 3] if "R_Peak_Outlier" in ecg_signal else [0, 1, 2]
 
     axs["ecg"].legend(
         [handles[idx] for idx in order], [labels[idx] for idx in order], loc=legend_loc, fontsize=legend_fontsize
@@ -337,7 +332,7 @@ def hr_plot(
     sns.set_palette(cmaps.faculties)
 
     if title:
-        ax.set_title("Heart Rate – {}".format(title))
+        ax.set_title(f"Heart Rate - {title}")
 
     ax.plot(heart_rate["Heart_Rate"], color=color, label="Heart Rate", linewidth=1.5, **kwargs)
 
@@ -363,7 +358,7 @@ def _hr_plot_plot_mean(heart_rate: pd.DataFrame, mean_color: str, ax: plt.Axes):
     rate_mean = heart_rate["Heart_Rate"].mean()
     ax.axhline(
         y=rate_mean,
-        label="Mean: {:.1f} bpm".format(rate_mean),
+        label=f"Mean: {rate_mean:.1f} bpm",
         linestyle="--",
         color=mean_color,
         linewidth=2,
@@ -500,7 +495,7 @@ def hrv_plot(
     axs["poin"].get_shared_y_axes().join(axs["poin"], axs["poin_y"])
 
     if title:
-        fig.suptitle("Heart Rate Variability (HRV) – {}".format(title), fontweight="bold")
+        fig.suptitle(f"Heart Rate Variability (HRV) - {title}", fontweight="bold")
     else:
         fig.suptitle("Heart Rate Variability (HRV)", fontweight="bold")
 
@@ -629,14 +624,14 @@ def rr_distribution_plot(
         widths=ax2.get_ylim()[-1] / 10,
         manage_ticks=False,
         patch_artist=True,
-        boxprops=dict(
-            linewidth=2.0,
-            color=tech_light,
-            facecolor=colors_all.tech,
-        ),
-        medianprops=dict(linewidth=2.0, color=tech_light),
-        whiskerprops=dict(linewidth=2.0, color=tech_light),
-        capprops=dict(linewidth=2.0, color=tech_light),
+        boxprops={
+            "linewidth": 2.0,
+            "color": tech_light,
+            "facecolor": colors_all.tech,
+        },
+        medianprops={"linewidth": 2.0, "color": tech_light},
+        whiskerprops={"linewidth": 2.0, "color": tech_light},
+        capprops={"linewidth": 2.0, "color": tech_light},
         zorder=4,
     )
 

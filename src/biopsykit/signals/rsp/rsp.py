@@ -5,7 +5,6 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import scipy.signal as ss
-
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.array_handling import sanitize_input_1d
 
@@ -72,7 +71,7 @@ class RspProcessor(_BaseProcessor):
         References
         ----------
         Schäfer, A., & Kratky, K. W. (2008). Estimation of Breathing Rate from Respiratory Sinus Arrhythmia:
-        Comparison of Various Methods. *Annals of Biomedical Engineering*, 36(3), 476–485.
+        Comparison of Various Methods. *Annals of Biomedical Engineering*, 36(3), 476-485.
         https://doi.org/10.1007/s10439-007-9428-1
 
 

@@ -5,12 +5,11 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 import pytz
-from scipy import signal
-
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import add_datetime_index, downsample, sanitize_input_nd
 from biopsykit.utils.datatype_helper import is_acc1d_dataframe, is_acc3d_dataframe
 from biopsykit.utils.time import tz
+from scipy import signal
 
 
 class ActivityCounts:
@@ -25,7 +24,7 @@ class ActivityCounts:
     References
     ----------
     Brønd, J. C., Andersen, L. B., & Arvidsson, D. (2017). Generating ActiGraph Counts from Raw Acceleration Recorded
-    by an Alternative Monitor. *Medicine and Science in Sports and Exercise*, 49(11), 2351–2360.
+    by an Alternative Monitor. *Medicine and Science in Sports and Exercise*, 49(11), 2351-2360.
     https://doi.org/10.1249/MSS.0000000000001344
 
     """

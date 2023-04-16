@@ -3,16 +3,14 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, List, Literal, Optional, Tuple, Union
 
 import pandas as pd
-from typing_extensions import Literal, get_args
-
 from biopsykit.utils._types import path_t
+from typing_extensions import get_args
 
 if TYPE_CHECKING:
     import ipywidgets.widgets
-
     from biopsykit.carwatch_logs import LogData
 
 LOG_FILENAME_PATTERN = "logs_(.*?)"
@@ -66,7 +64,7 @@ def log_file_subject_dropdown(
 
     if input_type == "file":
         log_file_pattern = LOG_FILENAME_PATTERN + ".csv"
-        log_file_list = list(sorted(base_path.glob("*.csv")))
+        log_file_list = sorted(base_path.glob("*.csv"))
         subject_list = [re.search(log_file_pattern, log_file.name).group(1) for log_file in log_file_list]
     else:
         log_file_list = [
@@ -84,10 +82,10 @@ def log_file_subject_dropdown(
 
 def _log_file_subject_dropdown_check_input(input_type: str, value_type: str):
     if input_type not in get_args(INPUT_TYPES):
-        raise ValueError("Invalid input_type! Expected one of {}, got {}.".format(INPUT_TYPES, input_type))
+        raise ValueError(f"Invalid input_type! Expected one of {INPUT_TYPES}, got {input_type}.")
 
     if value_type not in get_args(VALUE_TYPES):
-        raise ValueError("Invalid value_type! Expected one of {}, got {}.".format(VALUE_TYPES, value_type))
+        raise ValueError(f"Invalid value_type! Expected one of {VALUE_TYPES}, got {value_type}.")
 
 
 def _log_file_subject_dropdown_get_option_list(subject_list: List[str], log_file_list: List[Path], value_type: str):
@@ -103,8 +101,8 @@ def _log_file_subject_dropdown_get_option_list(subject_list: List[str], log_file
 
 
 def action_dropdown_widget(
-    data: Union["LogData", pd.DataFrame], callback: Optional[Callable] = None
-) -> "ipywidgets.Dropdown":
+    data: Union[LogData, pd.DataFrame], callback: Optional[Callable] = None
+) -> ipywidgets.Dropdown:
     """Create dropdown widget to filter log data by a specific action.
 
     Parameters
@@ -144,8 +142,8 @@ def action_dropdown_widget(
 
 
 def day_dropdown_widget(
-    data: Union["LogData", pd.DataFrame], callback: Optional[Callable] = None
-) -> "ipywidgets.Dropdown":
+    data: Union[LogData, pd.DataFrame], callback: Optional[Callable] = None
+) -> ipywidgets.Dropdown:
     """Create dropdown widget to filter log data by a specific day.
 
     Parameters

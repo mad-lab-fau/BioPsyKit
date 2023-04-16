@@ -7,22 +7,21 @@ from inspect import getmembers, signature
 from itertools import product
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Dict, Optional, Sequence, Tuple, Union, Callable
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import sklearn.metrics
+from biopsykit.classification.model_selection import nested_cv_param_search
+from biopsykit.classification.utils import _PipelineWrapper, merge_nested_dicts
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils._types import T, path_t, str_t
 from joblib import Memory
 from numpy.random import RandomState
 from sklearn.base import BaseEstimator, clone
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
-
-from biopsykit.classification.model_selection import nested_cv_param_search
-from biopsykit.classification.utils import _PipelineWrapper, merge_nested_dicts
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
-from biopsykit.utils._types import T, path_t, str_t
 
 __all__ = ["SklearnPipelinePermuter"]
 
@@ -277,9 +276,9 @@ class SklearnPipelinePermuter:
         score_summary = score_summary.set_index(list(score_summary.columns)[: num_pipeline_steps + 2])
         return cls(score_summary=score_summary)
 
-    def fit(  # pylint:disable=invalid-name
+    def fit(
         self,
-        X: np.ndarray,  # noqa
+        X: np.ndarray,  # noqa: N803
         y: np.ndarray,
         outer_cv: BaseCrossValidator,
         inner_cv: BaseCrossValidator,
@@ -389,7 +388,7 @@ class SklearnPipelinePermuter:
             memory.clear(warn=False)
             rmtree(location)
 
-    @functools.lru_cache(maxsize=5)
+    @functools.lru_cache(maxsize=5)  # noqa: B019
     def pipeline_score_results(self) -> pd.DataFrame:
         """Return parameter search results for each pipeline combination.
 
@@ -449,7 +448,7 @@ class SklearnPipelinePermuter:
         _assert_file_extension(file_path, ".csv")
         self.results.to_csv(file_path)
 
-    @functools.lru_cache(maxsize=5)
+    @functools.lru_cache(maxsize=5)  # noqa: B019
     def mean_pipeline_score_results(self) -> pd.DataFrame:
         """Compute mean score results for each pipeline combination.
 
@@ -689,16 +688,7 @@ class SklearnPipelinePermuter:
         kwargs.setdefault("column_format", self._format_latex_column_format(metric_summary_export))
 
         styler = metric_summary_export.style
-        if isinstance(highlight_best, str):
-            max_metric = metric_summary[f"mean_test_{highlight_best}"].idxmax()
-            # get index of max metric
-            max_metric = metric_summary_export.index.get_loc(max_metric)
-            styler = styler.highlight_max(subset=metric_map[highlight_best], props="bfseries: ;")
-            # get maximum of metric_summary
-            # make index bold
-            styler = styler.apply_index(lambda x: np.where(x.index == max_metric, "bfseries: ;", ""))
-        elif isinstance(highlight_best, bool) and highlight_best:
-            styler = styler.highlight_max(props="bfseries: ;")
+        styler = self._highlight_best(metric_summary, styler, highlight_best, metric_summary_export)
 
         metric_summary_tex = styler.to_latex(**kwargs)
         metric_summary_tex = self._apply_latex_code_correction(metric_summary_tex, si_table_format)
@@ -734,13 +724,12 @@ class SklearnPipelinePermuter:
         """
         file_path = Path(file_path)
         _assert_file_extension(file_path, ".pkl")
-        with open(file_path, "wb") as f:
+        with file_path.open(mode="wb") as f:
             pickle.dump(self, f)
 
     @staticmethod
     def from_pickle(file_path: path_t) -> "SklearnPipelinePermuter":
-        """Import a :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter` \
-        instance from a pickle file.
+        """Import a ``SklearnPipelinePermuter`` instance from a pickle file.
 
         Parameters
         ----------
@@ -755,7 +744,7 @@ class SklearnPipelinePermuter:
         """
         file_path = Path(file_path)
         _assert_file_extension(file_path, ".pkl")
-        with open(file_path, "rb") as f:
+        with file_path.open(mode="rb") as f:
             return pickle.load(f)
 
     def merge_permuter_instances(self, permuter: "SklearnPipelinePermuter") -> "SklearnPipelinePermuter":
@@ -802,7 +791,7 @@ class SklearnPipelinePermuter:
         results_concat = pd.concat([permuter_copy.results, permuter.results], axis=0)
         param_cols = list(results_concat.filter(like="param_").columns)
         # drop duplicate parameter combinations in results
-        results_concat = results_concat.reset_index("outer_fold").drop_duplicates(subset=["outer_fold"] + param_cols)
+        results_concat = results_concat.reset_index("outer_fold").drop_duplicates(subset=["outer_fold", *param_cols])
         results_concat = results_concat.set_index("outer_fold", append=True)
         permuter_copy.results = results_concat
 
@@ -857,7 +846,7 @@ class SklearnPipelinePermuter:
             if metric.endswith("_score"):
                 score_name = metric
                 # strip '_score' suffix from metric name for column name
-                metric = metric.replace("_score", "")
+                metric = metric.replace("_score", "")  # noqa: PLW2901
             else:
                 # name for calling sklearn metric function
                 score_name = metric + "_score"
@@ -889,9 +878,23 @@ class SklearnPipelinePermuter:
     def _initialize_models(self, model_dict: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
         if self.random_state is None:
             return model_dict
-        for k, v in model_dict.items():
+        for _k, v in model_dict.items():
             # add fixed random state to each estimator if it has a random_state parameter
             for estimator in v.values():
                 if hasattr(estimator, "random_state"):
                     estimator.random_state = self.random_state
         return model_dict
+
+    @staticmethod
+    def _highlight_best(metric_summary, styler, highlight_best, metric_summary_export):
+        if isinstance(highlight_best, str):
+            max_metric = metric_summary[f"mean_test_{highlight_best}"].idxmax()
+            # get index of max metric
+            max_metric = metric_summary_export.index.get_loc(max_metric)
+            styler = styler.highlight_max(subset=metric_map[highlight_best], props="bfseries: ;")
+            # get maximum of metric_summary
+            # make index bold
+            styler = styler.apply_index(lambda x: np.where(x.index == max_metric, "bfseries: ;", ""))
+        elif isinstance(highlight_best, bool) and highlight_best:
+            styler = styler.highlight_max(props="bfseries: ;")
+        return styler

@@ -8,20 +8,6 @@ import pandas as pd
 import pingouin
 import scipy
 
-import biopsykit.carwatch_logs  # pylint: disable=unused-import
-import biopsykit.classification  # pylint: disable=unused-import
-import biopsykit.example_data  # pylint: disable=unused-import
-import biopsykit.io  # pylint: disable=unused-import
-import biopsykit.metadata  # pylint: disable=unused-import
-import biopsykit.plotting  # pylint: disable=unused-import
-import biopsykit.protocols  # pylint: disable=unused-import
-import biopsykit.questionnaires  # pylint: disable=unused-import
-import biopsykit.saliva  # pylint: disable=unused-import
-import biopsykit.signals  # pylint: disable=unused-import
-import biopsykit.sleep  # pylint: disable=unused-import
-import biopsykit.stats  # pylint: disable=unused-import
-import biopsykit.utils  # pylint: disable=unused-import
-
 __all__ = [
     "carwatch_logs",
     "classification",

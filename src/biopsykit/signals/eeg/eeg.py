@@ -4,9 +4,8 @@ from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
-from tqdm.auto import tqdm
-
 from biopsykit.signals._base import _BaseProcessor
+from tqdm.auto import tqdm
 
 
 class EegProcessor(_BaseProcessor):

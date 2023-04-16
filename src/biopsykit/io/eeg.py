@@ -3,7 +3,6 @@ import warnings
 from typing import Optional, Tuple
 
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns
 from biopsykit.utils._types import path_t
 

@@ -158,8 +158,8 @@ def prepare_df_sklearn(
     return x_data, y_data, groups, group_keys
 
 
-def split_train_test(  # pylint:disable=invalid-name
-    X: np.ndarray,  # noqa
+def split_train_test(
+    X: np.ndarray,  # noqa: N803
     y: np.ndarray,
     train: np.ndarray,
     test: np.ndarray,
@@ -199,7 +199,7 @@ def split_train_test(  # pylint:disable=invalid-name
         Group labels of test data (only available if ``groups`` is not ``None``)
 
     """
-    X_train, X_test = X[train], X[test]  # noqa
+    X_train, X_test = X[train], X[test]  # noqa: N806
     y_train, y_test = y[train], y[test]
 
     if groups is None:
@@ -237,7 +237,6 @@ def _merge_nested_dicts(dict1: Dict, dict2: Dict) -> Dict:
             # check if value is list
         elif isinstance(value, list) and key in dict1:
             dict1[key] = value if key not in dict1 else dict1[key] + value
-        else:
-            if key not in dict1:
-                dict1[key] = value
+        elif key not in dict1:
+            dict1[key] = value
     return dict1

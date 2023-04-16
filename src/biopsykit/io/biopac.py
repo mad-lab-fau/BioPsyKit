@@ -12,7 +12,6 @@ except ImportError as e:
     ) from e
 
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t, str_t
 
@@ -158,7 +157,7 @@ class BiopacDataset:
         datastreams = self._sanitize_datastreams_input(datastreams)
 
         # assert that all datastreams have the same sampling rate
-        sampling_rates = set(self._sampling_rate[datastream] for datastream in datastreams)
+        sampling_rates = {self._sampling_rate[datastream] for datastream in datastreams}
         if len(sampling_rates) > 1:
             raise ValueError("All datastreams must have the same sampling rate for combining it into one DataFrame!")
 

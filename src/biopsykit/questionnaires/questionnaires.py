@@ -17,12 +17,10 @@ with subscale names as keys and the corresponding column names (as list of str) 
     questionnaire item columns, which typically also start with index 1!
 
 """
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Literal, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
-from typing_extensions import Literal
-
 from biopsykit.questionnaires.utils import (
     _compute_questionnaire_subscales,
     _invert_subscales,
@@ -99,7 +97,7 @@ def psqi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     # Sleep Latency: Question 2
     sl = data.filter(regex="02").iloc[:, 0]
     # Bin scale: 0-15 = 0, 16-30 = 1, 31-60 = 2, >=61 = 3
-    bin_scale(sl, bins=[0, 15, 30, 60], last_max=True, inplace=True)
+    sl = bin_scale(sl, bins=[0, 15, 30, 60], last_max=True, inplace=False)
 
     data = data.drop(columns=data.filter(regex="0[1234]"))
     data = data.drop(columns=data.filter(regex="05j_text"))
@@ -193,7 +191,7 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     References
     ----------
     Appels, A., Höppener, P., & Mulder, P. (1987). A questionnaire to assess premonitory symptoms of myocardial
-    infarction. *International Journal of Cardiology*, 17(1), 15–24. https://doi.org/10.1016/0167-5273(87)90029-5
+    infarction. *International Journal of Cardiology*, 17(1), 15-24. https://doi.org/10.1016/0167-5273(87)90029-5
 
     """
     score_name = "MVES"
@@ -521,7 +519,7 @@ def pss(
     data = invert(data, cols=to_idx([4, 5, 7, 8]), score_range=score_range)
 
     pss_data = _compute_questionnaire_subscales(data, score_name, subscales)
-    pss_data["{}_Total".format(score_name)] = data.sum(axis=1)
+    pss_data[f"{score_name}_Total"] = data.sum(axis=1)
 
     return pd.DataFrame(pss_data, index=data.index)
 
@@ -566,7 +564,7 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
     References
     ----------
     Radloff, L. S. (1977). The CES-D Scale: A Self-Report Depression Scale for Research in the General Population.
-    Applied Psychological Measurement, 1(3), 385–401. https://doi.org/10.1177/014662167700100306
+    Applied Psychological Measurement, 1(3), 385-401. https://doi.org/10.1177/014662167700100306
 
     """
     score_name = "CESD"
@@ -589,7 +587,7 @@ def cesd(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 
 
 def ads_l(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Allgemeine Depressionsskala - Langform (ADS-L)** (General Depression Scale – Long Version).
+    """Compute the **Allgemeine Depressionsskala - Langform (ADS-L)** (General Depression Scale - Long Version).
 
     The General Depression Scale (ADS) is a self-report instrument that can be used to assess the impairment caused by
     depressive symptoms within the last week. Emotional, motivational, cognitive, somatic as well as motor symptoms are
@@ -1401,7 +1399,7 @@ def lsq(
 
     _assert_value_range(data, score_range)
 
-    lsq_data = {"{}_{}".format(score_name, subscale): data.filter(like=subscale).sum(axis=1) for subscale in subscales}
+    lsq_data = {f"{score_name}_{subscale}": data.filter(like=subscale).sum(axis=1) for subscale in subscales}
 
     return pd.DataFrame(lsq_data, index=data.index)
 
@@ -1422,7 +1420,7 @@ def ctq(
     * ``EmotionalAbuse``: [3, 8, 14, 18, 25]
 
     Additionally, three items assess the validity of the responses (high scores on these items could be grounds for
-    exclusion of a given participants’ responses):
+    exclusion of a given participants` responses):
 
     * ``Validity``: [10, 16, 22]
 
@@ -1577,7 +1575,7 @@ def peat(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 def purpose_life(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
     """Compute the **Purpose in Life** questionnaire.
 
-    Purpose in life refers to the psychological tendency to derive meaning from life’s experiences
+    Purpose in life refers to the psychological tendency to derive meaning from life`s experiences
     and to possess a sense of intentionality and goal directedness that guides behavior.
     Higher scores indicate greater purpose in life.
 
@@ -1688,9 +1686,9 @@ def besaa(
 ) -> pd.DataFrame:
     """Compute the **Body-Esteem Scale for Adolescents and Adults (BESAA)**.
 
-    Body Esteem refers to self-evaluations of one’s body or appearance. The BESAA is based on
-    the idea that feelings about one’s weight can be differentiated from feelings about one’s general appearance,
-    and that one’s own opinions may be differentiated from the opinions attributed to others.
+    Body Esteem refers to self-evaluations of one`s body or appearance. The BESAA is based on
+    the idea that feelings about one`s weight can be differentiated from feelings about one`s general appearance,
+    and that one`s own opinions may be differentiated from the opinions attributed to others.
     Higher scores indicate higher body esteem.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
@@ -1973,7 +1971,7 @@ def pasa(
             pasa_data[score_name + "_SelfConcept"] + pasa_data[score_name + "_ControlExp"]
         ) / 2
 
-    if all("{}_{}".format(score_name, s) in pasa_data for s in ["Primary", "Secondary"]):
+    if all(f"{score_name}_{s}" in pasa_data for s in ["Primary", "Secondary"]):
         pasa_data[score_name + "_StressComposite"] = (
             pasa_data[score_name + "_Primary"] - pasa_data[score_name + "_Secondary"]
         )
@@ -2142,7 +2140,7 @@ def panas(
         language = "english"
 
     if language not in supported_versions:
-        raise ValueError("questionnaire_version must be one of {}, not {}.".format(supported_versions, language))
+        raise ValueError(f"questionnaire_version must be one of {supported_versions}, not {language}.")
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -2307,14 +2305,14 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     }
     idx_kov = {key: np.array(val) for key, val in idx_kov.items()}
     idx_vig = {key: np.setdiff1d(np.arange(1, 11), np.array(val), assume_unique=True) for key, val in idx_kov.items()}
-    abi_kov, abi_vig = [
+    abi_kov, abi_vig = (
         pd.concat(
             [abi_raw.loc[:, key].iloc[:, idx[key] - 1] for key in idx],
             axis=1,
             keys=idx_kov.keys(),
         )
         for idx in [idx_kov, idx_vig]
-    ]
+    )
 
     abi_data = {
         score_name + "_KOV_T": abi_kov.sum(axis=1),
@@ -2349,7 +2347,7 @@ def stadi(
     The state and trait scales both consist of the subscales with the item indices
     (count-by-one, i.e., the first question has the index 1!):
 
-    * Emotionality (Aufgeregtheit - affektive Komponente – ``AU``): [1, 5, 9, 13, 17]
+    * Emotionality (Aufgeregtheit - affektive Komponente - ``AU``): [1, 5, 9, 13, 17]
     * Worry (Besorgnis - kognitive Komponente - ``BE``): [2, 6, 10, 14, 18]
     * Anhedonia (Euthymie - positive Stimmung - ``EU``): [3, 7, 11, 15, 19]
     * Dysthymia (Dysthymie - depressive Stimmung - ``DY``): [4, 8, 12, 16, 20]
@@ -2437,28 +2435,28 @@ def stadi(
 
     stadi_data = {}
     for st in stadi_type:
-        stadi_data.update(_compute_questionnaire_subscales(data[st], "{}_{}".format(score_name, st), subscales))
-        if all("{}_{}_{}".format(score_name, st, subtype) in stadi_data for subtype in ["AU", "BE"]):
+        stadi_data.update(_compute_questionnaire_subscales(data[st], f"{score_name}_{st}", subscales))
+        if all(f"{score_name}_{st}_{subtype}" in stadi_data for subtype in ["AU", "BE"]):
             stadi_data.update(
                 {
-                    "{}_{}_Anxiety".format(score_name, st): stadi_data["{}_{}_AU".format(score_name, st)]
-                    + stadi_data["{}_{}_BE".format(score_name, st)]
+                    f"{score_name}_{st}_Anxiety": stadi_data[f"{score_name}_{st}_AU"]
+                    + stadi_data[f"{score_name}_{st}_BE"]
                 }
             )
 
-        if all("{}_{}_{}".format(score_name, st, subtype) in stadi_data for subtype in ["EU", "DY"]):
+        if all(f"{score_name}_{st}_{subtype}" in stadi_data for subtype in ["EU", "DY"]):
             stadi_data.update(
                 {
-                    "{}_{}_Depression".format(score_name, st): stadi_data["{}_{}_EU".format(score_name, st)]
-                    + stadi_data["{}_{}_DY".format(score_name, st)]
+                    f"{score_name}_{st}_Depression": stadi_data[f"{score_name}_{st}_EU"]
+                    + stadi_data[f"{score_name}_{st}_DY"]
                 }
             )
 
-        if all("{}_{}_{}".format(score_name, st, subtype) in stadi_data for subtype in ["Anxiety", "Depression"]):
+        if all(f"{score_name}_{st}_{subtype}" in stadi_data for subtype in ["Anxiety", "Depression"]):
             stadi_data.update(
                 {
-                    "{}_{}_Total".format(score_name, st): stadi_data["{}_{}_Anxiety".format(score_name, st)]
-                    + stadi_data["{}_{}_Depression".format(score_name, st)]
+                    f"{score_name}_{st}_Total": stadi_data[f"{score_name}_{st}_Anxiety"]
+                    + stadi_data[f"{score_name}_{st}_Depression"]
                 }
             )
 
@@ -2467,18 +2465,14 @@ def stadi(
 
 
 def _get_stadi_type(stadi_type: str) -> Sequence[str]:
-    if stadi_type is None:
-        stadi_type = ["State", "Trait"]
-    elif stadi_type == "state_trait":
+    if stadi_type is None or stadi_type == "state_trait":
         stadi_type = ["State", "Trait"]
     elif stadi_type == "state":
         stadi_type = ["State"]
     elif stadi_type == "trait":
         stadi_type = ["Trait"]
     else:
-        raise ValueError(
-            "Invalid 'stadi_type'! Must be one of 'state_trait', 'state', or 'trait', not {}.".format(stadi_type)
-        )
+        raise ValueError(f"Invalid 'stadi_type'! Must be one of 'state_trait', 'state', or 'trait', not {stadi_type}.")
     return stadi_type
 
 
@@ -2496,26 +2490,26 @@ def svf_120(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Trivialization/Minimalization (Bagatellisierung – ``Bag``): [10, 31, 50, 67, 88, 106]
-    * De-Emphasis by Comparison with Others (Herunterspielen – ``Her``): [17, 38, 52, 77, 97, 113]
-    * Rejection of Guilt (Schuldabwehr – ``Schab``): [5, 30, 43, 65, 104, 119]
-    * Distraction/Deflection from a Situation (Ablenkung – ``Abl``): [1, 20, 45, 86, 101, 111]
-    * Vicarious Satisfaction (Ersatzbefriedigung –``Ers``): [22, 36, 64, 74, 80, 103]
-    * Search for Self-Affirmation (Selbstbestätigung – ``Sebest``): [34, 47, 59, 78, 95, 115]
-    * Relaxation (Entspannung –``Entsp``): [12, 28, 58, 81, 99, 114]
-    * Attempt to Control Situation (Situationskontrolle – ``Sitkon``): [11, 18, 39, 66, 91, 116]
-    * Response Control (Reaktionskontrolle – ``Rekon``): [2, 26, 54, 68, 85, 109]
-    * Positive Self-Instruction (Positive Selbstinstruktion – ``Posi``): [15, 37, 56, 71, 83, 96]
-    * Need for Social Support (Soziales Unterstützungsbedürfnis – ``Sozube``): [3, 21, 42, 63, 84, 102]
-    * Avoidance Tendencies (Vermeidung – ``Verm``): [8, 29, 48, 69, 98, 118]
-    * Escapist Tendencies (Flucht – ``Flu``): [14, 24, 40, 62, 73, 120]
-    * Social Isolation (Soziale Abkapselung – ``Soza``): [6, 27, 49, 76, 92, 107]
-    * Mental Perseveration (Gedankliche Weiterbeschäftigung – ``Gedw``): [16, 23, 55, 72, 100, 110]
-    * Resignation (Resignation – ``Res``): [4, 32, 46, 60, 89, 105]
-    * Self-Pity (Selbstbemitleidung – ``Selmit``): [13, 41, 51, 79, 94, 117]
-    * Self-Incrimination (Selbstbeschuldigung – ``Sesch``): [9, 25, 35, 57, 75, 87]
-    * Aggression (Aggression – ``Agg``): [33, 44, 61, 82, 93, 112]
-    * Medicine-Taking (Pharmakaeinnahme – ``Pha``): [7, 19, 53, 70, 90, 108]
+    * Trivialization/Minimalization (Bagatellisierung - ``Bag``): [10, 31, 50, 67, 88, 106]
+    * De-Emphasis by Comparison with Others (Herunterspielen - ``Her``): [17, 38, 52, 77, 97, 113]
+    * Rejection of Guilt (Schuldabwehr - ``Schab``): [5, 30, 43, 65, 104, 119]
+    * Distraction/Deflection from a Situation (Ablenkung - ``Abl``): [1, 20, 45, 86, 101, 111]
+    * Vicarious Satisfaction (Ersatzbefriedigung -``Ers``): [22, 36, 64, 74, 80, 103]
+    * Search for Self-Affirmation (Selbstbestätigung - ``Sebest``): [34, 47, 59, 78, 95, 115]
+    * Relaxation (Entspannung -``Entsp``): [12, 28, 58, 81, 99, 114]
+    * Attempt to Control Situation (Situationskontrolle - ``Sitkon``): [11, 18, 39, 66, 91, 116]
+    * Response Control (Reaktionskontrolle - ``Rekon``): [2, 26, 54, 68, 85, 109]
+    * Positive Self-Instruction (Positive Selbstinstruktion - ``Posi``): [15, 37, 56, 71, 83, 96]
+    * Need for Social Support (Soziales Unterstützungsbedürfnis - ``Sozube``): [3, 21, 42, 63, 84, 102]
+    * Avoidance Tendencies (Vermeidung - ``Verm``): [8, 29, 48, 69, 98, 118]
+    * Escapist Tendencies (Flucht - ``Flu``): [14, 24, 40, 62, 73, 120]
+    * Social Isolation (Soziale Abkapselung - ``Soza``): [6, 27, 49, 76, 92, 107]
+    * Mental Perseveration (Gedankliche Weiterbeschäftigung - ``Gedw``): [16, 23, 55, 72, 100, 110]
+    * Resignation (Resignation - ``Res``): [4, 32, 46, 60, 89, 105]
+    * Self-Pity (Selbstbemitleidung - ``Selmit``): [13, 41, 51, 79, 94, 117]
+    * Self-Incrimination (Selbstbeschuldigung - ``Sesch``): [9, 25, 35, 57, 75, 87]
+    * Aggression (Aggression - ``Agg``): [33, 44, 61, 82, 93, 112]
+    * Medicine-Taking (Pharmakaeinnahme - ``Pha``): [7, 19, 53, 70, 90, 108]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -2619,9 +2613,7 @@ def svf_120(
 
     for name, scale_items in meta_scales.items():
         if all(scale in subscales for scale in scale_items):
-            svf_data["{}_{}".format(score_name, name)] = svf_data[
-                ["{}_{}".format(score_name, s) for s in scale_items]
-            ].mean(axis=1)
+            svf_data[f"{score_name}_{name}"] = svf_data[[f"{score_name}_{s}" for s in scale_items]].mean(axis=1)
 
     return svf_data
 
@@ -2640,26 +2632,26 @@ def svf_42(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Trivialization/Minimalization (Bagatellisierung – ``Bag``): [7, 22]
-    * De-Emphasis by Comparison with Others (Herunterspielen – ``Her``): [11, 35]
-    * Rejection of Guilt (Schuldabwehr – ``Schab``): [2, 34]
-    * Distraction/Deflection from a Situation (Ablenkung – ``Abl``): [1, 32]
-    * Vicarious Satisfaction (Ersatzbefriedigung –``Ers``): [12, 42]
-    * Search for Self-Affirmation (Selbstbestätigung – ``Sebest``): [19, 37]
-    * Relaxation (Entspannung –``Entsp``): [13, 26]
-    * Attempt to Control Situation (Situationskontrolle – ``Sitkon``): [4, 23]
-    * Response Control (Reaktionskontrolle – ``Rekon``): [17, 33]
-    * Positive Self-Instruction (Positive Selbstinstruktion – ``Posi``): [9, 24]
-    * Need for Social Support (Soziales Unterstützungsbedürfnis – ``Sozube``): [14, 27]
-    * Avoidance Tendencies (Vermeidung – ``Verm``): [6, 30]
-    * Escapist Tendencies (Flucht – ``Flu``): [16, 40]
-    * Social Isolation (Soziale Abkapselung – ``Soza``): [20, 29]
-    * Mental Perseveration (Gedankliche Weiterbeschäftigung – ``Gedw``): [10, 25]
-    * Resignation (Resignation – ``Res``): [38, 15]
-    * Self-Pity (Selbstbemitleidung – ``Selmit``): [18, 28]
-    * Self-Incrimination (Selbstbeschuldigung – ``Sesch``): [8, 31]
-    * Aggression (Aggression – ``Agg``): [21, 36]
-    * Medicine-Taking (Pharmakaeinnahme – ``Pha``): [3, 39]
+    * Trivialization/Minimalization (Bagatellisierung - ``Bag``): [7, 22]
+    * De-Emphasis by Comparison with Others (Herunterspielen - ``Her``): [11, 35]
+    * Rejection of Guilt (Schuldabwehr - ``Schab``): [2, 34]
+    * Distraction/Deflection from a Situation (Ablenkung - ``Abl``): [1, 32]
+    * Vicarious Satisfaction (Ersatzbefriedigung -``Ers``): [12, 42]
+    * Search for Self-Affirmation (Selbstbestätigung - ``Sebest``): [19, 37]
+    * Relaxation (Entspannung -``Entsp``): [13, 26]
+    * Attempt to Control Situation (Situationskontrolle - ``Sitkon``): [4, 23]
+    * Response Control (Reaktionskontrolle - ``Rekon``): [17, 33]
+    * Positive Self-Instruction (Positive Selbstinstruktion - ``Posi``): [9, 24]
+    * Need for Social Support (Soziales Unterstützungsbedürfnis - ``Sozube``): [14, 27]
+    * Avoidance Tendencies (Vermeidung - ``Verm``): [6, 30]
+    * Escapist Tendencies (Flucht - ``Flu``): [16, 40]
+    * Social Isolation (Soziale Abkapselung - ``Soza``): [20, 29]
+    * Mental Perseveration (Gedankliche Weiterbeschäftigung - ``Gedw``): [10, 25]
+    * Resignation (Resignation - ``Res``): [38, 15]
+    * Self-Pity (Selbstbemitleidung - ``Selmit``): [18, 28]
+    * Self-Incrimination (Selbstbeschuldigung - ``Sesch``): [8, 31]
+    * Aggression (Aggression - ``Agg``): [21, 36]
+    * Medicine-Taking (Pharmakaeinnahme - ``Pha``): [3, 39]
 
 
     .. note::
@@ -2751,10 +2743,8 @@ def svf_42(
     }
 
     for name, scale_items in meta_scales.items():
-        if all(scale in subscales.keys() for scale in scale_items):
-            svf_data["{}_{}".format(score_name, name)] = svf_data[
-                ["{}_{}".format(score_name, s) for s in scale_items]
-            ].mean(axis=1)
+        if all(scale in subscales for scale in scale_items):
+            svf_data[f"{score_name}_{name}"] = svf_data[[f"{score_name}_{s}" for s in scale_items]].mean(axis=1)
 
     return svf_data
 
@@ -2771,7 +2761,7 @@ def brief_cope(
     negative life experiences. The scale is often used in health-care settings to ascertain how patients are
     responding to a serious diagnosis. It can be used to measure how someone is coping with a wide range of
     adversity, including cancer diagnosis, heart failure, injuries, assaults, natural disasters and financial stress.
-    The scale can determine someone’s primary coping styles as either Approach Coping, or Avoidant Coping.
+    The scale can determine someone`s primary coping styles as either Approach Coping, or Avoidant Coping.
     Higher scores indicate better coping capabilities.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
@@ -2833,7 +2823,7 @@ def brief_cope(
 
     References
     ----------
-    Carver, C. S. (1997). You want to measure coping but your protocol’too long: Consider the brief cope.
+    Carver, C. S. (1997). You want to measure coping but your protocol`too long: Consider the brief cope.
     *International journal of behavioral medicine*, 4(1), 92-100.
 
     """
@@ -3178,24 +3168,24 @@ def fkk(
     It consists of the primary subscales with the item indices (count-by-one, i.e.,
     the first question has the index 1!):
 
-    * Self-concept of Own Abilities (Selbstkonzept eigener Fähigkeiten – ``SK``): [4, 8, 12, 24, 16, 20, 28, 32]
-    * Internality (Internalität – ``I``): [1, 5, 6, 11, 23, 25, 27, 30]
-    * Socially Induced Externality (Sozial bedingte Externalität – ``P``) (P = powerful others control orientation):
+    * Self-concept of Own Abilities (Selbstkonzept eigener Fähigkeiten - ``SK``): [4, 8, 12, 24, 16, 20, 28, 32]
+    * Internality (Internalität - ``I``): [1, 5, 6, 11, 23, 25, 27, 30]
+    * Socially Induced Externality (Sozial bedingte Externalität - ``P``) (P = powerful others control orientation):
       [3, 10, 14, 17, 19, 22, 26, 29]
-    * Fatalistic Externality (Fatalistische Externalität – ``C``) (C = chance control orientation):
+    * Fatalistic Externality (Fatalistische Externalität - ``C``) (C = chance control orientation):
       [2, 7, 9, 13, 15, 18, 21, 31]
 
     Further, the following secondary subscales can be computed:
 
     * Self-Efficacy / Generalized self-efficacy Beliefs (Selbstwirksamkeit / generalisierte
-      Selbstwirksamkeitsüberzeugung – ``SKI``): ``SK`` + ``I``
-    * Generalized Externality in Control Beliefs (Generalisierte Externalität in Kontrollüberzeugungen – ``PC``):
+      Selbstwirksamkeitsüberzeugung - ``SKI``): ``SK`` + ``I``
+    * Generalized Externality in Control Beliefs (Generalisierte Externalität in Kontrollüberzeugungen - ``PC``):
       ``P`` + ``C``
 
     Further, the following tertiary subscale can be computed:
 
     * Generalized Internality (Generalisierte Internalität) vs. Externality in control beliefs
-      (Externalität in Kontrollüberzeugungen – ``SKI_PC``): ``SKI`` - ``PC``
+      (Externalität in Kontrollüberzeugungen - ``SKI_PC``): ``SKI`` - ``PC``
 
     .. note::
         This implementation assumes a score range of [1, 6].
@@ -3271,18 +3261,18 @@ def fkk(
     fkk_data = pd.DataFrame(fkk_data, index=data.index)
 
     # Sekundärskalenwerte
-    if all("{}_{}".format(score_name, s) in fkk_data.columns for s in ["SK", "I"]):
+    if all(f"{score_name}_{s}" in fkk_data.columns for s in ["SK", "I"]):
         fkk_data["{}_{}".format(score_name, "SKI")] = (
             fkk_data["{}_{}".format(score_name, "SK")] + fkk_data["{}_{}".format(score_name, "I")]
         )
 
-    if all("{}_{}".format(score_name, s) in fkk_data.columns for s in ["P", "C"]):
+    if all(f"{score_name}_{s}" in fkk_data.columns for s in ["P", "C"]):
         fkk_data["{}_{}".format(score_name, "PC")] = (
             fkk_data["{}_{}".format(score_name, "P")] + fkk_data["{}_{}".format(score_name, "C")]
         )
 
     # Tertiärskalenwerte
-    if all("{}_{}".format(score_name, s) in fkk_data.columns for s in ["SKI", "PC"]):
+    if all(f"{score_name}_{s}" in fkk_data.columns for s in ["SKI", "PC"]):
         fkk_data["{}_{}".format(score_name, "SKI_PC")] = (
             fkk_data["{}_{}".format(score_name, "SKI")] - fkk_data["{}_{}".format(score_name, "PC")]
         )
@@ -3299,11 +3289,11 @@ def bidr(
 
     The BIDR is a 40-item instrument that is used to measure 2 constructs:
 
-    * Self-deceptive positivity – described as the tendency to give self-reports that are believed but have a
+    * Self-deceptive positivity - described as the tendency to give self-reports that are believed but have a
       positivety bias
-    * Impression management – deliberate self-presentation to an audience.
+    * Impression management - deliberate self-presentation to an audience.
 
-    The BIDR emphasizes exaggerated claims of positive cognitive attributes (overconfidence in one’s judgments and
+    The BIDR emphasizes exaggerated claims of positive cognitive attributes (overconfidence in one`s judgments and
     rationality). It is viewed as a measure of defense, i.e., people who score high on self-deceptive positivity
     tend to defend against negative self-evaluations and seek out inflated positive self-evaluations.
 
@@ -3552,7 +3542,7 @@ def fee(
 
     supported_versions = ["english", "german"]
     if language not in supported_versions:
-        raise ValueError("questionnaire_version must be one of {}, not {}.".format(supported_versions, language))
+        raise ValueError(f"questionnaire_version must be one of {supported_versions}, not {language}.")
 
     if columns is not None:
         # if columns parameter is supplied: slice columns from dataframe
@@ -3581,9 +3571,9 @@ def fee(
 
     # FEE is a mean score, not a sum score!
     fee_mother = _compute_questionnaire_subscales(df_mother, score_name, subscales, agg_type="mean")
-    fee_mother = {"{}_{}".format(key, mother): val for key, val in fee_mother.items()}
+    fee_mother = {f"{key}_{mother}": val for key, val in fee_mother.items()}
     fee_father = _compute_questionnaire_subscales(df_father, score_name, subscales, agg_type="mean")
-    fee_father = {"{}_{}".format(key, father): val for key, val in fee_father.items()}
+    fee_father = {f"{key}_{father}": val for key, val in fee_father.items()}
     fee_mother.update(fee_father)
 
     return pd.DataFrame(fee_mother, index=data.index)
@@ -3594,7 +3584,7 @@ def mbi_gs(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Maslach Burnout Inventory – General Survey (MBI-GS)**.
+    """Compute the **Maslach Burnout Inventory - General Survey (MBI-GS)**.
 
     The MBI measures burnout as defined by the World Health Organization (WHO) and in the ICD-11.
 
@@ -3681,7 +3671,7 @@ def mbi_gss(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Maslach Burnout Inventory – General Survey for Students (MBI-GS (S))**.
+    """Compute the **Maslach Burnout Inventory - General Survey for Students (MBI-GS (S))**.
 
     The MBI measures burnout as defined by the World Health Organization (WHO) and in the ICD-11.
 
@@ -3973,7 +3963,7 @@ def pfb(
     References
     ----------
     Hinz, A., Stöbel-Richter, Y., & Brähler, E. (2001). Der Partnerschaftsfragebogen (PFB).
-    *Diagnostica*, 47(3), 132–141.
+    *Diagnostica*, 47(3), 132-141.
 
     """
     score_name = "PFB"
@@ -4023,7 +4013,7 @@ def _pfb_assert_value_range(data: pd.DataFrame, subscales: Dict[str, Sequence[in
                 "Please consider converting to the correct range using "
                 "`biopsykit.questionnaire.utils.convert_scale()`.".format(score_range, subscales["Glueck"], [1, 6])
             ) from e
-        raise e
+        raise ValueRangeError from e
 
 
 def asq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
@@ -4106,9 +4096,9 @@ def asq_mod(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]
     References
     ----------
     Modified version:
-    Kramer, A. C., Neubauer, A. B., Stoffel, M., Voss, A., & Ditzen, B. (2019). Tomorrow’s gonna suck:
-    Today’s stress anticipation predicts tomorrow’s post-awakening cortisol increase. Psychoneuroendocrinology, 106,
-    38–46. https://doi.org/10.1016/j.psyneuen.2019.03.024
+    Kramer, A. C., Neubauer, A. B., Stoffel, M., Voss, A., & Ditzen, B. (2019). Tomorrow`s gonna suck:
+    Today`s stress anticipation predicts tomorrow`s post-awakening cortisol increase. Psychoneuroendocrinology, 106,
+    38-46. https://doi.org/10.1016/j.psyneuen.2019.03.024
 
     Original paper:
     Powell, D. J., & Schlotz, W. (2012). Daily Life Stress and the Cortisol Awakening Response:
@@ -4328,9 +4318,9 @@ def meq(
     )
 
     # recode items 11, 12, 19
-    data.iloc[:, to_idx(11)].replace({1: 0, 2: 2, 3: 4, 4: 6}, inplace=True)
-    data.iloc[:, to_idx(12)].replace({1: 0, 2: 2, 3: 3, 4: 5}, inplace=True)
-    data.iloc[:, to_idx(19)].replace({1: 0, 2: 2, 3: 4, 4: 6}, inplace=True)
+    data.iloc[:, to_idx(11)] = data.iloc[:, to_idx(11)].replace({1: 0, 2: 2, 3: 4, 4: 6})
+    data.iloc[:, to_idx(12)] = data.iloc[:, to_idx(12)].replace({1: 0, 2: 2, 3: 3, 4: 5})
+    data.iloc[:, to_idx(19)] = data.iloc[:, to_idx(19)].replace({1: 0, 2: 2, 3: 4, 4: 6})
 
     meq_data = pd.DataFrame(data.sum(axis=1), columns=[score_name])
 
@@ -4458,17 +4448,13 @@ def stai_short(
 
     stai = pd.DataFrame(stai_data, index=data.index)
 
-    if stai_type[0] == "state":
-        name = "SAI"
-    else:
-        name = "TAI"
+    name = "SAI" if stai_type[0] == "state" else "TAI"
 
-    stai.rename(
+    stai = stai.rename(
         columns={
             f"STADI_{stai_type[0].capitalize()}_GES": f"{name}_ges",
             f"STADI_{stai_type[0].capitalize()}_SKD": f"{name}_SKD",
         },
-        inplace=True,
     )
     stai[f"{name}_SKD"] /= 5
 
@@ -4908,8 +4894,8 @@ def abi_ms(
     abims_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     if len(subscales.keys()) == 8:
-        kov_cols = ["{}_{}".format(score_name, ele) for ele in ["KOV1", "KOV2", "KOV3", "KOV4"]]
-        vig_cols = ["{}_{}".format(score_name, ele) for ele in ["VIG1", "VIG2", "VIG3", "VIG4"]]
+        kov_cols = [f"{score_name}_{ele}" for ele in ["KOV1", "KOV2", "KOV3", "KOV4"]]
+        vig_cols = [f"{score_name}_{ele}" for ele in ["VIG1", "VIG2", "VIG3", "VIG4"]]
         # compute total score if all columns are present
         abims_data[score_name + "_KOV"] = pd.DataFrame(abims_data)[kov_cols].sum(axis=1)
         abims_data[score_name + "_VIG"] = pd.DataFrame(abims_data)[vig_cols].sum(axis=1)
@@ -4928,9 +4914,9 @@ def asi(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Physical Concerns (Bedenken Somatisch – ``BSM``): [3, 4, 7, 8, 12],
-    * Social Concerns (Bedenken Sozial – ``BZS``): [1, 6, 9, 11]
-    * Cognitive Concerns (Bedenken Kognitiv – ``BKO``): [2, 5, 10]
+    * Physical Concerns (Bedenken Somatisch - ``BSM``): [3, 4, 7, 8, 12],
+    * Social Concerns (Bedenken Sozial - ``BZS``): [1, 6, 9, 11]
+    * Cognitive Concerns (Bedenken Kognitiv - ``BKO``): [2, 5, 10]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -4978,7 +4964,7 @@ def asi(
     deutschen Version des Angstsensitivitätsindex-3. *Diagnostica*, 55(4), 223-233.
 
     Original Version: Reiss, S., Peterson, R. A., Gursky, D. M., & McNally, R. J. (1986). Anxiety sensitivity, anxiety
-    frequency and the prediction of fearfulness. Behaviour Research and Therapy, 24(1), 1–8.
+    frequency and the prediction of fearfulness. Behaviour Research and Therapy, 24(1), 1-8.
     https://doi.org/10.1016/0005-7967(86)90143-9
 
     """
@@ -5063,7 +5049,7 @@ def erq(
 
     References
     ----------
-    German version: Abler, B., & Kessler, H. (2009). Emotion regulation questionnaire – Eine deutschsprachige Fassung
+    German version: Abler, B., & Kessler, H. (2009). Emotion regulation questionnaire - Eine deutschsprachige Fassung
     des ERQ von Gross und John. *Diagnostica*, 55(3), 144-152.
 
     Original version: Gross, J. J., & John, O. P. (2003). Individual differences in two emotion regulation processes:
@@ -5093,7 +5079,7 @@ def erq(
 
 
 def phq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
-    """Compute the **Patient Health Questionnaire (Depression) – 9 items (PHQ-9)**.
+    """Compute the **Patient Health Questionnaire (Depression) - 9 items (PHQ-9)**.
 
     The PHQ-9 is a measure for depression.
 
@@ -5184,7 +5170,7 @@ def resilience(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Ind
     References
     ----------
     Schumacher, J., Leppert, K., Gunzelmann, T., Strauß, B., & Brähler, E. (2005).
-    Die resilienzskala–ein fragebogen zur erfassung der psychischen widerstandsfähigkeit als personmerkmal.
+    Die resilienzskala-ein fragebogen zur erfassung der psychischen widerstandsfähigkeit als personmerkmal.
     *Klin Psychol Psychiatr Psychother*, 53(1), 16-39.
 
     """
@@ -5214,9 +5200,9 @@ def sci(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Stress Scale 1 – Uncertainty (``Stress1``): [1, 2, 3, 4, 5, 6, 7],
-    * Stress Scale 2 – Load (``Stress2``): [8, 9, 10, 11, 12, 13, 14],
-    * Stress Scale 3 – Adverse (``Stress3``): [15, 16, 17, 18, 19, 20, 21],
+    * Stress Scale 1 - Uncertainty (``Stress1``): [1, 2, 3, 4, 5, 6, 7],
+    * Stress Scale 2 - Load (``Stress2``): [8, 9, 10, 11, 12, 13, 14],
+    * Stress Scale 3 - Adverse (``Stress3``): [15, 16, 17, 18, 19, 20, 21],
     * Physical and Psychological Symptoms (``PhysPsycSymp``): [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34],
     * Positive Thinking (``PosThink``): [29, 33, 34, 44],
     * Active Coping (``ActiveCoping``): [31, 35, 47, 45],
@@ -5320,9 +5306,7 @@ def sci(
 
     if {"Stress1", "Stress2", "Stress3"}.issubset(subscales.keys()):
         # compute total score if all columns are present
-        sci_data[score_name + "_StressTotal"] = sci_data[[score_name + "_Stress{}".format(i) for i in range(1, 4)]].sum(
-            axis=1
-        )
+        sci_data[score_name + "_StressTotal"] = sci_data[[score_name + f"_Stress{i}" for i in range(1, 4)]].sum(axis=1)
 
     return sci_data
 
@@ -5332,7 +5316,7 @@ def bfi_10(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Big Five Inventory – 10 items (BFI-10)**.
+    """Compute the **Big Five Inventory - 10 items (BFI-10)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
@@ -5483,8 +5467,8 @@ def swb(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Mood Level (Stimmungsniveau – ``SN``): [2, 5, 8, 10, 11, 13],
-    * General Life Satisfaction (Allgemeine Lebenszufriedenheit – ``ALZ``): [1, 3, 4, 6, 7, 9, 12]
+    * Mood Level (Stimmungsniveau - ``SN``): [2, 5, 8, 10, 11, 13],
+    * General Life Satisfaction (Allgemeine Lebenszufriedenheit - ``ALZ``): [1, 3, 4, 6, 7, 9, 12]
 
     .. note::
         This implementation assumes a score range of [1, 6].
@@ -5786,13 +5770,13 @@ def tb(
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
     subscales: Optional[Dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
-    """Compute the **Technology Commitment Questionnaire (TB – Technologiebereitschaft)**.
+    """Compute the **Technology Commitment Questionnaire (TB - Technologiebereitschaft)**.
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Technology Acceptance (Technikakzeptanz – ``TechAcc``): [1, 2, 3, 4]
-    * Technology Competence Beliefs (Technikkompetenzüberzeugungen – ``TechComp``): [5, 6, 7, 8]
-    * Technology Control Beliefs (Technikkontrollüberzeugungen – ``TechControl``): [9, 10, 11, 12]
+    * Technology Acceptance (Technikakzeptanz - ``TechAcc``): [1, 2, 3, 4]
+    * Technology Competence Beliefs (Technikkompetenzüberzeugungen - ``TechComp``): [5, 6, 7, 8]
+    * Technology Control Beliefs (Technikkontrollüberzeugungen - ``TechControl``): [9, 10, 11, 12]
 
     .. note::
         This implementation assumes a score range of [1, 5].
@@ -5936,18 +5920,18 @@ def wpi(
 
     It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
 
-    * Access to Treatment (Zugang zur Behandlung – ``AccessTreatment``): [2, 3, 4, 5, 6]
-    * Staff Competence (Kompetenz des Personals – ``StaffCompetence``): [11, 12]
-    * Effectiveness of Treatment (Wirksamkeit der Behandlung – ``EffectTreatment``): [22, 23, 24]
-    * Station Equipment (Stationsaustattung – ``StationEquipment``): [8, 9, 10]
-    * Staff-Patient Relationship (Personal-Patientenbeziehung –``Relation``): [7, 15, 16, 17, 18, 19, 21]
-    * Information about and Influence on Disease (Information über und Einflussnahme auf Erkrankung – ``Information``):
+    * Access to Treatment (Zugang zur Behandlung - ``AccessTreatment``): [2, 3, 4, 5, 6]
+    * Staff Competence (Kompetenz des Personals - ``StaffCompetence``): [11, 12]
+    * Effectiveness of Treatment (Wirksamkeit der Behandlung - ``EffectTreatment``): [22, 23, 24]
+    * Station Equipment (Stationsaustattung - ``StationEquipment``): [8, 9, 10]
+    * Staff-Patient Relationship (Personal-Patientenbeziehung -``Relation``): [7, 15, 16, 17, 18, 19, 21]
+    * Information about and Influence on Disease (Information über und Einflussnahme auf Erkrankung - ``Information``):
       [13, 14, 20]
-    * Overall Satisfaction (Insgesamte Zufriedenheit – ``OverallSatisfaction``): [1],
-    * Special Treatment Interventions (Spezielle Behandlungsinterventionen –``TreatmentInterventions``):
+    * Overall Satisfaction (Insgesamte Zufriedenheit - ``OverallSatisfaction``): [1],
+    * Special Treatment Interventions (Spezielle Behandlungsinterventionen -``TreatmentInterventions``):
       [25, 28, 29, 30, 31],
-    * Education about Medications (Aufklärung über Medikamente – ``Education``): [26, 27],
-    * Psychosocial Support Offer (Psychosoziales Unterstützungsangebot – ``Support``): [32, 33, 34, 35]
+    * Education about Medications (Aufklärung über Medikamente - ``Education``): [26, 27],
+    * Psychosocial Support Offer (Psychosoziales Unterstützungsangebot - ``Support``): [32, 33, 34, 35]
 
     .. note::
         This implementation assumes a score range of [1, 4] (for items 1-24) and [1, 5] (for items 25-35).

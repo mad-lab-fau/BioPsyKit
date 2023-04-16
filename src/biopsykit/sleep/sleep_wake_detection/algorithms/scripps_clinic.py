@@ -1,7 +1,6 @@
 """Sleep/Wake detection using the *Scripps Clinic Algorithm*."""
 import numpy as np
 import pandas as pd
-
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
 from biopsykit.utils._types import arr_t
@@ -40,7 +39,7 @@ class ScrippsClinic(_SleepWakeBase):
         """
         super().__init__(**kwargs)
 
-    def fit(self, data: arr_t, **kwargs):
+    def fit(self, data: arr_t, **kwargs):  # noqa: ARG002
         """Fit sleep/wake detection algorithm to input data.
 
         .. note::

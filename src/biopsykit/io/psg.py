@@ -15,7 +15,6 @@ except ImportError as e:
     ) from e
 
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
 from biopsykit.utils._types import path_t
 
@@ -36,7 +35,7 @@ class PSGDataset:
         self._data = data_dict
         for name, data in data_dict.items():
             setattr(self, name, data)
-        for name, sampling_rate in sampling_rate_dict.items():
+        for _, sampling_rate in sampling_rate_dict.items():
             setattr(self, "sampling_rate", sampling_rate)
         setattr(self, "channels", list(self._data.keys()))
         self._sampling_rate = sampling_rate_dict
@@ -174,7 +173,7 @@ class PSGDataset:
         _assert_is_dir(folder_path)
 
         # look for all PSG .edf files in the folder
-        dataset_list = list(sorted(folder_path.glob("*.edf")))
+        dataset_list = sorted(folder_path.glob("*.edf"))
         if len(dataset_list) == 0:
             raise FileNotFoundError(f"No PSG files found in folder {folder_path}!")
         if len(dataset_list) > 1:

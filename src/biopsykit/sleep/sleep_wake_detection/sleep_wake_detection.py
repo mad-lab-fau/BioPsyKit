@@ -82,4 +82,4 @@ class SleepWakeDetection:
             dataframe with sleep/wake predictions
 
         """
-        return _SleepWakeDataFrame(getattr(self.sleep_wake_algo, "predict")(data, **kwargs))
+        return _SleepWakeDataFrame(self.sleep_wake_algo.predict(data, **kwargs))

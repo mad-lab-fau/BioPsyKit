@@ -7,8 +7,6 @@ from typing import Dict, Literal, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 import pytz
-from nilspodlib import Dataset
-
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dtype
 from biopsykit.utils._types import path_t
 from biopsykit.utils.dataframe_handling import convert_nan
@@ -25,6 +23,7 @@ from biopsykit.utils.datatype_helper import (
 from biopsykit.utils.exceptions import ValidationError
 from biopsykit.utils.file_handling import is_excel_file
 from biopsykit.utils.time import tz
+from nilspodlib import Dataset
 
 __all__ = [
     "load_long_format_csv",
@@ -172,7 +171,7 @@ def load_time_log(
     if not continuous_time:
         data = _parse_time_log_not_continuous(data, index_cols)
 
-    for val in data.values.flatten():
+    for val in data.to_numpy().flatten():
         if val is np.nan:
             continue
         _assert_is_dtype(val, str)
@@ -233,7 +232,7 @@ def convert_time_log_datetime(
     if isinstance(timezone, str):
         timezone = pytz.timezone(timezone)
 
-    if isinstance(time_log.values.flatten()[0], str):
+    if isinstance(time_log.to_numpy().flatten()[0], str):
         # convert time strings into datetime.time object
         time_log = time_log.applymap(pd.to_datetime)
         time_log = time_log.applymap(lambda val: val.time())

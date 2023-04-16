@@ -352,7 +352,7 @@ class TestSalivaUtils:
             ),
             (
                 sample_times_series_wrong_input(),
-                pytest.raises(ValueError),
+                pytest.raises(TypeError),
             ),
             (
                 sample_times_series_str_correct(),

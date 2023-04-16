@@ -4,7 +4,6 @@ from typing import Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.io.io import _apply_index_cols
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns
 from biopsykit.utils._types import path_t
@@ -288,7 +287,7 @@ def load_saliva_wide_format(
 
 def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_index_cols: Sequence[str]):
     if condition_col is not None:
-        index_cols = [condition_col] + index_cols
+        index_cols = [condition_col, *index_cols]
 
     if additional_index_cols is None:
         additional_index_cols = []
@@ -395,13 +394,12 @@ def _get_id_columns(id_col_names: Sequence[str], extracted_cols: pd.DataFrame):
         id_col_names = ["subject", "sample"]
         if len(extracted_cols.columns) == 3:
             id_col_names = ["subject", "day", "sample"]
-    else:
-        if len(id_col_names) != len(extracted_cols.columns):
-            raise ValueError(
-                "Number of 'id_col_names' must match length of extracted index columns! Expected {}, got {}.".format(
-                    len(extracted_cols), len(id_col_names)
-                )
+    elif len(id_col_names) != len(extracted_cols.columns):
+        raise ValueError(
+            "Number of 'id_col_names' must match length of extracted index columns! Expected {}, got {}.".format(
+                len(extracted_cols), len(id_col_names)
             )
+        )
 
     return id_col_names
 

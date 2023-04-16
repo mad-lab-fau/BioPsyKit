@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
 from biopsykit.utils._types import path_t
 from biopsykit.utils.datatype_helper import HeartRatePhaseDict, HeartRateSubjectDataDict, is_hr_phase_dict
@@ -74,8 +73,7 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 def load_hr_phase_dict_folder(
     base_path: path_t, filename_pattern: str, subfolder_pattern: Optional[str] = None
 ) -> HeartRateSubjectDataDict:
-    """Load a folder with multiple :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` and concatenate them \
-    into a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`.
+    r"""Load a folder with multiple ``HeartRatePhaseDict`` and concatenate them  into a ``HeartRateSubjectDataDict``.
 
     This functions looks for all files that match the ``file_pattern`` in the folder specified by ``base_path``
     and loads the files that are all expected to be :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
@@ -156,12 +154,10 @@ def load_hr_phase_dict_folder(
 
     dict_hr_subjects = {}
     if subfolder_pattern is None:
-        file_list = list(sorted(base_path.glob("*")))
+        file_list = sorted(base_path.glob("*"))
         file_list = [f for f in file_list if re.search(filename_pattern, f.name)]
         if len(file_list) == 0:
-            raise FileNotFoundError(
-                "No files matching the pattern '{}' found in {}.".format(filename_pattern, base_path)
-            )
+            raise FileNotFoundError(f"No files matching the pattern '{filename_pattern}' found in {base_path}.")
         for file in file_list:
             subject_id = re.findall(filename_pattern, file.name)[0]
             dict_hr_subjects[subject_id] = load_hr_phase_dict(file)
@@ -182,7 +178,7 @@ def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str)
     # first try to search for files with glob (assuming that a regex string without capture group was passed),
     # then try to search via regex search (assuming that a regex string with capture group was passed,
     # which should actually not be done if subfolder_pattern is passed)
-    file_list = list(sorted(subject_dir.glob(filename_pattern)))
+    file_list = sorted(subject_dir.glob(filename_pattern))
     if len(file_list) == 0:
         file_list = sorted(subject_dir.glob("*"))
         # then extract the ones that match
@@ -200,7 +196,7 @@ def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str)
             dict_hr.update(load_hr_phase_dict(file))
         return dict_hr
 
-    print("No Heart Rate data for subject {}".format(subject_id))
+    print(f"No Heart Rate data for subject {subject_id}")
     return None
 
 
@@ -296,8 +292,7 @@ def load_hr_phase_dict_csv(
     phase_order: Optional[Sequence[str]] = None,
     assert_format: Optional[bool] = True,
 ) -> HeartRatePhaseDict:
-    """Load csv file containing time series heart rate data of one subject from folder and combine it into a \
-    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
+    """Load csv file with time series HR data of one subject from folder and combine it into a ``HeartRatePhaseDict``.
 
     The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`,
     i.e., a dict with heart rate data from one subject split into phases (as exported by :func:`write_hr_phase_dict`).

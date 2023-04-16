@@ -2,12 +2,10 @@
 import re
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import pingouin as pg
-from typing_extensions import Literal
-
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_index_levels
 from biopsykit.utils._types import path_t, str_t
 
@@ -234,7 +232,7 @@ class StatsPipeline:
             test_func = MAP_STAT_TESTS[step[1]]
             if len(grouper) > 0:
                 result = data.groupby(grouper, sort=general_params.get("sort", True)).apply(
-                    lambda df: test_func(data=df, **specific_params, **params)  # pylint:disable=cell-var-from-loop
+                    lambda df, tf=test_func, sp=specific_params, p=params: tf(data=df, **sp, **p)
                 )
             else:
                 result = test_func(data=data, **specific_params, **params)
@@ -371,10 +369,7 @@ class StatsPipeline:
         if sig_only is None:
             sig_only = {}
         if isinstance(sig_only, str):
-            if sig_only == "all":
-                sig_only = True
-            else:
-                sig_only = [sig_only]
+            sig_only = True if sig_only == "all" else [sig_only]
         if isinstance(sig_only, bool):
             sig_only = {cat: sig_only for cat in self.category_steps}
         if isinstance(sig_only, list):
@@ -892,10 +887,7 @@ class StatsPipeline:
         if levels is None:
             levels = []
         elif isinstance(levels, bool):
-            if levels:
-                levels = list(data.index.names)[:-1]
-            else:
-                levels = []
+            levels = list(data.index.names)[:-1] if levels else []
         elif isinstance(levels, str):
             levels = [levels]
         return levels
@@ -918,7 +910,7 @@ class StatsPipeline:
             else:
                 stats_data = stats_category_or_data
         else:
-            raise ValueError(
+            raise TypeError(
                 "Either string with stats category (e.g., 'test' or 'posthoc') or dataframe with stats results must "
                 "be supplied as parameter! "
             )
@@ -1059,11 +1051,8 @@ class StatsPipeline:
         data = data.rename(columns=rename_dict)
         columns = []
         if collapse_dof:
-            if "df1" in data.columns:
-                dof_cols = ["df1", "df2"]
-            else:
-                dof_cols = ["df"]
-            dofs = tuple((data[col].unique() for col in dof_cols))
+            dof_cols = ["df1", "df2"] if "df1" in data.columns else ["df"]
+            dofs = tuple(data[col].unique() for col in dof_cols)
             if any(len(d) != 1 for d in dofs):
                 raise ValueError(f"Cannot collapse dof in table: dof are not unique! Got {dofs}.")
             dofs = [self._format_dof(dof[0]) for dof in dofs]
@@ -1077,7 +1066,7 @@ class StatsPipeline:
                 data = data.drop(columns=["df1", "df2"])
             columns.append("df")
         eff_name = self._get_effsize_name(data)
-        columns = columns + [pcol, eff_name]
+        columns = [*columns, pcol, eff_name]
         data = data[columns]
         return data
 
@@ -1086,11 +1075,8 @@ class StatsPipeline:
         data = data.rename(columns=rename_dict)
         columns = []
         if collapse_dof:
-            if "df2" in data.columns:
-                dof_cols = ["df1", "df2"]
-            else:
-                dof_cols = ["df1"]
-            dofs = tuple((data[col].unique() for col in dof_cols))
+            dof_cols = ["df1", "df2"] if "df2" in data.columns else ["df1"]
+            dofs = tuple(data[col].unique() for col in dof_cols)
             if any(len(d) != 1 for d in dofs):
                 raise ValueError(f"Cannot collapse dof in table: dof are not unique! Got {dofs}.")
             dofs = [self._format_dof(dof[0]) for dof in dofs]
@@ -1109,7 +1095,7 @@ class StatsPipeline:
                 data["df"] = "{" + data["df1"].astype(str) + ", " + data["df2"].astype(str) + "}"
                 data = data.drop(columns=["df1", "df2"])
             columns.append("df")
-        columns = columns + [pcol]
+        columns = [*columns, pcol]
         data = data[columns]
         return data
 
@@ -1206,15 +1192,14 @@ class StatsPipeline:
                 for key, val in index_value_order.items():
                     data = data.reindex(val, level=key)
             else:
-                raise ValueError(
+                raise TypeError(
                     "'index_value_order' must be a dictionary with index level names as keys and "
                     "index values as values."
                 )
+        elif isinstance(index_value_order, dict):
+            data = data.reindex(index_value_order[data.index.name])
         else:
-            if isinstance(index_value_order, dict):
-                data = data.reindex(index_value_order[data.index.name])
-            else:
-                data = data.reindex(index_value_order)
+            data = data.reindex(index_value_order)
         return data
 
     @staticmethod
@@ -1226,15 +1211,14 @@ class StatsPipeline:
                 for key, val in column_value_order.items():
                     data = data.reindex(val, level=key, axis=1)
             else:
-                raise ValueError(
+                raise TypeError(
                     "'column_value_order' must be a dictionary with column level names as keys and "
                     "column values as values."
                 )
+        elif isinstance(column_value_order, dict):
+            data = data.reindex(column_value_order[data.index.name], axis=1)
         else:
-            if isinstance(column_value_order, dict):
-                data = data.reindex(column_value_order[data.index.name], axis=1)
-            else:
-                data = data.reindex(column_value_order, axis=1)
+            data = data.reindex(column_value_order, axis=1)
         return data
 
     @staticmethod

@@ -3,7 +3,6 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import sliding_window
 from biopsykit.utils.datatype_helper import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame

@@ -4,7 +4,6 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import _assert_num_columns
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import sliding_window
@@ -23,7 +22,7 @@ class RestPeriods:
     ----------
     van Hees, V. T., Sabia, S., Anderson, K. N., Denton, S. J., Oliver, J., Catt, M., Abell, J. G., Kivimäki, M.,
     Trenell, M. I., & Singh-Manoux, A. (2015). A Novel, Open Access Method to Assess Sleep Duration Using a
-    Wrist-Worn Accelerometer. *PLoS ONE*, 10(11), 1–13. https://doi.org/10.1371/journal.pone.0142533
+    Wrist-Worn Accelerometer. *PLoS ONE*, 10(11), 1-13. https://doi.org/10.1371/journal.pone.0142533
 
     """
 
@@ -54,10 +53,7 @@ class RestPeriods:
             dataframe with start, end, and total duration of each rest period detected by the algorithm
 
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.filter(like="acc")
-        else:
-            data = pd.DataFrame(data)
+        data = data.filter(like="acc") if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
 
         _assert_num_columns(data, 3)
 

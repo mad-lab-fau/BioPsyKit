@@ -2,12 +2,10 @@
 import re
 import warnings
 from inspect import getmembers, isfunction
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from typing_extensions import Literal
-
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_len_list, _assert_value_range
 from biopsykit.utils.dataframe_handling import wide_to_long as wide_to_long_utils
 
@@ -411,11 +409,10 @@ def _convert_scale_dataframe(
 ) -> pd.DataFrame:
     if cols is None:
         data.iloc[:, :] = data.iloc[:, :] + offset
-    else:
-        if isinstance(cols[0], int):
-            data.iloc[:, cols] = data.iloc[:, cols] + offset
-        elif isinstance(cols[0], str):
-            data.loc[:, cols] = data.loc[:, cols] + offset
+    elif isinstance(cols[0], int):
+        data.iloc[:, cols] = data.iloc[:, cols] + offset
+    elif isinstance(cols[0], str):
+        data.loc[:, cols] = data.loc[:, cols] + offset
 
     return data
 
@@ -452,10 +449,10 @@ def crop_scale(
         data = data.copy()
 
     if set_nan:
-        data.mask((data < score_range[0]) | (data > score_range[1]), inplace=True)
+        data = data.mask((data < score_range[0]) | (data > score_range[1]))
     else:
-        data.mask((data < score_range[0]), other=score_range[0], inplace=True)
-        data.mask((data > score_range[1]), other=score_range[1], inplace=True)
+        data = data.mask((data < score_range[0]), other=score_range[0])
+        data = data.mask((data > score_range[1]), other=score_range[1])
 
     if inplace:
         return None
@@ -635,11 +632,11 @@ def compute_scores(
 
     for score, columns in quest_dict.items():
         score_orig = score
-        score = score.lower()
+        score = score.lower()  # noqa: PLW2901
         suffix = None
         if "-" in score:
             score_split = score.split("-")
-            score = score_split[0]
+            score = score_split[0]  # noqa: PLW2901
             suffix = score_split[1]
 
         if score not in quest_funcs:
@@ -658,7 +655,7 @@ def compute_scores(
             ) from e
 
         if suffix is not None:
-            df.columns = ["{}_{}".format(col, suffix) for col in df.columns]
+            df.columns = [f"{col}_{suffix}" for col in df.columns]
         df_scores = df_scores.join(df)
 
     return df_scores
@@ -731,7 +728,7 @@ def _compute_questionnaire_subscales(
                 "column indices (list of integers)!"
             )
 
-        out["{}_{}".format(score_name, key)] = score
+        out[f"{score_name}_{key}"] = score
 
     return out
 
@@ -777,12 +774,12 @@ def _get_bins(
     if first_min:
         min_val = _bin_scale_get_min_val(data, col)
         if min_val < min(bins):
-            bins = [min_val - 0.01] + bins
+            bins = [min_val - 0.01, *bins]
 
     if last_max:
         max_val = _bin_scale_get_max_val(data, col)
         if max_val > max(bins):
-            bins = bins + [max_val + 0.01]
+            bins = [*bins, max_val + 0.01]
 
     return bins
 

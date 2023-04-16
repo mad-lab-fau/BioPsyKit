@@ -3,10 +3,9 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from scipy.stats import skew
-
 from biopsykit.utils.array_handling import sanitize_input_nd
 from biopsykit.utils.time import tz
+from scipy.stats import skew
 
 
 def compute_features(
@@ -83,12 +82,12 @@ def compute_features(
     # feature_dict.update(dict_ori)
 
     for dur, suffix in zip([durations, durations_60], ["", "_60"]):
-        feature_dict["sm_number{}".format(suffix)] = len(dur)
-        feature_dict["sm_max{}".format(suffix)] = np.max(dur)
-        feature_dict["sm_median{}".format(suffix)] = np.median(dur)
-        feature_dict["sm_mean{}".format(suffix)] = np.mean(dur)
-        feature_dict["sm_std{}".format(suffix)] = np.std(dur, ddof=1)
-        feature_dict["sm_skewness{}".format(suffix)] = skew(dur)
+        feature_dict[f"sm_number{suffix}"] = len(dur)
+        feature_dict[f"sm_max{suffix}"] = np.max(dur)
+        feature_dict[f"sm_median{suffix}"] = np.median(dur)
+        feature_dict[f"sm_mean{suffix}"] = np.mean(dur)
+        feature_dict[f"sm_std{suffix}"] = np.std(dur, ddof=1)
+        feature_dict[f"sm_skewness{suffix}"] = skew(dur)
 
     if index is None:
         index = 0

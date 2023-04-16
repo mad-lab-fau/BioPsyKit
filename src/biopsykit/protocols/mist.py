@@ -2,7 +2,6 @@
 from typing import Dict, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
-
 from biopsykit.protocols import BaseProtocol
 
 
@@ -78,7 +77,7 @@ class MIST(BaseProtocol):
         ----------
         Dedovic, K., Renwick, R., Mahani, N. K., Engert, V., Lupien, S. J., & Pruessner, J. C. (2005).
         The Montreal Imaging Stress Task: Using functional imaging to investigate the effects of perceiving and
-        processing psychosocial stress in the human brain. *Journal of Psychiatry and Neuroscience*, 30(5), 319–325.
+        processing psychosocial stress in the human brain. *Journal of Psychiatry and Neuroscience*, 30(5), 319-325.
 
         """
         if name is None:

@@ -2,12 +2,10 @@
 import json
 import warnings
 from datetime import datetime
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Literal, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
-from typing_extensions import Literal
-
 from biopsykit.carwatch_logs import log_actions, log_extras
 from biopsykit.utils.time import tz
 
@@ -251,7 +249,7 @@ class LogData:
                 subject_dict[log_extras.subject_condition], subject_conditions["UNDEFINED"]
             )
         elif self.error_handling == "warn":
-            warnings.warn("Action 'Subject ID Set' not found – Log Data may be invalid!")
+            warnings.warn("Action 'Subject ID Set' not found - Log Data may be invalid!")
 
         # App Metadata
         app_dict = get_extras_for_log(self, log_actions.app_metadata)
@@ -282,12 +280,12 @@ class LogData:
                 "IPython cannot be imported. Install it via 'pip install ipython'."
             ) from e
 
-        display(Markdown("Subject ID: **{}**".format(self.subject_id)))
-        display(Markdown("Condition: **{}**".format(self.condition)))
-        display(Markdown("App Version: **{}**".format(self.app_version)))
-        display(Markdown("Android Version: **{}**".format(self.android_version)))
-        display(Markdown("Phone: **{}**".format(self.model)))
-        display(Markdown("Logging Days: **{} – {}**".format(str(self.start_date), str(self.end_date))))
+        display(Markdown(f"Subject ID: **{self.subject_id}**"))
+        display(Markdown(f"Condition: **{self.condition}**"))
+        display(Markdown(f"App Version: **{self.app_version}**"))
+        display(Markdown(f"Android Version: **{self.android_version}**"))
+        display(Markdown(f"Phone: **{self.model}**"))
+        display(Markdown(f"Logging Days: **{str(self.start_date)} - {str(self.end_date)}**"))
 
     @property
     def subject_id(self) -> str:
@@ -534,10 +532,7 @@ def get_logs_for_action(
     if log_action not in LogData.log_actions:
         return pd.DataFrame()
 
-    if rows:
-        actions = data[data["action"] == log_action].iloc[rows, :]
-    else:
-        actions = data[data["action"] == log_action]
+    actions = data[data["action"] == log_action].iloc[rows, :] if rows else data[data["action"] == log_action]
     return actions
 
 

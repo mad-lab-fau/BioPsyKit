@@ -1,11 +1,8 @@
 """A set of util functions to detect static regions in a IMU signal given certain constrains."""
-from typing import Optional, Sequence, Tuple, Union
+from typing import Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from numpy.linalg import norm
-from typing_extensions import Literal
-
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import (
     _bool_fill,
@@ -14,6 +11,7 @@ from biopsykit.utils.array_handling import (
     sanitize_sliding_window_input,
     sliding_window_view,
 )
+from numpy.linalg import norm
 
 # supported metric functions
 _METRIC_FUNCTIONS = {
@@ -84,7 +82,7 @@ def _find_static_samples(
         raise ValueError("Invalid signal dimensions, signal must be of shape (n,3).")
 
     if metric not in _METRIC_FUNCTIONS:
-        raise ValueError("Invalid metric passed! {} as metric is not supported.".format(metric))
+        raise ValueError(f"Invalid metric passed! {metric} as metric is not supported.")
 
     # add default overlap value
     if overlap is None:
@@ -281,7 +279,7 @@ def find_first_static_window_multi_sensor(
 
     """
     if metric not in _METRIC_FUNCTIONS:
-        raise ValueError("`metric` must be one of {}".format(list(_METRIC_FUNCTIONS.keys())))
+        raise ValueError(f"`metric` must be one of {list(_METRIC_FUNCTIONS.keys())}")
 
     if not isinstance(signals, np.ndarray):
         # all signals should have the same shape
@@ -293,12 +291,11 @@ def find_first_static_window_multi_sensor(
                 "the sensor axis."
             )
         signals = np.hstack(signals)
-    else:
-        if signals.ndim != 3:
-            raise ValueError(
-                "If a array is used as input, it must be 3D, where the first dimension is the time, "
-                "the second indicates the sensor and the third the axis of the sensor."
-            )
+    elif signals.ndim != 3:
+        raise ValueError(
+            "If a array is used as input, it must be 3D, where the first dimension is the time, "
+            "the second indicates the sensor and the third the axis of the sensor."
+        )
 
     n_signals = signals.shape[1]
 

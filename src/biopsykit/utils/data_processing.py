@@ -4,8 +4,6 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from scipy import interpolate
-
 from biopsykit.utils._datatype_validation_helper import (
     _assert_dataframes_same_length,
     _assert_has_index_levels,
@@ -29,6 +27,7 @@ from biopsykit.utils.datatype_helper import (
     is_subject_data_dict,
 )
 from biopsykit.utils.functions import se
+from scipy import interpolate
 
 
 def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_start: bool) -> Dict[str, pd.DataFrame]:
@@ -107,12 +106,11 @@ def split_data(
 
     if isinstance(time_intervals, pd.Series):
         time_intervals = _split_data_series(data, time_intervals, include_start)
-    else:
-        if include_start:
-            time_intervals["Start"] = (
-                data.index[0].to_pydatetime().time(),
-                list(time_intervals.values())[0][0],
-            )
+    elif include_start:
+        time_intervals["Start"] = (
+            data.index[0].to_pydatetime().time(),
+            list(time_intervals.values())[0][0],
+        )
 
     data_dict = {name: data.between_time(*start_end) for name, start_end in time_intervals.items()}
     data_dict = {name: data for name, data in data_dict.items() if not data.empty}
@@ -161,9 +159,9 @@ def exclude_subjects(
             ):
                 cleaned_data[key] = _exclude_single_subject(data, excluded_subjects, index_name, key)
             else:
-                raise ValueError("{}: dtypes of index and subject ids to be excluded do not match!".format(key))
+                raise ValueError(f"{key}: dtypes of index and subject ids to be excluded do not match!")
         else:
-            raise ValueError("No '{}' level in index!".format(index_name))
+            raise ValueError(f"No '{index_name}' level in index!")
     if len(cleaned_data) == 1:
         cleaned_data = list(cleaned_data.values())[0]
     return cleaned_data
@@ -180,7 +178,7 @@ def _exclude_single_subject(
         # Regular Index
         return data.drop(index=excluded_subjects)
     except KeyError:
-        warnings.warn("Not all subjects of {} exist in '{}'!".format(excluded_subjects, dataset_name))
+        warnings.warn(f"Not all subjects of {excluded_subjects} exist in '{dataset_name}'!")
         return data
 
 
@@ -208,10 +206,7 @@ def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.
     _assert_is_dtype(phase, (str, pd.DataFrame))
     dict_subjects_norm = {}
     for subject_id, data in subject_data_dict.items():
-        if isinstance(phase, str):
-            bl_mean = data[phase].mean()
-        else:
-            bl_mean = phase.mean()
+        bl_mean = data[phase].mean() if isinstance(phase, str) else phase.mean()
         dict_subjects_norm[subject_id] = {p: (df - bl_mean) / bl_mean * 100 for p, df in data.items()}
 
     return dict_subjects_norm
@@ -245,10 +240,7 @@ def resample_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     """
     _assert_is_dtype(data, (pd.DataFrame, pd.Series))
 
-    if isinstance(data, pd.DataFrame):
-        column_name = data.columns
-    else:
-        column_name = [data.name]
+    column_name = data.columns if isinstance(data, pd.DataFrame) else [data.name]
 
     if isinstance(data.index, pd.DatetimeIndex):
         x_old = np.array((data.index - data.index[0]).total_seconds())
@@ -295,7 +287,7 @@ def resample_dict_sec(
         elif isinstance(value, dict):
             result_dict[key] = resample_dict_sec(value)
         else:
-            raise ValueError("Invalid input format!")
+            raise TypeError("Invalid input format!")
     return result_dict
 
 
@@ -326,10 +318,10 @@ def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Union[str, Se
 def rearrange_subject_data_dict(
     subject_data_dict: SubjectDataDict,
 ) -> StudyDataDict:
-    """Rearrange :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` to \
-    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`.
+    """Rearrange ``SubjectDataDict`` to ``StudyDataDict``.
 
-    A ``StudyDataDict`` is constructed from a ``SubjectDataDict`` by swapping outer (subject IDs) and inner
+    A :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` is constructed from a
+    :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` by swapping outer (subject IDs) and inner
     (phase names) dictionary keys.
 
     The **input** needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
@@ -500,8 +492,8 @@ def split_dict_into_subphases(
             for subphase, times in zip(subphases.keys(), subphase_times):
                 if isinstance(value.index, pd.DatetimeIndex):
                     # slice the current subphase by dropping the preceding subphases
-                    value_cpy = value.drop(value.first("{}s".format(times[0])).index)
-                    value_cpy = value_cpy.first("{}s".format(times[1] - times[0]))
+                    value_cpy = value.drop(value.first(f"{times[0]}s").index)
+                    value_cpy = value_cpy.first(f"{times[1] - times[0]}s")
                     subphase_dict[subphase] = value_cpy
                 else:
                     subphase_dict[subphase] = value.iloc[times[0] : times[1]]
@@ -560,7 +552,7 @@ def get_subphase_durations(
         if subphase_durations[-1] == 0:
             # last subphase has duration 0 => end of last subphase is length of dataframe
             times_cum[-1] = len(data)
-        subphase_times = list(zip([0] + list(times_cum), times_cum))
+        subphase_times = list(zip([0, *list(times_cum)], times_cum))
     else:
         # 2d array => subphase values are tuples => start end end time of each subphase are already provided and do
         # not need to be computed
@@ -674,10 +666,7 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
             if len(dict_levels) <= 1:
                 raise ValueError("Invalid number of 'dict_levels' specified!")
             # nested dictionary
-            if isinstance(key, (str, int)):
-                key_len = 1
-            else:
-                key_len = len(key)
+            key_len = 1 if isinstance(key, (str, int)) else len(key)
             result_data[key] = mean_per_subject_dict(value, dict_levels[key_len:], param_name)
         else:
             value.columns.name = "subject"
@@ -686,7 +675,7 @@ def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], para
             df = pd.DataFrame(value.mean(axis=0), columns=[param_name])
             result_data[key] = df
 
-    key_lengths = list(set(1 if isinstance(k, (str, int)) else len(k) for k in result_data))
+    key_lengths = list({1 if isinstance(k, (str, int)) else len(k) for k in result_data})
     if len(key_lengths) != 1:
         raise ValueError("Inconsistent dictionary key lengths!")
     key_lengths = key_lengths[0]

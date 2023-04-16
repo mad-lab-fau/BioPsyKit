@@ -4,7 +4,6 @@ from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.array_handling import sliding_window
@@ -49,10 +48,7 @@ class WearDetection:
         if isinstance(data, (pd.DataFrame, pd.Series)):
             index = data.index
 
-        if isinstance(data, pd.DataFrame):
-            data = data.filter(like="acc")
-        else:
-            data = pd.DataFrame(data)
+        data = data.filter(like="acc") if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
 
         window = 60  # min
         overlap = 15  # min
@@ -114,7 +110,7 @@ class WearDetection:
         start_end = start_end.astype(int)
 
         if isinstance(index, pd.DatetimeIndex):
-            index_resample = pd.DataFrame(index.values[start_end], columns=["start", "end"])
+            index_resample = pd.DataFrame(index.to_numpy()[start_end], columns=["start", "end"])
             index_resample = index_resample.apply(
                 lambda df: pd.to_datetime(df).dt.tz_localize("UTC").dt.tz_convert(index.tzinfo)
             )
@@ -132,15 +128,16 @@ class WearDetection:
                 # get hour lengths of the previous, current, and next blocks
                 dur_prev, dur_curr, dur_post = (len(dur) * 0.25 for dur in [prev, curr, post])
 
-                if dur_curr < 3 and dur_curr / (dur_prev + dur_post) < 0.8:
-                    # if the current block is less than 3 hours and the ratio to previous and post blocks is
+                if (dur_curr < 3 and dur_curr / (dur_prev + dur_post) < 0.8) or (
+                    dur_curr < 6 and dur_curr / (dur_prev + dur_post) < 0.3
+                ):
+                    # a) if the current block is less than 3 hours and the ratio to previous and post blocks is
                     # less than 80% rescore the wear period as non-wear
-                    data.loc[data["block"] == idx_curr, "wear"] = 0
-                elif dur_curr < 6 and dur_curr / (dur_prev + dur_post) < 0.3:
-                    # if the current block is less than 6 hours and the ratio to previous and post blocks is
+                    # b) if the current block is less than 6 hours and the ratio to previous and post blocks is
                     # less than 30% rescore the wear period as non-wear
                     data.loc[data["block"] == idx_curr, "wear"] = 0
-        data.drop(columns=["block"], inplace=True)
+
+        data = data.drop(columns=["block"])
         return data
 
     @staticmethod

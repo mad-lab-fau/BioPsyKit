@@ -1,9 +1,8 @@
 """Utility functions for sleep/wake detection algorithms."""
 
-from typing import Optional
+from typing import Literal, Optional
 
 import numpy as np
-from typing_extensions import Literal
 
 EPOCH_LENGTH = Literal[30, 60]
 
@@ -43,29 +42,28 @@ def _apply_recording_rules_a_c(rescored: np.ndarray, epoch_length: EPOCH_LENGTH)
     for t in range(len(rescored)):  # pylint:disable=consider-using-enumerate
         if rescored[t] == 1:
             wake_bin += 1
+        elif epoch_length == 30:
+            if wake_bin >= 30:
+                # rule c: at least 15 minutes of wake, next 4 minutes of sleep get rescored
+                rescored[t : t + 8] = 0
+            elif 20 <= wake_bin < 30:
+                # rule b: at least 10 minutes of wake, next 3 minutes of sleep get rescored
+                rescored[t : t + 6] = 0
+            elif 8 <= wake_bin < 20:
+                # rule a: at least 4 minutes of wake, next 1 minute of sleep gets rescored
+                rescored[t : t + 2] = 0
+            wake_bin = 0
         else:
-            if epoch_length == 30:
-                if wake_bin >= 30:
-                    # rule c: at least 15 minutes of wake, next 4 minutes of sleep get rescored
-                    rescored[t : t + 8] = 0
-                elif 20 <= wake_bin < 30:
-                    # rule b: at least 10 minutes of wake, next 3 minutes of sleep get rescored
-                    rescored[t : t + 6] = 0
-                elif 8 <= wake_bin < 20:
-                    # rule a: at least 4 minutes of wake, next 1 minute of sleep gets rescored
-                    rescored[t : t + 2] = 0
-                wake_bin = 0
-            else:
-                if wake_bin >= 15:
-                    # rule c: at least 15 minutes of wake, next 4 minutes of sleep get rescored
-                    rescored[t : t + 4] = 0
-                elif 10 <= wake_bin < 15:
-                    # rule b: at least 10 minutes of wake, next 3 minutes of sleep get rescored
-                    rescored[t : t + 3] = 0
-                elif 4 <= wake_bin < 10:
-                    # rule a: at least 4 minutes of wake, next 1 minute of sleep gets rescored
-                    rescored[t : t + 1] = 0
-                wake_bin = 0
+            if wake_bin >= 15:
+                # rule c: at least 15 minutes of wake, next 4 minutes of sleep get rescored
+                rescored[t : t + 4] = 0
+            elif 10 <= wake_bin < 15:
+                # rule b: at least 10 minutes of wake, next 3 minutes of sleep get rescored
+                rescored[t : t + 3] = 0
+            elif 4 <= wake_bin < 10:
+                # rule a: at least 4 minutes of wake, next 1 minute of sleep gets rescored
+                rescored[t : t + 1] = 0
+            wake_bin = 0
 
     return rescored
 

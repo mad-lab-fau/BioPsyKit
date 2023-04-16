@@ -9,7 +9,6 @@ from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.sleep.utils import split_nights
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dir
 from biopsykit.utils._types import path_t
@@ -88,9 +87,9 @@ def load_withings_sleep_analyzer_raw_folder(
 
     _assert_is_dir(folder_path)
 
-    raw_files = list(sorted(folder_path.glob("raw_sleep-monitor_*.csv")))
+    raw_files = sorted(folder_path.glob("raw_sleep-monitor_*.csv"))
     if len(raw_files) == 0:
-        raise ValueError("No sleep analyzer raw files found in {}!".format(folder_path))
+        raise ValueError(f"No sleep analyzer raw files found in {folder_path}!")
     data_sources = [re.findall(r"raw_sleep-monitor_(\S*).csv", s.name)[0] for s in raw_files]
 
     list_data = [
@@ -193,7 +192,6 @@ def load_withings_sleep_analyzer_raw_file(
     # explode data and apply timestamp explosion to groups
     data_explode = data.apply(pd.Series.explode)
     data_explode = data_explode.groupby("time", group_keys=False).apply(_explode_timestamp)
-    data_explode.index = data_explode.index.tz_localize("UTC").tz_convert(timezone)
     # rename the value column
     data_explode.columns = [data_source]
     # convert dtypes from object into numerical values
@@ -273,7 +271,7 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
         lambda date: ((date - pd.Timedelta("1d")) if date.hour < 12 else date).normalize()
     )
 
-    data.rename(
+    data = data.rename(
         {
             "von": "recording_start",
             "bis": "recording_end",
@@ -291,7 +289,6 @@ def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[s
             "Heart rate (max)": "heart_rate_max",
         },
         axis="columns",
-        inplace=True,
     )
 
     data["sleep_onset"] = data["recording_start"] + pd.to_timedelta(data["sleep_onset_latency"], unit="seconds")
@@ -344,16 +341,11 @@ def _explode_timestamp(df: pd.DataFrame) -> pd.DataFrame:
     # dur_sum then looks like this: [0, 60, 120, 180, ...]
     dur_sum = df["duration"].cumsum() - df["duration"].iloc[0]
     # Add these time durations to the index timestamps.
-    # For that, we need to convert the datetime objects from the pandas DatetimeIndex into a float
-    # and add the time onto it (we first need to multiply it with 10^9 because the time in the index
-    # is stored in nanoseconds)
-    index_sum = df.index.values.astype(float) + 1e9 * dur_sum
-    # convert the float values back into a DatetimeIndex
-    df["time"] = pd.to_datetime(index_sum)
+    df["time"] = df.index + pd.to_timedelta(dur_sum, unit="s")
     # set this as index
-    df.set_index("time", inplace=True)
+    df = df.set_index("time")
     # we don't need the duration column anymore so we can drop it
-    df.drop(columns="duration", inplace=True)
+    df = df.drop(columns="duration")
     return df
 
 

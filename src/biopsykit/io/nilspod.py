@@ -3,16 +3,14 @@ import datetime
 import re
 import warnings
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from nilspodlib import Dataset, SyncedSession
-from typing_extensions import Literal
-
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir, _assert_is_dtype
 from biopsykit.utils._types import path_t
 from biopsykit.utils.time import tz
+from nilspodlib import Dataset, SyncedSession
 
 COUNTER_INCONSISTENCY_HANDLING = Literal["raise", "warn", "ignore"]
 """Available behavior types when dealing with NilsPod counter inconsistencies."""
@@ -204,13 +202,13 @@ def load_synced_session_nilspod(
     # ensure pathlib
     folder_path = Path(folder_path)
 
-    nilspod_files = list(sorted(folder_path.glob("*.bin")))
+    nilspod_files = sorted(folder_path.glob("*.bin"))
     if len(nilspod_files) == 0:
         raise ValueError("No NilsPod files found in directory!")
 
     kwargs.setdefault("tz", kwargs.pop("timezone", tz))
     session = SyncedSession.from_folder_path(folder_path, **kwargs)
-    session.align_to_syncregion(inplace=True)
+    session = session.align_to_syncregion()
 
     _handle_counter_inconsistencies_session(session, handle_counter_inconsistency)
     if isinstance(datastreams, str):
@@ -233,7 +231,7 @@ def _handle_counter_inconsistencies_dataset(
     idxs_corrupted = np.where(np.diff(dataset.counter) < 1)[0]
     # edge case: check if only last sample is corrupted. if yes, cut last sample
     if len(idxs_corrupted) == 1 and (idxs_corrupted == len(dataset.counter) - 2):
-        dataset.cut(start=0, stop=idxs_corrupted[0], inplace=True)
+        dataset = dataset.cut(start=0, stop=idxs_corrupted[0])
     elif len(idxs_corrupted) > 1:
         if handle_counter_inconsistency == "raise":
             raise ValueError("Error loading dataset. Counter not monotonously increasing!")
@@ -252,7 +250,7 @@ def _handle_counter_inconsistencies_session(
     idxs_corrupted = np.where(np.diff(session.counter) < 1)[0]
     # edge case: check if only last sample is corrupted. if yes, cut last sample
     if len(idxs_corrupted) == 1 and (idxs_corrupted == len(session.counter) - 2):
-        session.cut(start=0, stop=idxs_corrupted[0], inplace=True)
+        session = session.cut(start=0, stop=idxs_corrupted[0])
     elif len(idxs_corrupted) > 1:
         if handle_counter_inconsistency == "raise":
             raise ValueError("Error loading session. Counter not monotonously increasing!")
@@ -419,7 +417,7 @@ def load_folder_nilspod(
     _assert_is_dir(folder_path)
 
     # look for all NilsPod binary files in the folder
-    dataset_list = list(sorted(folder_path.glob("*.bin")))
+    dataset_list = sorted(folder_path.glob("*.bin"))
     if len(dataset_list) == 0:
         raise ValueError(f"No NilsPod files found in folder {folder_path}!")
     if phase_names is None:
@@ -501,10 +499,7 @@ def get_nilspod_dataset_corrupted_info(dataset: Dataset, file_path: path_t) -> D
     keys = ["name", "percent_corrupt", "condition"]
     dict_res = dict.fromkeys(keys)
     re_groups = re.search(nilspod_file_pattern, file_path.name)
-    if re_groups is not None:
-        name = re_groups.group(1)
-    else:
-        name = file_path.name
+    name = re_groups.group(1) if re_groups is not None else file_path.name
     dict_res["name"] = name
     if not check_nilspod_dataset_corrupted(dataset):
         dict_res["condition"] = "fine"

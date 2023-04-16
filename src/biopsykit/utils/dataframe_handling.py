@@ -4,7 +4,6 @@ from typing import Callable, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_has_index_levels, _assert_is_dtype
 from biopsykit.utils.datatype_helper import CodebookDataFrame, is_codebook_dataframe
 
@@ -217,9 +216,9 @@ def replace_missing_data(
     if not inplace:
         data = data.copy()
 
-    data[target_col].fillna(data[source_col], inplace=True)
+    data[target_col].fillna(data[source_col], inplace=True)  # noqa: PD002
     if dropna:
-        data.dropna(subset=[target_col], inplace=True)
+        data = data.dropna(subset=[target_col])
 
     if inplace:
         return None
@@ -254,7 +253,7 @@ def convert_nan(
 
     if not inplace:
         data = data.copy()
-    data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan, inplace=True)
+    data = data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan)
     if inplace:
         return None
     return data
@@ -388,11 +387,11 @@ def apply_codebook(data: pd.DataFrame, codebook: CodebookDataFrame) -> pd.DataFr
 
     for col in data.index.names:
         if col in codebook.index:
-            data.rename(index=codebook.loc[col], level=col, inplace=True)
+            data = data.rename(index=codebook.loc[col], level=col)
 
     for col in data.columns:
         if col in codebook.index:
-            data.loc[:, col].replace(codebook.loc[col], inplace=True)
+            data.loc[:, col].replace(codebook.loc[col], inplace=True)  # noqa: PD002
 
     return data
 

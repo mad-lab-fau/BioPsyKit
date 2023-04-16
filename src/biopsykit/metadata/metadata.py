@@ -10,7 +10,6 @@ is passed, the required columns can be sliced by specifying them in the ``column
 from typing import Optional, Sequence, Union
 
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import (
     _assert_has_columns,
     _assert_has_index_levels,

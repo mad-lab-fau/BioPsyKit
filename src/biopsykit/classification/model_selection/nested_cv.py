@@ -3,18 +3,17 @@ import warnings
 from typing import Any, Dict, Optional
 
 import numpy as np
+from biopsykit.classification.utils import split_train_test
 from sklearn.metrics import confusion_matrix, get_scorer
 from sklearn.model_selection import BaseCrossValidator, GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
 
-from biopsykit.classification.utils import split_train_test
-
 __all__ = ["nested_cv_param_search"]
 
 
 def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-many-branches
-    X: np.ndarray,  # pylint:disable=invalid-name
+    X: np.ndarray,  # pylint:disable=invalid-name  # noqa: N803
     y: np.ndarray,
     param_dict: Dict[str, Any],
     pipeline: Pipeline,
@@ -135,9 +134,7 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
 
         results_dict["param_search"].append(cv_obj)
         for scorer in scoring_dict:
-            results_dict["test_{}".format(scorer)].append(
-                get_scorer(scorer)._score_func(y_test, cv_obj.predict(x_test))
-            )
+            results_dict[f"test_{scorer}"].append(get_scorer(scorer)._score_func(y_test, cv_obj.predict(x_test)))
         results_dict["train_indices"].append(train)
         results_dict["test_indices"].append(test)
         results_dict["predicted_labels"].append(cv_obj.predict(x_test))
@@ -181,7 +178,7 @@ def _fit_cv_obj_one_fold(cv_obj, x_train, y_train, groups_train):
             ) from e
         if "An empty dict was passed." in e.args[0]:
             raise ValueError("No scoring metric was specified for the estimator!") from e
-        raise e
+        raise ValueError from e
     return cv_obj
 
 

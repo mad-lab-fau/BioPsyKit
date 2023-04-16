@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Dict, Union
 
 import pandas as pd
-
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t
 from biopsykit.utils.datatype_helper import is_sleep_endpoint_dataframe, is_sleep_endpoint_dict

@@ -1,7 +1,6 @@
 """Sleep/Wake detection using the *Cole/Kripke Algorithm*."""
 import numpy as np
 import pandas as pd
-
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
 from biopsykit.utils._types import arr_t
@@ -30,7 +29,7 @@ class ColeKripkeOld(_SleepWakeBase):
         References
         ----------
         Cole, R. J., Kripke, D. F., Gruen, W., Mullaney, D. J., & Gillin, J. C. (1992). Automatic Sleep/Wake
-        Identification From Wrist Activity. *Sleep*, 15(5), 461–469. https://doi.org/10.1093/sleep/15.5.461
+        Identification From Wrist Activity. *Sleep*, 15(5), 461-469. https://doi.org/10.1093/sleep/15.5.461
 
         """
         self.scale_factor: float = kwargs.pop("scale_factor", None)
@@ -44,7 +43,7 @@ class ColeKripkeOld(_SleepWakeBase):
             self.scale_factor = 0.193125
         super().__init__(**kwargs)
 
-    def fit(self, data: arr_t, **kwargs) -> arr_t:
+    def fit(self, data: arr_t, **kwargs) -> arr_t:  # noqa: ARG002
         """Fit sleep/wake detection algorithm to input data.
 
         .. note::
@@ -59,7 +58,7 @@ class ColeKripkeOld(_SleepWakeBase):
         """
         return
 
-    def predict(self, data: arr_t, **kwargs) -> SleepWakeDataFrame:
+    def predict(self, data: arr_t, **kwargs) -> SleepWakeDataFrame:  # noqa: ARG002
         """Apply sleep/wake prediction on activity index values.
 
         Parameters

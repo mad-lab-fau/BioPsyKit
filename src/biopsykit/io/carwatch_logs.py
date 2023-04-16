@@ -7,11 +7,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Optional, Sequence, Union
 
 import pandas as pd
-from tqdm.auto import tqdm
-
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t
 from biopsykit.utils.time import tz, utc
+from tqdm.auto import tqdm
 
 if TYPE_CHECKING:
     from biopsykit.carwatch_logs import LogData
@@ -64,12 +63,12 @@ def load_logs_all_subjects(
         dict_log_files = _load_log_file_folder(folder_list)
     else:
         # first, look for available csv files
-        file_list = list(sorted(base_folder.glob("*.csv")))
+        file_list = sorted(base_folder.glob("*.csv"))
         if len(file_list) > 0:
             dict_log_files = _load_log_file_list_csv(file_list, log_filename_pattern)
         else:
             # fallback: look for zip files
-            file_list = list(sorted(base_folder.glob("*.zip")))
+            file_list = sorted(base_folder.glob("*.zip"))
             dict_log_files = _load_log_file_zip(file_list, log_filename_pattern)
 
     if return_df:
@@ -94,7 +93,7 @@ def _load_log_file_list_csv(file_list: Sequence[Path], log_filename_pattern: str
         subject_id = re.search(log_filename_pattern, file.name).group(1)
         df = pd.read_csv(file, sep=";")
         df["time"] = pd.to_datetime(df["time"])
-        df.set_index("time", inplace=True)
+        df = df.set_index("time")
         dict_log_files[subject_id] = df
     return dict_log_files
 
@@ -177,7 +176,7 @@ def log_folder_to_dataframe(folder_path: path_t) -> pd.DataFrame:
         dataframe with log data for one subject
 
     """
-    file_list = list(sorted(folder_path.glob("*.csv")))
+    file_list = sorted(folder_path.glob("*.csv"))
     return pd.concat([_load_log_file_csv(file) for file in file_list])
 
 
@@ -241,12 +240,11 @@ def save_log_data(
     if subject_id is None:
         subject_id = log_data.subject_id
 
-    export_path = path.joinpath("logs_{}.csv".format(subject_id))
+    export_path = path.joinpath(f"logs_{subject_id}.csv")
     if not export_path.exists() or overwrite:
         log_data.data.to_csv(export_path, sep=";")
-    else:
-        if show_skipped:
-            print("Skipping subject {}. Already exported.".format(subject_id))
+    elif show_skipped:
+        print(f"Skipping subject {subject_id}. Already exported.")
 
 
 def _parse_date(row: pd.Series) -> pd.Series:
