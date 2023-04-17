@@ -111,7 +111,7 @@ def lineplot(
 
     marker, linestyle = _get_styles(data, style, hue, marker, linestyle)
 
-    grouped = dict(data.groupby(hue)) if hue is not None else {y: data}
+    grouped = dict(tuple(data.groupby(hue))) if hue is not None else {y: data}
 
     if hue_order is not None:
         # reorder group dictionary

@@ -159,6 +159,6 @@ def endpoints_as_df(sleep_endpoints: SleepEndpointDict) -> Optional[SleepEndpoin
     df = df.fillna(value=np.nan)
     df["sleep_bouts"] = None
     df["wake_bouts"] = None
-    df.loc[df.index[0], "sleep_bouts"] = sleep_bouts
-    df.loc[df.index[0], "wake_bouts"] = wake_bouts
+    df.at[df.index[0], "sleep_bouts"] = sleep_bouts  # noqa: PD008
+    df.at[df.index[0], "wake_bouts"] = wake_bouts  # noqa: PD008
     return _SleepEndpointDataFrame(df)

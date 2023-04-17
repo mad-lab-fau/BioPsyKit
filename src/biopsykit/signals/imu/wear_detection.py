@@ -111,9 +111,6 @@ class WearDetection:
 
         if isinstance(index, pd.DatetimeIndex):
             index_resample = pd.DataFrame(index.to_numpy()[start_end], columns=["start", "end"])
-            index_resample = index_resample.apply(
-                lambda df: pd.to_datetime(df).dt.tz_localize("UTC").dt.tz_convert(index.tzinfo)
-            )
         return index_resample
 
     @staticmethod

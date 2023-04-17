@@ -465,7 +465,7 @@ def hr_mean_plot(  # pylint:disable=too-many-branches
     x_lims = x_lims - 0.5 * np.ediff1d(x_lims, to_end=dist)
 
     if "condition" in data.index.names:
-        data_grp = dict(data.groupby("condition"))  # pylint:disable=unnecessary-comprehension
+        data_grp = dict(tuple(data.groupby("condition")))
         order = kwargs.get("order", list(data_grp.keys()))
         data_grp = {key: data_grp[key] for key in order}
 
