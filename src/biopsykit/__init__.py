@@ -1,5 +1,7 @@
 """A Python package for the analysis of biopsychological data."""
 
+from biopsykit import example_data
+
 __all__ = [
     "classification",
     "example_data",
