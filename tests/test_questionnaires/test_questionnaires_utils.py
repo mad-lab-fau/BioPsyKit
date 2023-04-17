@@ -1,15 +1,11 @@
 from contextlib import contextmanager
 from itertools import product
 from pathlib import Path
-from typing import Optional
 from unittest import TestCase
 
 import numpy as np
 import pandas as pd
 import pytest
-from numpy.testing import assert_array_equal
-from pandas._testing import assert_frame_equal, assert_series_equal
-
 from biopsykit.questionnaires.utils import (
     bin_scale,
     compute_scores,
@@ -23,6 +19,8 @@ from biopsykit.questionnaires.utils import (
     zero_pad_columns,
 )
 from biopsykit.utils.exceptions import ValidationError, ValueRangeError
+from numpy.testing import assert_array_equal
+from pandas._testing import assert_frame_equal, assert_series_equal
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/questionnaires")
 
@@ -58,7 +56,7 @@ def data_compute_scores() -> pd.DataFrame:
 
 class TestQuestionnairesUtils:
     @pytest.mark.parametrize(
-        "data, expected",
+        ("data", "expected"),
         [(pd.Series(dtype="float64"), pytest.raises(ValidationError)), (pd.DataFrame(), does_not_raise())],
     )
     def test_find_cols_raise(self, data, expected):
@@ -66,7 +64,7 @@ class TestQuestionnairesUtils:
             find_cols(data)
 
     @pytest.mark.parametrize(
-        "data, regex_str, starts_with, ends_with, contains, zero_pad_numbers, expected",
+        ("data", "regex_str", "starts_with", "ends_with", "contains", "zero_pad_numbers", "expected"),
         [
             (
                 data_complete_correct(),
@@ -75,7 +73,7 @@ class TestQuestionnairesUtils:
                 None,
                 None,
                 False,
-                ["ADSL_{}".format(i) for i in range(1, 21)],
+                [f"ADSL_{i}" for i in range(1, 21)],
             ),
             (
                 data_complete_correct(),
@@ -84,7 +82,7 @@ class TestQuestionnairesUtils:
                 None,
                 None,
                 True,
-                ["ADSL_{:02d}".format(i) for i in range(1, 21)],
+                [f"ADSL_{i:02d}" for i in range(1, 21)],
             ),
             (
                 data_complete_correct(),
@@ -93,7 +91,7 @@ class TestQuestionnairesUtils:
                 None,
                 None,
                 True,
-                ["ADSL_{:02d}".format(i) for i in range(1, 21)],
+                [f"ADSL_{i:02d}" for i in range(1, 21)],
             ),
             (
                 data_complete_correct(),
@@ -102,7 +100,7 @@ class TestQuestionnairesUtils:
                 None,
                 None,
                 True,
-                ["FEE_{}_{}".format(i, j) for i, j in product(range(1, 25), ["Mutter", "Vater"])],
+                [f"FEE_{i}_{j}" for i, j in product(range(1, 25), ["Mutter", "Vater"])],
             ),
             (
                 data_complete_correct(),
@@ -111,7 +109,7 @@ class TestQuestionnairesUtils:
                 "Vater",
                 None,
                 True,
-                ["FEE_{}_Vater".format(i) for i in range(1, 25)],
+                [f"FEE_{i}_Vater" for i in range(1, 25)],
             ),
             (
                 data_complete_correct(),
@@ -120,7 +118,7 @@ class TestQuestionnairesUtils:
                 None,
                 None,
                 True,
-                ["FEE_{}_Mutter".format(i) for i in range(1, 25)],
+                [f"FEE_{i}_Mutter" for i in range(1, 25)],
             ),
             (
                 data_complete_correct(),
@@ -129,7 +127,7 @@ class TestQuestionnairesUtils:
                 "Vater",
                 None,
                 True,
-                ["FEE_{}_Mutter".format(i) for i in range(1, 25)],
+                [f"FEE_{i}_Mutter" for i in range(1, 25)],
             ),
             (
                 data_complete_correct(),
@@ -147,7 +145,7 @@ class TestQuestionnairesUtils:
                 None,
                 "COPE",
                 True,
-                ["Brief_COPE_{:02d}".format(i) for i in range(1, 29)],
+                [f"Brief_COPE_{i:02d}" for i in range(1, 29)],
             ),
             (
                 data_complete_correct(),
@@ -156,7 +154,7 @@ class TestQuestionnairesUtils:
                 None,
                 "COPE",
                 False,
-                ["Brief_COPE_{}".format(i) for i in range(1, 29)],
+                [f"Brief_COPE_{i}" for i in range(1, 29)],
             ),
         ],
     )
@@ -174,7 +172,7 @@ class TestQuestionnairesUtils:
         TestCase().assertListEqual(list(data_out.columns), expected)
 
     @pytest.mark.parametrize(
-        "data, inplace, expected_in, expected_out",
+        ("data", "inplace", "expected_in", "expected_out"),
         [
             (
                 pd.DataFrame(columns=["ABC_1", "ABC_2", "ABC_3"]),
@@ -198,7 +196,7 @@ class TestQuestionnairesUtils:
             assert_frame_equal(out, expected_out)
 
     @pytest.mark.parametrize(
-        "col_idxs, expected",
+        ("col_idxs", "expected"),
         [
             ([1, 2, 3, 4], np.array([0, 1, 2, 3])),
             (np.array([1, 2, 3, 4]), np.array([0, 1, 2, 3])),
@@ -209,7 +207,7 @@ class TestQuestionnairesUtils:
         assert_array_equal(out, expected)
 
     @pytest.mark.parametrize(
-        "data, score_range, cols, expected",
+        ("data", "score_range", "cols", "expected"),
         [
             (np.array([[1, 2], [3, 4], [5, 6]]), [1, 0], None, pytest.raises(ValidationError)),
             (pd.DataFrame({"A": [1, 2], "B": [2, 3], "C": [1, 3]}), [1, 2, 3], None, pytest.raises(ValidationError)),
@@ -233,7 +231,7 @@ class TestQuestionnairesUtils:
             invert(data=data, score_range=score_range, cols=cols)
 
     @pytest.mark.parametrize(
-        "data, score_range, cols, inplace, expected_in, expected_out",
+        ("data", "score_range", "cols", "inplace", "expected_in", "expected_out"),
         [
             (
                 pd.DataFrame({"A": [1, 2], "B": [2, 3], "C": [1, 3]}),
@@ -325,7 +323,7 @@ class TestQuestionnairesUtils:
             assert_frame_equal(out, expected_out)
 
     @pytest.mark.parametrize(
-        "data, score_range, cols, inplace, expected_in, expected_out",
+        ("data", "score_range", "cols", "inplace", "expected_in", "expected_out"),
         [
             (
                 pd.Series([1, 2, 3, 2, 2, 1]),
@@ -361,7 +359,7 @@ class TestQuestionnairesUtils:
             assert_series_equal(out, expected_out)
 
     @pytest.mark.parametrize(
-        "data, offset, cols, inplace, expected_in, expected_out",
+        ("data", "offset", "cols", "inplace", "expected_in", "expected_out"),
         [
             (
                 pd.DataFrame({"A": [1, 2], "B": [2, 3], "C": [1, 3]}),
@@ -429,7 +427,7 @@ class TestQuestionnairesUtils:
             assert_frame_equal(out, expected_out)
 
     @pytest.mark.parametrize(
-        "data, offset, cols, inplace, expected_in, expected_out",
+        ("data", "offset", "cols", "inplace", "expected_in", "expected_out"),
         [
             (
                 pd.Series([1, 2, 3, 2, 1, 3]),
@@ -465,7 +463,7 @@ class TestQuestionnairesUtils:
             assert_series_equal(out, expected_out)
 
     @pytest.mark.parametrize(
-        "data, score_range, set_nan, expected",
+        ("data", "score_range", "set_nan", "expected"),
         [
             (np.array([[1, 2], [3, 4], [5, 6]]), [1, 0], None, pytest.raises(ValidationError)),
             (pd.DataFrame({"A": [1, 2], "B": [2, 3], "C": [1, 3]}), [1, 2, 3], False, pytest.raises(ValidationError)),
@@ -477,7 +475,7 @@ class TestQuestionnairesUtils:
             crop_scale(data=data, score_range=score_range, set_nan=set_nan)
 
     @pytest.mark.parametrize(
-        "data, score_range, set_nan, inplace, expected_in, expected_out",
+        ("data", "score_range", "set_nan", "inplace", "expected_in", "expected_out"),
         [
             (
                 pd.DataFrame({"A": [-1, 4, 8], "B": [2, 3, 7], "C": [1, 3, 6]}),
@@ -521,7 +519,7 @@ class TestQuestionnairesUtils:
             assert_frame_equal(out, expected_out)
 
     @pytest.mark.parametrize(
-        "data, score_range, set_nan, inplace, expected_in, expected_out",
+        ("data", "score_range", "set_nan", "inplace", "expected_in", "expected_out"),
         [
             (
                 pd.Series([-1, 4, 8, 2, 3, 7, 1, 3, 6]),
@@ -565,7 +563,7 @@ class TestQuestionnairesUtils:
             assert_series_equal(out, expected_out)
 
     @pytest.mark.parametrize(
-        "data, bins, cols, first_min, last_max, inplace, expected_in, expected_out",
+        ("data", "bins", "cols", "first_min", "last_max", "inplace", "expected_in", "expected_out"),
         [
             (
                 pd.DataFrame(
@@ -989,7 +987,7 @@ class TestQuestionnairesUtils:
             assert_frame_equal(out, expected_out)
 
     @pytest.mark.parametrize(
-        "data, bins, cols, first_min, last_max, inplace, expected_in, expected_out",
+        ("data", "bins", "cols", "first_min", "last_max", "inplace", "expected_in", "expected_out"),
         [
             (
                 pd.Series([1, 10, 14, 90, 24, 16, 73, 97]),
@@ -1061,66 +1059,66 @@ class TestQuestionnairesUtils:
 
     def test_get_supported_questionnaires(self):
         quests = get_supported_questionnaires()
-        assert all(isinstance(s, str) for s in quests.keys())
+        assert all(isinstance(s, str) for s in quests)
         assert all(isinstance(s, str) for s in quests.values())
 
     @pytest.mark.parametrize(
-        "data, quest_dict, quest_kwargs, expected",
+        ("data", "quest_dict", "quest_kwargs", "expected"),
         [
             (
                 data_complete_correct(),
-                {"abc": ["ADSL_{}".format(i) for i in range(1, 21)]},
+                {"abc": [f"ADSL_{i}" for i in range(1, 21)]},
                 None,
                 pytest.raises(ValueError),
             ),
             (
                 data_complete_correct(),
-                {"ads_l": ["ADSL_{}".format(i) for i in range(1, 21)]},
+                {"ads_l": [f"ADSL_{i}" for i in range(1, 21)]},
                 {"ads_l": {"subscales": []}},
                 pytest.raises(TypeError),
             ),
-            (data_complete_correct(), {"ads_l": ["ADSL_{}".format(i) for i in range(1, 21)]}, None, does_not_raise()),
+            (data_complete_correct(), {"ads_l": [f"ADSL_{i}" for i in range(1, 21)]}, None, does_not_raise()),
             (
                 data_complete_correct(),
-                {"panas": ["PANAS_{}".format(i) for i in range(1, 21)]},
+                {"panas": [f"PANAS_{i}" for i in range(1, 21)]},
                 {"panas": {"subscales": []}},
                 pytest.raises(TypeError),
             ),
             (
                 data_complete_correct(),
-                {"panas": ["PANAS_{}".format(i) for i in range(1, 21)]},
+                {"panas": [f"PANAS_{i}" for i in range(1, 21)]},
                 {"panas": {"language": "english"}},
                 does_not_raise(),
             ),
             (
                 data_complete_correct(),
-                {"FEE": ["FEE_{}_{}".format(i, j) for i, j in product(range(1, 25), ["Vater", "Mutter"])]},
+                {"FEE": [f"FEE_{i}_{j}" for i, j in product(range(1, 25), ["Vater", "Mutter"])]},
                 {"FEE": {"language": "german"}},
                 does_not_raise(),
             ),
             (
                 data_complete_correct(),
-                {"fee": ["FEE_{}_{}".format(i, j) for i, j in product(range(1, 25), ["Vater", "Mutter"])]},
+                {"fee": [f"FEE_{i}_{j}" for i, j in product(range(1, 25), ["Vater", "Mutter"])]},
                 {"fee": {"language": "german"}},
                 does_not_raise(),
             ),
             (
                 data_complete_correct(),
-                {"FEE": ["FEE_{}_{}".format(i, j) for i, j in product(range(1, 25), ["Vater", "Mutter"])]},
+                {"FEE": [f"FEE_{i}_{j}" for i, j in product(range(1, 25), ["Vater", "Mutter"])]},
                 {"fee": {"language": "german"}},
                 pytest.raises(ValidationError),
             ),
             (
                 data_complete_correct(),
-                {"svf_120": ["SVF120_{}".format(i) for i in range(1, 121)]},
+                {"svf_120": [f"SVF120_{i}" for i in range(1, 121)]},
                 {"svf_120": {"subscales": {"Bag": [10, 31, 50, 67, 88, 106]}}},
                 does_not_raise(),
             ),
             (
                 data_pre_post(),
                 {
-                    "panas-pre": ["PANAS_{}_Pre".format(i) for i in range(1, 21)],
-                    "panas-post": ["PANAS_{}_Post".format(i) for i in range(1, 21)],
+                    "panas-pre": [f"PANAS_{i}_Pre" for i in range(1, 21)],
+                    "panas-post": [f"PANAS_{i}_Post" for i in range(1, 21)],
                 },
                 None,
                 does_not_raise(),
@@ -1132,16 +1130,16 @@ class TestQuestionnairesUtils:
             compute_scores(data=data, quest_dict=quest_dict, quest_kwargs=quest_kwargs)
 
     @pytest.mark.parametrize(
-        "data, quest_dict, quest_kwargs, expected",
+        ("data", "quest_dict", "quest_kwargs", "expected"),
         [
             (
                 data_compute_scores(),
                 {
-                    "pss": ["PSS_{}".format(i) for i in range(1, 11)],
-                    "fee": ["FEE_{}_{}".format(i, j) for i, j in product(range(1, 25), ["Vater", "Mutter"])],
-                    "panas-pre": ["PANAS_{}_Pre".format(i) for i in range(1, 21)],
-                    "panas-post": ["PANAS_{}_Post".format(i) for i in range(1, 21)],
-                    "svf_120": ["SVF120_{}".format(i) for i in range(1, 121)],
+                    "pss": [f"PSS_{i}" for i in range(1, 11)],
+                    "fee": [f"FEE_{i}_{j}" for i, j in product(range(1, 25), ["Vater", "Mutter"])],
+                    "panas-pre": [f"PANAS_{i}_Pre" for i in range(1, 21)],
+                    "panas-post": [f"PANAS_{i}_Post" for i in range(1, 21)],
+                    "svf_120": [f"SVF120_{i}" for i in range(1, 121)],
                 },
                 {"fee": {"language": "german"}, "svf_120": {"subscales": {"Bag": [10, 31, 50, 67, 88, 106]}}},
                 data_results_compute_scores(),

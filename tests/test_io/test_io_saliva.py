@@ -4,10 +4,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-from pandas._testing import assert_frame_equal, assert_index_equal
-
 from biopsykit.io.saliva import load_saliva_plate, load_saliva_wide_format, save_saliva
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
+from pandas._testing import assert_frame_equal, assert_index_equal
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")
 
@@ -237,8 +236,17 @@ def saliva_data_samples_time_condition():
 
 class TestIoSaliva:
     @pytest.mark.parametrize(
-        "file_path, saliva_type, sample_id_col, data_col, id_col_names, regex_str, "
-        "sample_times, condition_list, expected",
+        (
+            "file_path",
+            "saliva_type",
+            "sample_id_col",
+            "data_col",
+            "id_col_names",
+            "regex_str",
+            "sample_times",
+            "condition_list",
+            "expected",
+        ),
         [
             ("cortisol_plate_samples.xlsx", "cortisol", None, None, None, None, None, None, does_not_raise()),
             ("cortisol_plate_samples.xlsx", "cortisol", "sample ID", None, None, None, None, None, does_not_raise()),
@@ -424,7 +432,7 @@ class TestIoSaliva:
             )
 
     @pytest.mark.parametrize(
-        "file_path, id_col_names, regex_str, expected",
+        ("file_path", "id_col_names", "regex_str", "expected"),
         [
             (
                 "cortisol_plate_samples.xlsx",
@@ -483,7 +491,7 @@ class TestIoSaliva:
         assert_index_equal(data_out.index, expected)
 
     @pytest.mark.parametrize(
-        "file_path, id_col_names, sample_times, condition_list, regex_str, expected",
+        ("file_path", "id_col_names", "sample_times", "condition_list", "regex_str", "expected"),
         [
             ("cortisol_plate_samples.xlsx", None, None, None, r"(Vp\d+) (S\d)", saliva_data_samples()),
             ("cortisol_plate_samples.xlsx", None, [0, 10, 20, 30], None, r"(Vp\d+) (S\d)", saliva_data_samples_time()),
@@ -536,7 +544,7 @@ class TestIoSaliva:
         assert_frame_equal(data_out, expected)
 
     @pytest.mark.parametrize(
-        "file_path, expected",
+        ("file_path", "expected"),
         [
             ("cortisol_plate_samples_empty.xlsx", pytest.raises(ValueError)),
         ],
@@ -549,7 +557,7 @@ class TestIoSaliva:
             )
 
     @pytest.mark.parametrize(
-        "input_data, saliva_type, file_path, expected",
+        ("input_data", "saliva_type", "file_path", "expected"),
         [
             (saliva_data_samples(), "cortisol", "test_saliva.csv", does_not_raise()),
             (saliva_data_samples(), "cortisol", "test_saliva.xlsx", does_not_raise()),
@@ -568,7 +576,7 @@ class TestIoSaliva:
             save_saliva(tmp_path.joinpath(file_path), input_data, saliva_type=saliva_type)
 
     @pytest.mark.parametrize(
-        "file_path, subject_col, condition_col, additional_index_cols, sample_times, expected",
+        ("file_path", "subject_col", "condition_col", "additional_index_cols", "sample_times", "expected"),
         [
             ("cortisol_wide_samples.xlsx", None, None, None, None, does_not_raise()),
             ("cortisol_wide_samples.csv", None, None, None, None, does_not_raise()),
@@ -635,7 +643,7 @@ class TestIoSaliva:
             )
 
     @pytest.mark.parametrize(
-        "file_path, subject_col, condition_col, sample_times, additional_index_cols, expected",
+        ("file_path", "subject_col", "condition_col", "sample_times", "additional_index_cols", "expected"),
         [
             ("cortisol_wide_samples.xlsx", None, None, None, None, saliva_data_samples()),
             ("cortisol_wide_samples.csv", None, None, None, None, saliva_data_samples()),

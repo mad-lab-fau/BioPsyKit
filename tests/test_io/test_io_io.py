@@ -4,10 +4,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-from nilspodlib import Dataset
-from pandas._testing import assert_frame_equal, assert_index_equal
-from pytz import UnknownTimeZoneError
-
 from biopsykit.io import (
     convert_time_log_datetime,
     load_questionnaire_data,
@@ -16,6 +12,9 @@ from biopsykit.io import (
 )
 from biopsykit.io.io import load_time_log
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
+from nilspodlib import Dataset
+from pandas._testing import assert_frame_equal, assert_index_equal
+from pytz import UnknownTimeZoneError
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")
 
@@ -143,7 +142,15 @@ def result_dict_correct():
 
 class TestIoIo:
     @pytest.mark.parametrize(
-        "file_path, continuous_time, subject_col, condition_col, additional_index_cols, phase_cols, expected",
+        (
+            "file_path",
+            "continuous_time",
+            "subject_col",
+            "condition_col",
+            "additional_index_cols",
+            "phase_cols",
+            "expected",
+        ),
         [
             ("time_log.csv", True, None, None, None, None, does_not_raise()),
             ("time_log.xlsx", True, None, None, None, None, does_not_raise()),
@@ -210,7 +217,15 @@ class TestIoIo:
             )
 
     @pytest.mark.parametrize(
-        "file_path, subject_col, condition_col, additional_index_cols, phase_cols, continuous_time, expected",
+        (
+            "file_path",
+            "subject_col",
+            "condition_col",
+            "additional_index_cols",
+            "phase_cols",
+            "continuous_time",
+            "expected",
+        ),
         [
             ("time_log.csv", None, None, None, None, True, time_log_correct()),
             ("time_log.csv", "subject", "condition", None, None, True, time_log_correct()),
@@ -273,7 +288,7 @@ class TestIoIo:
         assert_index_equal(expected.columns, data_out.columns)
 
     @pytest.mark.parametrize(
-        "file_path, continuous_time, expected",
+        ("file_path", "continuous_time", "expected"),
         [
             ("time_log.csv", True, time_log_correct()),
             ("time_log.xlsx", True, time_log_correct()),
@@ -290,7 +305,7 @@ class TestIoIo:
         assert_frame_equal(data_out, expected)
 
     @pytest.mark.parametrize(
-        "file_path, subject_col, condition_col, expected",
+        ("file_path", "subject_col", "condition_col", "expected"),
         [
             ("condition_list.csv", None, None, does_not_raise()),
             ("condition_list.csv", "subject", "condition", does_not_raise()),
@@ -309,7 +324,7 @@ class TestIoIo:
             )
 
     @pytest.mark.parametrize(
-        "file_path, return_dict, expected",
+        ("file_path", "return_dict", "expected"),
         [
             ("condition_list.xlsx", False, subject_condition_list_correct()),
             ("condition_list.csv", False, subject_condition_list_correct()),
@@ -327,7 +342,7 @@ class TestIoIo:
                 assert np.array_equal(data_out[k1], expected[k2])
 
     @pytest.mark.parametrize(
-        "file_path, subject_col, condition_col, expected",
+        ("file_path", "subject_col", "condition_col", "expected"),
         [
             ("condition_list_other_column_names.csv", "ID", "Group", subject_condition_list_correct()),
         ],
@@ -339,7 +354,7 @@ class TestIoIo:
         assert_frame_equal(data_out, expected)
 
     @pytest.mark.parametrize(
-        "file_path, subject_col, condition_col, additional_index_cols, expected",
+        ("file_path", "subject_col", "condition_col", "additional_index_cols", "expected"),
         [
             ("questionnaire_data.xlsx", None, None, None, does_not_raise()),
             ("questionnaire_data.csv", None, None, None, does_not_raise()),
@@ -366,7 +381,7 @@ class TestIoIo:
             )
 
     @pytest.mark.parametrize(
-        "file_path, replace_missing_vals, remove_nan_rows, expected",
+        ("file_path", "replace_missing_vals", "remove_nan_rows", "expected"),
         [
             ("questionnaire_data.csv", False, False, questionnaire_data_no_remove()),
             ("questionnaire_data.csv", True, False, questionnaire_data_replace_missing()),
@@ -391,7 +406,7 @@ class TestIoIo:
         assert_frame_equal(data_out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
-        "time_log, dataset, df, date, timezone, expected",
+        ("time_log", "dataset", "df", "date", "timezone", "expected"),
         [
             (time_log_correct(), None, None, None, None, pytest.raises(ValueError)),
             (
@@ -423,7 +438,7 @@ class TestIoIo:
             convert_time_log_datetime(time_log=time_log, dataset=dataset, df=df, date=date, timezone=timezone)
 
     @pytest.mark.parametrize(
-        "data, filename, expected",
+        ("data", "filename", "expected"),
         [
             (result_dict_correct(), "test.csv", does_not_raise()),
             (result_dict_correct(), "test.xlsx", does_not_raise()),

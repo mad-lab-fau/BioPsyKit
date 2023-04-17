@@ -2,10 +2,9 @@ from contextlib import contextmanager
 
 import pandas as pd
 import pytest
-from pandas._testing import assert_frame_equal
-
 from biopsykit.metadata import bmi, whr
 from biopsykit.utils.exceptions import ValueRangeError
+from pandas._testing import assert_frame_equal
 
 
 @contextmanager
@@ -70,7 +69,7 @@ def whr_correct_solution():
 
 class TestMetadata:
     @pytest.mark.parametrize(
-        "input_data, expected",
+        ("input_data", "expected"),
         [(bmi_correct(), does_not_raise()), (bmi_wrong_order(), pytest.raises(ValueRangeError))],
     )
     def test_bmi_raises(self, input_data, expected):
@@ -78,7 +77,7 @@ class TestMetadata:
             bmi(input_data)
 
     @pytest.mark.parametrize(
-        "input_data, columns, expected",
+        ("input_data", "columns", "expected"),
         [(bmi_correct(), None, bmi_correct_solution()), (bmi_correct(), ["weight", "height"], bmi_correct_solution())],
     )
     def test_bmi(self, input_data, columns, expected):
@@ -86,7 +85,7 @@ class TestMetadata:
         assert_frame_equal(data_out, expected)
 
     @pytest.mark.parametrize(
-        "input_data, expected",
+        ("input_data", "expected"),
         [(whr_correct(), does_not_raise()), (whr_wrong_values(), pytest.raises(ValueRangeError))],
     )
     def test_whr_raises(self, input_data, expected):
@@ -94,7 +93,7 @@ class TestMetadata:
             whr(input_data)
 
     @pytest.mark.parametrize(
-        "input_data, columns, expected",
+        ("input_data", "columns", "expected"),
         [(whr_correct(), None, whr_correct_solution()), (data_complete(), ["waist", "hip"], whr_correct_solution())],
     )
     def test_whr(self, input_data, columns, expected):

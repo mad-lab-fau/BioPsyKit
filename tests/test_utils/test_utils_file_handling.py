@@ -2,7 +2,6 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
-
 from biopsykit.utils.exceptions import FileExtensionError
 from biopsykit.utils.file_handling import get_subject_dirs, is_excel_file, mkdirs
 
@@ -32,10 +31,10 @@ class TestUtilsFileHandling:
             assert dir_list in ac_dir_list
         else:
             # list of directories
-            assert all([p in ac_dir_list for p in dir_list])
+            assert all(p in ac_dir_list for p in dir_list)
 
     @pytest.mark.parametrize(
-        "base_path, pattern, expected",
+        ("base_path", "pattern", "expected"),
         [
             (TEST_FILE_PATH, "Vp*", does_not_raise()),
             (TEST_FILE_PATH.joinpath("dir"), "Vp*", pytest.raises(FileNotFoundError)),
@@ -45,13 +44,13 @@ class TestUtilsFileHandling:
         with expected:
             get_subject_dirs(base_path, pattern)
 
-    @pytest.mark.parametrize("base_path, pattern, expected", [(TEST_FILE_PATH, "Vp*", ["Vp03", "Vp04", "Vp05"])])
+    @pytest.mark.parametrize(("base_path", "pattern", "expected"), [(TEST_FILE_PATH, "Vp*", ["Vp03", "Vp04", "Vp05"])])
     def test_get_subject_dirs(self, base_path, pattern, expected):
         subject_dirs = get_subject_dirs(base_path, pattern)
-        assert all([TEST_FILE_PATH.joinpath(p) in subject_dirs for p in expected])
+        assert all(TEST_FILE_PATH.joinpath(p) in subject_dirs for p in expected)
 
     @pytest.mark.parametrize(
-        "file_name, expected",
+        ("file_name", "expected"),
         [
             ("test.xlsx", does_not_raise()),
             ("test.xls", does_not_raise()),
@@ -64,7 +63,7 @@ class TestUtilsFileHandling:
             is_excel_file(file_name)
 
     @pytest.mark.parametrize(
-        "file_name, expected",
+        ("file_name", "expected"),
         [
             ("test.xlsx", True),
             ("test.xls", True),

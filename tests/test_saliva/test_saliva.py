@@ -5,10 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import scipy.stats as ss
-from pandas.testing import assert_frame_equal
-
-import biopsykit.saliva as saliva
+from biopsykit import saliva
 from biopsykit.utils.exceptions import DataFrameTransformationError, ValidationError
+from pandas.testing import assert_frame_equal
 
 
 @contextmanager
@@ -150,9 +149,7 @@ def saliva_time_individual(saliva_type: Optional[str] = "cortisol"):
 
 def saliva_idx(saliva_type: Optional[str] = "cortisol"):
     data = pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(1, 9), ["S{}".format(i) for i in range(1, 6)]], names=["subject", "sample"]
-        ),
+        index=pd.MultiIndex.from_product([range(1, 9), [f"S{i}" for i in range(1, 6)]], names=["subject", "sample"]),
         columns=[saliva_type, "time"],
     )
     data[saliva_type] = np.concatenate(
@@ -173,9 +170,7 @@ def saliva_idx(saliva_type: Optional[str] = "cortisol"):
 
 def saliva_idx_multi_types():
     data = pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [range(1, 9), ["S{}".format(i) for i in range(1, 6)]], names=["subject", "sample"]
-        ),
+        index=pd.MultiIndex.from_product([range(1, 9), [f"S{i}" for i in range(1, 6)]], names=["subject", "sample"]),
     )
     data["cortisol"] = np.concatenate(
         [
@@ -322,7 +317,7 @@ def saliva_multi_days():
 def saliva_multi_days_idx():
     data = pd.DataFrame(
         index=pd.MultiIndex.from_product(
-            [range(1, 5), range(0, 2), ["S{}".format(i) for i in range(1, 6)]], names=["subject", "day", "sample"]
+            [range(1, 5), range(0, 2), [f"S{i}" for i in range(1, 6)]], names=["subject", "day", "sample"]
         ),
         columns=["cortisol", "time"],
     )
@@ -658,7 +653,7 @@ class TestSaliva:
             saliva.max_increase(input_data)
 
     @pytest.mark.parametrize(
-        "saliva_type, expectation",
+        ("saliva_type", "expectation"),
         [
             ("cortisol", does_not_raise()),
             ("amylase", pytest.raises(ValidationError)),
@@ -672,7 +667,7 @@ class TestSaliva:
             saliva.max_value(data, saliva_type=saliva_type)
 
     @pytest.mark.parametrize(
-        "saliva_type, expected_columns",
+        ("saliva_type", "expected_columns"),
         [
             ("cortisol", ["cortisol_max_val"]),
             ("amylase", ["amylase_max_val"]),
@@ -684,7 +679,7 @@ class TestSaliva:
         data_out = saliva.max_value(data_in, saliva_type=saliva_type)
         assert list(data_out.columns) == expected_columns
 
-    @pytest.mark.parametrize("remove_s0, expected", params_max_value)
+    @pytest.mark.parametrize(("remove_s0", "expected"), params_max_value)
     def test_max_value(self, remove_s0, expected):
         out = saliva.max_value(saliva_no_time(), remove_s0=remove_s0)
         assert_frame_equal(out, expected, check_dtype=False)
@@ -708,7 +703,7 @@ class TestSaliva:
         ]
 
     @pytest.mark.parametrize(
-        "saliva_type, expectation",
+        ("saliva_type", "expectation"),
         [
             ("cortisol", does_not_raise()),
             ("amylase", pytest.raises(ValidationError)),
@@ -722,7 +717,7 @@ class TestSaliva:
             saliva.initial_value(data, saliva_type=saliva_type)
 
     @pytest.mark.parametrize(
-        "saliva_type, expected_columns",
+        ("saliva_type", "expected_columns"),
         [
             ("cortisol", ["cortisol_ini_val"]),
             ("amylase", ["amylase_ini_val"]),
@@ -734,7 +729,7 @@ class TestSaliva:
         data_out = saliva.initial_value(data_in, saliva_type=saliva_type)
         assert list(data_out.columns) == expected_columns
 
-    @pytest.mark.parametrize("remove_s0, expected", params_initial_value)
+    @pytest.mark.parametrize(("remove_s0", "expected"), params_initial_value)
     def test_initial_value(self, remove_s0, expected):
         out = saliva.initial_value(saliva_no_time(), remove_s0=remove_s0)
         assert_frame_equal(out, expected, check_dtype=False)
@@ -758,7 +753,7 @@ class TestSaliva:
         ]
 
     @pytest.mark.parametrize(
-        "saliva_type, expectation",
+        ("saliva_type", "expectation"),
         [
             ("cortisol", does_not_raise()),
             ("amylase", pytest.raises(ValidationError)),
@@ -772,7 +767,7 @@ class TestSaliva:
             saliva.max_increase(data, saliva_type=saliva_type)
 
     @pytest.mark.parametrize(
-        "saliva_type, expected_columns",
+        ("saliva_type", "expected_columns"),
         [
             ("cortisol", ["cortisol_max_inc"]),
             ("amylase", ["amylase_max_inc"]),
@@ -784,7 +779,7 @@ class TestSaliva:
         data_out = saliva.max_increase(data_in, saliva_type=saliva_type)
         assert list(data_out.columns) == expected_columns
 
-    @pytest.mark.parametrize("remove_s0, expected", params_max_increase)
+    @pytest.mark.parametrize(("remove_s0", "expected"), params_max_increase)
     def test_max_increase(self, remove_s0, expected):
         out = saliva.max_increase(saliva_no_time(), remove_s0=remove_s0)
         assert_frame_equal(out, expected, check_dtype=False)
@@ -807,12 +802,12 @@ class TestSaliva:
             for saliva_type in ["cortisol", "amylase"]
         ]
 
-    @pytest.mark.parametrize("remove_s0, expected", params_max_increase_percent)
+    @pytest.mark.parametrize(("remove_s0", "expected"), params_max_increase_percent)
     def test_max_increase_percent(self, remove_s0, expected):
         out = saliva.max_increase(saliva_no_time(), remove_s0=remove_s0, percent=True)
         assert_frame_equal(out, expected, check_dtype=False)
 
-    @pytest.mark.parametrize("remove_s0, expected", params_max_increase)
+    @pytest.mark.parametrize(("remove_s0", "expected"), params_max_increase)
     def test_max_increase_multi_days(self, remove_s0, expected):
         out = saliva.max_increase(saliva_multi_days(), remove_s0=remove_s0)
         # set correct index to the expected output
@@ -820,7 +815,7 @@ class TestSaliva:
         assert_frame_equal(out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
-        "saliva_type, compute_auc_post, expected_columns",
+        ("saliva_type", "compute_auc_post", "expected_columns"),
         [
             ("cortisol", True, ["cortisol_auc_g", "cortisol_auc_i", "cortisol_auc_i_post"]),
             ("cortisol", False, ["cortisol_auc_g", "cortisol_auc_i"]),
@@ -836,7 +831,7 @@ class TestSaliva:
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize(
-        "data, sample_times, expected",
+        ("data", "sample_times", "expected"),
         [
             (saliva_no_time(), None, pytest.raises(ValueError)),
             (saliva_wrong_time_01(), None, pytest.raises(ValueError)),
@@ -943,7 +938,7 @@ class TestSaliva:
             saliva.auc(data, sample_times=sample_times)
 
     @pytest.mark.parametrize(
-        "saliva_type, expectation",
+        ("saliva_type", "expectation"),
         [
             ("cortisol", does_not_raise()),
             ("amylase", pytest.raises(ValidationError)),
@@ -956,7 +951,7 @@ class TestSaliva:
         with expectation:
             saliva.auc(data, saliva_type=saliva_type)
 
-    @pytest.mark.parametrize("remove_s0, compute_auc_post, expected", params_auc)
+    @pytest.mark.parametrize(("remove_s0", "compute_auc_post", "expected"), params_auc)
     def test_auc(self, remove_s0, compute_auc_post, expected):
         # check with 'time' column
         assert_frame_equal(
@@ -999,7 +994,7 @@ class TestSaliva:
         assert data_out["cortisol_auc_g"].iloc[0] != data_out["cortisol_auc_g"].iloc[1]
         assert data_out["cortisol_auc_i"].iloc[0] != data_out["cortisol_auc_i"].iloc[1]
 
-    @pytest.mark.parametrize("remove_s0, compute_auc_post, expected", params_auc_mutiple_pre)
+    @pytest.mark.parametrize(("remove_s0", "compute_auc_post", "expected"), params_auc_mutiple_pre)
     def test_auc_multiple_pre(self, remove_s0, compute_auc_post, expected):
         # check with 'time' column
         assert_frame_equal(
@@ -1027,7 +1022,7 @@ class TestSaliva:
         ----------
         Pruessner, J. C., Kirschbaum, C., Meinlschmid, G., & Hellhammer, D. H. (2003). Two formulas for computation of
         the area under the curve represent measures of total hormone concentration versus time-dependent change.
-        *Psychoneuroendocrinology*, 28(7), 916–931. https://doi.org/10.1016/S0306-4530(02)00108-7
+        *Psychoneuroendocrinology*, 28(7), 916-931. https://doi.org/10.1016/S0306-4530(02)00108-7
         """
         expected = pd.DataFrame(
             {"cortisol_auc_g": [34.75, 390], "cortisol_auc_i": [20.75, 232.50]},
@@ -1047,7 +1042,7 @@ class TestSaliva:
                 check_dtype=False,
             )
 
-    @pytest.mark.parametrize("remove_s0, compute_auc_post, expected", params_auc)
+    @pytest.mark.parametrize(("remove_s0", "compute_auc_post", "expected"), params_auc)
     def test_auc_multi_days(self, remove_s0, compute_auc_post, expected):
         out = saliva.auc(saliva_multi_days(), compute_auc_post=compute_auc_post, remove_s0=remove_s0)
         # set correct index to the expected output
@@ -1055,7 +1050,7 @@ class TestSaliva:
         assert_frame_equal(out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
-        "include_time, saliva_times",
+        ("include_time", "saliva_times"),
         [
             (True, None),
             (False, [-10, 0, 10, 20, 30]),
@@ -1065,17 +1060,14 @@ class TestSaliva:
         data_in = saliva_multi_types(include_time)
         data_out = saliva.auc(data_in, saliva_type=["cortisol", "amylase"], sample_times=saliva_times)
         for saliva_type in ["cortisol", "amylase"]:
-            if include_time:
-                cols = [saliva_type, "time"]
-            else:
-                cols = [saliva_type]
+            cols = [saliva_type, "time"] if include_time else [saliva_type]
             assert_frame_equal(
                 saliva.auc(data_in[cols], saliva_type=saliva_type, sample_times=saliva_times),
                 data_out[saliva_type],
             )
 
     @pytest.mark.parametrize(
-        "saliva_type, expected_columns",
+        ("saliva_type", "expected_columns"),
         [
             ("cortisol", ["cortisol_slope01"]),
             ("amylase", ["amylase_slope01"]),
@@ -1088,7 +1080,7 @@ class TestSaliva:
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize(
-        "sample_labels, sample_idx, expected",
+        ("sample_labels", "sample_idx", "expected"),
         [
             (None, None, pytest.raises(IndexError)),
             ((1, 2), (0, 1), pytest.raises(IndexError)),
@@ -1106,7 +1098,7 @@ class TestSaliva:
             )
 
     @pytest.mark.parametrize(
-        "sample_idx, expected_columns",
+        ("sample_idx", "expected_columns"),
         [
             ((0, 1), ["cortisol_slopeS1S2"]),
             ((1, 2), ["cortisol_slopeS2S3"]),
@@ -1131,7 +1123,7 @@ class TestSaliva:
         assert list(data_out.columns) == expected_columns
 
     @pytest.mark.parametrize(
-        "sample_labels, expected_columns",
+        ("sample_labels", "expected_columns"),
         [
             (("S1", "S2"), ["cortisol_slopeS1S2"]),
             (("S2", "S3"), ["cortisol_slopeS2S3"]),
@@ -1179,7 +1171,7 @@ class TestSaliva:
         with pytest.raises(IndexError):
             saliva.slope(saliva_idx(), sample_labels=sample_labels, saliva_type="cortisol")
 
-    @pytest.mark.parametrize("sample_idx, sample_labels, expected", params_slope)
+    @pytest.mark.parametrize(("sample_idx", "sample_labels", "expected"), params_slope)
     def test_slope(self, sample_idx, sample_labels, expected):
         data_in = saliva_idx()
         data_out = saliva.slope(data_in, sample_idx=sample_idx)
@@ -1187,7 +1179,7 @@ class TestSaliva:
         data_out = saliva.slope(data_in, sample_labels=sample_labels)
         assert_frame_equal(data_out, expected)
 
-    @pytest.mark.parametrize("sample_idx, sample_labels, expected", params_slope)
+    @pytest.mark.parametrize(("sample_idx", "sample_labels", "expected"), params_slope)
     def test_slope_multi_days(self, sample_idx, sample_labels, expected):
         out = saliva.slope(saliva_multi_days_idx(), sample_idx=sample_idx)
         # set correct index to the expected output
@@ -1199,7 +1191,7 @@ class TestSaliva:
         expected.index = pd.MultiIndex.from_product([range(1, 5), range(0, 2)], names=["subject", "day"])
         assert_frame_equal(out, expected, check_dtype=False)
 
-    @pytest.mark.parametrize("sample_idx, sample_labels, expected", params_slope)
+    @pytest.mark.parametrize(("sample_idx", "sample_labels", "expected"), params_slope)
     def test_slope_multi_saliva_types(self, sample_idx, sample_labels, expected):
         data_in = saliva_idx_multi_types()
         data_out = saliva.slope(data_in, saliva_type=["cortisol", "amylase"], sample_idx=sample_idx)
@@ -1217,7 +1209,7 @@ class TestSaliva:
             )
 
     @pytest.mark.parametrize(
-        "saliva_type, expected_columns",
+        ("saliva_type", "expected_columns"),
         [
             (
                 "cortisol",
@@ -1305,7 +1297,7 @@ class TestSaliva:
         assert_frame_equal(data_out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
-        "group_cols, keep_index, expected",
+        ("group_cols", "keep_index", "expected"),
         [
             (None, True, does_not_raise()),
             (["subject", "day"], True, does_not_raise()),
@@ -1326,7 +1318,7 @@ class TestSaliva:
             saliva.standard_features(saliva_multi_days(), group_cols=group_cols, keep_index=keep_index)
 
     @pytest.mark.parametrize(
-        "group_cols, keep_index, expected",
+        ("group_cols", "keep_index", "expected"),
         [
             (None, True, ["subject", "day"]),
             (["subject", "day"], True, ["subject", "day"]),
@@ -1412,7 +1404,7 @@ class TestSaliva:
             )
 
     @pytest.mark.parametrize(
-        "include_condition, include_day, expected_index_levels",
+        ("include_condition", "include_day", "expected_index_levels"),
         [
             (True, True, ["subject", "condition", "day"]),
             (True, False, ["subject", "condition"]),
@@ -1430,7 +1422,7 @@ class TestSaliva:
         assert list(data_out.index.names) == expected_index_levels
 
     @pytest.mark.parametrize(
-        "data_func, saliva_type, expected_columns, expected_index",
+        ("data_func", "saliva_type", "expected_columns", "expected_index"),
         [
             (saliva_no_time, "cortisol", ["mean", "se"], list(range(0, 5))),
             (saliva_no_time, "amylase", ["mean", "se"], list(range(0, 5))),
@@ -1442,19 +1434,19 @@ class TestSaliva:
                 saliva_idx,
                 "cortisol",
                 ["mean", "se"],
-                [("S{}".format(i), k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
+                [(f"S{i}", k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
             ),
             (
                 saliva_idx,
                 "amylase",
                 ["mean", "se"],
-                [("S{}".format(i), k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
+                [(f"S{i}", k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
             ),
             (
                 saliva_idx,
                 "il6",
                 ["mean", "se"],
-                [("S{}".format(i), k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
+                [(f"S{i}", k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
             ),
         ],
     )
@@ -1469,13 +1461,13 @@ class TestSaliva:
         # check column names
         assert list(data_out.columns) == expected_columns
 
-    @pytest.mark.parametrize("data_in, remove_s0, expected", params_mean_se)
+    @pytest.mark.parametrize(("data_in", "remove_s0", "expected"), params_mean_se)
     def test_mean_se(self, data_in, remove_s0, expected):
         data_out = saliva.mean_se(data_in, remove_s0=remove_s0)
         assert_frame_equal(data_out, expected, check_dtype=False)
 
     @pytest.mark.parametrize(
-        "data_in, group_cols, expected",
+        ("data_in", "group_cols", "expected"),
         [
             (saliva_no_time(), None, does_not_raise()),
             (saliva_no_time(), ["subject"], pytest.raises(DataFrameTransformationError)),
@@ -1492,7 +1484,7 @@ class TestSaliva:
             saliva.mean_se(data_in, group_cols=group_cols)
 
     @pytest.mark.parametrize(
-        "data_in, group_cols, expected",
+        ("data_in", "group_cols", "expected"),
         [
             (saliva_no_time(), None, ["sample"]),
             (saliva_time(), None, ["sample", "time"]),
@@ -1521,10 +1513,7 @@ class TestSaliva:
         data_in = saliva_multi_types(include_time)
         data_out = saliva.mean_se(data_in, saliva_type=["cortisol", "amylase"])
         for saliva_type in ["cortisol", "amylase"]:
-            if include_time:
-                data_test = data_in[[saliva_type, "time"]]
-            else:
-                data_test = data_in[[saliva_type]]
+            data_test = data_in[[saliva_type, "time"]] if include_time else data_in[[saliva_type]]
             assert_frame_equal(
                 saliva.mean_se(data_test, saliva_type=saliva_type),
                 data_out[saliva_type],

@@ -3,9 +3,8 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-
 from biopsykit.io.ecg import load_hr_phase_dict, load_hr_phase_dict_folder, write_hr_phase_dict
-from biopsykit.utils.datatype_helper import is_hr_phase_dict, is_hr_subject_data_dict
+from biopsykit.utils.datatype_helper import is_hr_phase_dict
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")
@@ -81,7 +80,7 @@ def hr_phase_dict_wrong_index_levels():
 
 class TestIoEcg:
     @pytest.mark.parametrize(
-        "input_data, expected",
+        ("input_data", "expected"),
         [
             (hr_phase_dict_none(), pytest.raises(ValidationError)),
             (hr_phase_dict_wrong_col_name(), pytest.raises(ValidationError)),
@@ -106,7 +105,7 @@ class TestIoEcg:
             is_hr_phase_dict(data=input_data, raise_exception=True)
 
     @pytest.mark.parametrize(
-        "input_data, expected",
+        ("input_data", "expected"),
         [
             (hr_phase_dict_none(), False),
             (hr_phase_dict_wrong_col_name(), False),
@@ -130,7 +129,7 @@ class TestIoEcg:
         assert is_hr_phase_dict(data=input_data, raise_exception=False) == expected
 
     @pytest.mark.parametrize(
-        "filename, expected",
+        ("filename", "expected"),
         [
             ("hr_result.xlsx", does_not_raise()),
             ("hr_result_wrong_format.xlsx", pytest.raises(ValidationError)),
@@ -142,7 +141,7 @@ class TestIoEcg:
             load_hr_phase_dict(TEST_FILE_PATH.joinpath(filename))
 
     @pytest.mark.parametrize(
-        "base_path, filename, expected",
+        ("base_path", "filename", "expected"),
         [
             ("load_hr_subject_dict_folder", r"hr_result_(\w+).xlsx", does_not_raise()),
             ("load_hr_subject_dict_folder", "ecg_result.xlsx", pytest.raises(FileNotFoundError)),
@@ -154,10 +153,10 @@ class TestIoEcg:
             dict_hr_subject = load_hr_phase_dict_folder(TEST_FILE_PATH.joinpath(base_path), filename)
             assert len(dict_hr_subject) == 2
             assert list(dict_hr_subject.keys()) == ["Vp01", "Vp02"]
-            assert all([is_hr_phase_dict(dict_phase, raise_exception=False) for dict_phase in dict_hr_subject.values()])
+            assert all(is_hr_phase_dict(dict_phase, raise_exception=False) for dict_phase in dict_hr_subject.values())
 
     @pytest.mark.parametrize(
-        "base_path, filename, subfolder, expected",
+        ("base_path", "filename", "subfolder", "expected"),
         [
             ("load_hr_subject_dict_folder", r"hr_result_(\w+).xlsx", "Vp*", does_not_raise()),
             ("load_hr_subject_dict_folder", "hr_result_*.xlsx", "Vp*", does_not_raise()),
@@ -171,10 +170,10 @@ class TestIoEcg:
             )
             assert len(dict_hr_subject) == 2
             assert list(dict_hr_subject.keys()) == ["Vp03", "Vp04"]
-            assert all([is_hr_phase_dict(dict_phase, raise_exception=False) for dict_phase in dict_hr_subject.values()])
+            assert all(is_hr_phase_dict(dict_phase, raise_exception=False) for dict_phase in dict_hr_subject.values())
 
     @pytest.mark.parametrize(
-        "base_path, filename, subfolder",
+        ("base_path", "filename", "subfolder"),
         [
             ("load_hr_subject_dict_folder", "hr_result_*.xlsx", "Pb*"),
         ],
@@ -186,11 +185,11 @@ class TestIoEcg:
             )
             assert len(dict_hr_subject) == 2
             assert list(dict_hr_subject.keys()) == ["Pb01", "Pb02"]
-            assert all([is_hr_phase_dict(dict_phase, raise_exception=False) for dict_phase in dict_hr_subject.values()])
-            assert all([list(dict_phase.keys()) == ["Part1", "Part2"] for dict_phase in dict_hr_subject.values()])
+            assert all(is_hr_phase_dict(dict_phase, raise_exception=False) for dict_phase in dict_hr_subject.values())
+            assert all(list(dict_phase.keys()) == ["Part1", "Part2"] for dict_phase in dict_hr_subject.values())
 
     @pytest.mark.parametrize(
-        "data, filename, expected",
+        ("data", "filename", "expected"),
         [
             (hr_phase_dict_correct(), "test.xlsx", does_not_raise()),
             (hr_phase_dict_datetimeindex_correct(), "test.xlsx", does_not_raise()),

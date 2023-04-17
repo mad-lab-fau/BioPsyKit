@@ -4,8 +4,6 @@ from unittest import TestCase
 
 import pandas as pd
 import pytest
-from pandas._testing import assert_index_equal
-
 from biopsykit.io.sleep import save_sleep_endpoints
 from biopsykit.io.sleep_analyzer import (
     load_withings_sleep_analyzer_raw_file,
@@ -13,6 +11,7 @@ from biopsykit.io.sleep_analyzer import (
     load_withings_sleep_analyzer_summary,
 )
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
+from pandas._testing import assert_index_equal
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/sleep_endpoints")
 
@@ -78,7 +77,7 @@ def sleep_endpoints_dict_correct():
 
 class TestIoSleep:
     @pytest.mark.parametrize(
-        "file_path, sleep_endpoints, expected",
+        ("file_path", "sleep_endpoints", "expected"),
         [
             ("sleep_endpoints.csv", sleep_endpoints_dataframe_correct(), does_not_raise()),
             ("sleep_endpoints.csv", sleep_endpoints_dataframe_additional_cols(), does_not_raise()),
@@ -93,7 +92,7 @@ class TestIoSleep:
             save_sleep_endpoints(tmp_path.joinpath(file_path), sleep_endpoints)
 
     @pytest.mark.parametrize(
-        "file_path, expected",
+        ("file_path", "expected"),
         [
             ("sleep_analyzer_summary.csv", does_not_raise()),
             ("sleep_analyzer_summary_wrong_column_names.csv", pytest.raises(ValidationError)),
@@ -115,7 +114,7 @@ class TestIoSleep:
         )
 
     @pytest.mark.parametrize(
-        "file_path, data_source, timezone, expected",
+        ("file_path", "data_source", "timezone", "expected"),
         [
             ("raw_sleep-monitor_hr.csv", "heart_rate", None, does_not_raise()),
             ("raw_sleep-monitor_hr.csv", "heart_rate", "Europe/Berlin", does_not_raise()),
@@ -133,7 +132,7 @@ class TestIoSleep:
             )
 
     @pytest.mark.parametrize(
-        "file_path, data_source",
+        ("file_path", "data_source"),
         [
             ("raw_sleep-monitor_hr.csv", "heart_rate"),
         ],
@@ -153,7 +152,7 @@ class TestIoSleep:
         assert all(str(d.index.tz) == "Europe/Berlin" for d in data.values())
 
     @pytest.mark.parametrize(
-        "file_path, data_source",
+        ("file_path", "data_source"),
         [
             ("raw_sleep-monitor_hr.csv", "heart_rate"),
         ],
@@ -170,7 +169,7 @@ class TestIoSleep:
         assert str(data.index.tz) == "Europe/Berlin"
 
     @pytest.mark.parametrize(
-        "file_path, data_source",
+        ("file_path", "data_source"),
         [
             ("raw_bed_sleep-state.csv", "sleep_state"),
         ],
@@ -188,7 +187,7 @@ class TestIoSleep:
         assert str(data.index.tz) == "Europe/Berlin"
 
     @pytest.mark.parametrize(
-        "file_path, data_source",
+        ("file_path", "data_source"),
         [
             ("raw_bed_sleep-state.csv", "sleep_state"),
         ],
@@ -212,7 +211,7 @@ class TestIoSleep:
             assert len(df.index) == dict_reference[key]["duration"]
 
     @pytest.mark.parametrize(
-        "folder_path, expected",
+        ("folder_path", "expected"),
         [
             ("sleep_analyzer", does_not_raise()),
             ("sleep_analyzer_empty", pytest.raises(ValueError)),

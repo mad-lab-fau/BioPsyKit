@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 
 import pytest
-
 from biopsykit.example_data import _get_data
 from biopsykit.io.eeg import load_eeg_raw_muse
 from biopsykit.utils.exceptions import ValidationError
@@ -14,7 +13,7 @@ def does_not_raise():
 
 class TestIoEeg:
     @pytest.mark.parametrize(
-        "file_path, expected",
+        ("file_path", "expected"),
         [
             (_get_data("eeg_muse_example.csv"), does_not_raise()),
             (_get_data("cortisol_sample.csv"), pytest.raises(ValidationError)),

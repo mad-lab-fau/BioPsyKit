@@ -4,8 +4,6 @@ from unittest import TestCase
 
 import pandas as pd
 import pytest
-from nilspodlib import Dataset
-
 from biopsykit.io.nilspod import (
     check_nilspod_dataset_corrupted,
     get_nilspod_dataset_corrupted_info,
@@ -14,6 +12,7 @@ from biopsykit.io.nilspod import (
     load_folder_nilspod,
     load_synced_session_nilspod,
 )
+from nilspodlib import Dataset
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/nilspod")
 
@@ -25,7 +24,7 @@ def does_not_raise():
 
 class TestIoNilspod:
     @pytest.mark.parametrize(
-        "file_path, dataset, expected",
+        ("file_path", "dataset", "expected"),
         [
             (TEST_FILE_PATH.joinpath("test_dataset.bin"), None, does_not_raise()),
             (
@@ -51,7 +50,7 @@ class TestIoNilspod:
             load_dataset_nilspod(file_path=file_path, dataset=dataset)
 
     @pytest.mark.parametrize(
-        "file_path, dataset, datastreams, timezone",
+        ("file_path", "dataset", "datastreams", "timezone"),
         [
             ("test_dataset.bin", None, None, None),
             ("test_dataset.bin", None, ["acc", "gyro"], "Europe/Berlin"),
@@ -66,7 +65,7 @@ class TestIoNilspod:
         assert type(fs) == float
 
     @pytest.mark.parametrize(
-        "folder_path, expected",
+        ("folder_path", "expected"),
         [
             ("synced_sample_session", does_not_raise()),
             ("synced_sample_session_empty", pytest.raises(ValueError)),
@@ -77,7 +76,7 @@ class TestIoNilspod:
             load_synced_session_nilspod(folder_path=TEST_FILE_PATH.joinpath(folder_path), legacy_support="warn")
 
     @pytest.mark.parametrize(
-        "folder_path, datastreams",
+        ("folder_path", "datastreams"),
         [
             ("synced_sample_session", None),
             ("synced_sample_session", "acc"),
@@ -91,7 +90,7 @@ class TestIoNilspod:
         assert type(fs) == float
 
     @pytest.mark.parametrize(
-        "folder_path, datastreams, timezone",
+        ("folder_path", "datastreams", "timezone"),
         [
             ("synced_sample_session", "acc", "Europe/Berlin"),
         ],
@@ -105,7 +104,7 @@ class TestIoNilspod:
         assert type(fs) == float
 
     @pytest.mark.parametrize(
-        "folder_path, phase_names, expected",
+        ("folder_path", "phase_names", "expected"),
         [
             ("multi_recordings", None, does_not_raise()),
             ("multi_recordings", ["Start", "End"], does_not_raise()),
@@ -121,14 +120,14 @@ class TestIoNilspod:
             )
 
     @pytest.mark.parametrize(
-        "file_path, expected",
+        ("file_path", "expected"),
         [("test_dataset.bin", False), ("test_dataset_corrupted.bin", True)],
     )
     def test_check_nilspod_dataset_corrupted(self, file_path, expected):
         assert check_nilspod_dataset_corrupted(Dataset.from_bin_file(TEST_FILE_PATH.joinpath(file_path))) == expected
 
     @pytest.mark.parametrize(
-        "file_path, expected",
+        ("file_path", "expected"),
         [
             ("test_dataset.bin", {"name": "test_dataset.bin", "percent_corrupt": 0.0, "condition": "fine"}),
             (
@@ -144,7 +143,7 @@ class TestIoNilspod:
         TestCase().assertDictEqual(data_out, expected)
 
     @pytest.mark.parametrize(
-        "file_path, filename_regex, time_regex, expected",
+        ("file_path", "filename_regex", "time_regex", "expected"),
         [
             ("NilsPodX-7FAD_20190430_093300.csv", None, None, does_not_raise()),
             ("NilsPodX-7FAD_20190430_093300.csv", None, None, does_not_raise()),
@@ -158,7 +157,7 @@ class TestIoNilspod:
             load_csv_nilspod(TEST_FILE_PATH.joinpath(file_path), filename_regex=filename_regex, time_regex=time_regex)
 
     @pytest.mark.parametrize(
-        "file_path, filename_regex, time_regex, datastreams, expected_index_type, expected_columns",
+        ("file_path", "filename_regex", "time_regex", "datastreams", "expected_index_type", "expected_columns"),
         [
             (
                 "NilsPodX-7FAD_20190430_093300.csv",
@@ -208,7 +207,7 @@ class TestIoNilspod:
         TestCase().assertListEqual(list(df.columns), list(expected_columns))
 
     @pytest.mark.parametrize(
-        "file_path, time_regex, expected_time",
+        ("file_path", "time_regex", "expected_time"),
         [
             ("NilsPodX-7FAD_20190430_0933.csv", None, "2019-04-30 09:03:03+02:00"),
             ("NilsPodX-7FAD_20190430_0933.csv", "%Y%m%d_%H%M", "2019-04-30 09:33:00+02:00"),

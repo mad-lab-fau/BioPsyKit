@@ -1,6 +1,19 @@
 """A Python package for the analysis of biopsychological data."""
 
-from biopsykit import example_data
+from biopsykit import (
+    classification,
+    example_data,
+    io,
+    metadata,
+    plotting,
+    protocols,
+    questionnaires,
+    saliva,
+    signals,
+    sleep,
+    stats,
+    utils,
+)
 
 __all__ = [
     "classification",

@@ -2,10 +2,9 @@ import unittest.mock
 from contextlib import contextmanager
 from inspect import getmembers, isfunction
 
+import biopsykit.example_data
 import pandas as pd
 import pytest
-
-import biopsykit.example_data
 from biopsykit.example_data import *
 from biopsykit.questionnaires import pss
 from biopsykit.questionnaires.utils import find_cols
@@ -48,7 +47,7 @@ class TestExampleData:
         is_subject_condition_dataframe(data)
 
     @pytest.mark.parametrize(
-        "sample_times, expected",
+        ("sample_times", "expected"),
         [
             (None, does_not_raise()),
             ([-30, -1, 0, 10, 20, 30, 40], does_not_raise()),
@@ -115,7 +114,7 @@ class TestExampleData:
         assert path.exists()
 
     @pytest.mark.parametrize(
-        "data_source, expected",
+        ("data_source", "expected"),
         [
             ("heart_rate", does_not_raise()),
             ("respiration_rate", does_not_raise()),
@@ -138,7 +137,7 @@ class TestExampleData:
         _assert_has_columns(data, [["start", "duration"]])
 
     @pytest.mark.parametrize(
-        "data_source, expected",
+        ("data_source", "expected"),
         [
             ("heart_rate", does_not_raise()),
             ("respiration_rate", does_not_raise()),

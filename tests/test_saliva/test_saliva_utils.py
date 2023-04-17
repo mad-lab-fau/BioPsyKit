@@ -4,10 +4,9 @@ from contextlib import contextmanager
 import numpy as np
 import pandas as pd
 import pytest
-from pandas._testing import assert_frame_equal, assert_series_equal
-
-import biopsykit.saliva.utils as utils
+from biopsykit.saliva import utils
 from biopsykit.utils.exceptions import ValidationError
+from pandas._testing import assert_frame_equal, assert_series_equal
 
 
 @contextmanager
@@ -196,7 +195,7 @@ def sample_times_series_correct_output():
 
 class TestSalivaUtils:
     @pytest.mark.parametrize(
-        "data_in, saliva_type, expected",
+        ("data_in", "saliva_type", "expected"),
         [
             (None, "cortisol", pytest.raises(ValidationError)),
             (pd.Series(dtype="float64"), "cortisol", pytest.raises(ValidationError)),
@@ -210,7 +209,7 @@ class TestSalivaUtils:
             utils.get_saliva_column_suggestions(data_in, saliva_type)
 
     @pytest.mark.parametrize(
-        "data_in, saliva_type, expected",
+        ("data_in", "saliva_type", "expected"),
         [
             (saliva_cols_none(), "cortisol", []),
             (saliva_cols_cort(), "cortisol", [r"^scorts(\d)$"]),
@@ -234,7 +233,7 @@ class TestSalivaUtils:
         assert expected == utils.get_saliva_column_suggestions(data_in, saliva_type)
 
     @pytest.mark.parametrize(
-        "data_in, saliva_type, col_pattern, expected",
+        ("data_in", "saliva_type", "col_pattern", "expected"),
         [
             (
                 saliva_cols_all(),
@@ -273,7 +272,7 @@ class TestSalivaUtils:
             utils.extract_saliva_columns(data=data_in, saliva_type=saliva_type, col_pattern=col_pattern)
 
     @pytest.mark.parametrize(
-        "data_in, saliva_type, col_pattern, expected",
+        ("data_in", "saliva_type", "col_pattern", "expected"),
         [
             (
                 saliva_cols_all(),
@@ -316,7 +315,7 @@ class TestSalivaUtils:
         )
 
     @pytest.mark.parametrize(
-        "saliva_type, col_pattern, expected",
+        ("saliva_type", "col_pattern", "expected"),
         [
             (["cortisol", "amylase"], [], pytest.raises(ValueError)),
             ([], [r"scort(\d)"], pytest.raises(ValueError)),
@@ -344,7 +343,7 @@ class TestSalivaUtils:
             )
 
     @pytest.mark.parametrize(
-        "data_in, expected",
+        ("data_in", "expected"),
         [
             (
                 sample_times_series_seconds_missing(),
@@ -365,7 +364,7 @@ class TestSalivaUtils:
             utils.sample_times_datetime_to_minute(data_in)
 
     @pytest.mark.parametrize(
-        "data_in, expected",
+        ("data_in", "expected"),
         [
             (
                 sample_times_series_str_correct(),
@@ -385,7 +384,7 @@ class TestSalivaUtils:
         assert_series_equal(utils.sample_times_datetime_to_minute(data_in), expected)
 
     @pytest.mark.parametrize(
-        "data_in, expected",
+        ("data_in", "expected"),
         [
             (
                 sample_times_series_str_correct().unstack("sample"),
