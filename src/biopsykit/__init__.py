@@ -1,12 +1,4 @@
 """A Python package for the analysis of biopsychological data."""
-import platform
-
-import matplotlib
-import neurokit2
-import numpy as np
-import pandas as pd
-import pingouin
-import scipy
 
 __all__ = [
     "classification",
@@ -36,6 +28,15 @@ def version() -> None:
     >>> bp.version()
 
     """
+    import platform
+
+    import matplotlib
+    import neurokit2
+    import numpy as np
+    import pandas as pd
+    import pingouin
+    import scipy
+
     print(
         f"Operating System: {platform.system()} ({platform.architecture()[1]} {platform.architecture()[0]})\n",
         f"- Python: {platform.python_version()}\n",
