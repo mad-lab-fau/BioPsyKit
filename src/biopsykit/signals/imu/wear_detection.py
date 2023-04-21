@@ -26,6 +26,7 @@ class WearDetection:
 
     [2] van Hees, V. T., Gorzelniak, L., Taherian, S., & Ekelund, U. (2013). Separating Movement and Gravity Components
     in an Acceleration Signal and Implications for the Assessment of Human Daily Physical Activity. PLOS ONE, 8(4), 10.
+    https://doi.org/doi.org/10.1371/journal.pone.0061691
 
     """
 
