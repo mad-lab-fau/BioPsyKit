@@ -14,6 +14,19 @@ class WearDetection:
 
     Non-wear times are estimated over 15 minute intervals over the day.
 
+    The non-wear detection was implemented according to [1] and modified according to [2].
+
+
+    References
+    ----------
+    [1] Van Hees, V. T., Renström, F., Wright, A., Gradmark, A., Catt, M., Chen, K. Y., Löf, M., Bluck, L.,
+    Pomeroy, J., Wareham, N. J., Ekelund, U., Brage, S., & Franks, P. W. (2011). Estimation of Daily Energy
+    Expenditure in Pregnant and Non-Pregnant Women Using a Wrist-Worn Tri-Axial Accelerometer. PLoS ONE, 6(7), e22922.
+    https://doi.org/10.1371/journal.pone.0022922
+
+    [2] van Hees, V. T., Gorzelniak, L., Taherian, S., & Ekelund, U. (2013). Separating Movement and Gravity Components
+    in an Acceleration Signal and Implications for the Assessment of Human Daily Physical Activity. PLOS ONE, 8(4), 10.
+
     """
 
     sampling_rate: float

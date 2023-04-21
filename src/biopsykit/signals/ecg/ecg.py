@@ -64,7 +64,7 @@ class EcgProcessor(_BaseProcessor):
         If the data was recorded during a study that consists of multiple phases, the ECG data can be split into single
         phases by passing time information via the ``time_intervals`` parameter.
 
-        Each instance of ``EcgProcessor`` the following attributes:
+        Each instance of ``EcgProcessor`` has the following attributes:
 
         * ``data``: dict with raw ECG data, split into the specified phases. If data was not split the
           dictionary only has one entry, accessible by the key ``Data``
