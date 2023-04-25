@@ -482,6 +482,7 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     alpha = kwargs.pop("alpha", 1.0)
     kwargs.setdefault("saturation", 1.0)
     rect = kwargs.pop("rect", (0, 0, 0.825, 1.0) if legend_orientation == "vertical" else (0, 0, 1, 0.925))
+    tight_layout = kwargs.pop("tight_layout", True)
 
     if isinstance(features, list):
         features = {f: [f] if isinstance(f, str) else f for f in features}
@@ -538,7 +539,7 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
             legend_orientation=legend_orientation,
             legend_title=legend_title,
         )
-    if kwargs.pop("tight_layout", True):
+    if tight_layout:
         fig.tight_layout(rect=rect)
     return fig, axs
 
