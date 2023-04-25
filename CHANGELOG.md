@@ -6,6 +6,9 @@
 ### Bugfixes
 - `biopsykit.classification.model_selection.SklearnPipelinePermuter`: some bugfixes and improvements when computing 
   additional classification metrics
+- additional bugfixes in other functions
+### Misc
+- code changes after switching to ruff as new linter
 
 ## Version 0.8.1 - Apr 04, 2023
 ### Added
