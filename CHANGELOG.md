@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.9.0 - XX, 2023
+## Version 0.9.0 - Apr 25, 2023
 ### Changes
 - removed `biopsykit.carwatch_logs` module for processing CARWatch log data (moved to own [`carwatch`](https://github.com/mad-lab-fau/carwatch) package)
 ### Bugfixes
