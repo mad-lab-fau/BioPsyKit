@@ -79,13 +79,17 @@ class BiopacDataset:
         self._tz = tz
 
     @classmethod
-    def from_acq_file(cls, path: path_t, tz: Optional[str] = "Europe/Berlin"):
+    def from_acq_file(
+        cls, path: path_t, channel_mapping: Optional[Dict[str, str]] = None, tz: Optional[str] = "Europe/Berlin"
+    ):
         """Create a new Dataset from a valid .acq file.
 
         Parameters
         ----------
         path : :class:`pathlib.Path` or str
             Path to the file
+        channel_mapping : dict, optional
+            Dictionary containing the mapping of the channel names in the .acq to the channel names used in the Dataset.
         tz : str, optional
             Timezone str of the recording. This can be used to localize the start and end time.
             Note, this should not be the timezone of your current PC, but the timezone relevant for the specific
@@ -104,7 +108,10 @@ class BiopacDataset:
             # start time is the marker time minus the time at the position of the marker sample
             start_time = marker_time - pd.Timedelta(seconds=biopac_data.time_index[marker_sample_idx])
 
-        dict_channel_data, dict_sampling_rate = cls._extract_channel_information(biopac_data)
+        if channel_mapping is None:
+            channel_mapping = cls._CHANNEL_NAME_MAPPING
+
+        dict_channel_data, dict_sampling_rate = cls._extract_channel_information(biopac_data, channel_mapping)
 
         return cls(
             data_dict=dict_channel_data,
@@ -170,13 +177,15 @@ class BiopacDataset:
 
     @classmethod
     def _extract_channel_information(
-        cls, biopac_data: bioread.reader.Datafile
+        cls, biopac_data: bioread.reader.Datafile, channel_mapping: Dict[str, str]
     ) -> Tuple[Dict[str, pd.DataFrame], Dict[str, int]]:
+        # TODO raise warning or error when there are more channels than were extracted
+        #  (might be an indication that mapping does not contain all channels)
         dict_channel_data = {}
         dict_sampling_rate = {}
         for channel in biopac_data.channels:
             # check if channel name is in mapping
-            for key, value in cls._CHANNEL_NAME_MAPPING.items():
+            for key, value in channel_mapping.items():
                 if channel.name.startswith(key):
                     ch_name = value
                     channel_df = pd.DataFrame(
