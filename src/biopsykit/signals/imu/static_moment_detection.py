@@ -39,8 +39,8 @@ def _find_static_samples(
 
     Parameters
     ----------
-    data : array with shape (n, 3)
-        3D signal on which static moment detection should be performed (e.g. 3D-acc or 3D-gyr data)
+    data : array with shape (n, 3) or (n, 2)
+        3D or 2D signal on which static moment detection should be performed (e.g. 3D-acc or 3D-gyr data)
     window_length : int
         Length of desired window in units of samples
     inactive_signal_th : float
@@ -78,8 +78,8 @@ def _find_static_samples(
 
     """
     # test for correct input data shape
-    if np.shape(data)[-1] != 3:
-        raise ValueError("Invalid signal dimensions, signal must be of shape (n,3).")
+    if np.shape(data)[-1] != 3 or np.shape(data)[-1] != 2:
+        raise ValueError("Invalid signal dimensions, signal must be of shape (n,3) or (n, 2).")
 
     if metric not in _METRIC_FUNCTIONS:
         raise ValueError(f"Invalid metric passed! {metric} as metric is not supported.")
@@ -124,8 +124,8 @@ def _find_static_sequences(
 
     Parameters
     ----------
-    data : array with shape (n, 3)
-        3D signal on which static moment detection should be performed (e.g. 3D-acc or 3D-gyr data)
+    data : array with shape (n, 3) or (n, 2)
+        3D or 2D signal on which static moment detection should be performed (e.g. 3D-acc or 3D-gyr data)
     window_length : int
         Length of desired window in units of samples
     inactive_signal_th : float
@@ -182,8 +182,8 @@ def find_static_moments(
 
     Parameters
     ----------
-    data : array with shape (n, 3)
-        3D signal on which static moment detection should be performed (e.g. 3D-acc or 3D-gyr data)
+    data : array with shape (n, 3) or (n, 2)
+        3D or 2D signal on which static moment detection should be performed (e.g. 3D-acc or 3D-gyr data)
     window_samples : int, optional
         window size in samples or ``None`` if window size is specified in seconds + sampling rate. Default: ``None``
     window_sec : int, optional
