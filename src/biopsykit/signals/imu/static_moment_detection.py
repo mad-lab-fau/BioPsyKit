@@ -78,7 +78,7 @@ def _find_static_samples(
 
     """
     # test for correct input data shape
-    if np.shape(data)[-1] != 3 or np.shape(data)[-1] != 2:
+    if np.shape(data)[-1] != 3 and np.shape(data)[-1] != 2:
         raise ValueError("Invalid signal dimensions, signal must be of shape (n,3) or (n, 2).")
 
     if metric not in _METRIC_FUNCTIONS:
