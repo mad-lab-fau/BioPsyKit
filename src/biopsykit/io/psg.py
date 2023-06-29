@@ -181,8 +181,7 @@ class PSGDataset:
                 f"More than one PSG files found in folder {folder_path}!"
                 f"This function only supports one recording per folder!"
             )
-
-        result_dict, fs, start_time = cls.load_data(path_t.joinpath(dataset_list[0]), datastreams, timezone)
+        result_dict, fs, start_time = cls.load_data(folder_path.joinpath(dataset_list[0]), datastreams, timezone)
 
         return result_dict, fs, start_time
 
@@ -229,13 +228,13 @@ class PSGDataset:
         for datastream in datastreams:
             try:
                 time_idx, _, start_time = cls._create_dt_index(data_psg.info["meas_date"], times_array=data_psg.times)
-                psg_datastream = data_psg.copy().pick_channels([datastream]).get_data()[0, :]
+                psg_datastream = data_psg.copy().pick([datastream]).get_data()[0, :]
                 result_dict[datastream] = pd.DataFrame(psg_datastream, index=time_idx, columns=[datastream])
-            except ValueError as exc:
-                raise NameError(
+            except ValueError:
+                print(
                     "Not all channels match the selected datastreams - Following Datastreams are available: "
                     + str(data_psg.ch_names)
-                ) from exc
+                )
 
         return result_dict, fs, start_time
 
