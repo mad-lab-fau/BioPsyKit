@@ -1,10 +1,9 @@
 """Module for importing data recorded by a PSG system (expects .edf files)."""
 
-import datetime
 import time
 import warnings
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Optional, Sequence
 
 try:
     import mne
