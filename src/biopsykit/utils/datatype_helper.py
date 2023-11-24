@@ -20,6 +20,7 @@ __all__ = [
     "R_PEAK_DATAFRAME_COLUMNS",
     "CodebookDataFrame",
     "MeanSeDataFrame",
+    "BiomarkerRawDataFrame",
     "SalivaRawDataFrame",
     "SalivaFeatureDataFrame",
     "SalivaMeanSeDataFrame",
@@ -89,6 +90,10 @@ class _CodebookDataFrame(pd.DataFrame):
 
 
 class _MeanSeDataFrame(pd.DataFrame):
+    pass
+
+
+class _BiomarkerRawDataFrame(pd.DataFrame):
     pass
 
 
@@ -177,7 +182,24 @@ The resulting dataframe must at least the two columns ``mean`` and ``se``. It ca
 such as ``phase``, ``subphase`` or ``condition``.
 """
 
-SalivaRawDataFrame = Union[_SalivaRawDataFrame, pd.DataFrame]
+BiomarkerRawDataFrame = Union[_BiomarkerRawDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing raw biomarker data in a standardized format.
+
+Data needs to be in long-format and **must** have a :class:`pandas.MultiIndex` with index level names:
+
+* ``subject``: subject ID; can be number or string
+* ``sample``: saliva sample ID; can be number or string
+
+Additionally, the following index levels can be added to identify saliva values, such as:
+
+* ``condition``: subject condition during the study (e.g., "Control" vs. "Condition")
+* ``day``: day ID, if saliva samples were collected over multiple days
+* ``night``: night ID, if saliva samples were collected over multiple night
+* ...
+
+"""
+
+SalivaRawDataFrame = Union[_BiomarkerRawDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing raw saliva data in a standardized format.
 
 Data needs to be in long-format and **must** have a :class:`pandas.MultiIndex` with index level names:
@@ -957,6 +979,55 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
     return True
 
 
+def is_biomarker_raw_dataframe(
+    data: BiomarkerRawDataFrame, biomarker_type: Union[str, List[str]], raise_exception: Optional[bool] = True
+) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check if it is a ``SalivaRawDataFrame``
+    saliva_type : str or list of str
+        type of saliva data (or list of saliva types) in the dataframe, e.g., "cortisol" or "amylase"
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``SalivaRawDataFrame```
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``SalivaRawDataFrame``
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        dataframe format
+
+    """
+    try:
+        if biomarker_type is None:
+            raise ValidationError("`saliva_type` is None!")
+        if isinstance(biomarker_type, str):
+            biomarker_type = [biomarker_type]
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_multiindex(data, nlevels=2, nlevels_atleast=True)
+        _assert_has_index_levels(data, index_levels=["subject", "sample"], match_atleast=True, match_order=False)
+        _assert_has_columns(data, [biomarker_type, biomarker_type + ["time"]])
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a BiomarkerRawDataFrame. "
+                "The validation failed with the following error:\n\n{}".format(str(e))
+            ) from e
+        return False
+    return True
+
+
 def is_saliva_raw_dataframe(
     data: SalivaRawDataFrame, saliva_type: Union[str, List[str]], raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
@@ -987,23 +1058,7 @@ def is_saliva_raw_dataframe(
         dataframe format
 
     """
-    try:
-        if saliva_type is None:
-            raise ValidationError("`saliva_type` is None!")
-        if isinstance(saliva_type, str):
-            saliva_type = [saliva_type]
-        _assert_is_dtype(data, pd.DataFrame)
-        _assert_has_multiindex(data, nlevels=2, nlevels_atleast=True)
-        _assert_has_index_levels(data, index_levels=["subject", "sample"], match_atleast=True, match_order=False)
-        _assert_has_columns(data, [saliva_type, [*saliva_type, "time"]])
-    except ValidationError as e:
-        if raise_exception is True:
-            raise ValidationError(
-                "The passed object does not seem to be a SalivaRawDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
-            ) from e
-        return False
-    return True
+    return is_biomarker_raw_dataframe(data, saliva_type, raise_exception)
 
 
 def is_saliva_feature_dataframe(
