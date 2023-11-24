@@ -4,20 +4,19 @@ from typing import Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-
 from biopsykit.io.io import _apply_index_cols
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns
 from biopsykit.utils._types import path_t
 from biopsykit.utils.datatype_helper import (
+    BiomarkerRawDataFrame,
     SalivaRawDataFrame,
     SubjectConditionDataFrame,
+    _BiomarkerRawDataFrame,
     _SalivaRawDataFrame,
     _SubjectConditionDataFrame,
+    is_biomarker_raw_dataframe,
     is_saliva_raw_dataframe,
     is_subject_condition_dataframe,
-    BiomarkerRawDataFrame,
-    _BiomarkerRawDataFrame,
-    is_biomarker_raw_dataframe,
 )
 
 __all__ = ["load_saliva_plate", "save_saliva", "load_saliva_wide_format", "load_biomarker_results"]
@@ -105,8 +104,7 @@ def load_saliva_plate(
         if imported data can not be parsed to a SalivaRawDataFrame
 
     """
-
-    if regex_str == None:
+    if regex_str is None:
         regex_str = r"(Vp\d+) (S\d)"
 
     return _SalivaRawDataFrame(
@@ -272,10 +270,10 @@ def load_biomarker_results(
     condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
     **kwargs,
 ) -> BiomarkerRawDataFrame:
-    """Load biomarker results from Excel file.
+    r"""Load biomarker results from Excel file.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     file_path: :class:`~pathlib.Path` or str
         path to file
     dbs_type: str, optional
@@ -288,7 +286,7 @@ def load_biomarker_results(
         names of the extracted ID column names. ``None`` to use the default column names (['subject', 'day', 'sample'])
     regex_str: str, optional
         regular expression to extract subject, day, and sample ID from sample ID column.
-        ``None`` to use the default regular expression ``r"(VP\d+)-(T\w)-(B\w)"``.
+        ``None`` to use the default regular expression ``r"(VP\\d+)-(T\\w)-(B\\w)"``.
     sample_times: list of int, optional
         times at which samples were collected or ``None`` if no sample times should be specified.
         Default: ``None``
@@ -309,7 +307,6 @@ def load_biomarker_results(
     :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no Excel file
     """
-
     # ensure pathlib
     file_path = Path(file_path)
     _assert_file_extension(file_path, (".xls", ".xlsx"))
@@ -363,7 +360,7 @@ def load_biomarker_results(
 
 def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_index_cols: Sequence[str]):
     if condition_col is not None:
-        index_cols = [condition_col] + index_cols
+        index_cols = [condition_col, *index_cols]
 
     if additional_index_cols is None:
         additional_index_cols = []
@@ -470,13 +467,12 @@ def _get_id_columns(id_col_names: Sequence[str], extracted_cols: pd.DataFrame):
         id_col_names = ["subject", "sample"]
         if len(extracted_cols.columns) == 3:
             id_col_names = ["subject", "day", "sample"]
-    else:
-        if len(id_col_names) != len(extracted_cols.columns):
-            raise ValueError(
-                "Number of 'id_col_names' must match length of extracted index columns! Expected {}, got {}.".format(
-                    len(extracted_cols), len(id_col_names)
-                )
+    elif len(id_col_names) != len(extracted_cols.columns):
+        raise ValueError(
+            "Number of 'id_col_names' must match length of extracted index columns! Expected {}, got {}.".format(
+                len(extracted_cols), len(id_col_names)
             )
+        )
 
     return id_col_names
 

@@ -1017,7 +1017,7 @@ def is_biomarker_raw_dataframe(
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_multiindex(data, nlevels=2, nlevels_atleast=True)
         _assert_has_index_levels(data, index_levels=["subject", "sample"], match_atleast=True, match_order=False)
-        _assert_has_columns(data, [biomarker_type, biomarker_type + ["time"]])
+        _assert_has_columns(data, [biomarker_type, [*biomarker_type, "time"]])
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(

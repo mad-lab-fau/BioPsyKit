@@ -1,6 +1,6 @@
 """Module wrapping biopsykit.io.biomarker including only I/O functions for saliva data."""
 from pathlib import Path
-from typing import Optional, Union, Sequence, Dict, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 from biopsykit.io import biomarker
@@ -8,7 +8,6 @@ from biopsykit.io import biomarker
 __all__ = ["load_saliva_plate", "save_saliva", "load_saliva_wide_format"]
 
 from biopsykit.utils._types import path_t
-
 from biopsykit.utils.datatype_helper import SalivaRawDataFrame, SubjectConditionDataFrame
 
 
@@ -186,7 +185,7 @@ def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_in
 
 
 def _read_dataframe(file_path: Path, **kwargs):
-    return biomarker._read_dataframe(file_path)
+    return biomarker._read_dataframe(file_path, **kwargs)
 
 
 def _check_num_samples(num_samples: int, num_subjects: int):
