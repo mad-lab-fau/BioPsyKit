@@ -243,7 +243,7 @@ def _merge_nested_dicts(dict1: Dict, dict2: Dict) -> Dict:
             for d in list_of_dicts:
                 for k, v in d.items():
                     # Use set to avoid duplicates, then convert it back to a list
-                    merged_dict[k] = list(set(merged_dict.get(k, []) + v))
+                    merged_dict[k] = list(set(merged_dict.get(k, []) + list(v)))
 
             # Convert the merged result back to dictionaries
             result = [dict(merged_dict)]
