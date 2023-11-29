@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 0.10.0 - Nov 28, 2023
+### Changes
+- `biopsykit.classification.model_selection.SklearnPipelinePermuter`:
+  - renamed method `best_pipeline` to `best_hyperparameter_pipeline`. **WARNING: This is a breaking change!**
+  - added new method to fit classification pipelines and save intermediate results to disk 
+    (`fit_and_save_intermediate`).
+  - all arguments passed to `fit` and `fit_and_save_intermediate` (except for `X` and `y`) are from now on keyword-only
+    arguments to avoid confusion. **WARNING: This is a breaking change!**
+  - `merge_permuter_instances` is now a class method that accepts a list of `SklearnPipelinePermuter` instances or a 
+    list of file paths as argument instead of a method that merges one `SklearnPipelinePermuter` instance with the 
+    current instance. **WARNING: This is a breaking change!**
+  - added new method `update_permuter` to update an `SklearnPipelinePermuter` instance with new model and parameter 
+    dictionaries that can then be used to fit new pipeline permutations.
+    
+
 ## Version 0.9.0 - Apr 25, 2023
 ### Changes
 - removed `biopsykit.carwatch_logs` module for processing CARWatch log data (moved to own [`carwatch`](https://github.com/mad-lab-fau/carwatch) package)

@@ -237,6 +237,17 @@ def _merge_nested_dicts(dict1: Dict, dict2: Dict) -> Dict:
             # check if value is list
         elif isinstance(value, list) and key in dict1:
             dict1[key] = value if key not in dict1 else dict1[key] + value
+            list_of_dicts = deepcopy(dict1[key])
+            merged_dict = {}
+
+            for d in list_of_dicts:
+                for k, v in d.items():
+                    # Use set to avoid duplicates, then convert it back to a list
+                    merged_dict[k] = list(set(merged_dict.get(k, []) + v))
+
+            # Convert the merged result back to dictionaries
+            result = [dict(merged_dict)]
+            dict1[key] = result
         elif key not in dict1:
             dict1[key] = value
     return dict1

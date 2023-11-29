@@ -15,13 +15,14 @@ import sklearn.metrics
 from biopsykit.classification.model_selection import nested_cv_param_search
 from biopsykit.classification.utils import _PipelineWrapper, merge_nested_dicts
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
-from biopsykit.utils._types import T, path_t, str_t
+from biopsykit.utils._types import path_t, str_t
 from joblib import Memory
 from numpy.random import RandomState
 from sklearn.base import BaseEstimator, clone
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
+from typing_extensions import Self
 
 __all__ = ["SklearnPipelinePermuter"]
 
@@ -65,7 +66,6 @@ class SklearnPipelinePermuter:
         param_dict: Optional[Dict[str, Optional[Union[Sequence[Dict[str, Any]], Dict[str, Any]]]]] = None,
         hyper_search_dict: Optional[Dict[str, Dict[str, Any]]] = None,
         random_state: Optional[int] = None,
-        **kwargs,
     ):
         """Class for systematically evaluating different sklearn pipeline combinations.
 
@@ -194,14 +194,15 @@ class SklearnPipelinePermuter:
 
         self._results_set: bool = False
 
-        if kwargs.get("score_summary") is not None:
-            self.results = kwargs.get("score_summary")
-            return
-
         if model_dict is None and param_dict is None:
             # create empty instance
             return
 
+        self.random_state = RandomState(random_state)
+
+        self._set_permuter_params(model_dict, param_dict, hyper_search_dict)
+
+    def _set_permuter_params(self, model_dict, param_dict, hyper_search_dict):
         self._check_missing_params(model_dict, param_dict)
 
         if hyper_search_dict is None:
@@ -221,12 +222,20 @@ class SklearnPipelinePermuter:
             if isinstance(v, dict):
                 param_dict[k] = [v]
 
-        self.random_state = RandomState(random_state)
-
         model_dict = deepcopy(model_dict)
         self.models = self._initialize_models(model_dict)
         self.params = param_dict
         self.model_combinations = model_combinations
+
+    def _initialize_models(self, model_dict: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+        if self.random_state is None:
+            return model_dict
+        for _k, v in model_dict.items():
+            # add fixed random state to each estimator if it has a random_state parameter
+            for estimator in v.values():
+                if hasattr(estimator, "random_state"):
+                    estimator.random_state = self.random_state
+        return model_dict
 
     @property
     def results(self):
@@ -251,7 +260,7 @@ class SklearnPipelinePermuter:
         self._results = results
 
     @classmethod
-    def from_csv(cls: T, file_path: path_t, num_pipeline_steps: Optional[int] = 3) -> T:
+    def from_csv(cls, file_path: path_t, num_pipeline_steps: Optional[int] = 3) -> Self:
         """Create a new ``SklearnPipelinePermute`` instance from a csv file with exported results from parameter search.
 
         Parameters
@@ -274,12 +283,15 @@ class SklearnPipelinePermuter:
         _assert_file_extension(file_path, ".csv")
         score_summary = pd.read_csv(file_path)
         score_summary = score_summary.set_index(list(score_summary.columns)[: num_pipeline_steps + 2])
-        return cls(score_summary=score_summary)
+        pipeline_permuter = SklearnPipelinePermuter()
+        pipeline_permuter.results = score_summary
+        return pipeline_permuter
 
     def fit(
         self,
         X: np.ndarray,  # noqa: N803
         y: np.ndarray,
+        *,
         outer_cv: BaseCrossValidator,
         inner_cv: BaseCrossValidator,
         scoring: Optional[str_t] = None,
@@ -313,6 +325,21 @@ class SklearnPipelinePermuter:
             :class:`~sklearn.model_selection.RandomizedSearchCV`).
 
         """
+        return self._fit(X=X, y=y, outer_cv=outer_cv, inner_cv=inner_cv, scoring=scoring, use_cache=use_cache, **kwargs)
+
+    def _fit(  # noqa: PLR0912, C901
+        self,
+        *,
+        X: np.ndarray,  # noqa: N803
+        y: np.ndarray,
+        outer_cv: BaseCrossValidator,
+        inner_cv: BaseCrossValidator,
+        save_intermediate: Optional[bool] = False,
+        file_path: Optional[path_t] = None,
+        scoring: Optional[str_t] = None,
+        use_cache: Optional[bool] = True,
+        **kwargs,
+    ):
         self.results = None
 
         if len(self.model_combinations) == 0:
@@ -337,8 +364,9 @@ class SklearnPipelinePermuter:
             refit = scoring
         self.refit = refit
 
-        for model_combination in tqdm(self.model_combinations):
+        for model_combination in tqdm(self.model_combinations, desc="Pipeline Combinations"):
             if model_combination in self.param_searches:
+                print(f"Skipping {model_combination} since this combination was already fitted!")
                 # continue if we already tried this combination
                 continue
 
@@ -355,16 +383,18 @@ class SklearnPipelinePermuter:
             ]
             pipeline_params = [{k: v for x in param for k, v in x.items()} for param in pipeline_params]
 
-            print(
-                f"### Running hyperparameter search for pipeline: "
-                f"{model_combination} with {len(pipeline_params)} parameter grid(s):"
-            )
+            if kwargs["verbose"] >= 1:
+                print(
+                    f"### Running hyperparameter search for pipeline: "
+                    f"{model_combination} with {len(pipeline_params)} parameter grid(s):"
+                )
 
             for j, param_dict in enumerate(pipeline_params):
                 hyper_search_params = self.hyper_search_dict[model_combination[-1][1]]
                 model_cls = [(step, clone(self.models[step][m])) for step, m in model_combination]
                 pipeline = Pipeline(model_cls, memory=memory)
-                print(f"Parameter grid #{j} ({hyper_search_params}): {param_dict}")
+                if kwargs["verbose"] >= 1:
+                    print(f"Parameter grid #{j} ({hyper_search_params}): {param_dict}")
 
                 result_dict = nested_cv_param_search(
                     X,
@@ -380,13 +410,73 @@ class SklearnPipelinePermuter:
                 )
 
                 self.param_searches[model_combination] = result_dict
+                if kwargs["verbose"] >= 1:
+                    print("")
+
+            if save_intermediate:
+                # Save intermediate results to file
+                self.to_pickle(file_path)
+            if kwargs["verbose"] >= 1:
                 print("")
-            print("")
 
         if use_cache:
             # Delete the temporary cache before exiting
             memory.clear(warn=False)
             rmtree(location)
+
+    def fit_and_save_intermediate(
+        self,
+        X: np.ndarray,  # noqa: N803
+        y: np.ndarray,
+        *,
+        outer_cv: BaseCrossValidator,
+        inner_cv: BaseCrossValidator,
+        file_path: path_t,
+        scoring: Optional[str_t] = None,
+        use_cache: Optional[bool] = True,
+        **kwargs,
+    ):
+        """Run fit for all pipeline combinations and sets of parameters and save intermediate results to file.
+
+        This function calls :func:`~biopsykit.classification.model_selection.nested_cv_param_search` for all
+        Pipeline combinations and stores the results in the ``param_searches`` attribute. After each model combination,
+        the results are saved to a pickle file.
+
+        Parameters
+        ----------
+        X : array-like of shape (`n_samples`, `n_features`)
+            Training vector, where `n_samples` is the number of samples and `n_features` is the number of features.
+        y : array-like of shape (`n_samples`, `n_output`) or (`n_samples`,)
+            Target (i.e., class labels) relative to X for classification or regression.
+        outer_cv : `CV splitter`_
+            Cross-validation object determining the cross-validation splitting strategy of the outer cross-validation.
+        inner_cv : `CV splitter`_
+            Cross-validation object determining the cross-validation splitting strategy of the hyperparameter search.
+        file_path : :class:`pathlib.Path` or str
+            path to pickle file
+        scoring : str, optional
+            A str specifying the scoring metric to use for evaluation.
+        use_cache : bool, optional
+            ``True`` to cache fitted transformer instances of the pipeline in a caching directory
+            (can be provided by the additional parameter ``cachedir_name``), ``False`` otherwise. Default: ``True``
+        **kwargs :
+            Additional arguments that are passed to
+            :func:`~biopsykit.classification.model_selection.nested_cv_parameter_search` and the hyperparameter search
+            class instance (e.g., :class:`~sklearn.model_selection.GridSearchCV` or
+            :class:`~sklearn.model_selection.RandomizedSearchCV`).
+
+        """
+        return self._fit(
+            X=X,
+            y=y,
+            outer_cv=outer_cv,
+            inner_cv=inner_cv,
+            save_intermediate=True,
+            file_path=file_path,
+            scoring=scoring,
+            use_cache=use_cache,
+            **kwargs,
+        )
 
     @functools.lru_cache(maxsize=5)  # noqa: B019
     def pipeline_score_results(self) -> pd.DataFrame:
@@ -435,63 +525,12 @@ class SklearnPipelinePermuter:
         self.results = df_summary.sort_index().sort_index(axis=1)
         return self.results
 
-    def export_pipeline_score_results(self, file_path: path_t) -> None:
-        """Export pipeline score results as csv file.
-
-        Parameters
-        ----------
-        file_path : :class:`~pathlib.Path` or str
-            file path to export
-
-        """
-        file_path = Path(file_path)
-        _assert_file_extension(file_path, ".csv")
-        self.results.to_csv(file_path)
-
-    @functools.lru_cache(maxsize=5)  # noqa: B019
-    def mean_pipeline_score_results(self) -> pd.DataFrame:
-        """Compute mean score results for each pipeline combination.
-
-        Returns
-        -------
-        :class:`~pandas.DataFrame`
-            dataframe with mean score results for each pipeline combination and each parameter combination,
-            sorted by the highest mean score.
-
-        .. note ::
-            The "mean_test_xx" columns
-
-        """
-        score_results = self.pipeline_score_results()
-        score_summary_mean = (
-            score_results.groupby(score_results.index.names[:-1])
-            .agg(["mean", "std"])
-            .sort_values(by=(f"mean_test_{self.refit}", "mean"), ascending=False)
-        )
-        return score_summary_mean
-
-    def best_pipeline(self) -> pd.DataFrame:
-        """Return the evaluation results for the `overall best pipeline`.
-
-        The `overall best pipeline` is the pipeline with the parameter combination that achieved the highest mean
-        score over all outer folds.
-
-        Returns
-        -------
-        :class:`~pandas.DataFrame`
-            dataframe with the evaluation results of the best pipeline over all outer folds
-
-        """
-        score_summary = self.pipeline_score_results()
-        score_summary_mean = self.mean_pipeline_score_results()
-        return score_summary.loc[score_summary_mean.index[0]].dropna(how="all", axis=1)
-
     def metric_summary(
         self, additional_metrics: Optional[str_t] = None, pos_label: Optional[str] = None
     ) -> pd.DataFrame:
-        """Return a summary with all performance metrics for the `best estimator` of each pipeline combination.
+        """Return summary with all performance metrics for the `best-performing estimator` of each pipeline combination.
 
-        The `best estimator` for each pipeline combination is the best estimator that
+        The `best-performing estimator` for each pipeline combination is the `best_estimator_` that
         :class:`~sklearn.model_selection.GridSearchCV` returns for each outer fold, i.e. the pipeline which yielded
         the highest average test score (over all inner folds).
 
@@ -556,6 +595,19 @@ class SklearnPipelinePermuter:
 
         return metric_summary
 
+    def export_pipeline_score_results(self, file_path: path_t) -> None:
+        """Export pipeline score results as csv file.
+
+        Parameters
+        ----------
+        file_path : :class:`~pathlib.Path` or str
+            file path to export
+
+        """
+        file_path = Path(file_path)
+        _assert_file_extension(file_path, ".csv")
+        self.results.to_csv(file_path)
+
     def export_metric_summary(self, file_path: path_t) -> None:
         """Export performance metric summary as csv file.
 
@@ -589,6 +641,72 @@ class SklearnPipelinePermuter:
             best_estimator_list.append(df_be)
 
         return pd.concat(best_estimator_list)
+
+    @functools.lru_cache(maxsize=5)  # noqa: B019
+    def mean_pipeline_score_results(self) -> pd.DataFrame:
+        """Compute mean score results for each pipeline combination and hyperparameter combination.
+
+        Returns
+        -------
+        :class:`~pandas.DataFrame`
+            dataframe with mean score results for each pipeline combination and each parameter combination,
+            sorted by the highest mean score.
+
+        Notes
+        -----
+        The pipeline with the highest "mean over the mean test scores" does not necessarily correspond to the
+        best-performing pipeline as returned by
+        :func:`~biopsykit.classification.model_selection.SklearnPipelinePermuter.metric_summary` or
+        :func:`~biopsykit.classification.model_selection.SklearnPipelinePermuter.best_estimator_summary` because the
+        best-performing pipelines are determined by averaging the `best_estimator` instances, as determined by
+        `scikit-learn` over all folds. Hence, all `best_estimator` instances can have a **different** set of
+        hyperparameters.
+
+        This function should only be used if you want to gain a deeper understanding of the different hyperparameter
+        combinations and their performance. If you want to get the best-performing pipeline(s) to report in a paper,
+        use :func:`~biopsykit.classification.model_selection.SklearnPipelinePermuter.metric_summary` or
+        :func:`~biopsykit.classification.model_selection.SklearnPipelinePermuter.best_estimator_summary` instead.
+
+        """
+        score_results = self.pipeline_score_results()
+        score_summary_mean = (
+            score_results.groupby(score_results.index.names[:-1])
+            .agg(["mean", "std"])
+            .sort_values(by=(f"mean_test_{self.refit}", "mean"), ascending=False)
+        )
+        return score_summary_mean
+
+    def best_hyperparameter_pipeline(self) -> pd.DataFrame:
+        """Return the evaluation results for the pipeline with the best-performing hyperparameter set.
+
+        This returns the pipeline with the **unique** hyperparameter combination that achieved
+        the highest mean score over all outer folds.
+
+        Notes
+        -----
+        This `best pipeline` does not necessarily correspond to the overall best-performing pipeline as returned by
+        :func:`~biopsykit.classification.model_selection.SklearnPipelinePermuter.metric_summary` or
+        :func:`~biopsykit.classification.model_selection.SklearnPipelinePermuter.best_estimator_summary` because the
+        best-performing pipelines are determined by averaging the `best_estimator` instances, as determined by
+        `scikit-learn` over all folds. Hence, all `best_estimator` instances can have a **different** set of
+        hyperparameters. This function returns the pipeline with the **unique** hyperparameter combination that
+        achieved the highest mean score over all outer folds.
+
+        This function should only be used if you want to gain a deeper understanding of the different hyperparameter
+        combinations and their performance. If you want to get the best-performing pipeline(s) to report in a paper,
+        use :func:`~biopsykit.classification.model_selection.SklearnPipelinePermuter.metric_summary` or
+        :func:`~biopsykit.classification.model_selection.SklearnPipelinePermuter.best_estimator_summary` instead.
+
+
+        Returns
+        -------
+        :class:`~pandas.DataFrame`
+            dataframe with the evaluation results of the best pipeline over all outer folds
+
+        """
+        score_summary = self.pipeline_score_results()
+        score_summary_mean = self.mean_pipeline_score_results()
+        return score_summary.loc[score_summary_mean.index[0]].dropna(how="all", axis=1)
 
     @staticmethod
     def _check_missing_params(
@@ -747,16 +865,61 @@ class SklearnPipelinePermuter:
         with file_path.open(mode="rb") as f:
             return pickle.load(f)
 
-    def merge_permuter_instances(self, permuter: "SklearnPipelinePermuter") -> "SklearnPipelinePermuter":
-        """Merge two :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter` instances.
-
-        This function first performs a deep copy of the current instance and then merges all attributes of the given
-        ``permuter`` instance with the copy. The ``permuter`` instance passed to this function is not modified.
+    def update_permuter(
+        self,
+        model_dict: Optional[Dict[str, Dict[str, BaseEstimator]]] = None,
+        param_dict: Optional[Dict[str, Any]] = None,
+        hyper_search_dict: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> Self:
+        """Update the ``SklearnPipelinePermuter`` instance with new model and parameter dictionaries.
 
         Parameters
         ----------
-        permuter : :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter`
-            ``SklearnPipelinePermuter`` instance to merge with the current instance
+        model_dict : dict, optional
+            dictionary with model classes for each pipeline step
+        param_dict : dict, optional
+            dictionary with parameter grids for each pipeline step
+        hyper_search_dict : dict, optional
+            dictionary with hyperparameter search settings for each estimator
+
+        Returns
+        -------
+        :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter`
+            updated ``SklearnPipelinePermuter`` instance
+
+        """
+        permuter = SklearnPipelinePermuter(model_dict, param_dict, hyper_search_dict)
+        return SklearnPipelinePermuter._merge_permuter_params(self, permuter)
+
+    @classmethod
+    def _merge_permuter_params(cls, permuter_01: Self, permuter_02: Self):
+        # merge model dicts
+        permuter_01.models = merge_nested_dicts(permuter_01.models, permuter_02.models)
+        # merge hyperparameter search dicts
+        permuter_01.hyper_search_dict = merge_nested_dicts(permuter_01.hyper_search_dict, permuter_02.hyper_search_dict)
+
+        # merge hyperparameter dicts
+        permuter_01.param_searches = merge_nested_dicts(permuter_01.param_searches, permuter_02.param_searches)
+        permuter_01.params = merge_nested_dicts(permuter_01.params, permuter_02.params)
+
+        # merge model combinations
+        permuter_01.model_combinations += permuter_02.model_combinations
+        permuter_01.model_combinations = list(set(permuter_01.model_combinations))
+
+        return permuter_01
+
+    @classmethod
+    def merge_permuter_instances(cls, permuter: Union[Sequence[Self], Sequence[path_t]]) -> Self:
+        """Merge two (or more) :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter` instances.
+
+        This function expects at least two ``SklearnPipelinePermuter`` instances to merge. The function first performs
+        a deep copy of the first instance and then merges all attributes of the remaining ``permuter`` instance with
+        the copy. The ``permuter`` instances passed to this function are not modified.
+
+        Parameters
+        ----------
+        permuter : list of :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter` instances or
+                    list of file paths to pickled `SklearnPipelinePermuter` instances
 
         Returns
         -------
@@ -764,42 +927,40 @@ class SklearnPipelinePermuter:
             merged ``SklearnPipelinePermuter`` instance
 
         """
-        if self.scoring != permuter.scoring:
-            raise ValueError(
-                f"Cannot merge permuter instances with different scoring functions: "
-                f"{self.scoring} vs. {permuter.scoring}"
+        # ensure that permuter contains at least two instances
+        if len(permuter) < 2:
+            raise ValueError("At least two SklearnPipelinePermuter instances must be passed to this function.")
+
+        if all(isinstance(p, (str, Path)) for p in permuter):
+            permuter = [cls.from_pickle(p) for p in permuter]
+
+        # make deep copy of first instance
+        base_permuter = deepcopy(permuter[0])
+
+        for p in permuter[1:]:
+            if base_permuter.scoring != p.scoring:
+                raise ValueError(
+                    f"Cannot merge permuter instances with different scoring functions: "
+                    f"{base_permuter.scoring} vs. {p.scoring}"
+                )
+            if base_permuter.refit != p.refit:
+                raise ValueError(
+                    f"Cannot merge permuter instances with different refit options: {base_permuter.refit} vs. {p.refit}"
+                )
+
+            SklearnPipelinePermuter._merge_permuter_params(base_permuter, p)
+
+            # merge results dataframes
+            results_concat = pd.concat([base_permuter.results, p.results], axis=0)
+            param_cols = list(results_concat.filter(like="param_").columns)
+            # drop duplicate parameter combinations in results
+            results_concat = results_concat.reset_index("outer_fold").drop_duplicates(
+                subset=["outer_fold", *param_cols]
             )
-        if self.refit != permuter.refit:
-            raise ValueError(
-                f"Cannot merge permuter instances with different refit options: {self.refit} vs. {permuter.refit}"
-            )
+            results_concat = results_concat.set_index("outer_fold", append=True)
+            base_permuter.results = results_concat
 
-        # make deep copy of current instance
-        permuter_copy = deepcopy(self)
-
-        # merge model dicts
-        permuter_copy.models = merge_nested_dicts(permuter_copy.models, permuter.models)
-        # merge hyperparameter search dicts
-        permuter_copy.hyper_search_dict = merge_nested_dicts(
-            permuter_copy.hyper_search_dict, permuter.hyper_search_dict
-        )
-        # merge hyperparameter dicts
-        permuter_copy.param_searches = merge_nested_dicts(permuter_copy.param_searches, permuter.param_searches)
-        permuter_copy.params = merge_nested_dicts(permuter_copy.params, permuter.params)
-
-        # merge results dataframes
-        results_concat = pd.concat([permuter_copy.results, permuter.results], axis=0)
-        param_cols = list(results_concat.filter(like="param_").columns)
-        # drop duplicate parameter combinations in results
-        results_concat = results_concat.reset_index("outer_fold").drop_duplicates(subset=["outer_fold", *param_cols])
-        results_concat = results_concat.set_index("outer_fold", append=True)
-        permuter_copy.results = results_concat
-
-        # merge model combinations
-        permuter_copy.model_combinations += permuter.model_combinations
-        permuter_copy.model_combinations = list(set(permuter_copy.model_combinations))
-
-        return permuter_copy
+        return base_permuter
 
     @staticmethod
     def _apply_score(row: pd.Series, score_func, pos_label: str):
@@ -874,16 +1035,6 @@ class SklearnPipelinePermuter:
         metric_summary = metric_summary[cols]
 
         return metric_summary
-
-    def _initialize_models(self, model_dict: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-        if self.random_state is None:
-            return model_dict
-        for _k, v in model_dict.items():
-            # add fixed random state to each estimator if it has a random_state parameter
-            for estimator in v.values():
-                if hasattr(estimator, "random_state"):
-                    estimator.random_state = self.random_state
-        return model_dict
 
     @staticmethod
     def _highlight_best(metric_summary, styler, highlight_best, metric_summary_export):

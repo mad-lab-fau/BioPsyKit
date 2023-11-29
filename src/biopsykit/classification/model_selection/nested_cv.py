@@ -145,6 +145,7 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
             results_dict["conf_matrix"].append(confusion_matrix(y_test, cv_obj.predict(x_test), normalize=None))
         except ValueError as e:
             if "Classification metrics can't handle a mix of multiclass and continuous targets" in e.args[0]:
+                # TODO: add "error_handling" parameter to allow for different error handling strategies
                 warnings.warn("Cannot compute confusion matrix for regression tasks.")
 
     return results_dict

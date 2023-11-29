@@ -224,6 +224,7 @@ multi_feature_boxplot(
 `BioPsyKit` implements methods for simplified and systematic evaluation of different machine learning pipelines.
 
 #### Quick Example
+
 ```python
 # Utils
 from sklearn.datasets import load_breast_cancer
@@ -245,34 +246,30 @@ y = breast_cancer.target
 
 # specify estimator combinations
 model_dict = {
-    "scaler": {
-        "StandardScaler": StandardScaler(),
-        "MinMaxScaler": MinMaxScaler()
-    },
-    "reduce_dim": {
-        "SelectKBest": SelectKBest(),
-    },
-    "clf" : {
-        "KNeighborsClassifier": KNeighborsClassifier(),
-        "DecisionTreeClassifier": DecisionTreeClassifier(),
-    }
+  "scaler": {
+    "StandardScaler": StandardScaler(),
+    "MinMaxScaler": MinMaxScaler()
+  },
+  "reduce_dim": {
+    "SelectKBest": SelectKBest(),
+  },
+  "clf": {
+    "KNeighborsClassifier": KNeighborsClassifier(),
+    "DecisionTreeClassifier": DecisionTreeClassifier(),
+  }
 }
 # specify hyperparameter for grid search
 params_dict = {
-    "StandardScaler": None,
-    "MinMaxScaler": None,
-    "SelectKBest": { "k": [2, 4, "all"] },
-    "KNeighborsClassifier": { "n_neighbors": [2, 4], "weights": ["uniform", "distance"] },
-    "DecisionTreeClassifier": {"criterion": ['gini', 'entropy'], "max_depth": [2, 4] },
+  "StandardScaler": None,
+  "MinMaxScaler": None,
+  "SelectKBest": {"k": [2, 4, "all"]},
+  "KNeighborsClassifier": {"n_neighbors": [2, 4], "weights": ["uniform", "distance"]},
+  "DecisionTreeClassifier": {"criterion": ['gini', 'entropy'], "max_depth": [2, 4]},
 }
 
 pipeline_permuter = SklearnPipelinePermuter(model_dict, params_dict)
 pipeline_permuter.fit(X, y, outer_cv=KFold(5), inner_cv=KFold(5))
 
-# print mean performance scores for each pipeline and parameter combinations, averaged over all outer CV folds
-print(pipeline_permuter.mean_pipeline_score_results())
-# print overall best-performing pipeline and the performances over all outer CV folds
-print(pipeline_permuter.best_pipeline())
 # print summary of all relevant metrics for the best pipeline for each evaluated pipeline combination
 print(pipeline_permuter.metric_summary())
 ```
