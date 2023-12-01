@@ -537,7 +537,7 @@ class SklearnPipelinePermuter:
         Parameters
         ----------
         additional_metrics : str or list of str, optional
-            additional metrics to compute. Default: ``None``. Available metrics can be found in sckit-learn's
+            additional metrics to compute. Default: ``None``. Available metrics can be found in scikit-learn's
             `metrics and scoring <https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter>`_
             module.
         pos_label : str, optional
@@ -562,15 +562,16 @@ class SklearnPipelinePermuter:
             train_indices = np.array(param_value["train_indices"], dtype="object")
             test_indices = np.array(param_value["test_indices"], dtype="object")
             df_metric = pd.DataFrame(param_dict, index=[0])
+
             df_metric["conf_matrix"] = [list(conf_matrix.flatten())]
             df_metric["conf_matrix_folds"] = [[cm.flatten() for cm in param_value["conf_matrix"]]]
-            df_metric["true_labels"] = [true_labels.flatten()]
+            df_metric["true_labels"] = [np.concatenate(true_labels)]
             df_metric["true_labels_folds"] = [true_labels]
-            df_metric["predicted_labels"] = [predicted_labels.flatten()]
+            df_metric["predicted_labels"] = [np.concatenate(predicted_labels)]
             df_metric["predicted_labels_folds"] = [predicted_labels]
-            df_metric["train_indices"] = [train_indices.flatten()]
+            df_metric["train_indices"] = [np.concatenate(train_indices)]
             df_metric["train_indices_folds"] = [train_indices]
-            df_metric["test_indices"] = [test_indices.flatten()]
+            df_metric["test_indices"] = [np.concatenate(test_indices)]
             df_metric["test_indices_folds"] = [test_indices]
 
             scoring = self.scoring
