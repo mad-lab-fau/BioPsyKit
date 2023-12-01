@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.10.1 - Dec 01, 2023
+### Bugfixes
+- `biopsykit.classification.model_selection.SklearnPipelinePermuter`: fixed bug that lead to the incorrect flattening 
+  of numpy arrays not due to a newer numpy version 
+
 ## Version 0.10.0 - Nov 28, 2023
 ### Changes
 - `biopsykit.classification.model_selection.SklearnPipelinePermuter`:
