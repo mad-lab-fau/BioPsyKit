@@ -391,7 +391,11 @@ class SklearnPipelinePermuter:
 
             for j, param_dict in enumerate(pipeline_params):
                 hyper_search_params = self.hyper_search_dict[model_combination[-1][1]]
-                model_cls = [(step, clone(self.models[step][m])) for step, m in model_combination]
+                model_cls = [(step, self.models[step][m]) for step, m in model_combination]
+                for i in range(len(model_cls)):
+                    if isinstance(model_cls[i][1], BaseEstimator):
+                        model_cls[i] = (model_cls[i][0], clone(model_cls[i][1]))
+
                 pipeline = Pipeline(model_cls, memory=memory)
                 if kwargs["verbose"] >= 1:
                     print(f"Parameter grid #{j} ({hyper_search_params}): {param_dict}")
