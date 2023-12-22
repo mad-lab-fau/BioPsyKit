@@ -1,6 +1,6 @@
 """Module for processing ECG data."""
 import warnings
-from typing import Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 
 import neurokit2 as nk
 import numpy as np
@@ -205,6 +205,7 @@ class EcgProcessor(_BaseProcessor):
         title: Optional[str] = None,
         method: Optional[str] = None,
         errors: Optional[ERROR_HANDLING] = "raise",
+        **kwargs
     ) -> None:
         """Process ECG signal.
 
@@ -285,9 +286,17 @@ class EcgProcessor(_BaseProcessor):
         if method is None:
             method = "neurokit"
 
+        if kwargs is None:
+            clean_method = method
+            peak_method = method
+        else:
+            clean_method = kwargs.get("clean_method", method)
+            peak_method = kwargs.get("peak_method", method)
+
+
         for name, df in tqdm(self.data.items(), desc=title):
             try:
-                ecg_result, rpeaks = self._ecg_process(df, method=method, phase=name)
+                ecg_result, rpeaks = self._ecg_process(df, clean_method=clean_method, peak_method=peak_method, phase=name)
                 ecg_result, rpeaks = self.correct_outlier(
                     ecg_signal=ecg_result,
                     rpeaks=rpeaks,
@@ -319,7 +328,7 @@ class EcgProcessor(_BaseProcessor):
             self.rpeaks[name] = rpeaks
 
     def _ecg_process(
-        self, data: EcgRawDataFrame, method: Optional[str] = None, phase: Optional[str] = None
+        self, data: EcgRawDataFrame, clean_method: Optional[str] = None, peak_method: Optional[str] = None, phase: Optional[str] = None
     ) -> Tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Private method for ECG processing.
 
@@ -344,15 +353,14 @@ class EcgProcessor(_BaseProcessor):
         # get numpy
         ecg_signal = data["ecg"].to_numpy()
         # clean (i.e. filter) the ECG signal using the specified method
-        ecg_cleaned = nk.ecg_clean(ecg_signal, sampling_rate=int(self.sampling_rate), method=method)
+        ecg_cleaned = nk.ecg_clean(ecg_signal, sampling_rate=int(self.sampling_rate), method=clean_method)
 
         # find peaks using the specified method
         # instant_peaks: array indicating where detected R peaks are in the raw ECG signal
         # rpeak_index array containing the indices of detected R peaks
-        instant_peaks, rpeak_idx = nk.ecg_peaks(ecg_cleaned, sampling_rate=int(self.sampling_rate), method=method)
+        instant_peaks, rpeak_idx = nk.ecg_peaks(ecg_cleaned, sampling_rate=int(self.sampling_rate), method=peak_method)
         rpeak_idx = rpeak_idx["ECG_R_Peaks"]
         instant_peaks = np.squeeze(instant_peaks.values)
-
         if len(rpeak_idx) <= 3:
             raise EcgProcessingError(f"Too few R peaks detected for phase '{phase}'. Please check your ECG signal.")
 
@@ -1173,6 +1181,8 @@ def _correct_outlier_correlation(rpeaks: pd.DataFrame, bool_mask: np.array, corr
         )
     # signal outlier
     # segment individual heart beats
+    # print(rpeaks["R_Peak_Idx"])
+    # print(ecg_signal["ECG_Clean"].reset_index(drop=True))
     heartbeats = nk.ecg_segment(ecg_signal["ECG_Clean"], rpeaks["R_Peak_Idx"], int(sampling_rate))
     heartbeats = nk.epochs_to_df(heartbeats)
     heartbeats_pivoted = heartbeats.pivot(index="Time", columns="Label", values="Signal")
