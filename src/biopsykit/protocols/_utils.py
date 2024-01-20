@@ -18,13 +18,15 @@ def _get_sample_times(
 
     if isinstance(sample_times, dict):
         for key in sample_times:
-            sample_times[key] = _get_sample_times(saliva_data[key], sample_times[key], test_times)
+            sample_times[key] = _get_sample_times(
+                saliva_data[key], sample_times[key], test_times, sample_times_absolute
+            )
         return sample_times
 
     if isinstance(saliva_data, dict):
         sample_times = {}
         for key in saliva_data:
-            sample_times[key] = _get_sample_times(saliva_data[key], sample_times, test_times)
+            sample_times[key] = _get_sample_times(saliva_data[key], sample_times, test_times, sample_times_absolute)
         return sample_times
 
     if sample_times is None:

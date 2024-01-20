@@ -341,6 +341,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         saliva_type: Optional[Union[str, Sequence[str]]] = None,
         sample_times: Optional[Union[Sequence[int], Dict[str, Sequence[int]]]] = None,
         test_times: Optional[Sequence[int]] = None,
+        sample_times_absolute: Optional[bool] = False,
     ):
         """Add saliva data collected during psychological protocol to ``Protocol`` instance.
 
@@ -352,13 +353,17 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             saliva type (or list of such) of saliva data. Not needed if ``saliva_data`` is a dictionary, then the
             saliva types are inferred from the dictionary keys.
         sample_times : list of int or dict, optional
-            list of sample times in minutes. Sample times are expected to be provided *relative* to the psychological
-            test in the protocol (if present). Per convention, a sample collected **directly before** was collected at
-            time point :math:`t = -1`, a sample collected **directly after** the test was collected at time point
-            :math`t = 0`.
+            list of sample times in minutes. Sample times are either expected to be provided *relative* to the
+            psychological test in the protocol (if present) or as *absolute* sample times. If passed as relative sample
+            times (``sample_times_absolute'' is ``False``), a sample collected **directly before** the test should,
+            per convention, be denoted as :math:`t = -1` while a sample collected **directly after** the test was
+            collected at time point :math`t = 0`.
         test_times : list of int, optional
             list with start and end time of psychological test in minutes. Per convention, the start of the test
             should be at time point :math:`t = 0`. ``test_times`` is also used to compute the **absolute** sample times
+        sample_times_absolute : bool, optional
+            ``True`` if sample times are provided as absolute time points or ``False`` if sample times
+            are provided as relative time points to the psychological test. Default: ``False``
 
         """
         saliva_data = deepcopy(saliva_data)
@@ -375,7 +380,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
                 sample_times = {key: sample_times for key in saliva_type}
             if not isinstance(saliva_data, dict):
                 saliva_data = {key: saliva_data for key in saliva_type}
-            self.sample_times.update(_get_sample_times(saliva_data, sample_times, self.test_times))
+            self.sample_times.update(
+                _get_sample_times(saliva_data, sample_times, self.test_times, sample_times_absolute)
+            )
             self.saliva_data.update(self._add_saliva_data(saliva_data, saliva_type, self.sample_times))
             self.saliva_types = list(self.saliva_data.keys())
 
