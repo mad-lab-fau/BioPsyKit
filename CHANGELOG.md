@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.10.2 - xxx
+### Changes
+- `BaseProtocol.add_salvia_data` now also accepts absolute saliva sample times as argument 
+  by setting `sample_times_absolute=True`.
+
 ## Version 0.10.1 - Dec 01, 2023
 ### Bugfixes
 - `biopsykit.classification.model_selection.SklearnPipelinePermuter`: fixed bug that lead to the incorrect flattening 

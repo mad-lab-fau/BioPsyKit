@@ -47,6 +47,7 @@ clf_map = {
     "StandardScaler": "Standard",
     "SelectKBest": "SkB",
     "RFE": "RFE",
+    "SelectFromModel": "SFM",
     "GaussianNB": "NB",
     "KNeighborsClassifier": "kNN",
     "DecisionTreeClassifier": "DT",
