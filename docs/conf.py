@@ -286,9 +286,6 @@ html_theme_options = {"show_toc_level": 3}
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 from pkg_resources import get_distribution
-import biopsykit as bp
-
-print("Biopsykit version: ", bp.__version__)
 
 release = get_distribution("biopsykit").version
 # for example take major/minor
