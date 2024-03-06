@@ -14,7 +14,7 @@ build:
   tools:
     python: "3.9"
   jobs:
-    post_install:
+    post_create_environment:
       - pip install poetry
-      - poetry config virtualenvs.create false
-      - poetry install -E jupyter -E mne
+    post_install:
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install -E jupyter -E mne
