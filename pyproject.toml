@@ -15,6 +15,9 @@ readme = "README.md"
 homepage = "https://github.com/mad-lab-fau/biopsykit"
 repository = "https://github.com/mad-lab-fau/biopsykit"
 license = "MIT"
+packages = [
+    { include = "biopsykit", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
