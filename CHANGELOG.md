@@ -1,9 +1,11 @@
 # Changelog
 
-## Version 0.10.2 - xxx
+## Version 0.10.2 - March 06, 2024
 ### Changes
 - `BaseProtocol.add_salvia_data` now also accepts absolute saliva sample times as argument 
   by setting `sample_times_absolute=True`.
+- `bp.protocols.plotting.saliva_plot`: removed hardcoded number of plotting colors (2) when plotting data with 
+  multiple conditions (> 2)
 
 ## Version 0.10.1 - Dec 01, 2023
 ### Bugfixes
