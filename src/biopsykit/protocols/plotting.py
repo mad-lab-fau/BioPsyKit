@@ -896,10 +896,16 @@ def _saliva_plot(
     kwargs.setdefault("style", kwargs.get("hue"))
     kwargs.setdefault("marker", "o")
 
-    if counter == 0 and len(ax.lines) == 0:
-        kwargs.setdefault("palette", _get_palette("fau", 2))
+    groups = kwargs.get("hue", None)
+    if groups is not None and groups in data.index.names:
+        num_groups = len(data.index.get_level_values(groups).unique())
     else:
-        kwargs.setdefault("palette", _get_palette("tech", 2))
+        num_groups = 2
+
+    if counter == 0 and len(ax.lines) == 0:
+        kwargs.setdefault("palette", _get_palette("fau", num_groups))
+    else:
+        kwargs.setdefault("palette", _get_palette("tech", num_groups))
         # the was already something drawn into the axis => we are using the same axis to add another feature
         ax_twin = ax.twinx()
         kwargs.update({"ax": ax_twin, "show_legend": False})
