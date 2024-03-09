@@ -17,4 +17,4 @@ build:
     post_create_environment:
       - pip install poetry
     post_install:
-      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install -E jupyter -E mne
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --all-extras
