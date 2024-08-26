@@ -118,29 +118,16 @@ class HeartBeatSegmentation(Algorithm):
             # fill the empty columns of heartbeats with the start, end, and r-peak of heartbeat_segments_new
             heartbeats = heartbeats.join(heartbeat_segments_new)
 
-            # for segment_idx in heartbeat_segments:
-            #     # extract sample number of start, end, r peak, and datetime of start from current segment
-            #     segment = heartbeat_segments[segment_idx].reset_index(drop=True)
-            #     start = segment["Index"].iloc[0]
-            #     end = segment["Index"].iloc[-1]
-            #     start_time = ecg_clean.index[start]
-            #
-            #     # fill the corresponding row of heartbeats for current segment
-            #     # (idx-1 because segments keys start with 1, but heartbeats_list should start with 0)
-            #     heartbeats["start_sample"].iloc[int(segment_idx) - 1] = start
-            #     heartbeats["end_sample"].iloc[int(segment_idx) - 1] = end
-            #     heartbeats["start_time"].iloc[int(segment_idx) - 1] = start_time
-
-        # # ensures that index is Int64Index (not RangeIndex) because some neurokit functions won't work  with RangeIndex
-        # heartbeats.index = list(heartbeats.index)
-        # heartbeats.index.name = "heartbeat_id"
-
         # check if R-peak occurs between corresponding start and end
         check = heartbeats.apply(lambda x: x["start_sample"] < x["r_peak_sample"] < x["end_sample"], axis=1)
         if len(check.loc[~check]) > 0:
             raise ValueError(
                 f"Start/end/R-peak position of heartbeat {list(check.loc[check is False].index)} could be incorrect!"
             )
+
+        # ensure that index is Int64Index (not RangeIndex) because some neurokit functions won't work  with RangeIndex
+        heartbeats.index = list(heartbeats.index)
+        heartbeats.index.name = "heartbeat_id"
 
         # ensure correct column order
         heartbeats = heartbeats[["start_time", "start_sample", "end_sample", "r_peak_sample"]]
