@@ -141,5 +141,5 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
         _assert_is_dtype(c_points, pd.DataFrame)
         _assert_has_columns(c_points, [["c_point_sample"]])
 
-        self.points_ = c_points
+        self.points_ = c_points.convert_dtypes(infer_objects=True)
         return self

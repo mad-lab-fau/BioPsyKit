@@ -20,5 +20,5 @@ class OutlierCorrectionDummy(BaseOutlierCorrection):
         sampling_rate_hz: int,
         handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
-        self.points_ = b_points.copy()
+        self.points_ = b_points.convert_dtypes(infer_objects=True)
         return self

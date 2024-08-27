@@ -76,7 +76,8 @@ class OutlierCorrectionForouzanfar2019(BaseOutlierCorrection):
         _assert_is_dtype(corrected_b_points, pd.DataFrame)
         _assert_has_columns(corrected_b_points, [["b_point_sample"]])
         # print(f"No more outliers got detected!")
-        self.points_ = corrected_b_points
+
+        self.points_ = corrected_b_points.convert_dtypes(infer_objects=True)
         return self
 
     @staticmethod

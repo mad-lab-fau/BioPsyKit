@@ -176,5 +176,5 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample"]])
 
-        self.points_ = b_points
+        self.points_ = b_points.convert_dtypes(infer_objects=True)
         return self

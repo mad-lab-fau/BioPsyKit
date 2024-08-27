@@ -42,6 +42,7 @@ class PepExtraction(Algorithm):
             heartbeat_start_time=heartbeats["start_time"],
             heartbeat_start_sample=heartbeats["start_sample"],
             heartbeat_end_sample=heartbeats["end_sample"],
+            r_peak_sample=heartbeats["r_peak_sample"],
             q_wave_onset_sample=q_wave_onset_samples["q_wave_onset_sample"],
             b_point_sample=b_point_samples["b_point_sample"],
             pep_sample=b_point_samples["b_point_sample"] - q_wave_onset_samples["q_wave_onset_sample"],
@@ -49,6 +50,8 @@ class PepExtraction(Algorithm):
         pep_results = pep_results.assign(
             pep_ms=pep_results["pep_sample"] / sampling_rate_hz * 1000,
         )
+        pep_results = pep_results.convert_dtypes(infer_objects=True)
+
         self.pep_results_ = pep_results
 
         return self
