@@ -1,9 +1,11 @@
-from typing import Union
+from typing import Union, Optional
 
 import pandas as pd
 from tpcp import Algorithm
 
 __all__ = ["BaseHeartbeatSegmentation"]
+
+from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
 
 
 class BaseHeartbeatSegmentation(Algorithm):
@@ -14,6 +16,12 @@ class BaseHeartbeatSegmentation(Algorithm):
     # result
     heartbeat_list_: pd.DataFrame
 
-    def extract(self, *, ecg: Union[pd.Series, pd.DataFrame], sampling_rate_hz: int):
+    def extract(
+        self,
+        *,
+        ecg: Union[pd.Series, pd.DataFrame],
+        sampling_rate_hz: int,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+    ):
         """Segment ECG signal into heartbeats."""
         raise NotImplementedError("Method 'extract' must be implemented in subclass.")
