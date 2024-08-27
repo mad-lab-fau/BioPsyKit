@@ -1,19 +1,23 @@
 from typing import Optional
 
-import neurokit2 as nk
+
 import pandas as pd
 from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
-from tpcp import make_action_safe
+
+from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
 
 
-class CPointExtractionKoka2022(BaseExtraction):
+__all__ = ["CPointExtractionKoka2022"]
+
+
+class CPointExtractionKoka2022(BaseCPointExtraction):
     """algorithm to extract C-points from ICG derivative signal using neurokit2s ecg_peaks() with the method koka2022."""
 
     # @make_action_safe
     def extract(
         self,
         *,
-        signal_clean: pd.DataFrame,
+        icg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
         handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",

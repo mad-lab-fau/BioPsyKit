@@ -4,13 +4,17 @@ from typing import Dict, Optional, Union
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
-from tpcp import Parameter, make_action_safe
+from tpcp import Parameter
 
+from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 from biopsykit.utils.exceptions import EventExtractionError
 
 
-class BPointExtractionArbol2017(BaseExtraction):
+__all__ = ["BPointExtractionArbol2017"]
+
+
+class BPointExtractionArbol2017(BaseBPointExtraction):
     """algorithm to extract B-point from cleaned ICG dZ/dt signal using the third derivative (see Arbol 2017)."""
 
     # input parameters
@@ -47,7 +51,7 @@ class BPointExtractionArbol2017(BaseExtraction):
     def extract(
         self,
         *,
-        signal_clean: pd.Series,
+        icg: pd.Series,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
@@ -84,14 +88,14 @@ class BPointExtractionArbol2017(BaseExtraction):
         # (but in case of wrongly detected Cs, the search window might be invalid, then no B can be found)
         heartbeats_no_b = []
 
-        signal_clean = signal_clean.squeeze()
+        icg = icg.squeeze()
 
         # search B-point for each heartbeat of the given signal
         for idx, data in heartbeats.iterrows():
             # slice signal for current heartbeat
             heartbeat_start = data["start_sample"]
             heartbeat_end = data["end_sample"]
-            heartbeat_icg_der = signal_clean.iloc[heartbeat_start:heartbeat_end]
+            heartbeat_icg_der = icg.iloc[heartbeat_start:heartbeat_end]
 
             # calculate derivatives for this heartbeat
             heartbeat_icg_2nd_der = np.gradient(heartbeat_icg_der)

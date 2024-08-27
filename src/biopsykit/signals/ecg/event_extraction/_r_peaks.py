@@ -1,19 +1,19 @@
 from typing import Optional
 
 import pandas as pd
-from tpcp import make_action_safe
 
 from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 
 
-class RPeakExtraction(BaseExtraction):
+class RPeakExtraction(BaseEcgExtraction):
     """algorithm to extract Q-wave onset based on the detection of the R-peak."""
 
     # @make_action_safe
     def extract(
         self,
-        signal_clean: pd.DataFrame,
+        ecg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
         *,

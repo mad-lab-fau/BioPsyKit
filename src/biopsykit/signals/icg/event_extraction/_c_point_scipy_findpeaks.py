@@ -3,15 +3,18 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
 from scipy import signal
-from tpcp import Parameter, make_action_safe
+from tpcp import Parameter
 
+from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 from biopsykit.utils.exceptions import EventExtractionError
 
+__all__ = ["CPointExtractionScipyFindPeaks"]
 
-class CPointExtractionScipyFindPeaks(BaseExtraction):
+
+class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
     """algorithm to extract C-points from ICG derivative signal using scipy's find_peaks function."""
 
     # input parameters
@@ -34,14 +37,14 @@ class CPointExtractionScipyFindPeaks(BaseExtraction):
     def extract(
         self,
         *,
-        signal_clean: pd.Series,
+        icg: pd.Series,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
         handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
         """Function which extracts C-points (max of most prominent peak) from given cleaned ICG derivative signal
         Args:
-            signal_clean:
+            icg:
                 cleaned ICG derivative signal
             heartbeats:
                 pd.DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
@@ -72,7 +75,7 @@ class CPointExtractionScipyFindPeaks(BaseExtraction):
             heartbeat_start = data["start_sample"]
             heartbeat_end = data["end_sample"]
 
-            heartbeat_icg_der = signal_clean.iloc[heartbeat_start:heartbeat_end].squeeze()
+            heartbeat_icg_der = icg.iloc[heartbeat_start:heartbeat_end].squeeze()
 
             # calculate R-peak position relative to start of current heartbeat
             heartbeat_r_peak = data["r_peak_sample"] - heartbeat_start

@@ -3,15 +3,18 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
 from scipy.signal import argrelextrema, argrelmin
-from tpcp import Parameter, make_action_safe
+from tpcp import Parameter
 
+from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 from biopsykit.utils.exceptions import EventExtractionError
 
+__all__ = ["BPointExtractionForouzanfar2019"]
 
-class BPointExtractionForouzanfar2019(BaseExtraction):
+
+class BPointExtractionForouzanfar2019(BaseBPointExtraction):
     """algorithm to extract B-point based on [Forouzanfar et al., 2018, Psychophysiology]."""
 
     # input parameters
@@ -37,7 +40,7 @@ class BPointExtractionForouzanfar2019(BaseExtraction):
     def extract(
         self,
         *,
-        signal_clean: pd.DataFrame,
+        icg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
@@ -64,7 +67,7 @@ class BPointExtractionForouzanfar2019(BaseExtraction):
             index is C-point (/heartbeat) id
         """
         # sanitize input signal
-        signal_clean = signal_clean.squeeze()
+        icg = icg.squeeze()
 
         # Create the B-Point/A-Point Dataframes with the index of the heartbeat_list
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
@@ -73,7 +76,7 @@ class BPointExtractionForouzanfar2019(BaseExtraction):
         check_c_points = np.isnan(c_points.values.astype(float))
 
         # Calculate the second- and third-derivative of the ICG-signal
-        second_der = np.gradient(signal_clean)
+        second_der = np.gradient(icg)
         third_der = np.gradient(second_der)
 
         # print(c_points)
@@ -94,13 +97,13 @@ class BPointExtractionForouzanfar2019(BaseExtraction):
             search_interval = int(beat_to_beat / 3)
 
             # Detect the local minimum (A-Point) within one third of the beat to beat interval prior to the C-Point
-            a_point = self.get_a_point(signal_clean, search_interval, c_point) + (c_point - search_interval)
+            a_point = self.get_a_point(icg, search_interval, c_point) + (c_point - search_interval)
 
             # Select the signal_segment between the A-Point and the C-Point
-            signal_clean_segment = signal_clean.iloc[a_point : c_point + 1]
+            signal_clean_segment = icg.iloc[a_point : c_point + 1]
 
             # Define the C-Point amplitude which is used as a constraint for monotonic segment detection
-            c_amplitude = signal_clean.iloc[c_point]
+            c_amplitude = icg.iloc[c_point]
 
             # Step 4.1: Get the most prominent monotonic increasing segment between the A-Point and the C-Point
             start_sample, end_sample = (
@@ -128,7 +131,7 @@ class BPointExtractionForouzanfar2019(BaseExtraction):
             monotonic_segment_3rd_der = pd.DataFrame(third_der[start:end], columns=["3rd_der"])
 
             # Calculate the amplitude difference between the C-Point and the A-Point
-            height = signal_clean.iloc[c_point] - signal_clean.iloc[a_point]
+            height = icg.iloc[c_point] - icg.iloc[a_point]
 
             # Compute the significant zero_crossings
             significant_zero_crossings = self.get_zero_crossings(

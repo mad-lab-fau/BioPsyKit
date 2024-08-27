@@ -3,15 +3,18 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
 from scipy.signal import find_peaks
-from tpcp import Parameter, make_action_safe
+from tpcp import Parameter
 
+from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 from biopsykit.utils.exceptions import EventExtractionError
 
+__all__ = ["BPointExtractionDebski1993"]
 
-class BPointExtractionDebski1993(BaseExtraction):
+
+class BPointExtractionDebski1993(BaseBPointExtraction):
     """algorithm to extract B-point based on the reversal (local minimum) of dZ^^2/dt^^2 before the C point."""
 
     # input parameters
@@ -31,7 +34,7 @@ class BPointExtractionDebski1993(BaseExtraction):
     def extract(
         self,
         *,
-        signal_clean: pd.DataFrame,
+        icg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
@@ -58,7 +61,7 @@ class BPointExtractionDebski1993(BaseExtraction):
             index is C-point (/heartbeat) id
         """
         # sanitize input
-        signal_clean = signal_clean.squeeze()
+        icg = icg.squeeze()
 
         # Create the b_point Dataframe. Use the heartbeats id as index
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
@@ -72,7 +75,7 @@ class BPointExtractionDebski1993(BaseExtraction):
         check_c_points = np.isnan(c_points.values.astype(float))
 
         # Compute the second derivative of the ICG-signal
-        icg_2nd_der = np.gradient(signal_clean)
+        icg_2nd_der = np.gradient(icg)
 
         counter = 0
         # go through each R-C interval independently and search for the local minima

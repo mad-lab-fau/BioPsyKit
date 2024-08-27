@@ -5,13 +5,13 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
-from tpcp import make_action_safe
+from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 from biopsykit.utils.exceptions import EventExtractionError
 
 
-class QPeakExtractionNeurokitDwt(BaseExtraction):
+class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
     """algorithm to extract Q-wave peaks (= R-wave onset) from ECG signal using neurokit ecg_delineate function with
     discrete wavelet method.
     """
@@ -19,7 +19,7 @@ class QPeakExtractionNeurokitDwt(BaseExtraction):
     # @make_action_safe
     def extract(
         self,
-        signal_clean: pd.DataFrame,
+        ecg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
         *,
@@ -52,9 +52,9 @@ class QPeakExtractionNeurokitDwt(BaseExtraction):
         # some neurokit functions (for example ecg_delineate()) don't work with r-peaks input as Series, so list instead
         r_peaks = list(heartbeats["r_peak_sample"])
 
-        signal_clean = signal_clean.squeeze()
+        ecg = ecg.squeeze()
         _, waves = nk.ecg_delineate(
-            signal_clean, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, method="dwt", show=False, show_type="peaks"
+            ecg, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, method="dwt", show=False, show_type="peaks"
         )  # show can also be set to False
 
         extracted_q_peaks = waves["ECG_Q_Peaks"]

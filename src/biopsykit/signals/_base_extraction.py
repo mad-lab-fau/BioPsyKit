@@ -1,8 +1,7 @@
-from abc import abstractmethod
 from typing import Literal, Optional
 
 import pandas as pd
-from tpcp import Algorithm, make_action_safe
+from tpcp import Algorithm
 
 EXTRACTION_HANDLING_BEHAVIOR = Literal["raise", "warn", "ignore"]
 

@@ -3,14 +3,17 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
-from tpcp import Parameter, make_action_safe
+from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
+from tpcp import Parameter
 
+from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 from biopsykit.utils.exceptions import EventExtractionError
 
+__all__ = ["BPointExtractionDrost2022"]
 
-class BPointExtractionDrost2022(BaseExtraction):
+
+class BPointExtractionDrost2022(BaseBPointExtraction):
     """algorithm to extract B-point based on the maximum distance of the dZ/dt curve and a straight line
     fitted between the C-Point and the Point on the dZ/dt curve 150 ms before the C-Point.
     """
@@ -32,7 +35,7 @@ class BPointExtractionDrost2022(BaseExtraction):
     def extract(
         self,
         *,
-        signal_clean: pd.DataFrame,
+        icg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
@@ -79,12 +82,10 @@ class BPointExtractionDrost2022(BaseExtraction):
             line_start = c_point - int((150 / 1000) * sampling_rate_hz)
 
             # Calculate the values of the straight line
-            line_values = self.get_line_values(
-                line_start, signal_clean.iloc[line_start], c_point, signal_clean.iloc[c_point]
-            )
+            line_values = self.get_line_values(line_start, icg.iloc[line_start], c_point, icg.iloc[c_point])
 
             # Get the interval of the cleaned ICG-signal in the range of the straight line
-            signal_clean_interval = signal_clean[line_start:c_point]
+            signal_clean_interval = icg[line_start:c_point]
 
             # Calculate the distance between the straight line and the cleaned ICG-signal
             distance = line_values["result"].values - signal_clean_interval.values

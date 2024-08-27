@@ -3,13 +3,14 @@ from typing import Optional
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from tpcp import Algorithm, Parameter, make_action_safe
+from tpcp import Parameter
+from biopsykit.signals.ecg.segmentation._base_segmentation import BaseHeartbeatSegmentation
 
-__all__ = ["HeartBeatSegmentation"]
+__all__ = ["HeartbeatSegmentationNeurokit"]
 
 
-class HeartBeatSegmentation(Algorithm):
-    """Finds R-peaks and segments ECG signal into heartbeats."""
+class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
+    """Segments ECG signal into heartbeats based on Neurokit's delineate function."""
 
     _action_methods = "extract"
 
@@ -20,7 +21,7 @@ class HeartBeatSegmentation(Algorithm):
     # result
     heartbeat_list_: pd.DataFrame
 
-    def __init__(self, variable_length: Optional[bool] = True, start_factor: Optional[float] = 0.35):
+    def __init__(self, *, variable_length: Optional[bool] = True, start_factor: Optional[float] = 0.35):
         """Initialize new HeartBeatExtraction algorithm instance.
 
         Parameters
@@ -42,7 +43,7 @@ class HeartBeatSegmentation(Algorithm):
         self.start_factor = start_factor
 
     # @make_action_safe
-    def extract(self, ecg_clean: pd.Series, sampling_rate_hz: int):
+    def extract(self, *, ecg: pd.Series, sampling_rate_hz: int):
         """Segments ecg signal into heartbeats, extract start, end, r-peak of each heartbeat.
 
         fills df containing all heartbeats, one row corresponds to one heartbeat;
@@ -50,12 +51,12 @@ class HeartBeatSegmentation(Algorithm):
         index of df can be used as heartbeat id
 
         Args:
-            ecg_clean : containing cleaned ecg signal as pd series with datetime index
+            ecg : containing cleaned ecg signal as pd series with datetime index
             sampling_rate_hz : containing sampling rate of ecg signal in hz as int
         Returns:
             self: fills heartbeat_list_
         """
-        _, r_peaks = nk.ecg_peaks(ecg_clean, sampling_rate=sampling_rate_hz, method="neurokit")
+        _, r_peaks = nk.ecg_peaks(ecg, sampling_rate=sampling_rate_hz, method="neurokit")
         r_peaks = r_peaks["ECG_R_Peaks"]
 
         heartbeats = pd.DataFrame(
@@ -93,7 +94,7 @@ class HeartBeatSegmentation(Algorithm):
                 heartbeats["r_peak_sample"].iloc[-1] + (1 - self.start_factor) * rr_interval_samples.iloc[-1]
             )
 
-            if last_beat_end < len(ecg_clean):
+            if last_beat_end < len(ecg):
                 beat_ends.iloc[-1] = last_beat_end
             else:
                 # drop the last beat if it is incomplete
@@ -103,12 +104,12 @@ class HeartBeatSegmentation(Algorithm):
             beat_ends = beat_ends.astype(int)
 
             # extract time of each beat's start
-            beat_starts_time = ecg_clean.iloc[beat_starts].index
+            beat_starts_time = ecg.iloc[beat_starts].index
             heartbeats = heartbeats.assign(start_sample=beat_starts, end_sample=beat_ends, start_time=beat_starts_time)
 
         else:
             # split ecg signal into heartbeats with fixed length
-            heartbeat_segments = nk.ecg_segment(ecg_clean, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, show=False)
+            heartbeat_segments = nk.ecg_segment(ecg, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, show=False)
 
             heartbeat_segments_new = {int(k) - 1: v for k, v in heartbeat_segments.items()}
             heartbeat_segments_new = pd.concat(heartbeat_segments_new, names=["heartbeat_id"])
@@ -116,7 +117,7 @@ class HeartBeatSegmentation(Algorithm):
             heartbeat_segments_new = heartbeat_segments_new.groupby("heartbeat_id").agg(
                 start_sample=("Index", "first"),
                 end_sample=("Index", "last"),
-                start_time=("Index", lambda s: ecg_clean.index[s.iloc[0]]),
+                start_time=("Index", lambda s: ecg.index[s.iloc[0]]),
             )
             # fill the empty columns of heartbeats with the start, end, and r-peak of heartbeat_segments_new
             heartbeats = heartbeats.join(heartbeat_segments_new)
