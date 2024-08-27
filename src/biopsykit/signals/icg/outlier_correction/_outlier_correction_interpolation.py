@@ -3,21 +3,22 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 
-from scipy.signal import butter, sosfiltfilt
-from scipy.stats import median_abs_deviation
-
-from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR, BaseExtraction
-
-__all__ = ["OutlierCorrectionInterpolation"]
+from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseOutlierCorrection
 
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 
+__all__ = ["OutlierCorrectionInterpolation"]
 
-class OutlierCorrectionInterpolation(BaseExtraction):
+
+# TODO add verbosity option
+
+
+class OutlierCorrectionInterpolation(BaseOutlierCorrection):
     """algorithm to correct outliers based on Linear Interpolation"""
 
     # @make_action_safe
-    def extract(
+    def correct_outlier(
         self,
         *,
         b_points: pd.DataFrame,
@@ -42,10 +43,10 @@ class OutlierCorrectionInterpolation(BaseExtraction):
         corrected_b_points = pd.DataFrame(index=b_points.index, columns=["b_point_sample"])
 
         # stationarize the B-Point time data
-        stationary_data = self.stationarize_data(b_points, c_points, sampling_rate_hz)
+        stationary_data = self.stationarize_b_points(b_points, c_points, sampling_rate_hz)
 
         # detect outliers
-        outliers = self.detect_outliers(stationary_data)
+        outliers = self.detect_b_point_outlier(stationary_data)
         print(f"Detected {len(outliers)} outliers in correction cycle 1!")
         if len(outliers) == 0:
             _assert_is_dtype(corrected_b_points, pd.DataFrame)
@@ -57,12 +58,12 @@ class OutlierCorrectionInterpolation(BaseExtraction):
         while len(outliers) > 0:
             if counter > 200:
                 break
-            corrected_b_points = self.correct_linear(
+            corrected_b_points = self._correct_outlier_linear_interpolation(
                 b_points, c_points, stationary_data, outliers, stationary_data["baseline"], sampling_rate_hz
             )
             # print(corrected_b_points)
-            stationary_data = self.stationarize_data(corrected_b_points, c_points, sampling_rate_hz)
-            outliers = self.detect_outliers(stationary_data)
+            stationary_data = self.stationarize_b_points(corrected_b_points, c_points, sampling_rate_hz)
+            outliers = self.detect_b_point_outlier(stationary_data)
             print(f"Detected {len(outliers)} outliers in correction cycle {counter}!")
             counter += 1
 
@@ -75,44 +76,7 @@ class OutlierCorrectionInterpolation(BaseExtraction):
         return self
 
     @staticmethod
-    def stationarize_data(b_points: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: int) -> pd.DataFrame:
-        dist_to_c_point = ((c_points["c_point_sample"] - b_points["b_point_sample"]) / sampling_rate_hz).to_frame()
-        dist_to_c_point.columns = ["dist_to_c_point_ms"]
-        dist_to_c_point["b_point_sample"] = b_points["b_point_sample"]
-        dist_to_c_point = dist_to_c_point.dropna()
-
-        sos = butter(4, Wn=0.1, btype="lowpass", output="sos", fs=1)
-
-        # TODO Check if necessary after changing to sos? If yes, find out how it needs to be changed
-        # length = len(b_points)
-        # if len(dist_to_c_point["dist_to_c_point_ms"].values) <= 3 * max(len(b), len(a)):
-        #     last_row = dist_to_c_point.iloc[-1]
-        #     num_rows_to_append = ((3 * max(len(b), len(a))) - len(dist_to_C)) + 1  # +1 to ensure it's enough
-        #     additional_rows = pd.DataFrame([last_row] * num_rows_to_append, columns=dist_to_C.columns)
-        #     dist_to_C = pd.concat([dist_to_C, additional_rows], ignore_index=True)
-        # baseline = filtfilt(b, a, dist_to_c_point["dist_to_c_point_ms"].values)
-        # baseline = baseline[:length]
-        # dist_to_c_point = dist_to_c_point[:length]
-
-        baseline = sosfiltfilt(sos, dist_to_c_point["dist_to_c_point_ms"].values)
-
-        statio_data = (dist_to_c_point["dist_to_c_point_ms"] - baseline).to_frame()
-        statio_data.columns = ["statio_data"]
-        statio_data["b_point_sample"] = dist_to_c_point["b_point_sample"]
-        statio_data["baseline"] = baseline
-        return statio_data
-
-    @staticmethod
-    def detect_outliers(stationary_data: pd.DataFrame) -> pd.DataFrame:
-        median_time = np.median(stationary_data["statio_data"])
-        median_abs_dev_time = median_abs_deviation(stationary_data["statio_data"], axis=0, nan_policy="propagate")
-        outliers = pd.DataFrame(index=stationary_data.index, columns=["outliers"])
-        outliers["outliers"] = False
-        outliers.loc[(stationary_data["statio_data"] - median_time) > (3 * median_abs_dev_time), "outliers"] = True
-        return outliers[outliers["outliers"]]
-
-    @staticmethod
-    def correct_linear(
+    def _correct_outlier_linear_interpolation(
         b_points_uncorrected: pd.DataFrame,
         c_points: pd.DataFrame,
         statio_data: pd.DataFrame,
