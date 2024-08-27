@@ -12,10 +12,10 @@ class CPointExtractionKoka2022(BaseExtraction):
     # @make_action_safe
     def extract(
         self,
+        *,
         signal_clean: pd.DataFrame,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
-        *,
         handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
         """Function which extracts C-points (max of most prominent peak) from given cleaned ICG derivative signal.

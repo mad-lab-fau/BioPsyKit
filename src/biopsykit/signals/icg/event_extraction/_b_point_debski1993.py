@@ -30,11 +30,11 @@ class BPointExtractionDebski1993(BaseExtraction):
     # @make_action_safe
     def extract(
         self,
+        *,
         signal_clean: pd.DataFrame,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
-        *,
         handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
         """Function which extracts B-points from given ICG cleaned signal.

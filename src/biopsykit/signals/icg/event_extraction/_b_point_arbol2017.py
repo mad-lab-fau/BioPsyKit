@@ -46,11 +46,11 @@ class BPointExtractionArbol2017(BaseExtraction):
     # @make_action_safe
     def extract(
         self,
+        *,
         signal_clean: pd.Series,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
-        *,
         handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
         """Function which extracts B-points from given cleaned ICG derivative signal.

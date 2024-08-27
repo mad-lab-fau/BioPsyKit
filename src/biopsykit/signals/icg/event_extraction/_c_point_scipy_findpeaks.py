@@ -33,10 +33,10 @@ class CPointExtractionScipyFindPeaks(BaseExtraction):
     # @make_action_safe
     def extract(
         self,
+        *,
         signal_clean: pd.Series,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
-        *,
         handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
         """Function which extracts C-points (max of most prominent peak) from given cleaned ICG derivative signal

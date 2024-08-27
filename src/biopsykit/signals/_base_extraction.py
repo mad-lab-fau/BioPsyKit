@@ -24,10 +24,10 @@ class BaseExtraction(Algorithm):
     # @make_action_safe
     def extract(
         self,
+        *,
         signal_clean: pd.Series,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
-        *,
         handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
         """Extract specific fiducial points from cleaned signal."""
