@@ -6,10 +6,10 @@ from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
 from biopsykit.signals.icg.outlier_correction import BaseOutlierCorrection
 
 
-__all__ = ["DummyOutlierCorrection"]
+__all__ = ["OutlierCorrectionDummy"]
 
 
-class DummyOutlierCorrection(BaseOutlierCorrection):
+class OutlierCorrectionDummy(BaseOutlierCorrection):
     """Dummy class for outlier correction. Does nothing."""
 
     def correct_outlier(

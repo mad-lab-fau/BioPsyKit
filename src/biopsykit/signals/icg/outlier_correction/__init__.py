@@ -3,11 +3,11 @@ from biopsykit.signals.icg.outlier_correction._outlier_correction_forouzanfar201
     OutlierCorrectionForouzanfar2019,
 )
 from biopsykit.signals.icg.outlier_correction._outlier_correction_interpolation import OutlierCorrectionInterpolation
-from biopsykit.signals.icg.outlier_correction._dummy_outlier_correction import DummyOutlierCorrection
+from biopsykit.signals.icg.outlier_correction._outlier_correction_dummy import OutlierCorrectionDummy
 
 __all__ = [
     "BaseOutlierCorrection",
     "OutlierCorrectionForouzanfar2019",
     "OutlierCorrectionInterpolation",
-    "DummyOutlierCorrection",
+    "OutlierCorrectionDummy",
 ]
