@@ -3,9 +3,12 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction
+from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
 from scipy.signal import argrelextrema, argrelmin
 from tpcp import Parameter, make_action_safe
+
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils.exceptions import EventExtractionError
 
 
 class BPointExtractionForouzanfar2019(BaseExtraction):
@@ -30,9 +33,15 @@ class BPointExtractionForouzanfar2019(BaseExtraction):
         """
         self.correct_outliers = correct_outliers
 
-    @make_action_safe
+    # @make_action_safe
     def extract(
-        self, signal_clean: pd.DataFrame, heartbeats: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: int
+        self,
+        signal_clean: pd.DataFrame,
+        heartbeats: pd.DataFrame,
+        c_points: pd.DataFrame,
+        sampling_rate_hz: int,
+        *,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
         """Function which extracts B-points from given ICG cleaned signal.
 
@@ -54,30 +63,32 @@ class BPointExtractionForouzanfar2019(BaseExtraction):
             saves resulting B-point locations (samples) in points_ attribute of super class,
             index is C-point (/heartbeat) id
         """
-        # Create the B-Point/A-Point Dataframes with the index of the heartbeat_list
-        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point"])
+        # sanitize input signal
+        signal_clean = signal_clean.squeeze()
 
-        # check wether the c_points contain NaN
+        # Create the B-Point/A-Point Dataframes with the index of the heartbeat_list
+        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
+
+        # check whether the c_points contain NaN
         check_c_points = np.isnan(c_points.values.astype(float))
 
         # Calculate the second- and third-derivative of the ICG-signal
         second_der = np.gradient(signal_clean)
         third_der = np.gradient(second_der)
 
+        # print(c_points)
+
         for idx, data in heartbeats[1:].iterrows():
             # check if c_points contain NaN. If this is the case, set the b_point to NaN
             if check_c_points[idx] | check_c_points[idx - 1]:
-                b_points["b_point"].iloc[idx] = np.NaN
-                warnings.warn(
-                    f"Either the r_peak or the c_point contains NaN at position{idx}! " f"B-Point was set to NaN."
-                )
+                b_points["b_point_sample"].iloc[idx] = np.NaN
                 continue
             else:
                 # Detect the main peak in the dZ/dt signal (C-Point)
-                c_point = c_points["c_point"].iloc[idx]
+                c_point = c_points["c_point_sample"].iloc[idx]
 
             # Compute the beat to beat interval
-            beat_to_beat = c_points["c_point"].iloc[idx] - c_points["c_point"].iloc[idx - 1]
+            beat_to_beat = c_points["c_point_sample"].iloc[idx] - c_points["c_point_sample"].iloc[idx - 1]
 
             # Compute the search interval for the A-Point
             search_interval = int(beat_to_beat / 3)
@@ -102,9 +113,9 @@ class BPointExtractionForouzanfar2019(BaseExtraction):
                 # warnings.warn(f"Could not find a monotonic increasing segment for heartbeat {idx}! "
                 #              f"The B-Point was set to NaN")
                 if self.correct_outliers:
-                    b_points["b_point"].iloc[idx] = data["r_peak_sample"]
+                    b_points["b_point_sample"].iloc[idx] = data["r_peak_sample"]
                 else:
-                    b_points["b_point"].iloc[idx] = np.NaN
+                    b_points["b_point_sample"].iloc[idx] = np.NaN
                 continue
 
             # Get the first third of the monotonic increasing segment
@@ -143,7 +154,25 @@ class BPointExtractionForouzanfar2019(BaseExtraction):
             else:
                 b_points['b_point'].iloc[idx] = b_point
             """
-            b_points["b_point"].iloc[idx] = b_point
+            b_points["b_point_sample"].iloc[idx] = b_point
+
+        # interpolate the first B-Point with the second B-Point since it is not possible to detect a B-Point
+        # for the first heartbeat
+        b_points.iloc[0] = b_points["b_point_sample"].iloc[1] - b_points["b_point_sample"].diff().iloc[2]
+
+        idx_nan = b_points["b_point_sample"].isna()
+        if idx_nan.sum() > 0:
+            idx_nan = list(b_points.index[idx_nan])
+            missing_str = (
+                f"Either 'r_peak' or 'c_point' contains NaN at positions {idx_nan}! The B-points were set to NaN."
+            )
+            if handle_missing == "warn":
+                warnings.warn(missing_str)
+            elif handle_missing == "raise":
+                raise EventExtractionError(missing_str)
+
+        _assert_is_dtype(b_points, pd.DataFrame)
+        _assert_has_columns(b_points, [["b_point_sample"]])
 
         self.points_ = b_points
         return self

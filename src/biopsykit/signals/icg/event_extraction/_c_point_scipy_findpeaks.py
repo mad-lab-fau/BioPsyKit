@@ -3,9 +3,12 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction
+from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
 from scipy import signal
 from tpcp import Parameter, make_action_safe
+
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils.exceptions import EventExtractionError
 
 
 class CPointExtractionScipyFindPeaks(BaseExtraction):
@@ -27,8 +30,15 @@ class CPointExtractionScipyFindPeaks(BaseExtraction):
         self.window_c_correction = window_c_correction
         self.save_candidates = save_candidates
 
-    @make_action_safe
-    def extract(self, signal_clean: pd.Series, heartbeats: pd.DataFrame, sampling_rate_hz: int):
+    # @make_action_safe
+    def extract(
+        self,
+        signal_clean: pd.Series,
+        heartbeats: pd.DataFrame,
+        sampling_rate_hz: int,
+        *,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+    ):
         """Function which extracts C-points (max of most prominent peak) from given cleaned ICG derivative signal
         Args:
             signal_clean:
@@ -42,11 +52,9 @@ class CPointExtractionScipyFindPeaks(BaseExtraction):
             saves resulting C-point positions (and C-candidates) in points_, index is heartbeat id.
         """
         # result df
-        c_points = pd.DataFrame(index=heartbeats.index, columns=["c_point", "c_candidates"])
+        c_points = pd.DataFrame(index=heartbeats.index, columns=["c_point_sample"])
         if self.save_candidates:
-            c_points["c_candidates"] = c_points.apply(lambda x: [], axis=1)
-        else:
-            c_points = c_points.drop(columns="c_candidates")
+            c_points = c_points.assign(c_point_candidates=np.empty((len(heartbeats.index), 0)).tolist())
 
         # distance of R-peak to C-point, averaged over as many preceding heartbeats as window_c_correction specifies
         # R-C-distances are positive when C-point occurs after R-Peak (which is the physiologically correct order)
@@ -60,11 +68,11 @@ class CPointExtractionScipyFindPeaks(BaseExtraction):
 
         # search C-point for each heartbeat of the given signal
         for idx, data in heartbeats.iterrows():
-
             # slice signal for current heartbeat
             heartbeat_start = data["start_sample"]
             heartbeat_end = data["end_sample"]
-            heartbeat_icg_der = signal_clean.iloc[heartbeat_start:heartbeat_end]
+
+            heartbeat_icg_der = signal_clean.iloc[heartbeat_start:heartbeat_end].squeeze()
 
             # calculate R-peak position relative to start of current heartbeat
             heartbeat_r_peak = data["r_peak_sample"] - heartbeat_start
@@ -76,7 +84,7 @@ class CPointExtractionScipyFindPeaks(BaseExtraction):
 
             if len(heartbeat_c_candidates) < 1:
                 heartbeats_no_c.append(idx)
-                c_points.at[idx, "c_point"] = np.NaN
+                c_points.at[idx, "c_point_sample"] = np.NaN
                 continue
 
             # calculates distance of R-peak to all C-candidates in samples, positive when C occurs after R
@@ -89,12 +97,11 @@ class CPointExtractionScipyFindPeaks(BaseExtraction):
                 # C-point before R-peak is invalid
                 if r_c_distance < 0:
                     heartbeats_no_c.append(idx)
-                    c_points.at[idx, "c_point"] = np.NaN
+                    c_points.at[idx, "c_point_sample"] = np.NaN
                     continue
 
             elif len(heartbeat_c_candidates) > 1:
-
-                # take averaged R-C-distance over the 3 (or window_c_correction) preceding heartbeats
+                # take averaged R-C-distance over the 'window_c_correction' (default: 3) preceding heartbeats
                 # calculate the absolute difference of R-C-distances for all C-candidates to this mean
                 # (to check which of the C-candidates are most probably the wrongly detected Cs)
                 distance_diff = np.abs(r_c_distance - mean_prev_r_c_distance)
@@ -116,13 +123,20 @@ class CPointExtractionScipyFindPeaks(BaseExtraction):
             mean_prev_r_c_distance = np.mean(prev_r_c_distances)
 
             # save C-point (and C-candidates) to result property
-            c_points.at[idx, "c_point"] = selected_c + heartbeat_start  # get C-point relative to complete signal
+            c_points.at[idx, "c_point_sample"] = selected_c + heartbeat_start  # get C-point relative to complete signal
             if self.save_candidates:
                 for c in heartbeat_c_candidates:
-                    c_points.at[idx, "c_candidates"].append(c + heartbeat_start)
+                    c_points.at[idx, "c_point_candidates"].append(c + heartbeat_start)
 
         if len(heartbeats_no_c) > 0:
-            warnings.warn(f"No valid C-point detected in {len(heartbeats_no_c)} heartbeats ({heartbeats_no_c})")
+            missing_str = f"No valid C-point detected in {len(heartbeats_no_c)} heartbeats ({heartbeats_no_c})"
+            if handle_missing == "warn":
+                warnings.warn(missing_str)
+            elif handle_missing == "raise":
+                raise EventExtractionError(missing_str)
+
+        _assert_is_dtype(c_points, pd.DataFrame)
+        _assert_has_columns(c_points, [["c_point_sample"]])
 
         self.points_ = c_points
         return self

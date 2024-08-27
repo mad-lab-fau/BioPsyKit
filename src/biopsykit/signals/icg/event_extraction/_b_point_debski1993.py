@@ -3,9 +3,12 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction
+from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
 from scipy.signal import find_peaks
 from tpcp import Parameter, make_action_safe
+
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils.exceptions import EventExtractionError
 
 
 class BPointExtractionDebski1993(BaseExtraction):
@@ -24,9 +27,15 @@ class BPointExtractionDebski1993(BaseExtraction):
         """
         self.correct_outliers = correct_outliers
 
-    @make_action_safe
+    # @make_action_safe
     def extract(
-        self, signal_clean: pd.DataFrame, heartbeats: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: int
+        self,
+        signal_clean: pd.DataFrame,
+        heartbeats: pd.DataFrame,
+        c_points: pd.DataFrame,
+        sampling_rate_hz: int,
+        *,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
         """Function which extracts B-points from given ICG cleaned signal.
 
@@ -48,27 +57,30 @@ class BPointExtractionDebski1993(BaseExtraction):
             saves resulting B-point locations (samples) in points_ attribute of super class,
             index is C-point (/heartbeat) id
         """
+        # sanitize input
+        signal_clean = signal_clean.squeeze()
+
         # Create the b_point Dataframe. Use the heartbeats id as index
-        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point"])
+        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
 
         # get the r_peak locations from the heartbeats dataframe and search for entries containing NaN
         r_peaks = heartbeats["r_peak_sample"]
         check_r_peaks = np.isnan(r_peaks.values)
 
         # get the c_point locations from the c_points dataframe and search for entries containing NaN
-        c_points = c_points["c_point"]
+        c_points = c_points["c_point_sample"]
         check_c_points = np.isnan(c_points.values.astype(float))
 
         # Compute the second derivative of the ICG-signal
         icg_2nd_der = np.gradient(signal_clean)
 
         counter = 0
-        # go trough each R-C interval independently and search for the local minima
+        # go through each R-C interval independently and search for the local minima
         for idx, data in heartbeats.iterrows():
             # check if r_peaks/c_points contain NaN. If this is the case, set the b_point to NaN and continue
             # with the next iteration
             if check_r_peaks[idx] | check_c_points[idx]:
-                b_points["b_point"].iloc[idx] = np.NaN
+                b_points["b_point_sample"].iloc[idx] = np.NaN
                 warnings.warn(
                     f"Either the r_peak or the c_point contains NaN at position{idx}! " f"B-Point was set to NaN."
                 )
@@ -111,9 +123,18 @@ class BPointExtractionDebski1993(BaseExtraction):
             else:
                 b_points['b_point'].iloc[idx] = b_point
             """
-            b_points["b_point"].iloc[idx] = b_point
+            b_points["b_point_sample"].iloc[idx] = b_point
 
-        warnings.warn(f"Could not detect a local minimum in the RC-interval in {counter} heartbeats!")
-        points = b_points
-        self.points_ = points
+        if counter > 0:
+            missing_str = f"Could not detect a local minimum in the RC-interval in {counter} heartbeats!"
+            if handle_missing == "warn":
+                warnings.warn(missing_str)
+            elif handle_missing == "raise":
+                raise EventExtractionError(missing_str)
+
+        _assert_is_dtype(b_points, pd.DataFrame)
+        _assert_has_columns(b_points, [["b_point_sample"]])
+
+        self.points_ = b_points
+
         return self

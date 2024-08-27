@@ -3,8 +3,11 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction
+from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
 from tpcp import Parameter, make_action_safe
+
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils.exceptions import EventExtractionError
 
 
 class BPointExtractionDrost2022(BaseExtraction):
@@ -25,9 +28,15 @@ class BPointExtractionDrost2022(BaseExtraction):
         """
         self.correct_outliers = correct_outliers
 
-    @make_action_safe
+    # @make_action_safe
     def extract(
-        self, signal_clean: pd.DataFrame, heartbeats: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: int
+        self,
+        signal_clean: pd.DataFrame,
+        heartbeats: pd.DataFrame,
+        c_points: pd.DataFrame,
+        sampling_rate_hz: int,
+        *,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
     ):
         """Function which extracts B-points from given ICG cleaned signal.
 
@@ -50,7 +59,7 @@ class BPointExtractionDrost2022(BaseExtraction):
             index is C-point (/heartbeat) id
         """
         # Create the b_point Dataframe. Use the heartbeats id as index
-        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point"])
+        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
 
         # get the c_point locations from the c_points dataframe and search for entries containing NaN
         check_c_points = np.isnan(c_points.values.astype(float))
@@ -60,18 +69,19 @@ class BPointExtractionDrost2022(BaseExtraction):
             # check if c_points contain NaN. If this is the case, set the b_point to NaN and continue
             # with the next iteration
             if check_c_points[idx]:
-                b_points["b_point"].iloc[idx] = np.NaN
-                warnings.warn(f"The C-Point contains NaN at heartbeat {idx}! The index of the B-Point was set to NaN.")
+                b_points["b_point_sample"].iloc[idx] = np.NaN
                 continue
             else:
                 # Get the C-Point location at the current heartbeat id
-                c_point = c_points["c_point"].iloc[idx]
+                c_point = c_points["c_point_sample"].iloc[idx]
 
             # Calculate the start position of the straight line (150 ms before the C-Point)
             line_start = c_point - int((150 / 1000) * sampling_rate_hz)
 
             # Calculate the values of the straight line
-            line_values = self.get_line_values(line_start, signal_clean[line_start], c_point, signal_clean[c_point])
+            line_values = self.get_line_values(
+                line_start, signal_clean.iloc[line_start], c_point, signal_clean.iloc[c_point]
+            )
 
             # Get the interval of the cleaned ICG-signal in the range of the straight line
             signal_clean_interval = signal_clean[line_start:c_point]
@@ -95,10 +105,25 @@ class BPointExtractionDrost2022(BaseExtraction):
                 b_points['b_point'].iloc[idx] = b_point
             """
 
-            b_points["b_point"].iloc[idx] = b_point
+            b_points["b_point_sample"].iloc[idx] = b_point
 
-        points = b_points
-        self.points_ = points
+        num_nan = b_points["b_point_sample"].isna().sum()
+        if num_nan > 0:
+            idx_nan = b_points["b_point_sample"].isna()
+            idx_nan = list(b_points.index[idx_nan])
+
+            missing_str = (
+                f"The C-point contains NaN at heartbeats {idx_nan}! The index of the B-points were also set to NaN."
+            )
+            if handle_missing == "warn":
+                warnings.warn(missing_str)
+            elif handle_missing == "raise":
+                raise EventExtractionError(missing_str)
+
+        _assert_is_dtype(b_points, pd.DataFrame)
+        _assert_has_columns(b_points, [["b_point_sample"]])
+
+        self.points_ = b_points
         return self
 
     @staticmethod

@@ -1,7 +1,10 @@
 from abc import abstractmethod
+from typing import Literal, Optional
 
 import pandas as pd
 from tpcp import Algorithm, make_action_safe
+
+EXTRACTION_HANDLING_BEHAVIOR = Literal["raise", "warn", "ignore"]
 
 
 class BaseExtraction(Algorithm):
@@ -17,8 +20,15 @@ class BaseExtraction(Algorithm):
     points_: pd.DataFrame
 
     # interface method
-    @abstractmethod
-    @make_action_safe
-    def extract(self, signal_clean: pd.Series, heartbeats: pd.DataFrame, sampling_rate_hz: int):
+    # @abstractmethod
+    # @make_action_safe
+    def extract(
+        self,
+        signal_clean: pd.Series,
+        heartbeats: pd.DataFrame,
+        sampling_rate_hz: int,
+        *,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+    ):
         """Extract specific fiducial points from cleaned signal."""
         raise NotImplementedError("Method 'extract' must be implemented in subclass.")

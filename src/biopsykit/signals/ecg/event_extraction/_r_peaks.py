@@ -1,14 +1,24 @@
+from typing import Optional
+
 import pandas as pd
 from tpcp import make_action_safe
 
-from biopsykit.signals._base_extraction import BaseExtraction
+from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 
 
 class RPeakExtraction(BaseExtraction):
     """algorithm to extract Q-wave onset based on the detection of the R-peak."""
 
-    @make_action_safe
-    def extract(self, signal_clean: pd.DataFrame, heartbeats: pd.DataFrame, sampling_rate_hz: int):
+    # @make_action_safe
+    def extract(
+        self,
+        signal_clean: pd.DataFrame,
+        heartbeats: pd.DataFrame,
+        sampling_rate_hz: int,
+        *,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+    ):
         """Function which extracts R-peaks from given ECG cleaned signal to use it as Q-wave onset estimate.
 
         Args:
@@ -28,8 +38,13 @@ class RPeakExtraction(BaseExtraction):
         r_peaks = pd.DataFrame(index=heartbeats.index, columns=["R-peak"])
         r_peaks["R-peak"] = heartbeats["r_peak_sample"]
 
-        points = r_peaks
+        r_peaks.columns = ["q_wave_onset_sample"]
         # points = super().match_points_heartbeats(self, points=points, heartbeats=heartbeats)
 
-        self.points_ = points
+        # TODO handle missing
+
+        _assert_is_dtype(r_peaks, pd.DataFrame)
+        _assert_has_columns(r_peaks, [["q_wave_onset_sample"]])
+
+        self.points_ = r_peaks
         return self

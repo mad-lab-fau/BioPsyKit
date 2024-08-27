@@ -7,6 +7,7 @@ __all__ = [
     "ValueRangeError",
     "FeatureComputationError",
     "EcgProcessingError",
+    "EventExtractionError",
 ]
 
 
@@ -32,3 +33,7 @@ class FeatureComputationError(Exception):
 
 class EcgProcessingError(Exception):
     """An error indicating that ECG processing failed."""
+
+
+class EventExtractionError(Exception):
+    """An error indicating that event extraction failed."""

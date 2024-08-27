@@ -41,7 +41,7 @@ class HeartBeatSegmentation(Algorithm):
         self.variable_length = variable_length
         self.start_factor = start_factor
 
-    @make_action_safe
+    # @make_action_safe
     def extract(self, ecg_clean: pd.Series, sampling_rate_hz: int):
         """Segments ecg signal into heartbeats, extract start, end, r-peak of each heartbeat.
 
@@ -81,7 +81,7 @@ class HeartBeatSegmentation(Algorithm):
             if first_beat_start >= 0:
                 beat_starts.iloc[0] = first_beat_start
             else:
-                beat_starts = beat_starts.iloc[1:].reset_index(drop=True)  # drop row, when heartbeat is incomplete
+                beat_starts = beat_starts.iloc[1:].reset_index(drop=True)  # drop row if heartbeat is incomplete
                 heartbeats = heartbeats.iloc[1:].reset_index(drop=True)
             beat_starts = round(beat_starts).astype(int)
 
@@ -92,11 +92,14 @@ class HeartBeatSegmentation(Algorithm):
             last_beat_end = round(
                 heartbeats["r_peak_sample"].iloc[-1] + (1 - self.start_factor) * rr_interval_samples.iloc[-1]
             )
+
             if last_beat_end < len(ecg_clean):
                 beat_ends.iloc[-1] = last_beat_end
             else:
-                beat_ends = beat_ends.iloc[:-1]  # drop row, when heart beat is incomplete
+                # drop the last beat if it is incomplete
                 heartbeats = heartbeats.iloc[:-1]
+                beat_ends = beat_ends.iloc[:-1]
+                beat_starts = beat_starts.iloc[:-1]
             beat_ends = beat_ends.astype(int)
 
             # extract time of each beat's start

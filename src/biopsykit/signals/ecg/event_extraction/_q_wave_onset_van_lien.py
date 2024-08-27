@@ -1,8 +1,10 @@
 from typing import Optional
 
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction
+from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
 from tpcp import Parameter, make_action_safe
+
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 
 
 class QWaveOnsetExtractionVanLien(BaseExtraction):
@@ -22,8 +24,15 @@ class QWaveOnsetExtractionVanLien(BaseExtraction):
         """
         self.time_interval = time_interval
 
-    @make_action_safe
-    def extract(self, signal_clean: pd.DataFrame, heartbeats: pd.DataFrame, sampling_rate_hz: int):
+    # @make_action_safe
+    def extract(
+        self,
+        signal_clean: pd.DataFrame,
+        heartbeats: pd.DataFrame,
+        sampling_rate_hz: int,
+        *,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+    ):
         """Function which extracts Q-wave onset (start of ventricular depolarization) from given ECG cleaned signal.
 
         Args:
@@ -43,12 +52,17 @@ class QWaveOnsetExtractionVanLien(BaseExtraction):
         time_interval_in_samples = (self.time_interval / 1000) * sampling_rate_hz  # 40 ms = 0.04 s
 
         # get the r_peaks from the heartbeats Dataframe
-        r_peaks = heartbeats["r_peak_sample"]
+        r_peaks = heartbeats[["r_peak_sample"]]
 
         # subtract the fixed time_interval from the r_peak samples to estimate the q_wave_onset
         q_wave_onset = r_peaks - time_interval_in_samples
 
-        points = q_wave_onset
+        q_wave_onset.columns = ["q_wave_onset_sample"]
 
-        self.points_ = points
+        # TODO handle missing
+
+        _assert_is_dtype(q_wave_onset, pd.DataFrame)
+        _assert_has_columns(q_wave_onset, [["q_wave_onset_sample"]])
+
+        self.points_ = q_wave_onset
         return self

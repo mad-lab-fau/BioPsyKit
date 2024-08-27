@@ -1,10 +1,14 @@
 import warnings
+from typing import Optional
 
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction
+from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
 from tpcp import make_action_safe
+
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils.exceptions import EventExtractionError
 
 
 class QPeakExtractionNeurokitDwt(BaseExtraction):
@@ -12,8 +16,15 @@ class QPeakExtractionNeurokitDwt(BaseExtraction):
     discrete wavelet method.
     """
 
-    @make_action_safe
-    def extract(self, signal_clean: pd.DataFrame, heartbeats: pd.DataFrame, sampling_rate_hz: int):
+    # @make_action_safe
+    def extract(
+        self,
+        signal_clean: pd.DataFrame,
+        heartbeats: pd.DataFrame,
+        sampling_rate_hz: int,
+        *,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+    ):
         """Function which extracts Q-wave peaks from given ECG cleaned signal.
 
         Args:
@@ -41,8 +52,7 @@ class QPeakExtractionNeurokitDwt(BaseExtraction):
         # some neurokit functions (for example ecg_delineate()) don't work with r-peaks input as Series, so list instead
         r_peaks = list(heartbeats["r_peak_sample"])
 
-        print(r_peaks)
-
+        signal_clean = signal_clean.squeeze()
         _, waves = nk.ecg_delineate(
             signal_clean, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, method="dwt", show=False, show_type="peaks"
         )  # show can also be set to False
@@ -51,7 +61,6 @@ class QPeakExtractionNeurokitDwt(BaseExtraction):
 
         # find heartbeat to which Q-peak belongs and save Q-peak position in corresponding row
         for idx, q in enumerate(extracted_q_peaks):
-
             # for some heartbeats, no Q can be detected, will be NaN in resulting df
             if np.isnan(q):
                 heartbeats_no_q.append(idx)
@@ -64,7 +73,6 @@ class QPeakExtractionNeurokitDwt(BaseExtraction):
                 if heartbeats["r_peak_sample"].loc[heartbeat_idx].item() < q:
                     heartbeats_q_after_r.append(heartbeat_idx)
                     q_peaks.at[heartbeat_idx, "q_peak"] = np.NaN
-
                 # valid Q-peak found
                 else:
                     q_peaks.at[heartbeat_idx, "q_peak"] = q
@@ -74,12 +82,32 @@ class QPeakExtractionNeurokitDwt(BaseExtraction):
             nan_rows = q_peaks[q_peaks["q_peak"].isna()]
             nan_rows = nan_rows.drop(index=heartbeats_q_after_r)
             nan_rows = nan_rows.drop(index=heartbeats_no_q)
-            warnings.warn(
-                f"No Q-peak detected in {q_peaks.isna().sum()[0]} heartbeats (for heartbeats "
-                f"{heartbeats_no_q} the neurokit algorithm was not able to detect a Q-peak; for heartbeats "
-                f"{heartbeats_q_after_r} the detected Q is invalid because it occurs after R; for "
-                f"{nan_rows.index.values} apparently none of the found Q-peaks were within these heartbeats)"
-            )
+
+            missing_str = f"No Q-peak detected in {q_peaks.isna().sum()[0]} heartbeats:\n"
+            if len(heartbeats_no_q) > 0:
+                missing_str += (
+                    f"- for heartbeats {heartbeats_no_q} the neurokit algorithm " f"was not able to detect a Q-peak\n"
+                )
+            if len(heartbeats_q_after_r) > 0:
+                missing_str += (
+                    f"- for heartbeats {heartbeats_q_after_r} the detected Q is invalid "
+                    f"because it occurs after the R-peak\n"
+                )
+            if len(nan_rows.index.values) > 0:
+                missing_str += (
+                    f"- for {nan_rows.index.values} apparently none of the found Q-peaks "
+                    f"were within these heartbeats"
+                )
+
+            if handle_missing == "warn":
+                warnings.warn(missing_str)
+            elif handle_missing == "raise":
+                raise EventExtractionError(missing_str)
+
+        q_peaks.columns = ["q_wave_onset_sample"]
+
+        _assert_is_dtype(q_peaks, pd.DataFrame)
+        _assert_has_columns(q_peaks, [["q_wave_onset_sample"]])
 
         self.points_ = q_peaks
         return self

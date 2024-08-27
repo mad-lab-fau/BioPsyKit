@@ -3,8 +3,11 @@ from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction
+from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
 from tpcp import Parameter, make_action_safe
+
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils.exceptions import EventExtractionError
 
 
 class BPointExtractionArbol2017(BaseExtraction):
@@ -40,8 +43,16 @@ class BPointExtractionArbol2017(BaseExtraction):
         self.save_icg_derivatives = save_icg_derivatives
         self.correct_outliers = correct_outliers
 
-    @make_action_safe
-    def extract(self, signal_clean: pd.Series, heartbeats: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: int):
+    # @make_action_safe
+    def extract(
+        self,
+        signal_clean: pd.Series,
+        heartbeats: pd.DataFrame,
+        c_points: pd.DataFrame,
+        sampling_rate_hz: int,
+        *,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+    ):
         """Function which extracts B-points from given cleaned ICG derivative signal.
 
         Args:
@@ -60,7 +71,7 @@ class BPointExtractionArbol2017(BaseExtraction):
             dictionary with heartbeat id as key
         """
         # result dfs
-        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point"])
+        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
         icg_derivatives = {}
         if self.save_icg_derivatives:
             icg_derivatives = {
@@ -73,9 +84,10 @@ class BPointExtractionArbol2017(BaseExtraction):
         # (but in case of wrongly detected Cs, the search window might be invalid, then no B can be found)
         heartbeats_no_b = []
 
+        signal_clean = signal_clean.squeeze()
+
         # search B-point for each heartbeat of the given signal
         for idx, data in heartbeats.iterrows():
-
             # slice signal for current heartbeat
             heartbeat_start = data["start_sample"]
             heartbeat_end = data["end_sample"]
@@ -93,12 +105,12 @@ class BPointExtractionArbol2017(BaseExtraction):
 
             # calculate R-peak and C-point position relative to start of current heartbeat
             heartbeat_r_peak = data["r_peak_sample"] - heartbeat_start
-            heartbeat_c_point = c_points["c_point"].iloc[idx] - heartbeat_start
+            heartbeat_c_point = c_points["c_point_sample"].iloc[idx] - heartbeat_start
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if np.isnan(heartbeat_c_point):
                 heartbeats_no_c_b.append(idx)
-                b_points.at[idx, "b_point"] = np.NaN
+                b_points.at[idx, "b_point_sample"] = np.NaN
                 continue
 
             # set window end to C-point position and set window start according to specified method
@@ -114,7 +126,7 @@ class BPointExtractionArbol2017(BaseExtraction):
             # might happen for wrongly detected Cs (search window becomes invalid)
             if window_start < 0 or window_end < 0:
                 heartbeats_no_b.append(idx)
-                b_points.at[idx, "b_point"] = np.NaN
+                b_points.at[idx, "b_point_sample"] = np.NaN
                 continue
 
             # find max in B window and calculate B-point relative to signal start
@@ -133,20 +145,32 @@ class BPointExtractionArbol2017(BaseExtraction):
             else:
                 b_points['b_point'].iloc[idx] = b_point
             """
-            b_points["b_point"].iloc[idx] = b_point
+            b_points["b_point_sample"].iloc[idx] = b_point
 
         # inform user about missing B-points
         if len(heartbeats_no_c_b) > 0 or len(heartbeats_no_b) > 0:
-            nan_rows = b_points[b_points["b_point"].isna()]
+            nan_rows = b_points[b_points["b_point_sample"].isna()]
             n = len(nan_rows)
             nan_rows = nan_rows.drop(index=heartbeats_no_c_b)
             nan_rows = nan_rows.drop(index=heartbeats_no_b)
-            warnings.warn(
-                f"No B-point detected in {n} heartbeats (for heartbeats {heartbeats_no_c_b} no B "
-                f"could be extracted, because there was no C; for heartbeats {heartbeats_no_b} the search "
-                f"window was invalid probably due to wrongly detected C; for heartbeats "
-                f"{nan_rows.index.values} apparently also no B was found for some other reason?!)"
+
+            missing_str = (
+                f"No B-point detected in {n} heartbeats:\n"
+                f"- For heartbeats {heartbeats_no_c_b} no B point could be extracted, "
+                f"because there was no C point\n"
+                f"- For heartbeats {heartbeats_no_b} the search window was invalid probably due to "
+                f"wrongly detected C points\n"
+                f"- for heartbeats {nan_rows.index.values} apparently also no B point was found "
+                f"for some other reasons"
             )
+
+            if handle_missing == "warn":
+                warnings.warn(missing_str)
+            elif handle_missing == "raise":
+                raise EventExtractionError(missing_str)
+
+        _assert_is_dtype(b_points, pd.DataFrame)
+        _assert_has_columns(b_points, [["b_point_sample"]])
 
         self.points_ = b_points
         return self
