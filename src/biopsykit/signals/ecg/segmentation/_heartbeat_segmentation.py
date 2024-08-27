@@ -1,12 +1,16 @@
-from typing import Optional
+from typing import Optional, Union
 
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
 from tpcp import Parameter
+
+from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
 from biopsykit.signals.ecg.segmentation._base_segmentation import BaseHeartbeatSegmentation
 
 __all__ = ["HeartbeatSegmentationNeurokit"]
+
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns
 
 
 class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
@@ -43,7 +47,13 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
         self.start_factor = start_factor
 
     # @make_action_safe
-    def extract(self, *, ecg: pd.Series, sampling_rate_hz: int):
+    def extract(
+        self,
+        *,
+        ecg: Union[pd.Series, pd.DataFrame],
+        sampling_rate_hz: int,
+        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+    ):
         """Segments ecg signal into heartbeats, extract start, end, r-peak of each heartbeat.
 
         fills df containing all heartbeats, one row corresponds to one heartbeat;
@@ -56,6 +66,9 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
         Returns:
             self: fills heartbeat_list_
         """
+        if not _assert_has_columns(ecg, [["ECG"]], raise_exception=False):
+            ecg = ecg.rename(columns={"ecg": "ECG"})
+
         _, r_peaks = nk.ecg_peaks(ecg, sampling_rate=sampling_rate_hz, method="neurokit")
         r_peaks = r_peaks["ECG_R_Peaks"]
 
