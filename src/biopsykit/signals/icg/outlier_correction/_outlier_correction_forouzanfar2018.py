@@ -141,6 +141,7 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
         verbose = kwargs.get("verbose", False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=ValueWarning)
+            warnings.simplefilter("ignore", category=FutureWarning)
 
             data = statio_data["statio_data"].to_frame()
             data.loc[outliers.index, "statio_data"] = np.NaN
@@ -177,10 +178,12 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
             # Fit the backward model
             b_arima_mod = ARIMA(endog=reversed_input, order=(b_order, 0, 0))
             b_arima_res = b_arima_mod.fit(method="burg")
+
             # predict the outlier values
             for idx in outliers.index:
                 forward_prediction = arima_res.predict(idx, idx)
-                backward_prediction = b_arima_res.predict(len(reversed_input) - idx, len(reversed_input) - idx)
+                backward_idx = (len(reversed_input) - idx) % len(reversed_input)
+                backward_prediction = b_arima_res.predict(backward_idx, backward_idx)
                 prediction = np.average([forward_prediction, backward_prediction])
                 data.loc[idx, "statio_data"] = prediction
             result = b_points_uncorrected.copy()

@@ -15,7 +15,6 @@ __all__ = ["OutlierCorrectionInterpolation"]
 class OutlierCorrectionInterpolation(BaseOutlierCorrection):
     """algorithm to correct outliers based on Linear Interpolation."""
 
-    # @make_action_safe
     def correct_outlier(
         self,
         *,
@@ -64,8 +63,9 @@ class OutlierCorrectionInterpolation(BaseOutlierCorrection):
             print(f"Detected {len(outliers)} outliers in correction cycle {counter}!")
 
         if len(outliers) == 0:
-            _assert_is_dtype(corrected_b_points, pd.DataFrame)
-            _assert_has_columns(corrected_b_points, [["b_point_sample"]])
+            _assert_is_dtype(b_points, pd.DataFrame)
+            _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+            self.points_ = b_points
             return self
 
         # Perform the outlier correction until no more outliers are detected
