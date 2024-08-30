@@ -51,7 +51,7 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
 
         """
         # result df
-        q_peaks = pd.DataFrame(index=heartbeats.index, columns=["q_peak"])
+        q_peaks = pd.DataFrame(index=heartbeats.index, columns=["q_peak", "nan_reason"])
 
         # used subsequently to store ids of heartbeats for which no AO or IVC could be detected
         heartbeats_no_q = []
@@ -93,15 +93,18 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
 
             missing_str = f"No Q-peak detected in {q_peaks.isna().sum()[0]} heartbeats:\n"
             if len(heartbeats_no_q) > 0:
+                q_peaks.loc[heartbeats_no_q, "nan_reason"] = "no_q_peak"
                 missing_str += (
                     f"- for heartbeats {heartbeats_no_q} the neurokit algorithm was not able to detect a Q-peak\n"
                 )
             if len(heartbeats_q_after_r) > 0:
+                q_peaks.loc[heartbeats_no_q, "nan_reason"] = "q_after_r_peak"
                 missing_str += (
                     f"- for heartbeats {heartbeats_q_after_r} the detected Q is invalid "
                     f"because it occurs after the R-peak\n"
                 )
             if len(nan_rows.index.values) > 0:
+                q_peaks.loc[nan_rows.index, "nan_reason"] = "no_q_peak_within_heartbeats"
                 missing_str += (
                     f"- for {nan_rows.index.to_numpy()} apparently none of the found Q-peaks "
                     f"were within these heartbeats"
@@ -112,10 +115,10 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
             elif handle_missing == "raise":
                 raise EventExtractionError(missing_str)
 
-        q_peaks.columns = ["q_wave_onset_sample"]
+        q_peaks.columns = ["q_wave_onset_sample", "nan_reason"]
 
         _assert_is_dtype(q_peaks, pd.DataFrame)
-        _assert_has_columns(q_peaks, [["q_wave_onset_sample"]])
+        _assert_has_columns(q_peaks, [["q_wave_onset_sample", "nan_reason"]])
 
         self.points_ = q_peaks
         return self
