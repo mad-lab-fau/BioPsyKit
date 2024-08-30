@@ -12,7 +12,7 @@ __all__ = ["BaseOutlierCorrection"]
 
 class BaseOutlierCorrection(Algorithm):
 
-    _action_methods = "correct_outliers"
+    _action_methods = "correct_outlier"
 
     points_: pd.DataFrame
 
