@@ -7,24 +7,29 @@ from scipy import signal
 def clean_icg_deriv(
     raw_signal: pd.Series, sampling_rate_hz: int, filter_type: Optional[str] = "butterworth"
 ) -> pd.Series:
-    """Function which cleans ICG dZ/dt signal using butterworth filtering.
+    """Clean ICG dZ/dt signal using a band-pass filter.
 
-    Butterworth band-pass filter: 4th order, low cutoff 0.5 Hz, high cutoff 25 Hz, see Forouzanfar 2019
+    This function filters the raw dZ/dt ICG signal using a band-pass filter. The following filters are available:
+        * Butterworth band-pass filter: 4th order, low cutoff 0.5 Hz, high cutoff 25 Hz, see Forouzanfar 2019
+        * Elliptic band-pass filter (Cauer filter): 2nd order, low cutoff 0.75 Hz, high cutoff 40 Hz, pass-band ripple
+            1 dB, stop-band ripple 80 dB, see Nabian 2017 & Ostadabbas 2023
+        * Savitzky-Golay filter: low-pass, 3rd order polynomial, see Salah 2020 & Salah 2017 (only useful for signal
+            with high frequency noise?)
 
-    Elliptic band-pass filter (Cauer filter): 2nd order, low cutoff 0.75 Hz, high cutoff 40 Hz, pass-band ripple 1 dB,
-    stop-band ripple 80 dB, see Nabian 2017 & Ostadabbas 2023
-
-    Savitzky-Golay filter: low-pass, 3rd order polynomial, see Salah 2020 & Salah 2017 (only useful for signal with
-    high frequency noise?)
-
-    Args:
-        raw_signal: pd.Series containing the raw dZ/dt ICG signal
-        sampling_rate_hz: sampling rate of ICG dZ/dt signal in hz
-        filter_type: type of filter (butterworth band-pass, elliptic band-pass, Savitzky-Golay filter)
+    Parameters
+    ----------
+    raw_signal: pd.Series
+        pd.Series containing the raw dZ/dt ICG signal
+    sampling_rate_hz: int
+        sampling rate of ICG dZ/dt signal in hz
+    filter_type: str, optional
+        type of filter. Must be one of "butterworth", "elliptic", or "savgol". Default: "butterworth"
 
     Returns
     -------
-        clean_signal: pd.Series containing filtered signal
+    pd.Series
+        cleaned ICG dZ/dt signal
+
     """
     if filter_type not in ["butterworth", "elliptic", "savgol"]:
         raise ValueError("Filter type can only be 'butterworth', 'elliptic', or 'savgol'")

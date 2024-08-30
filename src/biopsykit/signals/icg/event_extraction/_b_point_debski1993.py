@@ -3,13 +3,12 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.exceptions import EventExtractionError
 from scipy.signal import find_peaks
 from tpcp import Parameter
-
-from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
-from biopsykit.utils.exceptions import EventExtractionError
 
 __all__ = ["BPointExtractionDebski1993"]
 
@@ -37,28 +36,41 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
         icg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
-        sampling_rate_hz: int,
-        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+        sampling_rate_hz: int,  # noqa: ARG002
+        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
-        """Function which extracts B-points from given ICG cleaned signal.
+        """Extract B-points from given ICG cleaned signal.
 
-        Args:
-            signal_clean:
-                cleaned ICG signal
-            heartbeats:
-                pd.DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-                location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
-            c_points:
-                pd.DataFrame containing one row per segmented C-point, each row contains location
-                (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-                is not correct
-            sampling_rate_hz:
-                sampling rate of ECG signal in hz
+        This algorithm extracts B-points based on the reversal (local minimum) of the second derivative of the ICG
+        signal before the C-point.
+
+        The results are saved in the points_ attribute of the super class.
+
+        Parameters
+        ----------
+        icg : :class:`~pandas.DataFrame`
+            cleaned ICG signal
+        heartbeats : :class:`~pandas.DataFrame`
+            pd.DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
+            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+        c_points : :class:`~pandas.DataFrame`
+            pd.DataFrame containing one row per segmented C-point, each row contains location
+            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
+            is not correct
+        sampling_rate_hz : int
+            sampling rate of ECG signal in hz. Not used in this function.
+        handle_missing : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
 
         Returns
         -------
-            saves resulting B-point locations (samples) in points_ attribute of super class,
-            index is C-point (/heartbeat) id
+            self
+
+        Raises
+        ------
+        :exc:`~biopsykit.utils.exceptions.EventExtractionError`
+            If the C-Point contains NaN values and handle_missing is set to "raise"
+
         """
         # sanitize input
         icg = icg.squeeze()
@@ -68,11 +80,11 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
 
         # get the r_peak locations from the heartbeats dataframe and search for entries containing NaN
         r_peaks = heartbeats["r_peak_sample"]
-        check_r_peaks = np.isnan(r_peaks.values)
+        check_r_peaks = np.isnan(r_peaks.to_numpy())
 
         # get the c_point locations from the c_points dataframe and search for entries containing NaN
         c_points = c_points["c_point_sample"]
-        check_c_points = np.isnan(c_points.values.astype(float))
+        check_c_points = np.isnan(c_points.to_numpy().astype(float))
 
         # Compute the second derivative of the ICG-signal
         icg_2nd_der = np.gradient(icg)
@@ -85,13 +97,12 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
             if check_r_peaks[idx] | check_c_points[idx]:
                 b_points["b_point_sample"].iloc[idx] = np.NaN
                 warnings.warn(
-                    f"Either the r_peak or the c_point contains NaN at position{idx}! " f"B-Point was set to NaN."
+                    f"Either the r_peak or the c_point contains NaN at position{idx}! B-Point was set to NaN."
                 )
                 continue
-            else:
-                # set the borders of the interval between the R-Peak and the C-Point
-                start_r_c = r_peaks[idx]
-                end_r_c = c_points[idx]
+            # set the borders of the interval between the R-Peak and the C-Point
+            start_r_c = r_peaks[idx]
+            end_r_c = c_points[idx]
 
             # Select the specific interval in the second derivative of the ICG-signal
             icg_search_window = icg_2nd_der[start_r_c : (end_r_c + 1)]

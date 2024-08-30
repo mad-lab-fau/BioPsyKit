@@ -3,13 +3,11 @@ from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
-from tpcp import Parameter
-
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.exceptions import EventExtractionError
-
+from tpcp import Parameter
 
 __all__ = ["BPointExtractionArbol2017"]
 
@@ -48,31 +46,46 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
         self.correct_outliers = correct_outliers
 
     # @make_action_safe
-    def extract(
+    def extract(  # noqa: C901, PLR0915
         self,
         *,
         icg: pd.Series,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
-        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
-        """Function which extracts B-points from given cleaned ICG derivative signal.
+        """Extract B-points from given cleaned ICG derivative signal.
 
-        Args:
-            signal_clean :
-                cleaned ICG derivative signal
-            heartbeats :
-                pd.DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-                location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
-            sampling_rate_hz :
-                sampling rate of ICG derivative signal in hz
+        This algorithm extracts B-points based on the maximum of the third derivative of the ICG signal.
+
+        The results are saved in the points_ attribute of the super class.
+
+        Parameters
+        ----------
+        icg : :class:`~pandas.Series`
+            cleaned ICG derivative signal
+        heartbeats : :class:`~pandas.DataFrame`
+            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
+            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+        c_points : :class:`~pandas.DataFrame`
+            DataFrame containing one row per segmented C-point, each row contains location
+            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
+            is not correct
+        sampling_rate_hz : int
+            sampling rate of ICG derivative signal in hz
+        handle_missing : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
 
         Returns
         -------
-            saves resulting B-point positions in points_ attribute of super class, index is heartbeat id, and saves ICG
-            derivative signal and 2nd and 3rd derivatives of each heartbeat as pd.DataFrame in icg_derivatives_
-            dictionary with heartbeat id as key
+            self
+
+        Raises
+        ------
+        :exc:`~biopsykit.utils.exceptions.EventExtractionError`
+            If the C-Point contains NaN values and handle_missing is set to "raise"
+
         """
         # result dfs
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
@@ -114,7 +127,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if np.isnan(heartbeat_c_point):
                 heartbeats_no_c_b.append(idx)
-                b_points.at[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.NaN
                 continue
 
             # set window end to C-point position and set window start according to specified method
@@ -130,7 +143,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
             # might happen for wrongly detected Cs (search window becomes invalid)
             if window_start < 0 or window_end < 0:
                 heartbeats_no_b.append(idx)
-                b_points.at[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.NaN
                 continue
 
             # find max in B window and calculate B-point relative to signal start
@@ -164,7 +177,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
                 f"because there was no C point\n"
                 f"- For heartbeats {heartbeats_no_b} the search window was invalid probably due to "
                 f"wrongly detected C points\n"
-                f"- for heartbeats {nan_rows.index.values} apparently also no B point was found "
+                f"- for heartbeats {nan_rows.index.to_numpy()} apparently also no B point was found "
                 f"for some other reasons"
             )
 

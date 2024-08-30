@@ -3,18 +3,17 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.exceptions import EventExtractionError
 from scipy.signal import argrelextrema, argrelmin
 from tpcp import Parameter
 
-from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
-from biopsykit.utils.exceptions import EventExtractionError
-
-__all__ = ["BPointExtractionForouzanfar2019"]
+__all__ = ["BPointExtractionForouzanfar2018"]
 
 
-class BPointExtractionForouzanfar2019(BaseBPointExtraction):
+class BPointExtractionForouzanfar2018(BaseBPointExtraction):
     """algorithm to extract B-point based on [Forouzanfar et al., 2018, Psychophysiology]."""
 
     # input parameters
@@ -44,51 +43,60 @@ class BPointExtractionForouzanfar2019(BaseBPointExtraction):
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
-        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
-        """Function which extracts B-points from given ICG cleaned signal.
+        """Extract B-points from given ICG cleaned signal.
 
-        Args:
-            signal_clean:
-                cleaned ICG signal
-            heartbeats:
-                pd.DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-                location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
-            c_points:
-                pd.DataFrame containing one row per segmented C-point, each row contains location
-                (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-                is not correct
-            sampling_rate_hz:
-                sampling rate of ECG signal in hz
+        The results are saved in the 'points_' attribute of the class instance.
+
+        Parameters
+        ----------
+        icg : :class:`~pandas.DataFrame`
+            cleaned ICG signal
+        heartbeats : :class:`~pandas.DataFrame`
+            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak location
+            (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+        c_points : :class:`~pandas.DataFrame`
+            DataFrame containing one row per segmented C-point, each row contains location
+            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
+            is not correct.
+        sampling_rate_hz : int
+            sampling rate of ECG signal in hz
+        handle_missing : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
 
         Returns
         -------
-            saves resulting B-point locations (samples) in points_ attribute of super class,
-            index is C-point (/heartbeat) id
+        self
+
+        Raises
+        ------
+        :exc:`~biopsykit.utils.exceptions.EventExtractionError`
+            If the C-Point contains NaN values and handle_missing is set to "raise"
+
         """
         # sanitize input signal
         icg = icg.squeeze()
 
         # Create the B-Point/A-Point Dataframes with the index of the heartbeat_list
-        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
+        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
 
         # check whether the c_points contain NaN
-        check_c_points = np.isnan(c_points.values.astype(float))
+        check_c_points = np.isnan(c_points).to_numpy()
 
         # Calculate the second- and third-derivative of the ICG-signal
         second_der = np.gradient(icg)
         third_der = np.gradient(second_der)
 
-        # print(c_points)
-
         for idx, data in heartbeats[1:].iterrows():
-            # check if c_points contain NaN. If this is the case, set the b_point to NaN
-            if check_c_points[idx] | check_c_points[idx - 1]:
-                b_points["b_point_sample"].iloc[idx] = np.NaN
+            # check if the current or the previous C-Point contain NaN . If this is the case, set the b_point to NaN
+            if pd.isna(check_c_points[idx]) | pd.isna(check_c_points[idx - 1]):
+                b_points["b_point_sample"].iloc[idx] = np.nan
+                b_points["nan_reason"].iloc[idx] = "c_point_nan"
                 continue
-            else:
-                # Detect the main peak in the dZ/dt signal (C-Point)
-                c_point = c_points["c_point_sample"].iloc[idx]
+
+            # Detect the main peak in the dZ/dt signal (C-Point)
+            c_point = c_points["c_point_sample"].iloc[idx]
 
             # Compute the beat to beat interval
             beat_to_beat = c_points["c_point_sample"].iloc[idx] - c_points["c_point_sample"].iloc[idx - 1]
@@ -118,7 +126,8 @@ class BPointExtractionForouzanfar2019(BaseBPointExtraction):
                 if self.correct_outliers:
                     b_points["b_point_sample"].iloc[idx] = data["r_peak_sample"]
                 else:
-                    b_points["b_point_sample"].iloc[idx] = np.NaN
+                    b_points["b_point_sample"].iloc[idx] = np.nan
+                    b_points["nan_reason"].iloc[idx] = "no_monotonic_segment"
                 continue
 
             # Get the first third of the monotonic increasing segment
@@ -161,7 +170,9 @@ class BPointExtractionForouzanfar2019(BaseBPointExtraction):
 
         # interpolate the first B-Point with the second B-Point since it is not possible to detect a B-Point
         # for the first heartbeat
-        b_points.iloc[0] = b_points["b_point_sample"].iloc[1] - b_points["b_point_sample"].diff().iloc[2]
+        b_points["b_point_sample"].iloc[0] = (
+            b_points["b_point_sample"].iloc[1] - b_points["b_point_sample"].diff().iloc[2]
+        )
 
         idx_nan = b_points["b_point_sample"].isna()
         if idx_nan.sum() > 0:
@@ -175,14 +186,14 @@ class BPointExtractionForouzanfar2019(BaseBPointExtraction):
                 raise EventExtractionError(missing_str)
 
         _assert_is_dtype(b_points, pd.DataFrame)
-        _assert_has_columns(b_points, [["b_point_sample"]])
+        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
 
         self.points_ = b_points.convert_dtypes(infer_objects=True)
         return self
 
     @staticmethod
-    def get_a_point(signal_clean: pd.DataFrame, search_interval: int, c_point: int):
-        signal_interval = signal_clean.iloc[(c_point - search_interval) : c_point]
+    def get_a_point(icg: pd.DataFrame, search_interval: int, c_point: int):
+        signal_interval = icg.iloc[(c_point - search_interval) : c_point]
         signal_minima = argrelmin(signal_interval.values, mode="wrap")
         a_point_idx = np.argmin(signal_interval.iloc[signal_minima[0]])
         a_point = signal_minima[0][a_point_idx]
@@ -190,17 +201,17 @@ class BPointExtractionForouzanfar2019(BaseBPointExtraction):
 
     @staticmethod
     def get_monotonic_increasing_segments_2nd_der(
-        signal_clean_segment: pd.DataFrame, second_der_segment: pd.DataFrame, height: int
+        icg_segment: pd.DataFrame, icg_second_der_segment: pd.DataFrame, height: int
     ):
-        signal_clean_segment.index = np.arange(0, len(signal_clean_segment))
-        monotony_df = pd.DataFrame(signal_clean_segment.values, columns=["icg"])
-        monotony_df["2nd_der"] = second_der_segment
+        icg_segment.index = np.arange(0, len(icg_segment))
+        monotony_df = pd.DataFrame(icg_segment.values, columns=["icg"])
+        monotony_df["2nd_der"] = icg_second_der_segment
         monotony_df["borders"] = 0
 
         # C-Point is a possible end of the monotonic segment
-        monotony_df["borders"].iat[-1] = "end_increase"
+        monotony_df["borders"].iloc[-1] = "end_increase"
         # A-Point is a possible start of the monotonic segment
-        monotony_df["borders"].iat[0] = "start_increase"
+        monotony_df["borders"].iloc[0] = "start_increase"
 
         # start_increase if the sign of the second derivative changes from negative to positive
         monotony_df.loc[
@@ -264,42 +275,41 @@ class BPointExtractionForouzanfar2019(BaseBPointExtraction):
 
         # Discard zero_crossings with negative to positive sign change
         significant_crossings = zero_crossings.drop(
-            zero_crossings[monotonic_segment_2nd_der.iloc[zero_crossings["sample_position"]].values < 0].index, axis=0
+            zero_crossings[monotonic_segment_2nd_der.iloc[zero_crossings["sample_position"]].to_numpy() < 0].index,
+            axis=0,
         )
 
         # Discard zero crossings with slope higher than 10*H/f_s
         significant_crossings = significant_crossings.drop(
             significant_crossings[
-                monotonic_segment_2nd_der.iloc[significant_crossings["sample_position"]].values >= constraint
+                monotonic_segment_2nd_der.iloc[significant_crossings["sample_position"]].to_numpy() >= constraint
             ].index,
             axis=0,
         )
 
         if isinstance(zero_crossings, type(None)):
             return pd.DataFrame([0], columns=["sample_position"])
-        elif len(zero_crossings) == 0:
+        if len(zero_crossings) == 0:
             return pd.DataFrame([0], columns=["sample_position"])
-        else:
-            return significant_crossings
+        return significant_crossings
 
     @staticmethod
     def get_local_maximums(monotonic_segment_3rd_der: pd.DataFrame, height: int, sampling_rate_hz: int):
         constraint = 4 * height / sampling_rate_hz
 
-        local_maximums = argrelextrema(monotonic_segment_3rd_der["3rd_der"].values, np.greater_equal)[0]
+        local_maximums = argrelextrema(monotonic_segment_3rd_der["3rd_der"].to_numpy(), np.greater_equal)[0]
         local_maximums = pd.DataFrame(local_maximums, columns=["sample_position"])
 
         significant_maximums = local_maximums.drop(
             local_maximums[
-                monotonic_segment_3rd_der["3rd_der"].iloc[local_maximums["sample_position"]].values < constraint
+                monotonic_segment_3rd_der["3rd_der"].iloc[local_maximums["sample_position"]].to_numpy() < constraint
             ].index,
             axis=0,
         )
 
         if isinstance(significant_maximums, type(None)):
             return pd.DataFrame([0], columns=["sample_position"])
-        elif len(significant_maximums) == 0:
+        if len(significant_maximums) == 0:
             return pd.DataFrame([0], columns=["sample_position"])
-        else:
-            # print(f"Received significant maximum!")
-            return significant_maximums
+        # print(f"Received significant maximum!")
+        return significant_maximums

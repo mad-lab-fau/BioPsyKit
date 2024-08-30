@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def clean_ecg(raw_signal: pd.Series, sampling_rate_hz: int, method: Optional[str] = "biosppy") -> pd.Series:
-    """Function to clean ECG signals using neurokit's biosppy ecg_clean function.
+    """Clean ECG signals using :func:`~neurokit2.ecg_clean`.
 
     Args:
         raw_signal: pd.Series containing the raw ECG signal

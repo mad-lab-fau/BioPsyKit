@@ -1,9 +1,9 @@
+"""Module for loading and processing Task Force Monitor (TFM) data."""
 from typing import Dict, Optional
 
 import pandas as pd
-from scipy.io import loadmat
-
 from biopsykit.utils._types import path_t
+from scipy.io import loadmat
 
 
 class TFMDataset:
@@ -42,6 +42,16 @@ class TFMDataset:
         # channel_mapping: Optional[Dict[str, str]] = None,
         tz: Optional[str] = "Europe/Berlin",
     ):
+        """Load a TFM dataset from a .mat file.
+
+        Parameters
+        ----------
+        path : str or :class:`~pathlib.Path`
+            Path to the .mat file.
+        tz : str, optional
+            Timezone of the data. Default: "Europe/Berlin"
+
+        """
         data = loadmat(path, struct_as_record=False, squeeze_me=True)
         data_raw = data["RAW_SIGNALS"]
         # keys = [s for s in dir(data_raw) if not s.startswith("_")]
@@ -49,5 +59,13 @@ class TFMDataset:
         data_dict = {key: getattr(data_raw, value) for key, value in cls.CHANNEL_MAPPING.items()}
         return cls(data_dict=data_dict, tz=tz, sampling_rate_dict={})
 
-    def data_as_df(self):
+    def data_as_df(self) -> Dict[str, pd.DataFrame]:
+        """Return the TFM data as a dictionary of pandas DataFrames.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the TFM data as pandas DataFrames. Keys are channel names, values are the dataframes.
+
+        """
         return self._data

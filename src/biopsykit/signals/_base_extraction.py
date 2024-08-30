@@ -3,7 +3,7 @@ from typing import Literal, Optional
 import pandas as pd
 from tpcp import Algorithm
 
-EXTRACTION_HANDLING_BEHAVIOR = Literal["raise", "warn", "ignore"]
+HANDLE_MISSING_EVENTS = Literal["raise", "warn", "ignore"]
 
 
 class BaseExtraction(Algorithm):
@@ -27,7 +27,7 @@ class BaseExtraction(Algorithm):
         signal_clean: pd.Series,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
-        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
         """Extract specific fiducial points from cleaned signal."""
         raise NotImplementedError("Method 'extract' must be implemented in subclass.")

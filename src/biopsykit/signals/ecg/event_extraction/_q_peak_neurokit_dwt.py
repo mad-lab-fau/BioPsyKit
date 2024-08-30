@@ -4,17 +4,14 @@ from typing import Optional
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import BaseExtraction, EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
-
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.exceptions import EventExtractionError
 
 
 class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
-    """algorithm to extract Q-wave peaks (= R-wave onset) from ECG signal using neurokit ecg_delineate function with
-    discrete wavelet method.
-    """
+    """Q-wave peaks extraction using :func:`~neurokit2.ecg_delineate` function with discrete wavelet method."""
 
     # @make_action_safe
     def extract(
@@ -23,24 +20,35 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
         *,
-        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
-        """Function which extracts Q-wave peaks from given ECG cleaned signal.
+        """Extract Q-wave peaks from given ECG cleaned signal.
 
-        Args:
-            signal_clean:
-                cleaned ECG signal
-            heartbeats:
-                pd.DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-                location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
-            sampling_rate_hz:
-                sampling rate of ECG signal in hz
+        The results are saved in the ``points_`` attribute of the super class.
+
+        Parameters
+        ----------
+        ecg: :class:`~pandas.DataFrame`
+            ECG signal
+        heartbeats: :class:`~pandas.DataFrame`
+            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
+            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+        sampling_rate_hz: int
+            Sampling rate of ECG signal in hz
+        handle_missing : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. If "warn", a warning is raised if missing data is found.
+            If "raise", an exception is raised if missing data is found. If "ignore", missing data is ignored.
+            Default: "warn"
 
         Returns
         -------
-            saves resulting Q-peak locations (samples) in points_ attribute of super class (in the row of the heartbeat
-            to which the respective Q-peak corresponds), index is heartbeat id,
-            NaN when no Q-peak could be detected in that heartbeat
+            self
+
+        Raises
+        ------
+        :exc:`~biopsykit.utils.exceptions.EventExtractionError`
+            If missing data is found and ``handle_missing`` is set to "raise"
+
         """
         # result df
         q_peaks = pd.DataFrame(index=heartbeats.index, columns=["q_peak"])
@@ -72,10 +80,10 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
                 # Q occurs after R, which is not valid
                 if heartbeats["r_peak_sample"].loc[heartbeat_idx].item() < q:
                     heartbeats_q_after_r.append(heartbeat_idx)
-                    q_peaks.at[heartbeat_idx, "q_peak"] = np.NaN
+                    q_peaks.loc[heartbeat_idx, "q_peak"] = np.NaN
                 # valid Q-peak found
                 else:
-                    q_peaks.at[heartbeat_idx, "q_peak"] = q
+                    q_peaks.loc[heartbeat_idx, "q_peak"] = q
 
         # inform user about missing Q-values
         if q_peaks.isna().sum()[0] > 0:
@@ -86,7 +94,7 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
             missing_str = f"No Q-peak detected in {q_peaks.isna().sum()[0]} heartbeats:\n"
             if len(heartbeats_no_q) > 0:
                 missing_str += (
-                    f"- for heartbeats {heartbeats_no_q} the neurokit algorithm " f"was not able to detect a Q-peak\n"
+                    f"- for heartbeats {heartbeats_no_q} the neurokit algorithm was not able to detect a Q-peak\n"
                 )
             if len(heartbeats_q_after_r) > 0:
                 missing_str += (
@@ -95,7 +103,7 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
                 )
             if len(nan_rows.index.values) > 0:
                 missing_str += (
-                    f"- for {nan_rows.index.values} apparently none of the found Q-peaks "
+                    f"- for {nan_rows.index.to_numpy()} apparently none of the found Q-peaks "
                     f"were within these heartbeats"
                 )
 

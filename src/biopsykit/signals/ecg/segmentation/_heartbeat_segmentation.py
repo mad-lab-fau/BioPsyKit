@@ -3,10 +3,9 @@ from typing import Optional, Union
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from tpcp import Parameter
-
-from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.ecg.segmentation._base_segmentation import BaseHeartbeatSegmentation
+from tpcp import Parameter
 
 __all__ = ["HeartbeatSegmentationNeurokit"]
 
@@ -30,18 +29,20 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
 
         Parameters
         ----------
-        variable_length : bool
+        variable_length : bool, optional
             ``True`` if extracted heartbeats should have variable length (depending on the current RR-interval) or
             ``False`` if extracted heartbeats should have fixed length (same length for all heartbeats, depending
             on the mean heartrate of the complete signal, 35% of mean heartrate in seconds before R-peak and 50%
-            after r_peak, see :func:`neurokit2.ecg_segment` for details). For variable length heartbeats, the start of
-            the next heartbeat follows directly after end of last (ends exclusive); For fixed length heartbeats,
-            there might be spaces between heartbeat boarders, or they might overlap
+            after r_peak, see :func:`neurokit2.ecg_segment` for details).
+            For variable length heartbeats, the start of the next heartbeat follows directly after end of last
+            (ends exclusive); For fixed length heartbeats, there might be spaces between heartbeat borders, or they
+            might overlap. Default: ``True``
         start_factor : float, optional
-            only needed for variable_length heartbeats, factor between 0 and 1, which defines where the start boarder
-            between heartbeats is set depending on the RR-interval to previous heartbeat
+            only needed if ``variable_length=True``. If ``variable_length=True``, this parameter defines where the
+            start border between heartbeats is set depending on the RR-interval to previous heartbeat.
             For example, ``start_factor=0.35`` means that the beat start is set at 35% of current RR-distance before the
             R-peak of the beat
+
         """
         self.variable_length = variable_length
         self.start_factor = start_factor
@@ -52,19 +53,30 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
         *,
         ecg: Union[pd.Series, pd.DataFrame],
         sampling_rate_hz: int,
-        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",  # noqa: ARG002
     ):
         """Segments ecg signal into heartbeats, extract start, end, r-peak of each heartbeat.
 
-        fills df containing all heartbeats, one row corresponds to one heartbeat;
-        for each heartbeat, df contains: start datetime, sample index of start/end, and sample index of r-peak;
-        index of df can be used as heartbeat id
+        The function uses R-peak detection to segment the ECG signal into heartbeats. The start of each heartbeat is
+        determined based on the R-peak and the current RR-interval.
 
-        Args:
-            ecg : containing cleaned ecg signal as pd series with datetime index
-            sampling_rate_hz : containing sampling rate of ecg signal in hz as int
-        Returns:
-            self: fills heartbeat_list_
+        The results are saved in the ``heartbeat_list_`` attribute.
+
+        Parameters
+        ----------
+        ecg : :class:`~pandas.Series` or :class:`~pandas.DataFrame`
+            ECG signal
+        sampling_rate_hz : int
+            Sampling rate of ECG signal in hz
+        handle_missing : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. If "warn", a warning is raised if missing data is found.
+            If "raise", an exception is raised if missing data is found. If "ignore", missing data is ignored.
+            Default: "warn"
+
+        Returns
+        -------
+            self
+
         """
         if not _assert_has_columns(ecg, [["ECG"]], raise_exception=False):
             ecg = ecg.rename(columns={"ecg": "ECG"})
@@ -146,7 +158,11 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
         heartbeats.index = list(heartbeats.index)
         heartbeats.index.name = "heartbeat_id"
 
+        heartbeats = heartbeats.assign(rr_interval_ms=heartbeats["rr_interval_sample"] / sampling_rate_hz * 1000)
+
         # ensure correct column order
-        heartbeats = heartbeats[["start_time", "start_sample", "end_sample", "r_peak_sample"]]
+        heartbeats = heartbeats[
+            ["start_time", "start_sample", "end_sample", "r_peak_sample", "rr_interval_sample", "rr_interval_ms"]
+        ]
         self.heartbeat_list_ = heartbeats
         return self

@@ -3,19 +3,26 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
-from tpcp import Parameter
-
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.exceptions import EventExtractionError
+from tpcp import Parameter
 
 __all__ = ["BPointExtractionDrost2022"]
 
 
 class BPointExtractionDrost2022(BaseBPointExtraction):
-    """algorithm to extract B-point based on the maximum distance of the dZ/dt curve and a straight line
-    fitted between the C-Point and the Point on the dZ/dt curve 150 ms before the C-Point.
+    """Extract B-points based on the method proposed by Drost et al. (2022).
+
+    This algorithm extracts B-points based on the maximum distance of the dZ/dt curve and a straight line fitted
+    between the C-Point and the Point on the dZ/dt curve 150 ms before the C-Point.
+
+    References
+    ----------
+    Drost, L., Finke, J. B., Port, J., & Schächinger, H. (2022). Comparison of TWA and PEP as indices of a2- and
+    ß-adrenergic activation. Psychopharmacology. https://doi.org/10.1007/s00213-022-06114-8
+
     """
 
     # input parameters
@@ -39,33 +46,46 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
-        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
-        """Function which extracts B-points from given ICG cleaned signal.
+        """Extract B-points from given ICG cleaned signal.
 
-        Args:
-            signal_clean:
-                cleaned ICG signal
-            heartbeats:
-                pd.DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-                location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
-            c_points:
-                pd.DataFrame containing one row per segmented C-point, each row contains location
-                (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-                is not correct
-            sampling_rate_hz:
-                sampling rate of ECG signal in hz
+        This algorithm extracts B-points based on the maximum distance of the dZ/dt curve and a straight line
+        fitted between the C-Point and the Point on the dZ/dt curve 150 ms before the C-Point.
+
+        The results are saved in the points_ attribute of the super class.
+
+        Parameters
+        ----------
+        icg : :class:`~pandas.DataFrame`
+            DataFrame containing the cleaned ICG signal
+        heartbeats : :class:`~pandas.DataFrame`
+            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
+            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+        c_points : :class:`~pandas.DataFrame`
+            DataFrame containing one row per segmented C-point, each row contains location
+            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
+            is not correct
+        sampling_rate_hz : int
+            Sampling rate of ECG signal in hz
+        handle_missing : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
 
         Returns
         -------
-            saves resulting B-point locations (samples) in points_ attribute of super class,
-            index is C-point (/heartbeat) id
+            self
+
+        Raises
+        ------
+        :exc:`~biopsykit.utils.exceptions.EventExtractionError`
+            If the C-Point contains NaN values and handle_missing is set to "raise"
+
         """
         # Create the b_point Dataframe. Use the heartbeats id as index
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
 
         # get the c_point locations from the c_points dataframe and search for entries containing NaN
-        check_c_points = np.isnan(c_points.values.astype(float))
+        check_c_points = np.isnan(c_points.to_numpy().astype(float))
 
         # iterate over each heartbeat
         for idx, _data in heartbeats.iterrows():
@@ -74,9 +94,8 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
             if check_c_points[idx]:
                 b_points["b_point_sample"].iloc[idx] = np.NaN
                 continue
-            else:
-                # Get the C-Point location at the current heartbeat id
-                c_point = c_points["c_point_sample"].iloc[idx]
+            # Get the C-Point location at the current heartbeat id
+            c_point = c_points["c_point_sample"].iloc[idx]
 
             # Calculate the start position of the straight line (150 ms before the C-Point)
             line_start = c_point - int((150 / 1000) * sampling_rate_hz)
@@ -88,7 +107,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
             signal_clean_interval = icg[line_start:c_point]
 
             # Calculate the distance between the straight line and the cleaned ICG-signal
-            distance = line_values["result"].values - signal_clean_interval.values
+            distance = line_values["result"].to_numpy() - signal_clean_interval.to_numpy()
 
             # Calculate the location of the maximum distance and transform the index relative to the complete signal
             # to obtain the B-Point location
@@ -129,23 +148,25 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
 
     @staticmethod
     def get_line_values(start_x: int, start_y: float, c_x: int, c_y: float):
-        """Function which computes the values of a straight line fitted between the C-Point and the Point 150 ms before
-        the C-Point.
+        """Compute the values of a straight line fitted between the C-Point and the point 150 ms before the C-Point.
 
-        Args:
-            start_x:
-                int index of the Point 150 ms before the C-Point
-            start_y:
-                float value of the Point 150 ms before the C-Point
-            c_x:
-                int index of the C-Point
-            c_y:
-                float value of the C-Point
+        Parameters
+        ----------
+        start_x: int
+            index of the point 150 ms before the C-Point
+        start_y: float
+            value of the point 150 ms before the C-Point
+        c_x: int
+            index of the C-Point
+        c_y: float
+            value of the C-Point
 
         Returns
         -------
-            pd.DataFrame containing the values of the straight line for each index between the C-Point and the Point
+        :class:`~pandas.DataFrame`
+            DataFrame containing the values of the straight line for each index between the C-Point and the point
             150 ms before the C-Point
+
         """
         # Compute the slope of the straight line
         slope = (c_y - start_y) / (c_x - start_x)

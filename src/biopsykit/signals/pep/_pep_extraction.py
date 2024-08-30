@@ -1,7 +1,6 @@
-from typing_extensions import Self
-
 import pandas as pd
 from tpcp import Algorithm
+from typing_extensions import Self
 
 __all__ = ["PepExtraction"]
 
@@ -32,7 +31,8 @@ class PepExtraction(Algorithm):
             sampling_rate_hz:
                 Sampling rate of the signals in Hz
 
-        Returns:
+        Returns
+        -------
             self
         """
         # do something
@@ -43,6 +43,8 @@ class PepExtraction(Algorithm):
             heartbeat_start_sample=heartbeats["start_sample"],
             heartbeat_end_sample=heartbeats["end_sample"],
             r_peak_sample=heartbeats["r_peak_sample"],
+            rr_interval_sample=heartbeats["rr_interval_sample"],
+            rr_interval_ms=heartbeats["rr_interval_sample"] / sampling_rate_hz * 1000,
             q_wave_onset_sample=q_wave_onset_samples["q_wave_onset_sample"],
             b_point_sample=b_point_samples["b_point_sample"],
             pep_sample=b_point_samples["b_point_sample"] - q_wave_onset_samples["q_wave_onset_sample"],

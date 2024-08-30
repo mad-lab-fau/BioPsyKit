@@ -3,56 +3,73 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import EXTRACTION_HANDLING_BEHAVIOR
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.exceptions import EventExtractionError
 from scipy import signal
 from tpcp import Parameter
-
-from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
-from biopsykit.utils.exceptions import EventExtractionError
 
 __all__ = ["CPointExtractionScipyFindPeaks"]
 
 
 class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
-    """algorithm to extract C-points from ICG derivative signal using scipy's find_peaks function."""
+    """Extract C-points from ICG derivative signal using scipy's find_peaks function."""
 
     # input parameters
     window_c_correction: Parameter[int]
     save_candidates: Parameter[bool]
 
     def __init__(self, window_c_correction: Optional[int] = 3, save_candidates: Optional[bool] = False):
-        """Initialize new CPointExtraction_ScipyFindPeaks algorithm instance
-        Args:
-            window_c_correction : int
-                how many preceding heartbeats are taken into account for C-point correction (using mean R-C-distance)
-            save_candidates : bool
-                indicates whether only the selected C-point position (one per heartbeat) is saved in _points (False),
-                or also all other C-candidates (True).
+        """Initialize the C-point extraction algorithm.
+
+        Parameters
+        ----------
+        window_c_correction : int, optional
+            how many preceding heartbeats are taken into account for C-point correction (using mean R-C-distance)
+        save_candidates : bool, optional
+            indicates whether only the selected C-point position (one per heartbeat) is saved in _points (False),
+            or also all other C-candidates (True).
+
         """
         self.window_c_correction = window_c_correction
         self.save_candidates = save_candidates
 
     # @make_action_safe
-    def extract(
+    def extract(  # noqa: C901, PLR0912
         self,
         *,
         icg: pd.Series,
         heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,
-        handle_missing: Optional[EXTRACTION_HANDLING_BEHAVIOR] = "warn",
+        sampling_rate_hz: int,  # noqa: ARG002
+        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
-        """Function which extracts C-points (max of most prominent peak) from given cleaned ICG derivative signal
-        Args:
-            icg:
-                cleaned ICG derivative signal
-            heartbeats:
-                pd.DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-                location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
-            sampling_rate_hz:
-                sampling rate of ICG derivative signal in hz
-        Returns:
-            saves resulting C-point positions (and C-candidates) in points_, index is heartbeat id.
+        """Extract C-points from given cleaned ICG derivative signal using :func:`~scipy.signal.find_peaks`.
+
+        The C-point is detected as the maximum of the most prominent peak in the ICG derivative signal within each
+        segmented heartbeat.
+
+        The resulting C-points are saved in the 'points_' attribute of the class instance.
+
+        Parameters
+        ----------
+        icg : :class:`~pandas.Series`
+            cleaned ICG derivative signal
+        heartbeats : :class:`~pandas.DataFrame`
+            Dataframe containing one row per segmented heartbeat, each row contains start, end, and R-peak.
+            Result from :class:`~biopsykit.signals.ecg.segmentation.HeartbeatSegmentation`.
+        sampling_rate_hz : int
+            Sampling rate of ICG derivative signal in Hz. Not used in this function.
+        handle_missing : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing C-points (default: "warn").
+            * "warn" : issue a warning and set C-point to NaN
+            * "raise" : raise an :class:`~biopsykit.utils.exceptions.EventExtractionError`
+            * "ignore" : ignore missing C-points
+
+        Returns
+        -------
+        self
+
         """
         # result df
         c_points = pd.DataFrame(index=heartbeats.index, columns=["c_point_sample"])
@@ -87,7 +104,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
 
             if len(heartbeat_c_candidates) < 1:
                 heartbeats_no_c.append(idx)
-                c_points.at[idx, "c_point_sample"] = np.NaN
+                c_points.loc[idx, "c_point_sample"] = np.NaN
                 continue
 
             # calculates distance of R-peak to all C-candidates in samples, positive when C occurs after R
@@ -100,7 +117,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
                 # C-point before R-peak is invalid
                 if r_c_distance < 0:
                     heartbeats_no_c.append(idx)
-                    c_points.at[idx, "c_point_sample"] = np.NaN
+                    c_points.loc[idx, "c_point_sample"] = np.NaN
                     continue
 
             elif len(heartbeat_c_candidates) > 1:
@@ -126,10 +143,12 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
             mean_prev_r_c_distance = np.mean(prev_r_c_distances)
 
             # save C-point (and C-candidates) to result property
-            c_points.at[idx, "c_point_sample"] = selected_c + heartbeat_start  # get C-point relative to complete signal
+            c_points.loc[idx, "c_point_sample"] = (
+                selected_c + heartbeat_start
+            )  # get C-point relative to complete signal
             if self.save_candidates:
                 for c in heartbeat_c_candidates:
-                    c_points.at[idx, "c_point_candidates"].append(c + heartbeat_start)
+                    c_points.loc[idx, "c_point_candidates"].append(c + heartbeat_start)
 
         if len(heartbeats_no_c) > 0:
             missing_str = f"No valid C-point detected in {len(heartbeats_no_c)} heartbeats ({heartbeats_no_c})"
