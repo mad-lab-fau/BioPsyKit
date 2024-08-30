@@ -72,7 +72,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
 
         """
         # result df
-        c_points = pd.DataFrame(index=heartbeats.index, columns=["c_point_sample"])
+        c_points = pd.DataFrame(index=heartbeats.index, columns=["c_point_sample", "nan_reason"])
         if self.save_candidates:
             c_points = c_points.assign(c_point_candidates=np.empty((len(heartbeats.index), 0)).tolist())
 
@@ -151,6 +151,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
                     c_points.loc[idx, "c_point_candidates"].append(c + heartbeat_start)
 
         if len(heartbeats_no_c) > 0:
+            c_points.loc[heartbeats_no_c, "nan_reason"] = "no_c_detected"
             missing_str = f"No valid C-point detected in {len(heartbeats_no_c)} heartbeats ({heartbeats_no_c})"
             if handle_missing == "warn":
                 warnings.warn(missing_str)
@@ -158,7 +159,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
                 raise EventExtractionError(missing_str)
 
         _assert_is_dtype(c_points, pd.DataFrame)
-        _assert_has_columns(c_points, [["c_point_sample"]])
+        _assert_has_columns(c_points, [["c_point_sample", "nan_reason"]])
 
         self.points_ = c_points.convert_dtypes(infer_objects=True)
         return self

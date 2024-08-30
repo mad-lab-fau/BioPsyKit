@@ -88,7 +88,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
 
         """
         # result dfs
-        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
+        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
         icg_derivatives = {}
         if self.save_icg_derivatives:
             icg_derivatives = {
@@ -128,6 +128,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
             if np.isnan(heartbeat_c_point):
                 heartbeats_no_c_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "nan_reason"] = "no_c_point"
                 continue
 
             # set window end to C-point position and set window start according to specified method
@@ -144,6 +145,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
             if window_start < 0 or window_end < 0:
                 heartbeats_no_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "nan_reason"] = "invalid_b_point_search_window"
                 continue
 
             # find max in B window and calculate B-point relative to signal start
@@ -187,7 +189,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
                 raise EventExtractionError(missing_str)
 
         _assert_is_dtype(b_points, pd.DataFrame)
-        _assert_has_columns(b_points, [["b_point_sample"]])
+        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
 
         self.points_ = b_points.convert_dtypes(infer_objects=True)
         return self

@@ -76,7 +76,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
         icg = icg.squeeze()
 
         # Create the b_point Dataframe. Use the heartbeats id as index
-        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
+        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
 
         # get the r_peak locations from the heartbeats dataframe and search for entries containing NaN
         r_peaks = heartbeats["r_peak_sample"]
@@ -84,7 +84,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
 
         # get the c_point locations from the c_points dataframe and search for entries containing NaN
         c_points = c_points["c_point_sample"]
-        check_c_points = np.isnan(c_points.to_numpy().astype(float))
+        check_c_points = pd.isna(c_points)
 
         # Compute the second derivative of the ICG-signal
         icg_2nd_der = np.gradient(icg)
@@ -96,9 +96,14 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
             # with the next iteration
             if check_r_peaks[idx] | check_c_points[idx]:
                 b_points["b_point_sample"].iloc[idx] = np.NaN
-                warnings.warn(
-                    f"Either the r_peak or the c_point contains NaN at position{idx}! B-Point was set to NaN."
+                b_points["nan_reason"].iloc[idx] = "r_peak_or_c_point_nan"
+                missing_str = (
+                    f"Either the r_peak or the c_point contains NaN at position {idx}! " f"B-Point was set to NaN."
                 )
+                if handle_missing == "warn":
+                    warnings.warn(missing_str)
+                elif handle_missing == "raise":
+                    raise EventExtractionError(missing_str)
                 continue
             # set the borders of the interval between the R-Peak and the C-Point
             start_r_c = r_peaks[idx]
@@ -123,6 +128,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
             else:
                 # If there is no minima set the B-Point to NaN
                 b_point = np.NaN if not self.correct_outliers else data["r_peak_sample"]
+                b_points["nan_reason"].iloc[idx] = "no_local_minima"
                 counter += 1
 
             # Add the detected B-point to the b_points Dataframe
@@ -147,7 +153,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
                 raise EventExtractionError(missing_str)
 
         _assert_is_dtype(b_points, pd.DataFrame)
-        _assert_has_columns(b_points, [["b_point_sample"]])
+        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
 
         self.points_ = b_points.convert_dtypes(infer_objects=True)
 

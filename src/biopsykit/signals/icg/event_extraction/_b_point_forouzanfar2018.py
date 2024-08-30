@@ -82,7 +82,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
 
         # check whether the c_points contain NaN
-        check_c_points = np.isnan(c_points).to_numpy()
+        check_c_points = pd.isna(c_points["c_point_sample"]).to_numpy()
 
         # Calculate the second- and third-derivative of the ICG-signal
         second_der = np.gradient(icg)
@@ -205,13 +205,12 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
     ):
         icg_segment.index = np.arange(0, len(icg_segment))
         monotony_df = pd.DataFrame(icg_segment.values, columns=["icg"])
-        monotony_df["2nd_der"] = icg_second_der_segment
-        monotony_df["borders"] = 0
+        monotony_df = monotony_df.assign(**{"2nd_der": icg_second_der_segment, "borders": 0})
 
         # C-Point is a possible end of the monotonic segment
-        monotony_df["borders"].iloc[-1] = "end_increase"
+        monotony_df.loc[monotony_df.index[-1], "borders"] = "end_increase"
         # A-Point is a possible start of the monotonic segment
-        monotony_df["borders"].iloc[0] = "start_increase"
+        monotony_df.loc[monotony_df.index[0], "borders"] = "start_increase"
 
         # start_increase if the sign of the second derivative changes from negative to positive
         monotony_df.loc[

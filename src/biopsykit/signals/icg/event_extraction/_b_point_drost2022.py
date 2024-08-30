@@ -82,10 +82,10 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
 
         """
         # Create the b_point Dataframe. Use the heartbeats id as index
-        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample"])
+        b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
 
         # get the c_point locations from the c_points dataframe and search for entries containing NaN
-        check_c_points = np.isnan(c_points.to_numpy().astype(float))
+        check_c_points = pd.isna(c_points["c_point_sample"]).to_numpy()
 
         # iterate over each heartbeat
         for idx, _data in heartbeats.iterrows():
@@ -93,12 +93,14 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
             # with the next iteration
             if check_c_points[idx]:
                 b_points["b_point_sample"].iloc[idx] = np.NaN
+                b_points["nan_reason"].iloc[idx] = "c_point_nan"
                 continue
             # Get the C-Point location at the current heartbeat id
             c_point = c_points["c_point_sample"].iloc[idx]
 
-            # Calculate the start position of the straight line (150 ms before the C-Point)
-            line_start = c_point - int((150 / 1000) * sampling_rate_hz)
+            # Calculate the start position of the straight line (150 ms before the C-Point) and ensure that the
+            # start position is not negative
+            line_start = max(c_point - int((150 / 1000) * sampling_rate_hz), 0)
 
             # Calculate the values of the straight line
             line_values = self.get_line_values(line_start, icg.iloc[line_start], c_point, icg.iloc[c_point])
@@ -141,7 +143,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
                 raise EventExtractionError(missing_str)
 
         _assert_is_dtype(b_points, pd.DataFrame)
-        _assert_has_columns(b_points, [["b_point_sample"]])
+        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
 
         self.points_ = b_points.convert_dtypes(infer_objects=True)
         return self
