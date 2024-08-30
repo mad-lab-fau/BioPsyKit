@@ -98,7 +98,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
                 b_points["b_point_sample"].iloc[idx] = np.NaN
                 b_points["nan_reason"].iloc[idx] = "r_peak_or_c_point_nan"
                 missing_str = (
-                    f"Either the r_peak or the c_point contains NaN at position {idx}! " f"B-Point was set to NaN."
+                    f"Either the r_peak or the c_point contains NaN at position {idx}! B-Point was set to NaN."
                 )
                 if handle_missing == "warn":
                     warnings.warn(missing_str)
