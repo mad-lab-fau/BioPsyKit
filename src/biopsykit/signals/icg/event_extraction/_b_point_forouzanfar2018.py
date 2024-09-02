@@ -90,7 +90,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
 
         for idx, data in heartbeats[1:].iterrows():
             # check if the current or the previous C-Point contain NaN . If this is the case, set the b_point to NaN
-            if pd.isna(check_c_points[idx]) | pd.isna(check_c_points[idx - 1]):
+            if check_c_points[idx] or check_c_points[idx - 1]:
                 b_points["b_point_sample"].iloc[idx] = np.nan
                 b_points["nan_reason"].iloc[idx] = "c_point_nan"
                 continue
