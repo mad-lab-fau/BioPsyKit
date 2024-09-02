@@ -125,7 +125,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
             heartbeat_c_point = c_points["c_point_sample"].iloc[idx] - heartbeat_start
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
-            if np.isnan(heartbeat_c_point):
+            if pd.isna(heartbeat_c_point):
                 heartbeats_no_c_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
                 b_points.loc[idx, "nan_reason"] = "no_c_point"
