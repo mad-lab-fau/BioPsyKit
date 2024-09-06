@@ -89,7 +89,6 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
         # Compute the second derivative of the ICG-signal
         icg_2nd_der = np.gradient(icg)
 
-        counter = 0
         # go through each R-C interval independently and search for the local minima
         for idx, data in heartbeats.iterrows():
             # check if r_peaks/c_points contain NaN. If this is the case, set the b_point to NaN and continue
@@ -105,52 +104,15 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
                 elif handle_missing == "raise":
                     raise EventExtractionError(missing_str)
                 continue
-            # set the borders of the interval between the R-Peak and the C-Point
-            start_r_c = r_peaks[idx]
-            end_r_c = c_points[idx]
 
-            # Select the specific interval in the second derivative of the ICG-signal
-            icg_search_window = icg_2nd_der[start_r_c : (end_r_c + 1)]
+            b_point = self._b_point_core_extraction(icg_2nd_der, r_peaks[idx], c_points[idx])
 
-            # Compute the local minima in this interval
-            # icg_min = argrelmin(icg_search_window)
-            icg_min = find_peaks(-icg_search_window)[0]
-            # print(icg_min)
-
-            # Compute the distance between the C-point and the minima of the interval and select the entry with
-            # the minimal distance as B-point
-            if len(icg_min) >= 1:
-                distance = end_r_c - icg_min
-                b_point_idx = distance.argmin()
-                b_point = icg_min[b_point_idx]
-                # Compute the absolute sample position of the local B-point
-                b_point = b_point + start_r_c
-            else:
-                # If there is no minima set the B-Point to NaN
-                b_point = np.NaN if not self.correct_outliers else data["r_peak_sample"]
+            if np.isnan(b_point):
+                if self.correct_outliers:
+                    b_point = data["r_peak_sample"]
                 b_points["nan_reason"].iloc[idx] = "no_local_minima"
-                counter += 1
-
             # Add the detected B-point to the b_points Dataframe
-            """
-            if not self.correct_outliers:
-                if b_point < data['r_peak_sample']:
-                    b_points['b_point'].iloc[idx] = np.NaN
-                    #warnings.warn(f"The detected B-Point is located before the R-Peak at heartbeat {idx}!"
-                    #              f" The index of the B-Point was set to NaN. However, this should never happen!")
-                else:
-                    b_points['b_point'].iloc[idx] = b_point
-            else:
-                b_points['b_point'].iloc[idx] = b_point
-            """
             b_points["b_point_sample"].iloc[idx] = b_point
-
-        if counter > 0:
-            missing_str = f"Could not detect a local minimum in the RC-interval in {counter} heartbeats!"
-            if handle_missing == "warn":
-                warnings.warn(missing_str)
-            elif handle_missing == "raise":
-                raise EventExtractionError(missing_str)
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
@@ -158,3 +120,35 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
         self.points_ = b_points.convert_dtypes(infer_objects=True)
 
         return self
+
+    def _b_point_core_extraction(
+        self,
+        icg_2nd_der: pd.Series,
+        r_peak: pd.Series,
+        c_point: pd.Series,
+    ):
+        # set the borders of the interval between the R-Peak and the C-Point
+        start_r_c = r_peak
+        end_r_c = c_point
+
+        # Select the specific interval in the second derivative of the ICG-signal
+        icg_search_window = icg_2nd_der[start_r_c : (end_r_c + 1)]
+
+        # Compute the local minima in this interval
+        # icg_min = argrelmin(icg_search_window)
+        icg_min = find_peaks(-icg_search_window)[0]
+        # print(icg_min)
+
+        # Compute the distance between the C-point and the minima of the interval and select the entry with
+        # the minimal distance as B-point
+        if len(icg_min) >= 1:
+            distance = end_r_c - icg_min
+            b_point_idx = distance.argmin()
+            b_point = icg_min[b_point_idx]
+            # Compute the absolute sample position of the local B-point
+            b_point = b_point + start_r_c
+        else:
+            # If there is no minima set the B-Point to NaN
+            b_point = np.NaN
+
+        return b_point

@@ -103,17 +103,17 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
             line_start = max(c_point - int((150 / 1000) * sampling_rate_hz), 0)
 
             # Calculate the values of the straight line
-            line_values = self.get_line_values(line_start, icg.iloc[line_start], c_point, icg.iloc[c_point])
+            line_values = self._get_straight_line(line_start, icg.iloc[line_start], c_point, icg.iloc[c_point])
 
             # Get the interval of the cleaned ICG-signal in the range of the straight line
-            signal_clean_interval = icg[line_start:c_point]
+            signal_clean_interval = icg.iloc[line_start:c_point].squeeze()
 
             # Calculate the distance between the straight line and the cleaned ICG-signal
             distance = line_values["result"].to_numpy() - signal_clean_interval.to_numpy()
 
             # Calculate the location of the maximum distance and transform the index relative to the complete signal
             # to obtain the B-Point location
-            b_point = distance.argmax() + line_start
+            b_point = line_start + np.argmax(distance)
 
             """
             if not self.correct_outliers:
@@ -149,7 +149,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
         return self
 
     @staticmethod
-    def get_line_values(start_x: int, start_y: float, c_x: int, c_y: float):
+    def _get_straight_line(start_x: int, start_y: float, c_x: int, c_y: float):
         """Compute the values of a straight line fitted between the C-Point and the point 150 ms before the C-Point.
 
         Parameters
@@ -171,13 +171,15 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
 
         """
         # Compute the slope of the straight line
-        slope = (c_y - start_y) / (c_x - start_x)
+        start_y = float(start_y)
+        c_y = float(c_y)
+        slope = float((c_y - start_y) / (c_x - start_x))
 
         # Get the sample positions where we want to calculate the values of the straight line
         index = np.arange(0, (c_x - start_x), 1)
-        line_values = pd.DataFrame(index, columns=["index"])
+        line_values = pd.DataFrame(index=index, columns=["result"])
 
         # Compute the values of the straight line for each index
-        line_values["result"] = (line_values["index"] * slope) + start_y
+        line_values["result"] = (index * slope) + start_y
 
         return line_values
