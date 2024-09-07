@@ -39,7 +39,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
     def extract(  # noqa: C901, PLR0912
         self,
         *,
-        icg: pd.Series,
+        icg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,  # noqa: ARG002
         handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",

@@ -24,7 +24,7 @@ class CPointExtractionKoka2022(BaseCPointExtraction):
     def extract(
         self,
         *,
-        icg: pd.DataFrame,
+        icg: pd.Series,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
         handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",

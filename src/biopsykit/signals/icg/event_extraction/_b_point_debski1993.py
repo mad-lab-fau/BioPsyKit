@@ -33,7 +33,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
     def extract(
         self,
         *,
-        icg: pd.DataFrame,
+        icg: pd.Series,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,  # noqa: ARG002
