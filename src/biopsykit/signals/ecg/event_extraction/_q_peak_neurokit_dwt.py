@@ -5,8 +5,10 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.array_handling import sanitize_input_series
 from biopsykit.utils.exceptions import EventExtractionError
 
 
@@ -50,6 +52,8 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
             If missing data is found and ``handle_missing`` is set to "raise"
 
         """
+        ecg = sanitize_input_series(ecg, name="ecg")
+
         # result df
         q_peaks = pd.DataFrame(index=heartbeats.index, columns=["q_peak", "nan_reason"])
 
@@ -60,7 +64,6 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
         # some neurokit functions (for example ecg_delineate()) don't work with r-peaks input as Series, so list instead
         r_peaks = list(heartbeats["r_peak_sample"])
 
-        ecg = ecg.squeeze()
         _, waves = nk.ecg_delineate(
             ecg, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, method="dwt", show=False, show_type="peaks"
         )  # show can also be set to False
@@ -116,9 +119,11 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
                 raise EventExtractionError(missing_str)
 
         q_peaks.columns = ["q_wave_onset_sample", "nan_reason"]
+        q_peaks = q_peaks.convert_dtypes(infer_objects=True)
 
         _assert_is_dtype(q_peaks, pd.DataFrame)
         _assert_has_columns(q_peaks, [["q_wave_onset_sample", "nan_reason"]])
+        assert_sample_columns_int(q_peaks)
 
         self.points_ = q_peaks
         return self

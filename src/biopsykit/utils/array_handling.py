@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple, Union
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
+from biopsykit.utils._datatype_validation_helper import _assert_num_columns
 from biopsykit.utils._types import arr_t, str_t
 from scipy import interpolate, signal
 
@@ -68,6 +69,55 @@ def sanitize_input_nd(
         if data.shape[1] not in ncols:
             raise ValueError(f"Invalid number of columns! Expected one of {ncols}, got {data.shape[1]}.")
     return data
+
+
+def sanitize_input_series(data: Union[np.ndarray, pd.Series, pd.DataFrame], name: str) -> pd.Series:
+    """Convert input data to a pandas Series.
+
+    Parameters
+    ----------
+    data : array_like
+        input data
+    name : str
+        name of the series
+
+    Returns
+    -------
+    :class:`~pandas.Series`
+        input data as a pandas Series
+
+    """
+    if isinstance(data, pd.Series):
+        return data
+    if isinstance(data, pd.DataFrame):
+        if len(data.columns) > 1:
+            raise ValueError("Dataframe must have only one column to be converted to a Series!")
+        return data.squeeze()
+    return pd.Series(data, name=name)
+
+
+def sanitize_input_dataframe_1d(data: Union[np.ndarray, pd.Series, pd.DataFrame], column: str) -> pd.DataFrame:
+    """Convert input data to a pandas DataFrame with one column.
+
+    Parameters
+    ----------
+    data : array_like
+        input data
+    columns : str
+        name of the column
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        input data as a pandas DataFrame
+
+    """
+    if isinstance(data, pd.DataFrame):
+        _assert_num_columns(data, 1)
+        return data.rename(columns={data.columns[0]: column})
+    if isinstance(data, pd.Series):
+        return data.to_frame(name=column)
+    return pd.DataFrame(data, columns=[column])
 
 
 def find_extrema_in_radius(

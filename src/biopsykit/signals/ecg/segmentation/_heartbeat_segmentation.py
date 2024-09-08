@@ -4,12 +4,14 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.segmentation._base_segmentation import BaseHeartbeatSegmentation
 from tpcp import Parameter
 
 __all__ = ["HeartbeatSegmentationNeurokit"]
 
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns
+from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 
 
 class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
@@ -78,8 +80,10 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
             self
 
         """
-        if not _assert_has_columns(ecg, [["ECG"]], raise_exception=False):
-            ecg = ecg.rename(columns={"ecg": "ECG"})
+        ecg = sanitize_input_dataframe_1d(ecg, column="ECG")
+        if ecg.empty:
+            raise ValueError("Input data is empty!")
+        _assert_has_columns(ecg, [["ECG"]])
 
         _, r_peaks = nk.ecg_peaks(ecg, sampling_rate=sampling_rate_hz, method="neurokit")
         r_peaks = r_peaks["ECG_R_Peaks"]
@@ -164,5 +168,10 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
         heartbeats = heartbeats[
             ["start_time", "start_sample", "end_sample", "r_peak_sample", "rr_interval_sample", "rr_interval_ms"]
         ]
+
+        heartbeats = heartbeats.convert_dtypes(infer_objects=True)
+        # assert that columns with "_sample" in the end are of type int
+        assert_sample_columns_int(heartbeats)
+
         self.heartbeat_list_ = heartbeats
         return self

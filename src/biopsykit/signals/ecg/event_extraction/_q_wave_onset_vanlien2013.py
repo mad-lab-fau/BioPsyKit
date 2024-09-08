@@ -2,6 +2,7 @@ from typing import Optional
 
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from tpcp import Parameter
@@ -69,18 +70,22 @@ class QWaveOnsetExtractionVanLien2013(BaseEcgExtraction):
         """
         # TODO handle missing?
         # convert the fixed time_interval from milliseconds into samples
-        time_interval_in_samples = (self.time_interval_ms / 1000) * sampling_rate_hz  # 40 ms = 0.04 s
+        time_interval_in_samples = int((self.time_interval_ms / 1000) * sampling_rate_hz)
 
         # get the r_peaks from the heartbeats Dataframe
         r_peaks = heartbeats[["r_peak_sample"]]
 
         # subtract the fixed time_interval from the r_peak samples to estimate the q_wave_onset
+
         q_wave_onset = r_peaks - time_interval_in_samples
 
         q_wave_onset.columns = ["q_wave_onset_sample"]
+        q_wave_onset = q_wave_onset.convert_dtypes(infer_objects=True)
 
         _assert_is_dtype(q_wave_onset, pd.DataFrame)
         _assert_has_columns(q_wave_onset, [["q_wave_onset_sample"]])
+
+        assert_sample_columns_int(q_wave_onset)
 
         self.points_ = q_wave_onset
         return self
