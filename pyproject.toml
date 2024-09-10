@@ -103,10 +103,10 @@ skip_gitignore = true
 
 [tool.poe.tasks]
 _format_black = "black ."
-_format_ruff = "ruff . --fix-only"
+_format_ruff = "ruff check . --fix-only"
 format = { sequence = ["_format_black", "_format_ruff"], help = "Format all files." }
 lint = { cmd = "ruff src --fix", help = "Lint all files with ruff." }
-_lint_ci = "ruff src --format=github"
+_lint_ci = "ruff check src --output-format=github"
 _check_black = "black . --check"
 ci_check = { sequence = ["_check_black", "_lint_ci"], help = "Check all potential format and linting issues." }
 test = {cmd = "pytest --cov=biopsykit -cov-report=term-missing --cov-report=xml", help = "Run Pytest with coverage." }

@@ -1,6 +1,7 @@
 line-length = 120
 target-version = "py38"
 
+[lint]
 select = [
     # pyflakes
     "F",
@@ -104,12 +105,12 @@ exclude = [
     "examples"
 ]
 
-[pylint]
+[lint.pylint]
 max-args = 15
 
-[pydocstyle]
+[lint.pydocstyle]
 convention = "numpy"
 
-[pyupgrade]
+[lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
