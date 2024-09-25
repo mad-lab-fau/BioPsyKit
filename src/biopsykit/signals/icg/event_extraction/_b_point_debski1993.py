@@ -1,11 +1,12 @@
 import warnings
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.exceptions import EventExtractionError
 from scipy.signal import find_peaks
 from tpcp import Parameter
@@ -33,7 +34,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
     def extract(
         self,
         *,
-        icg: pd.Series,
+        icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,  # noqa: ARG002
@@ -73,6 +74,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
 
         """
         # sanitize input
+        icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
 
         # Create the b_point Dataframe. Use the heartbeats id as index
@@ -80,7 +82,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
 
         # get the r_peak locations from the heartbeats dataframe and search for entries containing NaN
         r_peaks = heartbeats["r_peak_sample"]
-        check_r_peaks = np.isnan(r_peaks.to_numpy())
+        check_r_peaks = pd.isna(r_peaks)
 
         # get the c_point locations from the c_points dataframe and search for entries containing NaN
         c_points = c_points["c_point_sample"]

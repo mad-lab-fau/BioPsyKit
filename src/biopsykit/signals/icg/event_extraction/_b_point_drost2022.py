@@ -1,11 +1,12 @@
 import warnings
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.exceptions import EventExtractionError
 from tpcp import Parameter
 
@@ -42,7 +43,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
     def extract(
         self,
         *,
-        icg: pd.Series,
+        icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
@@ -81,6 +82,9 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
             If the C-Point contains NaN values and handle_missing is set to "raise"
 
         """
+        icg = sanitize_input_dataframe_1d(icg, column="icg_der")
+        icg = icg.squeeze()
+
         # Create the b_point Dataframe. Use the heartbeats id as index
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
 

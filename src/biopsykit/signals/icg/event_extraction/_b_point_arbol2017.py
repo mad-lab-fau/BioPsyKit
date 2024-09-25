@@ -6,6 +6,7 @@ import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.exceptions import EventExtractionError
 from tpcp import Parameter
 
@@ -29,7 +30,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
         save_icg_derivatives: Optional[bool] = False,
         correct_outliers: Optional[bool] = False,
     ):
-        """Initialize new BPointExtraction_ThirdDeriv algorithm instance.
+        """Initialize new B-point extraction algorithm based on Arbol 2017.
 
         Args:
             window_b_detection_ms : str, int
@@ -49,7 +50,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
     def extract(  # noqa: C901, PLR0915
         self,
         *,
-        icg: pd.Series,
+        icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
@@ -87,6 +88,9 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
             If the C-Point contains NaN values and handle_missing is set to "raise"
 
         """
+        icg = sanitize_input_dataframe_1d(icg, column="icg_der")
+        icg = icg.squeeze()
+
         # result dfs
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
         icg_derivatives = {}
@@ -100,8 +104,6 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
         heartbeats_no_c_b = []
         # (but in case of wrongly detected Cs, the search window might be invalid, then no B can be found)
         heartbeats_no_b = []
-
-        icg = icg.squeeze()
 
         # search B-point for each heartbeat of the given signal
         for idx, data in heartbeats.iterrows():

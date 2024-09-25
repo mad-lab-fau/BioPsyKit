@@ -1,11 +1,14 @@
 import warnings
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
+
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.exceptions import EventExtractionError
 from scipy.signal import argrelextrema, argrelmin
 from tpcp import Parameter
@@ -39,7 +42,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
     def extract(
         self,
         *,
-        icg: pd.Series,
+        icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
@@ -76,6 +79,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
 
         """
         # sanitize input signal
+        icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
 
         # Create the B-Point/A-Point Dataframes with the index of the heartbeat_list
@@ -192,16 +196,24 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
         return self
 
     @staticmethod
-    def _get_a_point(icg: pd.DataFrame, search_interval: int, c_point: int):
+    def _get_a_point(icg: pd.Series, search_interval: int, c_point: int):
+        # print(search_interval)
+        # print(c_point)
         signal_interval = icg.iloc[(c_point - search_interval) : c_point]
         signal_minima = argrelmin(signal_interval.values, mode="wrap")
-        a_point_idx = np.argmin(signal_interval.iloc[signal_minima[0]])
+
+        a_point_candidates = signal_interval.iloc[signal_minima[0]]
+        if len(a_point_candidates) == 0:
+            # no local minima found => return the argmin of the interval
+            return np.argmin(signal_interval)
+
+        a_point_idx = np.argmin(a_point_candidates)
         a_point = signal_minima[0][a_point_idx]
         return a_point
 
     @staticmethod
     def _get_monotonic_increasing_segments_2nd_der(
-        icg_segment: pd.DataFrame, icg_second_der_segment: pd.DataFrame, height: int
+        icg_segment: pd.Series, icg_second_der_segment: np.ndarray, height: int
     ):
         icg_second_der_segment = icg_second_der_segment.squeeze()
         icg_segment.index = np.arange(0, len(icg_segment))
@@ -214,20 +226,37 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
         monotony_df.loc[monotony_df.index[-1], "borders"] = "end_increase"
 
         neg_pos_change_idx = np.where(np.ediff1d(np.sign(monotony_df["2nd_der"])) > 0)[0]
+        # check if there are consecutive change indices. if yes, then drop the second one, because it's a peak and
+        # not an index change
+        idx_to_drop = np.where(np.ediff1d(neg_pos_change_idx) == 1)[0] + 1
+        neg_pos_change_idx = np.delete(neg_pos_change_idx, idx_to_drop)
         monotony_df.loc[monotony_df.index[neg_pos_change_idx], "borders"] = "start_increase"
 
         pos_neg_change_idx = np.where(np.ediff1d(np.sign(monotony_df["2nd_der"])) < 0)[0]
+        # check if there are consecutive change indices. if yes, then drop the second one, because it's a peak and
+        # not an index change
+        idx_to_drop = np.where(np.ediff1d(pos_neg_change_idx) == 1)[0] + 1
+        pos_neg_change_idx = np.delete(pos_neg_change_idx, idx_to_drop)
+
+        # print(pos_neg_change_idx)
+        # print(monotony_df.tail(n=40))
+
+        # print(np.sign(monotony_df["2nd_der"].tail(n=40)))
+        # print(np.ediff1d(np.sign(monotony_df["2nd_der"].tail(n=40))))
+        # print(neg_pos_change_idx)
+        # print(pos_neg_change_idx)
         monotony_df.loc[monotony_df.index[pos_neg_change_idx], "borders"] = "end_increase"
 
         # drop all samples that are no possible start-/ end-points
         monotony_df = monotony_df.drop(monotony_df[monotony_df["borders"] == 0].index)
         monotony_df = monotony_df.reset_index()
+
         # Drop start- and corresponding end-point if their start value is higher than 1/2 of H
         start_index_drop_rule_a = monotony_df[
             (monotony_df["borders"] == "start_increase") & (monotony_df["icg"] > int(height / 2))
         ].index
-        monotony_df = monotony_df.drop(start_index_drop_rule_a, axis=0)
-        monotony_df = monotony_df.drop(start_index_drop_rule_a + 1, axis=0)
+        monotony_df = monotony_df.drop(index=start_index_drop_rule_a)
+        monotony_df = monotony_df.drop(index=start_index_drop_rule_a + 1)
 
         # Drop start- and corresponding end-point if their end values does not reach at least 2/3 of H
         end_index_drop_rule_b = monotony_df[
