@@ -1,11 +1,12 @@
 import warnings
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.exceptions import EventExtractionError
 from scipy import signal
 from tpcp import Parameter
@@ -39,7 +40,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
     def extract(  # noqa: C901, PLR0912
         self,
         *,
-        icg: pd.Series,
+        icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,  # noqa: ARG002
         handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
@@ -71,6 +72,8 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
         self
 
         """
+        icg = sanitize_input_dataframe_1d(icg, column="icg_der")
+
         # result df
         c_points = pd.DataFrame(index=heartbeats.index, columns=["c_point_sample", "nan_reason"])
         if self.save_candidates:
@@ -119,8 +122,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
                     heartbeats_no_c.append(idx)
                     c_points.loc[idx, "c_point_sample"] = np.NaN
                     continue
-
-            elif len(heartbeat_c_candidates) > 1:
+            else:
                 # take averaged R-C-distance over the 'window_c_correction' (default: 3) preceding heartbeats
                 # calculate the absolute difference of R-C-distances for all C-candidates to this mean
                 # (to check which of the C-candidates are most probably the wrongly detected Cs)
@@ -131,10 +133,6 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
                 c_idx = np.argmin(distance_diff)
                 selected_c = heartbeat_c_candidates[c_idx]
                 r_c_distance = r_c_distance[c_idx]  # save only R-C-distance for selected C
-
-            else:
-                warnings.warn("That should never happen!")
-                selected_c = np.NaN
 
             # update R-C-distances and mean for next heartbeat
             prev_r_c_distances.append(r_c_distance)
