@@ -49,10 +49,10 @@ class TestQPeakExtractionNeurokitDwt:
         ecg_data = self.ecg_data
         _assert_is_dtype(ecg_data, pd.DataFrame)
 
-        reference_q_wave_onset = self._get_regression_reference()
-        self.extract_algo.extract(ecg=self.ecg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
+        reference_q_wave_onsets = self._get_regression_reference()
+        self.extract_algo.extract(ecg=ecg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
 
-        self._check_q_wave_onset_equal(reference_q_wave_onset, self.extract_algo.points_)
+        self._check_q_wave_onset_equal(reference_q_wave_onsets, self.extract_algo.points_)
 
     def test_regression_extract_series(self):
         self.setup()
@@ -60,18 +60,16 @@ class TestQPeakExtractionNeurokitDwt:
         ecg_data = self.ecg_data.squeeze()
         _assert_is_dtype(ecg_data, pd.Series)
 
-        reference_q_wave_onset = self._get_regression_reference()
+        reference_q_wave_onsets = self._get_regression_reference()
         self.extract_algo.extract(ecg=ecg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
 
-        self._check_q_wave_onset_equal(reference_q_wave_onset, self.extract_algo.points_)
+        self._check_q_wave_onset_equal(reference_q_wave_onsets, self.extract_algo.points_)
 
     @staticmethod
     def _get_regression_reference():
-        reference_q_wave_onset = pd.read_csv(
-            TEST_FILE_PATH.joinpath("pep_test_q_wave_onset_reference_neurokit_dwt.csv"), index_col=0
-        )
-        reference_q_wave_onset = reference_q_wave_onset.convert_dtypes(infer_objects=True)
-        return reference_q_wave_onset
+        data = pd.read_csv(TEST_FILE_PATH.joinpath("pep_test_q_wave_onset_reference_neurokit_dwt.csv"), index_col=0)
+        data = data.convert_dtypes(infer_objects=True)
+        return data
 
     @staticmethod
     def _check_q_wave_onset_equal(reference_heartbeats, extracted_heartbeats):
@@ -117,10 +115,9 @@ class TestQWaveOnsetExtractionVanLien2013:
         ecg_data = self.ecg_data
         _assert_is_dtype(ecg_data, pd.DataFrame)
 
-        reference_q_wave_onset = self._get_regression_reference(time_interval_ms)
+        reference_q_wave_onsets = self._get_regression_reference(time_interval_ms)
         self.extract_algo.extract(ecg=ecg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
-
-        self._check_q_wave_onset_equal(reference_q_wave_onset, self.extract_algo.points_)
+        self._check_q_wave_onset_equal(reference_q_wave_onsets, self.extract_algo.points_)
 
     @pytest.mark.parametrize(
         ("time_interval_ms"),
@@ -132,10 +129,9 @@ class TestQWaveOnsetExtractionVanLien2013:
         ecg_data = self.ecg_data.squeeze()
         _assert_is_dtype(ecg_data, pd.Series)
 
-        reference_q_wave_onset = self._get_regression_reference(time_interval_ms)
+        reference_q_wave_onsets = self._get_regression_reference(time_interval_ms)
         self.extract_algo.extract(ecg=ecg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
-
-        self._check_q_wave_onset_equal(reference_q_wave_onset, self.extract_algo.points_)
+        self._check_q_wave_onset_equal(reference_q_wave_onsets, self.extract_algo.points_)
 
     def _get_regression_reference(self, time_interval_ms: int = 40):
         data = pd.read_csv(

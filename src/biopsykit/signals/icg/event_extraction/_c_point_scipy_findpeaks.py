@@ -37,7 +37,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
         self.save_candidates = save_candidates
 
     # @make_action_safe
-    def extract(  # noqa: C901, PLR0912
+    def extract(  # noqa: C901
         self,
         *,
         icg: Union[pd.Series, pd.DataFrame],
