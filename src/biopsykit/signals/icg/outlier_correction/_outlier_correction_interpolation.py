@@ -101,6 +101,7 @@ class OutlierCorrectionInterpolation(BaseOutlierCorrection):
         sampling_rate_hz: int,
     ) -> pd.DataFrame:
         data = statio_data["statio_data"].to_frame()
+
         # insert NaN at the heartbeat id of the outliers
         data.loc[outliers.index, "statio_data"] = np.NaN
 
@@ -108,6 +109,7 @@ class OutlierCorrectionInterpolation(BaseOutlierCorrection):
         data_interpol = data["statio_data"].astype(float).interpolate()
 
         corrected_b_points = b_points_uncorrected.copy()
+
         # Add the baseline back to the interpolated values
         corrected_b_points.loc[data.index, "b_point_sample"] = (
             (c_points["c_point_sample"][c_points.index[data.index]] - (data_interpol + baseline) * sampling_rate_hz)
