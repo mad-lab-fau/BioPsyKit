@@ -226,25 +226,9 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
         monotony_df.loc[monotony_df.index[-1], "borders"] = "end_increase"
 
         neg_pos_change_idx = np.where(np.ediff1d(np.sign(monotony_df["2nd_der"])) > 0)[0]
-        # check if there are consecutive change indices. if yes, then drop the second one, because it's a peak and
-        # not an index change
-        idx_to_drop = np.where(np.ediff1d(neg_pos_change_idx) == 1)[0] + 1
-        neg_pos_change_idx = np.delete(neg_pos_change_idx, idx_to_drop)
         monotony_df.loc[monotony_df.index[neg_pos_change_idx], "borders"] = "start_increase"
 
         pos_neg_change_idx = np.where(np.ediff1d(np.sign(monotony_df["2nd_der"])) < 0)[0]
-        # check if there are consecutive change indices. if yes, then drop the second one, because it's a peak and
-        # not an index change
-        idx_to_drop = np.where(np.ediff1d(pos_neg_change_idx) == 1)[0] + 1
-        pos_neg_change_idx = np.delete(pos_neg_change_idx, idx_to_drop)
-
-        # print(pos_neg_change_idx)
-        # print(monotony_df.tail(n=40))
-
-        # print(np.sign(monotony_df["2nd_der"].tail(n=40)))
-        # print(np.ediff1d(np.sign(monotony_df["2nd_der"].tail(n=40))))
-        # print(neg_pos_change_idx)
-        # print(pos_neg_change_idx)
         monotony_df.loc[monotony_df.index[pos_neg_change_idx], "borders"] = "end_increase"
 
         # drop all samples that are no possible start-/ end-points
@@ -255,15 +239,16 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
         start_index_drop_rule_a = monotony_df[
             (monotony_df["borders"] == "start_increase") & (monotony_df["icg"] > int(height / 2))
         ].index
+        start_index_drop_rule_a = start_index_drop_rule_a.union(start_index_drop_rule_a + 1)
         monotony_df = monotony_df.drop(index=start_index_drop_rule_a)
-        monotony_df = monotony_df.drop(index=start_index_drop_rule_a + 1)
 
         # Drop start- and corresponding end-point if their end values does not reach at least 2/3 of H
         end_index_drop_rule_b = monotony_df[
             (monotony_df["borders"] == "end_increase") & (monotony_df["icg"] < int(2 * height / 3))
         ].index
-        monotony_df = monotony_df.drop(end_index_drop_rule_b, axis=0)
-        monotony_df = monotony_df.drop(end_index_drop_rule_b - 1, axis=0)
+
+        end_index_drop_rule_b = end_index_drop_rule_b.union(end_index_drop_rule_b - 1)
+        monotony_df = monotony_df.drop(index=end_index_drop_rule_b)
 
         # Select the monotonic segment with the highest amplitude difference
         start_sample = 0
