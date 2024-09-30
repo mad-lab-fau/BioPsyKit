@@ -80,10 +80,11 @@ class QWaveOnsetExtractionVanLien2013(BaseEcgExtraction):
         q_wave_onset = r_peaks - time_interval_in_samples
 
         q_wave_onset.columns = ["q_wave_onset_sample"]
+        q_wave_onset = q_wave_onset.assign(nan_reason=pd.NA)
         q_wave_onset = q_wave_onset.convert_dtypes(infer_objects=True)
 
         _assert_is_dtype(q_wave_onset, pd.DataFrame)
-        _assert_has_columns(q_wave_onset, [["q_wave_onset_sample"]])
+        _assert_has_columns(q_wave_onset, [["q_wave_onset_sample", "nan_reason"]])
 
         assert_sample_columns_int(q_wave_onset)
 
