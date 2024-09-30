@@ -40,15 +40,17 @@ class PepExtraction(Algorithm):
 
         pep_results = pep_results.assign(
             heartbeat_start_time=heartbeats["start_time"],
-            heartbeat_start_sample=heartbeats["start_sample"],
-            heartbeat_end_sample=heartbeats["end_sample"],
-            r_peak_sample=heartbeats["r_peak_sample"],
-            rr_interval_sample=heartbeats["rr_interval_sample"],
-            rr_interval_ms=heartbeats["rr_interval_sample"] / sampling_rate_hz * 1000,
-            q_wave_onset_sample=q_wave_onset_samples["q_wave_onset_sample"],
-            b_point_sample=b_point_samples["b_point_sample"],
-            pep_sample=b_point_samples["b_point_sample"] - q_wave_onset_samples["q_wave_onset_sample"],
+            heartbeat_start_sample=pd.to_numeric(heartbeats["start_sample"]),
+            heartbeat_end_sample=pd.to_numeric(heartbeats["end_sample"]),
+            r_peak_sample=pd.to_numeric(heartbeats["r_peak_sample"]),
+            rr_interval_sample=pd.to_numeric(heartbeats["rr_interval_sample"]),
+            rr_interval_ms=pd.to_numeric(heartbeats["rr_interval_sample"] / sampling_rate_hz * 1000),
+            q_wave_onset_sample=pd.to_numeric(q_wave_onset_samples["q_wave_onset_sample"]),
+            b_point_sample=pd.to_numeric(b_point_samples["b_point_sample"]),
+            pep_sample=pd.to_numeric(b_point_samples["b_point_sample"] - q_wave_onset_samples["q_wave_onset_sample"]),
+            nan_reason=q_wave_onset_samples["nan_reason"],
         )
+
         pep_results = pep_results.assign(
             pep_ms=pep_results["pep_sample"] / sampling_rate_hz * 1000,
         )
