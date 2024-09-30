@@ -12,12 +12,5 @@ class BaseCPointExtraction(Algorithm):
 
     points_: pd.DataFrame
 
-    def extract(
-        self,
-        *,
-        icg: pd.Series,
-        heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
-    ):
+    def extract(self, *, icg: pd.Series, heartbeats: pd.DataFrame, sampling_rate_hz: Optional[float]):
         raise NotImplementedError("This is an abstract method and needs to be implemented in a subclass.")

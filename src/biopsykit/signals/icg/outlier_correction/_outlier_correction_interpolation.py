@@ -20,8 +20,7 @@ class OutlierCorrectionInterpolation(BaseOutlierCorrection):
         *,
         b_points: pd.DataFrame,
         c_points: pd.DataFrame,
-        sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",  # noqa: ARG002
+        sampling_rate_hz: float,
         **kwargs,
     ):
         """Correct outliers of given B-Point dataframe using Linear Interpolation.
@@ -34,10 +33,8 @@ class OutlierCorrectionInterpolation(BaseOutlierCorrection):
             Dataframe containing the extracted B-Points per heartbeat, index functions as id of heartbeat
         c_points : :class:`~pandas.DataFrame`
             Dataframe containing the extracted C-Points per heartbeat, index functions as id of heartbeat
-        sampling_rate_hz : int
+        sampling_rate_hz : float
             Sampling rate of ICG signal in hz
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Not used in this function.
         **kwargs
             Additional keyword arguments:
                 * verbose : bool, optional
@@ -54,6 +51,8 @@ class OutlierCorrectionInterpolation(BaseOutlierCorrection):
         corrected_b_points = pd.DataFrame(index=b_points.index, columns=["b_point_sample"])
         # stationarize the B-Point time data
         stationary_data = self.stationarize_b_points(b_points, c_points, sampling_rate_hz)
+        b_points_nan = b_points.loc[b_points["b_point_sample"].isna()]
+        stationary_data.loc[b_points_nan.index, "statio_data"] = np.NaN
 
         # detect outliers
         outliers = self.detect_b_point_outlier(stationary_data)
@@ -98,7 +97,7 @@ class OutlierCorrectionInterpolation(BaseOutlierCorrection):
         statio_data: pd.DataFrame,
         outliers: pd.DataFrame,
         baseline: pd.DataFrame,
-        sampling_rate_hz: int,
+        sampling_rate_hz: float,
     ) -> pd.DataFrame:
         data = statio_data["statio_data"].to_frame()
 
@@ -106,13 +105,19 @@ class OutlierCorrectionInterpolation(BaseOutlierCorrection):
         data.loc[outliers.index, "statio_data"] = np.NaN
 
         # interpolate the outlier positions using linear interpolation
-        data_interpol = data["statio_data"].astype(float).interpolate()
+        data_interpol = (
+            data["statio_data"]
+            .astype(float)
+            .interpolate(method="linear")
+            .interpolate(method="ffill")  # make sure that the first values are not NaN
+            .interpolate(method="bfill")  # make sure that the last values are not NaN
+        )
 
         corrected_b_points = b_points_uncorrected.copy()
 
         # Add the baseline back to the interpolated values
         corrected_b_points.loc[data.index, "b_point_sample"] = (
-            (c_points["c_point_sample"][c_points.index[data.index]] - (data_interpol + baseline) * sampling_rate_hz)
+            (c_points["c_point_sample"][c_points.loc[data.index].index] - (data_interpol + baseline) * sampling_rate_hz)
             .fillna(0)
             .astype(int)
         )

@@ -1,9 +1,7 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseOutlierCorrection
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from statsmodels.tools.sm_exceptions import ValueWarning
@@ -37,7 +35,6 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
         b_points: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",  # noqa: ARG002
         **kwargs,
     ):
         """Correct outliers of given B-Point dataframe using the method proposed by Forouzanfar et al. (2018).
@@ -50,8 +47,6 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
             Dataframe containing the extracted C-Points per heartbeat, index functions as id of heartbeat
         sampling_rate_hz: int
             Sampling rate of ICG signal in hz
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Not used in this function.
         **kwargs
             Additional keyword arguments:
                 * verbose: bool, optional
@@ -67,6 +62,8 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
 
         # stationarize the B-Point time data
         stationary_data = self.stationarize_b_points(b_points, c_points, sampling_rate_hz)
+        b_points_nan = b_points.loc[b_points["b_point_sample"].isna()]
+        stationary_data.loc[b_points_nan.index, "statio_data"] = np.NaN
 
         # detect outliers
         outliers = self.detect_b_point_outlier(stationary_data)
@@ -145,7 +142,14 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
 
             data = statio_data["statio_data"].to_frame()
             data.loc[outliers.index, "statio_data"] = np.NaN
-            input_endog = data["statio_data"].astype(float).interpolate()
+            input_endog = (
+                data["statio_data"]
+                .astype(float)
+                .interpolate(method="linear")
+                .interpolate(method="ffill")  # ensure that no NaN values are at the beginning
+                .interpolate(method="bfill")  # ensure that no NaN values are at the end
+            )
+
             # Select order of the froward model
             maxlag = 30
 
@@ -189,7 +193,7 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
             result = b_points_uncorrected.copy()
             result.loc[data.index, "b_point_sample"] = (
                 (
-                    c_points["c_point_sample"][c_points.index[data.index]]
+                    c_points["c_point_sample"][c_points.loc[data.index].index]
                     - (data["statio_data"] + baseline) * sampling_rate_hz
                 )
                 .fillna(0)

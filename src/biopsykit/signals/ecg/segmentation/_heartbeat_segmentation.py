@@ -3,7 +3,6 @@ from typing import Optional, Union
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.segmentation._base_segmentation import BaseHeartbeatSegmentation
 from tpcp import Parameter
@@ -26,7 +25,12 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
     # result
     heartbeat_list_: pd.DataFrame
 
-    def __init__(self, *, variable_length: Optional[bool] = True, start_factor: Optional[float] = 0.35):
+    def __init__(
+        self,
+        *,
+        variable_length: Optional[bool] = True,
+        start_factor: Optional[float] = 0.35,
+    ):
         """Initialize new HeartBeatExtraction algorithm instance.
 
         Parameters
@@ -55,7 +59,6 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
         *,
         ecg: Union[pd.Series, pd.DataFrame],
         sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",  # noqa: ARG002
     ):
         """Segments ecg signal into heartbeats, extract start, end, r-peak of each heartbeat.
 
@@ -70,10 +73,6 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
             ECG signal
         sampling_rate_hz : int
             Sampling rate of ECG signal in hz
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. If "warn", a warning is raised if missing data is found.
-            If "raise", an exception is raised if missing data is found. If "ignore", missing data is ignored.
-            Default: "warn"
 
         Returns
         -------

@@ -19,7 +19,6 @@ class BaseBPointExtraction(Algorithm):
         icg: pd.Series,
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
-        sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
+        sampling_rate_hz: Optional[float],
     ):
         raise NotImplementedError("This is an abstract method and needs to be implemented in a subclass.")

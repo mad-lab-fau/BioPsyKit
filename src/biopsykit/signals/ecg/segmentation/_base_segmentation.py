@@ -21,7 +21,6 @@ class BaseHeartbeatSegmentation(Algorithm):
         *,
         ecg: Union[pd.Series, pd.DataFrame],
         sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
         """Segment ECG signal into heartbeats."""
         raise NotImplementedError("Method 'extract' must be implemented in subclass.")

@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
@@ -13,7 +13,7 @@ from tpcp import Parameter
 __all__ = ["BPointExtractionDrost2022"]
 
 
-class BPointExtractionDrost2022(BaseBPointExtraction):
+class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixin):
     """Extract B-points based on the method proposed by Drost et al. (2022).
 
     This algorithm extracts B-points based on the maximum distance of the dZ/dt curve and a straight line fitted
@@ -29,7 +29,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
     # input parameters
     correct_outliers: Parameter[bool]
 
-    def __init__(self, correct_outliers: Optional[bool] = False):
+    def __init__(self, correct_outliers: Optional[bool] = False, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
         """Initialize new BPointExtractionDrost algorithm instance.
 
         Parameters
@@ -37,6 +37,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
         correct_outliers : bool
             Indicates whether to perform outlier correction (True) or not (False)
         """
+        super().__init__(handle_missing_events=handle_missing_events)
         self.correct_outliers = correct_outliers
 
     # @make_action_safe
@@ -46,8 +47,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
         icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
-        sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
+        sampling_rate_hz: float,
     ):
         """Extract B-points from given ICG cleaned signal.
 
@@ -69,8 +69,6 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
             is not correct
         sampling_rate_hz : int
             Sampling rate of ECG signal in hz
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
 
         Returns
         -------
@@ -82,6 +80,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
             If the C-Point contains NaN values and handle_missing is set to "raise"
 
         """
+        self._check_valid_missing_handling()
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
 
@@ -119,17 +118,15 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
             # to obtain the B-Point location
             b_point = line_start + np.argmax(distance)
 
-            """
-            if not self.correct_outliers:
-                if b_point < data['r_peak_sample']:
-                    b_points['b_point'].iloc[idx] = np.NaN
-                    #warnings.warn(f"The detected B-point is located before the R-Peak at heartbeat {idx}!"
-                    #              f" The B-point was set to NaN.")
-                else:
-                    b_points['b_point'].iloc[idx] = b_point
-            else:
-                b_points['b_point'].iloc[idx] = b_point
-            """
+            # if not self.correct_outliers:
+            #     if b_point < data['r_peak_sample']:
+            #         b_points['b_point'].iloc[idx] = np.NaN
+            #         #warnings.warn(f"The detected B-point is located before the R-Peak at heartbeat {idx}!"
+            #         #              f" The B-point was set to NaN.")
+            #     else:
+            #         b_points['b_point'].iloc[idx] = b_point
+            # else:
+            #     b_points['b_point'].iloc[idx] = b_point
 
             b_points["b_point_sample"].iloc[idx] = b_point
 
@@ -141,9 +138,9 @@ class BPointExtractionDrost2022(BaseBPointExtraction):
             missing_str = (
                 f"The C-point contains NaN at heartbeats {idx_nan}! The index of the B-points were also set to NaN."
             )
-            if handle_missing == "warn":
+            if self.handle_missing_events == "warn":
                 warnings.warn(missing_str)
-            elif handle_missing == "raise":
+            elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
         _assert_is_dtype(b_points, pd.DataFrame)

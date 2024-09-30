@@ -1,7 +1,6 @@
 from typing import Optional
 
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.outlier_correction import BaseOutlierCorrection
 
 __all__ = ["OutlierCorrectionDummy"]
@@ -14,9 +13,8 @@ class OutlierCorrectionDummy(BaseOutlierCorrection):
         self,
         *,
         b_points: pd.DataFrame,
-        c_points: pd.DataFrame,  # noqa: ARG002
-        sampling_rate_hz: int,  # noqa: ARG002
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",  # noqa: ARG002
+        c_points: Optional[pd.DataFrame],  # noqa: ARG002
+        sampling_rate_hz: Optional[float],
         **kwargs,  # noqa: ARG002
     ):
         """Correct no outliers, just pass through the input data unchanged.
@@ -31,8 +29,6 @@ class OutlierCorrectionDummy(BaseOutlierCorrection):
             Dataframe containing the extracted C-Points per heartbeat, index functions as id of heartbeat. Not used.
         sampling_rate_hz : int
             Sampling rate of ICG signal in hz. Not used.
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Not used.
         kwargs: dict
             Additional keyword arguments. Not used.
 

@@ -3,7 +3,7 @@ from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
@@ -13,7 +13,7 @@ from tpcp import Parameter
 __all__ = ["BPointExtractionArbol2017"]
 
 
-class BPointExtractionArbol2017(BaseBPointExtraction):
+class BPointExtractionArbol2017(BaseBPointExtraction, CanHandleMissingEventsMixin):
     """algorithm to extract B-point from cleaned ICG dZ/dt signal using the third derivative (see Arbol 2017)."""
 
     # input parameters
@@ -28,23 +28,28 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
         self,
         window_b_detection_ms: Optional[Union[str, int]] = 150,
         save_icg_derivatives: Optional[bool] = False,
-        correct_outliers: Optional[bool] = False,
+        handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new B-point extraction algorithm based on Arbol 2017.
 
-        Args:
-            window_b_detection_ms : str, int
-                defines the window in which the algorithm searches for the B-point,
-                'R' -> search B-point in the region between R-peak and C-point,
-                int -> search B-point in the region between xx ms before C-point and C-point
-                (150 ms -> see Arbol 2017, procedure for visual detection; Lababidi 1970)
-                (300 ms -> see Arbol 2017, 3rd derivative-based algorithm)
-            save_icg_derivatives : bool
-                when True 2nd and 3rd derivative of ICG signal are saved in icg_derivatives_, otherwise not
+        Parameters
+        ----------
+        window_b_detection_ms : str, int
+            defines the window in which the algorithm searches for the B-point,
+            'R' -> search B-point in the region between R-peak and C-point,
+            int -> search B-point in the region between xx ms before C-point and C-point
+            (150 ms -> see Arbol 2017, procedure for visual detection; Lababidi 1970)
+            (300 ms -> see Arbol 2017, 3rd derivative-based algorithm)
+        save_icg_derivatives : bool
+            when True 2nd and 3rd derivative of ICG signal are saved in icg_derivatives_, otherwise not
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
+
+
         """
+        super().__init__(handle_missing_events=handle_missing_events)
         self.window_b_detection_ms = window_b_detection_ms
         self.save_icg_derivatives = save_icg_derivatives
-        self.correct_outliers = correct_outliers
 
     # @make_action_safe
     def extract(  # noqa: C901, PLR0915
@@ -54,7 +59,6 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
         """Extract B-points from given cleaned ICG derivative signal.
 
@@ -75,8 +79,6 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
             is not correct
         sampling_rate_hz : int
             sampling rate of ICG derivative signal in hz
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
 
         Returns
         -------
@@ -88,6 +90,7 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
             If the C-Point contains NaN values and handle_missing is set to "raise"
 
         """
+        self._check_valid_missing_handling()
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
 
@@ -185,9 +188,9 @@ class BPointExtractionArbol2017(BaseBPointExtraction):
                 f"for some other reasons"
             )
 
-            if handle_missing == "warn":
+            if self.handle_missing_events == "warn":
                 warnings.warn(missing_str)
-            elif handle_missing == "raise":
+            elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
         _assert_is_dtype(b_points, pd.DataFrame)

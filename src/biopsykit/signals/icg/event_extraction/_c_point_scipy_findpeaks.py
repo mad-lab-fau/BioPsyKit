@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
@@ -14,14 +14,19 @@ from tpcp import Parameter
 __all__ = ["CPointExtractionScipyFindPeaks"]
 
 
-class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
+class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEventsMixin):
     """Extract C-points from ICG derivative signal using scipy's find_peaks function."""
 
     # input parameters
     window_c_correction: Parameter[int]
     save_candidates: Parameter[bool]
 
-    def __init__(self, window_c_correction: Optional[int] = 3, save_candidates: Optional[bool] = False):
+    def __init__(
+        self,
+        window_c_correction: Optional[int] = 3,
+        save_candidates: Optional[bool] = False,
+        handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
+    ):
         """Initialize the C-point extraction algorithm.
 
         Parameters
@@ -31,8 +36,14 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
         save_candidates : bool, optional
             indicates whether only the selected C-point position (one per heartbeat) is saved in _points (False),
             or also all other C-candidates (True).
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing C-points (default: "warn").
+            * "warn" : issue a warning and set C-point to NaN
+            * "raise" : raise an :class:`~biopsykit.utils.exceptions.EventExtractionError`
+            * "ignore" : ignore missing C-points
 
         """
+        super().__init__(handle_missing_events=handle_missing_events)
         self.window_c_correction = window_c_correction
         self.save_candidates = save_candidates
 
@@ -42,8 +53,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
         *,
         icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,  # noqa: ARG002
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
+        sampling_rate_hz: Optional[float],
     ):
         """Extract C-points from given cleaned ICG derivative signal using :func:`~scipy.signal.find_peaks`.
 
@@ -61,17 +71,13 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
             Result from :class:`~biopsykit.signals.ecg.segmentation.HeartbeatSegmentation`.
         sampling_rate_hz : int
             Sampling rate of ICG derivative signal in Hz. Not used in this function.
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing C-points (default: "warn").
-            * "warn" : issue a warning and set C-point to NaN
-            * "raise" : raise an :class:`~biopsykit.utils.exceptions.EventExtractionError`
-            * "ignore" : ignore missing C-points
 
         Returns
         -------
         self
 
         """
+        self._check_valid_missing_handling()
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
 
         # result df
@@ -151,9 +157,9 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction):
         if len(heartbeats_no_c) > 0:
             c_points.loc[heartbeats_no_c, "nan_reason"] = "no_c_detected"
             missing_str = f"No valid C-point detected in {len(heartbeats_no_c)} heartbeats ({heartbeats_no_c})"
-            if handle_missing == "warn":
+            if self.handle_missing_events == "warn":
                 warnings.warn(missing_str)
-            elif handle_missing == "raise":
+            elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
         _assert_is_dtype(c_points, pd.DataFrame)

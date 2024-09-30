@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
@@ -14,13 +14,13 @@ from tpcp import Parameter
 __all__ = ["BPointExtractionDebski1993"]
 
 
-class BPointExtractionDebski1993(BaseBPointExtraction):
+class BPointExtractionDebski1993(BaseBPointExtraction, CanHandleMissingEventsMixin):
     """algorithm to extract B-point based on the reversal (local minimum) of dZ^^2/dt^^2 before the C point."""
 
     # input parameters
     correct_outliers: Parameter[bool]
 
-    def __init__(self, correct_outliers: Optional[bool] = False):
+    def __init__(self, correct_outliers: Optional[bool] = False, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
         """Initialize new BPointExtractionDebski algorithm instance.
 
         Parameters
@@ -28,6 +28,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
         correct_outliers : bool
             Indicates whether to perform outlier correction (True) or not (False)
         """
+        super().__init__(handle_missing_events=handle_missing_events)
         self.correct_outliers = correct_outliers
 
     # @make_action_safe
@@ -37,8 +38,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
         icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
-        sampling_rate_hz: int,  # noqa: ARG002
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
+        sampling_rate_hz: Optional[float],
     ):
         """Extract B-points from given ICG cleaned signal.
 
@@ -60,8 +60,6 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
             is not correct
         sampling_rate_hz : int
             sampling rate of ECG signal in hz. Not used in this function.
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
 
         Returns
         -------
@@ -73,6 +71,7 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
             If the C-Point contains NaN values and handle_missing is set to "raise"
 
         """
+        self._check_valid_missing_handling()
         # sanitize input
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
@@ -101,9 +100,9 @@ class BPointExtractionDebski1993(BaseBPointExtraction):
                 missing_str = (
                     f"Either the r_peak or the c_point contains NaN at position {idx}! B-Point was set to NaN."
                 )
-                if handle_missing == "warn":
+                if self.handle_missing_events == "warn":
                     warnings.warn(missing_str)
-                elif handle_missing == "raise":
+                elif self.handle_missing_events == "raise":
                     raise EventExtractionError(missing_str)
                 continue
 

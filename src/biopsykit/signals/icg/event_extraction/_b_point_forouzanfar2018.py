@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
@@ -16,7 +16,7 @@ from tpcp import Parameter
 __all__ = ["BPointExtractionForouzanfar2018"]
 
 
-class BPointExtractionForouzanfar2018(BaseBPointExtraction):
+class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEventsMixin):
     """algorithm to extract B-point based on [Forouzanfar et al., 2018, Psychophysiology]."""
 
     # input parameters
@@ -25,6 +25,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
     def __init__(
         self,
         correct_outliers: Optional[bool] = False,
+        handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new BPointExtractionForouzanfar algorithm instance.
 
@@ -36,6 +37,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
             Indicates whether to use the amplitude of the C-Point or the amplitude difference between the C-Point and
             the A-Point as constraint to detect the monotonic segment
         """
+        super().__init__(handle_missing_events=handle_missing_events)
         self.correct_outliers = correct_outliers
 
     # @make_action_safe
@@ -45,8 +47,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
         icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
-        sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
+        sampling_rate_hz: float,
     ):
         """Extract B-points from given ICG cleaned signal.
 
@@ -65,8 +66,6 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
             is not correct.
         sampling_rate_hz : int
             sampling rate of ECG signal in hz
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
 
         Returns
         -------
@@ -79,6 +78,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
 
         """
         # sanitize input signal
+        self._check_valid_missing_handling()
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
 
@@ -151,25 +151,24 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
                 monotonic_segment_3rd_der, monotonic_segment_2nd_der, height, sampling_rate_hz
             )
 
-            # Compute the significant local maximums of the 3rd derivative of the most prominent monotonic segment
-            significant_local_maximums = self._get_local_maximums(monotonic_segment_3rd_der, height, sampling_rate_hz)
+            # Compute the significant local maxima of the 3rd derivative of the most prominent monotonic segment
+            significant_local_maxima = self._get_local_maxima(monotonic_segment_3rd_der, height, sampling_rate_hz)
 
             # Label the last zero crossing/ local maximum as the B-Point
-            # If there are no zero crossings or local maximums use the first Point of the segment as B-Point
-            significant_features = pd.concat([significant_zero_crossings, significant_local_maximums], axis=0) + start
+            # If there are no zero crossings or local maxima use the first Point of the segment as B-Point
+            significant_features = pd.concat([significant_zero_crossings, significant_local_maxima], axis=0) + start
             b_point = significant_features.iloc[np.argmin(c_point - significant_features)][0]
 
-            """
-            if not self.correct_outliers:
-                if b_point < data['r_peak_sample']:
-                    b_points['b_point'].iloc[idx] = np.NaN
-                    #warnings.warn(f"The detected B-point is located before the R-Peak at heartbeat {idx}!"
-                    #              f" The B-point was set to NaN.")
-                else:
-                    b_points['b_point'].iloc[idx] = b_point
-            else:
-                b_points['b_point'].iloc[idx] = b_point
-            """
+            # if not self.correct_outliers:
+            #     if b_point < data['r_peak_sample']:
+            #         b_points['b_point'].iloc[idx] = np.NaN
+            #         #warnings.warn(f"The detected B-point is located before the R-Peak at heartbeat {idx}!"
+            #         #              f" The B-point was set to NaN.")
+            #     else:
+            #         b_points['b_point'].iloc[idx] = b_point
+            # else:
+            #     b_points['b_point'].iloc[idx] = b_point
+
             b_points["b_point_sample"].iloc[idx] = b_point
 
         # interpolate the first B-Point with the second B-Point since it is not possible to detect a B-Point
@@ -184,9 +183,9 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
             missing_str = (
                 f"Either 'r_peak' or 'c_point' contains NaN at positions {idx_nan}! The B-points were set to NaN."
             )
-            if handle_missing == "warn":
+            if self.handle_missing_events == "warn":
                 warnings.warn(missing_str)
-            elif handle_missing == "raise":
+            elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
         _assert_is_dtype(b_points, pd.DataFrame)
@@ -268,7 +267,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
         monotonic_segment_3rd_der: pd.DataFrame,
         monotonic_segment_2nd_der: pd.DataFrame,
         height: int,
-        sampling_rate_hz: int,
+        sampling_rate_hz: float,
     ):
         constraint = float(10 * height / sampling_rate_hz)
 
@@ -294,22 +293,21 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction):
         return significant_crossings
 
     @staticmethod
-    def _get_local_maximums(monotonic_segment_3rd_der: pd.DataFrame, height: int, sampling_rate_hz: int):
+    def _get_local_maxima(monotonic_segment_3rd_der: pd.DataFrame, height: int, sampling_rate_hz: float):
         constraint = float(4 * height / sampling_rate_hz)
 
-        local_maximums = argrelextrema(monotonic_segment_3rd_der["3rd_der"].to_numpy(), np.greater_equal)[0]
-        local_maximums = pd.DataFrame(local_maximums, columns=["sample_position"])
+        local_maxima = argrelextrema(monotonic_segment_3rd_der["3rd_der"].to_numpy(), np.greater_equal)[0]
+        local_maxima = pd.DataFrame(local_maxima, columns=["sample_position"])
 
-        significant_maximums = local_maximums.drop(
-            local_maximums[
-                monotonic_segment_3rd_der["3rd_der"].iloc[local_maximums["sample_position"]].to_numpy() < constraint
+        significant_maxima = local_maxima.drop(
+            local_maxima[
+                monotonic_segment_3rd_der["3rd_der"].iloc[local_maxima["sample_position"]].to_numpy() < constraint
             ].index,
             axis=0,
         )
 
-        if isinstance(significant_maximums, type(None)):
+        if isinstance(significant_maxima, type(None)):
             return pd.DataFrame([0], columns=["sample_position"])
-        if len(significant_maximums) == 0:
+        if len(significant_maxima) == 0:
             return pd.DataFrame([0], columns=["sample_position"])
-        # print(f"Received significant maximum!")
-        return significant_maximums
+        return significant_maxima

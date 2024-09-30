@@ -41,11 +41,10 @@ class QWaveOnsetExtractionVanLien2013(BaseEcgExtraction):
     # @make_action_safe
     def extract(
         self,
-        ecg: pd.DataFrame,  # noqa: ARG002
+        *,
+        ecg: Optional[pd.DataFrame],
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
-        *,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",  # noqa: ARG002
     ):
         """Extract Q-wave onset (start of ventricular depolarization) from given ECG cleaned signal.
 
@@ -61,8 +60,6 @@ class QWaveOnsetExtractionVanLien2013(BaseEcgExtraction):
             location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
         sampling_rate_hz: int
             Sampling rate of ECG signal in hz
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Not used in this function.
 
         Returns
         -------

@@ -13,10 +13,9 @@ class RPeakExtraction(BaseEcgExtraction):
     def extract(
         self,
         *,
-        ecg: pd.DataFrame,  # noqa: ARG002
+        ecg: Optional[pd.DataFrame],  # noqa: ARG002
         heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,  # noqa: ARG002
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",  # noqa: ARG002
+        sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
         """Extract R-peaks from given ECG cleaned signal to use it as Q-wave onset estimate.
 
@@ -31,8 +30,6 @@ class RPeakExtraction(BaseEcgExtraction):
             location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
         sampling_rate_hz: int
             Sampling rate of ECG signal in hz
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Not used in this function.
 
         Returns
         -------

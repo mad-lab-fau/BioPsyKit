@@ -1,10 +1,10 @@
 import warnings
-from typing import Optional
 
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+
+from biopsykit.signals._base_extraction import CanHandleMissingEventsMixin
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
@@ -12,17 +12,16 @@ from biopsykit.utils.array_handling import sanitize_input_series
 from biopsykit.utils.exceptions import EventExtractionError
 
 
-class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
+class QPeakExtractionNeurokitDwt(BaseEcgExtraction, CanHandleMissingEventsMixin):
     """Q-wave peaks extraction using :func:`~neurokit2.ecg_delineate` function with discrete wavelet method."""
 
     # @make_action_safe
     def extract(
         self,
+        *,
         ecg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
-        *,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
     ):
         """Extract Q-wave peaks from given ECG cleaned signal.
 
@@ -37,10 +36,6 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
             location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
         sampling_rate_hz: int
             Sampling rate of ECG signal in hz
-        handle_missing : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. If "warn", a warning is raised if missing data is found.
-            If "raise", an exception is raised if missing data is found. If "ignore", missing data is ignored.
-            Default: "warn"
 
         Returns
         -------
@@ -52,6 +47,8 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
             If missing data is found and ``handle_missing`` is set to "raise"
 
         """
+        self._check_valid_missing_handling()
+
         ecg = sanitize_input_series(ecg, name="ecg")
 
         # result df
@@ -113,9 +110,9 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction):
                     f"were within these heartbeats"
                 )
 
-            if handle_missing == "warn":
+            if self.handle_missing_events == "warn":
                 warnings.warn(missing_str)
-            elif handle_missing == "raise":
+            elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
         q_peaks.columns = ["q_wave_onset_sample", "nan_reason"]

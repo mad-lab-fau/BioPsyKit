@@ -1,15 +1,21 @@
 import pandas as pd
 from tpcp import Algorithm
-from typing_extensions import Self
+from typing_extensions import Self, Literal
 
 __all__ = ["PepExtraction"]
+
+NEGATIVE_PEP_HANDLING = Literal["nan", "zero", "keep"]
 
 
 class PepExtraction(Algorithm):
 
     _action_methods = "extract"
 
+    handle_negative_pep: NEGATIVE_PEP_HANDLING
     pep_results_: pd.DataFrame
+
+    def __init__(self, handle_negative_pep: NEGATIVE_PEP_HANDLING = "nan") -> None:
+        self.handle_negative_pep = handle_negative_pep
 
     def extract(
         self,
@@ -17,7 +23,7 @@ class PepExtraction(Algorithm):
         heartbeats: pd.DataFrame,
         q_wave_onset_samples: pd.DataFrame,
         b_point_samples: pd.DataFrame,
-        sampling_rate_hz: int,
+        sampling_rate_hz: float,
     ) -> Self:
         """Compute PEP from Q-wave onset and B-point locations.
 
@@ -48,14 +54,40 @@ class PepExtraction(Algorithm):
             q_wave_onset_sample=pd.to_numeric(q_wave_onset_samples["q_wave_onset_sample"]),
             b_point_sample=pd.to_numeric(b_point_samples["b_point_sample"]),
             pep_sample=pd.to_numeric(b_point_samples["b_point_sample"] - q_wave_onset_samples["q_wave_onset_sample"]),
-            nan_reason=q_wave_onset_samples["nan_reason"],
         )
 
         pep_results = pep_results.assign(
             pep_ms=pep_results["pep_sample"] / sampling_rate_hz * 1000,
         )
+        pep_results = self._add_invalid_pep_reason(pep_results, q_wave_onset_samples, b_point_samples)
         pep_results = pep_results.convert_dtypes(infer_objects=True)
 
         self.pep_results_ = pep_results
 
         return self
+
+    def _add_invalid_pep_reason(
+        self,
+        pep_results: pd.DataFrame,
+        q_wave_onset_samples: pd.DataFrame,
+        b_point_samples: pd.DataFrame,
+    ) -> pd.DataFrame:
+
+        # extract nan_reason from q_wave_onset_samples and add to pep_results
+        pep_results = pep_results.assign(nan_reason=q_wave_onset_samples["nan_reason"])
+        # TODO add option to store multiple nan_reasons in one column?
+        # extract nan_reason from b_point_samples
+        nan_reason_b_point = b_point_samples["nan_reason"].loc[~b_point_samples["nan_reason"].isna()]
+        # add nan_reason to pep_results
+        if not nan_reason_b_point.empty:
+            pep_results.loc[nan_reason_b_point.index, "nan_reason"] = nan_reason_b_point
+
+        neg_pep_idx = pep_results["pep_ms"] < 0
+        if self.handle_negative_pep == "zero":
+            pep_results.loc[neg_pep_idx, ["pep_sample", "pep_ms"]] = 0
+            pep_results.loc[neg_pep_idx, "nan_reason"] = "negative_pep"
+        elif self.handle_negative_pep == "nan":
+            pep_results.loc[neg_pep_idx, ["pep_sample", "pep_ms"]] = pd.NA
+            pep_results.loc[neg_pep_idx, "nan_reason"] = "negative_pep"
+
+        return pep_results

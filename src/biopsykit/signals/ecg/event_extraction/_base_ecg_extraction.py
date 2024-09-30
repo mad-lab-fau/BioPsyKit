@@ -1,7 +1,4 @@
-from typing import Optional
-
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from tpcp import Algorithm
 
 __all__ = ["BaseEcgExtraction"]
@@ -17,7 +14,6 @@ class BaseEcgExtraction(Algorithm):
         *,
         ecg: pd.Series,
         heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
+        sampling_rate_hz: float,
     ):
         raise NotImplementedError("This is an abstract method and needs to be implemented in a subclass.")
