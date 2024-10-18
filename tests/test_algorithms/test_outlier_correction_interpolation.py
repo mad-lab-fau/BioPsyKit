@@ -9,10 +9,8 @@ import pytest
 
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
 from biopsykit.signals.icg.event_extraction import CPointExtractionScipyFindPeaks, BPointExtractionForouzanfar2018
-from biopsykit.signals.icg.event_extraction import BPointExtractionArbol2017
 from biopsykit.signals.icg.outlier_correction import OutlierCorrectionInterpolation
 
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/pep")
 

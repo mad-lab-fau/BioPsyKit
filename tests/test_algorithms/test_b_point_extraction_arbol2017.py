@@ -8,7 +8,7 @@ import pandas as pd
 
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
 from biopsykit.signals.icg.event_extraction import CPointExtractionScipyFindPeaks
-from biopsykit.signals.icg.event_extraction import BPointExtractionArbol2017
+from biopsykit.signals.icg.event_extraction import BPointExtractionArbol2017ThirdDerivative
 
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 
@@ -34,7 +34,7 @@ class TestBPointExtractionArbol2017:
         self.c_points = self.c_point_algo.extract(
             icg=self.icg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz
         ).points_
-        self.extract_algo = BPointExtractionArbol2017()
+        self.extract_algo = BPointExtractionArbol2017ThirdDerivative()
         self.test_case = unittest.TestCase()
 
     def test_extract(self):

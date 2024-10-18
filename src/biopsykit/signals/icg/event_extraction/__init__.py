@@ -1,5 +1,8 @@
 """Module for ICG event extraction."""
-from biopsykit.signals.icg.event_extraction._b_point_arbol2017 import BPointExtractionArbol2017
+from biopsykit.signals.icg.event_extraction._b_point_arbol2017 import (
+    BPointExtractionArbol2017ThirdDerivative,
+    BPointExtractionArbol2017SecondDerivative,
+)
 from biopsykit.signals.icg.event_extraction._b_point_debski1993 import BPointExtractionDebski1993
 from biopsykit.signals.icg.event_extraction._b_point_drost2022 import BPointExtractionDrost2022
 from biopsykit.signals.icg.event_extraction._b_point_forouzanfar2018 import BPointExtractionForouzanfar2018
@@ -12,7 +15,8 @@ from biopsykit.signals.icg.event_extraction._c_point_scipy_findpeaks import CPoi
 __all__ = [
     "BaseBPointExtraction",
     "BaseCPointExtraction",
-    "BPointExtractionArbol2017",
+    "BPointExtractionArbol2017ThirdDerivative",
+    "BPointExtractionArbol2017SecondDerivative",
     "BPointExtractionDrost2022",
     "BPointExtractionSherwood1990",
     "BPointExtractionForouzanfar2018",
