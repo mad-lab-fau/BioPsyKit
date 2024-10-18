@@ -3,12 +3,10 @@ from tpcp import Algorithm
 
 __all__ = ["BaseEcgExtraction"]
 
+from biopsykit.signals._base_extraction import BaseExtraction
 
-class BaseEcgExtraction(Algorithm):
-    _action_methods = "extract"
 
-    points_: pd.DataFrame
-
+class BaseEcgExtraction(BaseExtraction):
     def extract(
         self,
         *,

@@ -93,10 +93,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
         heartbeats = heartbeats.assign(r_peak_sample=r_peaks)
 
         # save RR-interval to successive heartbeat
-        rr_interval_to_next_beat = np.abs(heartbeats["r_peak_sample"].diff(periods=-1))
-        # rr_interval_to_next_beat.iloc[-1] = rr_interval_to_next_beat.iloc[-2]  # extrapolate last beat
-
-        heartbeats = heartbeats.assign(rr_interval_sample=rr_interval_to_next_beat)
+        heartbeats = heartbeats.assign(rr_interval_sample=np.abs(heartbeats["r_peak_sample"].diff(periods=-1)))
 
         if self.variable_length:
             # split ecg signal into heartbeats with varying length

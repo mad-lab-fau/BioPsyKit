@@ -39,17 +39,3 @@ class BaseExtraction(Algorithm):
 
     # results
     points_: pd.DataFrame
-
-    # interface method
-    # @abstractmethod
-    # @make_action_safe
-    def extract(
-        self,
-        *,
-        signal_clean: pd.Series,
-        heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,
-        handle_missing: Optional[HANDLE_MISSING_EVENTS] = "warn",
-    ):
-        """Extract specific fiducial points from cleaned signal."""
-        raise NotImplementedError("Method 'extract' must be implemented in subclass.")

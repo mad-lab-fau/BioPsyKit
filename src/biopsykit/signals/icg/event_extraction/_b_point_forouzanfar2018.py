@@ -3,7 +3,6 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
@@ -33,9 +32,6 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         ----------
         correct_outliers : bool
             Indicates whether to perform outlier correction (True) or not (False)
-        standard_amplitude : bool
-            Indicates whether to use the amplitude of the C-Point or the amplitude difference between the C-Point and
-            the A-Point as constraint to detect the monotonic segment
         """
         super().__init__(handle_missing_events=handle_missing_events)
         self.correct_outliers = correct_outliers
