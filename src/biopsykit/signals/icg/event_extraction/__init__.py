@@ -2,6 +2,7 @@
 from biopsykit.signals.icg.event_extraction._b_point_arbol2017 import (
     BPointExtractionArbol2017ThirdDerivative,
     BPointExtractionArbol2017SecondDerivative,
+    BPointExtractionArbol2017IsoelectricCrossings,
 )
 from biopsykit.signals.icg.event_extraction._b_point_debski1993 import BPointExtractionDebski1993
 from biopsykit.signals.icg.event_extraction._b_point_drost2022 import BPointExtractionDrost2022
@@ -15,6 +16,7 @@ from biopsykit.signals.icg.event_extraction._c_point_scipy_findpeaks import CPoi
 __all__ = [
     "BaseBPointExtraction",
     "BaseCPointExtraction",
+    "BPointExtractionArbol2017IsoelectricCrossings",
     "BPointExtractionArbol2017ThirdDerivative",
     "BPointExtractionArbol2017SecondDerivative",
     "BPointExtractionDrost2022",
