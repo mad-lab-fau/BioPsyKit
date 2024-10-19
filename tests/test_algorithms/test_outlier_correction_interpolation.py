@@ -1,16 +1,12 @@
+import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
-import unittest
-
-
 import pandas as pd
 import pytest
-
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
-from biopsykit.signals.icg.event_extraction import CPointExtractionScipyFindPeaks, BPointExtractionForouzanfar2018
+from biopsykit.signals.icg.event_extraction import BPointExtractionForouzanfar2018, CPointExtractionScipyFindPeaks
 from biopsykit.signals.icg.outlier_correction import OutlierCorrectionInterpolation
-
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/pep")
 
@@ -52,9 +48,9 @@ class TestOutlierCorrectionInterpolation:
             b_points=self.b_points, c_points=self.c_points, sampling_rate_hz=self.sampling_rate_hz
         )
 
-        self.test_case.assertIsInstance(self.outlier_algo.points_, pd.DataFrame)
-        self.test_case.assertIn("b_point_sample", self.outlier_algo.points_.columns)
-        self.test_case.assertIn("nan_reason", self.outlier_algo.points_.columns)
+        assert isinstance(self.outlier_algo.points_, pd.DataFrame)
+        assert "b_point_sample" in self.outlier_algo.points_.columns
+        assert "nan_reason" in self.outlier_algo.points_.columns
 
     @pytest.mark.parametrize(
         ("outlier_type"),

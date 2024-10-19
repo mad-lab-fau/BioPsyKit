@@ -14,7 +14,7 @@ __all__ = ["BPointExtractionDrost2022"]
 
 
 class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Extract B-points based on the method proposed by Drost et al. (2022).
+    """Algorithm by Drost et al. (2022) to extract B-points based on the distance of the dZ/dt curve to a straight line.
 
     This algorithm extracts B-points based on the maximum distance of the dZ/dt curve and a straight line fitted
     between the C-Point and the Point on the dZ/dt curve 150 ms before the C-Point.

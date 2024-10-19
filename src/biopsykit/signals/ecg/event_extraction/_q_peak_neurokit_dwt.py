@@ -3,7 +3,6 @@ import warnings
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-
 from biopsykit.signals._base_extraction import CanHandleMissingEventsMixin
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction

@@ -1,6 +1,8 @@
+from typing import Literal
+
 import pandas as pd
 from tpcp import Algorithm
-from typing_extensions import Self, Literal
+from typing_extensions import Self
 
 __all__ = ["PepExtraction"]
 

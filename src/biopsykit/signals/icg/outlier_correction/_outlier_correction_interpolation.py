@@ -1,8 +1,5 @@
-from typing import Optional
-
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseOutlierCorrection
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 

@@ -1,14 +1,11 @@
+import unittest
 from contextlib import contextmanager
 from pathlib import Path
-
-import unittest
 
 import numpy as np
 import pandas as pd
 import pytest
-
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
-
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 from biopsykit.utils.exceptions import ValidationError
 
@@ -32,27 +29,27 @@ class TestHeartbeatSegmentationNeurokit:
 
     def test_initialization(self):
         self.setup()
-        self.test_case.assertTrue(self.segmenter.variable_length)
-        self.test_case.assertEqual(self.segmenter.start_factor, 0.35)
+        assert self.segmenter.variable_length
+        assert self.segmenter.start_factor == 0.35
 
     def test_extract_variable_length(self):
         self.setup()
 
         self.segmenter.extract(ecg=self.ecg_data, sampling_rate_hz=self.sampling_rate_hz)
-        self.test_case.assertIsInstance(self.segmenter.heartbeat_list_, pd.DataFrame)
-        self.test_case.assertIn("start_sample", self.segmenter.heartbeat_list_.columns)
-        self.test_case.assertIn("end_sample", self.segmenter.heartbeat_list_.columns)
-        self.test_case.assertIn("r_peak_sample", self.segmenter.heartbeat_list_.columns)
+        assert isinstance(self.segmenter.heartbeat_list_, pd.DataFrame)
+        assert "start_sample" in self.segmenter.heartbeat_list_.columns
+        assert "end_sample" in self.segmenter.heartbeat_list_.columns
+        assert "r_peak_sample" in self.segmenter.heartbeat_list_.columns
 
     def test_extract_fixed_length(self):
         self.setup()
 
         self.segmenter.variable_length = False
         self.segmenter.extract(ecg=self.ecg_data, sampling_rate_hz=self.sampling_rate_hz)
-        self.test_case.assertIsInstance(self.segmenter.heartbeat_list_, pd.DataFrame)
-        self.test_case.assertIn("start_sample", self.segmenter.heartbeat_list_.columns)
-        self.test_case.assertIn("end_sample", self.segmenter.heartbeat_list_.columns)
-        self.test_case.assertIn("r_peak_sample", self.segmenter.heartbeat_list_.columns)
+        assert isinstance(self.segmenter.heartbeat_list_, pd.DataFrame)
+        assert "start_sample" in self.segmenter.heartbeat_list_.columns
+        assert "end_sample" in self.segmenter.heartbeat_list_.columns
+        assert "r_peak_sample" in self.segmenter.heartbeat_list_.columns
 
     # add regression test to check if the extracted heartbeats are correct
     def test_regression_extract_variable_length_dataframe(self):

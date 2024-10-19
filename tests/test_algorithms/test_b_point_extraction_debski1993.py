@@ -1,14 +1,13 @@
+import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
-import unittest
-
-
 import pandas as pd
-
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
-from biopsykit.signals.icg.event_extraction import CPointExtractionScipyFindPeaks, BPointExtractionDebski1993
-
+from biopsykit.signals.icg.event_extraction import (
+    BPointExtractionDebski1993SecondDerivative,
+    CPointExtractionScipyFindPeaks,
+)
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/pep")
@@ -33,7 +32,7 @@ class TestBPointExtractionDebski1993:
         self.c_points = self.c_point_algo.extract(
             icg=self.icg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz
         ).points_
-        self.extract_algo = BPointExtractionDebski1993()
+        self.extract_algo = BPointExtractionDebski1993SecondDerivative()
         self.test_case = unittest.TestCase()
 
     def test_extract(self):
@@ -46,9 +45,9 @@ class TestBPointExtractionDebski1993:
             sampling_rate_hz=self.sampling_rate_hz,
         )
 
-        self.test_case.assertIsInstance(self.extract_algo.points_, pd.DataFrame)
-        self.test_case.assertIn("b_point_sample", self.extract_algo.points_.columns)
-        self.test_case.assertIn("nan_reason", self.extract_algo.points_.columns)
+        assert isinstance(self.extract_algo.points_, pd.DataFrame)
+        assert "b_point_sample" in self.extract_algo.points_.columns
+        assert "nan_reason" in self.extract_algo.points_.columns
 
     # add regression test to check if the extracted q-wave onsets match with the saved reference
     def test_regression_extract_dataframe(self):

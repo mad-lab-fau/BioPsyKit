@@ -1,15 +1,12 @@
+import unittest
 from contextlib import contextmanager
 from pathlib import Path
-
-import unittest
 from typing import Optional
 
 import pandas as pd
 import pytest
-
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
 from biopsykit.signals.icg.event_extraction import CPointExtractionScipyFindPeaks
-
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/pep")
@@ -38,9 +35,9 @@ class TestCPointExtractionSciPyFindpeaks:
 
         self.extract_algo.extract(icg=self.icg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
 
-        self.test_case.assertIsInstance(self.extract_algo.points_, pd.DataFrame)
-        self.test_case.assertIn("c_point_sample", self.extract_algo.points_.columns)
-        self.test_case.assertIn("nan_reason", self.extract_algo.points_.columns)
+        assert isinstance(self.extract_algo.points_, pd.DataFrame)
+        assert "c_point_sample" in self.extract_algo.points_.columns
+        assert "nan_reason" in self.extract_algo.points_.columns
 
     # add regression test to check if the extracted q-wave onsets match with the saved reference
     def test_regression_extract_dataframe(self):
@@ -106,9 +103,9 @@ class TestCPointExtractionSciPyFindpeaksParameters:
 
         print(self.extract_algo.points_)
 
-        self.test_case.assertIsInstance(self.extract_algo.points_, pd.DataFrame)
-        self.test_case.assertIn("c_point_sample", self.extract_algo.points_.columns)
-        self.test_case.assertIn("nan_reason", self.extract_algo.points_.columns)
+        assert isinstance(self.extract_algo.points_, pd.DataFrame)
+        assert "c_point_sample" in self.extract_algo.points_.columns
+        assert "nan_reason" in self.extract_algo.points_.columns
 
     @pytest.mark.parametrize(
         ("save_candidates", "expected_columns"),
@@ -119,5 +116,5 @@ class TestCPointExtractionSciPyFindpeaksParameters:
 
         self.extract_algo.extract(icg=self.icg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
 
-        self.test_case.assertIsInstance(self.extract_algo.points_, pd.DataFrame)
+        assert isinstance(self.extract_algo.points_, pd.DataFrame)
         self.test_case.assertListEqual(expected_columns, self.extract_algo.points_.columns.tolist())

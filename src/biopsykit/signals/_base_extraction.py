@@ -1,4 +1,4 @@
-from typing import Literal, Optional, get_args
+from typing import Literal, get_args
 
 import pandas as pd
 from tpcp import Algorithm

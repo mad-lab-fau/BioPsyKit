@@ -3,10 +3,9 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-
-from biopsykit.signals._base_extraction import CanHandleMissingEventsMixin, HANDLE_MISSING_EVENTS
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction import BaseBPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.exceptions import EventExtractionError
 
@@ -32,7 +31,7 @@ class BPointExtractionSherwood1990(BaseBPointExtraction, CanHandleMissingEventsM
         check_c_points = pd.isna(c_points)
 
         # get zero crossings of icg
-        zero_crossings = np.where(np.diff(np.sign(icg)))[0]
+        zero_crossings = np.where(np.diff(np.signbit(icg)))[0]
 
         # go through each R-C interval independently and search for the local minima
         for idx, data in heartbeats.iterrows():

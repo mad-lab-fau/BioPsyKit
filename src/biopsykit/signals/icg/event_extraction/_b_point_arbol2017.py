@@ -1,5 +1,5 @@
 import warnings
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ __all__ = [
 
 
 class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm proposed by Arbol 2017 to extract B-points based on isoelectric crossings."""
+    """Algorithm by Arbol et al. (2017) to extract B-points based on isoelectric crossings."""
 
     def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
         """Initialize new B-point extraction algorithm based on Arbol 2017.
@@ -31,7 +31,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
         """
         super().__init__(handle_missing_events=handle_missing_events)
 
-    def extract(  # noqa: C901, PLR0915
+    def extract(
         self,
         *,
         icg: Union[pd.Series, pd.DataFrame],
@@ -102,7 +102,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             icg_isoelectric = icg_heartbeat - isoelectric_line
 
             # compute the isoelectric crossings
-            icg_isoelectric_crossings = np.where(np.diff(np.sign(icg_isoelectric)))[0]
+            icg_isoelectric_crossings = np.where(np.diff(np.signbit(icg_isoelectric)))[0]
 
             # find the last isoelectric crossing *before* the C-point
             icg_isoelectric_crossings_diff = icg_isoelectric_crossings - c_point
@@ -122,7 +122,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
 
 
 class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm proposed by Arbol 2017 to extract B-points based on the second derivative of the ICG signal."""
+    """Algorithm by Arbol et al. (2017) to extract B-points based on the second derivative of the ICG signal."""
 
     # input parameters
     search_window_start_ms: Parameter[int]  # integer defining window start in ms
@@ -154,7 +154,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
         self.window_size_ms = window_size_ms
 
     # @make_action_safe
-    def extract(  # noqa: C901, PLR0915
+    def extract(
         self,
         *,
         icg: Union[pd.Series, pd.DataFrame],
@@ -208,7 +208,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
         icg_2nd_der = np.gradient(icg)
 
         # search B-point for each heartbeat of the given signal
-        for idx, data in heartbeats.iterrows():
+        for idx, _data in heartbeats.iterrows():
             c_point_sample = c_points["c_point_sample"].iloc[idx]
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
@@ -266,7 +266,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
 
 
 class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm proposed by Arbol 2017 to extract B-points based on the third derivative of the ICG signal."""
+    """Algorithm by Arbol et al. (2017) to extract B-points based on the third derivative of the ICG signal."""
 
     # input parameters
     search_window_start_ms: Parameter[Union[str, int]]  # either 'R' or integer defining window length in ms
@@ -295,7 +295,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
         self.search_window_start_ms = search_window_start_ms
 
     # @make_action_safe
-    def extract(  # noqa: C901, PLR0915
+    def extract(
         self,
         *,
         icg: Union[pd.Series, pd.DataFrame],
@@ -352,8 +352,8 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
         # search B-point for each heartbeat of the given signal
         for idx, data in heartbeats.iterrows():
             # slice signal for current heartbeat
-            heartbeat_start = data["start_sample"]
-            heartbeat_end = data["end_sample"]
+            data["start_sample"]
+            data["end_sample"]
 
             # calculate R-peak and C-point position relative to start of current heartbeat
             heartbeat_r_peak = data["r_peak_sample"]

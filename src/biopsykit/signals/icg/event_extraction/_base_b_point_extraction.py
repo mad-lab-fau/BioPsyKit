@@ -2,7 +2,6 @@ from typing import Optional
 
 import pandas as pd
 from biopsykit.signals._base_extraction import BaseExtraction
-from tpcp import Algorithm
 
 __all__ = ["BaseBPointExtraction"]
 

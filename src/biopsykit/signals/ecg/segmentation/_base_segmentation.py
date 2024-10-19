@@ -1,11 +1,9 @@
-from typing import Optional, Union
+from typing import Union
 
 import pandas as pd
 from tpcp import Algorithm
 
 __all__ = ["BaseHeartbeatSegmentation"]
-
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 
 
 class BaseHeartbeatSegmentation(Algorithm):

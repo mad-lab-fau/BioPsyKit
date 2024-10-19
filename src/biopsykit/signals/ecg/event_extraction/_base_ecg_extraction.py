@@ -1,5 +1,4 @@
 import pandas as pd
-from tpcp import Algorithm
 
 __all__ = ["BaseEcgExtraction"]
 
