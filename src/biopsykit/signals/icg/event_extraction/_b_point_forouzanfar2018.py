@@ -123,10 +123,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
             # Step 4.1: Get the most prominent monotonic increasing segment between the A-Point and the C-Point
             start_sample, end_sample = (
-                self._get_monotonic_increasing_segments_2nd_der(
-                    signal_clean_segment, second_der[a_point : c_point + 1], c_amplitude
-                )
-                + a_point
+                self._get_most_prominent_monotonic_increasing_segment(signal_clean_segment, c_amplitude) + a_point
             )
 
             if (start_sample == a_point) & (end_sample == a_point):
@@ -152,17 +149,20 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
             height = icg.iloc[c_point] - icg.iloc[a_point]
 
             # Compute the significant zero_crossings
-            significant_zero_crossings = self._get_zero_crossings(
+            significant_zero_crossings = self._get_zero_crossings_3rd_derivative(
                 monotonic_segment_3rd_der, monotonic_segment_2nd_der, height
             )
 
             # Compute the significant local maxima of the 3rd derivative of the most prominent monotonic segment
-            significant_local_maxima = self._get_local_maxima(monotonic_segment_3rd_der, height)
+            significant_local_maxima = self._get_local_maxima_3rd_derivative(monotonic_segment_3rd_der, height)
 
             # Label the last zero crossing/ local maximum as the B-Point
             # If there are no zero crossings or local maxima use the first Point of the segment as B-Point
             significant_features = pd.concat([significant_zero_crossings, significant_local_maxima], axis=0) + start
-            b_point = significant_features.iloc[np.argmin(c_point - significant_features)][0]
+            if len(significant_features) == 0:
+                b_point = start
+            else:
+                b_point = significant_features.iloc[np.argmin(c_point - significant_features)][0]
 
             # if not self.correct_outliers:
             #     if b_point < data['r_peak_sample']:
@@ -214,14 +214,12 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         return a_point
 
     @staticmethod
-    def _get_monotonic_increasing_segments_2nd_der(
-        icg_segment: pd.Series, icg_second_der_segment: np.ndarray, height: int
-    ):
+    def _get_most_prominent_monotonic_increasing_segment(icg_segment: pd.Series, height: int):
         icg_segment = icg_segment.copy()
-        icg_second_der_segment = icg_second_der_segment.squeeze()
+        icg_2nd_der_segment = np.gradient(icg_segment)
         icg_segment.index = np.arange(0, len(icg_segment))
         monotony_df = pd.DataFrame(icg_segment.values, columns=["icg"])
-        monotony_df = monotony_df.assign(**{"2nd_der": icg_second_der_segment, "borders": 0})
+        monotony_df = monotony_df.assign(**{"2nd_der": icg_2nd_der_segment, "borders": 0})
 
         # A-Point is a possible start of the monotonic segment
         monotony_df.loc[monotony_df.index[0], "borders"] = "start_increase"
@@ -266,7 +264,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
         return start_sample, end_sample  # That are not absolute positions yet
 
-    def _get_zero_crossings(
+    def _get_zero_crossings_3rd_derivative(
         self, monotonic_segment_3rd_der: pd.DataFrame, monotonic_segment_2nd_der: pd.DataFrame, height: int
     ):
         constraint = float(10 * height / self.scaling_factor)
@@ -292,10 +290,15 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
             return pd.DataFrame([0], columns=["sample_position"])
         return significant_crossings
 
-    def _get_local_maxima(self, monotonic_segment_3rd_der: pd.DataFrame, height: int):
+    def _get_local_maxima_3rd_derivative(self, monotonic_segment_3rd_der: pd.DataFrame, height: int):
         constraint = float(4 * height / self.scaling_factor)
+        # compute gradient
+        monotonic_segment_3rd_der_gradient = np.gradient(monotonic_segment_3rd_der.squeeze())
 
-        local_maxima = argrelextrema(monotonic_segment_3rd_der["3rd_der"].to_numpy(), np.greater_equal)[0]
+        # find zero-crossings of the gradient to determine local maxima
+        local_maxima = np.where(np.diff(np.sign(monotonic_segment_3rd_der_gradient)) < 0)[0]
+        # add 1 to the index to get the correct position
+        local_maxima += 1
         local_maxima = pd.DataFrame(local_maxima, columns=["sample_position"])
 
         significant_maxima = local_maxima.drop(

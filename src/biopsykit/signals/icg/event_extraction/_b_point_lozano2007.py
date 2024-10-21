@@ -202,7 +202,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
             current_r_peak = heartbeats["r_peak_sample"].iloc[idx]
             # get the R-C interval in ms
             r_c_interval_ms = np.mean((c_point_sample - r_peak_sample) / sampling_rate_hz * 1000)
-            b_point_interval_ms = 1.233 * r_c_interval_ms - 0.0032 * r_c_interval_ms**2 - 31.59
+            b_point_interval_ms = -0.0032 * r_c_interval_ms**2 + 1.233 * r_c_interval_ms - 31.59
             b_point_interval_sample = int((b_point_interval_ms * sampling_rate_hz) / 1000)
             b_point_sample = current_r_peak + b_point_interval_sample
 

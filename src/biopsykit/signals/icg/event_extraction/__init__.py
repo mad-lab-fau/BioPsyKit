@@ -15,7 +15,6 @@ from biopsykit.signals.icg.event_extraction._b_point_sherwood1990 import BPointE
 from biopsykit.signals.icg.event_extraction._b_point_stern1985 import BPointExtractionStern1985
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
-from biopsykit.signals.icg.event_extraction._c_point_koka2022 import CPointExtractionKoka2022
 from biopsykit.signals.icg.event_extraction._c_point_scipy_findpeaks import CPointExtractionScipyFindPeaks
 
 __all__ = [
@@ -32,5 +31,4 @@ __all__ = [
     "BPointExtractionForouzanfar2018",
     "BPointExtractionDebski1993SecondDerivative",
     "CPointExtractionScipyFindPeaks",
-    "CPointExtractionKoka2022",
 ]
