@@ -7,7 +7,7 @@ from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _as
 from tpcp import Parameter
 
 
-class QWaveOnsetExtractionVanLien2013(BaseEcgExtraction):
+class QPeakExtractionVanLien2013(BaseEcgExtraction):
     """Algorithm to extract Q-wave onset based on the detection of the R-peak, as suggested by Van Lien et al. (2013).
 
     The Q-wave onset is estimated by subtracting a fixed time interval from the R-peak location. The fixed time

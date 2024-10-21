@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from biopsykit.signals.ecg.event_extraction import QPeakExtractionNeurokitDwt, QWaveOnsetExtractionVanLien2013
+from biopsykit.signals.ecg.event_extraction import QPeakExtractionMartinez2004Neurokit, QPeakExtractionVanLien2013
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 
@@ -25,7 +25,7 @@ class TestQPeakExtractionNeurokitDwt:
         self.heartbeats = self.segmenter.extract(
             ecg=self.ecg_data, sampling_rate_hz=self.sampling_rate_hz
         ).heartbeat_list_
-        self.extract_algo = QPeakExtractionNeurokitDwt()
+        self.extract_algo = QPeakExtractionMartinez2004Neurokit()
         self.test_case = unittest.TestCase()
 
     def test_extract(self):
@@ -80,7 +80,7 @@ class TestQWaveOnsetExtractionVanLien2013:
         self.heartbeats = self.segmenter.extract(
             ecg=self.ecg_data, sampling_rate_hz=self.sampling_rate_hz
         ).heartbeat_list_
-        self.extract_algo = QWaveOnsetExtractionVanLien2013(time_interval_ms=time_interval_ms)
+        self.extract_algo = QPeakExtractionVanLien2013(time_interval_ms=time_interval_ms)
         self.test_case = unittest.TestCase()
 
     @pytest.mark.parametrize(

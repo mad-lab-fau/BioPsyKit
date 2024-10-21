@@ -11,8 +11,8 @@ from biopsykit.utils.array_handling import sanitize_input_series
 from biopsykit.utils.exceptions import EventExtractionError
 
 
-class QPeakExtractionNeurokitDwt(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Q-wave peaks extraction using :func:`~neurokit2.ecg_delineate` function with discrete wavelet method."""
+class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
+    """Algorithm by Martinez et al. (2004) for Q-wave peak extraction using the DWT method implemented in NeuroKit2."""
 
     # @make_action_safe
     def extract(
@@ -49,6 +49,7 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction, CanHandleMissingEventsMixin)
         self._check_valid_missing_handling()
 
         ecg = sanitize_input_series(ecg, name="ecg")
+        ecg = ecg.squeeze()
 
         # result df
         q_peaks = pd.DataFrame(index=heartbeats.index, columns=["q_peak", "nan_reason"])
@@ -60,9 +61,7 @@ class QPeakExtractionNeurokitDwt(BaseEcgExtraction, CanHandleMissingEventsMixin)
         # some neurokit functions (for example ecg_delineate()) don't work with r-peaks input as Series, so list instead
         r_peaks = list(heartbeats["r_peak_sample"])
 
-        _, waves = nk.ecg_delineate(
-            ecg, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, method="dwt", show=False, show_type="peaks"
-        )  # show can also be set to False
+        _, waves = nk.ecg_delineate(ecg, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, method="dwt", show=False)
 
         extracted_q_peaks = waves["ECG_Q_Peaks"]
 
