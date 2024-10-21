@@ -18,21 +18,30 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
     """algorithm to extract B-point based on [Forouzanfar et al., 2018, Psychophysiology]."""
 
     # input parameters
+    scaling_factor: Parameter[float]
     correct_outliers: Parameter[bool]
 
     def __init__(
         self,
+        scaling_factor: float = 2000,
         correct_outliers: Optional[bool] = False,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new BPointExtractionForouzanfar algorithm instance.
 
+        WARNING: In the original paper, the authors report the sampling frequency of the ICG signal as the scaling
+        factor. Since this does not make sense, the scaling factor is set to 2000 (corresponding to a sampling rate of
+        the original data of 2000 Hz) instead of using the sampling rate of the ICG signal.
+
         Parameters
         ----------
+        scaling_factor : float
+            Scaling factor for the B-point extraction algorithm
         correct_outliers : bool
             Indicates whether to perform outlier correction (True) or not (False)
         """
         super().__init__(handle_missing_events=handle_missing_events)
+        self.scaling_factor = scaling_factor
         self.correct_outliers = correct_outliers
 
     # @make_action_safe
@@ -143,11 +152,11 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
             # Compute the significant zero_crossings
             significant_zero_crossings = self._get_zero_crossings(
-                monotonic_segment_3rd_der, monotonic_segment_2nd_der, height, sampling_rate_hz
+                monotonic_segment_3rd_der, monotonic_segment_2nd_der, height
             )
 
             # Compute the significant local maxima of the 3rd derivative of the most prominent monotonic segment
-            significant_local_maxima = self._get_local_maxima(monotonic_segment_3rd_der, height, sampling_rate_hz)
+            significant_local_maxima = self._get_local_maxima(monotonic_segment_3rd_der, height)
 
             # Label the last zero crossing/ local maximum as the B-Point
             # If there are no zero crossings or local maxima use the first Point of the segment as B-Point
@@ -257,14 +266,10 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
         return start_sample, end_sample  # That are not absolute positions yet
 
-    @staticmethod
     def _get_zero_crossings(
-        monotonic_segment_3rd_der: pd.DataFrame,
-        monotonic_segment_2nd_der: pd.DataFrame,
-        height: int,
-        sampling_rate_hz: float,
+        self, monotonic_segment_3rd_der: pd.DataFrame, monotonic_segment_2nd_der: pd.DataFrame, height: int
     ):
-        constraint = float(10 * height / sampling_rate_hz)
+        constraint = float(10 * height / self.scaling_factor)
 
         zero_crossings = np.where(np.diff(np.signbit(monotonic_segment_3rd_der["3rd_der"])))[0]
         zero_crossings = pd.DataFrame(zero_crossings, columns=["sample_position"])
@@ -275,7 +280,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
             axis=0,
         )
 
-        # Discard zero crossings with slope higher than 10*H/f_s
+        # Discard zero crossings with slope higher than 10*H/scaling_factor
         significant_crossings = significant_crossings.drop(
             significant_crossings[
                 monotonic_segment_2nd_der.iloc[significant_crossings["sample_position"]].to_numpy() >= constraint
@@ -287,9 +292,8 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
             return pd.DataFrame([0], columns=["sample_position"])
         return significant_crossings
 
-    @staticmethod
-    def _get_local_maxima(monotonic_segment_3rd_der: pd.DataFrame, height: int, sampling_rate_hz: float):
-        constraint = float(4 * height / sampling_rate_hz)
+    def _get_local_maxima(self, monotonic_segment_3rd_der: pd.DataFrame, height: int):
+        constraint = float(4 * height / self.scaling_factor)
 
         local_maxima = argrelextrema(monotonic_segment_3rd_der["3rd_der"].to_numpy(), np.greater_equal)[0]
         local_maxima = pd.DataFrame(local_maxima, columns=["sample_position"])

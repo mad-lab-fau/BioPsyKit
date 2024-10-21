@@ -1,18 +1,30 @@
-import warnings
-
-import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import CanHandleMissingEventsMixin
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_series
-from biopsykit.utils.exceptions import EventExtractionError
+from tpcp import Parameter
 
 
 class QPeakExtractionForounzafar2018(BaseEcgExtraction, CanHandleMissingEventsMixin):
     """Algorithm by Forouzanfar et al. (2018) for Q-wave peak extraction."""
+
+    scaling_factor: Parameter[float]
+
+    def __init__(self, scaling_factor: float = 2000, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
+        """Initialize new QWaveOnsetExtractionVanLien algorithm instance.
+
+        Parameters
+        ----------
+        scaling_factor : float, optional
+            Scaling factor for the threshold used to detect the Q-wave onset. Default: 2000
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
+        """
+        super().__init__(handle_missing_events=handle_missing_events)
+        self.scaling_factor = scaling_factor
 
     # @make_action_safe
     def extract(
@@ -59,7 +71,7 @@ class QPeakExtractionForounzafar2018(BaseEcgExtraction, CanHandleMissingEventsMi
             r_peak_sample = data["r_peak_sample"]
 
             # set an individual threshold for detecting the Q-wave onset based on the R-peak
-            threshold = -1.2 * ecg[r_peak_sample] / sampling_rate_hz
+            threshold = -1.2 * ecg[r_peak_sample] / self.scaling_factor
 
             # search for the Q-wave onset as the last sample before the R-peak that is below the threshold
             ecg_before_r_peak = ecg[heartbeat_start:r_peak_sample].reset_index(drop=True)

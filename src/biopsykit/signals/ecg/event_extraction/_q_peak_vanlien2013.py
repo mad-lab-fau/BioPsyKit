@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pandas as pd
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
@@ -26,15 +27,18 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction):
     # parameters
     time_interval_ms: Parameter[int]
 
-    def __init__(self, time_interval_ms: Optional[int] = 40):
+    def __init__(self, time_interval_ms: int = 40, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
         """Initialize new QWaveOnsetExtractionVanLien algorithm instance.
 
         Parameters
         ----------
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
         time_interval_ms : int, optional
             Specify the constant time interval in milliseconds which will be subtracted from the R-peak for
             Q-wave onset estimation. Default: 40 ms
         """
+        super().__init__(handle_missing_events=handle_missing_events)
         self.time_interval_ms = time_interval_ms
 
     # @make_action_safe

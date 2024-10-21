@@ -3,7 +3,7 @@ import warnings
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base_extraction import CanHandleMissingEventsMixin
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
@@ -13,6 +13,17 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
     """Algorithm for Q-wave peak extraction using the scipy.find_peaks method implemented in NeuroKit2."""
+
+    def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
+        """Initialize new QPeakExtractionMartinez2004Neurokit algorithm instance.
+
+        Parameters
+        ----------
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
+
+        """
+        super().__init__(handle_missing_events=handle_missing_events)
 
     # @make_action_safe
     def extract(

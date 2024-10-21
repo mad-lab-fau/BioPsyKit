@@ -1,13 +1,10 @@
-import warnings
-from typing import Optional, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
-from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
-from biopsykit.utils.exceptions import EventExtractionError
 from tpcp import Parameter
 
 __all__ = ["BPointExtractionLozano2007LinearRegression", "BPointExtractionLozano2007QuadraticRegression"]
@@ -83,7 +80,7 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
         heartbeats_no_c_b = []
 
         # search B-point for each heartbeat of the given signal
-        for idx, data in heartbeats.iterrows():
+        for idx, _data in heartbeats.iterrows():
             if self.moving_average_window == 1:
                 c_point_sample = c_points["c_point_sample"].iloc[[idx]]
                 r_peak_sample = heartbeats["r_peak_sample"].iloc[[idx]]
@@ -184,7 +181,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
         heartbeats_no_c_b = []
 
         # search B-point for each heartbeat of the given signal
-        for idx, data in heartbeats.iterrows():
+        for idx, _data in heartbeats.iterrows():
             if self.moving_average_window == 1:
                 c_point_sample = c_points["c_point_sample"].iloc[[idx]]
                 r_peak_sample = heartbeats["r_peak_sample"].iloc[[idx]]
