@@ -128,6 +128,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
                 )
                 + a_point
             )
+
             if (start_sample == a_point) & (end_sample == a_point):
                 # warnings.warn(f"Could not find a monotonic increasing segment for heartbeat {idx}! "
                 #              f"The B-Point was set to NaN")
@@ -200,8 +201,6 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
     @staticmethod
     def _get_a_point(icg: pd.Series, search_interval: int, c_point: int):
-        # print(search_interval)
-        # print(c_point)
         signal_interval = icg.iloc[(c_point - search_interval) : c_point]
         signal_minima = argrelmin(signal_interval.values, mode="wrap")
 
@@ -218,6 +217,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
     def _get_monotonic_increasing_segments_2nd_der(
         icg_segment: pd.Series, icg_second_der_segment: np.ndarray, height: int
     ):
+        icg_segment = icg_segment.copy()
         icg_second_der_segment = icg_second_der_segment.squeeze()
         icg_segment.index = np.arange(0, len(icg_segment))
         monotony_df = pd.DataFrame(icg_segment.values, columns=["icg"])
@@ -228,10 +228,10 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         # C-Point is a possible end of the monotonic segment
         monotony_df.loc[monotony_df.index[-1], "borders"] = "end_increase"
 
-        neg_pos_change_idx = np.where(np.ediff1d(np.sign(monotony_df["2nd_der"])) > 0)[0]
+        neg_pos_change_idx = np.where(np.diff(np.sign(monotony_df["2nd_der"])) > 0)[0]
         monotony_df.loc[monotony_df.index[neg_pos_change_idx], "borders"] = "start_increase"
 
-        pos_neg_change_idx = np.where(np.ediff1d(np.sign(monotony_df["2nd_der"])) < 0)[0]
+        pos_neg_change_idx = np.where(np.diff(np.sign(monotony_df["2nd_der"])) < 0)[0]
         monotony_df.loc[monotony_df.index[pos_neg_change_idx], "borders"] = "end_increase"
 
         # drop all samples that are no possible start-/ end-points
@@ -240,14 +240,14 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
         # Drop start- and corresponding end-point if their start value is higher than 1/2 of H
         start_index_drop_rule_a = monotony_df[
-            (monotony_df["borders"] == "start_increase") & (monotony_df["icg"] > int(height / 2))
+            (monotony_df["borders"] == "start_increase") & (monotony_df["icg"] > height / 2)
         ].index
         start_index_drop_rule_a = start_index_drop_rule_a.union(start_index_drop_rule_a + 1)
         monotony_df = monotony_df.drop(index=start_index_drop_rule_a)
 
         # Drop start- and corresponding end-point if their end values does not reach at least 2/3 of H
         end_index_drop_rule_b = monotony_df[
-            (monotony_df["borders"] == "end_increase") & (monotony_df["icg"] < int(2 * height / 3))
+            (monotony_df["borders"] == "end_increase") & (monotony_df["icg"] < 2 * height / 3)
         ].index
 
         end_index_drop_rule_b = end_index_drop_rule_b.union(end_index_drop_rule_b - 1)
