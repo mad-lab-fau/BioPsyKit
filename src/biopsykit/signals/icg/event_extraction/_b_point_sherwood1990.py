@@ -4,7 +4,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals.icg.event_extraction import BaseBPointExtraction
+from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.exceptions import EventExtractionError
