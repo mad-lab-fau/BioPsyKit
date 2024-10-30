@@ -268,6 +268,8 @@ def load_biomarker_results(
     regex_str: Optional[str] = None,
     sample_times: Optional[Sequence[int]] = None,
     condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
+    skiprows: Optional[int] = 2,
+    check_num_samples: Optional[bool] = True,
     **kwargs,
 ) -> BiomarkerRawDataFrame:
     r"""Load biomarker results from Excel file.
@@ -294,8 +296,11 @@ def load_biomarker_results(
         list of condition names or dictionary of condition names to list of condition assignments or
         :class:`~pandas.Index` of condition names or ``None`` if no conditions are present.
         Default: ``None``
+    skiprows: int, optional, default: 2, passed to :func:`pandas.read_excel`
+    check_num_samples: bool, optional, default: True
+        ``True`` to check that the number of samples is the same for all subjects, ``False`` to skip this check
     **kwargs
-        Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
+        Additional parameters that are passed to :func:`pandas.read_excel`
 
     Returns
     -------
@@ -321,7 +326,7 @@ def load_biomarker_results(
     if data_col is None:
         data_col = _DATA_COL_NAMES[biomarker_type]
 
-    df_biomarker = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col], **kwargs)
+    df_biomarker = pd.read_excel(file_path, skiprows=skiprows, usecols=[sample_id_col, data_col], **kwargs)
     cols = df_biomarker[sample_id_col].str.extract(regex_str)
     id_col_names = _get_id_columns(id_col_names, cols)
 
@@ -336,7 +341,8 @@ def load_biomarker_results(
 
     num_subjects = len(df_biomarker.index.get_level_values("subject").unique())
 
-    _check_num_samples(len(df_biomarker), num_subjects)
+    if check_num_samples:
+        _check_num_samples(len(df_biomarker), num_subjects)
 
     if sample_times:
         _check_sample_times(len(df_biomarker), num_subjects, sample_times)
