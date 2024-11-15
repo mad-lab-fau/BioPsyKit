@@ -4,6 +4,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
+from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
@@ -164,6 +165,8 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
 
         _assert_is_dtype(c_points, pd.DataFrame)
         _assert_has_columns(c_points, [["c_point_sample", "nan_reason"]])
+        c_points = c_points.astype({"c_point_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(c_points)
 
-        self.points_ = c_points.convert_dtypes(infer_objects=True)
+        self.points_ = c_points
         return self

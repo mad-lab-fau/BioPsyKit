@@ -1,9 +1,13 @@
 from typing import Optional
 
 import pandas as pd
+
+from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.outlier_correction import BaseOutlierCorrection
 
 __all__ = ["OutlierCorrectionDummy"]
+
+from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
 
 
 class OutlierCorrectionDummy(BaseOutlierCorrection):
@@ -37,5 +41,10 @@ class OutlierCorrectionDummy(BaseOutlierCorrection):
         self
 
         """
-        self.points_ = b_points.convert_dtypes(infer_objects=True)
+        _assert_is_dtype(b_points, pd.DataFrame)
+        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+        b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(b_points)
+
+        self.points_ = b_points
         return self

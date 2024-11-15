@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
 from biopsykit.signals.icg.event_extraction import BPointExtractionForouzanfar2018, CPointExtractionScipyFindPeaks
-from biopsykit.signals.icg.outlier_correction import OutlierCorrectionInterpolation
+from biopsykit.signals.icg.outlier_correction import OutlierCorrectionLinearInterpolation
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/pep")
 
@@ -31,7 +31,7 @@ class TestOutlierCorrectionInterpolation:
             icg=self.icg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz
         ).points_
         self.extract_algo = BPointExtractionForouzanfar2018()
-        self.outlier_algo = OutlierCorrectionInterpolation()
+        self.outlier_algo = OutlierCorrectionLinearInterpolation()
 
         self.b_points = self.extract_algo.extract(
             icg=self.icg_data,

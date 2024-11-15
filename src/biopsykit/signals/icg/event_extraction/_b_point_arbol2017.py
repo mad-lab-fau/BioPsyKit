@@ -4,6 +4,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
+from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
@@ -107,6 +108,10 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             # find the last isoelectric crossing *before* the C-point
             icg_isoelectric_crossings_diff = icg_isoelectric_crossings - c_point
             icg_isoelectric_crossings_diff = icg_isoelectric_crossings_diff[icg_isoelectric_crossings_diff < 0]
+            if len(icg_isoelectric_crossings_diff) == 0:
+                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "nan_reason"] = "no_iso_crossing_before_c_point"
+                continue
             icg_isoelectric_crossing_idx = np.argmax(icg_isoelectric_crossings_diff)
 
             b_point_idx = icg_isoelectric_crossings[icg_isoelectric_crossing_idx]
@@ -116,8 +121,10 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+        b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(b_points)
 
-        self.points_ = b_points.convert_dtypes(infer_objects=True)
+        self.points_ = b_points
         return self
 
 
@@ -260,8 +267,10 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+        b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(b_points)
 
-        self.points_ = b_points.convert_dtypes(infer_objects=True)
+        self.points_ = b_points
         return self
 
 
@@ -413,6 +422,8 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+        b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(b_points)
 
-        self.points_ = b_points.convert_dtypes(infer_objects=True)
+        self.points_ = b_points
         return self

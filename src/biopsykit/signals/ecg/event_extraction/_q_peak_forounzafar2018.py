@@ -79,15 +79,15 @@ class QPeakExtractionForounzafar2018(BaseEcgExtraction, CanHandleMissingEventsMi
 
             if len(ecg_below) == 0:
                 q_peaks.loc[idx, "q_wave_onset_sample"] = np.nan
-                q_peaks.loc[idx, "nan_reason"] = "no_value below threshold"
+                q_peaks.loc[idx, "nan_reason"] = "no_value_below_threshold"
                 continue
 
             q_peak_sample = heartbeat_start + ecg_below[-1]
             q_peaks.loc[idx, "q_wave_onset_sample"] = q_peak_sample
 
-        q_peaks = q_peaks.convert_dtypes(infer_objects=True)
         _assert_is_dtype(q_peaks, pd.DataFrame)
         _assert_has_columns(q_peaks, [["q_wave_onset_sample", "nan_reason"]])
+        q_peaks = q_peaks.astype({"q_wave_onset_sample": "Int64", "nan_reason": "object"})
         assert_sample_columns_int(q_peaks)
 
         self.points_ = q_peaks

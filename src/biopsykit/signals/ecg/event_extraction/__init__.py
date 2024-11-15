@@ -5,8 +5,7 @@ from biopsykit.signals.ecg.event_extraction._q_peak_scipy_findpeaks_neurokit imp
     QPeakExtractionSciPyFindPeaksNeurokit,
 )
 from biopsykit.signals.ecg.event_extraction._q_peak_vanlien2013 import QPeakExtractionVanLien2013
-from biopsykit.signals.ecg.event_extraction._q_wave_onset_forounzafar2018 import QPeakExtractionForounzafar2018
-from biopsykit.signals.ecg.event_extraction._r_peaks import RPeakExtraction
+from biopsykit.signals.ecg.event_extraction._q_peak_forounzafar2018 import QPeakExtractionForounzafar2018
 
 __all__ = [
     "BaseEcgExtraction",
@@ -14,5 +13,4 @@ __all__ = [
     "QPeakExtractionMartinez2004Neurokit",
     "QPeakExtractionSciPyFindPeaksNeurokit",
     "QPeakExtractionForounzafar2018",
-    "RPeakExtraction",
 ]

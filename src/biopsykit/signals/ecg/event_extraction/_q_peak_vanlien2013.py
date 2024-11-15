@@ -1,14 +1,14 @@
 from typing import Optional
 
 import pandas as pd
-from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from tpcp import Parameter
 
 
-class QPeakExtractionVanLien2013(BaseEcgExtraction):
+class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin):
     """Algorithm to extract Q-wave onset based on the detection of the R-peak, as suggested by Van Lien et al. (2013).
 
     The Q-wave onset is estimated by subtracting a fixed time interval from the R-peak location. The fixed time
@@ -75,18 +75,17 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction):
         # get the r_peaks from the heartbeats Dataframe
         r_peaks = heartbeats[["r_peak_sample"]]
 
-        # subtract the fixed time_interval from the r_peak samples to estimate the q_wave_onset
+        # subtract the fixed time_interval from the r_peak samples to estimate the q_peaks
 
-        q_wave_onset = r_peaks - time_interval_in_samples
+        q_peaks = r_peaks - time_interval_in_samples
 
-        q_wave_onset.columns = ["q_wave_onset_sample"]
-        q_wave_onset = q_wave_onset.assign(nan_reason=pd.NA)
-        q_wave_onset = q_wave_onset.convert_dtypes(infer_objects=True)
+        q_peaks.columns = ["q_wave_onset_sample"]
+        q_peaks = q_peaks.assign(nan_reason=pd.NA)
 
-        _assert_is_dtype(q_wave_onset, pd.DataFrame)
-        _assert_has_columns(q_wave_onset, [["q_wave_onset_sample", "nan_reason"]])
+        _assert_is_dtype(q_peaks, pd.DataFrame)
+        _assert_has_columns(q_peaks, [["q_wave_onset_sample", "nan_reason"]])
+        q_peaks = q_peaks.astype({"q_wave_onset_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(q_peaks)
 
-        assert_sample_columns_int(q_wave_onset)
-
-        self.points_ = q_wave_onset
+        self.points_ = q_peaks
         return self

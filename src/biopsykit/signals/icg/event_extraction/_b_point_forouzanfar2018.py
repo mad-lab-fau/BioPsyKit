@@ -4,6 +4,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
+from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
@@ -195,8 +196,10 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+        b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(b_points)
 
-        self.points_ = b_points.convert_dtypes(infer_objects=True)
+        self.points_ = b_points
         return self
 
     @staticmethod

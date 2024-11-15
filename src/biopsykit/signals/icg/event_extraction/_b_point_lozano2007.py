@@ -3,6 +3,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
+from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from tpcp import Parameter
@@ -92,7 +93,7 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
                 r_peak_sample = heartbeats["r_peak_sample"].iloc[start_idx:end_idx].dropna()
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
-            if pd.isna(c_point_sample.any()):
+            if pd.isna(c_point_sample).any():
                 heartbeats_no_c_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
                 b_points.loc[idx, "nan_reason"] = "no_c_point"
@@ -101,6 +102,11 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
             current_r_peak = heartbeats["r_peak_sample"].iloc[idx]
             # get the R-C interval in ms
             r_c_interval_ms = np.mean((c_point_sample - r_peak_sample) / sampling_rate_hz * 1000)
+            if pd.isna(r_c_interval_ms):
+                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "nan_reason"] = "no_r_c_interval"
+                continue
+
             b_point_interval_ms = 0.55 * r_c_interval_ms + 4.45
             b_point_interval_sample = int((b_point_interval_ms * sampling_rate_hz) / 1000)
             b_point_sample = current_r_peak + b_point_interval_sample
@@ -109,8 +115,10 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+        b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(b_points)
 
-        self.points_ = b_points.convert_dtypes(infer_objects=True)
+        self.points_ = b_points
         return self
 
 
@@ -193,7 +201,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
                 r_peak_sample = heartbeats["r_peak_sample"].iloc[start_idx:end_idx].dropna()
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
-            if pd.isna(c_point_sample.any()):
+            if pd.isna(c_point_sample).any():
                 heartbeats_no_c_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
                 b_points.loc[idx, "nan_reason"] = "no_c_point"
@@ -202,6 +210,10 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
             current_r_peak = heartbeats["r_peak_sample"].iloc[idx]
             # get the R-C interval in ms
             r_c_interval_ms = np.mean((c_point_sample - r_peak_sample) / sampling_rate_hz * 1000)
+            if pd.isna(r_c_interval_ms):
+                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "nan_reason"] = "no_r_c_interval"
+                continue
             b_point_interval_ms = -0.0032 * r_c_interval_ms**2 + 1.233 * r_c_interval_ms - 31.59
             b_point_interval_sample = int((b_point_interval_ms * sampling_rate_hz) / 1000)
             b_point_sample = current_r_peak + b_point_interval_sample
@@ -210,6 +222,8 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+        b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(b_points)
 
-        self.points_ = b_points.convert_dtypes(infer_objects=True)
+        self.points_ = b_points
         return self

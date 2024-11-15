@@ -1,15 +1,17 @@
 import numpy as np
 import pandas as pd
+
+from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseOutlierCorrection
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 
-__all__ = ["OutlierCorrectionInterpolation"]
+__all__ = ["OutlierCorrectionLinearInterpolation"]
 
 
 # TODO add verbosity option
 
 
-class OutlierCorrectionInterpolation(BaseOutlierCorrection):
+class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
     """algorithm to correct outliers based on Linear Interpolation."""
 
     def correct_outlier(
@@ -82,9 +84,11 @@ class OutlierCorrectionInterpolation(BaseOutlierCorrection):
             print("No more outliers got detected!")
 
         _assert_is_dtype(corrected_b_points, pd.DataFrame)
-        _assert_has_columns(corrected_b_points, [["b_point_sample"]])
+        _assert_has_columns(corrected_b_points, [["b_point_sample", "nan_reason"]])
+        corrected_b_points = corrected_b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        assert_sample_columns_int(corrected_b_points)
 
-        self.points_ = corrected_b_points.convert_dtypes(infer_objects=True)
+        self.points_ = corrected_b_points
         return self
 
     @staticmethod
