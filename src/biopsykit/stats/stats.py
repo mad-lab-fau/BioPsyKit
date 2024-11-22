@@ -438,7 +438,19 @@ class StatsPipeline:
             raise ValueError(f"No results for category {stats_category}!")
         if "Contrast" in results.columns:
             if stats_effect_type == "interaction":
-                key = f"{self.params['within']} * {self.params['between']}"
+                if "between" in self.params and "within" in self.params:
+                    # interaction
+                    effect1 = self.params["within"]
+                    effect2 = self.params["between"]
+                elif "between" in self.params:
+                    # two-level between
+                    effect1 = self.params["between"][0]
+                    effect2 = self.params["between"][1]
+                else:
+                    # two-level within
+                    effect1 = self.params["within"][0]
+                    effect2 = self.params["within"][1]
+                key = f"{effect1} * {effect2}"
             else:
                 key = self.params[stats_effect_type]
 
@@ -956,9 +968,15 @@ class StatsPipeline:
 
     def _get_stats_data_box_pairs_interaction(self, stats_data: pd.DataFrame):
         stats_data = stats_data.reset_index()
-        stats_data = stats_data[stats_data[self.params["within"]] != "-"]
+
+        if not isinstance(self.params["within"], str):
+            within_param = self.params["within"][0]
+        else:
+            within_param = self.params["within"]
+
+        stats_data = stats_data[stats_data[within_param] != "-"]
         index = stats_data[self.params.get("groupby", [])]
-        stats_data = stats_data.set_index(self.params["within"])
+        stats_data = stats_data.set_index(within_param)
 
         box_pairs = stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
         if not index.empty:
