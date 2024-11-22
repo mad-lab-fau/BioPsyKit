@@ -21,6 +21,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
     # input parameters
     variable_length: Parameter[bool]
     start_factor: Parameter[float]
+    r_peak_detection_method: Parameter[str]
 
     # result
     heartbeat_list_: pd.DataFrame
@@ -28,8 +29,9 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
     def __init__(
         self,
         *,
-        variable_length: Optional[bool] = True,
-        start_factor: Optional[float] = 0.35,
+        variable_length: bool = True,
+        start_factor: float = 0.35,
+        r_peak_detection_method: str = "neurokit",
     ):
         """Initialize new HeartBeatExtraction algorithm instance.
 
@@ -48,10 +50,13 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
             start border between heartbeats is set depending on the RR-interval to previous heartbeat.
             For example, ``start_factor=0.35`` means that the beat start is set at 35% of current RR-distance before the
             R-peak of the beat
+        r_peak_detection_method : str, optional
+            Method to detect R-peaks that is passed to :func:`neurokit2.ecg_peaks`. Default: "neurokit"
 
         """
         self.variable_length = variable_length
         self.start_factor = start_factor
+        self.r_peak_detection_method = r_peak_detection_method
 
     # @make_action_safe
     def extract(
@@ -84,7 +89,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
             raise ValueError("Input data is empty!")
         _assert_has_columns(ecg, [["ECG"]])
 
-        _, r_peaks = nk.ecg_peaks(ecg, sampling_rate=sampling_rate_hz, method="neurokit")
+        _, r_peaks = nk.ecg_peaks(ecg, sampling_rate=sampling_rate_hz, method=self.r_peak_detection_method)
         r_peaks = r_peaks["ECG_R_Peaks"]
 
         heartbeats = pd.DataFrame(
