@@ -262,7 +262,8 @@ def convert_nan(
 def multi_xs(
     data: Union[pd.DataFrame, pd.Series],
     keys: Union[str, Sequence[str]],
-    level: Union[str, int, Sequence[str], Sequence[int]],
+    axis: int = 0,
+    level: Optional[Union[str, int, Sequence[str], Sequence[int]]] = None,
     drop_level: Optional[bool] = True,
 ) -> Union[pd.DataFrame, pd.Series]:
     """Return cross-section of multiple keys from the dataframe.
@@ -294,9 +295,22 @@ def multi_xs(
     _assert_is_dtype(data, (pd.DataFrame, pd.Series))
     if isinstance(keys, str):
         keys = [keys]
-    levels = data.index.names
-    data_xs = pd.concat({key: data.xs(key, level=level, drop_level=drop_level) for key in keys}, names=[level])
-    return data_xs.reorder_levels(levels).sort_index()
+
+    level_concat = level
+    if isinstance(level, (str, int)):
+        level_concat = [level_concat]
+    if axis == 1:
+        levels = data.columns.names
+    else:
+        levels = data.index.names
+
+    data_xs = pd.concat(
+        {key: data.xs(key, level=level, drop_level=drop_level, axis=axis) for key in keys},
+        names=level_concat,
+        axis=axis,
+    )
+
+    return data_xs.reorder_levels(levels, axis=axis).sort_index(axis=axis)
 
 
 def stack_groups_percent(
