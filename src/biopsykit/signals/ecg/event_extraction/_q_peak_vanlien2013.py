@@ -9,16 +9,16 @@ from tpcp import Parameter
 
 
 class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Algorithm to extract Q-wave onset based on the detection of the R-peak, as suggested by Van Lien et al. (2013).
+    """Algorithm to extract Q-peaks based on the detection of the R-peak, as suggested by Van Lien et al. (2013).
 
-    The Q-wave onset is estimated by subtracting a fixed time interval from the R-peak location. The fixed time
+    The Q-peak is estimated by subtracting a fixed time interval from the R-peak location. The fixed time
     interval is defined by the parameter ``time_interval``.
 
 
     References
     ----------
     Van Lien, R., Schutte, N. M., Meijer, J. H., & De Geus, E. J. C. (2013). Estimated preejection period (PEP) based
-    on the detection of the R-wave and dZ/dt-min peaks does not adequately reflect the actual PEP across a wide range
+    on the detection of the R-peak and dZ/dt-min peaks does not adequately reflect the actual PEP across a wide range
     of laboratory and ambulatory conditions. International Journal of Psychophysiology, 87(1), 60-69.
     https://doi.org/10.1016/j.ijpsycho.2012.11.001
 
@@ -28,7 +28,7 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
     time_interval_ms: Parameter[int]
 
     def __init__(self, time_interval_ms: int = 40, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new QWaveOnsetExtractionVanLien algorithm instance.
+        """Initialize new QPeakExtractionVanLien algorithm instance.
 
         Parameters
         ----------
@@ -36,7 +36,7 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
             How to handle missing data in the input dataframes. Default: "warn"
         time_interval_ms : int, optional
             Specify the constant time interval in milliseconds which will be subtracted from the R-peak for
-            Q-wave onset estimation. Default: 40 ms
+            Q-peak estimation. Default: 40 ms
         """
         super().__init__(handle_missing_events=handle_missing_events)
         self.time_interval_ms = time_interval_ms
@@ -49,14 +49,14 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
     ):
-        """Extract Q-wave onset (start of ventricular depolarization) from given ECG cleaned signal.
+        """Extract Q-peaks (start of ventricular depolarization) from given ECG cleaned signal.
 
         The results are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
         ecg: :class:`~pandas.DataFrame`
-            ECG signal. Not used in this function since Q-wave onset is estimated from the R-peaks in the
+            ECG signal. Not used in this function since Q-peak is estimated from the R-peaks in the
             ``heartbeats`` DataFrame.
         heartbeats: :class:`~pandas.DataFrame`
             DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
@@ -79,12 +79,12 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
 
         q_peaks = r_peaks - time_interval_in_samples
 
-        q_peaks.columns = ["q_wave_onset_sample"]
+        q_peaks.columns = ["q_peak_sample"]
         q_peaks = q_peaks.assign(nan_reason=pd.NA)
 
         _assert_is_dtype(q_peaks, pd.DataFrame)
-        _assert_has_columns(q_peaks, [["q_wave_onset_sample", "nan_reason"]])
-        q_peaks = q_peaks.astype({"q_wave_onset_sample": "Int64", "nan_reason": "object"})
+        _assert_has_columns(q_peaks, [["q_peak_sample", "nan_reason"]])
+        q_peaks = q_peaks.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
         assert_sample_columns_int(q_peaks)
 
         self.points_ = q_peaks

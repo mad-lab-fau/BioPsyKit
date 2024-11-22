@@ -12,7 +12,7 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Algorithm by Martinez et al. (2004) for Q-wave peak extraction using the DWT method implemented in NeuroKit2."""
+    """Algorithm by Martinez et al. (2004) for Q-peak extraction using the DWT method implemented in NeuroKit2."""
 
     def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
         """Initialize new QPeakExtractionMartinez2004Neurokit algorithm instance.
@@ -33,7 +33,7 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
     ):
-        """Extract Q-wave peaks from given ECG cleaned signal.
+        """Extract Q-peaks from given ECG cleaned signal.
 
         The results are saved in the ``points_`` attribute of the super class.
 
@@ -124,10 +124,10 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
             elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
-        q_peaks.columns = ["q_wave_onset_sample", "nan_reason"]
+        q_peaks.columns = ["q_peak_sample", "nan_reason"]
         _assert_is_dtype(q_peaks, pd.DataFrame)
-        _assert_has_columns(q_peaks, [["q_wave_onset_sample", "nan_reason"]])
-        q_peaks = q_peaks.astype({"q_wave_onset_sample": "Int64", "nan_reason": "object"})
+        _assert_has_columns(q_peaks, [["q_peak_sample", "nan_reason"]])
+        q_peaks = q_peaks.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
         assert_sample_columns_int(q_peaks)
 
         self.points_ = q_peaks
