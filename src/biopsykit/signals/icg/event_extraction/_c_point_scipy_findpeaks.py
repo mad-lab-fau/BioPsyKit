@@ -20,12 +20,10 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
 
     # input parameters
     window_c_correction: Parameter[int]
-    save_candidates: Parameter[bool]
 
     def __init__(
         self,
         window_c_correction: Optional[int] = 3,
-        save_candidates: Optional[bool] = False,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize the C-point extraction algorithm.
@@ -34,9 +32,6 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
         ----------
         window_c_correction : int, optional
             how many preceding heartbeats are taken into account for C-point correction (using mean R-C-distance)
-        save_candidates : bool, optional
-            indicates whether only the selected C-point position (one per heartbeat) is saved in _points (False),
-            or also all other C-candidates (True).
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
             How to handle missing C-points (default: "warn").
             * "warn" : issue a warning and set C-point to NaN
@@ -46,15 +41,14 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
         """
         super().__init__(handle_missing_events=handle_missing_events)
         self.window_c_correction = window_c_correction
-        self.save_candidates = save_candidates
 
     # @make_action_safe
-    def extract(  # noqa: C901
+    def extract(
         self,
         *,
         icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
-        sampling_rate_hz: Optional[float],
+        sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
         """Extract C-points from given cleaned ICG derivative signal using :func:`~scipy.signal.find_peaks`.
 
@@ -83,8 +77,6 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
 
         # result df
         c_points = pd.DataFrame(index=heartbeats.index, columns=["c_point_sample", "nan_reason"])
-        if self.save_candidates:
-            c_points = c_points.assign(c_point_candidates=np.empty((len(heartbeats.index), 0)).tolist())
 
         # distance of R-peak to C-point, averaged over as many preceding heartbeats as window_c_correction specifies
         # R-C-distances are positive when C-point occurs after R-Peak (which is the physiologically correct order)
@@ -151,9 +143,6 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
             c_points.loc[idx, "c_point_sample"] = (
                 selected_c + heartbeat_start
             )  # get C-point relative to complete signal
-            if self.save_candidates:
-                for c in heartbeat_c_candidates:
-                    c_points.loc[idx, "c_point_candidates"].append(c + heartbeat_start)
 
         if len(heartbeats_no_c) > 0:
             c_points.loc[heartbeats_no_c, "nan_reason"] = "no_c_detected"

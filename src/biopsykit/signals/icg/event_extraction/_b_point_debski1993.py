@@ -39,7 +39,7 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
         icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
-        sampling_rate_hz: Optional[float],
+        sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
         """Extract B-points from given ICG cleaned signal.
 

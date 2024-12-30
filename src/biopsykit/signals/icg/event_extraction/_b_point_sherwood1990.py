@@ -17,7 +17,12 @@ class BPointExtractionSherwood1990(BaseBPointExtraction, CanHandleMissingEventsM
         super().__init__(handle_missing_events=handle_missing_events)
 
     def extract(
-        self, *, icg: pd.Series, heartbeats: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: Optional[float]
+        self,
+        *,
+        icg: pd.Series,
+        heartbeats: pd.DataFrame,
+        c_points: pd.DataFrame,
+        sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
         self._check_valid_missing_handling()
         # sanitize input

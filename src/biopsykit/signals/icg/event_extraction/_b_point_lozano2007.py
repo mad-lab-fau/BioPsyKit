@@ -35,7 +35,7 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
     def extract(
         self,
         *,
-        icg: Union[pd.Series, pd.DataFrame],
+        icg: Union[pd.Series, pd.DataFrame],  # noqa: ARG002
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,
@@ -143,7 +143,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
     def extract(
         self,
         *,
-        icg: Union[pd.Series, pd.DataFrame],
+        icg: Union[pd.Series, pd.DataFrame],  # noqa: ARG002
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
         sampling_rate_hz: int,

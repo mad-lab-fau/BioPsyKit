@@ -9,7 +9,7 @@ from biopsykit.signals.icg.event_extraction._base_b_point_extraction import Base
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.exceptions import EventExtractionError
-from scipy.signal import argrelextrema, argrelmin
+from scipy.signal import argrelmin
 from tpcp import Parameter
 
 __all__ = ["BPointExtractionForouzanfar2018"]
@@ -46,13 +46,13 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         self.correct_outliers = correct_outliers
 
     # @make_action_safe
-    def extract(
+    def extract(  # noqa: PLR0915
         self,
         *,
         icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
-        sampling_rate_hz: float,
+        sampling_rate_hz: float,  # noqa: ARG002
     ):
         """Extract B-points from given ICG cleaned signal.
 
@@ -128,8 +128,6 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
             )
 
             if (start_sample == a_point) & (end_sample == a_point):
-                # warnings.warn(f"Could not find a monotonic increasing segment for heartbeat {idx}! "
-                #              f"The B-Point was set to NaN")
                 if self.correct_outliers:
                     b_points["b_point_sample"].iloc[idx] = data["r_peak_sample"]
                 else:
@@ -164,16 +162,6 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
                 b_point = start
             else:
                 b_point = significant_features.iloc[np.argmin(c_point - significant_features)][0]
-
-            # if not self.correct_outliers:
-            #     if b_point < data['r_peak_sample']:
-            #         b_points['b_point'].iloc[idx] = np.NaN
-            #         #warnings.warn(f"The detected B-point is located before the R-Peak at heartbeat {idx}!"
-            #         #              f" The B-point was set to NaN.")
-            #     else:
-            #         b_points['b_point'].iloc[idx] = b_point
-            # else:
-            #     b_points['b_point'].iloc[idx] = b_point
 
             b_points["b_point_sample"].iloc[idx] = b_point
 

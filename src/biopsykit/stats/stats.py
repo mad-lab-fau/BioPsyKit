@@ -969,10 +969,7 @@ class StatsPipeline:
     def _get_stats_data_box_pairs_interaction(self, stats_data: pd.DataFrame):
         stats_data = stats_data.reset_index()
 
-        if not isinstance(self.params["within"], str):
-            within_param = self.params["within"][0]
-        else:
-            within_param = self.params["within"]
+        within_param = self.params["within"][0] if not isinstance(self.params["within"], str) else self.params["within"]
 
         stats_data = stats_data[stats_data[within_param] != "-"]
         index = stats_data[self.params.get("groupby", [])]

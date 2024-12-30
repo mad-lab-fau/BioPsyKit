@@ -45,7 +45,7 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
     def extract(
         self,
         *,
-        ecg: Optional[pd.DataFrame],
+        ecg: Optional[pd.DataFrame],  # noqa: ARG002
         heartbeats: pd.DataFrame,
         sampling_rate_hz: int,
     ):

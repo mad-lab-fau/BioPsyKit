@@ -1,13 +1,12 @@
 from typing import Optional
 
 import pandas as pd
-
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.outlier_correction import BaseOutlierCorrection
 
 __all__ = ["OutlierCorrectionDummy"]
 
-from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_has_columns
+from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 
 
 class OutlierCorrectionDummy(BaseOutlierCorrection):
@@ -18,7 +17,7 @@ class OutlierCorrectionDummy(BaseOutlierCorrection):
         *,
         b_points: pd.DataFrame,
         c_points: Optional[pd.DataFrame],  # noqa: ARG002
-        sampling_rate_hz: Optional[float],
+        sampling_rate_hz: Optional[float],  # noqa: ARG002
         **kwargs,  # noqa: ARG002
     ):
         """Correct no outliers, just pass through the input data unchanged.

@@ -299,10 +299,7 @@ def multi_xs(
     level_concat = level
     if isinstance(level, (str, int)):
         level_concat = [level_concat]
-    if axis == 1:
-        levels = data.columns.names
-    else:
-        levels = data.index.names
+    levels = data.columns.names if axis == 1 else data.index.names
 
     data_xs = pd.concat(
         {key: data.xs(key, level=level, drop_level=drop_level, axis=axis) for key in keys},

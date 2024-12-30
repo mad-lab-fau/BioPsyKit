@@ -38,7 +38,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
         icg: Union[pd.Series, pd.DataFrame],
         heartbeats: pd.DataFrame,
         c_points: pd.DataFrame,
-        sampling_rate_hz: int,
+        sampling_rate_hz: int,  # noqa: ARG002
     ):
         """Extract B-points from given cleaned ICG derivative signal.
 
@@ -304,7 +304,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
         self.search_window_start_ms = search_window_start_ms
 
     # @make_action_safe
-    def extract(
+    def extract(  # noqa: PLR0915
         self,
         *,
         icg: Union[pd.Series, pd.DataFrame],

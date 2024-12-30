@@ -32,7 +32,7 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
         *,
         ecg: pd.DataFrame,
         heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,
+        sampling_rate_hz: int,  # noqa: ARG002
     ):
         """Extract Q-peaks from given ECG cleaned signal.
 

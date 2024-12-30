@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 
 import neurokit2 as nk
 import numpy as np
