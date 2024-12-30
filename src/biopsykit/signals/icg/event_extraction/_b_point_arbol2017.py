@@ -89,7 +89,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             if pd.isna(c_point_sample):
                 heartbeats_no_c_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
-                b_points.loc[idx, "nan_reason"] = "no_c_point"
+                b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
             # slice the signal for the current heartbeat
@@ -222,7 +222,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
             if pd.isna(c_point_sample):
                 heartbeats_no_c_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
-                b_points.loc[idx, "nan_reason"] = "no_c_point"
+                b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
             # set window start according to specified method
@@ -372,7 +372,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
             if pd.isna(heartbeat_c_point):
                 heartbeats_no_c_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
-                b_points.loc[idx, "nan_reason"] = "no_c_point"
+                b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
             # set window end to C-point position and set window start according to specified method

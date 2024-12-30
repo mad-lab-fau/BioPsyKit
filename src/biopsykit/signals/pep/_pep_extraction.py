@@ -23,16 +23,16 @@ class PepExtraction(Algorithm):
         self,
         *,
         heartbeats: pd.DataFrame,
-        q_wave_onset_samples: pd.DataFrame,
+        q_peak_samples: pd.DataFrame,
         b_point_samples: pd.DataFrame,
         sampling_rate_hz: float,
     ) -> Self:
-        """Compute PEP from Q-wave onset and B-point locations.
+        """Compute PEP from Q-peak samples and B-point locations.
 
         Args:
             heartbeats:
                 Heartbeat locations as DataFrame
-            q_wave_onset_samples:
+            q_peak_samples:
                 ECG signal as DataFrame
             b_point_samples:
                 ICG signal as DataFrame
@@ -53,15 +53,16 @@ class PepExtraction(Algorithm):
             r_peak_sample=pd.to_numeric(heartbeats["r_peak_sample"]),
             rr_interval_sample=pd.to_numeric(heartbeats["rr_interval_sample"]),
             rr_interval_ms=pd.to_numeric(heartbeats["rr_interval_sample"] / sampling_rate_hz * 1000),
-            q_wave_onset_sample=pd.to_numeric(q_wave_onset_samples["q_wave_onset_sample"]),
+            heart_rate_bpm=pd.to_numeric(60 / (heartbeats["rr_interval_sample"] / sampling_rate_hz)),
+            q_peak_sample=pd.to_numeric(q_peak_samples["q_peak_sample"]),
             b_point_sample=pd.to_numeric(b_point_samples["b_point_sample"]),
-            pep_sample=pd.to_numeric(b_point_samples["b_point_sample"] - q_wave_onset_samples["q_wave_onset_sample"]),
+            pep_sample=pd.to_numeric(b_point_samples["b_point_sample"] - q_peak_samples["q_peak_sample"]),
         )
 
         pep_results = pep_results.assign(
             pep_ms=pep_results["pep_sample"] / sampling_rate_hz * 1000,
         )
-        pep_results = self._add_invalid_pep_reason(pep_results, q_wave_onset_samples, b_point_samples)
+        pep_results = self._add_invalid_pep_reason(pep_results, q_peak_samples, b_point_samples)
         pep_results = pep_results.convert_dtypes(infer_objects=True)
 
         self.pep_results_ = pep_results
@@ -71,12 +72,12 @@ class PepExtraction(Algorithm):
     def _add_invalid_pep_reason(
         self,
         pep_results: pd.DataFrame,
-        q_wave_onset_samples: pd.DataFrame,
+        q_peak_samples: pd.DataFrame,
         b_point_samples: pd.DataFrame,
     ) -> pd.DataFrame:
 
-        # extract nan_reason from q_wave_onset_samples and add to pep_results
-        pep_results = pep_results.assign(nan_reason=q_wave_onset_samples["nan_reason"])
+        # extract nan_reason from q_peak_samples and add to pep_results
+        pep_results = pep_results.assign(nan_reason=q_peak_samples["nan_reason"])
         # TODO add option to store multiple nan_reasons in one column?
         # extract nan_reason from b_point_samples
         nan_reason_b_point = b_point_samples["nan_reason"].loc[~b_point_samples["nan_reason"].isna()]

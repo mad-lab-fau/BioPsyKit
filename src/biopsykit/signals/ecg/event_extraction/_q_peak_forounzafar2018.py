@@ -71,7 +71,7 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
             r_peak_sample = data["r_peak_sample"]
 
             # set an individual threshold for detecting the Q-peaks based on the R-peak
-            threshold = -1.2 * ecg[r_peak_sample] / self.scaling_factor
+            threshold = (-1.2 * ecg.iloc[r_peak_sample]) / self.scaling_factor
 
             # search for the Q-peak as the last sample before the R-peak that is below the threshold
             ecg_before_r_peak = ecg[heartbeat_start:r_peak_sample].reset_index(drop=True)

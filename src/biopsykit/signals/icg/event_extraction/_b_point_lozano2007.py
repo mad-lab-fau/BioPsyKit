@@ -96,7 +96,7 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
             if pd.isna(c_point_sample).any():
                 heartbeats_no_c_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
-                b_points.loc[idx, "nan_reason"] = "no_c_point"
+                b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
             current_r_peak = heartbeats["r_peak_sample"].iloc[idx]
@@ -204,7 +204,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
             if pd.isna(c_point_sample).any():
                 heartbeats_no_c_b.append(idx)
                 b_points.loc[idx, "b_point_sample"] = np.NaN
-                b_points.loc[idx, "nan_reason"] = "no_c_point"
+                b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
             current_r_peak = heartbeats["r_peak_sample"].iloc[idx]

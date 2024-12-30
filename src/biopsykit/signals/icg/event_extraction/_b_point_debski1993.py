@@ -95,12 +95,17 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
         for idx, data in heartbeats.iterrows():
             # check if r_peaks/c_points contain NaN. If this is the case, set the b_point to NaN and continue
             # with the next iteration
-            if check_r_peaks[idx] | check_c_points[idx]:
+            missing_str = None
+            if check_r_peaks[idx]:
                 b_points["b_point_sample"].iloc[idx] = np.NaN
-                b_points["nan_reason"].iloc[idx] = "r_peak_or_c_point_nan"
-                missing_str = (
-                    f"Either the r_peak or the c_point contains NaN at position {idx}! B-Point was set to NaN."
-                )
+                b_points["nan_reason"].iloc[idx] = "r_peak_nan"
+                missing_str = f"The r_peak contains NaN at position {idx}! B-Point was set to NaN."
+            if check_c_points[idx]:
+                b_points["b_point_sample"].iloc[idx] = np.NaN
+                b_points["nan_reason"].iloc[idx] = "c_point_nan"
+                missing_str = f"The c_point contains NaN at position {idx}! B-Point was set to NaN."
+
+            if missing_str is not None:
                 if self.handle_missing_events == "warn":
                     warnings.warn(missing_str)
                 elif self.handle_missing_events == "raise":
@@ -112,7 +117,7 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
             if np.isnan(b_point):
                 if self.correct_outliers:
                     b_point = data["r_peak_sample"]
-                b_points["nan_reason"].iloc[idx] = "no_local_minima"
+                b_points["nan_reason"].iloc[idx] = "no_local_minimum"
             # Add the detected B-point to the b_points Dataframe
             b_points["b_point_sample"].iloc[idx] = b_point
 
