@@ -941,6 +941,8 @@ class StatsPipeline:
                 features = list(features.values())
                 features = [item for sublist in features for item in sublist]
             if all(isinstance(feature, str) for feature in features):
+                if isinstance(features, str):
+                    features = [features]
                 stats_data = pd.concat(stats_data.filter(like=f, axis=0) for f in features)
             else:
                 stats_data = stats_data.unstack().loc[features].stack()
