@@ -1,10 +1,9 @@
 """Module for importing data recorded by a PSG system (expects .edf files)."""
 
-import datetime
 import time
 import warnings
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Optional, Sequence
 
 try:
     import mne
@@ -29,7 +28,7 @@ class PSGDataset:
         data_dict: Dict[str, pd.DataFrame],
         sampling_rate_dict: Dict[str, int],
         start_time: Optional[pd.Timestamp] = None,
-        tz: Optional[str] = None,
+        tz: Optional[str] = "Europe/Berlin",
     ):
 
         self._data = data_dict
@@ -67,9 +66,9 @@ class PSGDataset:
 
         """
         if path.is_dir():
-            data_dict, fs, start_time = cls.load_data_folder(path, datastreams, tz)
+            data_dict, fs, start_time = cls.load_data_folder(path, datastreams)
         else:
-            data_dict, fs, start_time = cls.load_data(path, datastreams, tz)
+            data_dict, fs, start_time = cls.load_data(path, datastreams)
 
         return cls(data_dict=data_dict, sampling_rate_dict={"sampling_rate": fs}, start_time=start_time, tz=tz)
 
@@ -145,7 +144,6 @@ class PSGDataset:
         cls,
         folder_path: path_t,
         datastreams: Optional[Sequence] = None,
-        timezone: Optional[Union[datetime.tzinfo, str]] = "Europe/Berlin",
     ):
         """Load data from a folder containing a single .edf file.
 
@@ -181,7 +179,7 @@ class PSGDataset:
                 f"More than one PSG files found in folder {folder_path}!"
                 f"This function only supports one recording per folder!"
             )
-        result_dict, fs, start_time = cls.load_data(folder_path.joinpath(dataset_list[0]), datastreams, timezone)
+        result_dict, fs, start_time = cls.load_data(folder_path.joinpath(dataset_list[0]), datastreams)
 
         return result_dict, fs, start_time
 
@@ -190,7 +188,6 @@ class PSGDataset:
         cls,
         path: path_t,
         datastreams: Optional[Sequence] = None,
-        timezone: Optional[Union[datetime.tzinfo, str]] = "Europe/Berlin",
     ):
         """Load PSG data from a valid .edf file.
 
@@ -215,7 +212,7 @@ class PSGDataset:
 
         """
         # load raw data
-        data_psg, fs = cls.load_data_raw(path, timezone)
+        data_psg, fs = cls.load_data_raw(path)
 
         # select datastreams to extract
         if datastreams is None:
@@ -242,7 +239,6 @@ class PSGDataset:
     def load_data_raw(
         cls,
         path: path_t,
-        timezone: Optional[Union[datetime.tzinfo, str]] = "Europe/Berlin",
     ):
         """Load PSG data from .edf file.
 
@@ -262,9 +258,6 @@ class PSGDataset:
         # ensure pathlib
         path = Path(path)
         _assert_file_extension(path, ".edf")
-
-        if timezone is None:
-            timezone = "Europe/Berlin"
 
         # load data from edf file
         edf = mne.io.read_raw_edf(path)
@@ -316,6 +309,7 @@ class PSGDataset:
             data.index.name = index_name
             return data
         if index == "utc_datetime":
+            data.index = data.index.tz_localize(self.timezone).tz_convert("UTC")
             return data
         if index == "time":
             data.index = data.index - self.start_time_datetime
