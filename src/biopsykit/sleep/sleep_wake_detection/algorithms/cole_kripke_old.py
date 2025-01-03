@@ -1,6 +1,7 @@
 """Sleep/Wake detection using the *Cole/Kripke Algorithm*."""
 import numpy as np
 import pandas as pd
+
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
 from biopsykit.utils._types import arr_t

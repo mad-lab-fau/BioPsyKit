@@ -4,6 +4,6 @@ from biopsykit.sleep.sleep_wake_detection import algorithms
 from biopsykit.sleep.sleep_wake_detection.sleep_wake_detection import SleepWakeDetection
 
 __all__ = [
-    "algorithms",
     "SleepWakeDetection",
+    "algorithms",
 ]

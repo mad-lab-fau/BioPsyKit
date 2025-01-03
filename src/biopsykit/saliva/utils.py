@@ -1,18 +1,20 @@
 """Utility functions for working with saliva dataframes."""
 import re
+from collections.abc import Sequence
 from datetime import datetime, time
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_has_index_levels, _assert_is_dtype
 from biopsykit.utils._types import arr_t
 from biopsykit.utils.datatype_helper import SalivaFeatureDataFrame, SalivaRawDataFrame, _SalivaRawDataFrame
 
 __all__ = [
-    "saliva_feature_wide_to_long",
-    "get_saliva_column_suggestions",
     "extract_saliva_columns",
+    "get_saliva_column_suggestions",
+    "saliva_feature_wide_to_long",
     "sample_times_datetime_to_minute",
 ]
 
@@ -90,7 +92,7 @@ def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Se
             data.columns,
         )
     )
-    sugg_filt = list(filter(lambda s: any(str(i) in s for i in range(0, 20)), sugg_filt))
+    sugg_filt = list(filter(lambda s: any(str(i) in s for i in range(20)), sugg_filt))
     sugg_filt = list(
         filter(
             lambda s: all(
@@ -122,7 +124,7 @@ def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Se
 
 def extract_saliva_columns(
     data: pd.DataFrame, saliva_type: Union[str, Sequence[str]], col_pattern: Optional[Union[str, Sequence[str]]] = None
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Extract saliva sample columns from a pandas dataframe.
 
     Parameters
@@ -157,7 +159,7 @@ def extract_saliva_columns(
         if len(col_suggs) > 1:
             raise ValueError(
                 "More than one possible column pattern was found! "
-                "Please check manually which pattern is correct: {}".format(col_suggs)
+                f"Please check manually which pattern is correct: {col_suggs}"
             )
         col_pattern = col_suggs[0]
     return data.filter(regex=col_pattern)
@@ -322,7 +324,7 @@ def _get_sample_times_check_dims(data: pd.DataFrame, sample_times: arr_t, saliva
         if act_shape != exp_shape:
             raise ValueError(
                 "'sample_times' does not correspond to the number of saliva samples in 'data'! "
-                "Expected {}, got {}.".format(exp_shape, act_shape)
+                f"Expected {exp_shape}, got {act_shape}."
             )
     elif sample_times.ndim == 2:
         # saliva time different for all subjects
@@ -331,7 +333,7 @@ def _get_sample_times_check_dims(data: pd.DataFrame, sample_times: arr_t, saliva
         if act_shape != exp_shape:
             raise ValueError(
                 "Dimensions of 'sample_times' does not correspond to dimensions of 'data'! "
-                "Expected {}, got {}.".format(exp_shape, act_shape)
+                f"Expected {exp_shape}, got {act_shape}."
             )
     else:
         raise ValueError(f"'sample_times' has invalid dimensions! Expected 1 or 2, got {sample_times.ndim}")
@@ -339,9 +341,9 @@ def _get_sample_times_check_dims(data: pd.DataFrame, sample_times: arr_t, saliva
 
 def _get_saliva_idx_labels(
     columns: pd.Index,
-    sample_labels: Optional[Union[Tuple, Sequence]] = None,
-    sample_idx: Optional[Union[Tuple[int, int], Sequence[int]]] = None,
-) -> Tuple[Sequence, Sequence]:
+    sample_labels: Optional[Union[tuple, Sequence]] = None,
+    sample_idx: Optional[Union[tuple[int, int], Sequence[int]]] = None,
+) -> tuple[Sequence, Sequence]:
     """Get sample labels and indices from data, if only one of both was specified.
 
     Parameters
@@ -381,7 +383,7 @@ def _get_saliva_idx_labels(
     return sample_labels, sample_idx
 
 
-def _get_saliva_idx_labels_sanitize(sample_idx: List[int], columns: Sequence[str]):
+def _get_saliva_idx_labels_sanitize(sample_idx: list[int], columns: Sequence[str]):
     # replace idx values like '-1' with the actual index
     if sample_idx[0] < 0:
         sample_idx[0] = len(columns) + sample_idx[0]
@@ -397,7 +399,7 @@ def _get_saliva_idx_labels_sanitize(sample_idx: List[int], columns: Sequence[str
 
 def _get_group_cols(
     data: SalivaRawDataFrame, group_cols: Union[str, Sequence[str]], group_type: str, function_name: str
-) -> List[str]:
+) -> list[str]:
     """Get appropriate columns for grouping.
 
     Parameters
@@ -429,14 +431,12 @@ def _get_group_cols(
     if any(col not in list(data.index.names) + list(data.columns) for col in group_cols):
         # check for valid groupers
         raise ValueError(
-            "Computing {} failed: Not all of '{}' are valid index levels or column names!".format(
-                function_name, group_cols
-            )
+            f"Computing {function_name} failed: Not all of '{group_cols}' are valid index levels or column names!"
         )
     return group_cols
 
 
-_dict_saliva_type_suggs: Dict[str, Sequence[str]] = {
+_dict_saliva_type_suggs: dict[str, Sequence[str]] = {
     "cortisol": ["cortisol", "cort", "Cortisol", "_c_"],
     "amylase": ["amylase", "amy", "Amylase", "sAA"],
     "il6": ["il6", "IL6", "il-6", "IL-6", "il_6", "IL_6"],

@@ -1,11 +1,13 @@
 """Module for processing EEG data."""
 
-from typing import Dict, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.signals._base import _BaseProcessor
 from tqdm.auto import tqdm
+
+from biopsykit.signals._base import _BaseProcessor
 
 
 class EegProcessor(_BaseProcessor):
@@ -13,9 +15,9 @@ class EegProcessor(_BaseProcessor):
 
     def __init__(
         self,
-        data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+        data: Union[pd.DataFrame, dict[str, pd.DataFrame]],
         sampling_rate: Optional[float] = None,
-        time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
+        time_intervals: Optional[Union[pd.Series, dict[str, Sequence[str]]]] = None,
         include_start: Optional[bool] = False,
     ):
         """Initialize an ``EegProcessor`` instance.
@@ -46,14 +48,14 @@ class EegProcessor(_BaseProcessor):
             data=data, sampling_rate=sampling_rate, time_intervals=time_intervals, include_start=include_start
         )
 
-        self.eeg_result: Dict[str, pd.DataFrame] = {}
+        self.eeg_result: dict[str, pd.DataFrame] = {}
         """Dictionary with EEG processing result dataframes, split into different phases.
 
         """
 
     def relative_band_energy(
         self,
-        freq_bands: Optional[Dict[str, Sequence[int]]] = None,
+        freq_bands: Optional[dict[str, Sequence[int]]] = None,
         title: Optional[str] = None,
     ) -> None:
         """Process EEG signal.

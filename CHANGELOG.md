@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.11.0 - January 03, 2025
+### Changes
+- Made `biopsykit` compatible with matplotlib >= 3.9.
+
 ## Version 0.10.2 - March 06, 2024
 ### Changes
 - `BaseProtocol.add_salvia_data` now also accepts absolute saliva sample times as argument 

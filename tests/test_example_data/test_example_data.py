@@ -2,9 +2,10 @@ import unittest.mock
 from contextlib import contextmanager
 from inspect import getmembers, isfunction
 
-import biopsykit.example_data
 import pandas as pd
 import pytest
+
+import biopsykit.example_data
 from biopsykit.example_data import *
 from biopsykit.questionnaires import pss
 from biopsykit.questionnaires.utils import find_cols

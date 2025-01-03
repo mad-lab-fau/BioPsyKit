@@ -1,6 +1,7 @@
 """Module providing some standard plots for visualizing data collected during a psychological protocol."""
 import re
-from typing import Any, Dict, Iterable, Optional, Sequence, Tuple, Union
+from collections.abc import Iterable, Sequence
+from typing import Any, Optional, Union
 
 import matplotlib.patches as mpatch
 import matplotlib.pyplot as plt
@@ -8,6 +9,9 @@ import matplotlib.ticker as mticks
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from fau_colors import cmaps, colors_all
+from matplotlib.legend_handler import HandlerTuple
+
 from biopsykit.plotting import feature_boxplot, lineplot, multi_feature_boxplot
 from biopsykit.protocols._utils import _get_sample_times
 from biopsykit.saliva.utils import _remove_s0
@@ -24,8 +28,6 @@ from biopsykit.utils.datatype_helper import (
     is_saliva_raw_dataframe,
 )
 from biopsykit.utils.exceptions import ValidationError
-from fau_colors import cmaps, colors_all
-from matplotlib.legend_handler import HandlerTuple
 
 _hr_ensemble_plot_params = {
     "linestyle": ["solid", "dashed", "dotted", "dashdot"],
@@ -56,7 +58,7 @@ _hr_mean_plot_params = {
     "phase_text": "{}",
 }
 
-_saliva_feature_params: Dict[str, Dict[str, Any]] = {
+_saliva_feature_params: dict[str, dict[str, Any]] = {
     "ylabel": {
         "cortisol": {
             "auc": r"Cortisol AUC $\left[\frac{nmol \cdot min}{l} \right]$",
@@ -102,7 +104,7 @@ _saliva_feature_params: Dict[str, Dict[str, Any]] = {
     },
 }
 
-_saliva_plot_params: Dict = {
+_saliva_plot_params: dict = {
     "palette": None,
     "linestyle": ["-", "--"],
     "marker": ["o", "P"],
@@ -134,9 +136,9 @@ def _get_palette(color: Optional[Union[str, Sequence[str]]] = None, num_colors: 
 
 def hr_ensemble_plot(
     data: MergedStudyDataDict,
-    subphases: Optional[Dict[str, Dict[str, int]]] = None,
+    subphases: Optional[dict[str, dict[str, int]]] = None,
     **kwargs,
-) -> Optional[Tuple[plt.Figure, plt.Axes]]:
+) -> Optional[tuple[plt.Figure, plt.Axes]]:
     r"""Draw a heart rate ensemble plot.
 
     This function plots time-series heart rate continuously as ensemble plot (mean ± standard error).
@@ -321,7 +323,7 @@ def _hr_ensemble_plot_end_phase_annotation(ax: plt.Axes, data: pd.DataFrame, pha
 
 
 def _hr_ensemble_plot_subphase_vspans(
-    ax: plt.Axes, data: Dict[str, pd.DataFrame], subphases: Dict[str, Dict[str, int]], **kwargs
+    ax: plt.Axes, data: dict[str, pd.DataFrame], subphases: dict[str, dict[str, int]], **kwargs
 ):
     """Add subphase vertical spans (vspans) to heart rate ensemble plot.
 
@@ -383,7 +385,7 @@ def _hr_ensemble_plot_subphase_vspans(
 def hr_mean_plot(  # pylint:disable=too-many-branches
     data: MeanSeDataFrame,
     **kwargs,
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     r"""Plot course of heart rate as mean ± standard error over phases (and subphases) of a psychological protocol.
 
     The correct plot is automatically inferred from the provided data:
@@ -452,7 +454,7 @@ def hr_mean_plot(  # pylint:disable=too-many-branches
     if kwargs.get("is_relative", False):
         ylabel_default = r"$\Delta$ HR [%]"
     ylabel = kwargs.get("ylabel", ylabel_default)
-    ylims = kwargs.get("ylims", None)
+    ylims = kwargs.get("ylims")
 
     phase_dict = _hr_mean_get_phases_subphases(data)
     num_phases = len(phase_dict)
@@ -526,7 +528,7 @@ def _hr_mean_plot(data: MeanSeDataFrame, x_vals: np.array, key: str, index: int,
     if isinstance(data.columns, pd.MultiIndex):
         # if data has multiindex columns: drop all levels except the last one
         # (which is expected to contain ["mean", "se"])
-        data.columns = data.columns.droplevel(list(range(0, data.columns.nlevels - 1)))
+        data.columns = data.columns.droplevel(list(range(data.columns.nlevels - 1)))
 
     ax.errorbar(
         x=x_vals + index * x_offset,
@@ -563,7 +565,7 @@ def _hr_mean_add_legend(**kwargs):
     )
 
 
-def _hr_mean_style_x_axis(ax: plt.Axes, phase_dict: Dict[str, Sequence[str]], num_subphases: Sequence[int], **kwargs):
+def _hr_mean_style_x_axis(ax: plt.Axes, phase_dict: dict[str, Sequence[str]], num_subphases: Sequence[int], **kwargs):
     """Style x axis of mean HR plot.
 
     Parameters
@@ -585,7 +587,7 @@ def _hr_mean_style_x_axis(ax: plt.Axes, phase_dict: Dict[str, Sequence[str]], nu
         ax.set_xlabel(kwargs.get("xlabel", "Subphases"))
 
 
-def _hr_mean_plot_subphase_annotations(phase_dict: Dict[str, Sequence[str]], xlims: Sequence[float], **kwargs):
+def _hr_mean_plot_subphase_annotations(phase_dict: dict[str, Sequence[str]], xlims: Sequence[float], **kwargs):
     """Add subphase annotations to mean HR plot.
 
     Parameters
@@ -643,7 +645,7 @@ def _hr_mean_plot_subphase_annotations(phase_dict: Dict[str, Sequence[str]], xli
 
 def _hr_mean_get_x_spans(num_phases: int, num_subphases: Sequence[int]):
     if sum(num_subphases) == 0:
-        x_spans = list(zip([0, *list(range(0, num_phases))], list(range(0, num_phases))))
+        x_spans = list(zip([0, *list(range(num_phases))], list(range(num_phases))))
     else:
         x_spans = list(zip([0, *list(np.cumsum(num_subphases))], list(np.cumsum(num_subphases))))
     return x_spans
@@ -654,9 +656,9 @@ def _hr_mean_get_x_vals(num_phases: int, num_subphases: Sequence[int]):
     return x_vals
 
 
-def _hr_mean_get_phases_subphases(data: pd.DataFrame) -> Dict[str, Sequence[str]]:
+def _hr_mean_get_phases_subphases(data: pd.DataFrame) -> dict[str, Sequence[str]]:
     if "condition" in data.index.names:
-        data = [value for key, value in data.groupby("condition")][0]
+        data = next(value for key, value in data.groupby("condition"))
 
     phases = data.index.get_level_values("phase").unique()
 
@@ -670,15 +672,15 @@ def _hr_mean_get_phases_subphases(data: pd.DataFrame) -> Dict[str, Sequence[str]
 
 def saliva_plot(  # pylint:disable=too-many-branches
     data: Union[
-        SalivaRawDataFrame, SalivaMeanSeDataFrame, Dict[str, SalivaRawDataFrame], Dict[str, SalivaMeanSeDataFrame]
+        SalivaRawDataFrame, SalivaMeanSeDataFrame, dict[str, SalivaRawDataFrame], dict[str, SalivaMeanSeDataFrame]
     ],
     saliva_type: Optional[str] = None,
-    sample_times: Optional[Union[Sequence[int], Dict[str, Sequence[int]]]] = None,
+    sample_times: Optional[Union[Sequence[int], dict[str, Sequence[int]]]] = None,
     test_times: Optional[Sequence[int]] = None,
     sample_times_absolute: Optional[bool] = False,
     remove_s0: Optional[bool] = False,
     **kwargs,
-) -> Optional[Tuple[plt.Figure, plt.Axes]]:
+) -> Optional[tuple[plt.Figure, plt.Axes]]:
     r"""Plot saliva data during psychological protocol as mean ± standard error.
 
     The function accepts raw saliva data per subject (:obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`)
@@ -826,9 +828,9 @@ def saliva_plot(  # pylint:disable=too-many-branches
 
 def _saliva_plot_extract_style_params(
     key: str,
-    linestyle: Union[Dict[str, str], str],
-    marker: Union[Dict[str, str], str],
-    palette: Union[Dict[str, str], str],
+    linestyle: Union[dict[str, str], str],
+    marker: Union[dict[str, str], str],
+    palette: Union[dict[str, str], str],
     **kwargs,
 ):
     ls = _saliva_plot_get_plot_param(linestyle, key)
@@ -847,7 +849,7 @@ def _saliva_plot_extract_style_params(
 
 
 def _saliva_plot_sanitize_dicts(
-    data: Union[Dict[str, pd.DataFrame], pd.DataFrame], ylabel: Union[Dict[str, str], str], saliva_type: str
+    data: Union[dict[str, pd.DataFrame], pd.DataFrame], ylabel: Union[dict[str, str], str], saliva_type: str
 ):
     if isinstance(ylabel, dict):
         ylabel = ylabel[saliva_type]
@@ -863,7 +865,7 @@ def _saliva_plot(
     data: Union[SalivaRawDataFrame, SalivaMeanSeDataFrame],
     saliva_type: str,
     counter: int,
-    sample_times: Optional[Union[Sequence[int], Dict[str, Sequence[int]]]] = None,
+    sample_times: Optional[Union[Sequence[int], dict[str, Sequence[int]]]] = None,
     test_times: Optional[Sequence[int]] = None,
     sample_times_absolute: Optional[bool] = False,
     **kwargs,
@@ -896,7 +898,7 @@ def _saliva_plot(
     kwargs.setdefault("style", kwargs.get("hue"))
     kwargs.setdefault("marker", "o")
 
-    groups = kwargs.get("hue", None)
+    groups = kwargs.get("hue")
     if groups is not None and groups in data.index.names:
         num_groups = len(data.index.get_level_values(groups).unique())
     else:
@@ -924,7 +926,7 @@ def _assert_saliva_data_input(data: pd.DataFrame, saliva_type: str):
         raise ValidationError("'data' is expected to be either a SalivaRawDataFrame or a SalivaMeanSeDataFrame!")
 
 
-def _saliva_plot_get_plot_param(param: Union[Dict[str, str], str], key: str):
+def _saliva_plot_get_plot_param(param: Union[dict[str, str], str], key: str):
     p = param[key] if isinstance(param, dict) else param
     return p
 
@@ -1006,9 +1008,9 @@ def saliva_feature_boxplot(
     saliva_type: str,
     hue: Optional[str] = None,
     feature: Optional[str] = None,
-    stats_kwargs: Optional[Dict[str, Any]] = None,
+    stats_kwargs: Optional[dict[str, Any]] = None,
     **kwargs,
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """Draw a boxplot with significance brackets, specifically designed for saliva features.
 
     This is a wrapper of :func:`~biopsykit.plotting.feature_boxplot` that can be used to plot saliva features and
@@ -1074,11 +1076,11 @@ def saliva_feature_boxplot(
 def saliva_multi_feature_boxplot(
     data: SalivaFeatureDataFrame,
     saliva_type: str,
-    features: Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]],
+    features: Union[Sequence[str], dict[str, Union[str, Sequence[str]]]],
     hue: Optional[str] = None,
-    stats_kwargs: Optional[Dict] = None,
+    stats_kwargs: Optional[dict] = None,
     **kwargs,
-) -> Tuple[plt.Figure, Iterable[plt.Axes]]:
+) -> tuple[plt.Figure, Iterable[plt.Axes]]:
     """Draw multiple features as boxplots with significance brackets, specifically designed for saliva features.
 
     This is a wrapper of :func:`~biopsykit.plotting.multi_feature_boxplot` that can be used to plot saliva features and
@@ -1146,14 +1148,14 @@ def saliva_multi_feature_boxplot(
     )
 
 
-def _saliva_feature_boxplot_get_xticklabels(features: Dict[str, str]) -> Dict[str, Sequence[str]]:
+def _saliva_feature_boxplot_get_xticklabels(features: dict[str, str]) -> dict[str, Sequence[str]]:
     xlabel_dict = {}
-    for feature in features:
-        cols = features[feature]
-        if isinstance(cols, str):
-            cols = [cols]
+    for feature, feature_val in features.items():
+        col = feature_val
+        if isinstance(col, str):
+            col = [col]
         labels = []
-        for c in cols:
+        for c in col:
             if "slope" in c:
                 label = _saliva_feature_params["xticklabels"]["slope"].replace("§", re.findall(r"slope(\w+)", c)[0])
             else:
@@ -1164,7 +1166,7 @@ def _saliva_feature_boxplot_get_xticklabels(features: Dict[str, str]) -> Dict[st
     return xlabel_dict
 
 
-def _saliva_feature_boxplot_get_ylabels(saliva_type: str, features: Union[str, Sequence[str]]) -> Dict[str, str]:
+def _saliva_feature_boxplot_get_ylabels(saliva_type: str, features: Union[str, Sequence[str]]) -> dict[str, str]:
     ylabels = _saliva_feature_params["ylabel"][saliva_type]
     if isinstance(features, str):
         features = [features]
@@ -1176,7 +1178,7 @@ def _saliva_feature_boxplot_get_ylabels(saliva_type: str, features: Union[str, S
 
 
 def _plot_get_fig_ax(**kwargs):
-    ax: plt.Axes = kwargs.get("ax", None)
+    ax: plt.Axes = kwargs.get("ax")
     if ax is None:
         fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:

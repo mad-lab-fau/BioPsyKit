@@ -1,11 +1,13 @@
 """Module wrapping biopsykit.io.biomarker including only I/O functions for saliva data."""
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Optional, Union
 
 import pandas as pd
+
 from biopsykit.io import biomarker
 
-__all__ = ["load_saliva_plate", "save_saliva", "load_saliva_wide_format"]
+__all__ = ["load_saliva_plate", "load_saliva_wide_format", "save_saliva"]
 
 from biopsykit.utils._types import path_t
 from biopsykit.utils.datatype_helper import SalivaRawDataFrame, SubjectConditionDataFrame
@@ -19,7 +21,7 @@ def load_saliva_plate(
     id_col_names: Optional[Sequence[str]] = None,
     regex_str: Optional[str] = None,
     sample_times: Optional[Sequence[int]] = None,
-    condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
+    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
     **kwargs,
 ) -> SalivaRawDataFrame:
     r"""Read saliva from an Excel sheet in 'plate' format.
@@ -230,14 +232,14 @@ def _check_sample_times(num_samples: int, num_subjects: int, sample_times: Seque
 
 
 def _parse_condition_list(
-    data: pd.DataFrame, condition_list: Union[Sequence, Dict[str, Sequence], pd.Index]
+    data: pd.DataFrame, condition_list: Union[Sequence, dict[str, Sequence], pd.Index]
 ) -> SubjectConditionDataFrame:
     return biomarker._parse_condition_list(data, condition_list)
 
 
 def _apply_condition_list(
     data: pd.DataFrame,
-    condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
+    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
 ):
     return biomarker._apply_condition_list(data, condition_list)
 
@@ -247,5 +249,5 @@ def _get_id_columns(id_col_names: Sequence[str], extracted_cols: pd.DataFrame):
     return biomarker._get_id_columns(id_col_names, extracted_cols)
 
 
-def _get_condition_col(data: pd.DataFrame, condition_col: str) -> Tuple[pd.DataFrame, str]:
+def _get_condition_col(data: pd.DataFrame, condition_col: str) -> tuple[pd.DataFrame, str]:
     return biomarker._get_condition_col(data, condition_col)

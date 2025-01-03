@@ -1,7 +1,8 @@
 """Module for importing data recorded by the Biopac system."""
 
 import datetime
-from typing import Dict, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import ClassVar, Optional, Union
 
 try:
     import bioread
@@ -12,6 +13,7 @@ except ImportError as e:
     ) from e
 
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t, str_t
 
@@ -21,7 +23,7 @@ __all__ = ["BiopacDataset"]
 class BiopacDataset:
     """Class for loading and processing Biopac data."""
 
-    _CHANNEL_NAME_MAPPING = {
+    _CHANNEL_NAME_MAPPING: ClassVar[dict[str, str]] = {
         "ECG": "ecg",
         "RSP": "rsp",
         "EDA": "eda",
@@ -34,13 +36,13 @@ class BiopacDataset:
     _start_time_unix: pd.Timestamp
     _tz: str
     _event_markers: Optional[Sequence[bioread.reader.EventMarker]] = None
-    _data: Dict[str, pd.DataFrame] = {}
-    _sampling_rate: Dict[str, int] = {}
+    _data: ClassVar[dict[str, pd.DataFrame]] = {}
+    _sampling_rate: ClassVar[dict[str, int]] = {}
 
     def __init__(
         self,
-        data_dict: Dict[str, pd.DataFrame],
-        sampling_rate_dict: Dict[str, int],
+        data_dict: dict[str, pd.DataFrame],
+        sampling_rate_dict: dict[str, int],
         start_time: Optional[pd.Timestamp] = None,
         event_markers: Optional[Sequence[bioread.reader.EventMarker]] = None,
         tz: Optional[str] = None,
@@ -80,7 +82,7 @@ class BiopacDataset:
 
     @classmethod
     def from_acq_file(
-        cls, path: path_t, channel_mapping: Optional[Dict[str, str]] = None, tz: Optional[str] = "Europe/Berlin"
+        cls, path: path_t, channel_mapping: Optional[dict[str, str]] = None, tz: Optional[str] = "Europe/Berlin"
     ):
         """Create a new Dataset from a valid .acq file.
 
@@ -177,8 +179,8 @@ class BiopacDataset:
 
     @classmethod
     def _extract_channel_information(
-        cls, biopac_data: bioread.reader.Datafile, channel_mapping: Dict[str, str]
-    ) -> Tuple[Dict[str, pd.DataFrame], Dict[str, int]]:
+        cls, biopac_data: bioread.reader.Datafile, channel_mapping: dict[str, str]
+    ) -> tuple[dict[str, pd.DataFrame], dict[str, int]]:
         # TODO raise warning or error when there are more channels than were extracted
         #  (might be an indication that mapping does not contain all channels)
         dict_channel_data = {}

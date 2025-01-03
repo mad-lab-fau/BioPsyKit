@@ -9,12 +9,12 @@ from biopsykit.signals.imu import (
 from biopsykit.signals.imu.imu import convert_acc_data_to_g, sliding_windows_imu, var_norm_windows
 
 __all__ = [
-    "var_norm_windows",
-    "convert_acc_data_to_g",
-    "sliding_windows_imu",
-    "rest_periods",
-    "wear_detection",
-    "static_moment_detection",
     "activity_counts",
+    "convert_acc_data_to_g",
     "feature_extraction",
+    "rest_periods",
+    "sliding_windows_imu",
+    "static_moment_detection",
+    "var_norm_windows",
+    "wear_detection",
 ]

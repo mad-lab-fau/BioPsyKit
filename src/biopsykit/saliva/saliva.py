@@ -1,9 +1,11 @@
 """Functions for processing saliva data and computing established features (AUC, slope, maximum increase, ...)."""
 import warnings
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.saliva.utils import (
     _check_sample_times,
     _get_group_cols,
@@ -29,7 +31,7 @@ def max_value(
     data: SalivaRawDataFrame,
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     remove_s0: Optional[bool] = False,
-) -> Union[SalivaFeatureDataFrame, Dict[str, SalivaFeatureDataFrame]]:
+) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
     """Compute maximum value.
 
     The output feature name will be ``max_val``, preceded by the name of the saliva type to allow better
@@ -97,7 +99,7 @@ def initial_value(
     data: SalivaRawDataFrame,
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     remove_s0: Optional[bool] = False,
-) -> Union[SalivaFeatureDataFrame, Dict[str, SalivaFeatureDataFrame]]:
+) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
     """Compute initial saliva sample.
 
     The output feature name will be ``ini_val``, preceded by the name of the saliva type to allow better
@@ -164,7 +166,7 @@ def max_increase(
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     remove_s0: Optional[bool] = False,
     percent: Optional[bool] = False,
-) -> Union[SalivaFeatureDataFrame, Dict[str, SalivaFeatureDataFrame]]:
+) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
     """Compute maximum increase between first saliva sample and all others.
 
     The maximum increase (`max_inc`) is defined as the difference between the `first` sample and the maximum of
@@ -246,7 +248,7 @@ def auc(
     remove_s0: Optional[bool] = False,
     compute_auc_post: Optional[bool] = False,
     sample_times: Optional[Union[np.ndarray, Sequence[int], str]] = None,
-) -> Union[SalivaFeatureDataFrame, Dict[str, SalivaFeatureDataFrame]]:
+) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
     r"""Compute area-under-the-curve (AUC) for saliva samples.
 
     The area-under-the-curve is computed according to Pruessner et al. (2003) using the trapezoidal rule
@@ -357,8 +359,8 @@ def auc(
 
 
 def _auc_compute_auc_post(
-    data: SalivaRawDataFrame, auc_data: Dict[str, np.ndarray], sample_times: np.ndarray
-) -> Dict[str, np.ndarray]:
+    data: SalivaRawDataFrame, auc_data: dict[str, np.ndarray], sample_times: np.ndarray
+) -> dict[str, np.ndarray]:
     idxs_post = None
     if sample_times.ndim == 1:
         idxs_post = np.where(sample_times >= 0)[0]
@@ -375,11 +377,11 @@ def _auc_compute_auc_post(
 
 def slope(
     data: SalivaRawDataFrame,
-    sample_labels: Optional[Union[Tuple, Sequence]] = None,
-    sample_idx: Optional[Union[Tuple[int, int], Sequence[int]]] = None,
+    sample_labels: Optional[Union[tuple, Sequence]] = None,
+    sample_idx: Optional[Union[tuple[int, int], Sequence[int]]] = None,
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     sample_times: Optional[Sequence[int]] = None,
-) -> Union[SalivaFeatureDataFrame, Dict[str, SalivaFeatureDataFrame]]:
+) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
     """Compute the slope between two saliva samples.
 
     The samples to compute the slope can either be specified by `index` (parameter `sample_idx`) [0, num_of_samples-1]
@@ -475,7 +477,7 @@ def standard_features(
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
     group_cols: Optional[Union[str, Sequence[str]]] = None,
     keep_index: Optional[bool] = True,
-) -> Union[SalivaFeatureDataFrame, Dict[str, SalivaFeatureDataFrame]]:
+) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
     """Compute a set of `standard features` on saliva data.
 
     The following list of features is computed:
@@ -557,7 +559,7 @@ def standard_features(
                 "DataFrame transformation failed: Unable to keep old dataframe index because index does not match with "
                 "output data shape, possibly because 'groupby' recuded the index. "
                 "Consider setting 'keep_index' to 'False'. "
-                "The exact error was:\n\n{}".format(str(e))
+                f"The exact error was:\n\n{e!s}"
             ) from e
 
     # drop 'saliva_type' multiindex column and add as prefix to columns to ensure consistent naming with
@@ -575,9 +577,9 @@ def standard_features(
 def mean_se(
     data: SalivaRawDataFrame,
     saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    group_cols: Optional[Union[str, List[str]]] = None,
+    group_cols: Optional[Union[str, list[str]]] = None,
     remove_s0: Optional[bool] = False,
-) -> Union[SalivaMeanSeDataFrame, Dict[str, SalivaMeanSeDataFrame]]:
+) -> Union[SalivaMeanSeDataFrame, dict[str, SalivaMeanSeDataFrame]]:
     """Compute mean and standard error per saliva sample.
 
     Parameters

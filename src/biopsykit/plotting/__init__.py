@@ -8,9 +8,9 @@ from biopsykit.plotting.plotting import (
 )
 
 __all__ = [
-    "lineplot",
-    "stacked_barchart",
     "feature_boxplot",
-    "multi_feature_boxplot",
     "feature_pairplot",
+    "lineplot",
+    "multi_feature_boxplot",
+    "stacked_barchart",
 ]

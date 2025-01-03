@@ -1,7 +1,8 @@
 """Module representing the Cortisol Awakening Response (CAR) protocol."""
-from typing import Optional, Tuple
+from typing import Optional
 
 import matplotlib.pyplot as plt
+
 from biopsykit.plotting import lineplot
 from biopsykit.protocols import BaseProtocol
 from biopsykit.utils.datatype_helper import is_saliva_raw_dataframe
@@ -33,7 +34,7 @@ class CAR(BaseProtocol):
 
         super().__init__(name, **kwargs)
 
-    def car_saliva_plot(self, saliva_type: Optional[str] = "cortisol", **kwargs) -> Tuple[plt.Figure, plt.Axes]:
+    def car_saliva_plot(self, saliva_type: Optional[str] = "cortisol", **kwargs) -> tuple[plt.Figure, plt.Axes]:
         """Plot CAR saliva data as lineplot.
 
         Parameters

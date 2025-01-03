@@ -1,9 +1,11 @@
 """Internal helpers for dataset validation."""
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils._types import _Hashable, path_t
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError, ValueRangeError
 
@@ -71,15 +73,15 @@ def _assert_file_extension(
     if file_name.suffix not in expected_extension:
         if raise_exception:
             raise FileExtensionError(
-                "The file name extension is expected to be one of {}. "
-                "Instead it has the following extension: {}".format(expected_extension, file_name.suffix)
+                f"The file name extension is expected to be one of {expected_extension}. "
+                f"Instead it has the following extension: {file_name.suffix}"
             )
         return False
     return True
 
 
 def _assert_is_dtype(
-    obj, dtype: Union[type, Tuple[type, ...]], raise_exception: Optional[bool] = True
+    obj, dtype: Union[type, tuple[type, ...]], raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
     """Check if an object has a specific data type.
 
@@ -197,7 +199,7 @@ def _assert_has_index_levels(
 
 def _assert_has_columns(
     df: pd.DataFrame,
-    columns_sets: Sequence[Union[List[_Hashable], List[str], pd.Index]],
+    columns_sets: Sequence[Union[list[_Hashable], list[str], pd.Index]],
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
     """Check if the dataframe has at least all columns sets.
@@ -240,9 +242,8 @@ def _assert_has_columns(
             helper_str = f"one of the following sets of columns: {columns_sets}"
         if raise_exception:
             raise ValidationError(
-                "The dataframe is expected to have {}. Instead it has the following columns: {}".format(
-                    helper_str, list(df.columns)
-                )
+                f"The dataframe is expected to have {helper_str}. "
+                f"Instead it has the following columns: {list(df.columns)}"
             )
     return result
 
@@ -292,7 +293,7 @@ def _assert_has_column_multiindex(
 
 def _assert_has_columns_any_level(
     df: pd.DataFrame,
-    columns_sets: Sequence[Union[List[_Hashable], List[str], pd.Index]],
+    columns_sets: Sequence[Union[list[_Hashable], list[str], pd.Index]],
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
     """Check if the dataframe has the expected set of column names at any level of a :any:`pandas.MultiIndex`.
@@ -338,8 +339,8 @@ def _assert_has_columns_any_level(
             helper_str = f"one of the following sets of columns: {columns_sets}"
         if raise_exception:
             raise ValidationError(
-                "The dataframe is expected to have {} at any level of the MultiIndex. Instead it has the "
-                "following MultiIndex columns: {}".format(helper_str, column_levels)
+                f"The dataframe is expected to have {helper_str} at any level of the MultiIndex. Instead it has the "
+                f"following MultiIndex columns: {column_levels}"
             )
     return result
 
@@ -420,10 +421,10 @@ def _assert_value_range(
         if raise_exception:
             raise ValueRangeError(
                 "Some of the values are out of the expected range. "
-                "Expected were values in the range {}, got values in the range {}. "
+                f"Expected were values in the range {value_range}, got values in the range {[min_val, max_val]}. "
                 "If values are part of questionnaire scores, "
                 "you can convert questionnaire items into the correct range by calling "
-                "`biopsykit.questionnaire.utils.convert_scale()`.".format(value_range, [min_val, max_val])
+                "`biopsykit.questionnaire.utils.convert_scale()`."
             )
         return False
     return True
@@ -460,7 +461,7 @@ def _assert_num_columns(
         if raise_exception:
             raise ValidationError(
                 "The dataframe does not have the required number of columns. "
-                "Expected were any of {} columns, but has {} columns.".format(num_cols, len(data.columns))
+                f"Expected were any of {num_cols} columns, but has {len(data.columns)} columns."
             )
         return False
     return True
@@ -493,7 +494,7 @@ def _assert_len_list(data: Sequence, length: int, raise_exception: Optional[bool
         if raise_exception:
             raise ValidationError(
                 "The list does not have the required length. "
-                "Expected was length {}, but it has length {}.".format(length, len(data))
+                f"Expected was length {length}, but it has length {len(data)}."
             )
         return False
     return True
@@ -569,8 +570,8 @@ def _multiindex_level_names_helper(
     if not expected:
         if raise_exception:
             raise ValidationError(
-                "The dataframe is expected to have exactly the following {} level names {}, "
-                "but it has {}".format(idx_or_col, level_names, ac_levels)
+                f"The dataframe is expected to have exactly the following {idx_or_col} level names {level_names}, "
+                f"but it has {ac_levels}"
             )
         return False
     return True
@@ -595,14 +596,14 @@ def _multiindex_check_helper(
         if not expected:
             if raise_exception:
                 raise ValidationError(
-                    "The dataframe is expected to have a MultiIndex with {0} {1} levels. "
-                    "But it has a MultiIndex with {2} {1} levels.".format(nlevels, idx_or_col, nlevels_act)
+                    f"The dataframe is expected to have a MultiIndex with {nlevels} {idx_or_col} levels. "
+                    f"But it has a MultiIndex with {nlevels_act} {idx_or_col} levels."
                 )
             return False
     return True
 
 
-def _multiindex_check_helper_get_levels(df: pd.DataFrame, idx_or_col: str) -> Tuple[bool, int]:
+def _multiindex_check_helper_get_levels(df: pd.DataFrame, idx_or_col: str) -> tuple[bool, int]:
     if idx_or_col == "index":
         has_multiindex = isinstance(df.index, pd.MultiIndex)
         nlevels_act = df.index.nlevels
@@ -619,14 +620,14 @@ def _multiindex_check_helper_not_expected(
     if not expected:
         if raise_exception:
             raise ValidationError(
-                "The dataframe is expected to have a single level as {0}. "
-                "But it has a MultiIndex with {1} {0} levels.".format(idx_or_col, nlevels_act)
+                f"The dataframe is expected to have a single level as {idx_or_col}. "
+                f"But it has a MultiIndex with {nlevels_act} {idx_or_col} levels."
             )
         return False
     if raise_exception:
         raise ValidationError(
-            "The dataframe is expected to have a MultiIndex with {0} {1} levels. "
-            "It has just a single normal {1} level.".format(nlevels, idx_or_col)
+            f"The dataframe is expected to have a MultiIndex with {nlevels} {idx_or_col} levels. "
+            f"It has just a single normal {idx_or_col} level."
         )
     return False
 

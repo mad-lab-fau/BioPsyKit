@@ -1,12 +1,13 @@
 """I/O functions for files related to EEG processing."""
 import warnings
-from typing import Optional, Tuple
+from typing import Optional
 
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns
 from biopsykit.utils._types import path_t
 
-__all__ = ["load_eeg_raw_muse", "MuseDataset"]
+__all__ = ["MuseDataset", "load_eeg_raw_muse"]
 
 
 class MuseDataset:
@@ -125,7 +126,7 @@ class MuseDataset:
         return data
 
 
-def load_eeg_raw_muse(file_path: path_t, tz: Optional[str] = "Europe/Berlin") -> Tuple[pd.DataFrame, float]:
+def load_eeg_raw_muse(file_path: path_t, tz: Optional[str] = "Europe/Berlin") -> tuple[pd.DataFrame, float]:
     """Load a csv file with raw EEG data recorded by the Muse headband.
 
     Parameters

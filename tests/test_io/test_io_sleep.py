@@ -4,6 +4,8 @@ from unittest import TestCase
 
 import pandas as pd
 import pytest
+from pandas._testing import assert_index_equal
+
 from biopsykit.io.sleep import save_sleep_endpoints
 from biopsykit.io.sleep_analyzer import (
     load_withings_sleep_analyzer_raw_file,
@@ -11,7 +13,6 @@ from biopsykit.io.sleep_analyzer import (
     load_withings_sleep_analyzer_summary,
 )
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
-from pandas._testing import assert_index_equal
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/sleep_endpoints")
 
@@ -52,7 +53,7 @@ def sleep_endpoints_dataframe_incorrect_index():
             "wake_onset": pd.to_datetime("01.01.2021 08:00"),
             "total_sleep_duration": 8 * 60,
         },
-        index=range(0, 1),
+        index=range(1),
     )
 
 
@@ -118,7 +119,6 @@ class TestIoSleep:
         [
             ("raw_sleep-monitor_hr.csv", "heart_rate", None, does_not_raise()),
             ("raw_sleep-monitor_hr.csv", "heart_rate", "Europe/Berlin", does_not_raise()),
-            ("raw_sleep-monitor_hr.csv", "hr", None, pytest.raises(ValueError)),
             ("raw_sleep-monitor_hr.csv", "hr", None, pytest.raises(ValueError)),
             ("sleep-monitor_hr_wrong_column_names.csv", "heart_rate", None, pytest.raises(ValidationError)),
         ],
@@ -233,9 +233,9 @@ class TestIoSleep:
         # data has a duration of 16 minutes
         assert isinstance(data, dict)
         assert len(data) == 1
-        assert len(list(data.values())[0].index) == 16
+        assert len(next(iter(data.values())).index) == 16
         TestCase().assertListEqual(
-            list(list(data.values())[0].columns), ["heart_rate", "respiration_rate", "sleep_state", "snoring"]
+            list(next(iter(data.values())).columns), ["heart_rate", "respiration_rate", "sleep_state", "snoring"]
         )
 
     @pytest.mark.parametrize(

@@ -1,9 +1,12 @@
 """Module providing various functions for processing more complex structured data (e.g., collected during a study)."""
 import warnings
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
+from scipy import interpolate
+
 from biopsykit.utils._datatype_validation_helper import (
     _assert_dataframes_same_length,
     _assert_has_index_levels,
@@ -27,10 +30,9 @@ from biopsykit.utils.datatype_helper import (
     is_subject_data_dict,
 )
 from biopsykit.utils.functions import se
-from scipy import interpolate
 
 
-def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_start: bool) -> Dict[str, pd.DataFrame]:
+def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_start: bool) -> dict[str, pd.DataFrame]:
     if time_intervals.index.nlevels > 1:
         # multi-index series => second level contains start/end times of phases
         time_intervals = time_intervals.unstack().T
@@ -48,9 +50,9 @@ def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_st
 
 def split_data(
     data: pd.DataFrame,
-    time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
+    time_intervals: Union[pd.DataFrame, pd.Series, dict[str, Sequence[str]]],
     include_start: Optional[bool] = False,
-) -> Dict[str, pd.DataFrame]:
+) -> dict[str, pd.DataFrame]:
     """Split data into different phases based on time intervals.
 
     The start and end times of the phases are prodivded via the ``time_intervals`` parameter and can either be a
@@ -109,7 +111,7 @@ def split_data(
     elif include_start:
         time_intervals["Start"] = (
             data.index[0].to_pydatetime().time(),
-            list(time_intervals.values())[0][0],
+            next(iter(time_intervals.values())),
         )
 
     data_dict = {name: data.between_time(*start_end) for name, start_end in time_intervals.items()}
@@ -119,7 +121,7 @@ def split_data(
 
 def exclude_subjects(
     excluded_subjects: Union[Sequence[str], Sequence[int]], index_name: Optional[str] = "subject", **kwargs
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Exclude subjects from dataframes.
 
     This function can be used to exclude subject IDs for later analysis from different kinds of dataframes, such as:
@@ -148,7 +150,7 @@ def exclude_subjects(
         or dataframe if function was only called with one single dataframe
 
     """
-    cleaned_data: Dict[str, pd.DataFrame] = {}
+    cleaned_data: dict[str, pd.DataFrame] = {}
 
     for key, data in kwargs.items():
         _assert_is_dtype(data, pd.DataFrame)
@@ -163,7 +165,7 @@ def exclude_subjects(
         else:
             raise ValueError(f"No '{index_name}' level in index!")
     if len(cleaned_data) == 1:
-        cleaned_data = list(cleaned_data.values())[0]
+        cleaned_data = next(iter(cleaned_data.values()))
     return cleaned_data
 
 
@@ -254,8 +256,8 @@ def resample_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
 
 def resample_dict_sec(
-    data_dict: Dict[str, Any],
-) -> Dict[str, Any]:
+    data_dict: dict[str, Any],
+) -> dict[str, Any]:
     """Resample all data in the dictionary to 1 Hz data.
 
     This function recursively looks for all dataframes in the dictionary and resamples data to 1 Hz using
@@ -453,9 +455,9 @@ def merge_study_data_dict(
 
 
 def split_dict_into_subphases(
-    data_dict: Dict[str, Any],
-    subphases: Dict[str, int],
-) -> Union[Dict[str, Dict[str, Any]]]:
+    data_dict: dict[str, Any],
+    subphases: dict[str, int],
+) -> Union[dict[str, dict[str, Any]]]:
     """Split dataframes in a nested dictionary into subphases.
 
     By further splitting a dataframe into subphases a new dictionary level is created. The new dictionary level
@@ -502,8 +504,8 @@ def split_dict_into_subphases(
 
 
 def get_subphase_durations(
-    data: pd.DataFrame, subphases: Dict[str, Union[int, Tuple[int, int]]]
-) -> Sequence[Tuple[int, int]]:
+    data: pd.DataFrame, subphases: dict[str, Union[int, tuple[int, int]]]
+) -> Sequence[tuple[int, int]]:
     """Compute subphase durations from dataframe.
 
     The subphases can be specified in two different ways:
@@ -592,8 +594,8 @@ def add_subject_conditions(
 
 
 def split_subject_conditions(
-    data_dict: Dict[str, Any], condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
-) -> Dict[str, Dict[str, Any]]:
+    data_dict: dict[str, Any], condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
+) -> dict[str, dict[str, Any]]:
     """Split dictionary with data based on conditions subjects were assigned to.
 
     This function adds a new outer dictionary level with the different conditions as keys and dictionaries
@@ -623,14 +625,14 @@ def split_subject_conditions(
     return {cond: _splits_subject_conditions(data_dict, subjects) for cond, subjects in condition_list.items()}
 
 
-def _splits_subject_conditions(data_dict: Dict[str, Any], subject_list: Sequence[str]):
+def _splits_subject_conditions(data_dict: dict[str, Any], subject_list: Sequence[str]):
     _assert_is_dtype(data_dict, (dict, pd.DataFrame))
     if isinstance(data_dict, pd.DataFrame):
         return data_dict[subject_list]
     return {key: _splits_subject_conditions(value, subject_list) for key, value in data_dict.items()}
 
 
-def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], param_name: str) -> pd.DataFrame:
+def mean_per_subject_dict(data: dict[str, Any], dict_levels: Sequence[str], param_name: str) -> pd.DataFrame:
     """Compute mean values of time-series data from a nested dictionary.
 
     This function computes the mean value of time-series data in a nested dictionary per subject and combines it into

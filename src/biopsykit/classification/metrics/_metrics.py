@@ -4,6 +4,7 @@ from inspect import getmembers
 import numpy as np
 import pandas as pd
 import sklearn.metrics
+
 from biopsykit.utils._types import str_t
 
 

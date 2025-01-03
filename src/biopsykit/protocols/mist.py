@@ -1,7 +1,8 @@
 """Module representing the Montreal Imaging Stress Task (MIST) protocol."""
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
+
 from biopsykit.protocols import BaseProtocol
 
 
@@ -9,7 +10,7 @@ class MIST(BaseProtocol):
     """Class representing the Montreal Imaging Stress Task (MIST) protocol and data collected within a MIST study."""
 
     def __init__(
-        self, name: Optional[str] = None, structure: Optional[Dict[str, Union[None, Dict[str, int]]]] = None, **kwargs
+        self, name: Optional[str] = None, structure: Optional[dict[str, Union[None, dict[str, int]]]] = None, **kwargs
     ):
         """Class representing the Montreal Imaging Stress Task (MIST) protocol and data collected within a MIST study.
 
@@ -106,8 +107,8 @@ class MIST(BaseProtocol):
         super().__init__(name=name, structure=structure, test_times=test_times, **kwargs)
 
     def hr_ensemble_plot(
-        self, ensemble_id: str, subphases: Optional[Dict[str, int]] = None, **kwargs
-    ) -> Tuple[plt.Figure, plt.Axes]:
+        self, ensemble_id: str, subphases: Optional[dict[str, int]] = None, **kwargs
+    ) -> tuple[plt.Figure, plt.Axes]:
         """Draw heart rate ensemble plot.
 
         Parameters

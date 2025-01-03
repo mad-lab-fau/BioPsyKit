@@ -17,10 +17,12 @@ with subscale names as keys and the corresponding column names (as list of str) 
     questionnaire item columns, which typically also start with index 1!
 
 """
-from typing import Dict, Literal, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.questionnaires.utils import (
     _compute_questionnaire_subscales,
     _invert_subscales,
@@ -216,7 +218,7 @@ def mves(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 def tics_l(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    subscales: Optional[dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Trier Inventory for Chronic Stress (Long Version) (TICS_L)**.
 
@@ -329,7 +331,7 @@ def tics_l(
 def tics_s(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    subscales: Optional[dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Trier Inventory for Chronic Stress (Short Version) (TICS_S)**.
 
@@ -444,7 +446,7 @@ def tics_s(
 def pss(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    subscales: Optional[dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Perceived Stress Scale (PSS)**.
 
@@ -713,7 +715,7 @@ def ghq(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 def hads(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    subscales: Optional[dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Hospital Anxiety and Depression Scale (HADS)**.
 
@@ -804,7 +806,7 @@ def hads(
 def type_d(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Type D Personality Scale**.
 
@@ -960,7 +962,7 @@ def rse(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 def scs(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Self-Compassion Scale (SCS)**.
 
@@ -1135,7 +1137,7 @@ def midi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 def tsgs(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    subscales: Optional[dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Trait Shame and Guilt Scale**.
 
@@ -1223,7 +1225,7 @@ def tsgs(
 def rmidi(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    subscales: Optional[dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Revised Midlife Development Inventory (MIDI) Personality Scale**.
 
@@ -1407,7 +1409,7 @@ def lsq(
 def ctq(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Childhood Trauma Questionnaire (CTQ)**.
 
@@ -1682,7 +1684,7 @@ def trait_rumination(data: pd.DataFrame, columns: Optional[Union[Sequence[str], 
 def besaa(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[Union[int, str]]]] = None,
+    subscales: Optional[dict[str, Sequence[Union[int, str]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Body-Esteem Scale for Adolescents and Adults (BESAA)**.
 
@@ -1772,7 +1774,7 @@ def besaa(
 def fscrs(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Forms of Self-Criticizing/Attacking and Self-Reassuring Scale (FSCRS)**.
 
@@ -1866,7 +1868,7 @@ def fscrs(
 def pasa(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Primary Appraisal Secondary Appraisal Scale (PASA)**.
 
@@ -1982,7 +1984,7 @@ def pasa(
 def ssgs(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **State Shame and Guilt Scale (SSGS)**.
 
@@ -2329,7 +2331,7 @@ def abi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 def stadi(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
     stadi_type: Optional[Literal["state", "trait", "state_trait"]] = None,
 ) -> pd.DataFrame:
     """Compute the **State-Trait Anxiety-Depression Inventory (STADI)**.
@@ -2479,7 +2481,7 @@ def _get_stadi_type(stadi_type: str) -> Sequence[str]:
 def svf_120(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Stressverarbeitungsfragebogen - 120 item version (SVF120)**.
 
@@ -2621,7 +2623,7 @@ def svf_120(
 def svf_42(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Stressverarbeitungsfragebogen - 42 item version (SVF42)**.
 
@@ -2752,7 +2754,7 @@ def svf_42(
 def brief_cope(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Brief-COPE (28 items) Questionnaire (Brief_COPE)**.
 
@@ -2867,7 +2869,7 @@ def brief_cope(
 def bfi_k(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Big Five Inventory (short version) (BFI-K)**.
 
@@ -2969,7 +2971,7 @@ def bfi_k(
 def rsq(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Response Styles Questionnaire (RSQ)**.
 
@@ -3073,7 +3075,7 @@ def rsq(
 def sss(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[Union[str, int]]]] = None,
+    subscales: Optional[dict[str, Sequence[Union[str, int]]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Subjective Social Status (SSS)**.
 
@@ -3150,7 +3152,7 @@ def sss(
 def fkk(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Fragebogen zur Kompetenz- und Kontrollüberzeugungen (FKK)** (Competence and Control Beliefs).
 
@@ -3283,7 +3285,7 @@ def fkk(
 def bidr(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Balanced Inventory of Desirable Responding (BIDR)**.
 
@@ -3379,7 +3381,7 @@ def bidr(
 def kkg(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Kontrollüberzeugungen zu Krankheit und Gesundheit Questionnaire (KKG)**.
 
@@ -3465,7 +3467,7 @@ def kkg(
 def fee(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
     language: Optional[Literal["german", "english"]] = None,
 ) -> pd.DataFrame:
     """Compute the **Fragebogen zum erinnerten elterlichen Erziehungsverhalten (FEE)**.
@@ -3582,7 +3584,7 @@ def fee(
 def mbi_gs(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Maslach Burnout Inventory - General Survey (MBI-GS)**.
 
@@ -3669,7 +3671,7 @@ def mbi_gs(
 def mbi_gss(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Maslach Burnout Inventory - General Survey for Students (MBI-GS (S))**.
 
@@ -3755,7 +3757,7 @@ def mbi_gss(
 def mlq(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Meaning in Life Questionnaire (MLQ)**.
 
@@ -3807,6 +3809,7 @@ def mlq(
         if number of columns does not match
     :exc:`~biopsykit.utils.exceptions.ValueRangeError`
         if values are not within the required score range
+
     References
     ----------
     Steger, M. F., Frazier, P., Oishi, S., & Kaler, M. (2006). The meaning in life questionnaire: Assessing the
@@ -3916,7 +3919,7 @@ def mlq(
 def pfb(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Partnerschaftsfragebogen (PFB)**.
 
@@ -3997,7 +4000,7 @@ def pfb(
     return pd.DataFrame(pfb_data, index=data.index)
 
 
-def _pfb_assert_value_range(data: pd.DataFrame, subscales: Dict[str, Sequence[int]], score_range: Sequence[int]):
+def _pfb_assert_value_range(data: pd.DataFrame, subscales: dict[str, Sequence[int]], score_range: Sequence[int]):
     try:
         for subscale in subscales:
             # the " Glueck" column has a different score range => check separately
@@ -4126,7 +4129,7 @@ def asq_mod(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]
 def mdbf(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Multidimensionaler Befindlichkeitsfragebogen (MDBF)**.
 
@@ -4302,10 +4305,10 @@ def meq(
         _assert_value_range(data.iloc[:, col_mask], score_range)
     except ValueRangeError as e:
         raise ValueRangeError(
-            "This implementation of MEQ expects all values in the range {}, except the columns {}, "
-            "which are expected to be in the range {}! "
+            f"This implementation of MEQ expects all values in the range {score_range}, except the columns {col_idx}, "
+            f"which are expected to be in the range {[1, 5]}! "
             "Please consider converting to the correct range using "
-            "`biopsykit.questionnaire.utils.convert_scale()`.".format(score_range, col_idx, [1, 5])
+            "`biopsykit.questionnaire.utils.convert_scale()`."
         ) from e
 
     # invert items 1, 2, 10, 17, 18 (score range [1, 5])
@@ -4649,7 +4652,7 @@ def idq_post_scan(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.
 def clq(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Claustrophobia Questionnaire (CLQ)**.
 
@@ -4799,7 +4802,7 @@ def mkhai(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] 
 def abi_ms(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Angstbewältigungsinventar für medizinische Situationen (ABI-MS)**.
 
@@ -4906,7 +4909,7 @@ def abi_ms(
 def asi(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Angstsensitivitätsindex-3 (ASI)** (Anxiety Sensitivity Index).
 
@@ -4998,7 +5001,7 @@ def asi(
 def erq(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Emotion Regulation Questionnaire (ERQ)**.
 
@@ -5194,7 +5197,7 @@ def resilience(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Ind
 def sci(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Stress und Coping Inventar** (SCI).
 
@@ -5314,7 +5317,7 @@ def sci(
 def bfi_10(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Big Five Inventory - 10 items (BFI-10)**.
 
@@ -5460,7 +5463,7 @@ def swls(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 def swb(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
     invert_score: Optional[bool] = False,
 ) -> pd.DataFrame:
     """Compute the **Subjective Well-Being Scale (SWB)**.
@@ -5554,7 +5557,7 @@ def swb(
 def sop(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Self-Efficacy, Optimism & Pessimism Scale (SOP)**.
 
@@ -5634,7 +5637,7 @@ def sop(
 def ie_4(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Interne-Externe Kontrollüberzeugungs-Inventar (IE-4)** (Internal-External Locus of Control).
 
@@ -5768,7 +5771,7 @@ def sds(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
 def tb(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Technology Commitment Questionnaire (TB - Technologiebereitschaft)**.
 
@@ -5914,7 +5917,7 @@ def asku(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] =
 def wpi(
     data: pd.DataFrame,
     columns: Optional[Union[Sequence[str], pd.Index]] = None,
-    subscales: Optional[Dict[str, Sequence[int]]] = None,
+    subscales: Optional[dict[str, Sequence[int]]] = None,
 ) -> pd.DataFrame:
     """Compute the **Wiener Patientenzufriedenheitsinventar (WPI)**.
 

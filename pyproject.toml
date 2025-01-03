@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopsykit"
-version = "0.10.2"
+version = "0.11.0"
 description = "A Python package for the analysis of biopsychological data."
 authors = [
     "Robert Richer <robert.richer@fau.de>",
@@ -54,7 +54,7 @@ poethepoet = "^0.10.0"
 pytest = "^6"
 pytest-cov = "^2"
 ipykernel = "^6"
-ruff = "^0.0.261"
+ruff = "^0"
 # Doc dependencies. They also need to be updated in ./docs/requirements.txt
 sphinx = "^4"
 numpydoc = "^1"
@@ -105,7 +105,7 @@ skip_gitignore = true
 _format_black = "black ."
 _format_ruff = "ruff check . --fix-only"
 format = { sequence = ["_format_black", "_format_ruff"], help = "Format all files." }
-lint = { cmd = "ruff src --fix", help = "Lint all files with ruff." }
+lint = { cmd = "ruff check src --fix", help = "Lint all files with ruff." }
 _lint_ci = "ruff check src --output-format=github"
 _check_black = "black . --check"
 ci_check = { sequence = ["_check_black", "_lint_ci"], help = "Check all potential format and linting issues." }

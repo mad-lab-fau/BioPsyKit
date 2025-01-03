@@ -1,8 +1,9 @@
 """A couple of helper functions that ease the use of the typical biopsykit data formats."""
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import (
     _assert_has_column_multiindex,
     _assert_has_column_prefix,
@@ -18,58 +19,58 @@ __all__ = [
     "ECG_RESULT_DATAFRAME_COLUMNS",
     "HEART_RATE_DATAFRAME_COLUMNS",
     "R_PEAK_DATAFRAME_COLUMNS",
-    "CodebookDataFrame",
-    "MeanSeDataFrame",
-    "BiomarkerRawDataFrame",
-    "SalivaRawDataFrame",
-    "SalivaFeatureDataFrame",
-    "SalivaMeanSeDataFrame",
-    "SleepEndpointDataFrame",
-    "SleepEndpointDict",
-    "EcgRawDataFrame",
-    "EcgResultDataFrame",
-    "RPeakDataFrame",
-    "HeartRateDataFrame",
     "Acc1dDataFrame",
     "Acc3dDataFrame",
+    "BiomarkerRawDataFrame",
+    "CodebookDataFrame",
+    "EcgRawDataFrame",
+    "EcgResultDataFrame",
     "Gyr1dDataFrame",
     "Gyr3dDataFrame",
+    "HeartRateDataFrame",
+    "HeartRatePhaseDict",
+    "HeartRateStudyDataDict",
+    "HeartRateSubjectDataDict",
     "ImuDataFrame",
+    "MeanSeDataFrame",
+    "MergedStudyDataDict",
+    "PhaseDict",
+    "RPeakDataFrame",
+    "SalivaFeatureDataFrame",
+    "SalivaMeanSeDataFrame",
+    "SalivaRawDataFrame",
+    "SleepEndpointDataFrame",
+    "SleepEndpointDict",
     "SleepWakeDataFrame",
+    "StudyDataDict",
     "SubjectConditionDataFrame",
     "SubjectConditionDict",
-    "PhaseDict",
     "SubjectDataDict",
-    "HeartRatePhaseDict",
-    "HeartRateSubjectDataDict",
-    "HeartRateStudyDataDict",
-    "StudyDataDict",
-    "MergedStudyDataDict",
-    "is_subject_condition_dataframe",
-    "is_subject_condition_dict",
-    "is_codebook_dataframe",
-    "is_mean_se_dataframe",
-    "is_phase_dict",
-    "is_hr_phase_dict",
-    "is_subject_data_dict",
-    "is_hr_subject_data_dict",
-    "is_study_data_dict",
-    "is_merged_study_data_dict",
-    "is_saliva_raw_dataframe",
-    "is_saliva_feature_dataframe",
-    "is_saliva_mean_se_dataframe",
-    "is_sleep_endpoint_dataframe",
-    "is_sleep_endpoint_dict",
-    "is_ecg_raw_dataframe",
-    "is_ecg_result_dataframe",
-    "is_r_peak_dataframe",
-    "is_heart_rate_dataframe",
     "is_acc1d_dataframe",
     "is_acc3d_dataframe",
+    "is_codebook_dataframe",
+    "is_ecg_raw_dataframe",
+    "is_ecg_result_dataframe",
     "is_gyr1d_dataframe",
     "is_gyr3d_dataframe",
+    "is_heart_rate_dataframe",
+    "is_hr_phase_dict",
+    "is_hr_subject_data_dict",
     "is_imu_dataframe",
+    "is_mean_se_dataframe",
+    "is_merged_study_data_dict",
+    "is_phase_dict",
+    "is_r_peak_dataframe",
+    "is_saliva_feature_dataframe",
+    "is_saliva_mean_se_dataframe",
+    "is_saliva_raw_dataframe",
+    "is_sleep_endpoint_dataframe",
+    "is_sleep_endpoint_dict",
     "is_sleep_wake_dataframe",
+    "is_study_data_dict",
+    "is_subject_condition_dataframe",
+    "is_subject_condition_dict",
+    "is_subject_data_dict",
 ]
 
 ECG_RESULT_DATAFRAME_COLUMNS = ["ECG_Raw", "ECG_Clean", "ECG_Quality", "ECG_R_Peaks", "R_Peak_Outlier"]
@@ -160,7 +161,7 @@ A ``SubjectConditionDataFrame`` has an index with subject IDs named ``subject`` 
 assignment named ``condition``.
 """
 
-SubjectConditionDict = Dict[str, np.ndarray]
+SubjectConditionDict = dict[str, np.ndarray]
 """Dictionary containing subject IDs and condition assignment in a standardized format.
 
 A ``SubjectConditionDict`` contains conditions as dictionary keys and a collection of subject IDs
@@ -231,7 +232,7 @@ The resulting dataframe must at least have a ``sample`` index level and the two 
 It can have additional index levels, such as ``condition`` or ``time``.
 """
 
-SleepEndpointDict = Dict[str, Any]
+SleepEndpointDict = dict[str, Any]
 """Dictionary containing sleep endpoints in a standardized format.
 
 The dict entries represent the sleep endpoints and should follow a standardized naming convention,
@@ -424,7 +425,7 @@ The dataframe is expected to have at least the following column(s):
 
 """
 
-PhaseDict = Dict[str, pd.DataFrame]
+PhaseDict = dict[str, pd.DataFrame]
 """Dictionary containing general time-series data of **one single subject** split into **different phases**.
 
 A ``PhaseDict`` is a dictionary with the following format:
@@ -437,7 +438,7 @@ Each ``dataframe`` is a :class:`~pandas.DataFrame` with the following format:
 
 """
 
-HeartRatePhaseDict = Dict[str, HeartRateDataFrame]
+HeartRatePhaseDict = dict[str, HeartRateDataFrame]
 """Dictionary containing time-series heart rate data of **one single subject** split into **different phases**.
 
 A ``HeartRatePhaseDict`` is a dictionary with the following format:
@@ -451,7 +452,7 @@ Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
 
 """
 
-SubjectDataDict = Dict[str, PhaseDict]
+SubjectDataDict = dict[str, PhaseDict]
 """Dictionary representing time-series data from **multiple subjects** collected during a psychological protocol.
 
 A ``SubjectDataDict`` is a nested dictionary with time-series data from multiple subjects, each containing data
@@ -467,7 +468,7 @@ This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.data
 where the level order is reversed: `phase`, `subject`.
 """
 
-HeartRateSubjectDataDict = Union[Dict[str, HeartRatePhaseDict], Dict[str, Dict[str, HeartRatePhaseDict]]]
+HeartRateSubjectDataDict = Union[dict[str, HeartRatePhaseDict], dict[str, dict[str, HeartRatePhaseDict]]]
 """Dictionary with time-series heart rate data from **multiple subjects** collected during a psychological protocol.
 
 A ``HeartRateSubjectDataDict`` is a nested dictionary with time-series heart rate data from multiple subjects,
@@ -489,7 +490,7 @@ where the level order is reversed: `phase`, `subject`.
 
 """
 
-StudyDataDict = Dict[str, Dict[str, pd.DataFrame]]
+StudyDataDict = dict[str, dict[str, pd.DataFrame]]
 """Dictionary with data from **multiple phases** collected during a psychological protocol.
 
 A ``StudyDataDict`` is a nested dictionary with time-series data from multiple phases, each phase containing data
@@ -506,7 +507,7 @@ This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.Subje
 """
 
 
-HeartRateStudyDataDict = Dict[str, Dict[str, HeartRateDataFrame]]
+HeartRateStudyDataDict = dict[str, dict[str, HeartRateDataFrame]]
 """Dictionary with heart rate data from **multiple phases** collected during a psychological protocol.
 
 A ``HeartRateStudyDataDict`` is a nested dictionary with time-series heart rate data from multiple phases,
@@ -527,7 +528,7 @@ This dict results from rearranging a :obj:`~biopsykit.utils.datatype_helper.Hear
 :func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
 """
 
-MergedStudyDataDict = Dict[str, pd.DataFrame]
+MergedStudyDataDict = dict[str, pd.DataFrame]
 """Dictionary with merged time-series data of **multiple subjects**, split into **different phases**.
 
 A ``MergedStudyDataDict`` is a dictionary with the following format:
@@ -589,7 +590,7 @@ def is_subject_condition_dataframe(
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SubjectConditionDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -629,7 +630,7 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SubjectConditionDict. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -669,15 +670,14 @@ def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[boo
         _assert_has_index_levels(data, index_levels="variable", match_atleast=True, match_order=False)
         if not np.issubdtype(data.columns.dtype, np.integer):
             raise ValidationError(
-                "The dtypes of columns in a CodebookDataFrame are expected to be of type int, but it is {}.".format(
-                    data.columns.dtype
-                )
+                f"The dtypes of columns in a CodebookDataFrame are expected to be of type int, "
+                f"but it is {data.columns.dtype}."
             )
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a CodebookDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -722,7 +722,7 @@ def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] 
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a MeanSeDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -762,9 +762,9 @@ def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] =
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a HeartRatePhaseDict. "
-                "The validation failed with the following error:\n\n{}\n"
+                f"The validation failed with the following error:\n\n{e!s}\n"
                 "HeartRatePhaseDicts in an old format can be converted into the new format using "
-                "`biopsykit.utils.legacy_helper.legacy_convert_hr_phase_dict()`".format(str(e))
+                "`biopsykit.utils.legacy_helper.legacy_convert_hr_phase_dict()`"
             ) from e
         return False
     return True
@@ -807,7 +807,7 @@ def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Op
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a PhaseDict. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -847,7 +847,7 @@ def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Opt
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a HeartRateSubjectDataDict. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -889,7 +889,7 @@ def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = Tr
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a StudyDataDict. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -931,7 +931,7 @@ def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] 
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SubjectDataDict. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -973,14 +973,14 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a MergedStudyDataDict. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
 
 
 def is_biomarker_raw_dataframe(
-    data: BiomarkerRawDataFrame, biomarker_type: Union[str, List[str]], raise_exception: Optional[bool] = True
+    data: BiomarkerRawDataFrame, biomarker_type: Union[str, list[str]], raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
     """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`.
 
@@ -1022,14 +1022,14 @@ def is_biomarker_raw_dataframe(
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a BiomarkerRawDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
 
 
 def is_saliva_raw_dataframe(
-    data: SalivaRawDataFrame, saliva_type: Union[str, List[str]], raise_exception: Optional[bool] = True
+    data: SalivaRawDataFrame, saliva_type: Union[str, list[str]], raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
     """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`.
 
@@ -1102,7 +1102,7 @@ def is_saliva_feature_dataframe(
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SalivaFeatureDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1142,7 +1142,7 @@ def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: O
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SalivaMeanSeDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1183,7 +1183,7 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SleepEndpointDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1224,7 +1224,7 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SleepEndpointDict. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1263,7 +1263,7 @@ def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] 
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a EcgRawDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1308,7 +1308,7 @@ def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[boo
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a EcgResultDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1350,7 +1350,7 @@ def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a HeartRateDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1396,7 +1396,7 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a RPeakDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1438,7 +1438,7 @@ def is_acc1d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a Acc1dDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1483,7 +1483,7 @@ def is_acc3d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a Acc3dDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1525,7 +1525,7 @@ def is_gyr1d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a Gyr1dDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1570,7 +1570,7 @@ def is_gyr3d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a Gyr3dDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1609,7 +1609,7 @@ def is_imu_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = Tru
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a ImuDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True
@@ -1653,7 +1653,7 @@ def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SleepWakeDataFrame. "
-                "The validation failed with the following error:\n\n{}".format(str(e))
+                f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False
     return True

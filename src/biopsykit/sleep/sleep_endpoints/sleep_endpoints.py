@@ -1,9 +1,11 @@
 """Functions for computing sleep endpoints, i.e., parameters that characterize a recording during a sleep study."""
+from collections.abc import Sequence
 from numbers import Number
-from typing import Optional, Sequence, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils.datatype_helper import SleepEndpointDataFrame, SleepEndpointDict, _SleepEndpointDataFrame
 
 

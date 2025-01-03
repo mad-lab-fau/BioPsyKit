@@ -1,17 +1,18 @@
 """Functions to analyze classification results."""
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from biopsykit.classification.model_selection import SklearnPipelinePermuter
-from biopsykit.classification.utils import prepare_df_sklearn
 from fau_colors import cmaps
 from matplotlib import pyplot as plt
-
 from matplotlib.cm import ColormapRegistry
 from matplotlib.colors import ListedColormap
 from sklearn.metrics import ConfusionMatrixDisplay
+
+from biopsykit.classification.model_selection import SklearnPipelinePermuter
+from biopsykit.classification.utils import prepare_df_sklearn
 
 pipeline_step_map = {
     "pipeline_scaler": "Scaler",
@@ -47,8 +48,8 @@ clf_map = {
 def predictions_as_df(
     pipeline_permuter: SklearnPipelinePermuter,
     data: pd.DataFrame,
-    pipeline: Tuple[str],
-    label_mapping: Optional[Dict[str, str]] = None,
+    pipeline: tuple[str],
+    label_mapping: Optional[dict[str, str]] = None,
     index_col: Optional[str] = None,
 ) -> pd.DataFrame:
     """Get predictions from a specified pipeline and merge them with the index of the input dataframe.
@@ -95,9 +96,9 @@ def predictions_as_df(
 def predict_proba_from_estimator(
     pipeline_permuter: SklearnPipelinePermuter,
     data: pd.DataFrame,
-    pipeline: Tuple[str],
+    pipeline: tuple[str],
     label_col: Optional[str] = "label",
-    column_names: Optional[Dict[str, str]] = None,
+    column_names: Optional[dict[str, str]] = None,
 ) -> pd.DataFrame:
     """Get predictions as probabilities from a specified pipeline and merge them with the index of the input dataframe.
 
@@ -195,9 +196,9 @@ def plot_conf_matrix(
     predictions: pd.DataFrame,
     labels: Sequence[str],
     label_name: Optional[str] = "label",
-    conf_matrix_kwargs: Optional[Dict[str, Any]] = None,
+    conf_matrix_kwargs: Optional[dict[str, Any]] = None,
     **kwargs,
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot confusion matrix from predictions.
 
     Parameters
@@ -219,7 +220,7 @@ def plot_conf_matrix(
     if conf_matrix_kwargs is None:
         conf_matrix_kwargs = {}
     # check if ax is given
-    ax = kwargs.get("ax", None)
+    ax = kwargs.get("ax")
     if ax is None:
         fig, ax = plt.subplots(**kwargs)
     else:
@@ -263,7 +264,7 @@ def plot_conf_matrix_proba(
     label_col: Optional[str] = "label",
     label_name: Optional[str] = "label",
     **kwargs,
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot confusion matrix from prediction probabilities.
 
     Parameters
@@ -281,7 +282,7 @@ def plot_conf_matrix_proba(
 
     """
     # check if ax is given
-    ax = kwargs.get("ax", None)
+    ax = kwargs.get("ax")
     if ax is None:
         fig, ax = plt.subplots(**kwargs)
     else:
@@ -302,7 +303,7 @@ def plot_conf_matrix_proba(
 
 def metric_summary_to_latex(
     permuter_or_df: Union[SklearnPipelinePermuter, pd.DataFrame],
-    metrics: Sequence[str] = None,
+    metrics: Optional[Sequence[str]] = None,
     pipeline_steps: Optional[Sequence[str]] = None,
     si_table_format: Optional[str] = None,
     highlight_best: Optional[str] = None,

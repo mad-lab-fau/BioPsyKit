@@ -1,12 +1,12 @@
 """A set of custom exceptions."""
 
 __all__ = [
-    "ValidationError",
-    "FileExtensionError",
     "DataFrameTransformationError",
-    "ValueRangeError",
-    "FeatureComputationError",
     "EcgProcessingError",
+    "FeatureComputationError",
+    "FileExtensionError",
+    "ValidationError",
+    "ValueRangeError",
 ]
 
 

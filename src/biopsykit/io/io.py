@@ -1,12 +1,15 @@
 """Module containing different I/O functions to load time log data, subject condition lists, questionnaire data, etc."""
 
 import datetime
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Literal, Optional, Sequence, Tuple, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
 import pytz
+from nilspodlib import Dataset
+
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dtype
 from biopsykit.utils._types import path_t
 from biopsykit.utils.dataframe_handling import convert_nan
@@ -23,16 +26,15 @@ from biopsykit.utils.datatype_helper import (
 from biopsykit.utils.exceptions import ValidationError
 from biopsykit.utils.file_handling import is_excel_file
 from biopsykit.utils.time import tz
-from nilspodlib import Dataset
 
 __all__ = [
-    "load_long_format_csv",
-    "load_time_log",
-    "load_subject_condition_list",
-    "load_questionnaire_data",
-    "load_pandas_dict_excel",
-    "load_codebook",
     "convert_time_log_datetime",
+    "load_codebook",
+    "load_long_format_csv",
+    "load_pandas_dict_excel",
+    "load_questionnaire_data",
+    "load_subject_condition_list",
+    "load_time_log",
     "write_pandas_dict_excel",
     "write_result_dict",
 ]
@@ -74,7 +76,7 @@ def load_time_log(
     subject_col: Optional[str] = None,
     condition_col: Optional[str] = None,
     additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
-    phase_cols: Optional[Union[Sequence[str], Dict[str, str]]] = None,
+    phase_cols: Optional[Union[Sequence[str], dict[str, str]]] = None,
     continuous_time: Optional[bool] = True,
     **kwargs,
 ) -> pd.DataFrame:
@@ -301,7 +303,7 @@ def load_atimelogger_file(file_path: path_t, timezone: Optional[Union[datetime.t
 
 def convert_time_log_dict(
     timelog: Union[pd.DataFrame, pd.Series], time_format: Optional[Literal["str", "time"]] = "time"
-) -> Dict[str, Tuple[Union[str, datetime.time]]]:
+) -> dict[str, tuple[Union[str, datetime.time]]]:
     """Convert time log into dictionary.
 
     The resulting dictionary will have the phase names as keys and a tuple with start and end times as values.
@@ -581,7 +583,7 @@ def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
 
 def load_pandas_dict_excel(
     file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, datetime.tzinfo]] = None
-) -> Dict[str, pd.DataFrame]:
+) -> dict[str, pd.DataFrame]:
     """Load Excel file containing pandas dataframes with time series data of one subject.
 
     Parameters
@@ -617,17 +619,17 @@ def load_pandas_dict_excel(
     # assure that the file is an Excel file
     is_excel_file(file_path)
 
-    dict_df: Dict[str, pd.DataFrame] = pd.read_excel(file_path, index_col=index_col, sheet_name=None)
+    dict_df: dict[str, pd.DataFrame] = pd.read_excel(file_path, index_col=index_col, sheet_name=None)
 
     # (re-)localize each sheet since Excel does not support timezone-aware dates (if index is DatetimeIndex)
-    for key in dict_df:
-        if isinstance(dict_df[key].index, pd.DatetimeIndex):
-            dict_df[key] = dict_df[key].tz_localize(timezone)
+    for key, val in dict_df.items():
+        if isinstance(val.index, pd.DatetimeIndex):
+            dict_df[key] = val.tz_localize(timezone)
     return dict_df
 
 
 def write_pandas_dict_excel(
-    data_dict: Dict[str, pd.DataFrame],
+    data_dict: dict[str, pd.DataFrame],
     file_path: path_t,
     index_col: Optional[bool] = True,
 ):
@@ -653,17 +655,17 @@ def write_pandas_dict_excel(
     _assert_file_extension(file_path, [".xls", ".xlsx"])
 
     writer = pd.ExcelWriter(file_path, engine="xlsxwriter")  # pylint:disable=abstract-class-instantiated
-    for key in data_dict:
-        if isinstance(data_dict[key].index, pd.DatetimeIndex):
+    for key, val in data_dict.items():
+        if isinstance(val.index, pd.DatetimeIndex):
             # un-localize DateTimeIndex because Excel doesn't support timezone-aware dates
-            data_dict[key].tz_localize(None).to_excel(writer, sheet_name=key, index=index_col)
+            val.tz_localize(None).to_excel(writer, sheet_name=key, index=index_col)
         else:
-            data_dict[key].to_excel(writer, sheet_name=key, index=index_col)
+            val.to_excel(writer, sheet_name=key, index=index_col)
     writer.close()
 
 
 def write_result_dict(
-    result_dict: Dict[str, pd.DataFrame],
+    result_dict: dict[str, pd.DataFrame],
     file_path: path_t,
     index_name: Optional[str] = "subject",
 ):
@@ -748,7 +750,7 @@ def _sanitize_index_cols(
     subject_col: str,
     condition_col: Optional[str],
     additional_index_cols: Optional[Union[str, Sequence[str]]],
-) -> Tuple[pd.DataFrame, Sequence[str]]:
+) -> tuple[pd.DataFrame, Sequence[str]]:
     subject_col = _get_subject_col(data, subject_col)
     data = data.rename(columns={subject_col: "subject"})
     subject_col = "subject"
@@ -779,7 +781,7 @@ def _load_dataframe(file_path, **kwargs):
 
 
 def _apply_index_cols(
-    data: pd.DataFrame, index_cols: Optional[Union[str, Sequence[str], Dict[str, str]]] = None
+    data: pd.DataFrame, index_cols: Optional[Union[str, Sequence[str], dict[str, str]]] = None
 ) -> pd.DataFrame:
     new_index_cols = None
     if isinstance(index_cols, str):
@@ -798,7 +800,7 @@ def _apply_index_cols(
     return data
 
 
-def _apply_phase_cols(data: pd.DataFrame, phase_cols: Union[Dict[str, Sequence[str]], Sequence[str]]) -> pd.DataFrame:
+def _apply_phase_cols(data: pd.DataFrame, phase_cols: Union[dict[str, Sequence[str]], Sequence[str]]) -> pd.DataFrame:
     new_phase_cols = None
     if isinstance(phase_cols, dict):
         new_phase_cols = phase_cols
@@ -814,7 +816,7 @@ def _apply_phase_cols(data: pd.DataFrame, phase_cols: Union[Dict[str, Sequence[s
 
 
 def _parse_time_log_not_continuous(
-    data: pd.DataFrame, index_cols: Union[str, Sequence[str], Dict[str, str]]
+    data: pd.DataFrame, index_cols: Union[str, Sequence[str], dict[str, str]]
 ) -> pd.DataFrame:
     start_cols = np.squeeze(data.columns.str.extract(r"(\w+)_start").dropna().values)
     end_cols = np.squeeze(data.columns.str.extract(r"(\w+)_end").dropna().values)

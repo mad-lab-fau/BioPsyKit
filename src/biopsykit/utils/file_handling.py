@@ -1,9 +1,11 @@
 """Helper functions for file handling."""
 import re
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence, Union
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
+
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types import path_t
 

@@ -1,20 +1,21 @@
 """Module containing several advanced plotting functions."""
-import warnings
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from biopsykit.utils.functions import se
 from statannotations.Annotator import Annotator
+
+from biopsykit.utils.functions import se
 
 _PVALUE_THRESHOLDS = [[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]
 
 
 def lineplot(
     data: pd.DataFrame, x: str, y: str, hue: Optional[str] = None, style: Optional[str] = None, **kwargs
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """Draw a line plot with error bars with the possibility of several semantic groupings.
 
     This is an extension to seaborn's lineplot function (:func:`seaborn.lineplot`).
@@ -95,8 +96,8 @@ def lineplot(
     x_offset = kwargs.get("x_offset", 0.01)
     multi_x_offset = kwargs.get("multi_x_offset", 0)
     order = kwargs.get("order")
-    marker = kwargs.get("marker", None)
-    linestyle = kwargs.get("linestyle", None)
+    marker = kwargs.get("marker")
+    linestyle = kwargs.get("linestyle")
     hue_order = kwargs.get("hue_order")
     palette = kwargs.get("palette")
     show_legend = kwargs.get("show_legend", True)
@@ -158,7 +159,7 @@ def lineplot(
 def _lineplot_style_axis(data: pd.DataFrame, x: str, y: str, x_vals: np.ndarray, order: str, ax: plt.Axes, **kwargs):
     xlabel = kwargs.get("xlabel", x)
     ylabel = kwargs.get("ylabel", y)
-    ylim = kwargs.get("ylim", None)
+    ylim = kwargs.get("ylim")
 
     if order is None:
         xticklabels = kwargs.get("xticklabels", data.groupby([x]).groups.keys())
@@ -172,7 +173,7 @@ def _lineplot_style_axis(data: pd.DataFrame, x: str, y: str, x_vals: np.ndarray,
     ax.set_ylim(ylim)
 
 
-def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes]:
+def stacked_barchart(data: pd.DataFrame, **kwargs) -> tuple[plt.Figure, plt.Axes]:
     """Draw a stacked bar chart.
 
     A stacked bar chart has multiple bar charts along a categorical axis (``x`` axis) where values are
@@ -209,14 +210,14 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes
         function to rearrange dataframe to be plotted as stacked bar chart
 
     """
-    ax: plt.Axes = kwargs.get("ax", None)
+    ax: plt.Axes = kwargs.get("ax")
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
 
-    ylabel = kwargs.get("ylabel", None)
-    order = kwargs.get("order", None)
+    ylabel = kwargs.get("ylabel")
+    order = kwargs.get("order")
     if order:
         data = data.reindex(order)
 
@@ -230,16 +231,16 @@ def stacked_barchart(data: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes
     return fig, ax
 
 
-def feature_boxplot(  # pylint:disable=too-many-branches
+def feature_boxplot(  # noqa: C901
     data: pd.DataFrame,
     x: Optional[str] = None,
     y: Optional[str] = None,
     order: Optional[Sequence[str]] = None,
     hue: Optional[str] = None,
     hue_order: Optional[Sequence[str]] = None,
-    stats_kwargs: Optional[Dict[str, Any]] = None,
+    stats_kwargs: Optional[dict[str, Any]] = None,
     **kwargs,
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """Draw boxplot with significance brackets.
 
     This is a wrapper of seaborn's boxplot function (:func:`~seaborn.boxplot`) that allows to add significance
@@ -386,11 +387,11 @@ def feature_boxplot(  # pylint:disable=too-many-branches
     return fig, ax
 
 
-def _feature_boxplot_sanitize_stats_kwargs(stats_kwargs: Dict[str, Any]) -> Dict[str, Any]:
+def _feature_boxplot_sanitize_stats_kwargs(stats_kwargs: dict[str, Any]) -> dict[str, Any]:
     boxplot_pvals = stats_kwargs.get("pvalues", {})
     if len(stats_kwargs) > 0:
-        stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction", None)
-        stats_kwargs["test"] = stats_kwargs.get("test", None)
+        stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction")
+        stats_kwargs["test"] = stats_kwargs.get("test")
 
     if len(boxplot_pvals) > 0:
         stats_kwargs["perform_stat_test"] = False
@@ -404,14 +405,14 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     data: pd.DataFrame,
     x: str,
     y: str,
-    features: Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]],
+    features: Union[Sequence[str], dict[str, Union[str, Sequence[str]]]],
     group: str,
     order: Optional[Sequence[str]] = None,
     hue: Optional[str] = None,
     hue_order: Optional[Sequence[str]] = None,
-    stats_kwargs: Optional[Dict] = None,
+    stats_kwargs: Optional[dict] = None,
     **kwargs,
-) -> Tuple[plt.Figure, List[plt.Axes]]:
+) -> tuple[plt.Figure, list[plt.Axes]]:
     """Draw multiple features as boxplots with significance brackets.
 
     For each feature, a new subplot will be created. Similarly to `feature_boxplot` subplots can be annotated
@@ -497,7 +498,7 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     if isinstance(features, list):
         features = {f: [f] if isinstance(f, str) else f for f in features}
 
-    axs: List[plt.Axes] = kwargs.pop("axs", kwargs.pop("ax", None))
+    axs: list[plt.Axes] = kwargs.pop("axs", kwargs.pop("ax", None))
     fig, axs = _plot_get_fig_ax_list(features, axs, **kwargs)
 
     if stats_kwargs is None:
@@ -579,7 +580,7 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     return fig, axs
 
 
-def _multi_feature_boxplot_get_order(order: Union[Dict[str, Sequence[str]], Sequence[str]], key: str):
+def _multi_feature_boxplot_get_order(order: Union[dict[str, Sequence[str]], Sequence[str]], key: str):
     if isinstance(order, dict):
         return order[key]
     return order
@@ -587,7 +588,7 @@ def _multi_feature_boxplot_get_order(order: Union[Dict[str, Sequence[str]], Sequ
 
 def feature_pairplot(
     data: pd.DataFrame, abbreviate_names: Optional[bool] = True, **kwargs
-) -> Union[sns.PairGrid, Tuple[sns.PairGrid, pd.DataFrame]]:
+) -> Union[sns.PairGrid, tuple[sns.PairGrid, pd.DataFrame]]:
     """Plot feature pairs of a dataset.
 
     This function provides a convenient interface to the :func:`~seaborn.pairplot` class, with several additional
@@ -653,7 +654,7 @@ def _get_df_lineplot(data: pd.DataFrame, x: str, y: str, hue: str, order: Sequen
 def _set_legend_errorbar(**kwargs):
     legend_fontsize = kwargs.get("legend_fontsize", "small")
     legend_loc = kwargs.get("legend_loc", "upper left")
-    legend_title = kwargs.get("legend_title", None)
+    legend_title = kwargs.get("legend_title")
     ax = kwargs.get("ax")
 
     # get handles
@@ -670,7 +671,7 @@ def _get_styles(
     hue: str,
     marker: Optional[Union[str, Sequence[str]]] = None,
     linestyle: Optional[Union[str, Sequence[str]]] = None,
-) -> Tuple[Sequence[str], Sequence[str]]:
+) -> tuple[Sequence[str], Sequence[str]]:
     num_cats = None
     if style is None:
         if all(v is not None for v in [hue, marker, linestyle]):
@@ -689,7 +690,7 @@ def _get_styles(
 
 def _get_marker_linestyle(
     marker: Union[str, Sequence[str]], linestyle: Union[str, Sequence[str]], num_cats: int
-) -> Tuple[Sequence[str], Sequence[str]]:
+) -> tuple[Sequence[str], Sequence[str]]:
     if isinstance(marker, str):
         marker = [marker] * num_cats
     if isinstance(linestyle, str):
@@ -699,7 +700,7 @@ def _get_marker_linestyle(
 
 def _get_marker_linestyle_style(
     marker: Union[str, Sequence[str]], linestyle: Union[str, Sequence[str]], num_cats: int
-) -> Tuple[Sequence[str], Sequence[str]]:
+) -> tuple[Sequence[str], Sequence[str]]:
     if marker is None:
         marker = "o"
     if linestyle is None:
@@ -722,15 +723,15 @@ def _add_stat_annot_multi_feature_boxplot(
     order: Sequence[str],
     hue: str,
     hue_order: Sequence[str],
-    stats_kwargs: Dict[str, Any],
+    stats_kwargs: dict[str, Any],
     key: str,
     ax: plt.Axes,
-    dict_box_pairs: Optional[Dict[str, Sequence[str]]] = None,
-    dict_pvals: Optional[Dict[str, Sequence[float]]] = None,
+    dict_box_pairs: Optional[dict[str, Sequence[str]]] = None,
+    dict_pvals: Optional[dict[str, Sequence[float]]] = None,
 ):
     if len(stats_kwargs) > 0:
-        stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction", None)
-        stats_kwargs["test"] = stats_kwargs.get("test", None)
+        stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction")
+        stats_kwargs["test"] = stats_kwargs.get("test")
 
     if dict_box_pairs is not None:
         # filter box pairs by feature
@@ -794,10 +795,10 @@ def _multi_feature_boxplot_add_legend(fig: plt.Figure, hue: str, handles: Sequen
 
 
 def _style_xaxis_multi_feature_boxplot(
-    ax: plt.Axes, xlabels: Dict[str, str], xticklabels: Dict[str, Union[str, Sequence[str]]], key: str
+    ax: plt.Axes, xlabels: dict[str, str], xticklabels: dict[str, Union[str, Sequence[str]]], key: str
 ):
     if key in xticklabels:
-        ax.set_xlabel(xlabels.get(key, None))
+        ax.set_xlabel(xlabels.get(key))
         xt = xticklabels[key]
         if isinstance(xt, str):
             xt = [xt]
@@ -806,7 +807,7 @@ def _style_xaxis_multi_feature_boxplot(
 
 
 def _plot_get_fig_ax(**kwargs):
-    ax: plt.Axes = kwargs.get("ax", None)
+    ax: plt.Axes = kwargs.get("ax")
     if ax is None:
         fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
     else:
@@ -815,8 +816,8 @@ def _plot_get_fig_ax(**kwargs):
 
 
 def _plot_get_fig_ax_list(
-    features: Dict[str, Union[str, Sequence[str]]], axs: List[plt.Axes], **kwargs
-) -> Tuple[plt.Figure, List[plt.Axes]]:
+    features: dict[str, Union[str, Sequence[str]]], axs: list[plt.Axes], **kwargs
+) -> tuple[plt.Figure, list[plt.Axes]]:
     figsize = kwargs.get("figsize")
     if axs is None:
         fig, axs = plt.subplots(figsize=figsize, ncols=len(features))

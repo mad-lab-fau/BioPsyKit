@@ -3,8 +3,9 @@
 For user facing type declarations, please see :py:func:`biopsykit.utils.datatype_helper`.
 """
 
+from collections.abc import Hashable, Sequence
 from pathlib import Path
-from typing import Hashable, Sequence, TypeVar, Union
+from typing import TypeVar, Union
 
 import numpy as np
 import pandas as pd

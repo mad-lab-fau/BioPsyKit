@@ -1,10 +1,12 @@
 """I/O functions for files related to ECG processing."""
 import re
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
 from biopsykit.utils._types import path_t
 from biopsykit.utils.datatype_helper import HeartRatePhaseDict, HeartRateSubjectDataDict, is_hr_phase_dict
@@ -13,8 +15,8 @@ from biopsykit.utils.time import tz
 
 __all__ = [
     "load_hr_phase_dict",
-    "load_hr_phase_dict_folder",
     "load_hr_phase_dict_csv",
+    "load_hr_phase_dict_folder",
     "write_hr_phase_dict",
     "write_hr_phase_dict_csv",
 ]
@@ -188,8 +190,8 @@ def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str)
         return load_hr_phase_dict(file_list[0])
     if len(file_list) > 1:
         warnings.warn(
-            'More than one file matching file pattern "{}" found in folder {}. '
-            "Trying to merge these files into one HeartRatePhaseDict".format(filename_pattern, subject_dir)
+            f'More than one file matching file pattern "{filename_pattern}" found in folder {subject_dir}. '
+            "Trying to merge these files into one HeartRatePhaseDict"
         )
         dict_hr = {}
         for file in file_list:

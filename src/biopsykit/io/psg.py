@@ -2,8 +2,9 @@
 
 import time
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Optional
 
 try:
     import mne
@@ -14,6 +15,7 @@ except ImportError as e:
     ) from e
 
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
 from biopsykit.utils._types import path_t
 
@@ -25,8 +27,8 @@ class PSGDataset:
 
     def __init__(
         self,
-        data_dict: Dict[str, pd.DataFrame],
-        sampling_rate_dict: Dict[str, int],
+        data_dict: dict[str, pd.DataFrame],
+        sampling_rate_dict: dict[str, int],
         start_time: Optional[pd.Timestamp] = None,
         tz: Optional[str] = "Europe/Berlin",
     ):

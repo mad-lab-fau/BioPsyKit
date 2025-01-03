@@ -6,4 +6,4 @@ from biopsykit.protocols.cft import CFT
 from biopsykit.protocols.mist import MIST
 from biopsykit.protocols.tsst import TSST
 
-__all__ = ["BaseProtocol", "CFT", "CAR", "MIST", "TSST", "plotting"]
+__all__ = ["CAR", "CFT", "MIST", "TSST", "BaseProtocol", "plotting"]

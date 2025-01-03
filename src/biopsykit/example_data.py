@@ -3,11 +3,14 @@
 The data is either taken from the local file system in case biopsykit was installed manually or the example data is
 downloaded into the local user folder.
 """
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Optional, Union
 from urllib.request import urlretrieve
 
 import pandas as pd
+from tqdm.auto import tqdm
+
 from biopsykit.io import (
     load_long_format_csv,
     load_pandas_dict_excel,
@@ -37,7 +40,6 @@ from biopsykit.utils.datatype_helper import (
     is_saliva_mean_se_dataframe,
 )
 from biopsykit.utils.file_handling import mkdirs
-from tqdm.auto import tqdm
 
 _EXAMPLE_DATA_PATH_LOCAL = Path(__file__).parent.parent.parent.joinpath("example_data")
 _EXAMPLE_DATA_PATH_HOME = Path.home().joinpath(".biopsykit_data")
@@ -45,28 +47,28 @@ _REMOTE_DATA_PATH = "https://raw.githubusercontent.com/mad-lab-fau/BioPsyKit/mai
 
 __all__ = [
     "get_condition_list_example",
-    "get_saliva_example_plate_format",
-    "get_saliva_example",
-    "get_saliva_mean_se_example",
-    "get_mist_hr_example",
-    "get_hr_result_sample",
-    "get_hr_ensemble_sample",
-    "get_hr_subject_data_dict_example",
-    "get_hr_subject_data_dict_tuple_example",
-    "get_ecg_processing_results_path_example",
-    "get_ecg_path_example",
     "get_ecg_example",
     "get_ecg_example_02",
+    "get_ecg_path_example",
+    "get_ecg_processing_results_path_example",
     "get_eeg_example",
-    "get_sleep_analyzer_raw_file_unformatted",
-    "get_sleep_analyzer_raw_file",
-    "get_sleep_analyzer_raw_example",
-    "get_sleep_analyzer_summary_example",
-    "get_sleep_imu_example",
-    "get_time_log_example",
+    "get_hr_ensemble_sample",
+    "get_hr_result_sample",
+    "get_hr_subject_data_dict_example",
+    "get_hr_subject_data_dict_tuple_example",
+    "get_mist_hr_example",
     "get_questionnaire_example",
     "get_questionnaire_example_wrong_range",
+    "get_saliva_example",
+    "get_saliva_example_plate_format",
+    "get_saliva_mean_se_example",
+    "get_sleep_analyzer_raw_example",
+    "get_sleep_analyzer_raw_file",
+    "get_sleep_analyzer_raw_file_unformatted",
+    "get_sleep_analyzer_summary_example",
+    "get_sleep_imu_example",
     "get_stats_example",
+    "get_time_log_example",
 ]
 
 # TODO add SHA256 check to assert whether remote example data was changed and should be re-downloaded.
@@ -150,7 +152,7 @@ def get_saliva_example_plate_format(
     id_col_names: Optional[Sequence[str]] = None,
     regex_str: Optional[str] = None,
     sample_times: Optional[Sequence[int]] = None,
-    condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
+    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
 ) -> pd.DataFrame:
     r"""Return example saliva data from "plate" format.
 
@@ -216,7 +218,7 @@ def get_saliva_example(sample_times: Optional[Sequence[int]] = None) -> SalivaRa
     )
 
 
-def get_saliva_mean_se_example() -> Dict[str, SalivaMeanSeDataFrame]:
+def get_saliva_mean_se_example() -> dict[str, SalivaMeanSeDataFrame]:
     """Return dictionary with mean and standard error from example data for different saliva types.
 
     Returns
@@ -282,7 +284,7 @@ def get_hr_result_sample() -> pd.DataFrame:
     return load_long_format_csv(_get_data("hr_result_sample.csv"))
 
 
-def get_hr_ensemble_sample() -> Dict[str, pd.DataFrame]:
+def get_hr_ensemble_sample() -> dict[str, pd.DataFrame]:
     """Return heart rate ensemble example data.
 
     The example data consists of time-series heart rate of multiple subjects for different study phases,
@@ -344,7 +346,7 @@ def get_ecg_processing_results_path_example() -> path_t:
     return file_path.parent
 
 
-def get_ecg_example() -> Tuple[pd.DataFrame, float]:
+def get_ecg_example() -> tuple[pd.DataFrame, float]:
     """Return raw ECG example data from one subject.
 
     Returns
@@ -358,7 +360,7 @@ def get_ecg_example() -> Tuple[pd.DataFrame, float]:
     return load_dataset_nilspod(file_path=_get_data("ecg/ecg_sample_Vp01.bin"), datastreams=["ecg"])
 
 
-def get_ecg_example_02() -> Tuple[pd.DataFrame, float]:
+def get_ecg_example_02() -> tuple[pd.DataFrame, float]:
     """Return second raw ECG example data from another subject.
 
     Returns
@@ -389,9 +391,7 @@ def get_sleep_analyzer_raw_file_unformatted(data_source: str) -> pd.DataFrame:
     """
     if data_source not in WITHINGS_RAW_DATA_SOURCES.values():
         raise ValueError(
-            "Unsupported data source {}! Must be one of {}.".format(
-                data_source, list(WITHINGS_RAW_DATA_SOURCES.values())
-            )
+            f"Unsupported data source {data_source}! Must be one of {list(WITHINGS_RAW_DATA_SOURCES.values())}."
         )
     ds_name = list(WITHINGS_RAW_DATA_SOURCES.keys())[list(WITHINGS_RAW_DATA_SOURCES.values()).index(data_source)]
     return pd.read_csv(_get_data(f"sleep/raw_sleep-monitor_{ds_name}.csv"))
@@ -400,7 +400,7 @@ def get_sleep_analyzer_raw_file_unformatted(data_source: str) -> pd.DataFrame:
 def get_sleep_analyzer_raw_file(
     data_source: str,
     split_into_nights: Optional[bool] = True,
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Return Withings Sleep Analyzer raw data example file.
 
     Parameters
@@ -421,9 +421,7 @@ def get_sleep_analyzer_raw_file(
     """
     if data_source not in WITHINGS_RAW_DATA_SOURCES.values():
         raise ValueError(
-            "Unsupported data source {}! Must be one of {}.".format(
-                data_source, list(WITHINGS_RAW_DATA_SOURCES.values())
-            )
+            f"Unsupported data source {data_source}! Must be one of {list(WITHINGS_RAW_DATA_SOURCES.values())}."
         )
 
     ds_name = list(WITHINGS_RAW_DATA_SOURCES.keys())[list(WITHINGS_RAW_DATA_SOURCES.values()).index(data_source)]
@@ -436,7 +434,7 @@ def get_sleep_analyzer_raw_file(
 
 def get_sleep_analyzer_raw_example(
     split_into_nights: Optional[bool] = True,
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Return Withings Sleep Analyzer example raw data.
 
     Parameters
@@ -479,7 +477,7 @@ def get_sleep_analyzer_summary_example() -> SleepEndpointDataFrame:
     return load_withings_sleep_analyzer_summary(_get_data("sleep/sleep.csv"))
 
 
-def get_sleep_imu_example() -> Tuple[pd.DataFrame, float]:
+def get_sleep_imu_example() -> tuple[pd.DataFrame, float]:
     """Return raw IMU example data collected from a wrist-worn IMU sensor during night.
 
     Returns

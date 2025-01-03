@@ -1,10 +1,14 @@
 """Module for processing ECG data."""
 import warnings
-from typing import Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Callable, Literal, Optional, Union
 
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
+from scipy.stats import iqr
+from tqdm.auto import tqdm
+
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.array_handling import find_extrema_in_radius, remove_outlier_and_interpolate, sanitize_input_1d
 from biopsykit.utils.datatype_helper import (
@@ -21,8 +25,6 @@ from biopsykit.utils.datatype_helper import (
     is_ecg_result_dataframe,
     is_r_peak_dataframe,
 )
-from scipy.stats import iqr
-from tqdm.auto import tqdm
 
 __all__ = ["EcgProcessor"]
 
@@ -53,9 +55,9 @@ class EcgProcessor(_BaseProcessor):
 
     def __init__(
         self,
-        data: Union[EcgRawDataFrame, Dict[str, EcgRawDataFrame]],
+        data: Union[EcgRawDataFrame, dict[str, EcgRawDataFrame]],
         sampling_rate: Optional[float] = None,
-        time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
+        time_intervals: Optional[Union[pd.Series, dict[str, Sequence[str]]]] = None,
         include_start: Optional[bool] = False,
     ):
         """Initialize a new ``EcgProcessor`` instance.
@@ -142,7 +144,7 @@ class EcgProcessor(_BaseProcessor):
             # make sure all data has the correct format
             is_ecg_raw_dataframe(df)
 
-        self.ecg_result: Dict[str, EcgResultDataFrame] = {}
+        self.ecg_result: dict[str, EcgResultDataFrame] = {}
         """Dictionary with ECG processing result dataframes, split into different phases.
 
         Each dataframe is expected to be a ``EcgResultDataFrame``.
@@ -164,7 +166,7 @@ class EcgProcessor(_BaseProcessor):
 
         """
 
-        self.rpeaks: Dict[str, RPeakDataFrame] = {}
+        self.rpeaks: dict[str, RPeakDataFrame] = {}
         """Dictionary with R peak location indices, split into different phases.
 
         See Also
@@ -175,7 +177,7 @@ class EcgProcessor(_BaseProcessor):
         """
 
     @property
-    def ecg(self) -> Dict[str, pd.DataFrame]:
+    def ecg(self) -> dict[str, pd.DataFrame]:
         """Return ECG signal after filtering, split into different phases.
 
         Returns
@@ -201,7 +203,7 @@ class EcgProcessor(_BaseProcessor):
     def ecg_process(
         self,
         outlier_correction: Optional[Union[str, Sequence[str]]] = "all",
-        outlier_params: Optional[Dict[str, Union[float, Sequence[float]]]] = None,
+        outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
         title: Optional[str] = None,
         method: Optional[str] = None,
         errors: Optional[ERROR_HANDLING] = "raise",
@@ -320,7 +322,7 @@ class EcgProcessor(_BaseProcessor):
 
     def _ecg_process(
         self, data: EcgRawDataFrame, method: Optional[str] = None, phase: Optional[str] = None
-    ) -> Tuple[EcgResultDataFrame, RPeakDataFrame]:
+    ) -> tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Private method for ECG processing.
 
         Parameters
@@ -428,7 +430,7 @@ class EcgProcessor(_BaseProcessor):
         return list(_outlier_correction_methods.keys())
 
     @classmethod
-    def outlier_params_default(cls) -> Dict[str, Union[float, Sequence[float]]]:
+    def outlier_params_default(cls) -> dict[str, Union[float, Sequence[float]]]:
         """Return default parameter for all outlier correction methods.
 
         .. note::
@@ -458,10 +460,10 @@ class EcgProcessor(_BaseProcessor):
         ecg_signal: Optional[EcgResultDataFrame] = None,
         rpeaks: Optional[RPeakDataFrame] = None,
         outlier_correction: Optional[Union[str, None, Sequence[str]]] = "all",
-        outlier_params: Optional[Dict[str, Union[float, Sequence[float]]]] = None,
+        outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
         imputation_type: Optional[str] = None,
         sampling_rate: Optional[float] = 256.0,
-    ) -> Tuple[EcgResultDataFrame, RPeakDataFrame]:
+    ) -> tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Perform outlier correction on the detected R peaks.
 
         Different methods for outlier detection are available (see
@@ -774,7 +776,7 @@ class EcgProcessor(_BaseProcessor):
         hrv_methods = {key: _hrv_methods[key] for key in hrv_types}
 
         # compute all HRV parameters
-        list_hrv: List[pd.DataFrame] = [
+        list_hrv: list[pd.DataFrame] = [
             hrv_methods[key](rpeaks["R_Peak_Idx"], sampling_rate=sampling_rate) for key in hrv_methods
         ]
         # concat dataframe list
@@ -894,7 +896,7 @@ class EcgProcessor(_BaseProcessor):
         ecg_signal: EcgResultDataFrame,
         rsp_signal: pd.DataFrame,
         sampling_rate: Optional[float] = 256,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Compute respiratory sinus arrhythmia (RSA) based on ECG and respiration signal.
 
         RSA is computed both via Peak-to-Trough (P2T) Porges-Bohrer method using :func:`~neurokit2.hrv.hrv_rsa`.
@@ -1164,8 +1166,8 @@ def _correct_outlier_correlation(rpeaks: pd.DataFrame, bool_mask: np.array, corr
         this algorithm
 
     """
-    ecg_signal = kwargs.get("ecg_signal", None)
-    sampling_rate = kwargs.get("sampling_rate", None)
+    ecg_signal = kwargs.get("ecg_signal")
+    sampling_rate = kwargs.get("sampling_rate")
     if any(v is None for v in [ecg_signal, sampling_rate]):
         raise ValueError(
             "Cannot apply outlier correction method 'correlation' because not all additionally required arguments "
@@ -1352,7 +1354,7 @@ def _correct_outlier_artifact(
 
 
 def _correct_outlier_physiological(
-    rpeaks: pd.DataFrame, bool_mask: np.array, hr_thres: Tuple[float, float], **kwargs  # noqa: ARG001
+    rpeaks: pd.DataFrame, bool_mask: np.array, hr_thres: tuple[float, float], **kwargs  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'physiological'.
 
@@ -1387,8 +1389,8 @@ def _correct_outlier_physiological(
 
 def _get_outlier_params(
     outlier_correction: Optional[Union[str, None, Sequence[str]]] = "all",
-    outlier_params: Optional[Dict[str, Union[float, Sequence[float]]]] = None,
-) -> Tuple[Sequence[str], Dict[str, Union[float, Sequence[float]]], Dict[str, Callable]]:
+    outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
+) -> tuple[Sequence[str], dict[str, Union[float, Sequence[float]]], dict[str, Callable]]:
 
     if outlier_correction == "all":
         outlier_correction = list(_outlier_correction_methods.keys())
@@ -1398,12 +1400,11 @@ def _get_outlier_params(
         outlier_correction = []
 
     try:
-        outlier_funcs: Dict[str, Callable] = {key: _outlier_correction_methods[key] for key in outlier_correction}
+        outlier_funcs: dict[str, Callable] = {key: _outlier_correction_methods[key] for key in outlier_correction}
     except KeyError as e:
         raise ValueError(
-            "`outlier_correction` may only contain values from {}, None or `all`, not `{}`.".format(
-                list(_outlier_correction_methods.keys()), outlier_correction
-            )
+            f"`outlier_correction` may only contain values from {list(_outlier_correction_methods.keys())}, "
+            f"None or `all`, not `{outlier_correction}`."
         ) from e
 
     if outlier_params is None:
@@ -1417,19 +1418,19 @@ def _get_outlier_params(
     return outlier_correction, outlier_params, outlier_funcs
 
 
-_hrv_methods = {
+_hrv_methods: dict[str, Callable] = {
     "hrv_time": nk.hrv_time,
     "hrv_nonlinear": nk.hrv_nonlinear,
     "hrv_frequency": nk.hrv_frequency,
 }
 
-_edr_methods = {
+_edr_methods: dict[str, Callable] = {
     "peak_trough_mean": _edr_peak_trough_mean,
     "peak_trough_diff": _edr_peak_trough_diff,
     "peak_peak_interval": _edr_peak_peak_interval,
 }
 
-_outlier_correction_methods: Dict[str, Callable] = {
+_outlier_correction_methods: dict[str, Callable] = {
     "correlation": _correct_outlier_correlation,
     "quality": _correct_outlier_quality,
     "artifact": _correct_outlier_artifact,
@@ -1438,7 +1439,7 @@ _outlier_correction_methods: Dict[str, Callable] = {
     "statistical_rr_diff": _correct_outlier_statistical_rr_diff,
 }
 
-_outlier_correction_params_default: Dict[str, Union[float, Sequence[float]]] = {
+_outlier_correction_params_default: dict[str, Union[float, Sequence[float]]] = {
     "correlation": 0.3,
     "quality": 0.4,
     "artifact": 0.0,

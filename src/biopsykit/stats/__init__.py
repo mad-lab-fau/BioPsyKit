@@ -2,4 +2,4 @@
 
 from biopsykit.stats.stats import StatsPipeline
 
-__all__ = ["StatsPipeline", "regression", "multicoll"]
+__all__ = ["StatsPipeline", "multicoll", "regression"]

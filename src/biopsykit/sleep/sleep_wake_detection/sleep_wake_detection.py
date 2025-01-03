@@ -47,9 +47,8 @@ class SleepWakeDetection:
 
         if algorithm_type not in available_sleep_wake_algorithms:
             raise ValueError(
-                "Invalid algorithm type for sleep/wake detection! Must be one of {}, got {}.".format(
-                    available_sleep_wake_algorithms, algorithm_type
-                )
+                f"Invalid algorithm type for sleep/wake detection! "
+                f"Must be one of {available_sleep_wake_algorithms}, got {algorithm_type}."
             )
 
         sleep_wake_cls = available_sleep_wake_algorithms[algorithm_type]

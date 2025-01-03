@@ -12,13 +12,13 @@ from biopsykit.utils import (
 )
 
 __all__ = [
-    "time",
-    "functions",
-    "file_handling",
-    "datatype_helper",
     "array_handling",
-    "dataframe_handling",
-    "exceptions",
     "data_processing",
+    "dataframe_handling",
+    "datatype_helper",
+    "exceptions",
+    "file_handling",
+    "functions",
     "legacy_helper",
+    "time",
 ]

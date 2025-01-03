@@ -1,11 +1,12 @@
 """Module providing various functions for low-level handling of array data."""
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
-from biopsykit.utils._types import arr_t, str_t
 from scipy import interpolate, signal
+
+from biopsykit.utils._types import arr_t, str_t
 
 
 def sanitize_input_1d(data: arr_t) -> np.ndarray:
@@ -34,7 +35,7 @@ def sanitize_input_1d(data: arr_t) -> np.ndarray:
 
 def sanitize_input_nd(
     data: arr_t,
-    ncols: Optional[Union[int, Tuple[int, ...]]] = None,
+    ncols: Optional[Union[int, tuple[int, ...]]] = None,
 ) -> np.ndarray:
     """Convert n-d array-like data (:class:`~pandas.DataFrame`/:class:`~pandas.Series`) to a numpy array.
 
@@ -73,7 +74,7 @@ def sanitize_input_nd(
 def find_extrema_in_radius(
     data: arr_t,
     indices: arr_t,
-    radius: Union[int, Tuple[int, int]],
+    radius: Union[int, tuple[int, int]],
     extrema_type: Optional[str] = "min",
 ) -> np.ndarray:
     """Find extrema values (min or max) within a given radius around array indices.
@@ -147,7 +148,7 @@ def find_extrema_in_radius(
     return extrema_func(windows, axis=1) + indices - lower_limit
 
 
-def _find_extrema_in_radius_get_limits(radius: Union[int, Tuple[int, int]]) -> Tuple[int, int]:
+def _find_extrema_in_radius_get_limits(radius: Union[int, tuple[int, int]]) -> tuple[int, int]:
     # determine upper and lower limit
     lower_limit = radius[0] if isinstance(radius, tuple) else radius
     upper_limit = radius[-1] if isinstance(radius, tuple) else radius
@@ -286,7 +287,7 @@ def sanitize_sliding_window_input(
     sampling_rate: Optional[float] = None,
     overlap_samples: Optional[int] = None,
     overlap_percent: Optional[float] = None,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Sanitize input parameters for creating sliding windows from array data.
 
     The window size of sliding windows can either be specified in *samples* (``window_samples``)
@@ -534,7 +535,7 @@ def bool_array_to_start_end_array(bool_array: np.ndarray) -> np.ndarray:
     return np.array([[s.start, s.stop] for s in slices])
 
 
-def split_array_equally(data: arr_t, n_splits: int) -> List[Tuple[int, int]]:
+def split_array_equally(data: arr_t, n_splits: int) -> list[tuple[int, int]]:
     """Generate indices to split array into parts with equal lengths.
 
     Parameters

@@ -1,6 +1,6 @@
 """Module with utility functions for machine learning and classification applications."""
 from copy import deepcopy
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -72,7 +72,7 @@ def strip_labels(data: Union[pd.DataFrame, pd.Series], label_col: Optional[str] 
 
 def factorize_subject_id(
     data: Union[pd.Series, pd.DataFrame], subject_col: Optional[str] = None
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Factorize subject IDs, i.e., encode them as an enumerated type or categorical variable.
 
     Parameters
@@ -105,7 +105,7 @@ def prepare_df_sklearn(
     label_col: Optional[str] = None,
     subject_col: Optional[str] = None,
     print_summary: Optional[bool] = False,
-) -> Tuple[np.ndarray, ...]:
+) -> tuple[np.ndarray, ...]:
     """Prepare a dataframe for usage in sklearn functions and return the single components of the dataframe.
 
     This function performs the following steps:
@@ -150,9 +150,8 @@ def prepare_df_sklearn(
 
     if print_summary:
         print(
-            "Shape of X: {}; shape of y: {}; number of groups: {}, class prevalence: {}".format(
-                x_data.shape, y_data.shape, len(group_keys), np.unique(y_data, return_counts=True)[1]
-            )
+            f"Shape of X: {x_data.shape}; shape of y: {y_data.shape}; "
+            f"number of groups: {len(group_keys)}, class prevalence: {np.unique(y_data, return_counts=True)[1]}"
         )
 
     return x_data, y_data, groups, group_keys
@@ -164,7 +163,7 @@ def split_train_test(
     train: np.ndarray,
     test: np.ndarray,
     groups: Optional[np.ndarray] = None,
-) -> Tuple[np.ndarray, ...]:
+) -> tuple[np.ndarray, ...]:
     """Split data into train and test set.
 
     Parameters
@@ -210,7 +209,7 @@ def split_train_test(
     return X_train, X_test, y_train, y_test, groups_train, groups_test
 
 
-def merge_nested_dicts(dict1: Dict, dict2: Dict) -> Dict:
+def merge_nested_dicts(dict1: dict, dict2: dict) -> dict:
     """Merge two nested dictionaries.
 
     Parameters
@@ -230,7 +229,7 @@ def merge_nested_dicts(dict1: Dict, dict2: Dict) -> Dict:
     return _merge_nested_dicts(dict1, dict2)
 
 
-def _merge_nested_dicts(dict1: Dict, dict2: Dict) -> Dict:
+def _merge_nested_dicts(dict1: dict, dict2: dict) -> dict:
     for key, value in dict2.items():
         if isinstance(value, dict) and key in dict1:
             _merge_nested_dicts(dict1[key], value)

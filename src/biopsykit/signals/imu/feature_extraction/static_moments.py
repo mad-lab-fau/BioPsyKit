@@ -1,11 +1,12 @@
 """Extract features from static moments of IMU data."""
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+from scipy.stats import skew
+
 from biopsykit.utils.array_handling import sanitize_input_nd
 from biopsykit.utils.time import tz
-from scipy.stats import skew
 
 
 def compute_features(
@@ -99,7 +100,7 @@ def _get_start_end(
     start: Union[str, pd.Timestamp],
     end: Union[str, pd.Timestamp],
     timezone: str,
-) -> Tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]:
+) -> tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]:
     if timezone is None:
         timezone = tz
 

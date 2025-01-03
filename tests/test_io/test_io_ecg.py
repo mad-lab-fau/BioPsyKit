@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+
 from biopsykit.io.ecg import load_hr_phase_dict, load_hr_phase_dict_folder, write_hr_phase_dict
 from biopsykit.utils.datatype_helper import is_hr_phase_dict
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
@@ -17,7 +18,7 @@ def does_not_raise():
 
 def hr_phase_dict_correct():
     phases = ["phase1", "phase2", "phase3"]
-    df = pd.DataFrame(columns=["Heart_Rate"], index=pd.Index(range(0, 5), name="time"))
+    df = pd.DataFrame(columns=["Heart_Rate"], index=pd.Index(range(5), name="time"))
     hr_phase_dict = {key: df for key in phases}
     return hr_phase_dict
 
@@ -41,14 +42,14 @@ def hr_phase_dict_none():
 
 def hr_phase_dict_wrong_col_name():
     phases = ["phase1", "phase2", "phase3"]
-    df = pd.DataFrame(columns=["hr"], index=range(0, 5))
+    df = pd.DataFrame(columns=["hr"], index=range(5))
     hr_phase_dict = {key: df for key in phases}
     return hr_phase_dict
 
 
 def hr_phase_dict_too_many_columns():
     phases = ["phase1", "phase2", "phase3"]
-    df = pd.DataFrame(columns=["Heart_Rate", "test"], index=range(0, 5))
+    df = pd.DataFrame(columns=["Heart_Rate", "test"], index=range(5))
     hr_phase_dict = {key: df for key in phases}
     return hr_phase_dict
 
@@ -56,7 +57,7 @@ def hr_phase_dict_too_many_columns():
 def hr_phase_dict_wrong_col_index():
     phases = ["phase1", "phase2", "phase3"]
     df = pd.DataFrame(
-        columns=pd.MultiIndex.from_product([["hr"], [1, 2, 3]], names=["Heart_Rate", "number"]), index=range(0, 5)
+        columns=pd.MultiIndex.from_product([["hr"], [1, 2, 3]], names=["Heart_Rate", "number"]), index=range(5)
     )
     hr_phase_dict = {key: df for key in phases}
     return hr_phase_dict
@@ -64,7 +65,7 @@ def hr_phase_dict_wrong_col_index():
 
 def hr_phase_dict_wrong_index_name():
     phases = ["phase1", "phase2", "phase3"]
-    index = pd.Index(range(0, 5), name="Time")
+    index = pd.Index(range(5), name="Time")
     df = pd.DataFrame(columns=["Heart_Rate"], index=index)
     hr_phase_dict = {key: df for key in phases}
     return hr_phase_dict
@@ -72,7 +73,7 @@ def hr_phase_dict_wrong_index_name():
 
 def hr_phase_dict_wrong_index_levels():
     phases = ["phase1", "phase2", "phase3"]
-    index = pd.MultiIndex.from_product([["phase1"], range(0, 5)], names=["Phase", "Time"])
+    index = pd.MultiIndex.from_product([["phase1"], range(5)], names=["Phase", "Time"])
     df = pd.DataFrame(columns=["Heart_Rate"], index=index)
     hr_phase_dict = {key: df for key in phases}
     return hr_phase_dict
