@@ -1,7 +1,6 @@
 from typing import Optional
 
 import pandas as pd
-import neurokit2 as nk
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
