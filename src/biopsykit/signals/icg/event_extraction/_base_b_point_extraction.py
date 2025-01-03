@@ -9,6 +9,6 @@ __all__ = ["BaseBPointExtraction"]
 
 class BaseBPointExtraction(BaseExtraction):
     def extract(
-        self, *, icg: pd.Series, heartbeats: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: Optional[float]
+        self, *, icg: pd.DataFrame, heartbeats: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: Optional[float]
     ):
         raise NotImplementedError("This is an abstract method and needs to be implemented in a subclass.")

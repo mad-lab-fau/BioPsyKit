@@ -9,7 +9,7 @@ class BaseEcgExtraction(BaseExtraction):
     def extract(
         self,
         *,
-        ecg: pd.Series,
+        ecg: pd.DataFrame,
         heartbeats: pd.DataFrame,
         sampling_rate_hz: float,
     ):

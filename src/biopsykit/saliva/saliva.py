@@ -5,6 +5,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+import scipy.stats as ss
 
 from biopsykit.saliva.utils import (
     _check_sample_times,
@@ -544,10 +545,10 @@ def standard_features(
         .agg(
             [
                 np.argmax,
-                pd.DataFrame.mean,
-                pd.DataFrame.std,
-                pd.DataFrame.skew,
-                pd.DataFrame.kurt,
+                np.mean,
+                np.std,
+                ss.skew,
+                ss.kurtosis,
             ],
         )
     )

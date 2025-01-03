@@ -97,11 +97,11 @@ class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixi
             # check if c_points contain NaN. If this is the case, set the b_point to NaN and continue
             # with the next iteration
             if check_c_points[idx]:
-                b_points["b_point_sample"].iloc[idx] = np.NaN
-                b_points["nan_reason"].iloc[idx] = "c_point_nan"
+                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
             # Get the C-Point location at the current heartbeat id
-            c_point = c_points["c_point_sample"].iloc[idx]
+            c_point = c_points.loc[idx, "c_point_sample"]
 
             # Calculate the start position of the straight line (150 ms before the C-Point) and ensure that the
             # start position is not negative
@@ -120,17 +120,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixi
             # to obtain the B-Point location
             b_point = line_start + np.argmax(distance)
 
-            # if not self.correct_outliers:
-            #     if b_point < data['r_peak_sample']:
-            #         b_points['b_point'].iloc[idx] = np.NaN
-            #         #warnings.warn(f"The detected B-point is located before the R-Peak at heartbeat {idx}!"
-            #         #              f" The B-point was set to NaN.")
-            #     else:
-            #         b_points['b_point'].iloc[idx] = b_point
-            # else:
-            #     b_points['b_point'].iloc[idx] = b_point
-
-            b_points["b_point_sample"].iloc[idx] = b_point
+            b_points.loc[idx, "b_point_sample"] = b_point
 
         num_nan = b_points["b_point_sample"].isna().sum()
         if num_nan > 0:

@@ -45,8 +45,8 @@ class BPointExtractionSherwood1990(BaseBPointExtraction, CanHandleMissingEventsM
             # check if r_peaks/c_points contain NaN. If this is the case, set the b_point to NaN and continue
             # with the next iteration
             if check_c_points[idx]:
-                b_points["b_point_sample"].iloc[idx] = np.NaN
-                b_points["nan_reason"].iloc[idx] = "c_point_nan"
+                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 missing_str = f"The c_point contains NaN at position {idx}! B-Point was set to NaN."
                 if self.handle_missing_events == "warn":
                     warnings.warn(missing_str)
@@ -64,10 +64,10 @@ class BPointExtractionSherwood1990(BaseBPointExtraction, CanHandleMissingEventsM
             # assert that b_point is within the R-C interval
             if not (data["r_peak_sample"] < b_point < c_point):
                 b_point = np.NaN
-                b_points["nan_reason"].iloc[idx] = "no_zero_crossing"
+                b_points.loc[idx, "nan_reason"] = "no_zero_crossing"
 
             # Add the detected B-point to the b_points Dataframe
-            b_points["b_point_sample"].iloc[idx] = b_point
+            b_points.loc[idx, "b_point_sample"] = b_point
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])

@@ -22,7 +22,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
 numpy = "^1"
-pandas = "^1"
+pandas = "^2"
 matplotlib = "^3.9"
 seaborn = "^0"
 neurokit2 = "^0"

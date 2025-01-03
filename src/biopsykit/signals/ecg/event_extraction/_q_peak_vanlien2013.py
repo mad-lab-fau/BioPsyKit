@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pandas as pd
+import neurokit2 as nk
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
@@ -77,7 +78,6 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
         r_peaks = heartbeats[["r_peak_sample"]]
 
         # subtract the fixed time_interval from the r_peak samples to estimate the q_peaks
-
         q_peaks = r_peaks - time_interval_in_samples
 
         q_peaks.columns = ["q_peak_sample"]

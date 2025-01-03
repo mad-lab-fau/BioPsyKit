@@ -75,16 +75,16 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
             threshold = (-1.2 * ecg.iloc[r_peak_sample]) / self.scaling_factor
 
             # search for the Q-peak as the last sample before the R-peak that is below the threshold
-            ecg_before_r_peak = ecg[heartbeat_start:r_peak_sample].reset_index(drop=True)
+            ecg_before_r_peak = ecg.iloc[heartbeat_start:r_peak_sample].reset_index(drop=True)
             ecg_below = np.where(ecg_before_r_peak < threshold)[0]
 
             if len(ecg_below) == 0:
-                q_peaks.loc[idx, "q_peak_sample"] = np.nan
-                q_peaks.loc[idx, "nan_reason"] = "no_value_below_threshold"
+                q_peaks.loc[q_peaks.index[idx], "q_peak_sample"] = np.nan
+                q_peaks.loc[q_peaks.index[idx], "nan_reason"] = "no_value_below_threshold"
                 continue
 
             q_peak_sample = heartbeat_start + ecg_below[-1]
-            q_peaks.loc[idx, "q_peak_sample"] = q_peak_sample
+            q_peaks.loc[q_peaks.index[idx], "q_peak_sample"] = q_peak_sample
 
         _assert_is_dtype(q_peaks, pd.DataFrame)
         _assert_has_columns(q_peaks, [["q_peak_sample", "nan_reason"]])

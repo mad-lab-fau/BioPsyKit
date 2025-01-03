@@ -84,7 +84,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
 
         # search B-point for each heartbeat of the given signal
         for idx, data in heartbeats.iterrows():
-            c_point_sample = c_points["c_point_sample"].iloc[idx]
+            c_point_sample = c_points.loc[idx, "c_point_sample"]
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample):
@@ -96,7 +96,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             # slice the signal for the current heartbeat
             heartbeat_start = data["start_sample"]
             heartbeat_end = data["end_sample"]
-            icg_heartbeat = icg[heartbeat_start:heartbeat_end]
+            icg_heartbeat = icg.loc[heartbeat_start:heartbeat_end]
             c_point = c_point_sample - heartbeat_start
 
             # compute the isoelectric line and subtract it from the signal
@@ -118,7 +118,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             b_point_idx = icg_isoelectric_crossings[icg_isoelectric_crossing_idx]
             b_point = b_point_idx + heartbeat_start
 
-            b_points["b_point_sample"].iloc[idx] = b_point
+            b_points.loc[idx, "b_point_sample"] = b_point
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
@@ -217,7 +217,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
 
         # search B-point for each heartbeat of the given signal
         for idx, _data in heartbeats.iterrows():
-            c_point_sample = c_points["c_point_sample"].iloc[idx]
+            c_point_sample = c_points.loc[idx, "c_point_sample"]
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample):
@@ -264,7 +264,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
                 elif self.handle_missing_events == "raise":
                     raise EventExtractionError(missing_str)
 
-            b_points["b_point_sample"].iloc[idx] = b_point_sample
+            b_points.loc[idx, "b_point_sample"] = b_point_sample
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
@@ -361,13 +361,9 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
 
         # search B-point for each heartbeat of the given signal
         for idx, data in heartbeats.iterrows():
-            # slice signal for current heartbeat
-            data["start_sample"]
-            data["end_sample"]
-
             # calculate R-peak and C-point position relative to start of current heartbeat
             heartbeat_r_peak = data["r_peak_sample"]
-            heartbeat_c_point = c_points["c_point_sample"].iloc[idx]
+            heartbeat_c_point = c_points.loc[idx, "c_point_sample"]
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(heartbeat_c_point):
@@ -397,7 +393,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
             b_window = icg_3rd_der[window_start:window_end]
             b_window_max = np.argmax(b_window)
             b_point = b_window_max + window_start
-            b_points["b_point_sample"].iloc[idx] = b_point
+            b_points.loc[idx, "b_point_sample"] = b_point
 
         # inform user about missing B-points
         if len(heartbeats_no_c_b) > 0 or len(heartbeats_no_b) > 0:

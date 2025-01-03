@@ -84,14 +84,14 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
         # search B-point for each heartbeat of the given signal
         for idx, _data in heartbeats.iterrows():
             if self.moving_average_window == 1:
-                c_point_sample = c_points["c_point_sample"].iloc[[idx]]
-                r_peak_sample = heartbeats["r_peak_sample"].iloc[[idx]]
+                c_point_sample = c_points.loc[[idx], "c_point_sample"]
+                r_peak_sample = heartbeats.loc[[idx], "r_peak_sample"]
             else:
                 window_width = self.moving_average_window // 2
-                start_idx = max(0, idx - window_width)
-                end_idx = min(len(heartbeats), idx + window_width + 1)
-                c_point_sample = c_points["c_point_sample"].iloc[start_idx:end_idx].dropna()
-                r_peak_sample = heartbeats["r_peak_sample"].iloc[start_idx:end_idx].dropna()
+                start_idx = heartbeats.index[max(0, idx - window_width)]
+                end_idx = heartbeats.index[min(len(heartbeats) - 1, idx + window_width + 1)]
+                c_point_sample = c_points.loc[start_idx:end_idx, "c_point_sample"].dropna()
+                r_peak_sample = heartbeats.loc[start_idx:end_idx, "r_peak_sample"].dropna()
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample).any():
@@ -100,7 +100,7 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
-            current_r_peak = heartbeats["r_peak_sample"].iloc[idx]
+            current_r_peak = heartbeats.loc[idx, "r_peak_sample"]
             # get the R-C interval in ms
             r_c_interval_ms = np.mean((c_point_sample - r_peak_sample) / sampling_rate_hz * 1000)
             if pd.isna(r_c_interval_ms):
@@ -112,7 +112,7 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
             b_point_interval_sample = int((b_point_interval_ms * sampling_rate_hz) / 1000)
             b_point_sample = current_r_peak + b_point_interval_sample
 
-            b_points["b_point_sample"].iloc[idx] = b_point_sample
+            b_points.loc[idx, "b_point_sample"] = b_point_sample
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
@@ -192,14 +192,14 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
         # search B-point for each heartbeat of the given signal
         for idx, _data in heartbeats.iterrows():
             if self.moving_average_window == 1:
-                c_point_sample = c_points["c_point_sample"].iloc[[idx]]
-                r_peak_sample = heartbeats["r_peak_sample"].iloc[[idx]]
+                c_point_sample = c_points.loc[[idx], "c_point_sample"]
+                r_peak_sample = heartbeats.loc[[idx], "r_peak_sample"]
             else:
                 window_width = self.moving_average_window // 2
-                start_idx = max(0, idx - window_width)
-                end_idx = min(len(heartbeats), idx + window_width + 1)
-                c_point_sample = c_points["c_point_sample"].iloc[start_idx:end_idx].dropna()
-                r_peak_sample = heartbeats["r_peak_sample"].iloc[start_idx:end_idx].dropna()
+                start_idx = heartbeats.index[max(0, idx - window_width)]
+                end_idx = heartbeats.index[min(len(heartbeats) - 1, idx + window_width + 1)]
+                c_point_sample = c_points.loc[start_idx:end_idx, "c_point_sample"].dropna()
+                r_peak_sample = heartbeats.loc[start_idx:end_idx, "r_peak_sample"].dropna()
 
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample).any():
@@ -208,7 +208,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
-            current_r_peak = heartbeats["r_peak_sample"].iloc[idx]
+            current_r_peak = heartbeats.loc[idx, "r_peak_sample"]
             # get the R-C interval in ms
             r_c_interval_ms = np.mean((c_point_sample - r_peak_sample) / sampling_rate_hz * 1000)
             if pd.isna(r_c_interval_ms):
@@ -219,7 +219,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
             b_point_interval_sample = int((b_point_interval_ms * sampling_rate_hz) / 1000)
             b_point_sample = current_r_peak + b_point_interval_sample
 
-            b_points["b_point_sample"].iloc[idx] = b_point_sample
+            b_points.loc[idx, "b_point_sample"] = b_point_sample
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])

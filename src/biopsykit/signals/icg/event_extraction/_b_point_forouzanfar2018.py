@@ -98,18 +98,18 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         second_der = np.gradient(icg)
         third_der = np.gradient(second_der)
 
-        for idx, data in heartbeats[1:].iterrows():
+        for idx, data in heartbeats.iloc[1:].iterrows():
             # check if the current or the previous C-Point contain NaN . If this is the case, set the b_point to NaN
             if check_c_points[idx] or check_c_points[idx - 1]:
-                b_points["b_point_sample"].iloc[idx] = np.nan
-                b_points["nan_reason"].iloc[idx] = "c_point_nan"
+                b_points.loc[idx, "b_point_sample"] = np.nan
+                b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
             # Detect the main peak in the dZ/dt signal (C-Point)
-            c_point = c_points["c_point_sample"].iloc[idx]
+            c_point = c_points.loc[idx, "c_point_sample"]
 
             # Compute the beat to beat interval
-            beat_to_beat = c_points["c_point_sample"].iloc[idx] - c_points["c_point_sample"].iloc[idx - 1]
+            beat_to_beat = c_points.loc[idx, "c_point_sample"] - c_points.loc[idx - 1, "c_point_sample"]
 
             # Compute the search interval for the A-Point
             search_interval = int(beat_to_beat / 3)
@@ -162,14 +162,14 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
             if len(significant_features) == 0:
                 b_point = start
             else:
-                b_point = significant_features.iloc[np.argmin(c_point - significant_features)][0]
+                b_point = significant_features.iloc[np.argmin(c_point - significant_features)].iloc[0]
 
-            b_points["b_point_sample"].iloc[idx] = b_point
+            b_points.loc[idx, "b_point_sample"] = b_point
 
         # interpolate the first B-Point with the second B-Point since it is not possible to detect a B-Point
         # for the first heartbeat
-        b_points["b_point_sample"].iloc[0] = (
-            b_points["b_point_sample"].iloc[1] - b_points["b_point_sample"].diff().iloc[2]
+        b_points.loc[b_points.index[0], "b_point_sample"] = (
+            b_points.loc[b_points.index[1], "b_point_sample"] - b_points["b_point_sample"].diff().loc[b_points.index[2]]
         )
 
         idx_nan = b_points["b_point_sample"].isna()
@@ -211,7 +211,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         icg_2nd_der_segment = np.gradient(icg_segment)
         icg_segment.index = np.arange(0, len(icg_segment))
         monotony_df = pd.DataFrame(icg_segment.values, columns=["icg"])
-        monotony_df = monotony_df.assign(**{"2nd_der": icg_2nd_der_segment, "borders": 0})
+        monotony_df = monotony_df.assign(**{"2nd_der": icg_2nd_der_segment, "borders": pd.NA})
 
         # A-Point is a possible start of the monotonic segment
         monotony_df.loc[monotony_df.index[0], "borders"] = "start_increase"
@@ -225,7 +225,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         monotony_df.loc[monotony_df.index[pos_neg_change_idx], "borders"] = "end_increase"
 
         # drop all samples that are no possible start-/ end-points
-        monotony_df = monotony_df.drop(monotony_df[monotony_df["borders"] == 0].index)
+        monotony_df = monotony_df.drop(monotony_df[pd.isna(monotony_df["borders"])].index)
         monotony_df = monotony_df.reset_index()
 
         # Drop start- and corresponding end-point if their start value is higher than 1/2 of H

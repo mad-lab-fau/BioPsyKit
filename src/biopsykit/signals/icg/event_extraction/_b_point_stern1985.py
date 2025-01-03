@@ -90,8 +90,9 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
             # check c_point is NaN. If this is the case, set the b_point to NaN and continue with the next iteration
             if check_c_points[idx]:
-                b_points["b_point_sample"].iloc[idx] = np.NaN
-                b_points["nan_reason"].iloc[idx] = "c_point_nan"
+
+                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 missing_str = f"The c_point is NaN at position {idx}! B-Point was set to NaN."
                 if self.handle_missing_events == "warn":
                     warnings.warn(missing_str)
@@ -108,8 +109,8 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
             # if there are no zero crossings in the interval, set B-point to NaN
             if len(zero_crossings_heartbeat) == 0:
-                b_points["b_point_sample"].iloc[idx] = np.NaN
-                b_points["nan_reason"].iloc[idx] = "no_local_minimum"
+                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "nan_reason"] = "no_local_minimum"
                 continue
             # get the closest zero crossing *before* the C-point
             zero_crossings_diff = zero_crossings_heartbeat - c_points[idx]
@@ -118,7 +119,7 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
             b_point = zero_crossings_heartbeat[zero_crossing_idx]
 
-            b_points["b_point_sample"].iloc[idx] = b_point
+            b_points.loc[idx, "b_point_sample"] = b_point
 
         _assert_is_dtype(b_points, pd.DataFrame)
         _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])

@@ -96,12 +96,12 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
                     q_peaks.loc[heartbeat_idx, "q_peak"] = q
 
         # inform user about missing Q-values
-        if q_peaks.isna().sum()[0] > 0:
+        if q_peaks.isna().sum().iloc[0] > 0:
             nan_rows = q_peaks[q_peaks["q_peak"].isna()]
             nan_rows = nan_rows.drop(index=heartbeats_q_after_r)
             nan_rows = nan_rows.drop(index=heartbeats_no_q)
 
-            missing_str = f"No Q-peak detected in {q_peaks.isna().sum()[0]} heartbeats:\n"
+            missing_str = f"No Q-peak detected in {q_peaks.isna().sum().iloc[0]} heartbeats:\n"
             if len(heartbeats_no_q) > 0:
                 q_peaks.loc[heartbeats_no_q, "nan_reason"] = "no_q_peak"
                 missing_str += (
