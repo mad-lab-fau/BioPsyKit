@@ -28,7 +28,6 @@ seaborn = "^0"
 neurokit2 = "^0"
 pingouin = "^0.5.2"
 scipy = "^1"
-statannot = "^0.2.3"
 tqdm = "^4"
 joblib = "^1"
 scikit-learn = "^1.0"
@@ -43,6 +42,7 @@ mne = {version = "^1.2.1", optional = true}
 IPython = {version = "^7", optional = true}
 ipywidgets = {version = "^8", optional = true}
 ipympl = {version = "^0.9", optional = true}
+statannotations = "^0.7.1"
 
 [tool.poetry.extras]
 mne = ["mne"]

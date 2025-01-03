@@ -1,4 +1,5 @@
 """Module containing several advanced plotting functions."""
+import warnings
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -6,7 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from biopsykit.utils.functions import se
-from statannot import add_stat_annotation
+from statannotations.Annotator import Annotator
 
 _PVALUE_THRESHOLDS = [[1e-3, "***"], [1e-2, "**"], [0.05, "*"]]
 
@@ -340,6 +341,9 @@ def feature_boxplot(  # pylint:disable=too-many-branches
     if len(box_pairs) == 0:
         stats_kwargs = {}
 
+    palette = _sanitize_palette(data, kwargs.pop("palette", None), hue)
+    if palette is not None:
+        kwargs["palette"] = palette
     sns.boxplot(data=data.reset_index(), x=x, y=y, order=order, hue=hue, hue_order=hue_order, **kwargs)
 
     for patch in ax.patches:
@@ -347,19 +351,24 @@ def feature_boxplot(  # pylint:disable=too-many-branches
         patch.set_facecolor((r, g, b, alpha))
 
     if len(box_pairs) > 0:
-        add_stat_annotation(
+        annotator = Annotator(
             data=data.reset_index(), ax=ax, x=x, y=y, order=order, hue=hue, hue_order=hue_order, **stats_kwargs
         )
+        annotator.configure(hide_non_significant=True, pvalue_thresholds=stats_kwargs.get("pvalue_thresholds"))
+        annotator.set_pvalues(stats_kwargs.get("pvalues"))
+        annotator.annotate()
 
     if ylabel is not None:
         ax.set_ylabel(ylabel)
 
     if xticklabels is not None:
+        ax.set_xticks(np.arange(len(xticklabels)))
         ax.set_xticklabels(xticklabels)
 
     if show_legend:
-        if hue is not None:
+        if hue is not None and ax.legend_ is not None:
             ax.legend().remove()
+
         handles, labels = ax.get_legend_handles_labels()
         _feature_boxplot_add_legend(
             fig,
@@ -386,6 +395,7 @@ def _feature_boxplot_sanitize_stats_kwargs(stats_kwargs: Dict[str, Any]) -> Dict
     if len(boxplot_pvals) > 0:
         stats_kwargs["perform_stat_test"] = False
 
+    stats_kwargs["pairs"] = stats_kwargs.get("pairs", stats_kwargs.get("box_pairs", {}))
     stats_kwargs.setdefault("pvalue_thresholds", _PVALUE_THRESHOLDS)
     return stats_kwargs
 
@@ -493,11 +503,16 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
     if stats_kwargs is None:
         stats_kwargs = {}
 
-    dict_box_pairs = stats_kwargs.pop("box_pairs", None)
+    dict_box_pairs = stats_kwargs.pop("pairs", stats_kwargs.pop("box_pairs", None))
     dict_pvals = stats_kwargs.pop("pvalues", None)
 
     handles = None
     labels = None
+    palette = kwargs.pop("palette", None)
+
+    if hue is None:
+        hue = x
+
     for ax, key in zip(axs, features):
         reindex_keys = features[key]
         if isinstance(reindex_keys, str):
@@ -508,8 +523,19 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
 
         order_list = _multi_feature_boxplot_get_order(order, key)
 
+        palette_hue = _sanitize_palette(data_plot, palette, hue)
+
         sns.boxplot(
-            data=data_plot.reset_index(), x=x, y=y, order=order_list, hue=hue, hue_order=hue_order, ax=ax, **kwargs
+            data=data_plot.reset_index(),
+            x=x,
+            y=y,
+            order=order_list,
+            hue=hue,
+            legend=True,
+            hue_order=hue_order,
+            palette=palette_hue,
+            ax=ax,
+            **kwargs,
         )
 
         for patch in ax.patches:
@@ -517,15 +543,24 @@ def multi_feature_boxplot(  # pylint:disable=too-many-branches
             patch.set_facecolor((r, g, b, alpha))
 
         _add_stat_annot_multi_feature_boxplot(
-            data_plot, x, y, order_list, hue, hue_order, stats_kwargs, dict_box_pairs, dict_pvals, key, ax
+            data_plot,
+            x,
+            y,
+            order_list,
+            hue,
+            hue_order,
+            stats_kwargs,
+            key,
+            ax,
+            dict_box_pairs,
+            dict_pvals,
         )
 
         ax.set_ylabel(ylabels.get(key, ax.get_ylabel()))
         _style_xaxis_multi_feature_boxplot(ax, xlabels, xticklabels, key)
 
-        if hue is not None:
-            handles, labels = ax.get_legend_handles_labels()
-            ax.legend().remove()
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend().remove()
 
     if show_legend:
         _multi_feature_boxplot_add_legend(
@@ -592,6 +627,16 @@ def feature_pairplot(
         return sns.pairplot(data=data.reset_index(), **kwargs), feature_names_df
 
     return sns.pairplot(data=data.reset_index(), **kwargs)
+
+
+def _sanitize_palette(
+    data: pd.DataFrame, palette: Optional[Union[str, Sequence[str]]], hue: str
+) -> Optional[Union[str, Sequence[str]]]:
+    if isinstance(palette, str):
+        return palette
+    if palette is not None and hue is not None:
+        palette = palette[: len(data.reset_index()[hue].unique())]
+    return palette
 
 
 def _get_df_lineplot(data: pd.DataFrame, x: str, y: str, hue: str, order: Sequence[str]) -> pd.DataFrame:
@@ -677,11 +722,11 @@ def _add_stat_annot_multi_feature_boxplot(
     order: Sequence[str],
     hue: str,
     hue_order: Sequence[str],
-    stats_kwargs: Dict,
-    dict_box_pairs: Dict,
-    dict_pvals: Dict,
+    stats_kwargs: Dict[str, Any],
     key: str,
     ax: plt.Axes,
+    dict_box_pairs: Optional[Dict[str, Sequence[str]]] = None,
+    dict_pvals: Optional[Dict[str, Sequence[float]]] = None,
 ):
     if len(stats_kwargs) > 0:
         stats_kwargs["comparisons_correction"] = stats_kwargs.get("comparisons_correction", None)
@@ -689,9 +734,9 @@ def _add_stat_annot_multi_feature_boxplot(
 
     if dict_box_pairs is not None:
         # filter box pairs by feature
-        stats_kwargs["box_pairs"] = [dict_box_pairs[x] for x in dict_box_pairs if key in x]
+        stats_kwargs["pairs"] = [dict_box_pairs[x] for x in dict_box_pairs if key in x]
         # flatten list
-        stats_kwargs["box_pairs"] = [x for pairs in stats_kwargs["box_pairs"] for x in pairs]
+        stats_kwargs["pairs"] = [x for pairs in stats_kwargs["pairs"] for x in pairs]
 
     if dict_pvals is not None:
         # filter pvals by feature
@@ -702,10 +747,10 @@ def _add_stat_annot_multi_feature_boxplot(
 
     stats_kwargs["pvalue_thresholds"] = _PVALUE_THRESHOLDS
 
-    if "box_pairs" in stats_kwargs and len(stats_kwargs["box_pairs"]) > 0:
-        add_stat_annotation(
-            ax=ax,
+    if "pairs" in stats_kwargs and len(stats_kwargs["pairs"]) > 0:
+        annotator = Annotator(
             data=data.reset_index(),
+            ax=ax,
             x=x,
             y=y,
             order=order,
@@ -713,6 +758,9 @@ def _add_stat_annot_multi_feature_boxplot(
             hue_order=hue_order,
             **stats_kwargs,
         )
+        annotator.configure(hide_non_significant=True, pvalue_thresholds=stats_kwargs.get("pvalue_thresholds"))
+        annotator.set_pvalues(stats_kwargs.get("pvalues"))
+        annotator.annotate()
 
 
 def _feature_boxplot_add_legend(fig: plt.Figure, hue: str, handles: Sequence, labels: Sequence, **kwargs):
@@ -739,8 +787,8 @@ def _multi_feature_boxplot_add_legend(fig: plt.Figure, hue: str, handles: Sequen
 
     if hue is not None:
         ncol = len(handles) if legend_orientation == "horizontal" else 1
-
-        fig.legend(handles, labels, loc=legend_loc, ncol=ncol, fontsize=legend_fontsize, title=legend_title)
+        if handles is not None and len(handles) > 1:
+            fig.legend(handles, labels, loc=legend_loc, ncol=ncol, fontsize=legend_fontsize, title=legend_title)
     if kwargs.pop("tight_layout", True):
         fig.tight_layout(pad=0.5, rect=rect)
 
@@ -753,6 +801,7 @@ def _style_xaxis_multi_feature_boxplot(
         xt = xticklabels[key]
         if isinstance(xt, str):
             xt = [xt]
+        ax.set_xticks(np.arange(len(xt)))
         ax.set_xticklabels(xt)
 
 

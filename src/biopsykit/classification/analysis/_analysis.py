@@ -8,7 +8,8 @@ from biopsykit.classification.model_selection import SklearnPipelinePermuter
 from biopsykit.classification.utils import prepare_df_sklearn
 from fau_colors import cmaps
 from matplotlib import pyplot as plt
-from matplotlib.cm import register_cmap
+
+from matplotlib.cm import ColormapRegistry
 from matplotlib.colors import ListedColormap
 from sklearn.metrics import ConfusionMatrixDisplay
 
@@ -186,7 +187,8 @@ def _register_fau_r():
     fau_r.reverse()
     fau_r = ListedColormap(fau_r, "fau_r")
     if "fau_r" not in plt.colormaps():
-        register_cmap("fau_r", fau_r)
+        colormap_registry = ColormapRegistry()
+        colormap_registry.register(cmap=fau_r, name="fau_r")
 
 
 def plot_conf_matrix(

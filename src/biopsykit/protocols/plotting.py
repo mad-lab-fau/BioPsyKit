@@ -1066,8 +1066,9 @@ def saliva_feature_boxplot(
             xticklabels = list(_saliva_feature_boxplot_get_xticklabels({f: f for f in feature}).values())
             xticklabels = [x[0] for x in xticklabels]
             kwargs.setdefault("xticklabels", xticklabels)
-
-    return feature_boxplot(data=data, x=x, y=saliva_type, stats_kwargs=stats_kwargs, **kwargs)
+    if hue is None:
+        hue = x
+    return feature_boxplot(data=data, x=x, y=saliva_type, hue=hue, stats_kwargs=stats_kwargs, **kwargs)
 
 
 def saliva_multi_feature_boxplot(

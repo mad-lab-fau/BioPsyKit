@@ -203,7 +203,7 @@ def _ecg_plot(
     legend_loc = kwargs.get("legend_loc", "upper right")
     legend_fontsize = kwargs.get("legend_fontsize", "small")
 
-    axs["ecg"].get_shared_x_axes().join(axs["ecg"], axs["hr"])
+    axs["ecg"].sharex(axs["hr"])
 
     # z-normalize the ecg signal for better visualization
     ecg_clean = nk.standardize(ecg_signal["ECG_Clean"])
@@ -491,8 +491,8 @@ def hrv_plot(
     axs["poin"] = fig.add_subplot(spec_within[1:4, 0:3])
     axs["poin_x"] = fig.add_subplot(spec_within[0, 0:3])
     axs["poin_y"] = fig.add_subplot(spec_within[1:4, 3])
-    axs["poin"].get_shared_x_axes().join(axs["poin"], axs["poin_x"])
-    axs["poin"].get_shared_y_axes().join(axs["poin"], axs["poin_y"])
+    axs["poin"].sharex(axs["poin_x"])
+    axs["poin"].sharey(axs["poin_y"])
 
     if title:
         fig.suptitle(f"Heart Rate Variability (HRV) - {title}", fontweight="bold")
