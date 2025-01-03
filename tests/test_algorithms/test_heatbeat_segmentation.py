@@ -62,10 +62,6 @@ class TestHeartbeatSegmentationNeurokit:
         _assert_is_dtype(ecg_data, pd.DataFrame)
 
         self.segmenter.extract(ecg=ecg_data, sampling_rate_hz=self.sampling_rate_hz)
-
-        # print(self.segmenter.heartbeat_list_["start_time"].dtype)
-        # print(reference_heartbeats["start_time"].dtype)
-
         # check if the extraction is equal
         self._check_heartbeats_equal(reference_heartbeats, self.segmenter.heartbeat_list_)
 
@@ -136,7 +132,7 @@ class TestHeartbeatSegmentationNeurokit:
         ("data", "expected"),
         [
             (None, pytest.raises(ValueError)),
-            (pd.Series([]), pytest.raises(ValueError)),
+            (pd.Series([], dtype="Float64"), pytest.raises(ValueError)),
             (pd.DataFrame(), pytest.raises(ValidationError)),
         ],
     )

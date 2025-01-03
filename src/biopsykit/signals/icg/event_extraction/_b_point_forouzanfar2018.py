@@ -241,7 +241,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         ].index
 
         end_index_drop_rule_b = end_index_drop_rule_b.union(end_index_drop_rule_b - 1)
-        monotony_df = monotony_df.drop(index=end_index_drop_rule_b)
+        monotony_df = monotony_df.drop(index=monotony_df.iloc[end_index_drop_rule_b].index)
 
         # Select the monotonic segment with the highest amplitude difference
         start_sample = 0

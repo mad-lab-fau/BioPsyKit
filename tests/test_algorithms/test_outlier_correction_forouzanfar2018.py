@@ -86,7 +86,7 @@ class TestOutlierCorrectionForouzanfar2018:
 
     def _get_regression_reference(self):
         data = pd.read_csv(TEST_FILE_PATH.joinpath("pep_test_icg_outlier_correction_forouzanfar2018.csv"), index_col=0)
-        data = data.convert_dtypes(infer_objects=True)
+        data = data.astype({"b_point_sample": "Int64", "nan_reason": "object"})
         return data
 
     @staticmethod

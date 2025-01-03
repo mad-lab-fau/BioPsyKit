@@ -1,4 +1,4 @@
-heartbeat_id,q_wave_onset_sample,nan_reason
+heartbeat_id,q_peak_sample,nan_reason
 0,423,
 1,1012,
 2,1614,

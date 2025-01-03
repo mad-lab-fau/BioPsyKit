@@ -66,7 +66,7 @@ class TestCPointExtractionSciPyFindpeaks:
     @staticmethod
     def _get_regression_reference():
         data = pd.read_csv(TEST_FILE_PATH.joinpath("pep_test_c_point_reference_scipy_findpeaks.csv"), index_col=0)
-        data = data.convert_dtypes(infer_objects=True)
+        data = data.astype({"c_point_sample": "Int64", "nan_reason": "object"})
         return data
 
     @staticmethod
@@ -78,7 +78,6 @@ class TestCPointExtractionSciPyFindpeaksParameters:
     def setup(
         self,
         window_c_correction: Optional[int] = 3,
-        save_candidates: Optional[bool] = False,
     ):
         # Sample ECG data
         self.ecg_data = pd.read_csv(TEST_FILE_PATH.joinpath("pep_test_ecg.csv"), index_col=0)
@@ -88,9 +87,7 @@ class TestCPointExtractionSciPyFindpeaksParameters:
         self.heartbeats = self.segmenter.extract(
             ecg=self.ecg_data, sampling_rate_hz=self.sampling_rate_hz
         ).heartbeat_list_
-        self.extract_algo = CPointExtractionScipyFindPeaks(
-            window_c_correction=window_c_correction, save_candidates=save_candidates
-        )
+        self.extract_algo = CPointExtractionScipyFindPeaks(window_c_correction=window_c_correction)
         self.test_case = unittest.TestCase()
 
     @pytest.mark.parametrize(
@@ -102,20 +99,6 @@ class TestCPointExtractionSciPyFindpeaksParameters:
 
         self.extract_algo.extract(icg=self.icg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
 
-        print(self.extract_algo.points_)
-
         assert isinstance(self.extract_algo.points_, pd.DataFrame)
         assert "c_point_sample" in self.extract_algo.points_.columns
         assert "nan_reason" in self.extract_algo.points_.columns
-
-    @pytest.mark.parametrize(
-        ("save_candidates", "expected_columns"),
-        [(True, ["c_point_sample", "nan_reason", "c_point_candidates"]), (False, ["c_point_sample", "nan_reason"])],
-    )
-    def test_extract_window_(self, save_candidates, expected_columns):
-        self.setup(save_candidates=save_candidates)
-
-        self.extract_algo.extract(icg=self.icg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
-
-        assert isinstance(self.extract_algo.points_, pd.DataFrame)
-        self.test_case.assertListEqual(expected_columns, self.extract_algo.points_.columns.tolist())

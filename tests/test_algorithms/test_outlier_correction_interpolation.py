@@ -69,8 +69,6 @@ class TestOutlierCorrectionInterpolation:
             b_points=b_points, c_points=self.c_points, sampling_rate_hz=self.sampling_rate_hz
         )
 
-        print(self.outlier_algo.points_)
-
         corrected_beats = (self.b_points - self.outlier_algo.points_)["b_point_sample"] != 0
         corrected_beats = self.b_points.index[corrected_beats]
 
@@ -87,7 +85,7 @@ class TestOutlierCorrectionInterpolation:
 
     def _get_regression_reference(self):
         data = pd.read_csv(TEST_FILE_PATH.joinpath("pep_test_icg_outlier_correction_interpolation.csv"), index_col=0)
-        data = data.convert_dtypes(infer_objects=True)
+        data = data.astype({"b_point_sample": "Int64", "nan_reason": "object"})
         return data
 
     @staticmethod
