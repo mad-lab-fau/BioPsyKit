@@ -1,6 +1,6 @@
 # Changelog
 
-### Version 0.12.1 - January 03, 2025
+## Version 0.12.1 - January 03, 2025
 ### Bugfix
 - Updated `pandas` version constraint from "^1" to "^2" and updated all code and test cases to be compatible with newer 
   `pandas` versions.
