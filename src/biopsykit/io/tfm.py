@@ -1,5 +1,5 @@
 """Module for loading and processing Task Force Monitor (TFM) data."""
-from typing import ClassVar, Optional, Self
+from typing import ClassVar, Optional
 
 import pandas as pd
 from scipy.io import loadmat
@@ -42,7 +42,7 @@ class TFMDataset:
         path: path_t,
         # channel_mapping: Optional[Dict[str, str]] = None,
         tz: Optional[str] = "Europe/Berlin",
-    ) -> Self:
+    ):
         """Load TFM data from a .mat file.
 
         Parameters
