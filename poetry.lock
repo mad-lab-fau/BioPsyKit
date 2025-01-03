@@ -3617,6 +3617,31 @@ files = [
 ]
 
 [[package]]
+name = "tpcp"
+version = "2.0.0"
+description = "Pipeline and Dataset helpers for complex algorithm evaluation."
+optional = false
+python-versions = "<4.0,>=3.9"
+files = [
+    {file = "tpcp-2.0.0-py3-none-any.whl", hash = "sha256:0ded48af9767dcfd79f9eb345a9e796fba034b16410a613b14f4dea10dd6eeb1"},
+    {file = "tpcp-2.0.0.tar.gz", hash = "sha256:6db63bdb1df0e4b0e4b62b77c769d055e3f38d593a196f7e4bad71ce15af44bb"},
+]
+
+[package.dependencies]
+joblib = ">=1.3"
+numpy = ">=1.0"
+pandas = ">=1.3"
+scikit-learn = ">=1.2.0"
+tqdm = ">=4.62.3"
+typing-extensions = ">=4.1.1"
+
+[package.extras]
+attrs = ["attrs (>=22.1.0)"]
+optuna = ["optuna (>=2.10)"]
+x-tensorflow = ["tensorflow-cpu (>=2.16.0)"]
+x-torch-cpu = ["torch (>=1.6.0)"]
+
+[[package]]
 name = "tqdm"
 version = "4.67.1"
 description = "Fast, Extensible Progress Meter"
@@ -3651,6 +3676,54 @@ files = [
 [package.extras]
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
 test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<8.2)", "pytest-mock", "pytest-mypy-testing"]
+
+[[package]]
+name = "ts2vg"
+version = "1.2.4"
+description = "Build visibility graphs from time series data."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "ts2vg-1.2.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:35e624aba334274788afc2566ff2e317a5ff17c42f16c8d3272bacab3eb1ae64"},
+    {file = "ts2vg-1.2.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:6a1e4534fee32a377786193688b26434f3409a689ddcb86e4fb54b28b26bb279"},
+    {file = "ts2vg-1.2.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fa86a6db0469885e12430c3eeeb7b8393f9444076203769ac6e947119479ab6f"},
+    {file = "ts2vg-1.2.4-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2f1f06810d6513821bc0beb169924e4fc804356514e6035854c12d50ddede839"},
+    {file = "ts2vg-1.2.4-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:237f516d517a71e74f5eb27b4626482baff7d24d881a98babd478d6921a3b950"},
+    {file = "ts2vg-1.2.4-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:18fa3ff74ebbfcf0f163725a0b6d30704e375b784bd3e538de2f2f91643add56"},
+    {file = "ts2vg-1.2.4-cp310-cp310-win32.whl", hash = "sha256:1e3788a75bf8da7756ebc77b390811555d59007a915af19d723569568af384e7"},
+    {file = "ts2vg-1.2.4-cp310-cp310-win_amd64.whl", hash = "sha256:c3876d79f7a6160070c19a016251e751a11a786ea18757c7cb260eea68a1dbbb"},
+    {file = "ts2vg-1.2.4-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:3e3111dd79ff4c7a883d5b05f66650abf06b7c722c8319e4f0e15c292870c274"},
+    {file = "ts2vg-1.2.4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e1d3fdcc92faaa3d97660a7bf6c1780735a8b67a9daba2217265fbaf32450f79"},
+    {file = "ts2vg-1.2.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:65eaf3aaa655924c854eea658af3a4666b3940517db65e98988e23f78d99c654"},
+    {file = "ts2vg-1.2.4-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:03c49466c98644f320e19016e62882947ea0722283b280a0cff998d76651eac0"},
+    {file = "ts2vg-1.2.4-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:948cda910c0307291cf51ba2bb34757b229b1885b9990919aade05915b5c8434"},
+    {file = "ts2vg-1.2.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:6ba8e7b5be946719e5e2eaff856de73ca05d43d359437d80902d171a2a825c6e"},
+    {file = "ts2vg-1.2.4-cp311-cp311-win32.whl", hash = "sha256:c76c6c051138c5658c14211f4485ab98b9c924411b356718f3ddb83e3aea97ef"},
+    {file = "ts2vg-1.2.4-cp311-cp311-win_amd64.whl", hash = "sha256:24aadc970ddc2d88cc50550fbb3a1777f5536928f7c009f2834fef07aec2e853"},
+    {file = "ts2vg-1.2.4-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:ef8f5d16165a8e1e77e3800db36bb459869b9fd17821b69ca17aed0cf454ab99"},
+    {file = "ts2vg-1.2.4-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:96582848572d60d47cb91e99320d49a2bbc6e584bf4a3c59a8a64c828c16c088"},
+    {file = "ts2vg-1.2.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:276dc621e7a380fc4d496dff41b6deb47e0bd61e0d9ea2b437b11ff4d74acae1"},
+    {file = "ts2vg-1.2.4-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5f02d4d26ee34ed714e3980a347eb4bdb3aca860bbcb302776be193073b9f4e4"},
+    {file = "ts2vg-1.2.4-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:46ee6bb234b0bef52687c61446da1a6e287091b7ccee1015e089951c2075d62b"},
+    {file = "ts2vg-1.2.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:3d30ef6ea87c7a365918a3759cb687a91a0432ac985ce759ece61f5fb1ca4aed"},
+    {file = "ts2vg-1.2.4-cp312-cp312-win32.whl", hash = "sha256:308a5e9aff8e010fc518e08903dd585cf22c3ff8355f5b3a5959c33762559905"},
+    {file = "ts2vg-1.2.4-cp312-cp312-win_amd64.whl", hash = "sha256:4cd73dd54112f6e2672df9c6448e335369df6918bbe2ec9e0c6e6a7757fe78ec"},
+    {file = "ts2vg-1.2.4-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:b56d82fb8d44759e9a1807177dc576048ce536a380cd36cd914bcf447f1389aa"},
+    {file = "ts2vg-1.2.4-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:5ef5836726065c2a3c39b682cc87d9861dcb32bacc8308dd3898fa81d3ced970"},
+    {file = "ts2vg-1.2.4-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6a01ce7a214578fca102405fa7a0cd86f0eb8b32fcd26ef2228c793117c86ca4"},
+    {file = "ts2vg-1.2.4-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:fedfe1abb7cd3e016013af225ee248252076cb76c728dad5f92246e3225ba958"},
+    {file = "ts2vg-1.2.4-cp39-cp39-musllinux_1_2_i686.whl", hash = "sha256:78ba9cb668d4c8387758fbef64f0afa330c856e99f2e605b04a139144988299f"},
+    {file = "ts2vg-1.2.4-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:0000199b83effd9a78adad90fd9c54e7b2cf871949e230850e223ccd86f445a7"},
+    {file = "ts2vg-1.2.4-cp39-cp39-win32.whl", hash = "sha256:9bdc7c6565cf8c096ccc47da0f495c135f182939df5d57dc239d5bdc5504858d"},
+    {file = "ts2vg-1.2.4-cp39-cp39-win_amd64.whl", hash = "sha256:cfb263ed97595c1227532743359462e66d35567029fb991ea8afb814dede0e04"},
+    {file = "ts2vg-1.2.4.tar.gz", hash = "sha256:cf5531c6d565246d6a61621cecf8bc528cdf6a45ce579ab454efe8f5c64672e0"},
+]
+
+[package.dependencies]
+numpy = ">=1.24"
+
+[package.extras]
+tests = ["pytest"]
 
 [[package]]
 name = "typing-extensions"
@@ -3886,4 +3959,4 @@ mne = ["mne"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4.0"
-content-hash = "93c2c7f3db0c767ae361f2d01f0e358fb2592037aa64d0d2a1fb8c8925e49bbd"
+content-hash = "a6d2246038776cd5954541f6e805e80f359a479cbdbd584e20d1441e2da7b47c"

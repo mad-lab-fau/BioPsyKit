@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopsykit"
-version = "0.11.0"
+version = "0.12.0"
 description = "A Python package for the analysis of biopsychological data."
 authors = [
     "Robert Richer <robert.richer@fau.de>",
@@ -23,7 +23,7 @@ packages = [
 python = ">=3.9,<4.0"
 numpy = "^1"
 pandas = "^1"
-matplotlib = "^3.4"
+matplotlib = "^3.9"
 seaborn = "^0"
 neurokit2 = "^0"
 pingouin = "^0.5.2"

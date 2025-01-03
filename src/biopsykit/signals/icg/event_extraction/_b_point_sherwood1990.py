@@ -3,6 +3,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction

@@ -9,8 +9,8 @@ from biopsykit.signals.ecg.event_extraction._q_peak_vanlien2013 import QPeakExtr
 
 __all__ = [
     "BaseEcgExtraction",
-    "QPeakExtractionVanLien2013",
+    "QPeakExtractionForouzanfar2018",
     "QPeakExtractionMartinez2004Neurokit",
     "QPeakExtractionSciPyFindPeaksNeurokit",
-    "QPeakExtractionForouzanfar2018",
+    "QPeakExtractionVanLien2013",
 ]

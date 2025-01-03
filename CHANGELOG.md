@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.12.0 - January 03, 2025
+### New Features
+- Added new algorithms for pre-ejection period (PEP) computation in `biopsykit.signals`, including
+  algorithms for ECG Q-peak extraction (`biopsykit.signals.ecg`) and ICG B-point extraction (`biopsykit.signals.icg`).
+  Added further utility functions (e.g., for heartbeat segmentation) and to compute the PEP using a combination 
+  of ECG and ICG data (`biopsykit.signals.pep`).
+
 ## Version 0.11.0 - January 03, 2025
 ### Changes
 - Made `biopsykit` compatible with matplotlib >= 3.9.

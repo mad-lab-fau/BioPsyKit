@@ -1,11 +1,12 @@
 from typing import Optional
 
 import pandas as pd
+from tpcp import Parameter
+
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
-from tpcp import Parameter
 
 
 class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin):

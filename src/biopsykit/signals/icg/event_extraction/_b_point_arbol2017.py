@@ -3,18 +3,19 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+from tpcp import Parameter
+
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.exceptions import EventExtractionError
-from tpcp import Parameter
 
 __all__ = [
     "BPointExtractionArbol2017IsoelectricCrossings",
-    "BPointExtractionArbol2017ThirdDerivative",
     "BPointExtractionArbol2017SecondDerivative",
+    "BPointExtractionArbol2017ThirdDerivative",
 ]
 
 
@@ -304,7 +305,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
         self.search_window_start_ms = search_window_start_ms
 
     # @make_action_safe
-    def extract(  # noqa: PLR0915
+    def extract(
         self,
         *,
         icg: Union[pd.Series, pd.DataFrame],

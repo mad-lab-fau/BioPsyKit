@@ -5,6 +5,7 @@ from typing import Optional
 
 import pandas as pd
 import pytest
+
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
 from biopsykit.signals.icg.event_extraction import CPointExtractionScipyFindPeaks
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype

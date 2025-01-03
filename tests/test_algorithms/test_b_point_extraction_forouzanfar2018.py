@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pandas as pd
+
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
 from biopsykit.signals.icg.event_extraction import (
     BPointExtractionForouzanfar2018,

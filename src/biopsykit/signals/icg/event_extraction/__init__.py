@@ -18,17 +18,17 @@ from biopsykit.signals.icg.event_extraction._base_c_point_extraction import Base
 from biopsykit.signals.icg.event_extraction._c_point_scipy_findpeaks import CPointExtractionScipyFindPeaks
 
 __all__ = [
-    "BaseBPointExtraction",
-    "BaseCPointExtraction",
-    "BPointExtractionStern1985",
+    "BPointExtractionArbol2017IsoelectricCrossings",
+    "BPointExtractionArbol2017SecondDerivative",
+    "BPointExtractionArbol2017ThirdDerivative",
+    "BPointExtractionDebski1993SecondDerivative",
+    "BPointExtractionDrost2022",
+    "BPointExtractionForouzanfar2018",
     "BPointExtractionLozano2007LinearRegression",
     "BPointExtractionLozano2007QuadraticRegression",
-    "BPointExtractionArbol2017IsoelectricCrossings",
-    "BPointExtractionArbol2017ThirdDerivative",
-    "BPointExtractionArbol2017SecondDerivative",
-    "BPointExtractionDrost2022",
     "BPointExtractionSherwood1990",
-    "BPointExtractionForouzanfar2018",
-    "BPointExtractionDebski1993SecondDerivative",
+    "BPointExtractionStern1985",
+    "BaseBPointExtraction",
+    "BaseCPointExtraction",
     "CPointExtractionScipyFindPeaks",
 ]

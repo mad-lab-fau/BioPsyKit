@@ -2,4 +2,4 @@
 from biopsykit.signals.ecg import event_extraction, plotting, preprocessing, segmentation
 from biopsykit.signals.ecg.ecg import EcgProcessor
 
-__all__ = ["EcgProcessor", "plotting", "preprocessing", "segmentation", "event_extraction"]
+__all__ = ["EcgProcessor", "event_extraction", "plotting", "preprocessing", "segmentation"]

@@ -3,9 +3,10 @@ from typing import Union
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
+from tpcp import Parameter
+
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.segmentation._base_segmentation import BaseHeartbeatSegmentation
-from tpcp import Parameter
 
 __all__ = ["HeartbeatSegmentationNeurokit"]
 

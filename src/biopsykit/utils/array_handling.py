@@ -4,9 +4,10 @@ from typing import Optional, Union
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
+from scipy import interpolate, signal
+
 from biopsykit.utils._datatype_validation_helper import _assert_num_columns
 from biopsykit.utils._types import arr_t, str_t
-from scipy import interpolate, signal
 
 
 def sanitize_input_1d(data: arr_t) -> np.ndarray:

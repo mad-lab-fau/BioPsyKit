@@ -1,4 +1,5 @@
 import pandas as pd
+
 from biopsykit.utils.exceptions import ValidationError
 
 __all__ = ["assert_sample_columns_int"]

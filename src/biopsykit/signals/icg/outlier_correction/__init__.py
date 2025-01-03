@@ -10,7 +10,7 @@ from biopsykit.signals.icg.outlier_correction._outlier_correction_linear_interpo
 
 __all__ = [
     "BaseOutlierCorrection",
+    "OutlierCorrectionDummy",
     "OutlierCorrectionForouzanfar2018",
     "OutlierCorrectionLinearInterpolation",
-    "OutlierCorrectionDummy",
 ]

@@ -2,11 +2,12 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
+from tpcp import Parameter
+
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
-from tpcp import Parameter
 
 __all__ = ["BPointExtractionLozano2007LinearRegression", "BPointExtractionLozano2007QuadraticRegression"]
 
