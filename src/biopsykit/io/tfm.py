@@ -2,9 +2,8 @@
 from typing import ClassVar, Optional
 
 import pandas as pd
-from scipy.io import loadmat
-
 from biopsykit.utils._types import path_t
+from scipy.io import loadmat
 
 
 class TFMDataset:
@@ -43,19 +42,14 @@ class TFMDataset:
         # channel_mapping: Optional[Dict[str, str]] = None,
         tz: Optional[str] = "Europe/Berlin",
     ):
-        """Load TFM data from a .mat file.
+        """Load a TFM dataset from a .mat file.
 
         Parameters
         ----------
-        path : str
-            Path to the .mat file containing the TFM data.
+        path : str or :class:`~pathlib.Path`
+            Path to the .mat file.
         tz : str, optional
             Timezone of the data. Default: "Europe/Berlin"
-
-        Returns
-        -------
-        :class:`~biopsykit.io.tfm.TFMDataset`
-            TFM dataset object.
 
         """
         data = loadmat(path, struct_as_record=False, squeeze_me=True)
@@ -65,13 +59,13 @@ class TFMDataset:
         data_dict = {key: getattr(data_raw, value) for key, value in cls.CHANNEL_MAPPING.items()}
         return cls(data_dict=data_dict, tz=tz, sampling_rate_dict={})
 
-    def data_as_df(self):
-        """Return data as a single pandas DataFrame.
+    def data_as_df(self) -> dict[str, pd.DataFrame]:
+        """Return the TFM data as a dictionary of pandas DataFrames.
 
         Returns
         -------
-        :class:`~pandas.DataFrame`
-            Data as a single pandas DataFrame.
+        dict
+            Dictionary containing the TFM data as pandas DataFrames. Keys are channel names, values are the dataframes.
 
         """
         return self._data

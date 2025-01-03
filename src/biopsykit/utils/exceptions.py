@@ -3,6 +3,7 @@
 __all__ = [
     "DataFrameTransformationError",
     "EcgProcessingError",
+    "EventExtractionError",
     "FeatureComputationError",
     "FileExtensionError",
     "ValidationError",
@@ -32,3 +33,7 @@ class FeatureComputationError(Exception):
 
 class EcgProcessingError(Exception):
     """An error indicating that ECG processing failed."""
+
+
+class EventExtractionError(Exception):
+    """An error indicating that event extraction failed."""
