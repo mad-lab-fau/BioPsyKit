@@ -68,7 +68,7 @@ def compute_sleep_endpoints(
     # get percent of total time asleep
     sleep_efficiency = 100.0 * (len(net_sleep_time) / len(sleep_wake))
     # wake after sleep onset = duration of wake during first and last 'sleep' sample
-    wake_after_sleep_onset = len(df_sw_sleep) - int(df_sw_sleep.sum()[0])
+    wake_after_sleep_onset = len(df_sw_sleep) - int(df_sw_sleep.sum().iloc[0])
 
     df_sw_sleep["block"] = df_sw_sleep["sleep_wake"].diff().ne(0).cumsum()
     df_sw_sleep = df_sw_sleep.reset_index()

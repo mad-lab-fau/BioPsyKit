@@ -190,11 +190,11 @@ def convert_time_log_datetime(
 ) -> pd.DataFrame:
     """Convert the time log information into datetime objects.
 
-    This function converts time log information (containing only time, but no date)
-    into datetime objects, thus, adds the `start date` of the recording. To specify the recording date,
-    either a NilsPod :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DatetimeIndex`
-    must be supplied from which the recording date can be extracted.
-    As an alternative, the date can be specified explicitly via ``date`` parameter.
+    This function converts time log information (containing only time, but no date) into datetime objects, thus, adds
+    the `start date` of the recording. To specify the recording date, either a NilsPod
+    :class:`~nilspodlib.dataset.Dataset` or a pandas dataframe with a :class:`~pandas.DatetimeIndex` must be supplied
+    from which the recording date can be extracted. As an alternative, the date can be specified explicitly via
+    ``date`` parameter.
 
     Parameters
     ----------

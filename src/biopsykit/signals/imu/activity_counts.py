@@ -181,6 +181,6 @@ class ActivityCounts:
         arr = self._digitize_8bit(arr)
         arr = self._accumulate_second_bins(arr)
         if start_idx is not None:
-            arr = add_datetime_index(arr, start_idx, 1 / 60, column_name=["activity_counts"])
+            arr = add_datetime_index(arr, start_idx, 1, column_name=["activity_counts"])
 
         return arr

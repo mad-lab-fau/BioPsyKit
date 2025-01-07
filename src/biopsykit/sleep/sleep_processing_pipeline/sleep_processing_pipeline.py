@@ -81,6 +81,7 @@ def predict_pipeline_acceleration(
     df_sw = sw.predict(df_ac)
     df_rp = rp.predict(data)
     bed_interval = [df_rp["start"][0], df_rp["end"][0]]
+    print(df_sw.value_counts())
     sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval)
     if not sleep_endpoints:
         return {}

@@ -127,8 +127,8 @@ class RestPeriods:
         )[:, 0]
 
         if isinstance(data.index, pd.DatetimeIndex):
-            index_resample = pd.DatetimeIndex(index_resample)
-            index_resample = index_resample.tz_localize("UTC").tz_convert(data.index.tzinfo)
+            index_resample = pd.to_datetime(index_resample, unit="us", utc=True)
+            index_resample = pd.DatetimeIndex(index_resample).tz_convert(data.index.tzinfo)
         return index_resample
 
     def _major_rest_period(

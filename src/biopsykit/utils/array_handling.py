@@ -660,7 +660,9 @@ def add_datetime_index(
         column_name = [column_name]
     arr = pd.DataFrame(arr, columns=column_name) if column_name is not None else pd.DataFrame(arr)
 
-    start_time_s = float(start_time.to_datetime64()) / 1e9
+    # convert start_time to seconds
+    start_time_s = start_time.timestamp()
+
     arr.index = pd.to_datetime(
         (arr.index * 1 / sampling_rate + start_time_s).astype(int), utc=True, unit="s"
     ).tz_convert(start_time.tzinfo)

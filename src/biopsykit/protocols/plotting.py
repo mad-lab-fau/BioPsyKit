@@ -71,7 +71,7 @@ _saliva_feature_params: dict[str, dict[str, Any]] = {
             "max_inc": r"Cortisol $\left[\frac{nmol}{l} \right]$",
             "mean": r"Cortisol $\left[\frac{nmol}{l} \right]$",
             "std": r"Cortisol $\left[\frac{nmol}{l} \right]$",
-            "kurt": r"Cortisol $\left[\frac{nmol}{l} \right]$",
+            "kurtosis": r"Cortisol $\left[\frac{nmol}{l} \right]$",
             "skew": r"Cortisol $\left[\frac{nmol}{l} \right]$",
         },
         "amylase": {
@@ -84,7 +84,7 @@ _saliva_feature_params: dict[str, dict[str, Any]] = {
             "max_inc": r"Amylase $\left[\frac{U}{l} \right]$",
             "mean": r"Amylase $\left[\frac{U}{l} \right]$",
             "std": r"Amylase $\left[\frac{U}{l} \right]$",
-            "kurt": r"Amylase $\left[\frac{U}{l} \right]$",
+            "kurtosis": r"Amylase $\left[\frac{U}{l} \right]$",
             "skew": r"Amylase $\left[\frac{U}{l} \right]$",
         },
     },
@@ -100,7 +100,7 @@ _saliva_feature_params: dict[str, dict[str, Any]] = {
         "mean": r"$\mu(c)$",
         "std": r"$\sigma(c)$",
         "skew": r"$skew(c)$",
-        "kurt": r"$kurt(c)$",
+        "kurtosis": r"$kurtosis(c)$",
     },
 }
 

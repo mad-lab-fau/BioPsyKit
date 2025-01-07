@@ -312,9 +312,9 @@ class SklearnPipelinePermuter:
             Training vector, where `n_samples` is the number of samples and `n_features` is the number of features.
         y : array-like of shape (`n_samples`, `n_output`) or (`n_samples`,)
             Target (i.e., class labels) relative to X for classification or regression.
-        outer_cv : `CV splitter`_
+        outer_cv :
             Cross-validation object determining the cross-validation splitting strategy of the outer cross-validation.
-        inner_cv : `CV splitter`_
+        inner_cv :
             Cross-validation object determining the cross-validation splitting strategy of the hyperparameter search.
         scoring : str, optional
             A str specifying the scoring metric to use for evaluation.
@@ -455,9 +455,9 @@ class SklearnPipelinePermuter:
             Training vector, where `n_samples` is the number of samples and `n_features` is the number of features.
         y : array-like of shape (`n_samples`, `n_output`) or (`n_samples`,)
             Target (i.e., class labels) relative to X for classification or regression.
-        outer_cv : `CV splitter`_
+        outer_cv :
             Cross-validation object determining the cross-validation splitting strategy of the outer cross-validation.
-        inner_cv : `CV splitter`_
+        inner_cv :
             Cross-validation object determining the cross-validation splitting strategy of the hyperparameter search.
         file_path : :class:`pathlib.Path` or str
             path to pickle file
@@ -677,8 +677,10 @@ class SklearnPipelinePermuter:
 
         """
         score_results = self.pipeline_score_results()
+        cols_scoring = [col for col in score_results.columns if any(c for c in ["test", "train"] if c in col)]
         score_summary_mean = (
-            score_results.groupby(score_results.index.names[:-1])
+            score_results[cols_scoring]
+            .groupby(score_results.index.names[:-1])
             .agg(["mean", "std"])
             .sort_values(by=(f"mean_test_{self.refit}", "mean"), ascending=False)
         )
