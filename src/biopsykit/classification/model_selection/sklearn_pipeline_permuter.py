@@ -264,7 +264,7 @@ class SklearnPipelinePermuter:
 
     @classmethod
     def from_csv(cls, file_path: path_t, num_pipeline_steps: Optional[int] = 3) -> Self:
-        """Create a new ``SklearnPipelinePermute`` instance from a csv file with exported results from parameter search.
+        """Create a new ``SklearnPipelinePermuter`` instance from a csv file with results from parameter search.
 
         Parameters
         ----------
@@ -867,7 +867,7 @@ class SklearnPipelinePermuter:
         Returns
         -------
         :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter`
-            ``SklearnPipelinePermuter` instance
+            ``SklearnPipelinePermuter`` instance
 
         """
         file_path = Path(file_path)

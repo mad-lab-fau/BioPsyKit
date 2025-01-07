@@ -205,17 +205,16 @@ def convert_time_log_datetime(
     df : :class:`~pandas.DataFrame`, optional
         dataframe with :class:`~pandas.DatetimeIndex` to extract time and date information. Default: ``None``
     date : str or datetime, optional
-        datetime object or date string used to convert time log information into datetime.
-        If ``date`` is a string, it must be supplied in a common date format, e.g. "dd.mm.yyyy" or "dd/mm/yyyy".
+        datetime object or date string used to convert time log information into datetime. If ``date`` is a string,
+        it must be supplied in a common date format, e.g. "dd.mm.yyyy" or "dd/mm/yyyy".
         Default: ``None``
     timezone : str or :class:`datetime.tzinfo`, optional
-        timezone of the acquired data to convert, either as string of as tzinfo object.
-        Default: "Europe/Berlin"
+        timezone of the acquired data to convert, either as string of as tzinfo object. Default: "Europe/Berlin"
 
     Returns
     -------
     :class:`~pandas.DataFrame`
-        pandas dataframe with log time converted into datetime
+        time log dataframe with datetime objects
 
     Raises
     ------
