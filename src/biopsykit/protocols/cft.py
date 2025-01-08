@@ -214,7 +214,7 @@ class CFT(BaseProtocol):
                     "Error computing Baseline heart rate! The provided data is shorter than the Baseline interval."
                 )
             hr_baseline = data.loc[bl_start:bl_end]
-        return float(hr_baseline.mean())
+        return float(hr_baseline.mean().iloc[0])
 
     def extract_cft_interval(self, data: pd.DataFrame) -> pd.DataFrame:
         """Extract interval during which CFT was applied.
@@ -727,14 +727,14 @@ class CFT(BaseProtocol):
         if isinstance(data.index, pd.DatetimeIndex):
             brady_loc = cft_params["peak_brady"]
             brady_x = brady_loc
-            brady_y = float(data.loc[brady_loc])
+            brady_y = float(data.loc[brady_loc].iloc[0])
         else:
             brady_loc = cft_params["cft_start_idx"] + cft_params["peak_brady_idx"]
             brady_x = data.index[brady_loc]
-            brady_y = float(data.iloc[brady_loc])
+            brady_y = float(data.iloc[brady_loc].iloc[0])
 
         hr_baseline = cft_params["baseline_hr"]
-        max_hr_cft = float(self.extract_cft_interval(data).max())
+        max_hr_cft = float(self.extract_cft_interval(data).max().iloc[0])
         cft_start = cft_times["cft_start"]
 
         color = getattr(colors_all, color_key)
@@ -906,10 +906,10 @@ class CFT(BaseProtocol):
         if isinstance(data.index, pd.DatetimeIndex):
             onset_idx = cft_params["onset"]
             onset_x = onset_idx
-            onset_y = float(data.loc[onset_idx])
+            onset_y = float(data.loc[onset_idx].iloc[0])
         else:
             onset_idx = cft_params["cft_start_idx"] + cft_params["onset_idx"]
-            onset_y = float(data.iloc[onset_idx])
+            onset_y = float(data.iloc[onset_idx].iloc[0])
             onset_x = data.index[onset_idx]
 
         # CFT Onset vline

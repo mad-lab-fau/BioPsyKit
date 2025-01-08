@@ -248,7 +248,7 @@ def load_saliva_wide_format(
 
     num_subjects = len(data)
     data.columns = pd.MultiIndex.from_product([[saliva_type], data.columns], names=[None, "sample"])
-    data = data.stack()
+    data = data.stack(future_stack=True)
 
     _check_num_samples(len(data), num_subjects)
 

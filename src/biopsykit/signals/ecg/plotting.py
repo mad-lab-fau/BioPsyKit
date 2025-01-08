@@ -243,7 +243,7 @@ def _ecg_plot(
     if "R_Peak_Outlier" in ecg_signal:
         axs["ecg"].scatter(
             x_axis[outlier],
-            ecg_clean[outlier],
+            ecg_clean.iloc[outlier],
             color=colors_all.phil,
             label="Outlier",
             zorder=2,

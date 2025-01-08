@@ -826,7 +826,7 @@ class StatsPipeline:
         if len(data.index.names) > 1:
             data.index = data.index.droplevel(-1)
         data = data.assign(**{pcol: data.loc[:, pcol].apply(self._format_pvals_stars)})
-        data = data.applymap(self._format_number)
+        data = data.map(self._format_number)
 
         if unstack_levels is not None:
             data = data.stack()

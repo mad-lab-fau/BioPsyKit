@@ -494,8 +494,10 @@ def split_dict_into_subphases(
             for subphase, times in zip(subphases.keys(), subphase_times):
                 if isinstance(value.index, pd.DatetimeIndex):
                     # slice the current subphase by dropping the preceding subphases
-                    value_cpy = value.drop(value.first(f"{times[0]}s").index)
-                    value_cpy = value_cpy.first(f"{times[1] - times[0]}s")
+                    mask_drop = value.index < value.index[0] + pd.Timedelta(seconds=times[0])
+                    value_cpy = value[~mask_drop]
+                    mask_keep = value_cpy.index <= value.index[0] + pd.Timedelta(seconds=times[1])
+                    value_cpy = value_cpy[mask_keep]
                     subphase_dict[subphase] = value_cpy
                 else:
                     subphase_dict[subphase] = value.iloc[times[0] : times[1]]
