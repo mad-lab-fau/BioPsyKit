@@ -231,8 +231,8 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
 
             b_points.loc[idx, "b_point_sample"] = b_point_sample
 
-        is_b_point_dataframe(b_points)
         b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        is_b_point_dataframe(b_points)
 
         self.points_ = b_points
         return self

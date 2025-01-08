@@ -9,6 +9,7 @@ import pytest
 from biopsykit.signals.ecg.event_extraction import QPeakExtractionMartinez2004Neurokit, QPeakExtractionVanLien2013
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
+from biopsykit.utils.exceptions import ValidationError
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/pep")
 
@@ -57,10 +58,8 @@ class TestQPeakExtractionNeurokitDwt:
         ecg_data = self.ecg_data.squeeze()
         _assert_is_dtype(ecg_data, pd.Series)
 
-        reference_q_peaks = self._get_regression_reference()
-        self.extract_algo.extract(ecg=ecg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
-
-        self._check_q_peaks_equal(reference_q_peaks, self.extract_algo.points_)
+        with pytest.raises(ValidationError):
+            self.extract_algo.extract(ecg=ecg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
 
     @staticmethod
     def _get_regression_reference():
@@ -126,9 +125,8 @@ class TestQPeakExtractionVanLien2013:
         ecg_data = self.ecg_data.squeeze()
         _assert_is_dtype(ecg_data, pd.Series)
 
-        reference_q_peaks = self._get_regression_reference(time_interval_ms)
-        self.extract_algo.extract(ecg=ecg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
-        self._check_q_peaks_equal(reference_q_peaks, self.extract_algo.points_)
+        with pytest.raises(ValidationError):
+            self.extract_algo.extract(ecg=ecg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
 
     def _get_regression_reference(self, time_interval_ms: int = 40):
         data = pd.read_csv(

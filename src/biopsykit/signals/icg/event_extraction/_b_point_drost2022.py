@@ -145,8 +145,8 @@ class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixi
             elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
-        is_b_point_dataframe(b_points)
         b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
+        is_b_point_dataframe(b_points)
 
         self.points_ = b_points
         return self

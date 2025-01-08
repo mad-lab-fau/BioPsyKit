@@ -68,14 +68,11 @@ class TestHeartbeatSegmentationNeurokit:
     def test_regression_extract_variable_length_series(self):
         self.setup()
 
-        reference_heartbeats = self._get_regression_reference("pep_test_heartbeat_reference_variable_length.csv")
-
         ecg_data = self.ecg_data["ecg"]
         _assert_is_dtype(ecg_data, pd.Series)
 
-        self.segmenter.extract(ecg=ecg_data, sampling_rate_hz=self.sampling_rate_hz)
-        # check if the first heartbeat is correct
-        self._check_heartbeats_equal(reference_heartbeats, self.segmenter.heartbeat_list_)
+        with pytest.raises(ValidationError):
+            self.segmenter.extract(ecg=ecg_data, sampling_rate_hz=self.sampling_rate_hz)
 
     def test_regression_extract_fixed_length_dataframe(self):
         self.setup()
@@ -93,34 +90,33 @@ class TestHeartbeatSegmentationNeurokit:
     def test_regression_extract_fixed_length_series(self):
         self.setup(variable_length=False)
 
-        reference_heartbeats = self._get_regression_reference("pep_test_heartbeat_reference_fixed_length.csv")
-
         ecg_data = self.ecg_data["ecg"]
         _assert_is_dtype(ecg_data, pd.Series)
 
-        self.segmenter.extract(ecg=ecg_data, sampling_rate_hz=self.sampling_rate_hz)
-        # check if the first heartbeat is correct
-        self._check_heartbeats_equal(reference_heartbeats, self.segmenter.heartbeat_list_)
+        with pytest.raises(ValidationError):
+            self.segmenter.extract(ecg=ecg_data, sampling_rate_hz=self.sampling_rate_hz)
 
     def test_regression_extract_fixed_length_numpy(self):
         self.setup(variable_length=False)
 
-        reference_heartbeats = self._get_regression_reference("pep_test_heartbeat_reference_fixed_length.csv")
-
         ecg_data = self.ecg_data["ecg"].to_numpy()
         _assert_is_dtype(ecg_data, np.ndarray)
 
-        self.segmenter.extract(ecg=ecg_data, sampling_rate_hz=self.sampling_rate_hz)
-        # check if the first heartbeat is correct
-        estimated_heartbeats = self.segmenter.heartbeat_list_.drop(columns="start_time")
-        reference_heartbeats = reference_heartbeats.drop(columns="start_time")
-
-        self._check_heartbeats_equal(reference_heartbeats, estimated_heartbeats)
+        with pytest.raises(ValidationError):
+            self.segmenter.extract(ecg=ecg_data, sampling_rate_hz=self.sampling_rate_hz)
 
     @staticmethod
     def _get_regression_reference(file_path):
         data = pd.read_csv(TEST_FILE_PATH.joinpath(file_path), index_col=0, parse_dates=True)
-        data = data.convert_dtypes(infer_objects=True)
+        data = data.astype(
+            {
+                "start_sample": "Int64",
+                "end_sample": "Int64",
+                "r_peak_sample": "Int64",
+                "rr_interval_sample": "Int64",
+                "rr_interval_ms": "Float64",
+            }
+        )
         data["start_time"] = pd.to_datetime(data["start_time"]).dt.tz_convert("Europe/Berlin")
         return data
 
@@ -131,8 +127,8 @@ class TestHeartbeatSegmentationNeurokit:
     @pytest.mark.parametrize(
         ("data", "expected"),
         [
-            (None, pytest.raises(ValueError)),
-            (pd.Series([], dtype="Float64"), pytest.raises(ValueError)),
+            (None, pytest.raises(ValidationError)),
+            (pd.Series([], dtype="Float64"), pytest.raises(ValidationError)),
             (pd.DataFrame(), pytest.raises(ValidationError)),
         ],
     )

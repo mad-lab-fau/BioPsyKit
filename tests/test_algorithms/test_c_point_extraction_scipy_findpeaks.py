@@ -9,6 +9,7 @@ import pytest
 from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
 from biopsykit.signals.icg.event_extraction import CPointExtractionScipyFindPeaks
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
+from biopsykit.utils.exceptions import ValidationError
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/pep")
 
@@ -58,10 +59,8 @@ class TestCPointExtractionSciPyFindpeaks:
         icg_data = self.icg_data.squeeze()
         _assert_is_dtype(icg_data, pd.Series)
 
-        reference_c_points = self._get_regression_reference()
-        self.extract_algo.extract(icg=icg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
-
-        self._check_c_point_equal(reference_c_points, self.extract_algo.points_)
+        with pytest.raises(ValidationError):
+            self.extract_algo.extract(icg=icg_data, heartbeats=self.heartbeats, sampling_rate_hz=self.sampling_rate_hz)
 
     @staticmethod
     def _get_regression_reference():
