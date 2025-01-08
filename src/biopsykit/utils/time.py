@@ -10,7 +10,7 @@ import pandas as pd
 import pytz
 
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
-from biopsykit.utils._types import path_t
+from biopsykit.utils._types_internal import path_t
 
 tz = pytz.timezone("Europe/Berlin")
 utc = pytz.timezone("UTC")

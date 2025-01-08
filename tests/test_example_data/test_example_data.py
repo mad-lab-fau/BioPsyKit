@@ -10,7 +10,7 @@ from biopsykit.example_data import *
 from biopsykit.questionnaires import pss
 from biopsykit.questionnaires.utils import find_cols
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_has_index_levels, _assert_is_dtype
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     is_ecg_raw_dataframe,
     is_hr_phase_dict,
     is_hr_subject_data_dict,

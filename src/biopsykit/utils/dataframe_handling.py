@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_has_index_levels, _assert_is_dtype
-from biopsykit.utils.datatype_helper import CodebookDataFrame, is_codebook_dataframe
+from biopsykit.utils.dtypes import CodebookDataFrame, is_codebook_dataframe
 
 __all__ = [
     "add_space_to_camel",
@@ -360,13 +360,13 @@ def apply_codebook(data: pd.DataFrame, codebook: CodebookDataFrame) -> pd.DataFr
     """Apply codebook to convert numerical to categorical values.
 
     The codebook is expected to be a dataframe in a standardized format
-    (see :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame` for further information).
+    (see :obj:`~biopsykit.utils.dtypes.CodebookDataFrame` for further information).
 
 
 
     Parameters
     ----------
-    codebook : :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame`
+    codebook : :obj:`~biopsykit.utils.dtypes.CodebookDataFrame`
         path to codebook or dataframe to be used as codebook
     data : :class:`~pandas.DataFrame`
         data to apply codebook on

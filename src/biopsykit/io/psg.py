@@ -17,7 +17,7 @@ except ImportError as e:
 import pandas as pd
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
-from biopsykit.utils._types import path_t
+from biopsykit.utils._types_internal import path_t
 
 __all__ = ["PSGDataset"]
 

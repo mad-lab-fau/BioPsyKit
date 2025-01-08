@@ -4,9 +4,14 @@ import pandas as pd
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.dtypes import (
+    EcgRawDataFrame,
+    HeartbeatSegmentationDataFrame,
+    is_ecg_raw_dataframe,
+    is_heartbeat_segmentation_dataframe,
+    is_q_peak_dataframe,
+)
 
 
 class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin):
@@ -46,9 +51,9 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
     def extract(
         self,
         *,
-        ecg: Optional[pd.DataFrame],  # noqa: ARG002
-        heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,
+        ecg: Optional[EcgRawDataFrame],
+        heartbeats: HeartbeatSegmentationDataFrame,
+        sampling_rate_hz: float,
     ):
         """Extract Q-peaks (start of ventricular depolarization) from given ECG cleaned signal.
 
@@ -69,6 +74,8 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
         -------
             self
         """
+        is_ecg_raw_dataframe(ecg)
+        is_heartbeat_segmentation_dataframe(heartbeats)
         # TODO handle missing?
         # convert the fixed time_interval from milliseconds into samples
         time_interval_in_samples = int((self.time_interval_ms / 1000) * sampling_rate_hz)
@@ -82,10 +89,8 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
         q_peaks.columns = ["q_peak_sample"]
         q_peaks = q_peaks.assign(nan_reason=pd.NA)
 
-        _assert_is_dtype(q_peaks, pd.DataFrame)
-        _assert_has_columns(q_peaks, [["q_peak_sample", "nan_reason"]])
         q_peaks = q_peaks.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(q_peaks)
+        is_q_peak_dataframe(q_peaks)
 
         self.points_ = q_peaks
         return self

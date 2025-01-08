@@ -1,5 +1,5 @@
 import warnings
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -7,10 +7,17 @@ from scipy.signal import argrelmin
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
+from biopsykit.utils.dtypes import (
+    CPointDataFrame,
+    HeartbeatSegmentationDataFrame,
+    IcgRawDataFrame,
+    is_b_point_dataframe,
+    is_c_point_dataframe,
+    is_heartbeat_segmentation_dataframe,
+    is_icg_raw_dataframe,
+)
 from biopsykit.utils.exceptions import EventExtractionError
 
 __all__ = ["BPointExtractionForouzanfar2018"]
@@ -50,10 +57,10 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
     def extract(  # noqa: PLR0915
         self,
         *,
-        icg: Union[pd.Series, pd.DataFrame],
-        heartbeats: pd.DataFrame,
-        c_points: pd.DataFrame,
-        sampling_rate_hz: float,  # noqa: ARG002
+        icg: IcgRawDataFrame,
+        heartbeats: HeartbeatSegmentationDataFrame,
+        c_points: CPointDataFrame,
+        sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
         """Extract B-points from given ICG cleaned signal.
 
@@ -85,6 +92,9 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         """
         # sanitize input signal
         self._check_valid_missing_handling()
+        is_icg_raw_dataframe(icg)
+        is_heartbeat_segmentation_dataframe(heartbeats)
+        is_c_point_dataframe(c_points)
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
 
@@ -130,10 +140,10 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
             if (start_sample == a_point) & (end_sample == a_point):
                 if self.correct_outliers:
-                    b_points["b_point_sample"].iloc[idx] = data["r_peak_sample"]
+                    b_points.loc[idx, "b_point_sample"] = data["r_peak_sample"]
                 else:
-                    b_points["b_point_sample"].iloc[idx] = np.nan
-                    b_points["nan_reason"].iloc[idx] = "no_monotonic_segment"
+                    b_points.loc[idx, "b_point_sample"] = np.nan
+                    b_points.loc[idx, "nan_reason"] = "no_monotonic_segment"
                 continue
 
             # Get the first third of the monotonic increasing segment
@@ -183,10 +193,8 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
             elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
-        _assert_is_dtype(b_points, pd.DataFrame)
-        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
         b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(b_points)
+        is_b_point_dataframe(b_points)
 
         self.points_ = b_points
         return self

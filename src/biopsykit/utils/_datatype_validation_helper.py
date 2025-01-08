@@ -6,7 +6,7 @@ from typing import Any, Optional, Union
 import numpy as np
 import pandas as pd
 
-from biopsykit.utils._types import _Hashable, path_t
+from biopsykit.utils._types_internal import _Hashable, path_t
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError, ValueRangeError
 
 
@@ -199,7 +199,7 @@ def _assert_has_index_levels(
 
 def _assert_has_columns(
     df: pd.DataFrame,
-    columns_sets: Sequence[Union[list[_Hashable], list[str], pd.Index]],
+    column_sets: Sequence[Union[list[_Hashable], list[str], pd.Index]],
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
     """Check if the dataframe has at least all columns sets.
@@ -208,7 +208,7 @@ def _assert_has_columns(
     ----------
     df : :class:`~pandas.DataFrame`
         The dataframe to check
-    columns_sets : list
+    column_sets : list
         Column set or list of column sets to check
     raise_exception : bool, optional
         whether to raise an exception or return a bool value
@@ -232,14 +232,14 @@ def _assert_has_columns(
     """
     columns = df.columns
     result = False
-    for col_set in columns_sets:
+    for col_set in column_sets:
         result = result or all(v in columns for v in col_set)
 
     if result is False:
-        if len(columns_sets) == 1:
-            helper_str = f"the following columns: {columns_sets[0]}"
+        if len(column_sets) == 1:
+            helper_str = f"the following columns: {column_sets[0]}"
         else:
-            helper_str = f"one of the following sets of columns: {columns_sets}"
+            helper_str = f"one of the following sets of columns: {column_sets}"
         if raise_exception:
             raise ValidationError(
                 f"The dataframe is expected to have {helper_str}. "
@@ -528,6 +528,15 @@ def _assert_dataframes_same_length(
             raise ValidationError("Not all dataframes have the same length!")
         return False
     return True
+
+
+def _assert_sample_columns_int(data: pd.DataFrame) -> None:
+    """Assert that the columns of a DataFrame that have "_sample" in their name are of type int."""
+    if not any(data.columns.str.contains("_sample")):
+        raise ValidationError("DataFrame does not contain any columns with '_sample' in their name!")
+    for col in data.columns:
+        if "_sample" in col and not pd.api.types.is_integer_dtype(data[col]):
+            raise ValidationError(f"Column '{col}' is not of type 'int'!")
 
 
 def _multiindex_level_names_helper_get_expected_levels(

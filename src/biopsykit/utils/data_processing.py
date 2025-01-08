@@ -14,7 +14,7 @@ from biopsykit.utils._datatype_validation_helper import (
     _assert_is_dtype,
 )
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     MeanSeDataFrame,
     MergedStudyDataDict,
     StudyDataDict,
@@ -127,10 +127,10 @@ def exclude_subjects(
     This function can be used to exclude subject IDs for later analysis from different kinds of dataframes, such as:
 
     * dataframes with subject condition information
-      (:obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`)
+      (:obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame`)
     * dataframes with time log information
-    * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.datatype_helper.SalivaRawDataFrame` or
-      :obj:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`)
+    * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.dtypes.SalivaRawDataFrame` or
+      :obj:`~biopsykit.utils.dtypes.MeanSeDataFrame`)
 
     All dataframes can be supplied at once via ``**kwargs``.
 
@@ -191,8 +191,8 @@ def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.
 
     Parameters
     ----------
-    subject_data_dict : :class:`~biopsykit.utils.datatype_helper.SubjectDataDict`
-        ``SubjectDataDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.PhaseDict`
+    subject_data_dict : :class:`~biopsykit.utils.dtypes.SubjectDataDict`
+        ``SubjectDataDict``, i.e., a dictionary with a :class:`~biopsykit.utils.dtypes.PhaseDict`
         for each subject
     phase : str or :class:`~pandas.DataFrame`
         phase to normalize all other data to. If ``phase`` is a string then it is interpreted as the name of a phase
@@ -294,18 +294,18 @@ def resample_dict_sec(
 
 
 def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Union[str, Sequence[str]]) -> SubjectDataDict:
-    """Select specific phases from :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`.
+    """Select specific phases from :obj:`~biopsykit.utils.dtypes.SubjectDataDict`.
 
     Parameters
     ----------
-    subject_data_dict : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
-        ``SubjectDataDict``, i.e. a dictionary with :obj:`~biopsykit.utils.datatype_helper.PhaseDict` for each subject
+    subject_data_dict : :obj:`~biopsykit.utils.dtypes.SubjectDataDict`
+        ``SubjectDataDict``, i.e. a dictionary with :obj:`~biopsykit.utils.dtypes.PhaseDict` for each subject
     phases : list of str
         list of phases to select
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+    :obj:`~biopsykit.utils.dtypes.SubjectDataDict`
         ``SubjectDataDict`` containing only the phases of interest
 
     """
@@ -322,11 +322,11 @@ def rearrange_subject_data_dict(
 ) -> StudyDataDict:
     """Rearrange ``SubjectDataDict`` to ``StudyDataDict``.
 
-    A :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` is constructed from a
-    :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` by swapping outer (subject IDs) and inner
+    A :obj:`~biopsykit.utils.dtypes.StudyDataDict` is constructed from a
+    :obj:`~biopsykit.utils.dtypes.SubjectDataDict` by swapping outer (subject IDs) and inner
     (phase names) dictionary keys.
 
-    The **input** needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
+    The **input** needs to be a :obj:`~biopsykit.utils.dtypes.SubjectDataDict`,
     a nested dictionary in the following format:
 
     | {
@@ -346,14 +346,14 @@ def rearrange_subject_data_dict(
 
     Parameters
     ----------
-    subject_data_dict : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+    subject_data_dict : :obj:`~biopsykit.utils.dtypes.SubjectDataDict`
         ``SubjectDataDict``, i.e. a dictionary with data from multiple subjects, each containing data from
-        multiple phases (in form of a :obj:`~biopsykit.utils.datatype_helper.PhaseDict`)
+        multiple phases (in form of a :obj:`~biopsykit.utils.dtypes.PhaseDict`)
 
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+    :obj:`~biopsykit.utils.dtypes.StudyDataDict`
         rearranged ``SubjectDataDict``
 
     """
@@ -382,7 +382,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 
     Parameters
     ----------
-    study_data_dict : :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+    study_data_dict : :obj:`~biopsykit.utils.dtypes.StudyDataDict`
         ``StudyDataDict``, i.e. a dictionary with data from multiple phases, each phase containing data from
         different subjects.
     phases : list of str, optional
@@ -391,7 +391,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+    :obj:`~biopsykit.utils.dtypes.StudyDataDict`
         ``StudyDataDict`` with data cut to the shortest duration in each phase
 
     """
@@ -412,7 +412,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 def merge_study_data_dict(
     study_data_dict: StudyDataDict, dict_levels: Optional[Sequence[str]] = None
 ) -> MergedStudyDataDict:
-    """Merge inner dictionary level of :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into one dataframe.
+    """Merge inner dictionary level of :obj:`~biopsykit.utils.dtypes.StudyDataDict` into one dataframe.
 
     This function removes the inner level of the nested ``StudyDataDict`` by merging data from all subjects
     into one dataframe for each phase.
@@ -425,7 +425,7 @@ def merge_study_data_dict(
 
     Parameters
     ----------
-    study_data_dict : :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+    study_data_dict : :obj:`~biopsykit.utils.dtypes.StudyDataDict`
         ``StudyDataDict``, i.e. a dictionary with data from multiple phases, each phase containing data from
         different subjects.
     dict_levels : list of str
@@ -434,7 +434,7 @@ def merge_study_data_dict(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
+    :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`
         ``MergedStudyDataDict`` with data of all subjects merged into one dataframe for each phase
 
     """
@@ -576,8 +576,8 @@ def add_subject_conditions(
     data : :class:`~pandas.DataFrame`
         dataframe where new index level ``condition`` with subject conditions should be added to
     condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
-        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` or
-        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` or
+        :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` with information on which subject belongs to
         which condition
 
 
@@ -608,8 +608,8 @@ def split_subject_conditions(
     data_dict : dict
         (nested) dictionary with data which should be split based on the conditions subjects belong to
     condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
-        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` or
-        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` or
+        :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` with information on which subject belongs to
         which condition
 
 

@@ -28,8 +28,8 @@ from biopsykit.io.sleep_analyzer import (
     load_withings_sleep_analyzer_raw_folder,
     load_withings_sleep_analyzer_summary,
 )
-from biopsykit.utils._types import path_t
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils._types_internal import path_t
+from biopsykit.utils.dtypes import (
     HeartRatePhaseDict,
     HeartRateSubjectDataDict,
     SalivaMeanSeDataFrame,
@@ -137,7 +137,7 @@ def get_condition_list_example() -> SubjectConditionDataFrame:
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame`
         dataframe with example subject condition assignment
 
     """
@@ -175,7 +175,7 @@ def get_saliva_example_plate_format(
 
     Returns
     -------
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
 
     See Also
@@ -206,7 +206,7 @@ def get_saliva_example(sample_times: Optional[Sequence[int]] = None) -> SalivaRa
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         dataframe with example raw saliva data
 
     """
@@ -224,7 +224,7 @@ def get_saliva_mean_se_example() -> dict[str, SalivaMeanSeDataFrame]:
     Returns
     -------
     dict
-        dictionary with :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame` from different saliva types
+        dictionary with :obj:`~biopsykit.utils.dtypes.SalivaMeanSeDataFrame` from different saliva types
 
     """
     data_dict = pd.read_excel(_get_data("saliva_sample_mean_se.xlsx"), sheet_name=None)
@@ -235,11 +235,11 @@ def get_saliva_mean_se_example() -> dict[str, SalivaMeanSeDataFrame]:
 
 
 def get_hr_subject_data_dict_example() -> HeartRateSubjectDataDict:
-    """Return heart rate example data in the form of a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`.
+    """Return heart rate example data in the form of a :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`.
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+    :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`
         dictionary with heart rate time-series data from multiple subjects, each containing data from different phases.
 
     """
@@ -256,7 +256,7 @@ def get_hr_subject_data_dict_tuple_example() -> HeartRateSubjectDataDict:
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+    :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`
         dictionary with heart rate time-series, each containing data from different phases.
 
     """
@@ -304,7 +304,7 @@ def get_mist_hr_example() -> HeartRatePhaseDict:
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+    :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
         dictionary with heart rate time-series data from one subject during multiple phases
 
     """
@@ -470,7 +470,7 @@ def get_sleep_analyzer_summary_example() -> SleepEndpointDataFrame:
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SleepEndpointDataFrame`
         dataframe with example sleep endpoints computed from Withings Sleep Analyzer Summary data
 
     """

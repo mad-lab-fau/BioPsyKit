@@ -16,7 +16,7 @@ from biopsykit.plotting import feature_boxplot, lineplot, multi_feature_boxplot
 from biopsykit.protocols._utils import _get_sample_times
 from biopsykit.saliva.utils import _remove_s0
 from biopsykit.utils.data_processing import get_subphase_durations
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     MeanSeDataFrame,
     MergedStudyDataDict,
     SalivaFeatureDataFrame,
@@ -145,14 +145,14 @@ def hr_ensemble_plot(
     If the data consist of multiple phases, data from each phase are overlaid in the same plot.
     If each phase additionally consists of subphases, the single subphases are highlighted in the plot.
 
-    The input data is expected to be a :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`, i.e.,
+    The input data is expected to be a :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`, i.e.,
     a dictionary with merged time-series heart rate data, of multiple subjects, split into individual phases.
     Per phase, the data of each subjects have same length and are combined into one common dataframe.
 
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
+    data : :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`
         dict with heart rate data to plot
     subphases : dict, optional
         dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
@@ -202,7 +202,7 @@ def hr_ensemble_plot(
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
+    :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`
         dictionary format
     :func:`~biopsykit.utils.data_processing.merge_study_data_dict`
         function to build ``MergedStudyDataDict``
@@ -397,7 +397,7 @@ def hr_mean_plot(  # pylint:disable=too-many-branches
 
     Parameters
     ----------
-    data : :class:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.MeanSeDataFrame`
         Heart rate data to plot. Must be provided as ``MeanSeDataFrame`` with columns ``mean`` and ``se``
         computed over phases (and, if available, subphases)
     **kwargs
@@ -683,9 +683,9 @@ def saliva_plot(  # pylint:disable=too-many-branches
 ) -> Optional[tuple[plt.Figure, plt.Axes]]:
     r"""Plot saliva data during psychological protocol as mean ± standard error.
 
-    The function accepts raw saliva data per subject (:obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`)
+    The function accepts raw saliva data per subject (:obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`)
     as well as pre-computed mean and standard error values of saliva samples
-    ( :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`). To combine data from multiple saliva
+    ( :obj:`~biopsykit.utils.dtypes.SalivaMeanSeDataFrame`). To combine data from multiple saliva
     types (maximum: 2) into one plot a dict can be passed to ``data``.
 
     If a psychological test (e.g., TSST, MIST, or Stroop) was performed, the test time is highlighted as vertical span
@@ -698,8 +698,8 @@ def saliva_plot(  # pylint:disable=too-many-branches
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`, \
-           :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`, or dict of such
+    data : :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`, \
+           :obj:`~biopsykit.utils.dtypes.SalivaMeanSeDataFrame`, or dict of such
         Saliva data to plot. Must either be provided as ``SalivaRawDataFrame`` with raw saliva data per subject or
         as ``SalivaMeanSeDataFrame`` with columns ``mean`` and ``se`` computed per saliva sample. To plot data from
         multiple saliva types (maximum: 2) a dict can be passed (keys: saliva types, values: saliva data).
@@ -1022,7 +1022,7 @@ def saliva_feature_boxplot(
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+    data : :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame`
         data to plot
     x : str
         column of x axis in ``data``
@@ -1091,7 +1091,7 @@ def saliva_multi_feature_boxplot(
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+    data : :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame`
         data to plot
     saliva_type : str
         type of saliva data to plot

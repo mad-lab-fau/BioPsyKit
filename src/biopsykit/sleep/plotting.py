@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from fau_colors import colors_all
 
-from biopsykit.utils.datatype_helper import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame, SleepEndpointDict
+from biopsykit.utils.dtypes import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame, SleepEndpointDict
 
 _sleep_imu_plot_params = {
     "background_color": ["#e0e0e0", "#9e9e9e"],
@@ -36,14 +36,14 @@ def sleep_imu_plot(
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
-        data to plot. Data must either be acceleration data (:obj:`~biopsykit.utils.datatype_helper.AccDataFrame`),
-        gyroscope data (:obj:`~biopsykit.utils.datatype_helper.GyrDataFrame`), or IMU data
-        (:obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`).
+        data to plot. Data must either be acceleration data (:obj:`~biopsykit.utils.dtypes.AccDataFrame`),
+        gyroscope data (:obj:`~biopsykit.utils.dtypes.GyrDataFrame`), or IMU data
+        (:obj:`~biopsykit.utils.dtypes.ImuDataFrame`).
     datastreams : str or list of str, optional
         list of datastreams indicating which type of data should be plotted or ``None`` to only plot acceleration data.
         If more than one type of datastream is specified each datastream is plotted row-wise in its own subplot.
         Default: ``None``
-    sleep_endpoints : :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`
+    sleep_endpoints : :obj:`~biopsykit.utils.dtypes.SleepEndpointDict`
         dictionary with sleep endpoints to add to plot or ``None`` to only plot IMU data.
     downsample_factor : int, optional
         downsample factor to apply to raw input data before plotting or ``None`` to not downsample data before

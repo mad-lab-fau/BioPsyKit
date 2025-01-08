@@ -1,15 +1,21 @@
-from typing import Union
-
 import numpy as np
 import pandas as pd
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 
 __all__ = ["BPointExtractionLozano2007LinearRegression", "BPointExtractionLozano2007QuadraticRegression"]
+
+from biopsykit.utils.dtypes import (
+    CPointDataFrame,
+    HeartbeatSegmentationDataFrame,
+    IcgRawDataFrame,
+    is_b_point_dataframe,
+    is_c_point_dataframe,
+    is_heartbeat_segmentation_dataframe,
+    is_icg_raw_dataframe,
+)
 
 
 class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandleMissingEventsMixin):
@@ -36,10 +42,10 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
     def extract(
         self,
         *,
-        icg: Union[pd.Series, pd.DataFrame],  # noqa: ARG002
-        heartbeats: pd.DataFrame,
-        c_points: pd.DataFrame,
-        sampling_rate_hz: int,
+        icg: IcgRawDataFrame,
+        heartbeats: HeartbeatSegmentationDataFrame,
+        c_points: CPointDataFrame,
+        sampling_rate_hz: float,
     ):
         """Extract B-points from given cleaned ICG derivative signal.
 
@@ -73,6 +79,9 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
 
         """
         self._check_valid_missing_handling()
+        is_icg_raw_dataframe(icg)
+        is_heartbeat_segmentation_dataframe(heartbeats)
+        is_c_point_dataframe(c_points)
 
         # result dfs
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
@@ -114,10 +123,8 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
 
             b_points.loc[idx, "b_point_sample"] = b_point_sample
 
-        _assert_is_dtype(b_points, pd.DataFrame)
-        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
         b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(b_points)
+        is_b_point_dataframe(b_points)
 
         self.points_ = b_points
         return self
@@ -144,10 +151,10 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
     def extract(
         self,
         *,
-        icg: Union[pd.Series, pd.DataFrame],  # noqa: ARG002
-        heartbeats: pd.DataFrame,
-        c_points: pd.DataFrame,
-        sampling_rate_hz: int,
+        icg: IcgRawDataFrame,
+        heartbeats: HeartbeatSegmentationDataFrame,
+        c_points: CPointDataFrame,
+        sampling_rate_hz: float,
     ):
         """Extract B-points from given cleaned ICG derivative signal.
 
@@ -181,6 +188,9 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
 
         """
         self._check_valid_missing_handling()
+        is_icg_raw_dataframe(icg)
+        is_heartbeat_segmentation_dataframe(heartbeats)
+        is_c_point_dataframe(c_points)
 
         # result dfs
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
@@ -221,10 +231,8 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
 
             b_points.loc[idx, "b_point_sample"] = b_point_sample
 
-        _assert_is_dtype(b_points, pd.DataFrame)
-        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+        is_b_point_dataframe(b_points)
         b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(b_points)
 
         self.points_ = b_points
         return self

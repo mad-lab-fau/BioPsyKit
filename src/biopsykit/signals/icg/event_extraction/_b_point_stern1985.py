@@ -1,15 +1,22 @@
 import warnings
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
+from biopsykit.utils.dtypes import (
+    CPointDataFrame,
+    HeartbeatSegmentationDataFrame,
+    IcgRawDataFrame,
+    is_b_point_dataframe,
+    is_c_point_dataframe,
+    is_heartbeat_segmentation_dataframe,
+    is_icg_raw_dataframe,
+)
 from biopsykit.utils.exceptions import EventExtractionError
 
 __all__ = ["BPointExtractionStern1985"]
@@ -32,9 +39,9 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
     def extract(
         self,
         *,
-        icg: Union[pd.Series, pd.DataFrame],
-        heartbeats: pd.DataFrame,
-        c_points: pd.DataFrame,
+        icg: IcgRawDataFrame,
+        heartbeats: HeartbeatSegmentationDataFrame,
+        c_points: CPointDataFrame,
         sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
         """Extract B-points from given ICG cleaned signal.
@@ -69,6 +76,9 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
         """
         self._check_valid_missing_handling()
+        is_icg_raw_dataframe(icg)
+        is_heartbeat_segmentation_dataframe(heartbeats)
+        is_c_point_dataframe(c_points)
         # sanitize input
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
@@ -90,7 +100,6 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
             # check c_point is NaN. If this is the case, set the b_point to NaN and continue with the next iteration
             if check_c_points[idx]:
-
                 b_points.loc[idx, "b_point_sample"] = np.NaN
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 missing_str = f"The c_point is NaN at position {idx}! B-Point was set to NaN."
@@ -121,10 +130,8 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
             b_points.loc[idx, "b_point_sample"] = b_point
 
-        _assert_is_dtype(b_points, pd.DataFrame)
-        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
         b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(b_points)
+        is_b_point_dataframe(b_points)
 
         self.points_ = b_points
 

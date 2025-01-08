@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseOutlierCorrection
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 
 __all__ = ["OutlierCorrectionLinearInterpolation"]
 
+
+from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, is_b_point_dataframe, is_c_point_dataframe
 
 # TODO add verbosity option
 
@@ -17,8 +17,8 @@ class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
     def correct_outlier(
         self,
         *,
-        b_points: pd.DataFrame,
-        c_points: pd.DataFrame,
+        b_points: BPointDataFrame,
+        c_points: CPointDataFrame,
         sampling_rate_hz: float,
         **kwargs,
     ):
@@ -46,6 +46,8 @@ class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
 
         """
         verbose = kwargs.get("verbose", False)
+        is_b_point_dataframe(b_points)
+        is_c_point_dataframe(c_points)
 
         corrected_b_points = pd.DataFrame(index=b_points.index, columns=["b_point_sample"])
         # stationarize the B-Point time data
@@ -61,8 +63,7 @@ class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
             print(f"Detected {len(outliers)} outliers in correction cycle {counter}!")
 
         if len(outliers) == 0:
-            _assert_is_dtype(b_points, pd.DataFrame)
-            _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+            is_b_point_dataframe(b_points)
             self.points_ = b_points
             return self
 
@@ -83,10 +84,8 @@ class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
         if verbose:
             print("No more outliers got detected!")
 
-        _assert_is_dtype(corrected_b_points, pd.DataFrame)
-        _assert_has_columns(corrected_b_points, [["b_point_sample", "nan_reason"]])
         corrected_b_points = corrected_b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(corrected_b_points)
+        is_b_point_dataframe(corrected_b_points)
 
         self.points_ = corrected_b_points
         return self
@@ -110,8 +109,8 @@ class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
             data["statio_data"]
             .astype(float)
             .interpolate(method="linear")
-            .interpolate(method="ffill")  # make sure that the first values are not NaN
-            .interpolate(method="bfill")  # make sure that the last values are not NaN
+            .ffill()  # make sure that the first values are not NaN
+            .bfill()  # make sure that the last values are not NaN
         )
 
         corrected_b_points = b_points_uncorrected.copy()

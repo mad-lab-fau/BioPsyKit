@@ -4,7 +4,7 @@ from typing import ClassVar, Optional
 import pandas as pd
 from scipy.io import loadmat
 
-from biopsykit.utils._types import path_t
+from biopsykit.utils._types_internal import path_t
 
 
 class TFMDataset:

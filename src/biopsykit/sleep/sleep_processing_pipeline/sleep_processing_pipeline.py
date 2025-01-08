@@ -10,7 +10,7 @@ from biopsykit.signals.imu.rest_periods import RestPeriods
 from biopsykit.signals.imu.wear_detection import WearDetection
 from biopsykit.sleep.sleep_endpoints import compute_sleep_endpoints
 from biopsykit.sleep.sleep_wake_detection.sleep_wake_detection import SleepWakeDetection
-from biopsykit.utils._types import arr_t
+from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import accumulate_array
 
 

@@ -1,5 +1,5 @@
 import warnings
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -7,10 +7,15 @@ from scipy import signal
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
+from biopsykit.utils.dtypes import (
+    HeartbeatSegmentationDataFrame,
+    IcgRawDataFrame,
+    is_c_point_dataframe,
+    is_heartbeat_segmentation_dataframe,
+    is_icg_raw_dataframe,
+)
 from biopsykit.utils.exceptions import EventExtractionError
 
 __all__ = ["CPointExtractionScipyFindPeaks"]
@@ -47,8 +52,8 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
     def extract(
         self,
         *,
-        icg: Union[pd.Series, pd.DataFrame],
-        heartbeats: pd.DataFrame,
+        icg: IcgRawDataFrame,
+        heartbeats: HeartbeatSegmentationDataFrame,
         sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
         """Extract C-points from given cleaned ICG derivative signal using :func:`~scipy.signal.find_peaks`.
@@ -60,7 +65,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
 
         Parameters
         ----------
-        icg : :class:`~pandas.Series`
+        icg : :class:`~pandas.DataFrame`
             cleaned ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
             Dataframe containing one row per segmented heartbeat, each row contains start, end, and R-peak.
@@ -74,7 +79,10 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
 
         """
         self._check_valid_missing_handling()
+        is_icg_raw_dataframe(icg)
+        is_heartbeat_segmentation_dataframe(heartbeats)
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
+        icg = icg.squeeze()
 
         # result df
         c_points = pd.DataFrame(index=heartbeats.index, columns=["c_point_sample", "nan_reason"])
@@ -153,10 +161,8 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
             elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
-        _assert_is_dtype(c_points, pd.DataFrame)
-        _assert_has_columns(c_points, [["c_point_sample", "nan_reason"]])
         c_points = c_points.astype({"c_point_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(c_points)
+        is_c_point_dataframe(c_points)
 
         self.points_ = c_points
         return self

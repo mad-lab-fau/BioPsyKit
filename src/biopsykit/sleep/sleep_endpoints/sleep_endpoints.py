@@ -6,7 +6,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from biopsykit.utils.datatype_helper import SleepEndpointDataFrame, SleepEndpointDict, _SleepEndpointDataFrame
+from biopsykit.utils.dtypes import SleepEndpointDataFrame, SleepEndpointDict, _SleepEndpointDataFrame
 
 
 def compute_sleep_endpoints(
@@ -49,7 +49,7 @@ def compute_sleep_endpoints(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`
+    :obj:`~biopsykit.utils.dtypes.SleepEndpointDict`
         dictionary with computed sleep endpoints
 
     """
@@ -135,12 +135,12 @@ def endpoints_as_df(sleep_endpoints: SleepEndpointDict) -> Optional[SleepEndpoin
 
     Parameters
     ----------
-    sleep_endpoints : :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`
+    sleep_endpoints : :obj:`~biopsykit.utils.dtypes.SleepEndpointDict`
         dictionary with computed Sleep Endpoints
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SleepEndpointDataFrame`
         dataframe with computed Sleep Endpoints or ``None`` if ``sleep_endpoints`` is ``None``
 
     """

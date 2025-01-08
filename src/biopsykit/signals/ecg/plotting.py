@@ -17,7 +17,7 @@ from neurokit2.hrv.hrv_utils import _hrv_get_rri
 
 from biopsykit.signals.ecg.ecg import _assert_ecg_input
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.datatype_helper import EcgResultDataFrame
+from biopsykit.utils.dtypes import EcgResultDataFrame
 
 if TYPE_CHECKING:
     from biopsykit.signals.ecg import EcgProcessor
@@ -69,7 +69,7 @@ def ecg_plot(
         ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
     key : str, optional
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
-    ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+    ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
         Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     heart_rate : :class:`~pandas.DataFrame`, optional
         Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
@@ -427,7 +427,7 @@ def hrv_plot(
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
     ecg_signal : :class:`~pandas.DataFrame`, optional
         dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
         Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
@@ -653,9 +653,9 @@ def individual_beats_plot(
 
     Parameters
     ----------
-    ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+    ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
         Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
         Dataframe with detected R peaks or ``None`` to infer R peaks from ``ecg_signal``. Default: ``None``
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
@@ -728,7 +728,7 @@ def hrv_poincare_plot(
 
     Parameters
     ----------
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
@@ -895,7 +895,7 @@ def hrv_frequency_plot(
 
     Parameters
     ----------
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256

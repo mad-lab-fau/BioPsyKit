@@ -1,14 +1,22 @@
 from typing import Optional
 
-import pandas as pd
-
 from biopsykit.signals._base_extraction import BaseExtraction
 
 __all__ = ["BaseBPointExtraction"]
 
+from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, HeartbeatSegmentationDataFrame, IcgRawDataFrame
+
 
 class BaseBPointExtraction(BaseExtraction):
+
+    points_: BPointDataFrame
+
     def extract(
-        self, *, icg: pd.DataFrame, heartbeats: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: Optional[float]
+        self,
+        *,
+        icg: IcgRawDataFrame,
+        heartbeats: HeartbeatSegmentationDataFrame,
+        c_points: CPointDataFrame,
+        sampling_rate_hz: Optional[float],
     ):
         raise NotImplementedError("This is an abstract method and needs to be implemented in a subclass.")

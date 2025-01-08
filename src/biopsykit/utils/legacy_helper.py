@@ -2,15 +2,15 @@
 from typing import Optional
 
 from biopsykit.io.ecg import load_hr_phase_dict, write_hr_phase_dict
-from biopsykit.utils._types import path_t
+from biopsykit.utils._types_internal import path_t
 
 __all__ = ["legacy_convert_hr_phase_dict"]
 
-from biopsykit.utils.datatype_helper import HeartRatePhaseDict
+from biopsykit.utils.dtypes import HeartRatePhaseDict
 
 
 def legacy_convert_hr_phase_dict(file_path: path_t, export: Optional[bool] = True) -> Optional[HeartRatePhaseDict]:
-    """Legacy conversion for :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
+    """Legacy conversion for :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`.
 
     Legacy conversion includes changing the column name from "ECG_Rate" into "Heart_Rate".
 
@@ -21,14 +21,14 @@ def legacy_convert_hr_phase_dict(file_path: path_t, export: Optional[bool] = Tru
         path to file
     export : bool, optional
         ``True`` to directly export the converted
-        :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` under the same file name,
-        ``False`` to return the converted :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` under the same file name,
+        ``False`` to return the converted :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
 
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
-        The converted :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`, if ``export`` is ``False``
+    :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
+        The converted :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`, if ``export`` is ``False``
 
     """
     hr_phase_dict = load_hr_phase_dict(file_path, assert_format=False)

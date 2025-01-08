@@ -13,8 +13,8 @@ import pandas as pd
 
 from biopsykit.sleep.utils import split_nights
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dir
-from biopsykit.utils._types import path_t
-from biopsykit.utils.datatype_helper import SleepEndpointDataFrame, is_sleep_endpoint_dataframe
+from biopsykit.utils._types_internal import path_t
+from biopsykit.utils.dtypes import SleepEndpointDataFrame, is_sleep_endpoint_dataframe
 from biopsykit.utils.time import tz
 
 __all__ = [

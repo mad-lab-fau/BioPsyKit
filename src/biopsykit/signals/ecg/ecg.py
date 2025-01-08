@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.array_handling import find_extrema_in_radius, remove_outlier_and_interpolate, sanitize_input_1d
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     ECG_RESULT_DATAFRAME_COLUMNS,
     HEART_RATE_DATAFRAME_COLUMNS,
     R_PEAK_DATAFRAME_COLUMNS,
@@ -101,7 +101,7 @@ class EcgProcessor(_BaseProcessor):
 
         Parameters
         ----------
-        data : :class:`~biopsykit.utils.datatype_helper.EcgRawDataFrame` or dict
+        data : :class:`~biopsykit.utils.dtypes.EcgRawDataFrame` or dict
             dataframe (or dict of such) with ECG data
         sampling_rate : float, optional
             sampling rate of recorded data in Hz
@@ -151,7 +151,7 @@ class EcgProcessor(_BaseProcessor):
 
         See Also
         --------
-        :obj:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`
+        :obj:`~biopsykit.utils.dtypes.EcgResultDataFrame`
             dataframe format
 
         """
@@ -161,7 +161,7 @@ class EcgProcessor(_BaseProcessor):
 
         See Also
         --------
-        :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
             dictionary format
 
         """
@@ -171,7 +171,7 @@ class EcgProcessor(_BaseProcessor):
 
         See Also
         --------
-        :obj:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
+        :obj:`~biopsykit.utils.dtypes.RPeakDataFrame`
             dictionary format
 
         """
@@ -337,9 +337,9 @@ class EcgProcessor(_BaseProcessor):
 
         Returns
         -------
-        ecg_result : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+        ecg_result : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
             Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
 
         """
@@ -485,9 +485,9 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+        ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
             Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         outlier_correction : list, optional
             List containing the outlier correction methods to be applied.
@@ -511,9 +511,9 @@ class EcgProcessor(_BaseProcessor):
 
         Returns
         -------
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`
+        ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`
             processed ECG signal in standardized format
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`
             extracted R peaks in standardized format
 
 
@@ -650,7 +650,7 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         sampling_rate : float, optional
             Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
@@ -724,7 +724,7 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         hrv_types: str (or list of such), optional
             list of HRV types to be computed. Must be a subset of ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
@@ -833,9 +833,9 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+        ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
             Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         edr_type : {'peak_trough_mean', 'peak_trough_diff', 'peak_peak_interval'}, optional
             Method to use for estimating EDR. Must be one of 'peak_trough_mean', 'peak_trough_diff',
@@ -904,7 +904,7 @@ class EcgProcessor(_BaseProcessor):
 
         Parameters
         ----------
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+        ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
             Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         rsp_signal : pd.DataFrame
             Dataframe with 1-D raw respiration signal. Can be a 'true' respiration signal
@@ -1465,7 +1465,7 @@ def _assert_rpeaks_input(
         ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
     key : str, optional
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
         Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process`
 
     Raises
@@ -1494,9 +1494,9 @@ def _assert_ecg_input(ecg_processor: "EcgProcessor", key: str, ecg_signal: EcgRe
         ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
     key : str, optional
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
-    ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+    ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
         Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
         Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
 
     Raises

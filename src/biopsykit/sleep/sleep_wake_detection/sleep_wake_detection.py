@@ -7,8 +7,8 @@ from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
 from biopsykit.sleep.sleep_wake_detection.algorithms.sazonov import Sazonov
 from biopsykit.sleep.sleep_wake_detection.algorithms.scripps_clinic import ScrippsClinic
 from biopsykit.sleep.sleep_wake_detection.algorithms.webster import Webster
-from biopsykit.utils._types import arr_t
-from biopsykit.utils.datatype_helper import SleepWakeDataFrame, _SleepWakeDataFrame
+from biopsykit.utils._types_internal import arr_t
+from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
 
 
 class SleepWakeDetection:
@@ -77,7 +77,7 @@ class SleepWakeDetection:
 
         Returns
         -------
-        :obj:`~biopsykit.utils.datatype_helper.SleepWakeDataFrame`
+        :obj:`~biopsykit.utils.dtypes.SleepWakeDataFrame`
             dataframe with sleep/wake predictions
 
         """

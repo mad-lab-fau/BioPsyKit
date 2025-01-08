@@ -1,17 +1,19 @@
-from typing import Union
-
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
 from tpcp import Parameter
 
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.segmentation._base_segmentation import BaseHeartbeatSegmentation
 
 __all__ = ["HeartbeatSegmentationNeurokit"]
 
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
+from biopsykit.utils.dtypes import (
+    EcgRawDataFrame,
+    HeartbeatSegmentationDataFrame,
+    is_ecg_raw_dataframe,
+    is_heartbeat_segmentation_dataframe,
+)
 
 
 class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
@@ -25,7 +27,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
     r_peak_detection_method: Parameter[str]
 
     # result
-    heartbeat_list_: pd.DataFrame
+    heartbeat_list_: HeartbeatSegmentationDataFrame
 
     def __init__(
         self,
@@ -63,8 +65,8 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
     def extract(
         self,
         *,
-        ecg: Union[pd.Series, pd.DataFrame],
-        sampling_rate_hz: int,
+        ecg: EcgRawDataFrame,
+        sampling_rate_hz: float,
     ):
         """Segments ecg signal into heartbeats, extract start, end, r-peak of each heartbeat.
 
@@ -85,12 +87,12 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
             self
 
         """
+        is_ecg_raw_dataframe(ecg)
         ecg = sanitize_input_dataframe_1d(ecg, column="ECG")
         if ecg.empty:
             raise ValueError("Input data is empty!")
-        _assert_has_columns(ecg, [["ECG"]])
 
-        _, r_peaks = nk.ecg_peaks(ecg, sampling_rate=sampling_rate_hz, method=self.r_peak_detection_method)
+        _, r_peaks = nk.ecg_peaks(ecg, sampling_rate=int(sampling_rate_hz), method=self.r_peak_detection_method)
         r_peaks = r_peaks["ECG_R_Peaks"]
 
         heartbeats = pd.DataFrame(
@@ -140,7 +142,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
 
         else:
             # split ecg signal into heartbeats with fixed length
-            heartbeat_segments = nk.ecg_segment(ecg, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, show=False)
+            heartbeat_segments = nk.ecg_segment(ecg, rpeaks=r_peaks, sampling_rate=int(sampling_rate_hz), show=False)
 
             heartbeat_segments_new = {int(k) - 1: v for k, v in heartbeat_segments.items()}
             heartbeat_segments_new = pd.concat(heartbeat_segments_new, names=["heartbeat_id"])
@@ -171,9 +173,17 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
             ["start_time", "start_sample", "end_sample", "r_peak_sample", "rr_interval_sample", "rr_interval_ms"]
         ]
 
-        heartbeats = heartbeats.convert_dtypes(infer_objects=True)
-        # assert that columns with "_sample" in the end are of type int
-        assert_sample_columns_int(heartbeats)
+        heartbeats = heartbeats.astype(
+            {
+                "start_sample": "Int64",
+                "end_sample": "Int64",
+                "r_peak_sample": "Int64",
+                "rr_interval_sample": "Int64",
+                "rr_interval_ms": "Float64",
+            }
+        )
+
+        is_heartbeat_segmentation_dataframe(heartbeats)
 
         self.heartbeat_list_ = heartbeats
         return self

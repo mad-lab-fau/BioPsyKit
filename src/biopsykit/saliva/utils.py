@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 
 from biopsykit.utils._datatype_validation_helper import _assert_has_index_levels, _assert_is_dtype
-from biopsykit.utils._types import arr_t
-from biopsykit.utils.datatype_helper import SalivaFeatureDataFrame, SalivaRawDataFrame, _SalivaRawDataFrame
+from biopsykit.utils._types_internal import arr_t
+from biopsykit.utils.dtypes import SalivaFeatureDataFrame, SalivaRawDataFrame, _SalivaRawDataFrame
 
 __all__ = [
     "extract_saliva_columns",
@@ -27,7 +27,7 @@ def saliva_feature_wide_to_long(
 
     Parameters
     ----------
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame`
         dataframe containing saliva features in wide-format, i.e. one column per saliva sample, one row per subject.
     saliva_type : str
         saliva type (e.g. 'cortisol')
@@ -240,12 +240,12 @@ def _remove_s0(data: SalivaRawDataFrame) -> SalivaRawDataFrame:
 
     Parameters
     ----------
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
 
     Returns
     -------
-    :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format without the first saliva sample
 
     """
@@ -404,7 +404,7 @@ def _get_group_cols(
 
     Parameters
     ----------
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     group_cols : str or list of str
         list of index levels and column names to group by

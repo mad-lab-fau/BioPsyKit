@@ -14,7 +14,7 @@ from biopsykit.saliva.utils import (
     _get_sample_times,
     _remove_s0,
 )
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     SalivaFeatureDataFrame,
     SalivaMeanSeDataFrame,
     SalivaRawDataFrame,
@@ -40,7 +40,7 @@ def max_value(
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str or list of str
         saliva type or list of saliva types to compute features on
@@ -49,13 +49,13 @@ def max_value(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame` or dict of such
+    :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame` or dict of such
         dataframe containing the computed features, or a dict of such if ``saliva_type`` is a list
 
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        if ``data`` is not a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
 
     """
     # check input
@@ -108,7 +108,7 @@ def initial_value(
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str or list of str
         saliva type or list of saliva types to compute features on
@@ -117,13 +117,13 @@ def initial_value(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame` or dict of such
+    :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame` or dict of such
         dataframe containing the computed features, or a dict of such if ``saliva_type`` is a list
 
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        if ``data`` is not a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
 
     """
     # check input
@@ -184,7 +184,7 @@ def max_increase(
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str or list of str
         saliva type or list of saliva types to compute features on
@@ -195,13 +195,13 @@ def max_increase(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame` or dict of such
+    :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame` or dict of such
         dataframe containing the computed features, or a dict of such if ``saliva_type`` is a list
 
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        if ``data`` is not a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
 
     """
     # check input
@@ -254,7 +254,7 @@ def auc(
 
     The area-under-the-curve is computed according to Pruessner et al. (2003) using the trapezoidal rule
     (:func:`numpy.trapz`). To compute an AUC the saliva time points are required in minutes. They can either be part of
-    the :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame` (`time` column) or can be supplied as extra
+    the :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame` (`time` column) or can be supplied as extra
     parameter (``sample_times``).
 
     Pruessner defined two types of AUC, which are computed by default:
@@ -279,7 +279,7 @@ def auc(
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str or list of str
         saliva type or list of saliva types to compute features on
@@ -300,13 +300,13 @@ def auc(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame` or dict of such
+    :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame` or dict of such
         dataframe containing the computed features, or a dict of such if ``saliva_type`` is a list
 
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        if ``data`` is not a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
 
     References
     ----------
@@ -394,7 +394,7 @@ def slope(
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str or list of str
         saliva type or list of saliva types to compute features on
@@ -416,7 +416,7 @@ def slope(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame` or dict of such
+    :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame` or dict of such
         dataframe containing the computed features, or a dict of such if ``saliva_type`` is a list
 
     Raises
@@ -424,7 +424,7 @@ def slope(
     IndexError
         if invalid `sample_labels` or `sample_idx` is provided
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        if ``data`` is not a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
 
     """
     # check input
@@ -499,7 +499,7 @@ def standard_features(
 
     Parameters
     ----------
-    data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str or list of str
         saliva type or list of saliva types to compute features on
@@ -514,13 +514,13 @@ def standard_features(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame` or dict of such
+    :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame` or dict of such
         dataframe containing the computed features, or a dict of such if ``saliva_type`` is a list
 
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        if ``data`` is not a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
     :exc:`~biopsykit.utils.exceptions.DataFrameTransformationError`
         if ``keep_index`` is ``True``, but applying the old index fails
 
@@ -585,7 +585,7 @@ def mean_se(
 
     Parameters
     ----------
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str or list of str
         saliva type or list of saliva types to compute features on
@@ -598,13 +598,13 @@ def mean_se(
 
     Returns
     -------
-    :class:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`
+    :class:`~biopsykit.utils.dtypes.SalivaMeanSeDataFrame`
         dataframe with mean and standard error per saliva sample or a dict of such if ``saliva_type`` is a list
 
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if ``data`` is not a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        if ``data`` is not a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
 
 
     """

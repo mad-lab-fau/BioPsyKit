@@ -9,8 +9,8 @@ from biopsykit.io import biomarker
 
 __all__ = ["load_saliva_plate", "load_saliva_wide_format", "save_saliva"]
 
-from biopsykit.utils._types import path_t
-from biopsykit.utils.datatype_helper import SalivaRawDataFrame, SubjectConditionDataFrame
+from biopsykit.utils._types_internal import path_t
+from biopsykit.utils.dtypes import SalivaRawDataFrame, SubjectConditionDataFrame
 
 
 def load_saliva_plate(
@@ -76,7 +76,7 @@ def load_saliva_plate(
 
     Returns
     -------
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
 
     Raises
@@ -106,7 +106,7 @@ def save_saliva(
     ----------
     file_path: :class:`~pathlib.Path` or str
         file path to export. Must be a csv or an Excel file
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str
         type of saliva data in the dataframe
@@ -168,7 +168,7 @@ def load_saliva_wide_format(
 
     Returns
     -------
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
 
     Raises

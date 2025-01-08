@@ -5,10 +5,15 @@ import numpy as np
 import pandas as pd
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_series
+from biopsykit.utils.dtypes import (
+    EcgRawDataFrame,
+    HeartbeatSegmentationDataFrame,
+    is_ecg_raw_dataframe,
+    is_heartbeat_segmentation_dataframe,
+    is_q_peak_dataframe,
+)
 from biopsykit.utils.exceptions import EventExtractionError
 
 
@@ -30,9 +35,9 @@ class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingE
     def extract(
         self,
         *,
-        ecg: pd.DataFrame,
-        heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,
+        ecg: EcgRawDataFrame,
+        heartbeats: HeartbeatSegmentationDataFrame,
+        sampling_rate_hz: float,
     ):
         """Extract Q-peaks from given ECG cleaned signal.
 
@@ -59,7 +64,8 @@ class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingE
 
         """
         self._check_valid_missing_handling()
-
+        is_ecg_raw_dataframe(ecg)
+        is_heartbeat_segmentation_dataframe(heartbeats)
         ecg = sanitize_input_series(ecg, name="ecg")
         ecg = ecg.squeeze()
 
@@ -73,7 +79,9 @@ class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingE
         # some neurokit functions (for example ecg_delineate()) don't work with r-peaks input as Series, so list instead
         r_peaks = list(heartbeats["r_peak_sample"])
 
-        _, waves = nk.ecg_delineate(ecg, rpeaks=r_peaks, sampling_rate=sampling_rate_hz, method="peaks", show=False)
+        _, waves = nk.ecg_delineate(
+            ecg, rpeaks=r_peaks, sampling_rate=int(sampling_rate_hz), method="peaks", show=False
+        )
 
         extracted_q_peaks = waves["ECG_Q_Peaks"]
 
@@ -125,11 +133,8 @@ class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingE
             elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
-        _assert_is_dtype(q_peaks, pd.DataFrame)
-        q_peaks.columns = ["q_peak_sample", "nan_reason"]
-        _assert_has_columns(q_peaks, [["q_peak_sample", "nan_reason"]])
         q_peaks = q_peaks.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(q_peaks)
+        is_q_peak_dataframe(q_peaks)
 
         self.points_ = q_peaks
         return self

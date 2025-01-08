@@ -14,7 +14,7 @@ from biopsykit.io import write_pandas_dict_excel
 from biopsykit.protocols._utils import _check_sample_times_match, _get_sample_times
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dtype
-from biopsykit.utils._types import T, path_t
+from biopsykit.utils._types_internal import T, path_t
 from biopsykit.utils.data_processing import (
     add_subject_conditions,
     cut_phases_to_shortest,
@@ -28,7 +28,7 @@ from biopsykit.utils.data_processing import (
     split_dict_into_subphases,
     split_subject_conditions,
 )
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     HeartRateSubjectDataDict,
     SalivaFeatureDataFrame,
     SalivaRawDataFrame,
@@ -169,7 +169,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self.saliva_data: dict[str, SalivaRawDataFrame] = {}
         """Dictionary with saliva data collected during the study.
 
-        Data in :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame` format can be added using
+        Data in :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame` format can be added using
         :meth:`~biopsykit.protocols.BaseProtocol.add_saliva_data`.
         """
 
@@ -179,7 +179,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         If the study has no individual study parts (only different phases), the name of the one and only study part
         defaults to ``Study`` (to ensure consistent dictionary structure).
 
-        Data in :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict` format can be added using
+        Data in :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict` format can be added using
         :meth:`~biopsykit.protocols.BaseProtocol.add_hr_data`.
         """
 
@@ -189,7 +189,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         If the study has no individual study parts (only different phases), the name of the one and only study part
         defaults to ``Study`` (to ensure consistent dictionary structure).
 
-        Data in :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` format can be added using
+        Data in :obj:`~biopsykit.utils.dtypes.SubjectDataDict` format can be added using
         :meth:`~biopsykit.protocols.BaseProtocol.add_hr_data`.
         """
 
@@ -345,7 +345,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         Parameters
         ----------
-        saliva_data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame` or dict
+        saliva_data : :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame` or dict
             saliva data (or dict of such) to be added to this protocol.
         saliva_type : str or list of str, optional
             saliva type (or list of such) of saliva data. Not needed if ``saliva_data`` is a dictionary, then the
@@ -419,9 +419,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         Parameters
         ----------
-        hr_data : :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+        hr_data : :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`
             dictionary with heart rate data of all subjects collected during the protocol.
-        rpeak_data : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`, optional
+        rpeak_data : :obj:`~biopsykit.utils.dtypes.SubjectDataDict`, optional
             dictionary with rpeak data of all subjects collected during the protocol. Needed if heart rate
             variability should be computed.
         study_part : str, optional
@@ -492,8 +492,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             Default: ``True``
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         reindex : bool, optional
@@ -600,8 +600,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             See :func:`~biopsykit.signals.ecg.EcgProcessor.hrv_process` for an overview on available parameters.
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         params : dict, optional
@@ -701,14 +701,14 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             ``True`` to cut time-series data to shortest duration of a subject in each phase, ``False`` otherwise.
             Default: ``True``
         merge_dict : bool, optional
-            ``True`` to convert :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into
-            :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`, i.e., merge dictionary data from
+            ``True`` to convert :obj:`~biopsykit.utils.dtypes.StudyDataDict` into
+            :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`, i.e., merge dictionary data from
             individual subjects into one dataframe for each phase.
             Default: ``True``
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         params : dict, optional
@@ -796,8 +796,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             Default: ``False``
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         params : dict, optional
@@ -859,7 +859,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         baseline_phase : str
             string indicating the name of the phase that should be used as baseline for computing the relative amount
             above the baseline.
-        continuous_hrv_data : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+        continuous_hrv_data : :obj:`~biopsykit.utils.dtypes.SubjectDataDict`
             dictionary with continuous HRV of all subjects collected during the protocol.
         select_phases : bool, optional
             ``True`` to only select specific phases for further processing, ``False`` to use all data from
@@ -873,8 +873,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             Default: ``False``
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         hrv_columns: list of str
@@ -1122,7 +1122,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         ----------
         ensemble_id : str
             identifier of ensemble parameters used to store dictionary in ``hr_ensemble`` dictionary
-        ensemble : :class:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
+        ensemble : :class:`~biopsykit.utils.dtypes.MergedStudyDataDict`
             ensemble data as ``MergedStudyDataDict``
 
         """
@@ -1284,7 +1284,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         Parameters
         ----------
-        data : :class:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+        data : :class:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame`
             saliva feature dataframe
         saliva_type : str
             type of saliva data to plot

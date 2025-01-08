@@ -12,6 +12,7 @@ from biopsykit.utils._datatype_validation_helper import (
     _assert_has_index_levels,
     _assert_has_multiindex,
     _assert_is_dtype,
+    _assert_sample_columns_int,
 )
 from biopsykit.utils.exceptions import ValidationError
 
@@ -21,7 +22,9 @@ __all__ = [
     "R_PEAK_DATAFRAME_COLUMNS",
     "Acc1dDataFrame",
     "Acc3dDataFrame",
+    "BPointDataFrame",
     "BiomarkerRawDataFrame",
+    "CPointDataFrame",
     "CodebookDataFrame",
     "EcgRawDataFrame",
     "EcgResultDataFrame",
@@ -31,10 +34,13 @@ __all__ = [
     "HeartRatePhaseDict",
     "HeartRateStudyDataDict",
     "HeartRateSubjectDataDict",
+    "HeartbeatSegmentationDataFrame",
+    "IcgRawDataFrame",
     "ImuDataFrame",
     "MeanSeDataFrame",
     "MergedStudyDataDict",
     "PhaseDict",
+    "QPeakDataFrame",
     "RPeakDataFrame",
     "SalivaFeatureDataFrame",
     "SalivaMeanSeDataFrame",
@@ -48,18 +54,25 @@ __all__ = [
     "SubjectDataDict",
     "is_acc1d_dataframe",
     "is_acc3d_dataframe",
+    "is_b_point_dataframe",
+    "is_biomarker_raw_dataframe",
+    "is_c_point_dataframe",
     "is_codebook_dataframe",
     "is_ecg_raw_dataframe",
     "is_ecg_result_dataframe",
     "is_gyr1d_dataframe",
     "is_gyr3d_dataframe",
     "is_heart_rate_dataframe",
+    "is_heartbeat_segmentation_dataframe",
     "is_hr_phase_dict",
     "is_hr_subject_data_dict",
+    "is_icg_raw_dataframe",
     "is_imu_dataframe",
     "is_mean_se_dataframe",
     "is_merged_study_data_dict",
+    "is_pep_result_dataframe",
     "is_phase_dict",
+    "is_q_peak_dataframe",
     "is_r_peak_dataframe",
     "is_saliva_feature_dataframe",
     "is_saliva_mean_se_dataframe",
@@ -76,6 +89,16 @@ __all__ = [
 ECG_RESULT_DATAFRAME_COLUMNS = ["ECG_Raw", "ECG_Clean", "ECG_Quality", "ECG_R_Peaks", "R_Peak_Outlier"]
 HEART_RATE_DATAFRAME_COLUMNS = ["Heart_Rate"]
 R_PEAK_DATAFRAME_COLUMNS = ["R_Peak_Quality", "R_Peak_Idx", "RR_Interval", "R_Peak_Outlier"]
+
+PEP_RESULT_DATAFRAME_COLUMNS = [
+    "heartbeat_start_sample",
+    "heartbeat_end_sample",
+    "r_peak_sample",
+    "q_peak_sample",
+    "b_point_sample",
+    "pep_sample",
+    "pep_ms",
+]
 
 # these subclasses of pd.DataFrame are needed to be added to the type aliases because otherwise, autosphinx does not
 # add the docstring to the documentation of the type aliases. Additionally, they can be used internally to highlight
@@ -107,6 +130,10 @@ class _SalivaFeatureDataFrame(pd.DataFrame):
 
 
 class _SalivaMeanSeDataFrame(pd.DataFrame):
+    pass
+
+
+class _IcgRawDataFrame(pd.DataFrame):
     pass
 
 
@@ -151,6 +178,26 @@ class _SleepWakeDataFrame(pd.DataFrame):
 
 
 class _SleepEndpointDataFrame(pd.DataFrame):
+    pass
+
+
+class _HeartbeatSegmentationDataFrame(pd.DataFrame):
+    pass
+
+
+class _QPeakDataFrame(pd.DataFrame):
+    pass
+
+
+class _BPointDataFrame(pd.DataFrame):
+    pass
+
+
+class _CPointDataFrame(pd.DataFrame):
+    pass
+
+
+class _PepResultDataFrame(pd.DataFrame):
     pass
 
 
@@ -315,6 +362,16 @@ The following columns are further possible:
 
 """
 
+IcgRawDataFrame = Union[_IcgRawDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing raw ICG data of `one` subject.
+
+The dataframe is expected to have one of the following columns:
+
+* ``icg``: Raw ICG signal
+* ``icg_der``: Derivative of the ICG signal
+
+"""
+
 
 EcgRawDataFrame = Union[_EcgRawDataFrame, pd.DataFrame]
 """:class:`~pandas.DataFrame` containing raw ECG data of `one` subject.
@@ -425,6 +482,81 @@ The dataframe is expected to have at least the following column(s):
 
 """
 
+HeartbeatSegmentationDataFrame = Union[_HeartbeatSegmentationDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing results of heartbeat segmentation.
+
+The dataframe is expected to have *at least* the following columns:
+
+* ``start_sample``: Start sample of segmented heartbeat
+* ``end_sample``: End sample of segmented heartbeat
+* ``r_peak_sample``: R-peak sample of segmented heartbeat
+
+"""
+
+QPeakDataFrame = Union[_QPeakDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing Q-peak locations extracted from ECG data.
+
+The dataframe is expected to have *at least* the following columns:
+
+* ``q_peak_sample``: The sample index of the Q-peak in the ECG signal
+
+Optionally, the dataframe can contain additional columns, such as:
+
+* ``nan_reason``: Reason why the Q-peak was set to NaN (e.g., "r_peak_nan", "no_zero_crossing")
+
+"""
+
+BPointDataFrame = Union[_BPointDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing B-Point locations extracted from ICG data.
+
+The dataframe is expected to have *at least* the following columns:
+
+* ``b_point_sample``: The sample index of the B-point in the ICG signal
+
+Optionally, the dataframe can contain additional columns, such as:
+
+* ``nan_reason``: Reason why the B-point was set to NaN (e.g., "c_point_nan", "no_zero_crossing")
+
+"""
+
+CPointDataFrame = Union[_CPointDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing C-Point locations extracted from ICG data.
+
+The dataframe is expected to have *at least* the following columns:
+
+* ``c_point_sample``: The sample index of the C-point in the ICG signal
+
+Optionally, the dataframe can contain additional columns, such as:
+
+* ``nan_reason``: Reason why the C-point was set to NaN (e.g., "no_local_maxima")
+
+"""
+
+PepResultDataFrame = Union[_PepResultDataFrame, pd.DataFrame]
+""":class:`~pandas.DataFrame` containing results of PEP extraction.
+
+The dataframe is expected to have *at least* the following columns:
+
+* ``heartbeat_start_sample``: Start sample of segmented heartbeat
+* ``heartbeat_end_sample``: End sample of segmented heartbeat
+* ``r_peak_sample``: R-peak sample of segmented heartbeat
+* ``q_peak_sample``: Q-peak sample of segmented heartbeat
+* ``b_point_sample``: B-point sample of segmented heartbeat
+* ``pep_sample``: Pre-ejection period (PEP) in samples
+* ``pep_ms``: Pre-ejection period (PEP) in milliseconds
+
+
+
+Additionally, the dataframe can contain the following columns:
+
+* ``rr_interval_sample``: RR interval between the previous and the current heartbeat in samples
+* ``rr_interval_ms``: RR interval between the previous and the current heartbeat in milliseconds
+* ``heart_rate_bpm``: Heart rate in beats per minute, derived from RR interval
+* ``nan_reason``: Reason why the PEP was set to NaN (e.g., "r_peak_nan", "no_zero_crossing")
+
+"""
+
+
 PhaseDict = dict[str, pd.DataFrame]
 """Dictionary containing general time-series data of **one single subject** split into **different phases**.
 
@@ -464,7 +596,7 @@ from different phases. It is expected to have the level order `subject`, `phase`
 |     ...
 | }
 
-This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.datatype_helper.StudyDataDict`,
+This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.dtypes.StudyDataDict`,
 where the level order is reversed: `phase`, `subject`.
 """
 
@@ -485,7 +617,7 @@ Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
 * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
 * ``Heart_Rate`` Column: heart rate values
 
-This dictionary can, for instance, be rearranged to a :obj:`~biopsykit.utils.datatype_helper.HeartRateStudyDataDict`,
+This dictionary can, for instance, be rearranged to a :obj:`~biopsykit.utils.dtypes.HeartRateStudyDataDict`,
 where the level order is reversed: `phase`, `subject`.
 
 """
@@ -502,7 +634,7 @@ from different subjects. It is expected to have the level order `phase`, `subjec
 |     ...
 | }
 
-This dict results from rearranging a :obj:`biopsykit.utils.datatype_helper.SubjectDataDict` by calling
+This dict results from rearranging a :obj:`biopsykit.utils.dtypes.SubjectDataDict` by calling
 :func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
 """
 
@@ -524,7 +656,7 @@ Each ``hr_dataframe`` is a :class:`~pandas.DataFrame` with the following format:
 * ``time`` Index: :class:`pandas.DatetimeIndex` with heart rate sample timestamps
 * ``Heart_Rate`` Column: heart rate values
 
-This dict results from rearranging a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict` by calling
+This dict results from rearranging a :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict` by calling
 :func:`~biopsykit.utils.data_processing.rearrange_subject_data_dict`.
 """
 
@@ -556,7 +688,7 @@ Each ``merged_dataframe`` is a :class:`~pandas.DataFrame` with the following for
 def is_subject_condition_dataframe(
     data: SubjectConditionDataFrame, raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame`.
 
     Parameters
     ----------
@@ -577,7 +709,7 @@ def is_subject_condition_dataframe(
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame`
         dataframe format
 
     """
@@ -597,7 +729,7 @@ def is_subject_condition_dataframe(
 
 
 def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SubjectConditionDict`.
 
     Parameters
     ----------
@@ -618,7 +750,7 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
+    :obj:`~biopsykit.utils.dtypes.SubjectConditionDict`
         dictionary format
 
     """
@@ -637,7 +769,7 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
 
 
 def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.CodebookDataFrame`.
 
     Parameters
     ----------
@@ -661,7 +793,7 @@ def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[boo
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame`
+    :obj:`~biopsykit.utils.dtypes.CodebookDataFrame`
         dataframe format
 
     """
@@ -684,7 +816,7 @@ def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[boo
 
 
 def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.MeanSeDataFrame`.
 
     Parameters
     ----------
@@ -708,7 +840,7 @@ def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] 
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`
+    :obj:`~biopsykit.utils.dtypes.MeanSeDataFrame`
         dataframe format
 
     """
@@ -729,7 +861,7 @@ def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] 
 
 
 def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
+    """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`.
 
     Parameters
     ----------
@@ -750,7 +882,7 @@ def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] =
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+    :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
         dictionary format
 
     """
@@ -771,7 +903,7 @@ def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] =
 
 
 def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.PhaseDict`.
+    """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.PhaseDict`.
 
     Parameters
     ----------
@@ -792,7 +924,7 @@ def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Op
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.PhaseDict`
+    :obj:`~biopsykit.utils.dtypes.PhaseDict`
         dictionary format
 
     """
@@ -814,7 +946,7 @@ def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Op
 
 
 def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`.
+    """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`.
 
     Parameters
     ----------
@@ -835,7 +967,7 @@ def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Opt
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+    :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`
         dictionary format
 
     """
@@ -854,7 +986,7 @@ def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Opt
 
 
 def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`.
+    """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.StudyDataDict`.
 
     Parameters
     ----------
@@ -875,7 +1007,7 @@ def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = Tr
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+    :obj:`~biopsykit.utils.dtypes.StudyDataDict`
         dictionary format
 
     """
@@ -896,7 +1028,7 @@ def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = Tr
 
 
 def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`.
+    """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.SubjectDataDict`.
 
     Parameters
     ----------
@@ -917,7 +1049,7 @@ def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] 
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict``
+    :obj:`~biopsykit.utils.dtypes.SubjectDataDict``
         dictionary format
 
     """
@@ -938,7 +1070,7 @@ def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] 
 
 
 def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether a dict is a :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`.
+    """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`.
 
     Parameters
     ----------
@@ -959,7 +1091,7 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
+    :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`
         dictionary format
 
     """
@@ -982,7 +1114,7 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
 def is_biomarker_raw_dataframe(
     data: BiomarkerRawDataFrame, biomarker_type: Union[str, list[str]], raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`.
 
     Parameters
     ----------
@@ -1005,7 +1137,7 @@ def is_biomarker_raw_dataframe(
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         dataframe format
 
     """
@@ -1031,7 +1163,7 @@ def is_biomarker_raw_dataframe(
 def is_saliva_raw_dataframe(
     data: SalivaRawDataFrame, saliva_type: Union[str, list[str]], raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`.
 
     Parameters
     ----------
@@ -1054,7 +1186,7 @@ def is_saliva_raw_dataframe(
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         dataframe format
 
     """
@@ -1064,7 +1196,7 @@ def is_saliva_raw_dataframe(
 def is_saliva_feature_dataframe(
     data: SalivaFeatureDataFrame, saliva_type: str, raise_exception: Optional[bool] = True
 ) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame`.
 
     Parameters
     ----------
@@ -1087,7 +1219,7 @@ def is_saliva_feature_dataframe(
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame`
         dataframe format
 
     """
@@ -1109,7 +1241,7 @@ def is_saliva_feature_dataframe(
 
 
 def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SalivaMeanSeDataFrame`.
 
     Parameters
     ----------
@@ -1130,7 +1262,7 @@ def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: O
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SalivaMeanSeDataFrame``
+    :obj:`~biopsykit.utils.dtypes.SalivaMeanSeDataFrame``
         dataframe format
 
     """
@@ -1149,7 +1281,7 @@ def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: O
 
 
 def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SleepEndpointDataFrame`.
 
     Parameters
     ----------
@@ -1170,7 +1302,7 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SleepEndpointDataFrame`
         dataframe format
 
     """
@@ -1178,7 +1310,7 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
         _assert_is_dtype(data, pd.DataFrame)
         _assert_is_dtype(data.index, pd.DatetimeIndex)
         _assert_has_index_levels(data, index_levels="date", match_atleast=True, match_order=False)
-        _assert_has_columns(data, columns_sets=[["sleep_onset", "wake_onset", "total_sleep_duration"]])
+        _assert_has_columns(data, column_sets=[["sleep_onset", "wake_onset", "total_sleep_duration"]])
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(
@@ -1190,7 +1322,7 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
 
 
 def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dictionary is a :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`.
+    """Check whether dictionary is a :obj:`~biopsykit.utils.dtypes.SleepEndpointDict`.
 
     Parameters
     ----------
@@ -1211,7 +1343,7 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`
+    :obj:`~biopsykit.utils.dtypes.SleepEndpointDict`
         dictionary format
 
     """
@@ -1230,8 +1362,47 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
     return True
 
 
+def is_icg_raw_dataframe(data: IcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.IcgRawDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check if it is a ``IcgRawDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``IcgRawDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``IcgRawDataFrame``
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.dtypes.IcgRawDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(data, column_sets=[["icg_der"], ["icg"]])
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a IcgRawDataFrame. "
+                f"The validation failed with the following error:\n\n{e!s}"
+            ) from e
+        return False
+    return True
+
+
 def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.EcgRawDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.EcgRawDataFrame`.
 
     Parameters
     ----------
@@ -1252,13 +1423,13 @@ def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] 
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.EcgRawDataFrame`
+    :obj:`~biopsykit.utils.dtypes.EcgRawDataFrame`
         dataframe format
 
     """
     try:
         _assert_is_dtype(data, pd.DataFrame)
-        _assert_has_columns(data, columns_sets=[["ecg"]])
+        _assert_has_columns(data, column_sets=[["ecg"]])
     except ValidationError as e:
         if raise_exception is True:
             raise ValidationError(
@@ -1270,7 +1441,7 @@ def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] 
 
 
 def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.EcgResultDataFrame`.
 
     Parameters
     ----------
@@ -1291,7 +1462,7 @@ def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[boo
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`
+    :obj:`~biopsykit.utils.dtypes.EcgResultDataFrame`
         dataframe format
 
     """
@@ -1299,7 +1470,7 @@ def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[boo
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_columns(
             data,
-            columns_sets=[
+            column_sets=[
                 ECG_RESULT_DATAFRAME_COLUMNS,
                 ECG_RESULT_DATAFRAME_COLUMNS + HEART_RATE_DATAFRAME_COLUMNS,
             ],
@@ -1315,7 +1486,7 @@ def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[boo
 
 
 def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.HeartRateDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.HeartRateDataFrame`.
 
     Parameters
     ----------
@@ -1336,13 +1507,13 @@ def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRateDataFrame`
+    :obj:`~biopsykit.utils.dtypes.HeartRateDataFrame`
         dataframe format
 
     """
     try:
         _assert_is_dtype(data, pd.DataFrame)
-        _assert_has_columns(data, columns_sets=[HEART_RATE_DATAFRAME_COLUMNS])
+        _assert_has_columns(data, column_sets=[HEART_RATE_DATAFRAME_COLUMNS])
         _assert_has_multiindex(data, expected=False)
         _assert_has_column_multiindex(data, expected=False)
         _assert_has_index_levels(data, ["time"])
@@ -1357,7 +1528,7 @@ def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[
 
 
 def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.RPeakDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.RPeakDataFrame`.
 
     Parameters
     ----------
@@ -1378,7 +1549,7 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
+    :obj:`~biopsykit.utils.dtypes.RPeakDataFrame`
         dataframe format
 
     """
@@ -1386,7 +1557,7 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_columns(
             data,
-            columns_sets=[
+            column_sets=[
                 ["R_Peak_Idx", "RR_Interval"],
                 ["R_Peak_Quality", "R_Peak_Idx", "RR_Interval"],
                 R_PEAK_DATAFRAME_COLUMNS,
@@ -1403,7 +1574,7 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
 
 
 def is_acc1d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.Acc1dDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.Acc1dDataFrame`.
 
     Parameters
     ----------
@@ -1424,7 +1595,7 @@ def is_acc1d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.Acc1dDataFrame`
+    :obj:`~biopsykit.utils.dtypes.Acc1dDataFrame`
         dataframe format
 
     """
@@ -1432,7 +1603,7 @@ def is_acc1d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_columns(
             data,
-            columns_sets=[["acc"], ["acc_norm"]],
+            column_sets=[["acc"], ["acc_norm"]],
         )
     except ValidationError as e:
         if raise_exception is True:
@@ -1445,7 +1616,7 @@ def is_acc1d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
 
 
 def is_acc3d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.Acc3dDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.Acc3dDataFrame`.
 
     Parameters
     ----------
@@ -1466,7 +1637,7 @@ def is_acc3d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.Acc3dDataFrame`
+    :obj:`~biopsykit.utils.dtypes.Acc3dDataFrame`
         dataframe format
 
     """
@@ -1474,7 +1645,7 @@ def is_acc3d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_columns(
             data,
-            columns_sets=[
+            column_sets=[
                 ["acc_x", "acc_y", "acc_z"],
                 [("acc", "x"), ("acc", "y"), ("acc", "z")],
             ],
@@ -1490,7 +1661,7 @@ def is_acc3d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
 
 
 def is_gyr1d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.Gyr1dDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.Gyr1dDataFrame`.
 
     Parameters
     ----------
@@ -1511,7 +1682,7 @@ def is_gyr1d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.Gyr1dDataFrame`
+    :obj:`~biopsykit.utils.dtypes.Gyr1dDataFrame`
         dataframe format
 
     """
@@ -1519,7 +1690,7 @@ def is_gyr1d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_columns(
             data,
-            columns_sets=[["gyr"], ["gyr_norm"]],
+            column_sets=[["gyr"], ["gyr_norm"]],
         )
     except ValidationError as e:
         if raise_exception is True:
@@ -1532,7 +1703,7 @@ def is_gyr1d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
 
 
 def is_gyr3d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.Gyr3dDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.Gyr3dDataFrame`.
 
     Parameters
     ----------
@@ -1553,7 +1724,7 @@ def is_gyr3d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.Gyr3dDataFrame`
+    :obj:`~biopsykit.utils.dtypes.Gyr3dDataFrame`
         dataframe format
 
     """
@@ -1561,7 +1732,7 @@ def is_gyr3d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
         _assert_is_dtype(data, pd.DataFrame)
         _assert_has_columns(
             data,
-            columns_sets=[
+            column_sets=[
                 ["gyr_x", "gyr_y", "gyr_z"],
                 [("gyr", "x"), ("gyr", "y"), ("gyr", "z")],
             ],
@@ -1577,7 +1748,7 @@ def is_gyr3d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
 
 
 def is_imu_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.ImuDataFrame`.
 
     Parameters
     ----------
@@ -1598,7 +1769,7 @@ def is_imu_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = Tru
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`
+    :obj:`~biopsykit.utils.dtypes.ImuDataFrame`
         dataframe format
 
     """
@@ -1616,7 +1787,7 @@ def is_imu_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = Tru
 
 
 def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
-    """Check whether dataframe is a :obj:`~biopsykit.utils.datatype_helper.SleepWakeDataFrame`.
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SleepWakeDataFrame`.
 
     Parameters
     ----------
@@ -1637,7 +1808,7 @@ def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[
 
     See Also
     --------
-    :obj:`~biopsykit.utils.datatype_helper.SleepWakeDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SleepWakeDataFrame`
         dataframe format
 
     """
@@ -1653,6 +1824,223 @@ def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[
         if raise_exception is True:
             raise ValidationError(
                 "The passed object does not seem to be a SleepWakeDataFrame. "
+                f"The validation failed with the following error:\n\n{e!s}"
+            ) from e
+        return False
+    return True
+
+
+def is_heartbeat_segmentation_dataframe(
+    data: HeartbeatSegmentationDataFrame, raise_exception: Optional[bool] = True
+) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.HeartbeatSegmentationDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check if it is a ``HeartbeatSegmentationDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``HeartbeatSegmentationDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``HeartbeatSegmentationDataFrame``
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.dtypes.HeartbeatSegmentationDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(data, [["start_sample", "end_sample", "r_peak_sample"]])
+        # assert that columns with "_sample" in the end are of type int
+        _assert_sample_columns_int(data)
+        _assert_has_index_levels(data, "heartbeat_id", match_atleast=True, match_order=False)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a HeartbeatSegmentationDataFrame. "
+                f"The validation failed with the following error:\n\n{e!s}"
+            ) from e
+        return False
+    return True
+
+
+def is_c_point_dataframe(data: CPointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.CPointDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check if it is a ``CPointDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``CPointDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``CPointDataFrame``
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.dtypes.CPointDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(data, [["c_point_sample"], ["c_point_sample", "nan_reason"]])
+        # assert that columns with "_sample" in the end are of type int
+        _assert_sample_columns_int(data)
+        _assert_has_index_levels(data, "heartbeat_id", match_atleast=True, match_order=False)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a CPointDataFrame. "
+                f"The validation failed with the following error:\n\n{e!s}"
+            ) from e
+        return False
+    return True
+
+
+def is_b_point_dataframe(data: BPointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.BPointDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check if it is a ``BPointDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``BPointDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``BPointDataFrame``
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.dtypes.BPointDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(data, [["b_point_sample"], ["b_point_sample", "nan_reason"]])
+        # assert that columns with "_sample" in the end are of type int
+        _assert_sample_columns_int(data)
+        _assert_has_index_levels(data, "heartbeat_id", match_atleast=True, match_order=False)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a BPointDataFrame. "
+                f"The validation failed with the following error:\n\n{e!s}"
+            ) from e
+        return False
+    return True
+
+
+def is_q_peak_dataframe(data: QPeakDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.QPeakDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check if it is a ``QPeakDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``QPeakDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``QPeakDataFrame``
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.dtypes.QPeakDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(data, [["q_peak_sample"], ["q_peak_sample", "nan_reason"]])
+        # assert that columns with "_sample" in the end are of type int
+        _assert_sample_columns_int(data)
+        _assert_has_index_levels(data, "heartbeat_id", match_atleast=True, match_order=False)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a QPeakDataFrame. "
+                f"The validation failed with the following error:\n\n{e!s}"
+            ) from e
+        return False
+    return True
+
+
+def is_pep_result_dataframe(data: PepResultDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+    """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.PepResultDataFrame`.
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        data to check if it is a ``PepResultDataFrame``
+    raise_exception : bool, optional
+        whether to raise an exception or return a bool value
+
+    Returns
+    -------
+    ``True`` if ``data`` is a ``PepResultDataFrame``
+    ``False`` otherwise (if ``raise_exception`` is ``False``)
+
+    Raises
+    ------
+    ValidationError
+        if ``raise_exception`` is ``True`` and ``data`` is not a ``PepResultDataFrame``
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.dtypes.PepResultDataFrame`
+        dataframe format
+
+    """
+    try:
+        _assert_is_dtype(data, pd.DataFrame)
+        _assert_has_columns(
+            data,
+            column_sets=[
+                PEP_RESULT_DATAFRAME_COLUMNS,
+                [*PEP_RESULT_DATAFRAME_COLUMNS, "rr_interval_sample", "rr_interval_ms", "heart_rate_bpm", "nan_reason"],
+            ],
+        )
+        _assert_sample_columns_int(data)
+        _assert_has_index_levels(data, "heartbeat_id", match_atleast=True, match_order=False)
+    except ValidationError as e:
+        if raise_exception is True:
+            raise ValidationError(
+                "The passed object does not seem to be a PepResultDataFrame. "
                 f"The validation failed with the following error:\n\n{e!s}"
             ) from e
         return False

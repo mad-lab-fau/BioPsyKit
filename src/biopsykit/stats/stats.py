@@ -9,7 +9,7 @@ import pandas as pd
 import pingouin as pg
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_index_levels
-from biopsykit.utils._types import path_t, str_t
+from biopsykit.utils._types_internal import path_t, str_t
 
 MAP_STAT_TESTS = {
     "normality": pg.normality,

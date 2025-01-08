@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from numpy.linalg import norm
 
-from biopsykit.utils._types import arr_t
+from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import (
     _bool_fill,
     bool_array_to_start_end_array,

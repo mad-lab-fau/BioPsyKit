@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from biopsykit.utils._datatype_validation_helper import _assert_num_columns
-from biopsykit.utils._types import arr_t
+from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import sliding_window
 
 

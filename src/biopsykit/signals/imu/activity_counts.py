@@ -7,9 +7,9 @@ import pandas as pd
 import pytz
 from scipy import signal
 
-from biopsykit.utils._types import arr_t
+from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import add_datetime_index, downsample, sanitize_input_nd
-from biopsykit.utils.datatype_helper import is_acc1d_dataframe, is_acc3d_dataframe
+from biopsykit.utils.dtypes import is_acc1d_dataframe, is_acc3d_dataframe
 from biopsykit.utils.time import tz
 
 

@@ -1,4 +1,4 @@
 """Module for ECG preprocessing functions."""
-from biopsykit.signals.ecg.preprocessing._preprocessing import clean_ecg
+from biopsykit.signals.ecg.preprocessing._preprocessing import EcgPreprocessingNeurokit
 
-__all__ = ["clean_ecg"]
+__all__ = ["EcgPreprocessingNeurokit"]

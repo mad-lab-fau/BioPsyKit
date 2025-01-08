@@ -1,6 +1,6 @@
 """Some custom helper types to make type hints and type checking easier.
 
-For user facing type declarations, please see :py:func:`biopsykit.utils.datatype_helper`.
+For user facing type declarations, please see :py:func:`biopsykit.utils.dtypes`.
 """
 
 from collections.abc import Hashable, Sequence

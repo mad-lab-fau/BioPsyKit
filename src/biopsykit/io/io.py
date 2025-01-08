@@ -11,9 +11,9 @@ import pytz
 from nilspodlib import Dataset
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dtype
-from biopsykit.utils._types import path_t
+from biopsykit.utils._types_internal import path_t
 from biopsykit.utils.dataframe_handling import convert_nan
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     CodebookDataFrame,
     SubjectConditionDataFrame,
     SubjectConditionDict,
@@ -372,8 +372,8 @@ def load_subject_condition_list(
 
     Returns
     -------
-    :class:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-    :class:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
+    :class:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+    :class:`~biopsykit.utils.dtypes.SubjectConditionDict`
         a standardized pandas dataframe with subject IDs and condition assignments (if ``return_dict`` is ``False``) or
         a standardized dict with subject IDs per group (if ``return_dict`` is ``True``)
 
@@ -382,8 +382,8 @@ def load_subject_condition_list(
     :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is not a csv or Excel file
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if result is not a :class:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or a
-        :class:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
+        if result is not a :class:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or a
+        :class:`~biopsykit.utils.dtypes.SubjectConditionDict`
 
     """
     # ensure pathlib
@@ -511,7 +511,7 @@ def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
     Returns
     -------
     :class:`~pandas.DataFrame`
-        :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame`, a dataframe in a standardized format
+        :obj:`~biopsykit.utils.dtypes.CodebookDataFrame`, a dataframe in a standardized format
 
 
     See Also

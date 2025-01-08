@@ -6,6 +6,16 @@ from typing_extensions import Self
 
 __all__ = ["PepExtraction"]
 
+from biopsykit.utils.dtypes import (
+    BPointDataFrame,
+    HeartbeatSegmentationDataFrame,
+    QPeakDataFrame,
+    is_b_point_dataframe,
+    is_heartbeat_segmentation_dataframe,
+    is_pep_result_dataframe,
+    is_q_peak_dataframe,
+)
+
 NEGATIVE_PEP_HANDLING = Literal["nan", "zero", "keep"]
 
 
@@ -22,9 +32,9 @@ class PepExtraction(Algorithm):
     def extract(
         self,
         *,
-        heartbeats: pd.DataFrame,
-        q_peak_samples: pd.DataFrame,
-        b_point_samples: pd.DataFrame,
+        heartbeats: HeartbeatSegmentationDataFrame,
+        q_peak_samples: QPeakDataFrame,
+        b_point_samples: BPointDataFrame,
         sampling_rate_hz: float,
     ) -> Self:
         """Compute PEP from Q-peak samples and B-point locations.
@@ -43,6 +53,10 @@ class PepExtraction(Algorithm):
         -------
             self
         """
+        is_heartbeat_segmentation_dataframe(heartbeats)
+        is_b_point_dataframe(b_point_samples)
+        is_q_peak_dataframe(q_peak_samples)
+
         # do something
         pep_results = pd.DataFrame(index=heartbeats.index)
 
@@ -63,7 +77,23 @@ class PepExtraction(Algorithm):
             pep_ms=pep_results["pep_sample"] / sampling_rate_hz * 1000,
         )
         pep_results = self._add_invalid_pep_reason(pep_results, q_peak_samples, b_point_samples)
-        pep_results = pep_results.convert_dtypes(infer_objects=True)
+        pep_results = pep_results.astype(
+            {
+                "heartbeat_start_sample": "Int64",
+                "heartbeat_end_sample": "Int64",
+                "r_peak_sample": "Int64",
+                "rr_interval_sample": "Int64",
+                "rr_interval_ms": "Float64",
+                "heart_rate_bpm": "Float64",
+                "q_peak_sample": "Int64",
+                "b_point_sample": "Int64",
+                "pep_sample": "Int64",
+                "pep_ms": "Float64",
+                "nan_reason": "object",
+            }
+        )
+
+        is_pep_result_dataframe(pep_results)
 
         self.pep_results_ = pep_results
 
@@ -72,15 +102,15 @@ class PepExtraction(Algorithm):
     def _add_invalid_pep_reason(
         self,
         pep_results: pd.DataFrame,
-        q_peak_samples: pd.DataFrame,
-        b_point_samples: pd.DataFrame,
+        q_peaks: QPeakDataFrame,
+        b_points: BPointDataFrame,
     ) -> pd.DataFrame:
 
         # extract nan_reason from q_peak_samples and add to pep_results
-        pep_results = pep_results.assign(nan_reason=q_peak_samples["nan_reason"])
+        pep_results = pep_results.assign(nan_reason=q_peaks["nan_reason"])
         # TODO add option to store multiple nan_reasons in one column?
         # extract nan_reason from b_point_samples
-        nan_reason_b_point = b_point_samples["nan_reason"].loc[~b_point_samples["nan_reason"].isna()]
+        nan_reason_b_point = b_points["nan_reason"].loc[~b_points["nan_reason"].isna()]
         # add nan_reason to pep_results
         if not nan_reason_b_point.empty:
             pep_results.loc[nan_reason_b_point.index, "nan_reason"] = nan_reason_b_point

@@ -8,22 +8,24 @@ from tpcp import Algorithm
 
 __all__ = ["BaseOutlierCorrection"]
 
+from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame
+
 
 class BaseOutlierCorrection(Algorithm):
 
     _action_methods = "correct_outlier"
 
-    points_: pd.DataFrame
+    points_: BPointDataFrame
 
     def correct_outlier(
         self,
         *,
-        b_points: pd.DataFrame,
-        c_points: Optional[pd.DataFrame],
+        b_points: BPointDataFrame,
+        c_points: Optional[CPointDataFrame],
         sampling_rate_hz: float,
         **kwargs,
     ):
-        raise NotImplementedError("Method 'correct_outliers' must be implemented in a subclass!")
+        raise NotImplementedError("Method 'correct_outlier' must be implemented in a subclass!")
 
     @staticmethod
     def detect_b_point_outlier(stationary_data: pd.DataFrame) -> pd.DataFrame:
@@ -43,7 +45,7 @@ class BaseOutlierCorrection(Algorithm):
         dist_to_c_point = ((c_point_sample - b_point_sample) / sampling_rate_hz).to_frame()
         dist_to_c_point.columns = ["dist_to_c_point_ms"]
         dist_to_c_point["b_point_sample"] = b_point_sample
-        dist_to_c_point = dist_to_c_point.interpolate().interpolate(method="ffill").interpolate(method="bfill")
+        dist_to_c_point = dist_to_c_point.interpolate().ffill().bfill()
 
         sos = butter(4, Wn=0.1, btype="lowpass", output="sos", fs=1)
 

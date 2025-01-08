@@ -1,13 +1,10 @@
 from typing import Optional
 
-import pandas as pd
-
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.icg.outlier_correction import BaseOutlierCorrection
 
 __all__ = ["OutlierCorrectionDummy"]
 
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
+from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, is_b_point_dataframe
 
 
 class OutlierCorrectionDummy(BaseOutlierCorrection):
@@ -16,8 +13,8 @@ class OutlierCorrectionDummy(BaseOutlierCorrection):
     def correct_outlier(
         self,
         *,
-        b_points: pd.DataFrame,
-        c_points: Optional[pd.DataFrame],  # noqa: ARG002
+        b_points: BPointDataFrame,
+        c_points: Optional[CPointDataFrame],  # noqa: ARG002
         sampling_rate_hz: Optional[float],  # noqa: ARG002
         **kwargs,  # noqa: ARG002
     ):
@@ -41,10 +38,8 @@ class OutlierCorrectionDummy(BaseOutlierCorrection):
         self
 
         """
-        _assert_is_dtype(b_points, pd.DataFrame)
-        _assert_has_columns(b_points, [["b_point_sample", "nan_reason"]])
+        is_b_point_dataframe(b_points)
         b_points = b_points.astype({"b_point_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(b_points)
 
         self.points_ = b_points
         return self

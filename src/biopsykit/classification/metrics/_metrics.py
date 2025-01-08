@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import sklearn.metrics
 
-from biopsykit.utils._types import str_t
+from biopsykit.utils._types_internal import str_t
 
 
 def _apply_score(row: pd.Series, score_func, pos_label: str):

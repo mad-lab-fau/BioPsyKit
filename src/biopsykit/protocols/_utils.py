@@ -7,7 +7,7 @@ import pandas as pd
 from pandas._libs.lib import is_timedelta_or_timedelta64_array
 
 from biopsykit.utils._datatype_validation_helper import _assert_len_list
-from biopsykit.utils.datatype_helper import SalivaMeanSeDataFrame
+from biopsykit.utils.dtypes import SalivaMeanSeDataFrame
 from biopsykit.utils.exceptions import ValidationError
 
 

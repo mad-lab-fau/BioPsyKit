@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from biopsykit.io.ecg import load_hr_phase_dict, load_hr_phase_dict_folder, write_hr_phase_dict
-from biopsykit.utils.datatype_helper import is_hr_phase_dict
+from biopsykit.utils.dtypes import is_hr_phase_dict
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")

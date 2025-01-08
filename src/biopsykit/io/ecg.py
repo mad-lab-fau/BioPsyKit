@@ -8,8 +8,8 @@ from typing import Optional
 import pandas as pd
 
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir
-from biopsykit.utils._types import path_t
-from biopsykit.utils.datatype_helper import HeartRatePhaseDict, HeartRateSubjectDataDict, is_hr_phase_dict
+from biopsykit.utils._types_internal import path_t
+from biopsykit.utils.dtypes import HeartRatePhaseDict, HeartRateSubjectDataDict, is_hr_phase_dict
 from biopsykit.utils.file_handling import get_subject_dirs, is_excel_file
 from biopsykit.utils.time import tz
 
@@ -25,7 +25,7 @@ __all__ = [
 def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) -> HeartRatePhaseDict:
     """Load Excel file containing time series heart rate data of one subject.
 
-    The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`,
+    The returned dictionary will be a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`,
     i.e., a dict with heart rate data from one subject split into phases (as exported by :func:`write_hr_phase_dict`
     or :func:`write_hr_phase_dict_csv`).
 
@@ -38,21 +38,21 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+    :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
         Dict with heart rate data split into phases
 
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if file in ``file_path`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        if file in ``file_path`` is not a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
         (if ``assert_format`` is ``True``)
     :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no Excel file (`.xls` or `.xlsx`)
 
     See Also
     --------
-    ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
-    write_hr_phase_dict : Write :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` to file
+    ~biopsykit.utils.dtypes.HeartRatePhaseDict : Dictionary format
+    write_hr_phase_dict : Write :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` to file
 
     """
     # ensure pathlib
@@ -78,7 +78,7 @@ def load_hr_phase_dict_folder(
     r"""Load a folder with multiple ``HeartRatePhaseDict`` and concatenate them  into a ``HeartRateSubjectDataDict``.
 
     This functions looks for all files that match the ``file_pattern`` in the folder specified by ``base_path``
-    and loads the files that are all expected to be :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
+    and loads the files that are all expected to be :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`.
 
     Subject IDs are extracted from the file name. Hence, ``file_pattern`` needs to be a regex
     including a capture group, e.g. "ecg_results_(\\w+).xlsx".
@@ -86,10 +86,10 @@ def load_hr_phase_dict_folder(
     Alternatively, if the files are stored in subfolders, the name pattern of these subfolders can be specified by
     ``subject_folder_pattern``. Then, it is expected that the subfolder names correspond to the subject IDs.
 
-    The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+    The returned dictionary will be a :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`
     with the following format:
 
-    { ``subject_id`` : :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` }
+    { ``subject_id`` : :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` }
 
 
     Parameters
@@ -97,7 +97,7 @@ def load_hr_phase_dict_folder(
     base_path : :class: `~pathlib.Path` or str
         path to top-level folder containing all subject folders
     filename_pattern : str
-        filename pattern of exported :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`.
+        filename pattern of exported :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`.
         Must be a regex string with capture group to extract subject IDs, or a regular regex string
         (without capture group) if ``subfolder_pattern`` is specified
     subfolder_pattern : str, optional
@@ -107,22 +107,22 @@ def load_hr_phase_dict_folder(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
-        :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`, i.e., a dictionary with
-        :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` of multiple subjects
+    :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`
+        :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`, i.e., a dictionary with
+        :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` of multiple subjects
 
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.ValidationError`
         if any file that matches ``filename_pattern`` is not a
-        :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
     :exc:`FileNotFoundError`
         if no files match ``filename_pattern`` or no subfolders match ``subfolder_pattern``
 
     See Also
     --------
     ~biopsykit.utils.file_handling.get_subject_dirs : Filter for subject subfolders in a given folder
-    load_hr_phase_dict : Load :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` for one subject
+    load_hr_phase_dict : Load :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` for one subject
 
     Examples
     --------
@@ -203,25 +203,25 @@ def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str)
 
 
 def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t):
-    """Write :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` to an Excel file.
+    """Write :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` to an Excel file.
 
-    The :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` is a dictionary with heart rate time
+    The :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` is a dictionary with heart rate time
     series data split into phases.
 
     Each of the phases in the dictionary will be a separate sheet in the Excel file.
 
     Parameters
     ----------
-    hr_phase_dict : :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
-        a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` containing pandas dataframes
+    hr_phase_dict : :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
+        a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` containing pandas dataframes
         with heart rate data
     file_path : :class:`~pathlib.Path` or str
         path to export file
 
     See Also
     --------
-    ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
-    load_hr_phase_dict : Load :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` written to file
+    ~biopsykit.utils.dtypes.HeartRatePhaseDict : Dictionary format
+    load_hr_phase_dict : Load :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` written to file
     ~biopsykit.io.write_pandas_dict_excel : Write dictionary with pandas dataframes to Excel file
 
     """
@@ -236,17 +236,17 @@ def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t):
 
 
 def write_hr_phase_dict_csv(hr_phase_dict: HeartRatePhaseDict, folder_path: path_t, file_pattern: path_t):
-    """Write :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` to a series of csv files.
+    """Write :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` to a series of csv files.
 
-    The :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` is a dictionary with heart rate time
+    The :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` is a dictionary with heart rate time
     series data split into phases.
 
     Each of the phases in the dictionary will be a separate csv file.
 
     Parameters
     ----------
-    hr_phase_dict : :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
-        a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` containing pandas dataframes
+    hr_phase_dict : :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
+        a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` containing pandas dataframes
         with heart rate data
     folder_path : :class:`~pathlib.Path` or str
         folder path to export csv files
@@ -259,14 +259,14 @@ def write_hr_phase_dict_csv(hr_phase_dict: HeartRatePhaseDict, folder_path: path
     ValueError
         if ``file_pattern`` does not include a placeholder "{}" that can be filled with the phase name
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if ``hr_phase_dict`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        if ``hr_phase_dict`` is not a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
     :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if ``file_pattern`` is no csv file
 
     See Also
     --------
-    ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
-    load_hr_phase_dict_csv : Load :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` written to csv files
+    ~biopsykit.utils.dtypes.HeartRatePhaseDict : Dictionary format
+    load_hr_phase_dict_csv : Load :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` written to csv files
 
     """
     # ensure pathlib
@@ -296,7 +296,7 @@ def load_hr_phase_dict_csv(
 ) -> HeartRatePhaseDict:
     """Load csv file with time series HR data of one subject from folder and combine it into a ``HeartRatePhaseDict``.
 
-    The returned dictionary will be a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`,
+    The returned dictionary will be a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`,
     i.e., a dict with heart rate data from one subject split into phases (as exported by :func:`write_hr_phase_dict`).
 
     Parameters
@@ -307,7 +307,7 @@ def load_hr_phase_dict_csv(
         file pattern of the csv files. `file_pattern` must include a regex capture group (see Examples) which is used
         to extract the phase name from the file name.
     phase_order : list of str, optional
-        list of phase names to order resulting :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` or ``None``
+        list of phase names to order resulting :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` or ``None``
         to order phases according to the file name ordering in ``folder_path``.
         Default: ``None``
     assert_format : bool, optional
@@ -315,21 +315,21 @@ def load_hr_phase_dict_csv(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+    :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
         Dict with heart rate data split into phases
 
     Raises
     ------
     :exc:`~biopsykit.utils.exceptions.ValidationError`
-        if file in ``file_path`` is not a :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        if file in ``file_path`` is not a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
         (if ``assert_format`` is ``True``)
     :exc:`~biopsykit.utils.exceptions.FileExtensionError`
         if file is no Excel file (`.xls` or `.xlsx`)
 
     See Also
     --------
-    ~biopsykit.utils.datatype_helper.HeartRatePhaseDict : Dictionary format
-    write_hr_phase_dict_csv : Write :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict` to a series of csv files
+    ~biopsykit.utils.dtypes.HeartRatePhaseDict : Dictionary format
+    write_hr_phase_dict_csv : Write :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict` to a series of csv files
 
     """
     # ensure pathlib

@@ -3,12 +3,18 @@ import pandas as pd
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals._dtypes import assert_sample_columns_int
 from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
-from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_is_dtype
 from biopsykit.utils.array_handling import sanitize_input_series
 
 __all__ = ["QPeakExtractionForouzanfar2018"]
+
+from biopsykit.utils.dtypes import (
+    EcgRawDataFrame,
+    HeartbeatSegmentationDataFrame,
+    is_ecg_raw_dataframe,
+    is_heartbeat_segmentation_dataframe,
+    is_q_peak_dataframe,
+)
 
 
 class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMixin):
@@ -52,9 +58,9 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
     def extract(
         self,
         *,
-        ecg: pd.DataFrame,
-        heartbeats: pd.DataFrame,
-        sampling_rate_hz: int,  # noqa: ARG002
+        ecg: EcgRawDataFrame,
+        heartbeats: HeartbeatSegmentationDataFrame,
+        sampling_rate_hz: float,  # noqa: ARG002
     ):
         """Extract Q-peaks from given ECG cleaned signal.
 
@@ -67,7 +73,7 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
         heartbeats: :class:`~pandas.DataFrame`
             DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
             location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
-        sampling_rate_hz: int
+        sampling_rate_hz: float
             Sampling rate of ECG signal in hz
 
         Returns
@@ -81,6 +87,8 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
 
         """
         self._check_valid_missing_handling()
+        is_ecg_raw_dataframe(ecg)
+        is_heartbeat_segmentation_dataframe(heartbeats)
         ecg = sanitize_input_series(ecg, name="ecg")
         ecg = ecg.squeeze()
 
@@ -107,10 +115,8 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
             q_peak_sample = heartbeat_start + ecg_below[-1]
             q_peaks.loc[q_peaks.index[idx], "q_peak_sample"] = q_peak_sample
 
-        _assert_is_dtype(q_peaks, pd.DataFrame)
-        _assert_has_columns(q_peaks, [["q_peak_sample", "nan_reason"]])
         q_peaks = q_peaks.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
-        assert_sample_columns_int(q_peaks)
+        is_q_peak_dataframe(q_peaks)
 
         self.points_ = q_peaks
         return self
