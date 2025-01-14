@@ -15,6 +15,7 @@ from biopsykit.utils.dtypes import (
     is_q_peak_dataframe,
 )
 from biopsykit.utils.exceptions import EventExtractionError
+from jinja2.utils import missing
 
 
 class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
@@ -70,7 +71,18 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
         ecg = ecg.squeeze()
 
         # result df
-        q_peaks = pd.DataFrame(index=heartbeats.index, columns=["q_peak", "nan_reason"])
+        q_peaks = pd.DataFrame(index=heartbeats.index, columns=["q_peak_sample", "nan_reason"])
+
+        if heartbeats.empty:
+            missing_str = "No heartbeats found, no Q-peaks can be extracted!"
+            if self.handle_missing_events == "warn":
+                warnings.warn(missing_str)
+            elif self.handle_missing_events == "raise":
+                raise EventExtractionError(missing_str)
+            q_peaks = q_peaks.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
+            is_q_peak_dataframe(q_peaks)
+            self.points_ = q_peaks
+            return self
 
         # used subsequently to store ids of heartbeats for which no AO or IVC could be detected
         heartbeats_no_q = []
@@ -88,22 +100,26 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
             # for some heartbeats, no Q can be detected, will be NaN in resulting df
             if np.isnan(q):
                 heartbeats_no_q.append(idx)
-            else:
-                heartbeat_idx = heartbeats.loc[(heartbeats["start_sample"] < q) & (q < heartbeats["end_sample"])].index[
-                    0
-                ]
+                continue
 
-                # Q occurs after R, which is not valid
-                if heartbeats["r_peak_sample"].loc[heartbeat_idx].item() < q:
-                    heartbeats_q_after_r.append(heartbeat_idx)
-                    q_peaks.loc[heartbeat_idx, "q_peak"] = np.NaN
-                # valid Q-peak found
-                else:
-                    q_peaks.loc[heartbeat_idx, "q_peak"] = q
+            q_idx = (heartbeats["start_sample"] < q) & (q < heartbeats["end_sample"])
+            if np.sum(q_idx) == 0:
+                heartbeats_no_q.append(idx)
+                continue
+
+            heartbeat_idx = heartbeats.loc[q_idx].index[0]
+
+            # Q occurs after R, which is not valid
+            if heartbeats["r_peak_sample"].loc[heartbeat_idx].item() < q:
+                heartbeats_q_after_r.append(heartbeat_idx)
+                q_peaks.loc[heartbeat_idx, "q_peak_sample"] = np.NaN
+            # valid Q-peak found
+            else:
+                q_peaks.loc[heartbeat_idx, "q_peak_sample"] = q
 
         # inform user about missing Q-values
         if q_peaks.isna().sum().iloc[0] > 0:
-            nan_rows = q_peaks[q_peaks["q_peak"].isna()]
+            nan_rows = q_peaks[q_peaks["q_peak_sample"].isna()]
             nan_rows = nan_rows.drop(index=heartbeats_q_after_r)
             nan_rows = nan_rows.drop(index=heartbeats_no_q)
 
@@ -131,7 +147,6 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
             elif self.handle_missing_events == "raise":
                 raise EventExtractionError(missing_str)
 
-        q_peaks.columns = ["q_peak_sample", "nan_reason"]
         q_peaks = q_peaks.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
         is_q_peak_dataframe(q_peaks)
 

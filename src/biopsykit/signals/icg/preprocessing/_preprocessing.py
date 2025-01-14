@@ -36,6 +36,10 @@ class IcgPreprocessingBandpass(Algorithm):
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
 
+        if icg.empty:
+            self.icg_clean_ = pd.DataFrame(index=icg.index, columns=["icg_der"])
+            return self
+
         if self.method not in ["butterworth", "elliptic", "savgol"]:
             raise ValueError("Filter type can only be 'butterworth', 'elliptic', or 'savgol'")
 

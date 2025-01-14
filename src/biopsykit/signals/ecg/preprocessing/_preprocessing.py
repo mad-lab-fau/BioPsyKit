@@ -45,6 +45,9 @@ class EcgPreprocessingNeurokit(Algorithm):
         is_ecg_raw_dataframe(ecg)
         ecg = sanitize_input_dataframe_1d(ecg, column="ecg")
         ecg = ecg.squeeze()
+        if ecg.empty:
+            self.ecg_clean_ = pd.DataFrame(index=ecg.index, columns=["ecg"])
+            return self
 
         if self.method not in ["neurokit", "biosppy"]:
             raise ValueError("Not implemented yet!")

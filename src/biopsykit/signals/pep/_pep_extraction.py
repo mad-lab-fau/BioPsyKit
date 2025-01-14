@@ -1,3 +1,4 @@
+import warnings
 from typing import Literal
 
 import pandas as pd
@@ -6,6 +7,7 @@ from typing_extensions import Self
 
 __all__ = ["PepExtraction"]
 
+from biopsykit.signals._base_extraction import CanHandleMissingEventsMixin, HANDLE_MISSING_EVENTS, BaseExtraction
 from biopsykit.utils.dtypes import (
     BPointDataFrame,
     HeartbeatSegmentationDataFrame,
@@ -15,19 +17,25 @@ from biopsykit.utils.dtypes import (
     is_pep_result_dataframe,
     is_q_peak_dataframe,
 )
+from biopsykit.utils.exceptions import EventExtractionError
 
 NEGATIVE_PEP_HANDLING = Literal["nan", "zero", "keep"]
 
 
-class PepExtraction(Algorithm):
+class PepExtraction(BaseExtraction, CanHandleMissingEventsMixin):
 
     _action_methods = "extract"
 
     handle_negative_pep: NEGATIVE_PEP_HANDLING
     pep_results_: pd.DataFrame
 
-    def __init__(self, handle_negative_pep: NEGATIVE_PEP_HANDLING = "nan") -> None:
+    def __init__(
+        self,
+        handle_negative_pep: NEGATIVE_PEP_HANDLING = "nan",
+        handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
+    ) -> None:
         self.handle_negative_pep = handle_negative_pep
+        super().__init__(handle_missing_events=handle_missing_events)
 
     def extract(
         self,
@@ -56,9 +64,35 @@ class PepExtraction(Algorithm):
         is_heartbeat_segmentation_dataframe(heartbeats)
         is_b_point_dataframe(b_point_samples)
         is_q_peak_dataframe(q_peak_samples)
+        self._check_valid_missing_handling()
+        self._check_valid_handle_pep()
 
         # do something
-        pep_results = pd.DataFrame(index=heartbeats.index)
+        pep_results = pd.DataFrame(
+            index=heartbeats.index,
+            columns=[
+                "heartbeat_start_sample",
+                "heartbeat_end_sample",
+                "r_peak_sample",
+                "rr_interval_sample",
+                "rr_interval_ms",
+                "heart_rate_bpm",
+                "q_peak_sample",
+                "b_point_sample",
+                "pep_sample",
+                "pep_ms",
+                "nan_reason",
+            ],
+        )
+
+        if heartbeats.empty:
+            missing_str = "No heartbeats found, no PEP can be extracted!"
+            self.pep_results_ = pep_results
+            if self.handle_missing_events == "warn":
+                warnings.warn(missing_str)
+            elif self.handle_missing_events == "raise":
+                raise EventExtractionError(missing_str)
+            return self
 
         pep_results = pep_results.assign(
             heartbeat_start_time=heartbeats["start_time"],
@@ -124,3 +158,7 @@ class PepExtraction(Algorithm):
             pep_results.loc[neg_pep_idx, "nan_reason"] = "negative_pep"
 
         return pep_results
+
+    def _check_valid_handle_pep(self):
+        if self.handle_negative_pep not in ["nan", "zero", "keep"]:
+            raise ValueError(f"Invalid value for 'handle_negative_pep': {self.handle_negative_pep}")

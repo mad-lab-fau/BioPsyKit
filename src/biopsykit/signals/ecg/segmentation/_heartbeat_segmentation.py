@@ -1,8 +1,11 @@
+import warnings
+
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
 from tpcp import Parameter
 
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.ecg.segmentation._base_segmentation import BaseHeartbeatSegmentation
 
 __all__ = ["HeartbeatSegmentationNeurokit"]
@@ -14,9 +17,10 @@ from biopsykit.utils.dtypes import (
     is_ecg_raw_dataframe,
     is_heartbeat_segmentation_dataframe,
 )
+from biopsykit.utils.exceptions import EventExtractionError
 
 
-class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
+class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingEventsMixin):
     """Segments ECG signal into heartbeats based on Neurokit's delineate function."""
 
     _action_methods = "extract"
@@ -35,6 +39,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
         variable_length: bool = True,
         start_factor: float = 0.35,
         r_peak_detection_method: str = "neurokit",
+        handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new HeartBeatExtraction algorithm instance.
 
@@ -55,11 +60,14 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
             R-peak of the beat
         r_peak_detection_method : str, optional
             Method to detect R-peaks that is passed to :func:`neurokit2.ecg_peaks`. Default: "neurokit"
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
 
         """
         self.variable_length = variable_length
         self.start_factor = start_factor
         self.r_peak_detection_method = r_peak_detection_method
+        super().__init__(handle_missing_events=handle_missing_events)
 
     # @make_action_safe
     def extract(
@@ -89,17 +97,43 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation):
         """
         is_ecg_raw_dataframe(ecg)
         ecg = sanitize_input_dataframe_1d(ecg, column="ECG")
+        heartbeats = pd.DataFrame(
+            columns=["start_sample", "end_sample", "r_peak_sample"],
+        )
+        heartbeats.index.name = "heartbeat_id"
+        heartbeats = heartbeats.astype("Int64")
+
         if ecg.empty:
-            raise ValueError("Input data is empty!")
+            is_heartbeat_segmentation_dataframe(heartbeats)
+            self.heartbeat_list_ = heartbeats
+            missing_str = "No ECG signal found, no heartbeats can be segmented!"
+            if self.handle_missing_events == "warn":
+                warnings.warn(missing_str)
+            elif self.handle_missing_events == "raise":
+                raise EventExtractionError(missing_str)
+            return self
 
         _, r_peaks = nk.ecg_peaks(ecg, sampling_rate=int(sampling_rate_hz), method=self.r_peak_detection_method)
         r_peaks = r_peaks["ECG_R_Peaks"]
 
-        heartbeats = pd.DataFrame(
-            index=np.arange(0, len(r_peaks)),
-        )
-        heartbeats = heartbeats.assign(r_peak_sample=r_peaks)
+        if len(r_peaks) < 2:
+            # no r-peaks were detected, so no heartbeats can be segmented
+            # clear dataframe
+            is_heartbeat_segmentation_dataframe(heartbeats)
+            missing_str = "Not sufficient R-peaks were detected, so no heartbeats can be segmented!"
+            self.heartbeat_list_ = heartbeats
+            if self.handle_missing_events == "warn":
+                warnings.warn(missing_str)
+            elif self.handle_missing_events == "raise":
+                raise EventExtractionError(missing_str)
+            return self
 
+        heartbeats = pd.DataFrame(
+            index=pd.Index(np.arange(0, len(r_peaks)), name="heartbeat_id"),
+            columns=["start_sample", "end_sample", "r_peak_sample"],
+        )
+
+        heartbeats = heartbeats.assign(r_peak_sample=r_peaks)
         # save RR-interval to successive heartbeat
         heartbeats = heartbeats.assign(rr_interval_sample=np.abs(heartbeats["r_peak_sample"].diff(periods=-1)))
 
