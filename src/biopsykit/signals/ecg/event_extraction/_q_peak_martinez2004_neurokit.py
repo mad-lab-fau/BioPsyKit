@@ -15,7 +15,6 @@ from biopsykit.utils.dtypes import (
     is_q_peak_dataframe,
 )
 from biopsykit.utils.exceptions import EventExtractionError
-from jinja2.utils import missing
 
 
 class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
@@ -33,7 +32,7 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
         super().__init__(handle_missing_events=handle_missing_events)
 
     # @make_action_safe
-    def extract(
+    def extract(  # noqa: PLR0915, PLR0912, C901
         self,
         *,
         ecg: EcgRawDataFrame,

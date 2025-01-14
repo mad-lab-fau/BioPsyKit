@@ -2,12 +2,11 @@ import warnings
 from typing import Literal
 
 import pandas as pd
-from tpcp import Algorithm
 from typing_extensions import Self
 
 __all__ = ["PepExtraction"]
 
-from biopsykit.signals._base_extraction import CanHandleMissingEventsMixin, HANDLE_MISSING_EVENTS, BaseExtraction
+from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, BaseExtraction, CanHandleMissingEventsMixin
 from biopsykit.utils.dtypes import (
     BPointDataFrame,
     HeartbeatSegmentationDataFrame,

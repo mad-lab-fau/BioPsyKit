@@ -70,7 +70,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
         super().__init__(handle_missing_events=handle_missing_events)
 
     # @make_action_safe
-    def extract(
+    def extract(  # noqa: PLR0915, PLR0912, C901
         self,
         *,
         ecg: EcgRawDataFrame,
