@@ -224,10 +224,6 @@ class BiopacDataset:
             data = data.reset_index(drop=True)
             data.index.name = index_name
             return data
-        if index == "utc":
-            # convert counter to utc timestamps
-            data.index += self.start_time_unix.timestamp()
-            return data
 
         if start_time is None:
             start_time = self.start_time_unix
@@ -238,9 +234,14 @@ class BiopacDataset:
                 "Use a different index representation or provide a custom start time using the 'start_time' parameter."
             )
 
+        if index == "utc":
+            # convert counter to utc timestamps
+            data.index += start_time.timestamp()
+            return data
+
         # convert counter to pandas datetime index
         data.index = pd.to_timedelta(data.index, unit="s")
-        data.index += self.start_time_unix
+        data.index += start_time
 
         if index == "local_datetime":
             data.index = data.index.tz_convert(self.timezone)
