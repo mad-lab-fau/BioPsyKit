@@ -69,6 +69,7 @@ from biopsykit.questionnaires.questionnaires import (
     tsgs,
     type_d,
     wpi,
+    sssq,
 )
 
 __all__ = [
@@ -142,4 +143,5 @@ __all__ = [
     "type_d",
     "utils",
     "wpi",
+    "sssq",
 ]

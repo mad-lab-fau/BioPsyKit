@@ -6078,3 +6078,99 @@ def eval_clinic(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.In
     _assert_value_range(data, score_range)
 
     return pd.DataFrame(data.mean(axis=1), columns=[score_name])
+
+
+def sssq(
+    data: pd.DataFrame,
+    columns: Optional[Union[Sequence[str], pd.Index]] = None,
+    subscales: Optional[dict[str, Sequence[Union[str, int]]]] = None,
+    language: Optional[Literal["english", "german"]] = None,
+) -> pd.DataFrame:
+    """Compute the **Short Stress State Questionnaire (SSSQ)**.
+
+    The SSSQ
+
+    It consists of the subscales with the item indices (count-by-one, i.e., the first question has the index 1!):
+
+    * Socioeconomic Status Ladder (``SocioeconomicStatus``): [1]
+    * Community Ladder (``Community``): [2]
+
+    .. note::
+        This implementation assumes a score range of [0, 10].
+        Use :func:`~biopsykit.questionnaires.utils.convert_scale()` to convert the items into the correct range
+        beforehand.
+
+    .. warning::
+        Column indices in ``subscales`` are assumed to start at 1 (instead of 0) to avoid confusion with
+        questionnaire item columns, which typically also start with index 1!
+
+
+    Parameters
+    ----------
+    data : :class:`~pandas.DataFrame`
+        dataframe containing questionnaire data. Can either be only the relevant columns for computing this score or
+        a complete dataframe if ``columns`` parameter is supplied.
+    columns : list of str or :class:`pandas.Index`, optional
+        list with column names in correct order.
+        This can be used if columns in the dataframe are not in the correct order or if a complete dataframe is
+        passed as ``data``.
+    subscales : dict, optional
+        A dictionary with subscale names (keys) and column names or column indices (count-by-1) (values)
+        if only specific subscales should be computed.
+
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame`
+        SSS score
+
+
+    Raises
+    ------
+    ValueError
+        if ``subscales`` is supplied and dict values are something else than a list of strings or a list of ints
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if number of columns does not match
+    :exc:`~biopsykit.utils.exceptions.ValueRangeError`
+        if values are not within the required score range
+
+    """
+    score_name = "SSSQ"
+    score_range = [1, 5]
+    # TODO add english version
+    supported_versions = ["german"]
+
+    if language is None:
+        language = "german"
+
+    if language not in supported_versions:
+        raise ValueError(f"questionnaire_version must be one of {supported_versions}, not {language}.")
+
+    if columns is not None:
+        # if columns parameter is supplied: slice columns from dataframe
+        _assert_has_columns(data, [columns])
+        data = data.loc[:, columns]
+
+    if subscales is None:
+        _assert_num_columns(data, 24)
+        subscales = {
+            "Distress": [1, 6, 7, 8, 9],
+            "Worry": [18, 19, 20, 24],
+            "Confidence": [2, 5, 17, 21, 22],
+            "NegativeAffect": [3, 4, 10],
+            "Motivation": [11, 12, 13],
+            "SelfEvaluation": [14, 15, 16],
+        }
+
+    _assert_value_range(data, score_range)
+
+    # compute total score
+    sssq_data = _compute_questionnaire_subscales(data, score_name, subscales, agg_type="mean")
+
+    # items 2, 5, 11, 12, 13, 17, 21, 22 are reverse coded in the total scale score, but these items are kept as
+    # originally coded in all other analyses and subscales.
+    data_inv = invert(data, score_range, cols=to_idx([2, 5, 11, 12, 13, 17, 21, 22]))
+
+    sssq_data[f"{score_name}_Total"] = data_inv.mean(axis=1)
+
+    return pd.DataFrame(sssq_data, index=data.index)

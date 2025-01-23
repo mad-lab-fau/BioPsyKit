@@ -648,6 +648,7 @@ def compute_scores(
                 "to get a list of all supported questionnaires."
             )
         kwargs = quest_kwargs.get(score_orig, {})
+
         try:
             df = quest_funcs[score](data[columns], **kwargs)
         except TypeError as e:
