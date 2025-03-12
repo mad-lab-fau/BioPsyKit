@@ -18,10 +18,10 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Algorithm for Q-peak extraction using the scipy.find_peaks method implemented in NeuroKit2."""
+    """Algorithm for Q-peak extraction using the ``scipy.find_peaks`` method implemented in NeuroKit2."""
 
     def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new QPeakExtractionMartinez2004Neurokit algorithm instance.
+        """Initialize new QPeakExtractionSciPyFindPeaksNeurokit algorithm instance.
 
         Parameters
         ----------
@@ -39,7 +39,7 @@ class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingE
         heartbeats: HeartbeatSegmentationDataFrame,
         sampling_rate_hz: float,
     ):
-        """Extract Q-peaks from given ECG cleaned signal.
+        """Extract Q-peaks from given ECG signal.
 
         The results are saved in the ``points_`` attribute of the super class.
 

@@ -42,7 +42,7 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
     scaling_factor: Parameter[float]
 
     def __init__(self, scaling_factor: float = 2000, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new QPeakExtractionVanLien algorithm instance.
+        """Initialize new QPeakExtractionForouzanfar2018 algorithm instance.
 
         Parameters
         ----------
@@ -62,7 +62,7 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
         heartbeats: HeartbeatSegmentationDataFrame,
         sampling_rate_hz: float,  # noqa: ARG002
     ):
-        """Extract Q-peaks from given ECG cleaned signal.
+        """Extract Q-peaks from given ECG signal.
 
         The results are saved in the ``points_`` attribute of the super class.
 

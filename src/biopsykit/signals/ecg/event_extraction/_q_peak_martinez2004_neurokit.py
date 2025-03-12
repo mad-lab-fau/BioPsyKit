@@ -18,7 +18,20 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Algorithm by Martinez et al. (2004) for Q-peak extraction using the DWT method implemented in NeuroKit2."""
+    """Q-peak extraction algorithm by Martinez et al. (2004) [1]_ using the DWT method implemented in NeuroKit2.
+
+    This algorithm detects the Q-peak of an ECG signal using the discrete wavelet transform (DWT) method implemented in
+    NeuroKit2.
+
+
+    References
+    ----------
+    .. [1] Martinez, J. P., Almeida, R., Olmos, S., Rocha, A. P., & Laguna, P. (2004).
+        A wavelet-based ECG delineator: evaluation on standard databases.
+        IEEE Transactions on Biomedical Engineering, 51(4), 570-581.
+        https://doi.org/10.1109/TBME.2003.821031
+
+    """
 
     def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
         """Initialize new QPeakExtractionMartinez2004Neurokit algorithm instance.
@@ -39,7 +52,7 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
         heartbeats: HeartbeatSegmentationDataFrame,
         sampling_rate_hz: float,
     ):
-        """Extract Q-peaks from given ECG cleaned signal.
+        """Extract Q-peaks from given ECG signal.
 
         The results are saved in the ``points_`` attribute of the super class.
 

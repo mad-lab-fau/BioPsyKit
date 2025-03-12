@@ -15,7 +15,7 @@ from biopsykit.utils.dtypes import (
 
 
 class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Algorithm to extract Q-peaks based on the detection of the R-peak, as suggested by Van Lien et al. (2013).
+    """Algorithm to extract Q-peaks based on the detection of the R-peak, as suggested by Van Lien et al. (2013) [1]_.
 
     The Q-peak is estimated by subtracting a fixed time interval from the R-peak location. The fixed time
     interval is defined by the parameter ``time_interval``.
@@ -23,10 +23,10 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
 
     References
     ----------
-    Van Lien, R., Schutte, N. M., Meijer, J. H., & De Geus, E. J. C. (2013). Estimated preejection period (PEP) based
-    on the detection of the R-peak and dZ/dt-min peaks does not adequately reflect the actual PEP across a wide range
-    of laboratory and ambulatory conditions. International Journal of Psychophysiology, 87(1), 60-69.
-    https://doi.org/10.1016/j.ijpsycho.2012.11.001
+    .. [1] Van Lien, R., Schutte, N. M., Meijer, J. H., & De Geus, E. J. C. (2013). Estimated preejection period (PEP)
+        based on the detection of the R-peak and dZ/dt-min peaks does not adequately reflect the actual PEP across a
+        wide range of laboratory and ambulatory conditions. International Journal of Psychophysiology, 87(1), 60-69.
+        https://doi.org/10.1016/j.ijpsycho.2012.11.001
 
     """
 
@@ -34,15 +34,15 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
     time_interval_ms: Parameter[int]
 
     def __init__(self, time_interval_ms: int = 40, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new QPeakExtractionVanLien algorithm instance.
+        """Initialize new QPeakExtractionVanLien2013 algorithm instance.
 
         Parameters
         ----------
-        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
         time_interval_ms : int, optional
             Specify the constant time interval in milliseconds which will be subtracted from the R-peak for
             Q-peak estimation. Default: 40 ms
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle missing data in the input dataframes. Default: "warn"
         """
         super().__init__(handle_missing_events=handle_missing_events)
         self.time_interval_ms = time_interval_ms
@@ -55,7 +55,7 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
         heartbeats: HeartbeatSegmentationDataFrame,
         sampling_rate_hz: float,
     ):
-        """Extract Q-peaks (start of ventricular depolarization) from given ECG cleaned signal.
+        """Extract Q-peaks from given ECG signal.
 
         The results are saved in the ``points_`` attribute of the super class.
 
@@ -73,6 +73,12 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
         Returns
         -------
             self
+
+        Raises
+        ------
+        :exc:`~biopsykit.utils.exceptions.EventExtractionError`
+            If missing data is found and ``handle_missing`` is set to "raise"
+
         """
         is_ecg_raw_dataframe(ecg)
         is_heartbeat_segmentation_dataframe(heartbeats)
