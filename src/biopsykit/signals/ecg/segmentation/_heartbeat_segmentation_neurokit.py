@@ -202,8 +202,10 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
                 end_sample=("Index", "last"),
                 start_time=("Index", lambda s: ecg.index[s.iloc[0]]),
             )
-            # fill the empty columns of heartbeats with the start, end, and r-peak of heartbeat_segments_new
-            heartbeats = heartbeats.join(heartbeat_segments_new)
+            # fill the empty columns of heartbeats with the start_sample, end_sample, and start_time of
+            # heartbeat_segments_new
+            heartbeats.update(heartbeat_segments_new)
+            heartbeats = heartbeats.assign(start_time=heartbeat_segments_new["start_time"])
 
         # check if R-peak occurs between corresponding start and end
         check = heartbeats.apply(lambda x: x["start_sample"] < x["r_peak_sample"] < x["end_sample"], axis=1)
