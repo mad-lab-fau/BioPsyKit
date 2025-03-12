@@ -12,6 +12,8 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame
 
 
 class BaseOutlierCorrection(Algorithm):
+    """Base class for outlier correction algorithms for B-Point data."""
+
     _action_methods = "correct_outlier"
 
     points_: BPointDataFrame
@@ -28,6 +30,23 @@ class BaseOutlierCorrection(Algorithm):
 
     @staticmethod
     def detect_b_point_outlier(stationary_data: pd.DataFrame) -> pd.DataFrame:
+        """Detect outliers in stationary B-Point data.
+
+        Outliers are detected based on the median absolute deviation of the stationary data. If the difference between
+        the stationary data and the median is greater than 3 times the median absolute deviation, the data point is
+        considered an outlier.
+
+        Parameters
+        ----------
+        stationary_data : :class:`~pandas.DataFrame`
+            DataFrame containing the stationary B-Point data
+
+        Returns
+        -------
+        :class:`~pandas.DataFrame`
+            DataFrame containing the detected outliers
+
+        """
         median = np.nanmedian(stationary_data["statio_data"])
         median_abs_dev = median_abs_deviation(stationary_data["statio_data"], axis=0, nan_policy="propagate")
         outliers = pd.DataFrame(index=stationary_data.index, columns=["outliers"])
@@ -39,6 +58,26 @@ class BaseOutlierCorrection(Algorithm):
 
     @staticmethod
     def stationarize_b_points(b_points: pd.DataFrame, c_points: pd.DataFrame, sampling_rate_hz: float) -> pd.DataFrame:
+        """Stationarize B-Point data by removing the baseline.
+
+        The B-points are stationarized by removing the baseline from the distance to the C-point. The baseline is
+        estimated using a 4th order low-pass Butterworth filter with a cutoff frequency of 0.1 Hz.
+
+        Parameters
+        ----------
+        b_points : :class:`~pandas.DataFrame`
+            Dataframe containing the extracted B-Points per heartbeat, index functions as id of heartbeat
+        c_points : :class:`~pandas.DataFrame`
+            Dataframe containing the extracted C-Points per heartbeat, index functions as id of heartbeat
+        sampling_rate_hz : float
+            Sampling rate of ICG signal in Hz
+
+        Returns
+        -------
+        :class:`~pandas.DataFrame`
+            DataFrame containing the stationarized B-Point data
+
+        """
         b_point_sample = b_points["b_point_sample"].astype(float)
         c_point_sample = c_points["c_point_sample"].astype(float)
         dist_to_c_point = ((c_point_sample - b_point_sample) / sampling_rate_hz).to_frame()

@@ -21,7 +21,18 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingEventsMixin):
-    """Segments ECG signal into heartbeats based on Neurokit's delineate function."""
+    """Segment ECG signal into individual heartbeats based on NeuroKit2 [1]_.
+
+    This algorithm segments the ECG signal into individual heartbeats based on the R-peaks detected by Neurokit's
+    ``ecg_peaks`` function. The start of each heartbeat is determined based on the R-peak and the current RR-interval.
+
+    References
+    ----------
+    .. [1] Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S.H. Chen
+        (2021). NeuroKit2: A Python Toolbox for Neurophysiological Signal Processing. Behavior Research Methods.
+        https://doi.org/10.3758/s13428-020-01516-y
+
+    """
 
     _action_methods = "extract"
 
@@ -41,7 +52,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
         r_peak_detection_method: str = "neurokit",
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
-        """Initialize new HeartBeatExtraction algorithm instance.
+        """Initialize new ``HeartbeatSegmentationNeurokit`` algorithm instance.
 
         Parameters
         ----------
@@ -54,10 +65,9 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
             (ends exclusive); For fixed length heartbeats, there might be spaces between heartbeat borders, or they
             might overlap. Default: ``True``
         start_factor : float, optional
-            only needed if ``variable_length=True``. If ``variable_length=True``, this parameter defines where the
-            start border between heartbeats is set depending on the RR-interval to previous heartbeat.
-            For example, ``start_factor=0.35`` means that the beat start is set at 35% of current RR-distance before the
-            R-peak of the beat
+            only needed if ``variable_length=True``. This parameter defines where the start border between heartbeats
+            is set depending on the RR-interval to previous heartbeat. For example, ``start_factor=0.35`` means that
+            the beat start is set at 35% of current RR-distance before the R-peak of the beat
         r_peak_detection_method : str, optional
             Method to detect R-peaks that is passed to :func:`neurokit2.ecg_peaks`. Default: "neurokit"
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
@@ -76,12 +86,13 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
         ecg: EcgRawDataFrame,
         sampling_rate_hz: float,
     ):
-        """Segments ecg signal into heartbeats, extract start, end, r-peak of each heartbeat.
+        """Segment ECG signal into heartbeats.
 
         The function uses R-peak detection to segment the ECG signal into heartbeats. The start of each heartbeat is
         determined based on the R-peak and the current RR-interval.
 
-        The results are saved in the ``heartbeat_list_`` attribute.
+        The results (start and end sample, R-peak sample, current RR-interval in samples and milliseconds) are saved
+        in the ``heartbeat_list_`` attribute.
 
         Parameters
         ----------
@@ -93,6 +104,11 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
         Returns
         -------
             self
+
+        Raises
+        ------
+        :exc:`~biopsykit.utils.exceptions.EventExtractionError`
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         is_ecg_raw_dataframe(ecg)

@@ -8,6 +8,8 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, HeartbeatSe
 
 
 class BaseBPointExtraction(BaseExtraction):
+    """Base class for B-point extraction algorithms."""
+
     points_: BPointDataFrame
 
     def extract(

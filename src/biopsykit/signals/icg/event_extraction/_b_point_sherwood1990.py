@@ -20,8 +20,31 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class BPointExtractionSherwood1990(BaseBPointExtraction, CanHandleMissingEventsMixin):
+    """B-point extraction algorithm by Sherwood et al. (1990) [1]_.
+
+    This algorithm extracts B-points based on the last zero crossing of the ICG signal before the C-point.
+
+    References
+    ----------
+    .. [1] Sherwood, A., Allen, M. T., Fahrenberg, J., Kelsey, R. M., Lovallo, W. R., & Doornen, L. J. P. (1990).
+        Methodological Guidelines for Impedance Cardiography. Psychophysiology, 27(1), 1-23.
+        https://doi.org/10.1111/j.1469-8986.1990.tb02171.x
+
+    """
+
     def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new BPointExtractionSherwood1990 algorithm instance."""
+        """Initialize new ``BPointExtractionSherwood1990`` instance.
+
+        Parameters
+        ----------
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
+
+        """
         super().__init__(handle_missing_events=handle_missing_events)
 
     def extract(
@@ -32,6 +55,36 @@ class BPointExtractionSherwood1990(BaseBPointExtraction, CanHandleMissingEventsM
         c_points: CPointDataFrame,
         sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
+        """Extract B-points from given ICG derivative signal.
+
+        This algorithm extracts B-points based on the last zero crossing of the ICG signal before the C-point.
+
+        The results are stored in the ``points_`` attribute of this class.
+
+        Parameters
+        ----------
+        icg : :class:`~pandas.DataFrame`
+            ICG derivative signal
+        heartbeats : :class:`~pandas.DataFrame`
+            Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
+            from beginning of signal) of that heartbeat, index functions as id of heartbeat
+        c_points : :class:`~pandas.DataFrame`
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats
+        sampling_rate_hz : int
+            sampling rate of ICG derivative signal in hz
+
+        Returns
+        -------
+            self
+
+        Raises
+        ------
+        :exc:`~biopsykit.utils.exceptions.EventExtractionError`
+            If the event extraction fails and ``handle_missing`` is set to "raise"
+
+        """
         self._check_valid_missing_handling()
         # sanitize input
         is_icg_raw_dataframe(icg)

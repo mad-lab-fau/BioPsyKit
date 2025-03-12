@@ -23,15 +23,29 @@ __all__ = ["BPointExtractionStern1985"]
 
 
 class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm by Stern et al. (1985) to extract B-points based on reversal of dZ/dt curve before the C-point."""
+    """B-point extraction algorithm by Stern et al. (1985) [1]_.
+
+    This algorithm extracts B-points based on the last local minimum of the dZ/dt curve before the C-point.
+
+    References
+    ----------
+    .. [1] Stern, H. C., Wolf, G. K., & Belz, G. G. (1985). Comparative measurements of left ventricular ejection time
+        by mechano-, echo- and electrical impedance cardiography. Arzneimittel-Forschung, 35(10), 1582-1586.
+
+    """
 
     def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new BPointExtractionDebski algorithm instance.
+        """Initialize new ``BPointExtractionStern1985`` instance.
 
         Parameters
         ----------
-        handle_missing_events : HANDLE_MISSING_EVENTS
-            Indicates how to handle missing events (e.g., missing R-peaks or C-points)
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
+
         """
         super().__init__(handle_missing_events=handle_missing_events)
 
@@ -44,26 +58,25 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
         c_points: CPointDataFrame,
         sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
-        """Extract B-points from given ICG cleaned signal.
+        """Extract B-points from given ICG derivative signal.
 
-        This algorithm extracts B-points based on the reversal (local minimum) of the second derivative of the ICG
-        signal before the C-point.
+        This algorithm extracts B-points based on the last local minimum of the dZ/dt curve before the C-point.
 
-        The results are saved in the points_ attribute of the super class.
+        The results are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
         icg : :class:`~pandas.DataFrame`
-            cleaned ICG signal
+            ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
-            pd.DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+            Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
+            from beginning of signal) of that heartbeat, index functions as id of heartbeat
         c_points : :class:`~pandas.DataFrame`
-            pd.DataFrame containing one row per segmented C-point, each row contains location
-            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-            is not correct
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats
         sampling_rate_hz : int
-            sampling rate of ECG signal in hz. Not used in this function.
+            sampling rate of ICG derivative signal in hz
 
         Returns
         -------
@@ -72,7 +85,7 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If the C-Point contains NaN values and handle_missing is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()

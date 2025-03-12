@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from biopsykit.signals.ecg.segmentation._heartbeat_segmentation import HeartbeatSegmentationNeurokit
+from biopsykit.signals.ecg.segmentation._heartbeat_segmentation_neurokit import HeartbeatSegmentationNeurokit
 from biopsykit.signals.icg.event_extraction import BPointExtractionForouzanfar2018, CPointExtractionScipyFindPeaks
 from biopsykit.signals.icg.outlier_correction import OutlierCorrectionLinearInterpolation
 

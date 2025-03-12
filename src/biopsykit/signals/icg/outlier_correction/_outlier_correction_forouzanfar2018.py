@@ -17,16 +17,16 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, is_b_point_
 
 
 class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
-    """Algorithm to correct outliers based on (Forouzanfar et al., 2018, Psychophysiology).
+    """B-Point outlier correction algorithm based on Forouzanfar et al. (2018) [1]_.
 
     This algorithm corrects outliers in B-Point data using an autoregressive model.
 
     References
     ----------
-    Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
-    Toward a better noninvasive assessment of preejection period: A novel automatic algorithm for B-point detection
-    and correction on thoracic impedance cardiogram. Psychophysiology, 55(8), e13072.
-    https://doi.org/10.1111/psyp.13072
+    .. [1] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
+        Toward a better noninvasive assessment of preejection period: A novel automatic algorithm for B-point detection
+        and correction on thoracic impedance cardiogram. Psychophysiology, 55(8), e13072.
+        https://doi.org/10.1111/psyp.13072
 
     """
 
@@ -39,25 +39,33 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
         sampling_rate_hz: float,
         **kwargs,
     ):
-        """Correct outliers of given B-Point dataframe using the method proposed by Forouzanfar et al. (2018).
+        """Perform outlier correction on B-Point data.
+
+        The outliers are corrected using an autoregressive model.
+
+        The results of the outlier correction are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
-        b_points: :class:`~pandas.DataFrame`
-            Dataframe containing the extracted B-Points per heartbeat, index functions as id of heartbeat
-        c_points: :class:`~pandas.DataFrame`
-            Dataframe containing the extracted C-Points per heartbeat, index functions as id of heartbeat
-        sampling_rate_hz: int
-            Sampling rate of ICG signal in hz
-        **kwargs
+        b_points : :class:`~pandas.DataFrame`
+            Extracted B-points. Each row contains the B-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. B-point locations can be NaN if no B-points were detected
+            for certain heartbeats.
+        c_points : :class:`~pandas.DataFrame`
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats.
+        sampling_rate_hz : int
+            sampling rate of ICG derivative signal in hz
+        kwargs : dict
             Additional keyword arguments:
                 * verbose: bool, optional
                     Whether to print additional information. Default: False
 
         Returns
         -------
-            saves resulting corrected B-point locations (samples) in points_ attribute of super class,
-            index is B-point (/heartbeat) id
+            self
+
         """
         verbose = kwargs.get("verbose", False)
         is_b_point_dataframe(b_points)

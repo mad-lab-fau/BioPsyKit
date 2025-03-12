@@ -34,7 +34,7 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
     time_interval_ms: Parameter[int]
 
     def __init__(self, time_interval_ms: int = 40, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new QPeakExtractionVanLien2013 algorithm instance.
+        """Initialize new ``QPeakExtractionVanLien2013`` algorithm instance.
 
         Parameters
         ----------
@@ -77,7 +77,7 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If missing data is found and ``handle_missing`` is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         is_ecg_raw_dataframe(ecg)

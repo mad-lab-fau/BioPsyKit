@@ -27,15 +27,31 @@ __all__ = [
 
 
 class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm by Arbol et al. (2017) to extract B-points based on isoelectric crossings."""
+    """B-point extraction algorithm by Arbol et al. (2017) [1]_ based on isoelectric crossings.
+
+    This algorithm extracts B-points based on the last crossing of the dZ/dt signal through the isoelectric line (i.e.,
+    the mean of the dZ/dt signal in the cardiac cycle) before the C-point.
+
+    References
+    ----------
+    .. [1] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
+        Mathematical detection of aortic valve opening (B point) in impedance cardiography: A comparison of three
+        popular algorithms. Psychophysiology, 54(3), 350-357. https://doi.org/10.1111/psyp.12799
+
+    """
 
     def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new B-point extraction algorithm based on Arbol 2017.
+        """Initialize new ``BPointExtractionArbol2017IsoelectricCrossings`` algorithm instance.
 
         Parameters
         ----------
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
+
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
@@ -48,23 +64,23 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
         c_points: CPointDataFrame,
         sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
-        """Extract B-points from given cleaned ICG derivative signal.
+        """Extract B-points from given ICG derivative signal.
 
         This algorithm extracts B-points based on the last isoelectric crossing before the C-point.
 
-        The results are saved in the points_ attribute of the super class.
+        The results are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
-        icg : :class:`~pandas.Series`
-            cleaned ICG derivative signal
+        icg : :class:`~pandas.DataFrame`
+            ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+            Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
+            from beginning of signal) of that heartbeat, index functions as id of heartbeat
         c_points : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented C-point, each row contains location
-            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-            is not correct
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats
         sampling_rate_hz : int
             sampling rate of ICG derivative signal in hz
 
@@ -75,7 +91,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If the C-Point contains NaN values and handle_missing is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()
@@ -138,7 +154,18 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
 
 
 class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm by Arbol et al. (2017) to extract B-points based on the second derivative of the ICG signal."""
+    """B-point extraction algorithm by Arbol et al. (2017) [1]_ based on the second derivative of the ICG signal.
+
+    This algorithm extracts B-points based on the maximum of the second derivative of the ICG signal in a 50ms window,
+    starting 150ms before the C-point.
+
+    References
+    ----------
+    .. [1] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
+        Mathematical detection of aortic valve opening (B point) in impedance cardiography: A comparison of three
+        popular algorithms. Psychophysiology, 54(3), 350-357. https://doi.org/10.1111/psyp.12799
+
+    """
 
     # input parameters
     search_window_start_ms: Parameter[int]  # integer defining window start in ms
@@ -151,18 +178,21 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
         window_size_ms: Optional[int] = 50,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
-        """Initialize new B-point extraction algorithm based on Arbol 2017.
+        """Initialize new ``BPointExtractionArbol2017SecondDerivative`` algorithm instance.
 
         Parameters
         ----------
-        search_window_start_ms : int
-            defines the start of the search window in which the algorithm searches for the B-point, relative to the
-            C-point, default: 150 ms (see Arbol 2017)
+        search_window_start_ms : int, optional
+            Start of the search window in which the algorithm searches for the B-point, relative to the C-point.
+            Default: 150 ms (see Arbol 2017)
         window_size_ms : str, int
-            defines the size of the search window in which the algorithm searches for the B-point, default: 50 ms (see
-            Arbol 2017)
+            Size of the search window in which the algorithm searches for the B-point. Default: 50 ms (see Arbol 2017)
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
@@ -178,23 +208,24 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
         c_points: CPointDataFrame,
         sampling_rate_hz: float,
     ):
-        """Extract B-points from given cleaned ICG derivative signal.
+        """Extract B-points from given ICG derivative signal.
 
-        This algorithm extracts B-points based on the maximum of the third derivative of the ICG signal.
+        This algorithm extracts B-points based on the maximum of the second derivative of the ICG signal in a 50ms
+        window, starting 150ms before the C-point.
 
-        The results are saved in the points_ attribute of the super class.
+        The results are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
-        icg : :class:`~pandas.Series`
-            cleaned ICG derivative signal
+        icg : :class:`~pandas.DataFrame`
+            ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+            Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
+            from beginning of signal) of that heartbeat, index functions as id of heartbeat
         c_points : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented C-point, each row contains location
-            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-            is not correct
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats
         sampling_rate_hz : int
             sampling rate of ICG derivative signal in hz
 
@@ -205,7 +236,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If the C-Point contains NaN values and handle_missing is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()
@@ -285,7 +316,18 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
 
 
 class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm by Arbol et al. (2017) to extract B-points based on the third derivative of the ICG signal."""
+    """B-point extraction algorithm by Arbol et al. (2017) [1]_ based on the third derivative of the ICG signal.
+
+    This algorithm extracts B-points based on the maximum of the third derivative of the ICG signal within a 300ms
+    window before the C-point.
+
+    References
+    ----------
+    .. [1] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
+        Mathematical detection of aortic valve opening (B-point) in impedance cardiography: A comparison of three
+        popular algorithms. Psychophysiology, 54(3), 350-357. https://doi.org/10.1111/psyp.12799
+
+    """
 
     # input parameters
     search_window_start_ms: Parameter[Union[str, int]]  # either 'R' or integer defining window length in ms
@@ -296,18 +338,22 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
         search_window_start_ms: Optional[Union[str, int]] = 300,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
-        """Initialize new B-point extraction algorithm based on Arbol 2017.
+        """Initialize new ``BPointExtractionArbol2017ThirdDerivative`` algorithm instance.
 
         Parameters
         ----------
-        search_window_start_ms : str, int
-            defines the start of the search window in which the algorithm searches for the B-point, relative to the
-            C-point. Can be one of:
+        search_window_start_ms : int or str, optional
+           Start of the window in which the algorithm searches for the B-point, relative to the C-point. Can be one of:
                 * 'R' -> search B-point in the region between R-peak and C-point
                 * int -> search B-point in the region between xx ms before C-point and C-point
                     (300 ms -> see Arbol 2017, 3rd derivative-based algorithm)
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
+
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
@@ -322,23 +368,24 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
         c_points: CPointDataFrame,
         sampling_rate_hz: float,
     ):
-        """Extract B-points from given cleaned ICG derivative signal.
+        """Extract B-points from given ICG derivative signal.
 
-        This algorithm extracts B-points based on the maximum of the third derivative of the ICG signal.
+        This algorithm extracts B-points based on the maximum of the third derivative of the ICG signal within a 300ms
+        window before the C-point.
 
-        The results are saved in the points_ attribute of the super class.
+        The results are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
         icg : :class:`~pandas.DataFrame`
-            cleaned ICG derivative signal
+            ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+            Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
+            from beginning of signal) of that heartbeat, index functions as id of heartbeat
         c_points : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented C-point, each row contains location
-            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-            is not correct
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats
         sampling_rate_hz : int
             sampling rate of ICG derivative signal in hz
 
@@ -349,7 +396,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If the C-Point contains NaN values and handle_missing is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()

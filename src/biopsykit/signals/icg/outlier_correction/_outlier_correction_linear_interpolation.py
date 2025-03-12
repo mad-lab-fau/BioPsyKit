@@ -12,7 +12,11 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, is_b_point_
 
 
 class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
-    """algorithm to correct outliers based on Linear Interpolation."""
+    """B-point outlier correction algorithm based on linear interpolation.
+
+    This algorithm corrects outliers in B-Point data using linear interpolation.
+
+    """
 
     def correct_outlier(
         self,
@@ -22,27 +26,32 @@ class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
         sampling_rate_hz: float,
         **kwargs,
     ):
-        """Correct outliers of given B-Point dataframe using Linear Interpolation.
+        """Perform outlier correction on B-Point data.
 
-        The results of the outlier correction are saved in the `points_` attribute of the class instance.
+        The outliers are corrected using linear interpolation.
+
+        The results of the outlier correction are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
         b_points : :class:`~pandas.DataFrame`
-            Dataframe containing the extracted B-Points per heartbeat, index functions as id of heartbeat
+            Extracted B-points. Each row contains the B-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. B-point locations can be NaN if no B-points were detected
+            for certain heartbeats.
         c_points : :class:`~pandas.DataFrame`
-            Dataframe containing the extracted C-Points per heartbeat, index functions as id of heartbeat
-        sampling_rate_hz : float
-            Sampling rate of ICG signal in hz
-        **kwargs
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats.
+        sampling_rate_hz : int
+            sampling rate of ICG derivative signal in hz
+        kwargs : dict
             Additional keyword arguments:
-                * verbose : bool, optional
+                * verbose: bool, optional
                     Whether to print additional information. Default: False
 
         Returns
         -------
         self
-
 
         """
         verbose = kwargs.get("verbose", False)

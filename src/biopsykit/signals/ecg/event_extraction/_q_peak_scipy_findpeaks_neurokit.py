@@ -18,7 +18,15 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Algorithm for Q-peak extraction using the ``scipy.find_peaks`` method implemented in NeuroKit2."""
+    """Algorithm for Q-peak extraction using the ``scipy.find_peaks`` method implemented in NeuroKit2 [1]_.
+
+    References
+    ----------
+    .. [1] Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S.H. Chen
+        (2021). NeuroKit2: A Python Toolbox for Neurophysiological Signal Processing. Behavior Research Methods.
+        https://doi.org/10.3758/s13428-020-01516-y
+
+    """
 
     def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
         """Initialize new QPeakExtractionSciPyFindPeaksNeurokit algorithm instance.
@@ -60,7 +68,7 @@ class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingE
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If missing data is found and ``handle_missing`` is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()

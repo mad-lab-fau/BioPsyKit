@@ -24,7 +24,21 @@ __all__ = ["BPointExtractionForouzanfar2018"]
 
 
 class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """algorithm to extract B-point based on [Forouzanfar et al., 2018, Psychophysiology]."""
+    """B-point extraction algorithm by Forouzanfar et al. (2018) [1]_.
+
+    This algorithm extracts B-points based on the detection of the most prominent monotonic increasing segment
+    between the A-Point (the local minimum within one third of the beat-to-beat interval prior to the C-Point)
+    and the C-Point. The B-Point is then detected as the last zero crossing or local maximum of the third derivative
+    of the ICG signal within the segment.
+
+    References
+    ----------
+    .. [1] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
+        Toward a better noninvasive assessment of preejection period: A novel automatic algorithm for B-point detection
+        and correction on thoracic impedance cardiogram. Psychophysiology, 55(8), e13072.
+        https://doi.org/10.1111/psyp.13072
+
+    """
 
     # input parameters
     scaling_factor: Parameter[float]
@@ -36,18 +50,27 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         correct_outliers: Optional[bool] = False,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
-        """Initialize new BPointExtractionForouzanfar algorithm instance.
+        """Initialize new ``BPointExtractionForouzanfar2018`` instance.
 
-        WARNING: In the original paper, the authors report the sampling frequency of the ICG signal as the scaling
-        factor. Since this does not make sense, the scaling factor is set to 2000 (corresponding to a sampling rate of
-        the original data of 2000 Hz) instead of using the sampling rate of the ICG signal.
+        .. note:: In the original paper, the authors report the *sampling frequency* of the ICG signal as the scaling
+        factor. Since this would change the algorithm behavior depending on the sampling rate of the ICG signal,
+        this implementation introduces a scaling factor that can be set by the user. By default, the scaling factor is
+        set to 2000 (corresponding to a sampling rate of the original data of 2000 Hz) instead of using the
+        sampling rate of the ICG signal.
 
         Parameters
         ----------
-        scaling_factor : float
-            Scaling factor for the B-point extraction algorithm
-        correct_outliers : bool
-            Indicates whether to perform outlier correction (True) or not (False)
+        scaling_factor : float, optional
+            Scaling factor for the B-point extraction algorithm. Default: 2000
+        correct_outliers : bool, optional
+            True to correct outliers, False to set B-Point to NaN if no monotonic segment is found. Default: False
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
+
         """
         super().__init__(handle_missing_events=handle_missing_events)
         self.scaling_factor = scaling_factor
@@ -62,23 +85,28 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         c_points: CPointDataFrame,
         sampling_rate_hz: Optional[float],  # noqa: ARG002
     ):
-        """Extract B-points from given ICG cleaned signal.
+        """Extract B-points from given ICG derivative signal.
 
-        The results are saved in the 'points_' attribute of the class instance.
+        The algorithm extracts B-points based on the detection of the most prominent monotonic increasing segment
+        between the A-Point (the local minimum within one third of the beat-to-beat interval prior to the C-Point)
+        and the C-Point. The B-Point is then detected as the last zero crossing or local maximum of the third derivative
+        of the ICG signal within the segment.
+
+        The results are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
         icg : :class:`~pandas.DataFrame`
-            cleaned ICG signal
+            ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak location
-            (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+            Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
+            from beginning of signal) of that heartbeat, index functions as id of heartbeat
         c_points : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented C-point, each row contains location
-            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-            is not correct.
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats
         sampling_rate_hz : int
-            sampling rate of ECG signal in hz
+            sampling rate of ICG derivative signal in hz
 
         Returns
         -------
@@ -87,7 +115,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If the C-Point contains NaN values and handle_missing is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         # sanitize input signal

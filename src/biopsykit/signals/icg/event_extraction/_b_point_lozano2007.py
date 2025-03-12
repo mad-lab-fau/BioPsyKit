@@ -19,13 +19,23 @@ from biopsykit.utils.dtypes import (
 
 
 class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm by Lozano et al. (2007) to extract B-points based on linear regression of R-C interval."""
+    """B-point extraction algorithm by Lozano et al. (2007) [1]_ based on linear regression of R-C interval.
+
+    This algorithm extracts B-points based on the linear regression of the relationship between the R-C interval
+    and the B-point.
+
+    References
+    ----------
+    .. [1] Lozano, D. L., Norman, G., Knox, D., Wood, B. L., Miller, B. D., Emery, C. F., & Berntson, G. G. (2007).
+        Where to B in dZ/dt. Psychophysiology, 44(1), 113-119. https://doi.org/10.1111/j.1469-8986.2006.00468.x
+
+    """
 
     # input parameters
     moving_average_window: Parameter[int]
 
     def __init__(self, moving_average_window: int = 1, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new B-point extraction algorithm based on Lozano 2007.
+        """Initialize new ``BPointExtractionLozano2007LinearRegression`` instance.
 
         Parameters
         ----------
@@ -33,7 +43,11 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
             Window size for moving average filter (in heartbeats, centered around the current heartbeat)
             to compute the R-C interval. Default: 1 (no moving average)
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
@@ -47,24 +61,24 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
         c_points: CPointDataFrame,
         sampling_rate_hz: float,
     ):
-        """Extract B-points from given cleaned ICG derivative signal.
+        """Extract B-points from given ICG derivative signal.
 
         This algorithm extracts B-points using linear regression based on the relationship between
         the R-C interval and the B-point.
 
-        The results are saved in the points_ attribute of the super class.
+        The results are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
-        icg : :class:`~pandas.Series`
-            cleaned ICG derivative signal
+        icg : :class:`~pandas.DataFrame`
+            ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+            Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
+            from beginning of signal) of that heartbeat, index functions as id of heartbeat
         c_points : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented C-point, each row contains location
-            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-            is not correct
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats
         sampling_rate_hz : int
             sampling rate of ICG derivative signal in hz
 
@@ -75,7 +89,7 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If the C-Point contains NaN values and handle_missing is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()
@@ -131,10 +145,20 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
 
 
 class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm by Lozano et al. (2007) to extract B-points based on quadratic regression of R-C interval."""
+    """B-point extraction algorithm by Lozano et al. (2007) [1]_ based on quadratic regression of R-C interval.
+
+    This algorithm extracts B-points based on the quadratic regression of the relationship between the R-C interval
+    and the B-point.
+
+    References
+    ----------
+    .. [1] Lozano, D. L., Norman, G., Knox, D., Wood, B. L., Miller, B. D., Emery, C. F., & Berntson, G. G. (2007).
+        Where to B in dZ/dt. Psychophysiology, 44(1), 113-119. https://doi.org/10.1111/j.1469-8986.2006.00468.x
+
+    """
 
     def __init__(self, moving_average_window: int = 1, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new B-point extraction algorithm based on Arbol 2017.
+        """Initialize new ``BPointExtractionLozano2007QuadraticRegression`` instance.
 
         Parameters
         ----------
@@ -142,7 +166,11 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
             Window size for moving average filter (in heartbeats, centered around the current heartbeat)
             to compute the R-C interval. Default: 1 (no moving average)
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing data in the input dataframes. Default: "warn"
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
@@ -156,24 +184,24 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
         c_points: CPointDataFrame,
         sampling_rate_hz: float,
     ):
-        """Extract B-points from given cleaned ICG derivative signal.
+        """Extract B-points from given ICG derivative signal.
 
         This algorithm extracts B-points using quadratic regression based on the relationship between
         the R-C interval and the B-point.
 
-        The results are saved in the points_ attribute of the super class.
+        The results are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
-        icg : :class:`~pandas.Series`
-            cleaned ICG derivative signal
+        icg : :class:`~pandas.DataFrame`
+            ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+            Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
+            from beginning of signal) of that heartbeat, index functions as id of heartbeat
         c_points : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented C-point, each row contains location
-            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-            is not correct
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats
         sampling_rate_hz : int
             sampling rate of ICG derivative signal in hz
 
@@ -184,7 +212,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If the C-Point contains NaN values and handle_missing is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()

@@ -42,7 +42,7 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
     scaling_factor: Parameter[float]
 
     def __init__(self, scaling_factor: float = 2000, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new QPeakExtractionForouzanfar2018 algorithm instance.
+        """Initialize new ``QPeakExtractionForouzanfar2018`` algorithm instance.
 
         Parameters
         ----------
@@ -83,7 +83,7 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If missing data is found and ``handle_missing`` is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()

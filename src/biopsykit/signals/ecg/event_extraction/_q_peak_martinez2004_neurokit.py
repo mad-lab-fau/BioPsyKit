@@ -18,7 +18,7 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Q-peak extraction algorithm by Martinez et al. (2004) [1]_ using the DWT method implemented in NeuroKit2.
+    """Q-peak extraction algorithm by Martinez et al. (2004) [1]_ using the DWT method implemented in NeuroKit2 [2]_.
 
     This algorithm detects the Q-peak of an ECG signal using the discrete wavelet transform (DWT) method implemented in
     NeuroKit2.
@@ -30,11 +30,14 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
         A wavelet-based ECG delineator: evaluation on standard databases.
         IEEE Transactions on Biomedical Engineering, 51(4), 570-581.
         https://doi.org/10.1109/TBME.2003.821031
+    .. [2] Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S.H. Chen
+        (2021). NeuroKit2: A Python Toolbox for Neurophysiological Signal Processing. Behavior Research Methods.
+        https://doi.org/10.3758/s13428-020-01516-y
 
     """
 
     def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new QPeakExtractionMartinez2004Neurokit algorithm instance.
+        """Initialize new ``QPeakExtractionMartinez2004Neurokit`` algorithm instance.
 
         Parameters
         ----------
@@ -73,7 +76,7 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If missing data is found and ``handle_missing`` is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()

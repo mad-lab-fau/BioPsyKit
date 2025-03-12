@@ -1,9 +1,7 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
-from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
@@ -23,31 +21,32 @@ __all__ = ["BPointExtractionDrost2022"]
 
 
 class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """Algorithm by Drost et al. (2022) to extract B-points based on the distance of the dZ/dt curve to a straight line.
+    """B-point extraction algorithm by Drost et al. (2022) [1]_.
 
     This algorithm extracts B-points based on the maximum distance of the dZ/dt curve and a straight line fitted
     between the C-Point and the Point on the dZ/dt curve 150 ms before the C-Point.
 
     References
     ----------
-    Drost, L., Finke, J. B., Port, J., & Schächinger, H. (2022). Comparison of TWA and PEP as indices of a2- and
-    ß-adrenergic activation. Psychopharmacology. https://doi.org/10.1007/s00213-022-06114-8
+    .. [1] Drost, L., Finke, J. B., Port, J., & Schächinger, H. (2022). Comparison of TWA and PEP as indices of a2- and
+        ß-adrenergic activation. Psychopharmacology. https://doi.org/10.1007/s00213-022-06114-8
 
     """
 
-    # input parameters
-    correct_outliers: Parameter[bool]
-
-    def __init__(self, correct_outliers: Optional[bool] = False, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
-        """Initialize new BPointExtractionDrost algorithm instance.
+    def __init__(self, handle_missing_events: HANDLE_MISSING_EVENTS = "warn"):
+        """Initialize new ``BPointExtractionDrost2022`` instance.
 
         Parameters
         ----------
-        correct_outliers : bool
-            Indicates whether to perform outlier correction (True) or not (False)
+        handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
+
         """
         super().__init__(handle_missing_events=handle_missing_events)
-        self.correct_outliers = correct_outliers
 
     # @make_action_safe
     def extract(
@@ -58,26 +57,26 @@ class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixi
         c_points: CPointDataFrame,
         sampling_rate_hz: float,
     ):
-        """Extract B-points from given ICG cleaned signal.
+        """Extract B-points from given ICG derivative signal.
 
         This algorithm extracts B-points based on the maximum distance of the dZ/dt curve and a straight line
         fitted between the C-Point and the Point on the dZ/dt curve 150 ms before the C-Point.
 
-        The results are saved in the points_ attribute of the super class.
+        The results are saved in the ``points_`` attribute of the super class.
 
         Parameters
         ----------
         icg : :class:`~pandas.DataFrame`
-            DataFrame containing the cleaned ICG signal
+            ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented heartbeat, each row contains start, end, and R-peak
-            location (in samples from beginning of signal) of that heartbeat, index functions as id of heartbeat
+            Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
+            from beginning of signal) of that heartbeat, index functions as id of heartbeat
         c_points : :class:`~pandas.DataFrame`
-            DataFrame containing one row per segmented C-point, each row contains location
-            (in samples from beginning of signal) of that C-point or NaN if the location of that C-point
-            is not correct
+            Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
+            heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
+            for certain heartbeats
         sampling_rate_hz : int
-            Sampling rate of ECG signal in hz
+            sampling rate of ICG derivative signal in hz
 
         Returns
         -------
@@ -86,7 +85,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixi
         Raises
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
-            If the C-Point contains NaN values and handle_missing is set to "raise"
+            If the event extraction fails and ``handle_missing`` is set to "raise"
 
         """
         self._check_valid_missing_handling()

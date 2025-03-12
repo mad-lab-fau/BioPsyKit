@@ -20,5 +20,14 @@ class BaseHeartbeatSegmentation(Algorithm):
         ecg: EcgRawDataFrame,
         sampling_rate_hz: float,
     ):
-        """Segment ECG signal into heartbeats."""
+        """Segment ECG signal into heartbeats.
+
+        Parameters
+        ----------
+        ecg : EcgRawDataFrame
+            ECG data.
+        sampling_rate_hz : float
+            Sampling rate of the ECG data in Hz.
+
+        """
         raise NotImplementedError("Method 'extract' must be implemented in subclass.")

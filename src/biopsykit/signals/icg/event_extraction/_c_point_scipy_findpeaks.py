@@ -22,27 +22,35 @@ __all__ = ["CPointExtractionScipyFindPeaks"]
 
 
 class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEventsMixin):
-    """Extract C-points from ICG derivative signal using scipy's find_peaks function."""
+    """C-point extraction algorithm using :func:`~scipy.signal.find_peaks`.
+
+    This algorithm extracts C-points based on the maximum of the most prominent peak in the ICG derivative signal
+    using the :func:`~scipy.signal.find_peaks` function.
+
+    """
 
     # input parameters
     window_c_correction: Parameter[int]
 
     def __init__(
         self,
-        window_c_correction: Optional[int] = 3,
+        window_c_correction: int = 3,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
-        """Initialize the C-point extraction algorithm.
+        """Initialize new ``CPointExtractionScipyFindPeaks`` instance.
 
         Parameters
         ----------
         window_c_correction : int, optional
-            how many preceding heartbeats are taken into account for C-point correction (using mean R-C-distance)
+            Number of preceding heartbeats taken into account for C-point correction (using mean R-C-distance).
+            Default: 3
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle missing C-points (default: "warn").
-            * "warn" : issue a warning and set C-point to NaN
-            * "raise" : raise an :class:`~biopsykit.utils.exceptions.EventExtractionError`
-            * "ignore" : ignore missing C-points
+            How to handle failing event extraction. Can be one of:
+                * "warn": issue a warning and set the event to NaN
+                * "raise": raise an ``EventExtractionError``
+                * "ignore": ignore the error and continue with the next event
+            Default: "warn"
+
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
