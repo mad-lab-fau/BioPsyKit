@@ -1,4 +1,5 @@
 """Internal helpers for dataset validation."""
+
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any, Optional, Union
@@ -567,7 +568,6 @@ def _multiindex_level_names_helper(
     match_order: Optional[bool] = False,
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
-
     if isinstance(level_names, str):
         level_names = [level_names]
 
@@ -594,7 +594,6 @@ def _multiindex_check_helper(
     nlevels_atleast: Optional[int] = False,
     raise_exception: Optional[bool] = True,
 ) -> Optional[bool]:
-
     has_multiindex, nlevels_act = _multiindex_check_helper_get_levels(df, idx_or_col)
 
     if has_multiindex is not expected:

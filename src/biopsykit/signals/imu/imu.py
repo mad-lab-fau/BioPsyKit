@@ -1,4 +1,5 @@
 """Module with functions to process IMU data."""
+
 from typing import Optional, Union
 
 import numpy as np

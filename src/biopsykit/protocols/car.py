@@ -1,4 +1,5 @@
 """Module representing the Cortisol Awakening Response (CAR) protocol."""
+
 from typing import Optional
 
 import matplotlib.pyplot as plt

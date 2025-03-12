@@ -3,6 +3,7 @@
 The data is either taken from the local file system in case biopsykit was installed manually or the example data is
 downloaded into the local user folder.
 """
+
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Optional, Union

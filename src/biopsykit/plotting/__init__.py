@@ -1,4 +1,5 @@
 """Module providing various customized plotting functions."""
+
 from biopsykit.plotting.plotting import (
     feature_boxplot,
     feature_pairplot,

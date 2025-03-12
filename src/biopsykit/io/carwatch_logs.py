@@ -1,4 +1,5 @@
 """Module providing functions to load and save logs from the *CARWatch* app."""
+
 import json
 import re
 import warnings

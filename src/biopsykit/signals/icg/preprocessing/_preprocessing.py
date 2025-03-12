@@ -7,7 +7,6 @@ from biopsykit.utils.dtypes import is_icg_raw_dataframe
 
 
 class IcgPreprocessingBandpass(Algorithm):
-
     _action_methods = "clean"
 
     method: Parameter[str]

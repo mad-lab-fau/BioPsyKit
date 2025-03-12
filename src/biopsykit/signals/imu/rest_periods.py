@@ -1,4 +1,5 @@
 """Module for computing Rest Periods from raw acceleration signals."""
+
 import datetime
 from typing import Union
 

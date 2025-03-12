@@ -1,4 +1,5 @@
 """Functions to process sleep data from raw IMU data or Actigraph data."""
+
 from collections.abc import Sequence
 from typing import Any, Optional, Union
 

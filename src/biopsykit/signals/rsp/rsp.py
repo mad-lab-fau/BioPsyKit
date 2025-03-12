@@ -1,4 +1,5 @@
 """Module for processing Respiration data."""
+
 from collections.abc import Sequence
 from typing import Optional, Union
 

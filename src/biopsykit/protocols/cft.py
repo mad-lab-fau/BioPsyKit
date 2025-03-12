@@ -1,4 +1,5 @@
 """Module representing the Cold Face Test (CFT) protocol."""
+
 import datetime
 import warnings
 from typing import Any, Optional, Union
@@ -674,7 +675,10 @@ class CFT(BaseProtocol):
         bg_colors = kwargs.get("background_color", self.cft_plot_params.get("background_color"))
         if bg_colors is None:
             bg_color_base = kwargs.get("background_base_color", self.cft_plot_params.get("background_base_color"))
-            bg_colors = list(sns.dark_palette(bg_color_base, n_colors=len(times), reverse=True))
+            if isinstance(bg_color_base, list):
+                bg_colors = bg_color_base
+            else:
+                bg_colors = list(sns.dark_palette(bg_color_base, n_colors=len(times), reverse=True))
         bg_alphas = kwargs.get("background_alpha", self.cft_plot_params.get("background_alpha"))
         bg_alphas = [bg_alphas] * len(times)
         names = kwargs.get("phase_names", self.cft_plot_params["phase_names"])
@@ -689,6 +693,7 @@ class CFT(BaseProtocol):
                 zorder=3,
                 ha="center",
                 va="center",
+                color=kwargs.get("phase_text_color"),
             )
         rect = mpatch.Rectangle(
             xy=(0, 0.9),
@@ -722,7 +727,6 @@ class CFT(BaseProtocol):
         ax: plt.Axes,
         bbox: dict,
     ) -> None:
-
         color_key = "fau"
         if isinstance(data.index, pd.DatetimeIndex):
             brady_loc = cft_params["peak_brady"]
@@ -847,7 +851,6 @@ class CFT(BaseProtocol):
         ax: plt.Axes,
         bbox: dict,
     ) -> None:
-
         color_key = "wiso"
         mean_hr = cft_params["mean_hr_bpm"]
         cft_start = cft_times["cft_start"]
@@ -899,7 +902,6 @@ class CFT(BaseProtocol):
         ax: plt.Axes,
         bbox: dict,
     ) -> None:
-
         color_key = "med"
         color = getattr(colors_all, color_key)
 
@@ -955,7 +957,6 @@ class CFT(BaseProtocol):
         cft_params: dict,
         ax: plt.Axes,
     ) -> None:
-
         color_key = "phil"
         df_cft = self.extract_cft_interval(data)
         if isinstance(df_cft.index, pd.DatetimeIndex):

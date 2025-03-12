@@ -1,4 +1,5 @@
 """Module providing various functions for processing more complex structured data (e.g., collected during a study)."""
+
 import warnings
 from collections.abc import Sequence
 from typing import Any, Optional, Union

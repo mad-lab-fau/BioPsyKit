@@ -1,4 +1,5 @@
 """Module containing utility functions for manipulating and processing questionnaire data."""
+
 import re
 import warnings
 from collections.abc import Sequence
@@ -767,7 +768,6 @@ def _get_bins(
     first_min: Optional[bool] = False,
     last_max: Optional[bool] = False,
 ) -> Union[int, Sequence[float]]:
-
     if isinstance(bins, (int, pd.IntervalIndex)):
         return bins
 

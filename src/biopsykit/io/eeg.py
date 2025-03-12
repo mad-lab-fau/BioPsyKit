@@ -1,4 +1,5 @@
 """I/O functions for files related to EEG processing."""
+
 import warnings
 from typing import Optional
 

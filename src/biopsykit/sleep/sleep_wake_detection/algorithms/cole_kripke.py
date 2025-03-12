@@ -1,4 +1,5 @@
 """Sleep/Wake detection using the *Cole/Kripke Algorithm*."""
+
 import numpy as np
 import pandas as pd
 

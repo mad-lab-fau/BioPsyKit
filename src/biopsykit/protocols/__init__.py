@@ -1,4 +1,5 @@
 """Module with classes representing different psychological protocols."""
+
 from biopsykit.protocols import plotting
 from biopsykit.protocols.base import BaseProtocol
 from biopsykit.protocols.car import CAR

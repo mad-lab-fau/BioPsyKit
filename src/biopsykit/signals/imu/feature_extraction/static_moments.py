@@ -1,4 +1,5 @@
 """Extract features from static moments of IMU data."""
+
 from typing import Optional, Union
 
 import numpy as np

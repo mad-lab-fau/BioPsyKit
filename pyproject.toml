@@ -50,7 +50,7 @@ statannotations = "^0.7.1"
 mne = ["mne"]
 jupyter = ["IPython", "ipympl", "ipywidgets"]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = { version="^22", extras=["jupyter", "d"] }
 poethepoet = "^0.10.0"
 pytest = "^6"

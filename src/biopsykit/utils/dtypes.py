@@ -1,4 +1,5 @@
 """A couple of helper functions that ease the use of the typical biopsykit data formats."""
+
 from typing import Any, Optional, Union
 
 import numpy as np

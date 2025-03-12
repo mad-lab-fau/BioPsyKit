@@ -1,4 +1,5 @@
 """Module providing functions for plotting ECG data."""
+
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Optional
 

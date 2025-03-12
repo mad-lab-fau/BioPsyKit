@@ -1,6 +1,7 @@
 # pylint:disable=unsupported-assignment-operation
 # pylint:disable=unsubscriptable-object
 """Module containing different I/O functions to load data recorded by Withings Sleep Analyzer."""
+
 import datetime
 import re
 from ast import literal_eval

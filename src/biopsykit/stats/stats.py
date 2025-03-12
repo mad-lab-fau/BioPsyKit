@@ -1,4 +1,5 @@
 """Module for setting up a pipeline for statistical analysis."""
+
 import re
 import warnings
 from collections.abc import Sequence

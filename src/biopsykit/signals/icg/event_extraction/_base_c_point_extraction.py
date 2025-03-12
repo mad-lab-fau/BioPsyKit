@@ -8,7 +8,6 @@ from biopsykit.utils.dtypes import CPointDataFrame, HeartbeatSegmentationDataFra
 
 
 class BaseCPointExtraction(BaseExtraction):
-
     points_: CPointDataFrame
 
     def extract(

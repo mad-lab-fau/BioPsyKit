@@ -1,4 +1,5 @@
 """Module for processing IMU data."""
+
 from biopsykit.signals.imu import (
     activity_counts,
     feature_extraction,

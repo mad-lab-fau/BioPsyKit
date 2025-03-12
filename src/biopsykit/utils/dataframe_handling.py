@@ -1,4 +1,5 @@
 """Module providing various functions for advanced handling of pandas dataframes."""
+
 import re
 from collections.abc import Sequence
 from typing import Callable, Optional, Union

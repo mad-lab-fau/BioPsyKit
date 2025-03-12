@@ -1,4 +1,5 @@
 """Utility functions for the ``biopsykit.protocols`` module."""
+
 from collections.abc import Sequence
 from typing import Optional, Union
 
@@ -17,7 +18,6 @@ def _get_sample_times(
     test_times: Sequence[int],
     sample_times_absolute: Optional[bool] = False,
 ) -> Union[Sequence[int], dict[str, Sequence[int]]]:
-
     if isinstance(sample_times, dict):
         for key in sample_times:
             sample_times[key] = _get_sample_times(

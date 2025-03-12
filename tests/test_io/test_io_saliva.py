@@ -667,7 +667,6 @@ class TestIoSaliva:
     def test_load_saliva_wide_format(
         self, file_path, subject_col, condition_col, sample_times, additional_index_cols, expected
     ):
-
         data_out = load_saliva_wide_format(
             TEST_FILE_PATH.joinpath(file_path),
             saliva_type="cortisol",

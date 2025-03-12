@@ -32,7 +32,6 @@ class PSGDataset:
         start_time: Optional[pd.Timestamp] = None,
         tz: Optional[str] = "Europe/Berlin",
     ):
-
         self._data = data_dict
         for name, data in data_dict.items():
             setattr(self, name, data)

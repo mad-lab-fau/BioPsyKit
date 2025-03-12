@@ -1,4 +1,5 @@
 """Sleep/Wake detection using the *Sazonov Algorithm*."""
+
 import numpy as np
 import pandas as pd
 from scipy.special import expit

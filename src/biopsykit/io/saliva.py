@@ -1,4 +1,5 @@
 """Module wrapping biopsykit.io.biomarker including only I/O functions for saliva data."""
+
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Optional, Union
@@ -245,7 +246,6 @@ def _apply_condition_list(
 
 
 def _get_id_columns(id_col_names: Sequence[str], extracted_cols: pd.DataFrame):
-
     return biomarker._get_id_columns(id_col_names, extracted_cols)
 
 

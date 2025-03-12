@@ -1,4 +1,5 @@
 """I/O functions for files related to ECG processing."""
+
 import re
 import warnings
 from collections.abc import Sequence

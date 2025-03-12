@@ -1,4 +1,5 @@
 """Module with utility functions for machine learning and classification applications."""
+
 from copy import deepcopy
 from typing import Optional, Union
 

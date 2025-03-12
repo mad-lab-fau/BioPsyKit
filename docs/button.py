@@ -1,4 +1,3 @@
-
 import jinja2
 from docutils import nodes
 from docutils.parsers.rst import Directive
@@ -11,6 +10,7 @@ BUTTON_TEMPLATE = jinja2.Template(
 </a>
 """
 )
+
 
 # placeholder node for document graph
 class button_node(nodes.General, nodes.Element):

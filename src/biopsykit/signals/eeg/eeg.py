@@ -79,7 +79,6 @@ class EegProcessor(_BaseProcessor):
 
         eeg_result = {}
         for key, df in tqdm(self.data.items(), desc=title):
-
             raw_array = np.transpose(df.values)
             # define the different frequency bands
             if freq_bands is None:

@@ -1,4 +1,5 @@
 """Module with utility functions to handle sleep data."""
+
 import datetime
 
 import numpy as np

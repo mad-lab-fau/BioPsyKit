@@ -1,4 +1,5 @@
 """Module for generating Activity Counts from raw acceleration signals."""
+
 import datetime
 from typing import Optional, Union
 

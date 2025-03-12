@@ -1,4 +1,5 @@
 """Module implementing a base class to represent psychological protocols."""
+
 import json
 from collections.abc import Iterable, Sequence
 from copy import deepcopy

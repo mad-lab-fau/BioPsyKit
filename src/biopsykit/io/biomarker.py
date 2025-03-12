@@ -1,4 +1,5 @@
 """Module containing different I/O functions for biomarker data (saliva, dried blood spots, IL-6)."""
+
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Optional, Union

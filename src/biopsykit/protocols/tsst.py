@@ -1,4 +1,5 @@
 """Module representing the Trier Social Stress Test (TSST) protocol."""
+
 from typing import Optional, Union
 
 from biopsykit.protocols import BaseProtocol

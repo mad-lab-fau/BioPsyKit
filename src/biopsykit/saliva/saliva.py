@@ -1,4 +1,5 @@
 """Functions for processing saliva data and computing established features (AUC, slope, maximum increase, ...)."""
+
 import warnings
 from collections.abc import Sequence
 from typing import Optional, Union

@@ -1,4 +1,5 @@
 """Module for loading and processing Task Force Monitor (TFM) data."""
+
 from typing import ClassVar, Optional
 
 import pandas as pd

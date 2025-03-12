@@ -1,4 +1,5 @@
 """Module for detection non-wear times from raw acceleration signals."""
+
 import datetime
 from typing import Union
 

@@ -1,4 +1,5 @@
 """A set of util functions to detect static regions in a IMU signal given certain constrains."""
+
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 

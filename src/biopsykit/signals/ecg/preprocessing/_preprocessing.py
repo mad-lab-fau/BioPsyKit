@@ -9,7 +9,6 @@ from biopsykit.utils.dtypes import EcgRawDataFrame, is_ecg_raw_dataframe
 
 
 class EcgPreprocessingNeurokit(Algorithm):
-
     _action_methods = "clean"
 
     method: Parameter[str]

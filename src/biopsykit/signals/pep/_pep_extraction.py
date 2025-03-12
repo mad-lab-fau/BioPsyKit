@@ -22,7 +22,6 @@ NEGATIVE_PEP_HANDLING = Literal["nan", "zero", "keep"]
 
 
 class PepExtraction(BaseExtraction, CanHandleMissingEventsMixin):
-
     _action_methods = "extract"
 
     handle_negative_pep: NEGATIVE_PEP_HANDLING
@@ -138,7 +137,6 @@ class PepExtraction(BaseExtraction, CanHandleMissingEventsMixin):
         q_peaks: QPeakDataFrame,
         b_points: BPointDataFrame,
     ) -> pd.DataFrame:
-
         # extract nan_reason from q_peak_samples and add to pep_results
         pep_results = pep_results.assign(nan_reason=q_peaks["nan_reason"])
         # TODO add option to store multiple nan_reasons in one column?

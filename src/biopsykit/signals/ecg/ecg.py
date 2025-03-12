@@ -1,4 +1,5 @@
 """Module for processing ECG data."""
+
 import warnings
 from collections.abc import Sequence
 from typing import Callable, Literal, Optional, Union
@@ -1197,7 +1198,10 @@ def _correct_outlier_correlation(rpeaks: pd.DataFrame, bool_mask: np.array, corr
 
 
 def _correct_outlier_quality(
-    rpeaks: pd.DataFrame, bool_mask: np.array, quality_thres: float, **kwargs  # noqa: ARG001
+    rpeaks: pd.DataFrame,
+    bool_mask: np.array,
+    quality_thres: float,
+    **kwargs,  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'quality'.
 
@@ -1267,7 +1271,10 @@ def _correct_outlier_statistical_rr(
 
 
 def _correct_outlier_statistical_rr_diff(
-    rpeaks: pd.DataFrame, bool_mask: np.array, stat_thres: float, **kwargs  # noqa: ARG001
+    rpeaks: pd.DataFrame,
+    bool_mask: np.array,
+    stat_thres: float,
+    **kwargs,  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'statistical_rr_diff'.
 
@@ -1354,7 +1361,10 @@ def _correct_outlier_artifact(
 
 
 def _correct_outlier_physiological(
-    rpeaks: pd.DataFrame, bool_mask: np.array, hr_thres: tuple[float, float], **kwargs  # noqa: ARG001
+    rpeaks: pd.DataFrame,
+    bool_mask: np.array,
+    hr_thres: tuple[float, float],
+    **kwargs,  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'physiological'.
 
@@ -1391,7 +1401,6 @@ def _get_outlier_params(
     outlier_correction: Optional[Union[str, None, Sequence[str]]] = "all",
     outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
 ) -> tuple[Sequence[str], dict[str, Union[float, Sequence[float]]], dict[str, Callable]]:
-
     if outlier_correction == "all":
         outlier_correction = list(_outlier_correction_methods.keys())
     elif isinstance(outlier_correction, str):

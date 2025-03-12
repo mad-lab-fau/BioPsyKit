@@ -1,4 +1,5 @@
 """Functions to analyze classification results."""
+
 from collections.abc import Sequence
 from typing import Any, Optional, Union
 

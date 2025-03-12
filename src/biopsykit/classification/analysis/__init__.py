@@ -1,4 +1,5 @@
 """Functions to analyze classification results."""
+
 from biopsykit.classification.analysis._analysis import (
     metric_summary_to_latex,
     plot_conf_matrix,

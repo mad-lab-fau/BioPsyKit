@@ -1,4 +1,5 @@
 """Module providing various functions for low-level handling of array data."""
+
 from typing import Optional, Union
 
 import neurokit2 as nk

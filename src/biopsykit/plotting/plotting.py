@@ -1,4 +1,5 @@
 """Module containing several advanced plotting functions."""
+
 from collections.abc import Sequence
 from typing import Any, Optional, Union
 
@@ -338,7 +339,7 @@ def feature_boxplot(  # noqa: C901
 
     stats_kwargs = _feature_boxplot_sanitize_stats_kwargs(stats_kwargs)
 
-    box_pairs = stats_kwargs.get("box_pairs", {})
+    box_pairs = stats_kwargs.get("pairs", {})
     if len(box_pairs) == 0:
         stats_kwargs = {}
 
@@ -396,7 +397,8 @@ def _feature_boxplot_sanitize_stats_kwargs(stats_kwargs: dict[str, Any]) -> dict
     if len(boxplot_pvals) > 0:
         stats_kwargs["perform_stat_test"] = False
 
-    stats_kwargs["pairs"] = stats_kwargs.get("pairs", stats_kwargs.get("box_pairs", {}))
+    pairs = stats_kwargs.get("pairs", stats_kwargs.get("box_pairs"))
+    stats_kwargs["pairs"] = pairs if pairs is not None else {}
     stats_kwargs.setdefault("pvalue_thresholds", _PVALUE_THRESHOLDS)
     return stats_kwargs
 

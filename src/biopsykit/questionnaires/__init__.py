@@ -1,4 +1,5 @@
 """Module with functions and utility functions to compute questionnaires."""
+
 from biopsykit.questionnaires import utils
 from biopsykit.questionnaires.questionnaires import (
     abi,
@@ -55,6 +56,7 @@ from biopsykit.questionnaires.questionnaires import (
     sop,
     ssgs,
     sss,
+    sssq,
     stadi,
     stai_short,
     state_rumination,
@@ -69,7 +71,6 @@ from biopsykit.questionnaires.questionnaires import (
     tsgs,
     type_d,
     wpi,
-    sssq,
 )
 
 __all__ = [
@@ -128,6 +129,7 @@ __all__ = [
     "sop",
     "ssgs",
     "sss",
+    "sssq",
     "stadi",
     "stai_short",
     "state_rumination",
@@ -143,5 +145,4 @@ __all__ = [
     "type_d",
     "utils",
     "wpi",
-    "sssq",
 ]

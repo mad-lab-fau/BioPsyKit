@@ -1,4 +1,5 @@
 """Helper functions for file handling."""
+
 import re
 from collections.abc import Sequence
 from pathlib import Path

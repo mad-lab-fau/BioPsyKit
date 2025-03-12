@@ -1,4 +1,5 @@
 """Sleep/Wake detection using the *Scripps Clinic Algorithm*."""
+
 import numpy as np
 import pandas as pd
 

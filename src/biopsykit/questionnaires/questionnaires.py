@@ -17,6 +17,7 @@ with subscale names as keys and the corresponding column names (as list of str) 
     questionnaire item columns, which typically also start with index 1!
 
 """
+
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 

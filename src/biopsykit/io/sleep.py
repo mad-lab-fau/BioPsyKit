@@ -1,4 +1,5 @@
 """Module containing different I/O functions to load and save sleep data."""
+
 from pathlib import Path
 from typing import Union
 

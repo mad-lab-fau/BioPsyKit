@@ -7,6 +7,7 @@ If ``data`` is a dataframe that contains more than the required two columns, e.g
 is passed, the required columns can be sliced by specifying them in the ``columns`` parameter.
 
 """
+
 from collections.abc import Sequence
 from typing import Optional, Union
 

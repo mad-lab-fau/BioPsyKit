@@ -1,4 +1,5 @@
 """General class for sleep/wake detection."""
+
 from typing import Optional
 
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke

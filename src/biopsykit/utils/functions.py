@@ -1,4 +1,5 @@
 """Module with a set of functions useful for computing."""
+
 from typing import Union
 
 import numpy as np

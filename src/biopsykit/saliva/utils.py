@@ -1,4 +1,5 @@
 """Utility functions for working with saliva dataframes."""
+
 import re
 from collections.abc import Sequence
 from datetime import datetime, time
@@ -166,7 +167,7 @@ def extract_saliva_columns(
 
 
 def _sample_times_datetime_to_minute_apply(
-    sample_times: Union[pd.DataFrame, pd.Series]
+    sample_times: Union[pd.DataFrame, pd.Series],
 ) -> Union[pd.DataFrame, pd.Series]:
     if isinstance(sample_times.to_numpy().flatten()[0], (pd.Timedelta, np.timedelta64)):
         return sample_times.apply(pd.to_timedelta)

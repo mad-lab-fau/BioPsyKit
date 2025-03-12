@@ -1,4 +1,5 @@
 """Module for sleep/wake detection base class."""
+
 from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.dtypes import SleepWakeDataFrame
 

@@ -1,4 +1,5 @@
 """Module providing some standard plots for visualizing data collected during a psychological protocol."""
+
 import re
 from collections.abc import Iterable, Sequence
 from typing import Any, Optional, Union
@@ -614,7 +615,7 @@ def _hr_mean_plot_subphase_annotations(phase_dict: dict[str, Sequence[str]], xli
 
     x_spans = _hr_mean_get_x_spans(num_phases, num_subphases)
 
-    for (i, phase) in enumerate(phase_dict):
+    for i, phase in enumerate(phase_dict):
         left, right = x_spans[i]
         bg_color = bg_colors[i]
         bg_alpha = bg_alphas[i]

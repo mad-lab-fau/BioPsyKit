@@ -12,7 +12,6 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame
 
 
 class BaseOutlierCorrection(Algorithm):
-
     _action_methods = "correct_outlier"
 
     points_: BPointDataFrame

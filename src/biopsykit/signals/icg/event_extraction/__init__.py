@@ -1,4 +1,5 @@
 """Module for ICG event extraction."""
+
 from biopsykit.signals.icg.event_extraction._b_point_arbol2017 import (
     BPointExtractionArbol2017IsoelectricCrossings,
     BPointExtractionArbol2017SecondDerivative,

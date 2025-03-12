@@ -1,4 +1,5 @@
 """Module representing the Montreal Imaging Stress Task (MIST) protocol."""
+
 from typing import Optional, Union
 
 import matplotlib.pyplot as plt

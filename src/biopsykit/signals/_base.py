@@ -1,4 +1,5 @@
 """Base class for implementing signal processing pipelines."""
+
 from collections.abc import Sequence
 from typing import Optional, Union
 
