@@ -62,6 +62,8 @@ select = [
 ]
 
 ignore = [
+    # stdlib-module-shadowing
+    "A005",
     # No explicit stacklevel keyword argument found in logging calls
     "B028",
     # controversial
