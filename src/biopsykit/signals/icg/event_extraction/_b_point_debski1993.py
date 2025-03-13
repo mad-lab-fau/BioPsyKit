@@ -32,8 +32,8 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
     References
     ----------
     .. [1] Debski, T. T., Zhang, Y., Jennings, J. R., & Kamarck, T. W. (1993). Stability of cardiac impedance
-    measures: Aortic opening (B-point) detection and scoring. Biological Psychology, 36(1-2), 63-74.
-    https://doi.org/10.1016/0301-0511(93)90081-I
+        measures: Aortic opening (B-point) detection and scoring. Biological Psychology, 36(1-2), 63-74.
+        https://doi.org/10.1016/0301-0511(93)90081-I
 
     """
 
