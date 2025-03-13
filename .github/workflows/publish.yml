@@ -9,13 +9,16 @@ on:
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
-
+    environment:
+        name: pypi
+        url: https://pypi.org/p/${{ github.repository }}
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
     - name: Install dependencies
@@ -24,4 +27,4 @@ jobs:
         pip install poetry
     - name: Build and publish
       run: |
-        poetry publish -u "${{ secrets.PYPI_USERNAME }}" -p "${{ secrets.PYPI_API_TOKEN }}" --build
+        uv publish

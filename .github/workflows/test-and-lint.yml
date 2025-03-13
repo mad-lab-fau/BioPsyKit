@@ -12,28 +12,26 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+    - uses: actions/checkout@v4
+    - name: Install uv and Python
+      uses: astral-sh/setup-uv@v5
       with:
+        version: "0.6.2"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry
-        pip install poethepoet
-        poetry config virtualenvs.in-project true
-        poetry install -E mne -E jupyter
+    - name: Install the project
+      run: uv sync --all-extras --dev
     - name: Linting
       run: |
-        poetry run poe ci_check
+        uv run poe ci_check
     - name: Testing
       if: ${{ matrix.python-version == '3.9' }}
       run: |
-        poetry run poe test
+        uv run poe test
     - name: "Upload coverage to Codecov"
       if: ${{ matrix.python-version == '3.9' }}
       uses: codecov/codecov-action@v3
