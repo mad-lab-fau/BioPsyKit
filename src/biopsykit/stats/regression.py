@@ -1,4 +1,5 @@
 """Functions for performing regression analysis."""
+
 from typing import Union
 
 import pandas as pd

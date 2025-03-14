@@ -1,10 +1,13 @@
 """Functions for computing sleep endpoints, i.e., parameters that characterize a recording during a sleep study."""
+
+from collections.abc import Sequence
 from numbers import Number
-from typing import Optional, Sequence, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.utils.datatype_helper import SleepEndpointDataFrame, SleepEndpointDict, _SleepEndpointDataFrame
+
+from biopsykit.utils.dtypes import SleepEndpointDataFrame, SleepEndpointDict, _SleepEndpointDataFrame
 
 
 def compute_sleep_endpoints(
@@ -47,7 +50,7 @@ def compute_sleep_endpoints(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`
+    :obj:`~biopsykit.utils.dtypes.SleepEndpointDict`
         dictionary with computed sleep endpoints
 
     """
@@ -66,7 +69,7 @@ def compute_sleep_endpoints(
     # get percent of total time asleep
     sleep_efficiency = 100.0 * (len(net_sleep_time) / len(sleep_wake))
     # wake after sleep onset = duration of wake during first and last 'sleep' sample
-    wake_after_sleep_onset = len(df_sw_sleep) - int(df_sw_sleep.sum()[0])
+    wake_after_sleep_onset = len(df_sw_sleep) - int(df_sw_sleep.sum().iloc[0])
 
     df_sw_sleep["block"] = df_sw_sleep["sleep_wake"].diff().ne(0).cumsum()
     df_sw_sleep = df_sw_sleep.reset_index()
@@ -133,12 +136,12 @@ def endpoints_as_df(sleep_endpoints: SleepEndpointDict) -> Optional[SleepEndpoin
 
     Parameters
     ----------
-    sleep_endpoints : :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`
+    sleep_endpoints : :obj:`~biopsykit.utils.dtypes.SleepEndpointDict`
         dictionary with computed Sleep Endpoints
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDataFrame`
+    :obj:`~biopsykit.utils.dtypes.SleepEndpointDataFrame`
         dataframe with computed Sleep Endpoints or ``None`` if ``sleep_endpoints`` is ``None``
 
     """

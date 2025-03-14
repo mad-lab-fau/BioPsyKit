@@ -30,7 +30,7 @@ __all__ = [
     "utils",
 ]
 
-__version__ = "0.10.2"
+__version__ = "0.12.2"
 
 
 def version() -> None:

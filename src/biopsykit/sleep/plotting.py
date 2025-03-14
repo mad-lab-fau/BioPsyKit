@@ -1,14 +1,17 @@
 """Module providing functions to plot data collected during sleep studies."""
+
 import datetime
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from collections.abc import Iterable, Sequence
+from typing import Optional, Union
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticks
 import pandas as pd
 import seaborn as sns
-from biopsykit.utils.datatype_helper import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame, SleepEndpointDict
 from fau_colors import colors_all
+
+from biopsykit.utils.dtypes import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame, SleepEndpointDict
 
 _sleep_imu_plot_params = {
     "background_color": ["#e0e0e0", "#9e9e9e"],
@@ -28,20 +31,20 @@ def sleep_imu_plot(
     sleep_endpoints: Optional[SleepEndpointDict] = None,
     downsample_factor: Optional[int] = None,
     **kwargs,
-) -> Tuple[plt.Figure, Iterable[plt.Axes]]:
+) -> tuple[plt.Figure, Iterable[plt.Axes]]:
     """Draw plot to visualize IMU data during sleep, and, optionally, add sleep endpoints information.
 
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
-        data to plot. Data must either be acceleration data (:obj:`~biopsykit.utils.datatype_helper.AccDataFrame`),
-        gyroscope data (:obj:`~biopsykit.utils.datatype_helper.GyrDataFrame`), or IMU data
-        (:obj:`~biopsykit.utils.datatype_helper.ImuDataFrame`).
+        data to plot. Data must either be acceleration data (:obj:`~biopsykit.utils.dtypes.AccDataFrame`),
+        gyroscope data (:obj:`~biopsykit.utils.dtypes.GyrDataFrame`), or IMU data
+        (:obj:`~biopsykit.utils.dtypes.ImuDataFrame`).
     datastreams : str or list of str, optional
         list of datastreams indicating which type of data should be plotted or ``None`` to only plot acceleration data.
         If more than one type of datastream is specified each datastream is plotted row-wise in its own subplot.
         Default: ``None``
-    sleep_endpoints : :obj:`~biopsykit.utils.datatype_helper.SleepEndpointDict`
+    sleep_endpoints : :obj:`~biopsykit.utils.dtypes.SleepEndpointDict`
         dictionary with sleep endpoints to add to plot or ``None`` to only plot IMU data.
     downsample_factor : int, optional
         downsample factor to apply to raw input data before plotting or ``None`` to not downsample data before
@@ -83,7 +86,7 @@ def sleep_imu_plot(
         list of subplot axes objects
 
     """
-    axs: List[plt.Axes] = kwargs.pop("ax", kwargs.pop("axs", None))
+    axs: list[plt.Axes] = kwargs.pop("ax", kwargs.pop("axs", None))
 
     sns.set_palette(kwargs.get("palette", sns.light_palette(colors_all.fau, n_colors=4, reverse=True)[:-1]))
 
@@ -99,9 +102,8 @@ def sleep_imu_plot(
 
     if len(datastreams) != len(axs):
         raise ValueError(
-            "Number of datastreams to be plotted must match number of provided subplots! Expected {}, got {}.".format(
-                len(datastreams), len(axs)
-            )
+            f"Number of datastreams to be plotted must match number of provided subplots! "
+            f"Expected {len(datastreams)}, got {len(axs)}."
         )
 
     for ax, ds in zip(axs, datastreams):
@@ -119,8 +121,8 @@ def sleep_imu_plot(
     return fig, axs
 
 
-def _sleep_imu_plot_get_fig_axs(axs: List[plt.Axes], nrows: int, **kwargs):
-    figsize = kwargs.get("figsize", None)
+def _sleep_imu_plot_get_fig_axs(axs: list[plt.Axes], nrows: int, **kwargs):
+    figsize = kwargs.get("figsize")
 
     if isinstance(axs, plt.Axes):
         # ensure list (if only one Axes object is passed to sleep_imu_plot() instead of a list of Axes objects)
@@ -403,7 +405,7 @@ def _sleep_imu_plot_add_bed_end(wake_onset, bed_end, ax: plt.Axes, **kwargs):
 
 def _sleep_imu_plot_add_sleep_wake_bouts(
     sleep_bouts: pd.DataFrame, wake_bouts: pd.DataFrame, ax: plt.Axes, **kwargs
-) -> Dict[str, plt.Artist]:
+) -> dict[str, plt.Artist]:
     handles = {}
     for (bout_name, bouts), bg_color, bg_alpha in zip(
         {"sleep": sleep_bouts, "wake": wake_bouts}.items(),

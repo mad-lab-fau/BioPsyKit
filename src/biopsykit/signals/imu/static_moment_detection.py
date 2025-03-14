@@ -1,9 +1,13 @@
 """A set of util functions to detect static regions in a IMU signal given certain constrains."""
-from typing import Literal, Optional, Sequence, Tuple, Union
+
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.utils._types import arr_t
+from numpy.linalg import norm
+
+from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import (
     _bool_fill,
     bool_array_to_start_end_array,
@@ -11,7 +15,6 @@ from biopsykit.utils.array_handling import (
     sanitize_sliding_window_input,
     sliding_window_view,
 )
-from numpy.linalg import norm
 
 # supported metric functions
 _METRIC_FUNCTIONS = {
@@ -28,7 +31,7 @@ def _find_static_samples(
     window_length: int,
     inactive_signal_th: float,
     metric: METRIC_FUNCTION_NAMES = "mean",
-    overlap: int = None,
+    overlap: Optional[int] = None,
 ) -> np.ndarray:
     """Search for static samples within given input signal, based on windowed L2-norm thresholding.
 
@@ -114,7 +117,7 @@ def _find_static_sequences(
     window_length: int,
     inactive_signal_th: float,
     metric: METRIC_FUNCTION_NAMES = "variance",
-    overlap: int = None,
+    overlap: Optional[int] = None,
 ) -> np.ndarray:
     """Search for static sequences within given input signal, based on windowed L2-norm thresholding.
 
@@ -251,7 +254,7 @@ def find_first_static_window_multi_sensor(
     window_length: int,
     inactive_signal_th: float,
     metric: METRIC_FUNCTION_NAMES,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Find the first time window in the signal where all provided sensors are static.
 
     Parameters

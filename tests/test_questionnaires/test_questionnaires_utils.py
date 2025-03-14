@@ -6,6 +6,9 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 import pytest
+from numpy.testing import assert_array_equal
+from pandas._testing import assert_frame_equal, assert_series_equal
+
 from biopsykit.questionnaires.utils import (
     bin_scale,
     compute_scores,
@@ -19,8 +22,6 @@ from biopsykit.questionnaires.utils import (
     zero_pad_columns,
 )
 from biopsykit.utils.exceptions import ValidationError, ValueRangeError
-from numpy.testing import assert_array_equal
-from pandas._testing import assert_frame_equal, assert_series_equal
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/questionnaires")
 

@@ -1,17 +1,19 @@
 """Module representing the Cold Face Test (CFT) protocol."""
+
 import datetime
 import warnings
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import matplotlib.patches as mpatch
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from fau_colors import colors_all
+
 from biopsykit.protocols import BaseProtocol
 from biopsykit.signals.ecg.plotting import hr_plot
 from biopsykit.utils.exceptions import FeatureComputationError
-from fau_colors import colors_all
 
 
 class CFT(BaseProtocol):
@@ -20,7 +22,7 @@ class CFT(BaseProtocol):
     def __init__(
         self,
         name: Optional[str] = None,
-        structure: Optional[Dict[str, int]] = None,
+        structure: Optional[dict[str, int]] = None,
         **kwargs,
     ):
         """Class representing the Cold Face Test (CFT) and data collected while conducting the CFT.
@@ -98,7 +100,7 @@ class CFT(BaseProtocol):
             "phase_names": list(structure.keys()),
         }
         cft_plot_params.update(kwargs.get("cft_plot_params", {}))
-        self.cft_plot_params: Dict[str, Any] = cft_plot_params
+        self.cft_plot_params: dict[str, Any] = cft_plot_params
 
         super().__init__(name, structure, **kwargs)
 
@@ -107,7 +109,7 @@ class CFT(BaseProtocol):
         data: pd.DataFrame,
         index: Optional[str] = None,
         return_dict: Optional[bool] = False,
-    ) -> Union[Dict, pd.DataFrame]:
+    ) -> Union[dict, pd.DataFrame]:
         """Compute CFT parameter.
 
         This function computes the following CFT parameter and returns the result in a dataframe
@@ -213,7 +215,7 @@ class CFT(BaseProtocol):
                     "Error computing Baseline heart rate! The provided data is shorter than the Baseline interval."
                 )
             hr_baseline = data.loc[bl_start:bl_end]
-        return float(hr_baseline.mean())
+        return float(hr_baseline.mean().iloc[0])
 
     def extract_cft_interval(self, data: pd.DataFrame) -> pd.DataFrame:
         """Extract interval during which CFT was applied.
@@ -246,7 +248,7 @@ class CFT(BaseProtocol):
         is_cft_interval: Optional[bool] = False,
         compute_baseline: Optional[bool] = True,
         hr_baseline: Optional[float] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Compute **CFT onset**.
 
         The CFT onset is defined as the time point after beginning of the CFT Interval where three consecutive
@@ -319,7 +321,7 @@ class CFT(BaseProtocol):
         is_cft_interval: Optional[bool] = False,
         compute_baseline: Optional[bool] = True,
         hr_baseline: Optional[float] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Compute **CFT peak bradycardia**.
 
         The CFT peak bradycardia is defined as the maximum bradycardia (i.e., the minimum heart rate)
@@ -382,7 +384,7 @@ class CFT(BaseProtocol):
         is_cft_interval: Optional[bool] = False,
         compute_baseline: Optional[bool] = True,
         hr_baseline: Optional[float] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Compute **CFT mean bradycardia**.
 
         The CFT mean bradycardia is defined as the mean bradycardia (i.e., the mean decrease of heart rate)
@@ -435,7 +437,7 @@ class CFT(BaseProtocol):
         is_cft_interval: Optional[bool] = False,
         compute_baseline: Optional[bool] = True,
         hr_baseline: Optional[float] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Compute **CFT polynomial fit**.
 
         The CFT polynomial fit is computed by applying a 2nd order least-squares polynomial fit to the heart rate
@@ -486,7 +488,7 @@ class CFT(BaseProtocol):
         is_cft_interval: Optional[bool] = False,
         compute_baseline: Optional[bool] = True,
         hr_baseline: Optional[float] = None,
-    ) -> Tuple[pd.DataFrame, float]:
+    ) -> tuple[pd.DataFrame, float]:
         """Sanitize CFT input.
 
         Most functions for computing CFT parameter expect multiple possible combinations of input parameter:
@@ -533,9 +535,8 @@ class CFT(BaseProtocol):
                     "when only CFT data is passed (`is_cft_interval` is `True`)"
                 )
             hr_baseline = self.baseline_hr(data)
-        else:
-            if hr_baseline is None:  # noqa: PLR5501
-                raise ValueError("`baseline_hr` must be supplied as parameter when `compute_baseline` is set to False!")
+        elif hr_baseline is None:
+            raise ValueError("`baseline_hr` must be supplied as parameter when `compute_baseline` is set to False!")
 
         return data_cft, hr_baseline
 
@@ -543,7 +544,7 @@ class CFT(BaseProtocol):
         self,
         data: pd.DataFrame,
         **kwargs,
-    ) -> Tuple[plt.Figure, plt.Axes]:
+    ) -> tuple[plt.Figure, plt.Axes]:
         """Draw Cold Face Test (CFT) plot.
 
         Parameters
@@ -616,7 +617,7 @@ class CFT(BaseProtocol):
 
     @staticmethod
     def _cft_plot_style_axis(data: pd.DataFrame, ax: plt.Axes, **kwargs):
-        ylims = kwargs.get("ylims", None)
+        ylims = kwargs.get("ylims")
         if isinstance(ylims, (tuple, list)):
             ax.set_ylim(ylims)
         else:
@@ -632,7 +633,7 @@ class CFT(BaseProtocol):
 
     def _cft_plot_get_cft_times(
         self, data: pd.DataFrame, time_baseline: int, time_recovery: int
-    ) -> Dict[str, Union[int, datetime.datetime]]:
+    ) -> dict[str, Union[int, datetime.datetime]]:
         if isinstance(data.index, pd.DatetimeIndex):
             cft_start = data.index[0] + pd.Timedelta(seconds=self.cft_start)
             plot_start = cft_start - pd.Timedelta(seconds=time_baseline)
@@ -653,7 +654,7 @@ class CFT(BaseProtocol):
         return cft_times
 
     def _cft_plot_extract_plot_interval(
-        self, data: pd.DataFrame, times_dict: Dict[str, Union[int, datetime.datetime]]
+        self, data: pd.DataFrame, times_dict: dict[str, Union[int, datetime.datetime]]
     ) -> pd.DataFrame:
         plot_start = times_dict["plot_start"]
         plot_end = times_dict["plot_end"]
@@ -665,7 +666,7 @@ class CFT(BaseProtocol):
         return df_plot
 
     def _cft_plot_add_phase_annotations(
-        self, ax: plt.Axes, times_dict: Dict[str, Union[int, datetime.datetime]], **kwargs
+        self, ax: plt.Axes, times_dict: dict[str, Union[int, datetime.datetime]], **kwargs
     ):
         times = list(zip(list(times_dict.values()), list(times_dict.values())[1:]))
         # filter empty phases, e.g., when no baseline or no recovery phase is present
@@ -674,7 +675,10 @@ class CFT(BaseProtocol):
         bg_colors = kwargs.get("background_color", self.cft_plot_params.get("background_color"))
         if bg_colors is None:
             bg_color_base = kwargs.get("background_base_color", self.cft_plot_params.get("background_base_color"))
-            bg_colors = list(sns.dark_palette(bg_color_base, n_colors=len(times), reverse=True))
+            if isinstance(bg_color_base, list):
+                bg_colors = bg_color_base
+            else:
+                bg_colors = list(sns.dark_palette(bg_color_base, n_colors=len(times), reverse=True))
         bg_alphas = kwargs.get("background_alpha", self.cft_plot_params.get("background_alpha"))
         bg_alphas = [bg_alphas] * len(times)
         names = kwargs.get("phase_names", self.cft_plot_params["phase_names"])
@@ -689,6 +693,7 @@ class CFT(BaseProtocol):
                 zorder=3,
                 ha="center",
                 va="center",
+                color=kwargs.get("phase_text_color"),
             )
         rect = mpatch.Rectangle(
             xy=(0, 0.9),
@@ -717,24 +722,23 @@ class CFT(BaseProtocol):
     def _cft_plot_add_peak_bradycardia(
         self,
         data: pd.DataFrame,
-        cft_params: Dict,
-        cft_times: Dict,
+        cft_params: dict,
+        cft_times: dict,
         ax: plt.Axes,
-        bbox: Dict,
+        bbox: dict,
     ) -> None:
-
         color_key = "fau"
         if isinstance(data.index, pd.DatetimeIndex):
             brady_loc = cft_params["peak_brady"]
             brady_x = brady_loc
-            brady_y = float(data.loc[brady_loc])
+            brady_y = float(data.loc[brady_loc].iloc[0])
         else:
             brady_loc = cft_params["cft_start_idx"] + cft_params["peak_brady_idx"]
             brady_x = data.index[brady_loc]
-            brady_y = float(data.iloc[brady_loc])
+            brady_y = float(data.iloc[brady_loc].iloc[0])
 
         hr_baseline = cft_params["baseline_hr"]
-        max_hr_cft = float(self.extract_cft_interval(data).max())
+        max_hr_cft = float(self.extract_cft_interval(data).max().iloc[0])
         cft_start = cft_times["cft_start"]
 
         color = getattr(colors_all, color_key)
@@ -822,8 +826,8 @@ class CFT(BaseProtocol):
 
     def _cft_plot_add_baseline(
         self,
-        cft_params: Dict,
-        cft_times: Dict,
+        cft_params: dict,
+        cft_times: dict,
         ax: plt.Axes,
     ) -> None:
         color_key = "tech"
@@ -842,12 +846,11 @@ class CFT(BaseProtocol):
     def _cft_plot_add_mean_bradycardia(
         self,
         data: pd.DataFrame,
-        cft_params: Dict,
-        cft_times: Dict,
+        cft_params: dict,
+        cft_times: dict,
         ax: plt.Axes,
-        bbox: Dict,
+        bbox: dict,
     ) -> None:
-
         color_key = "wiso"
         mean_hr = cft_params["mean_hr_bpm"]
         cft_start = cft_times["cft_start"]
@@ -894,22 +897,21 @@ class CFT(BaseProtocol):
     def _cft_plot_add_onset(
         self,
         data: pd.DataFrame,
-        cft_params: Dict,
-        cft_times: Dict,
+        cft_params: dict,
+        cft_times: dict,
         ax: plt.Axes,
-        bbox: Dict,
+        bbox: dict,
     ) -> None:
-
         color_key = "med"
         color = getattr(colors_all, color_key)
 
         if isinstance(data.index, pd.DatetimeIndex):
             onset_idx = cft_params["onset"]
             onset_x = onset_idx
-            onset_y = float(data.loc[onset_idx])
+            onset_y = float(data.loc[onset_idx].iloc[0])
         else:
             onset_idx = cft_params["cft_start_idx"] + cft_params["onset_idx"]
-            onset_y = float(data.iloc[onset_idx])
+            onset_y = float(data.iloc[onset_idx].iloc[0])
             onset_x = data.index[onset_idx]
 
         # CFT Onset vline
@@ -952,10 +954,9 @@ class CFT(BaseProtocol):
     def _cft_plot_add_poly_fit(
         self,
         data: pd.DataFrame,
-        cft_params: Dict,
+        cft_params: dict,
         ax: plt.Axes,
     ) -> None:
-
         color_key = "phil"
         df_cft = self.extract_cft_interval(data)
         if isinstance(df_cft.index, pd.DatetimeIndex):

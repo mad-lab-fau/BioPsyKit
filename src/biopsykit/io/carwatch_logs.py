@@ -1,16 +1,19 @@
 """Module providing functions to load and save logs from the *CARWatch* app."""
+
 import json
 import re
 import warnings
 import zipfile
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import pandas as pd
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
-from biopsykit.utils._types import path_t
-from biopsykit.utils.time import tz, utc
 from tqdm.auto import tqdm
+
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils._types_internal import path_t
+from biopsykit.utils.time import tz, utc
 
 if TYPE_CHECKING:
     from biopsykit.carwatch_logs import LogData
@@ -23,7 +26,7 @@ def load_logs_all_subjects(
     has_subject_folders: Optional[bool] = True,
     log_filename_pattern: Optional[str] = None,
     return_df: Optional[bool] = True,
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Load log files from all subjects in a folder.
 
     This function iterates through the base folder and looks for subfolders
@@ -98,7 +101,7 @@ def _load_log_file_list_csv(file_list: Sequence[Path], log_filename_pattern: str
     return dict_log_files
 
 
-def _load_log_file_zip(file_list: Sequence[Path], log_filename_pattern: str) -> Dict[str, pd.DataFrame]:
+def _load_log_file_zip(file_list: Sequence[Path], log_filename_pattern: str) -> dict[str, pd.DataFrame]:
     dict_log_files = {}
     if log_filename_pattern is None:
         log_filename_pattern = LOG_FILENAME_PATTERN + ".zip"

@@ -1,10 +1,11 @@
 """Some custom helper types to make type hints and type checking easier.
 
-For user facing type declarations, please see :py:func:`biopsykit.utils.datatype_helper`.
+For user facing type declarations, please see :py:func:`biopsykit.utils.dtypes`.
 """
 
+from collections.abc import Hashable, Sequence
 from pathlib import Path
-from typing import Hashable, Sequence, TypeVar, Union
+from typing import TypeVar, Union
 
 import numpy as np
 import pandas as pd

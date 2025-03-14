@@ -1,13 +1,18 @@
 """Module for processing ECG data."""
+
 import warnings
-from typing import Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Callable, Literal, Optional, Union
 
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
+from scipy.stats import iqr
+from tqdm.auto import tqdm
+
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.array_handling import find_extrema_in_radius, remove_outlier_and_interpolate, sanitize_input_1d
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     ECG_RESULT_DATAFRAME_COLUMNS,
     HEART_RATE_DATAFRAME_COLUMNS,
     R_PEAK_DATAFRAME_COLUMNS,
@@ -21,8 +26,6 @@ from biopsykit.utils.datatype_helper import (
     is_ecg_result_dataframe,
     is_r_peak_dataframe,
 )
-from scipy.stats import iqr
-from tqdm.auto import tqdm
 
 __all__ = ["EcgProcessor"]
 
@@ -53,9 +56,9 @@ class EcgProcessor(_BaseProcessor):
 
     def __init__(
         self,
-        data: Union[EcgRawDataFrame, Dict[str, EcgRawDataFrame]],
+        data: Union[EcgRawDataFrame, dict[str, EcgRawDataFrame]],
         sampling_rate: Optional[float] = None,
-        time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
+        time_intervals: Optional[Union[pd.Series, dict[str, Sequence[str]]]] = None,
         include_start: Optional[bool] = False,
     ):
         """Initialize a new ``EcgProcessor`` instance.
@@ -99,7 +102,7 @@ class EcgProcessor(_BaseProcessor):
 
         Parameters
         ----------
-        data : :class:`~biopsykit.utils.datatype_helper.EcgRawDataFrame` or dict
+        data : :class:`~biopsykit.utils.dtypes.EcgRawDataFrame` or dict
             dataframe (or dict of such) with ECG data
         sampling_rate : float, optional
             sampling rate of recorded data in Hz
@@ -142,14 +145,14 @@ class EcgProcessor(_BaseProcessor):
             # make sure all data has the correct format
             is_ecg_raw_dataframe(df)
 
-        self.ecg_result: Dict[str, EcgResultDataFrame] = {}
+        self.ecg_result: dict[str, EcgResultDataFrame] = {}
         """Dictionary with ECG processing result dataframes, split into different phases.
 
         Each dataframe is expected to be a ``EcgResultDataFrame``.
 
         See Also
         --------
-        :obj:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`
+        :obj:`~biopsykit.utils.dtypes.EcgResultDataFrame`
             dataframe format
 
         """
@@ -159,23 +162,23 @@ class EcgProcessor(_BaseProcessor):
 
         See Also
         --------
-        :obj:`~biopsykit.utils.datatype_helper.HeartRatePhaseDict`
+        :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`
             dictionary format
 
         """
 
-        self.rpeaks: Dict[str, RPeakDataFrame] = {}
+        self.rpeaks: dict[str, RPeakDataFrame] = {}
         """Dictionary with R peak location indices, split into different phases.
 
         See Also
         --------
-        :obj:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
+        :obj:`~biopsykit.utils.dtypes.RPeakDataFrame`
             dictionary format
 
         """
 
     @property
-    def ecg(self) -> Dict[str, pd.DataFrame]:
+    def ecg(self) -> dict[str, pd.DataFrame]:
         """Return ECG signal after filtering, split into different phases.
 
         Returns
@@ -201,7 +204,7 @@ class EcgProcessor(_BaseProcessor):
     def ecg_process(
         self,
         outlier_correction: Optional[Union[str, Sequence[str]]] = "all",
-        outlier_params: Optional[Dict[str, Union[float, Sequence[float]]]] = None,
+        outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
         title: Optional[str] = None,
         method: Optional[str] = None,
         errors: Optional[ERROR_HANDLING] = "raise",
@@ -320,7 +323,7 @@ class EcgProcessor(_BaseProcessor):
 
     def _ecg_process(
         self, data: EcgRawDataFrame, method: Optional[str] = None, phase: Optional[str] = None
-    ) -> Tuple[EcgResultDataFrame, RPeakDataFrame]:
+    ) -> tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Private method for ECG processing.
 
         Parameters
@@ -335,9 +338,9 @@ class EcgProcessor(_BaseProcessor):
 
         Returns
         -------
-        ecg_result : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+        ecg_result : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
             Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
 
         """
@@ -428,7 +431,7 @@ class EcgProcessor(_BaseProcessor):
         return list(_outlier_correction_methods.keys())
 
     @classmethod
-    def outlier_params_default(cls) -> Dict[str, Union[float, Sequence[float]]]:
+    def outlier_params_default(cls) -> dict[str, Union[float, Sequence[float]]]:
         """Return default parameter for all outlier correction methods.
 
         .. note::
@@ -458,10 +461,10 @@ class EcgProcessor(_BaseProcessor):
         ecg_signal: Optional[EcgResultDataFrame] = None,
         rpeaks: Optional[RPeakDataFrame] = None,
         outlier_correction: Optional[Union[str, None, Sequence[str]]] = "all",
-        outlier_params: Optional[Dict[str, Union[float, Sequence[float]]]] = None,
+        outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
         imputation_type: Optional[str] = None,
         sampling_rate: Optional[float] = 256.0,
-    ) -> Tuple[EcgResultDataFrame, RPeakDataFrame]:
+    ) -> tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Perform outlier correction on the detected R peaks.
 
         Different methods for outlier detection are available (see
@@ -483,9 +486,9 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+        ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
             Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         outlier_correction : list, optional
             List containing the outlier correction methods to be applied.
@@ -509,9 +512,9 @@ class EcgProcessor(_BaseProcessor):
 
         Returns
         -------
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`
+        ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`
             processed ECG signal in standardized format
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`
             extracted R peaks in standardized format
 
 
@@ -648,7 +651,7 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         sampling_rate : float, optional
             Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
@@ -722,7 +725,7 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         hrv_types: str (or list of such), optional
             list of HRV types to be computed. Must be a subset of ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
@@ -774,7 +777,7 @@ class EcgProcessor(_BaseProcessor):
         hrv_methods = {key: _hrv_methods[key] for key in hrv_types}
 
         # compute all HRV parameters
-        list_hrv: List[pd.DataFrame] = [
+        list_hrv: list[pd.DataFrame] = [
             hrv_methods[key](rpeaks["R_Peak_Idx"], sampling_rate=sampling_rate) for key in hrv_methods
         ]
         # concat dataframe list
@@ -831,9 +834,9 @@ class EcgProcessor(_BaseProcessor):
             ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
         key : str, optional
             Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+        ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
             Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
-        rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+        rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
         edr_type : {'peak_trough_mean', 'peak_trough_diff', 'peak_peak_interval'}, optional
             Method to use for estimating EDR. Must be one of 'peak_trough_mean', 'peak_trough_diff',
@@ -894,7 +897,7 @@ class EcgProcessor(_BaseProcessor):
         ecg_signal: EcgResultDataFrame,
         rsp_signal: pd.DataFrame,
         sampling_rate: Optional[float] = 256,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Compute respiratory sinus arrhythmia (RSA) based on ECG and respiration signal.
 
         RSA is computed both via Peak-to-Trough (P2T) Porges-Bohrer method using :func:`~neurokit2.hrv.hrv_rsa`.
@@ -902,7 +905,7 @@ class EcgProcessor(_BaseProcessor):
 
         Parameters
         ----------
-        ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+        ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
             Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
         rsp_signal : pd.DataFrame
             Dataframe with 1-D raw respiration signal. Can be a 'true' respiration signal
@@ -1164,8 +1167,8 @@ def _correct_outlier_correlation(rpeaks: pd.DataFrame, bool_mask: np.array, corr
         this algorithm
 
     """
-    ecg_signal = kwargs.get("ecg_signal", None)
-    sampling_rate = kwargs.get("sampling_rate", None)
+    ecg_signal = kwargs.get("ecg_signal")
+    sampling_rate = kwargs.get("sampling_rate")
     if any(v is None for v in [ecg_signal, sampling_rate]):
         raise ValueError(
             "Cannot apply outlier correction method 'correlation' because not all additionally required arguments "
@@ -1195,7 +1198,10 @@ def _correct_outlier_correlation(rpeaks: pd.DataFrame, bool_mask: np.array, corr
 
 
 def _correct_outlier_quality(
-    rpeaks: pd.DataFrame, bool_mask: np.array, quality_thres: float, **kwargs  # noqa: ARG001
+    rpeaks: pd.DataFrame,
+    bool_mask: np.array,
+    quality_thres: float,
+    **kwargs,  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'quality'.
 
@@ -1265,7 +1271,10 @@ def _correct_outlier_statistical_rr(
 
 
 def _correct_outlier_statistical_rr_diff(
-    rpeaks: pd.DataFrame, bool_mask: np.array, stat_thres: float, **kwargs  # noqa: ARG001
+    rpeaks: pd.DataFrame,
+    bool_mask: np.array,
+    stat_thres: float,
+    **kwargs,  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'statistical_rr_diff'.
 
@@ -1352,7 +1361,10 @@ def _correct_outlier_artifact(
 
 
 def _correct_outlier_physiological(
-    rpeaks: pd.DataFrame, bool_mask: np.array, hr_thres: Tuple[float, float], **kwargs  # noqa: ARG001
+    rpeaks: pd.DataFrame,
+    bool_mask: np.array,
+    hr_thres: tuple[float, float],
+    **kwargs,  # noqa: ARG001
 ) -> np.array:
     """Apply outlier correction method 'physiological'.
 
@@ -1387,9 +1399,8 @@ def _correct_outlier_physiological(
 
 def _get_outlier_params(
     outlier_correction: Optional[Union[str, None, Sequence[str]]] = "all",
-    outlier_params: Optional[Dict[str, Union[float, Sequence[float]]]] = None,
-) -> Tuple[Sequence[str], Dict[str, Union[float, Sequence[float]]], Dict[str, Callable]]:
-
+    outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
+) -> tuple[Sequence[str], dict[str, Union[float, Sequence[float]]], dict[str, Callable]]:
     if outlier_correction == "all":
         outlier_correction = list(_outlier_correction_methods.keys())
     elif isinstance(outlier_correction, str):
@@ -1398,12 +1409,11 @@ def _get_outlier_params(
         outlier_correction = []
 
     try:
-        outlier_funcs: Dict[str, Callable] = {key: _outlier_correction_methods[key] for key in outlier_correction}
+        outlier_funcs: dict[str, Callable] = {key: _outlier_correction_methods[key] for key in outlier_correction}
     except KeyError as e:
         raise ValueError(
-            "`outlier_correction` may only contain values from {}, None or `all`, not `{}`.".format(
-                list(_outlier_correction_methods.keys()), outlier_correction
-            )
+            f"`outlier_correction` may only contain values from {list(_outlier_correction_methods.keys())}, "
+            f"None or `all`, not `{outlier_correction}`."
         ) from e
 
     if outlier_params is None:
@@ -1417,19 +1427,19 @@ def _get_outlier_params(
     return outlier_correction, outlier_params, outlier_funcs
 
 
-_hrv_methods = {
+_hrv_methods: dict[str, Callable] = {
     "hrv_time": nk.hrv_time,
     "hrv_nonlinear": nk.hrv_nonlinear,
     "hrv_frequency": nk.hrv_frequency,
 }
 
-_edr_methods = {
+_edr_methods: dict[str, Callable] = {
     "peak_trough_mean": _edr_peak_trough_mean,
     "peak_trough_diff": _edr_peak_trough_diff,
     "peak_peak_interval": _edr_peak_peak_interval,
 }
 
-_outlier_correction_methods: Dict[str, Callable] = {
+_outlier_correction_methods: dict[str, Callable] = {
     "correlation": _correct_outlier_correlation,
     "quality": _correct_outlier_quality,
     "artifact": _correct_outlier_artifact,
@@ -1438,7 +1448,7 @@ _outlier_correction_methods: Dict[str, Callable] = {
     "statistical_rr_diff": _correct_outlier_statistical_rr_diff,
 }
 
-_outlier_correction_params_default: Dict[str, Union[float, Sequence[float]]] = {
+_outlier_correction_params_default: dict[str, Union[float, Sequence[float]]] = {
     "correlation": 0.3,
     "quality": 0.4,
     "artifact": 0.0,
@@ -1464,7 +1474,7 @@ def _assert_rpeaks_input(
         ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
     key : str, optional
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
         Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process`
 
     Raises
@@ -1493,9 +1503,9 @@ def _assert_ecg_input(ecg_processor: "EcgProcessor", key: str, ecg_signal: EcgRe
         ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well
     key : str, optional
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument
-    ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+    ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
         Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
         Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`
 
     Raises

@@ -4,9 +4,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from pandas._testing import assert_frame_equal, assert_index_equal
+
 from biopsykit.io.saliva import load_saliva_plate, load_saliva_wide_format, save_saliva
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
-from pandas._testing import assert_frame_equal, assert_index_equal
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")
 
@@ -18,7 +19,7 @@ def does_not_raise():
 
 def time_log_no_index():
     df = pd.DataFrame(
-        columns=["subject", "condition", "Baseline", "Intervention", "Stress", "Recovery", "End"], index=range(0, 2)
+        columns=["subject", "condition", "Baseline", "Intervention", "Stress", "Recovery", "End"], index=range(2)
     )
     return df
 
@@ -126,9 +127,9 @@ def questionnaire_data_replace_missing_remove_nan():
 
 def result_dict_correct():
     return {
-        "Vp01": pd.DataFrame(columns=["data"], index=pd.Index(range(0, 2), name="time")),
-        "Vp02": pd.DataFrame(columns=["data"], index=pd.Index(range(0, 2), name="time")),
-        "Vp03": pd.DataFrame(columns=["data"], index=pd.Index(range(0, 2), name="time")),
+        "Vp01": pd.DataFrame(columns=["data"], index=pd.Index(range(2), name="time")),
+        "Vp02": pd.DataFrame(columns=["data"], index=pd.Index(range(2), name="time")),
+        "Vp03": pd.DataFrame(columns=["data"], index=pd.Index(range(2), name="time")),
     }
 
 
@@ -666,7 +667,6 @@ class TestIoSaliva:
     def test_load_saliva_wide_format(
         self, file_path, subject_col, condition_col, sample_times, additional_index_cols, expected
     ):
-
         data_out = load_saliva_wide_format(
             TEST_FILE_PATH.joinpath(file_path),
             saliva_type="cortisol",

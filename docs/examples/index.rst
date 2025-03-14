@@ -31,6 +31,7 @@ using sleep trackers.
     :glob:
 
     _notebooks/Sleep_IMU_Example
+    _notebooks/Sleep_Analyzer_Import_Example
     _notebooks/Sleep_Analyzer_Example
 
 
@@ -84,12 +85,3 @@ These examples demonstrate how to evaluate results either with statistical metho
     _notebooks/StatsPipeline_Plotting_Example
     _notebooks/SklearnPipelinePermuter_Example
 
-
-Miscellaneous
-=============
-.. nbgallery::
-    :caption: Miscellaneous
-    :name: miscellaneous-examples
-    :glob:
-
-    _notebooks/Log_Data_Example

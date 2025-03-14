@@ -7,9 +7,12 @@ If ``data`` is a dataframe that contains more than the required two columns, e.g
 is passed, the required columns can be sliced by specifying them in the ``columns`` parameter.
 
 """
-from typing import Optional, Sequence, Union
+
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import (
     _assert_has_columns,
     _assert_has_index_levels,
@@ -17,7 +20,7 @@ from biopsykit.utils._datatype_validation_helper import (
     _assert_value_range,
 )
 
-__all__ = ["bmi", "whr", "gender_counts"]
+__all__ = ["bmi", "gender_counts", "whr"]
 
 from biopsykit.utils.exceptions import ValidationError
 

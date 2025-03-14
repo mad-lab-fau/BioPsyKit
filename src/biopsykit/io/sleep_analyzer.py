@@ -1,18 +1,21 @@
 # pylint:disable=unsupported-assignment-operation
 # pylint:disable=unsubscriptable-object
 """Module containing different I/O functions to load data recorded by Withings Sleep Analyzer."""
+
 import datetime
 import re
 from ast import literal_eval
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.sleep.utils import split_nights
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns, _assert_is_dir
-from biopsykit.utils._types import path_t
-from biopsykit.utils.datatype_helper import SleepEndpointDataFrame, is_sleep_endpoint_dataframe
+from biopsykit.utils._types_internal import path_t
+from biopsykit.utils.dtypes import SleepEndpointDataFrame, is_sleep_endpoint_dataframe
 from biopsykit.utils.time import tz
 
 __all__ = [
@@ -124,7 +127,7 @@ def load_withings_sleep_analyzer_raw_file(
     data_source: str,
     timezone: Optional[Union[datetime.tzinfo, str]] = None,
     split_into_nights: Optional[bool] = True,
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Load single Withings Sleep Analyzer raw data file and convert into time-series data.
 
     Parameters
@@ -159,9 +162,7 @@ def load_withings_sleep_analyzer_raw_file(
     """
     if data_source not in WITHINGS_RAW_DATA_SOURCES.values():
         raise ValueError(
-            "Unsupported data source {}! Must be one of {}.".format(
-                data_source, list(WITHINGS_RAW_DATA_SOURCES.values())
-            )
+            f"Unsupported data source {data_source}! Must be one of {list(WITHINGS_RAW_DATA_SOURCES.values())}."
         )
 
     file_path = Path(file_path)

@@ -1,21 +1,23 @@
 """Utility functions for the ``biopsykit.protocols`` module."""
-from typing import Dict, Optional, Sequence, Union
+
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.utils._datatype_validation_helper import _assert_len_list
-from biopsykit.utils.datatype_helper import SalivaMeanSeDataFrame
-from biopsykit.utils.exceptions import ValidationError
 from pandas._libs.lib import is_timedelta_or_timedelta64_array
+
+from biopsykit.utils._datatype_validation_helper import _assert_len_list
+from biopsykit.utils.dtypes import SalivaMeanSeDataFrame
+from biopsykit.utils.exceptions import ValidationError
 
 
 def _get_sample_times(
-    saliva_data: Union[Dict[str, SalivaMeanSeDataFrame], SalivaMeanSeDataFrame],
-    sample_times: Union[Sequence[int], Dict[str, Sequence[int]]],
+    saliva_data: Union[dict[str, SalivaMeanSeDataFrame], SalivaMeanSeDataFrame],
+    sample_times: Union[Sequence[int], dict[str, Sequence[int]]],
     test_times: Sequence[int],
     sample_times_absolute: Optional[bool] = False,
-) -> Union[Sequence[int], Dict[str, Sequence[int]]]:
-
+) -> Union[Sequence[int], dict[str, Sequence[int]]]:
     if isinstance(sample_times, dict):
         for key in sample_times:
             sample_times[key] = _get_sample_times(
@@ -65,5 +67,5 @@ def _check_sample_times_match(data: SalivaMeanSeDataFrame, sample_times: Sequenc
     if not any(len(sample_times) == s for s in [len(data.index.get_level_values("sample").unique()), len(data)]):
         raise ValidationError(
             "Number of saliva samples in data does not match number of samples in 'sample_times'. "
-            "Expected {}, got {}.".format(len(data), len(sample_times))
+            f"Expected {len(data)}, got {len(sample_times)}."
         )

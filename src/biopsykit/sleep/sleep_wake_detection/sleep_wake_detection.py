@@ -1,4 +1,5 @@
 """General class for sleep/wake detection."""
+
 from typing import Optional
 
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke
@@ -7,8 +8,8 @@ from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
 from biopsykit.sleep.sleep_wake_detection.algorithms.sazonov import Sazonov
 from biopsykit.sleep.sleep_wake_detection.algorithms.scripps_clinic import ScrippsClinic
 from biopsykit.sleep.sleep_wake_detection.algorithms.webster import Webster
-from biopsykit.utils._types import arr_t
-from biopsykit.utils.datatype_helper import SleepWakeDataFrame, _SleepWakeDataFrame
+from biopsykit.utils._types_internal import arr_t
+from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
 
 
 class SleepWakeDetection:
@@ -47,9 +48,8 @@ class SleepWakeDetection:
 
         if algorithm_type not in available_sleep_wake_algorithms:
             raise ValueError(
-                "Invalid algorithm type for sleep/wake detection! Must be one of {}, got {}.".format(
-                    available_sleep_wake_algorithms, algorithm_type
-                )
+                f"Invalid algorithm type for sleep/wake detection! "
+                f"Must be one of {available_sleep_wake_algorithms}, got {algorithm_type}."
             )
 
         sleep_wake_cls = available_sleep_wake_algorithms[algorithm_type]
@@ -78,7 +78,7 @@ class SleepWakeDetection:
 
         Returns
         -------
-        :obj:`~biopsykit.utils.datatype_helper.SleepWakeDataFrame`
+        :obj:`~biopsykit.utils.dtypes.SleepWakeDataFrame`
             dataframe with sleep/wake predictions
 
         """

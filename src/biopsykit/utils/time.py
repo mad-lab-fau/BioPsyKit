@@ -8,19 +8,20 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 import pytz
+
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
-from biopsykit.utils._types import path_t
+from biopsykit.utils._types_internal import path_t
 
 tz = pytz.timezone("Europe/Berlin")
 utc = pytz.timezone("UTC")
 
 __all__ = [
-    "tz",
     "check_tz_aware",
     "extract_time_from_filename",
     "get_time_from_date",
     "time_to_timedelta",
     "timedelta_to_time",
+    "tz",
 ]
 
 

@@ -1,27 +1,30 @@
 """Module for importing data recorded by NilsPod sensors."""
+
 import datetime
 import re
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Literal, Optional, Sequence, Tuple, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir, _assert_is_dtype
-from biopsykit.utils._types import path_t
-from biopsykit.utils.time import tz
 from nilspodlib import Dataset, SyncedSession
+
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dir, _assert_is_dtype
+from biopsykit.utils._types_internal import path_t
+from biopsykit.utils.time import tz
 
 COUNTER_INCONSISTENCY_HANDLING = Literal["raise", "warn", "ignore"]
 """Available behavior types when dealing with NilsPod counter inconsistencies."""
 
 __all__ = [
-    "load_dataset_nilspod",
-    "load_synced_session_nilspod",
-    "load_csv_nilspod",
-    "load_folder_nilspod",
     "check_nilspod_dataset_corrupted",
     "get_nilspod_dataset_corrupted_info",
+    "load_csv_nilspod",
+    "load_dataset_nilspod",
+    "load_folder_nilspod",
+    "load_synced_session_nilspod",
 ]
 
 
@@ -31,7 +34,7 @@ def load_dataset_nilspod(
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
     **kwargs,
-) -> Tuple[pd.DataFrame, float]:
+) -> tuple[pd.DataFrame, float]:
     """Load NilsPod recording and convert into dataframe.
 
     To load a dataset either a :class:`~nilspodlib.dataset.Dataset` object (via ``dataset`` parameter)
@@ -136,7 +139,7 @@ def load_synced_session_nilspod(
     datastreams: Optional[Union[str, Sequence[str]]] = None,
     handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
     **kwargs,
-) -> Tuple[pd.DataFrame, float]:
+) -> tuple[pd.DataFrame, float]:
     """Load a synchronized session of NilsPod recordings and convert into dataframes.
 
     Parameters
@@ -267,7 +270,7 @@ def load_csv_nilspod(
     timezone: Optional[Union[datetime.tzinfo, str]] = tz,
     filename_regex: Optional[str] = None,
     time_regex: Optional[str] = None,
-) -> Tuple[pd.DataFrame, float]:
+) -> tuple[pd.DataFrame, float]:
     r"""Convert a csv file recorded by NilsPod into a dataframe.
 
     By default, this function expects the file name to have the following pattern:
@@ -365,7 +368,7 @@ def _convert_index(df: pd.DataFrame, start_time: Sequence[str], time_regex: str)
 
 def load_folder_nilspod(
     folder_path: path_t, phase_names: Optional[Sequence[str]] = None, **kwargs
-) -> Tuple[Dict[str, pd.DataFrame], float]:
+) -> tuple[dict[str, pd.DataFrame], float]:
     """Load all NilsPod datasets from one folder, convert them into dataframes, and combine them into a dictionary.
 
     This function can for example be used when single NilsPod sessions (datasets) were recorded
@@ -461,7 +464,7 @@ def check_nilspod_dataset_corrupted(dataset: Dataset) -> bool:
     return np.where(np.diff(dataset.counter) != 1.0)[0].size != 0
 
 
-def get_nilspod_dataset_corrupted_info(dataset: Dataset, file_path: path_t) -> Dict:
+def get_nilspod_dataset_corrupted_info(dataset: Dataset, file_path: path_t) -> dict:
     """Get information about the corruption state of a NilsPod dataset.
 
     Corruption information include the information:

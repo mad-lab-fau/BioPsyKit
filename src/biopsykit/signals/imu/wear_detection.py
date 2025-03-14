@@ -1,11 +1,13 @@
 """Module for detection non-wear times from raw acceleration signals."""
+
 import datetime
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns
-from biopsykit.utils._types import arr_t
+from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import sliding_window
 
 
@@ -152,7 +154,7 @@ class WearDetection:
         return data
 
     @staticmethod
-    def get_major_wear_block(data: pd.DataFrame) -> Tuple[Union[datetime.datetime, int], Union[datetime.datetime, int]]:
+    def get_major_wear_block(data: pd.DataFrame) -> tuple[Union[datetime.datetime, int], Union[datetime.datetime, int]]:
         """Return major wear block.
 
         The major wear block is the longest continuous wear block in the data.
@@ -186,7 +188,7 @@ class WearDetection:
 
     @staticmethod
     def cut_to_wear_block(
-        data: pd.DataFrame, wear_block: Tuple[Union[datetime.datetime, int], Union[datetime.datetime, int]]
+        data: pd.DataFrame, wear_block: tuple[Union[datetime.datetime, int], Union[datetime.datetime, int]]
     ) -> pd.DataFrame:
         """Cut data to wear block.
 

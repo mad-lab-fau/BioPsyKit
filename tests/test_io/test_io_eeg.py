@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 
 import pytest
+
 from biopsykit.example_data import _get_data
 from biopsykit.io.eeg import load_eeg_raw_muse
 from biopsykit.utils.exceptions import ValidationError

@@ -1,20 +1,23 @@
 """Functions to process sleep data from raw IMU data or Actigraph data."""
-from typing import Any, Dict, Optional, Sequence, Union
+
+from collections.abc import Sequence
+from typing import Any, Optional, Union
 
 import numpy as np
+
 from biopsykit.signals.imu import convert_acc_data_to_g
 from biopsykit.signals.imu.activity_counts import ActivityCounts
 from biopsykit.signals.imu.rest_periods import RestPeriods
 from biopsykit.signals.imu.wear_detection import WearDetection
 from biopsykit.sleep.sleep_endpoints import compute_sleep_endpoints
 from biopsykit.sleep.sleep_wake_detection.sleep_wake_detection import SleepWakeDetection
-from biopsykit.utils._types import arr_t
+from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import accumulate_array
 
 
 def predict_pipeline_acceleration(
     data: arr_t, sampling_rate: float, convert_to_g: Optional[bool] = True, **kwargs
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Apply sleep processing pipeline on raw acceleration data.
 
     This function processes raw acceleration data collected during sleep. The pipeline consists of the following steps:
@@ -79,6 +82,7 @@ def predict_pipeline_acceleration(
     df_sw = sw.predict(df_ac)
     df_rp = rp.predict(data)
     bed_interval = [df_rp["start"][0], df_rp["end"][0]]
+    print(df_sw.value_counts())
     sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval)
     if not sleep_endpoints:
         return {}
@@ -99,7 +103,7 @@ def predict_pipeline_acceleration(
 
 def predict_pipeline_actigraph(
     data: arr_t, algorithm_type: str, bed_interval: Sequence[Union[str, int, np.datetime64]], **kwargs
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Apply sleep processing pipeline on actigraph data.
 
     This function processes actigraph data collected during sleep and performs sleep/wake detection.

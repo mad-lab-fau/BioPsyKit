@@ -24,6 +24,7 @@ __location__ = os.path.join(os.getcwd(), os.path.dirname(inspect.getfile(inspect
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+import contextlib
 from datetime import datetime
 from pathlib import Path
 
@@ -45,10 +46,8 @@ except ImportError:
 
 output_dir = os.path.join(__location__, "api")
 module_dir = os.path.join(__location__, "../src/biopsykit")
-try:
+with contextlib.suppress(FileNotFoundError):
     shutil.rmtree(output_dir)
-except FileNotFoundError:
-    pass
 
 try:
     import sphinx
@@ -120,7 +119,7 @@ if os.environ.get("NO_MATHJAX"):
     mathjax_path = ""
 else:
     extensions.append("sphinx.ext.mathjax")
-    mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/" "tex-chtml.js"
+    mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
 
 
 # Configure AutoStructify
@@ -193,8 +192,8 @@ master_doc = "index"
 # General information about the project.
 project = "BioPsyKit"
 copyright = (
-    "2020 - {}, Machine Learning and Data Analytics (MaD) Lab, Friedrich-Alexander-Universität "
-    "Erlangen-Nürnberg (FAU)".format(datetime.now().year)
+    f"2020 - {datetime.now().year}, Machine Learning and Data Analytics (MaD) Lab, Friedrich-Alexander-Universität "
+    "Erlangen-Nürnberg (FAU)"
 )
 
 # -- Copy README, Changelog, etc. --------------------------------------
