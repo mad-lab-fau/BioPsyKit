@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
         name: pypi
-        url: https://pypi.org/p/${{ github.repository }}
     permissions:
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
