@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.12.3 - March 15, 2025
+### Internal Changes
+- Migrated from `poetry` to `uv` as the main build tool. This change is due to the fact that `uv` is more flexible and 
+  allows for more customization. The `pyproject.toml` file was updated accordingly.
+
 ## Version 0.12.2 - January 14, 2025
 ### Bugfix
 - small bugfixes in PEP Algorithms and Biopac importer (improved error handling)
