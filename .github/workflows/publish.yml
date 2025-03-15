@@ -11,7 +11,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-        name: pypi
+      name: pypi
+      url: https://pypi.org/p/biopsykit
     permissions:
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
@@ -28,4 +29,6 @@ jobs:
     - name: Build and publish
       run: |
         uv build
-        uv publish
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+
