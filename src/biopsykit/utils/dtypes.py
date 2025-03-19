@@ -40,6 +40,7 @@ __all__ = [
     "ImuDataFrame",
     "MeanSeDataFrame",
     "MergedStudyDataDict",
+    "PepResultDataFrame",
     "PhaseDict",
     "QPeakDataFrame",
     "RPeakDataFrame",

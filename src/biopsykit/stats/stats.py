@@ -193,7 +193,7 @@ class StatsPipeline:
         self.data: Optional[pd.DataFrame] = None
         self.results: dict[str, pd.DataFrame] = {}
         self.category_steps = {}
-        self.round = kwargs.get("round", {col: 4 for col in _sig_cols})
+        self.round = kwargs.get("round", dict.fromkeys(_sig_cols, 4))
         for step in self.steps:
             self.category_steps.setdefault(step[0], [])
             self.category_steps[step[0]].append(step[1])
@@ -374,7 +374,7 @@ class StatsPipeline:
         if isinstance(sig_only, str):
             sig_only = True if sig_only == "all" else [sig_only]
         if isinstance(sig_only, bool):
-            sig_only = {cat: sig_only for cat in self.category_steps}
+            sig_only = dict.fromkeys(self.category_steps, sig_only)
         if isinstance(sig_only, list):
             sig_only = {cat: cat in sig_only for cat in self.category_steps}
         return sig_only

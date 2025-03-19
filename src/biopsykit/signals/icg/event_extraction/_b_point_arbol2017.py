@@ -6,7 +6,7 @@ import pandas as pd
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
+from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction, bpoint_algo_docfiller
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.dtypes import (
     CPointDataFrame,
@@ -26,15 +26,22 @@ __all__ = [
 ]
 
 
+@bpoint_algo_docfiller
 class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Arbol et al. (2017) [1]_ based on isoelectric crossings.
+    """B-point extraction algorithm by Arbol et al. (2017) [Arb17]_ based on isoelectric crossings.
 
     This algorithm extracts B-points based on the last crossing of the dZ/dt signal through the isoelectric line (i.e.,
     the mean of the dZ/dt signal in the cardiac cycle) before the C-point.
 
+    Parameters
+    ----------
+    %(base_parameters)s
+
+    %(base_attributes)s
+
     References
     ----------
-    .. [1] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
+    .. [Arb17] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
         Mathematical detection of aortic valve opening (B point) in impedance cardiography: A comparison of three
         popular algorithms. Psychophysiology, 54(3), 350-357. https://doi.org/10.1111/psyp.12799
 
@@ -51,7 +58,6 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
                 * "raise": raise an ``EventExtractionError``
                 * "ignore": ignore the error and continue with the next event
             Default: "warn"
-
 
         """
         super().__init__(handle_missing_events=handle_missing_events)

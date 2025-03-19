@@ -12,11 +12,28 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame
 
 
 class BaseOutlierCorrection(Algorithm):
-    """Base class for outlier correction algorithms for B-Point data."""
+    """Base class for outlier correction algorithms for B-Point data.
+
+    This class provides a template for outlier correction algorithms for B-Point data. It includes methods for
+    detecting outliers and stationarizing B-Point data. The actual outlier correction algorithm must be implemented in
+    a subclass.
+
+    Attributes
+    ----------
+    points_ : :class:`~pandas.DataFrame`
+        DataFrame containing the B-Point data with the outliers corrected. Each row contains the B-point location (in
+        samples from beginning of signal) for each heartbeat, index functions as id of heartbeat. B-point locations can
+        be NaN if no B-points were detected for certain heartbeats.
+
+    """
 
     _action_methods = "correct_outlier"
 
     points_: BPointDataFrame
+
+    def __init__(self) -> None:
+        """Initialize new Outlier Correction Algorithm."""
+        return super().__init__()
 
     def correct_outlier(
         self,

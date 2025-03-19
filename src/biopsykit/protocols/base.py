@@ -376,9 +376,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         if saliva_data is not None:
             if not isinstance(sample_times, dict):
-                sample_times = {key: sample_times for key in saliva_type}
+                sample_times = dict.fromkeys(saliva_type, sample_times)
             if not isinstance(saliva_data, dict):
-                saliva_data = {key: saliva_data for key in saliva_type}
+                saliva_data = dict.fromkeys(saliva_type, saliva_data)
             self.sample_times.update(
                 _get_sample_times(saliva_data, sample_times, self.test_times, sample_times_absolute)
             )
