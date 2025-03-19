@@ -31,8 +31,8 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
     References
     ----------
-    .. [Ste85] Stern, H. C., Wolf, G. K., & Belz, G. G. (1985). Comparative measurements of left ventricular ejection time
-        by mechano-, echo- and electrical impedance cardiography. Arzneimittel-Forschung, 35(10), 1582-1586.
+    .. [Ste85] Stern, H. C., Wolf, G. K., & Belz, G. G. (1985). Comparative measurements of left ventricular ejection
+        time by mechano-, echo- and electrical impedance cardiography. Arzneimittel-Forschung, 35(10), 1582-1586.
 
     """
 

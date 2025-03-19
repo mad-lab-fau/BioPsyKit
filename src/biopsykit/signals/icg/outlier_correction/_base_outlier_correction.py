@@ -33,7 +33,7 @@ class BaseOutlierCorrection(Algorithm):
 
     def __init__(self) -> None:
         """Initialize new Outlier Correction Algorithm."""
-        return super().__init__()
+        super().__init__()
 
     def correct_outlier(
         self,

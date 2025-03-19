@@ -24,10 +24,10 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
 
     References
     ----------
-    .. [Van13] Van Lien, R., Schutte, N. M., Meijer, J. H., & De Geus, E. J. C. (2013). Estimated preejection period (PEP)
-        based on the detection of the R-peak and dZ/dt-min peaks does not adequately reflect the actual PEP across a
-        wide range of laboratory and ambulatory conditions. International Journal of Psychophysiology, 87(1), 60-69.
-        https://doi.org/10.1016/j.ijpsycho.2012.11.001
+    .. [Van13] Van Lien, R., Schutte, N. M., Meijer, J. H., & De Geus, E. J. C. (2013). Estimated preejection period
+        (PEP) based on the detection of the R-peak and dZ/dt-min peaks does not adequately reflect the actual PEP
+        across a wide range of laboratory and ambulatory conditions. International Journal of Psychophysiology, 87(1),
+        60-69. https://doi.org/10.1016/j.ijpsycho.2012.11.001
 
     """
 

@@ -30,8 +30,8 @@ class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixi
 
     References
     ----------
-    .. [Dro22] Drost, L., Finke, J. B., Port, J., & Schächinger, H. (2022). Comparison of TWA and PEP as indices of a2- and
-        ß-adrenergic activation. Psychopharmacology. https://doi.org/10.1007/s00213-022-06114-8
+    .. [Dro22] Drost, L., Finke, J. B., Port, J., & Schächinger, H. (2022). Comparison of TWA and PEP as indices of
+        a2- and ß-adrenergic activation. Psychopharmacology. https://doi.org/10.1007/s00213-022-06114-8
 
     """
 

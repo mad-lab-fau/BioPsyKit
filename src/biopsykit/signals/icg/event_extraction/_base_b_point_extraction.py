@@ -5,7 +5,6 @@ from biopsykit.signals._base_extraction import BaseExtraction
 __all__ = ["BaseBPointExtraction", "bpoint_algo_docfiller"]
 
 from biopsykit.utils._docutils import make_filldoc
-
 from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, HeartbeatSegmentationDataFrame, IcgRawDataFrame
 
 bpoint_algo_docfiller = make_filldoc(
@@ -22,7 +21,7 @@ bpoint_algo_docfiller = make_filldoc(
         Attributes
         ----------
         points_ : :class:`~biopsykit.utils.dtypes.BPointDataFrame`
-            DataFrame containing the extracted B-points. Each row contains the B-point location 
+            DataFrame containing the extracted B-points. Each row contains the B-point location
             (in samples from beginning of signal) for each heartbeat, index functions as id of heartbeat.
             B-point locations can be NaN if no B-points were detected for certain heartbeats.
         """,
