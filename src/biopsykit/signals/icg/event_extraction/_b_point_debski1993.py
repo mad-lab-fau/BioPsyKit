@@ -24,14 +24,16 @@ __all__ = ["BPointExtractionDebski1993SecondDerivative"]
 
 
 class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Debski et al. (1993) [1]_ based on the reversal of dZ^2/dt^2 before the C-point.
+    """B-point extraction algorithm by Debski et al. (1993) based on the reversal of dZ^2/dt^2 before the C-point.
 
     This algorithm extracts B-points based on the last reversal (local minimum) of the second derivative
     of the ICG signal before the C-point.
 
+    For more information, see [Deb93]_.
+
     References
     ----------
-    .. [1] Debski, T. T., Zhang, Y., Jennings, J. R., & Kamarck, T. W. (1993). Stability of cardiac impedance
+    .. [Deb93] Debski, T. T., Zhang, Y., Jennings, J. R., & Kamarck, T. W. (1993). Stability of cardiac impedance
         measures: Aortic opening (B-point) detection and scoring. Biological Psychology, 36(1-2), 63-74.
         https://doi.org/10.1016/0301-0511(93)90081-I
 

@@ -20,13 +20,15 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class BPointExtractionSherwood1990(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Sherwood et al. (1990) [1]_.
+    """B-point extraction algorithm by Sherwood et al. (1990).
 
     This algorithm extracts B-points based on the last zero crossing of the ICG signal before the C-point.
 
+    For more information, see [She90]_.
+
     References
     ----------
-    .. [1] Sherwood, A., Allen, M. T., Fahrenberg, J., Kelsey, R. M., Lovallo, W. R., & Doornen, L. J. P. (1990).
+    .. [She90] Sherwood, A., Allen, M. T., Fahrenberg, J., Kelsey, R. M., Lovallo, W. R., & Doornen, L. J. P. (1990).
         Methodological Guidelines for Impedance Cardiography. Psychophysiology, 27(1), 1-23.
         https://doi.org/10.1111/j.1469-8986.1990.tb02171.x
 

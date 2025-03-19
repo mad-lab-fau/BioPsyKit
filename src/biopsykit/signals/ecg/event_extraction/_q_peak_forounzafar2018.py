@@ -18,7 +18,7 @@ from biopsykit.utils.dtypes import (
 
 
 class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    r"""Q-peak extraction algorithm by Forouzanfar et al. (2018) [1]_.
+    r"""Q-peak extraction algorithm by Forouzanfar et al. (2018).
 
     This algorithm detects the Q-peak of an ECG signal based on the last sample before the R-peak that is below a
     certain threshold (:math:`-1.2 \cdot R_peak/f_s`), where R_peak is the amplitude of the R-peak and f_s is the
@@ -28,10 +28,12 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
     can differ from the original publication (2000 Hz). Thus, the scaling_factor is set to the sampling rate of the
     original publication (2000 Hz) by default.
 
+    For more information on the algorithm, see [For18]_.
+
 
     References
     ----------
-    .. [1] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
+    .. [For18] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
         Toward a better noninvasive assessment of preejection period: A novel automatic algorithm for B-point detection
         and correction on thoracic impedance cardiogram. Psychophysiology, 55(8), e13072.
         https://doi.org/10.1111/psyp.13072

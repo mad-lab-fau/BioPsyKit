@@ -7,7 +7,18 @@ from biopsykit.utils.dtypes import EcgRawDataFrame
 
 
 class BaseHeartbeatSegmentation(Algorithm):
-    """Base class for all heartbeat segmentation algorithms."""
+    """Base class for all heartbeat segmentation algorithms.
+
+    This class defines the interface for all heartbeat segmentation algorithms. Heartbeat segmentation algorithms
+    are used to segment ECG signals into individual heartbeats.
+
+    Attributes
+    ----------
+    heartbeat_list_ : :class:`~pandas.DataFrame`
+        DataFrame containing the segmented heartbeats. Each row represents one heartbeat.
+
+
+    """
 
     _action_methods = "extract"
 

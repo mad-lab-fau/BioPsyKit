@@ -18,19 +18,21 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Q-peak extraction algorithm by Martinez et al. (2004) [1]_ using the DWT method implemented in NeuroKit2 [2]_.
+    """Q-peak extraction algorithm by Martinez et al. (2004) using the DWT method implemented in NeuroKit2.
 
     This algorithm detects the Q-peak of an ECG signal using the discrete wavelet transform (DWT) method implemented in
     NeuroKit2.
 
+    For more information on the algorithm, see [Mar04]_. For more information on the NeuroKit2 library, see [Mak21]_.
+
 
     References
     ----------
-    .. [1] Martinez, J. P., Almeida, R., Olmos, S., Rocha, A. P., & Laguna, P. (2004).
+    .. [Mar04] Martinez, J. P., Almeida, R., Olmos, S., Rocha, A. P., & Laguna, P. (2004).
         A wavelet-based ECG delineator: evaluation on standard databases.
         IEEE Transactions on Biomedical Engineering, 51(4), 570-581.
         https://doi.org/10.1109/TBME.2003.821031
-    .. [2] Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S.H. Chen
+    .. [Mak21] Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S.H. Chen
         (2021). NeuroKit2: A Python Toolbox for Neurophysiological Signal Processing. Behavior Research Methods.
         https://doi.org/10.3758/s13428-020-01516-y
 

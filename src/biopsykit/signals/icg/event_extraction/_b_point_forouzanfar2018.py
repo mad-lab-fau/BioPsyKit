@@ -24,16 +24,18 @@ __all__ = ["BPointExtractionForouzanfar2018"]
 
 
 class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Forouzanfar et al. (2018) [1]_.
+    """B-point extraction algorithm by Forouzanfar et al. (2018).
 
     This algorithm extracts B-points based on the detection of the most prominent monotonic increasing segment
     between the A-Point (the local minimum within one third of the beat-to-beat interval prior to the C-Point)
     and the C-Point. The B-Point is then detected as the last zero crossing or local maximum of the third derivative
     of the ICG signal within the segment.
 
+    For more information, see [For18]_.
+
     References
     ----------
-    .. [1] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
+    .. [For18] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
         Toward a better noninvasive assessment of preejection period: A novel automatic algorithm for B-point detection
         and correction on thoracic impedance cardiogram. Psychophysiology, 55(8), e13072.
         https://doi.org/10.1111/psyp.13072

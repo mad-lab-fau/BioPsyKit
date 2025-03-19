@@ -7,6 +7,22 @@ from biopsykit.utils.dtypes import is_icg_raw_dataframe
 
 
 class IcgPreprocessingBandpass(Algorithm):
+    """Preprocessing algorithm for ICG signals using a band-pass filter.
+
+    This algorithm applies a band-pass filter to the ICG signal to clean it from noise.
+
+    Parameters
+    ----------
+    method : str, optional
+        Method to use for filtering. Can be one of {"butterworth", "elliptic", "savgol"}. Default: "butterworth"
+
+    Attributes
+    ----------
+    icg_clean_ : :class:`~pandas.DataFrame`
+        Cleaned ICG signal
+
+    """
+
     _action_methods = "clean"
 
     method: Parameter[str]
@@ -14,6 +30,14 @@ class IcgPreprocessingBandpass(Algorithm):
     icg_clean_: pd.DataFrame
 
     def __init__(self, method: str = "butterworth"):
+        """Initialize new ``IcgPreprocessingBandpass`` instance.
+
+        Parameters
+        ----------
+        method : str, optional
+            Method to use for filtering. Can be one of {"butterworth", "elliptic", "savgol"}. Default: "butterworth"
+
+        """
         self.method = method
 
     def clean(self, *, icg: pd.DataFrame, sampling_rate_hz: int):
@@ -29,6 +53,11 @@ class IcgPreprocessingBandpass(Algorithm):
         Returns
         -------
         self
+
+        Raises
+        ------
+        ValueError
+            If the filter type is not one of {"butterworth", "elliptic", "savgol"}
 
         """
         is_icg_raw_dataframe(icg)

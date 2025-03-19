@@ -28,10 +28,12 @@ __all__ = [
 
 @bpoint_algo_docfiller
 class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Arbol et al. (2017) [Arb17]_ based on isoelectric crossings.
+    """B-point extraction algorithm by Arbol et al. (2017) based on isoelectric crossings.
 
     This algorithm extracts B-points based on the last crossing of the dZ/dt signal through the isoelectric line (i.e.,
     the mean of the dZ/dt signal in the cardiac cycle) before the C-point.
+
+    For more information, see [Arb17]_.
 
     Parameters
     ----------
@@ -160,14 +162,16 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
 
 
 class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Arbol et al. (2017) [1]_ based on the second derivative of the ICG signal.
+    """B-point extraction algorithm by Arbol et al. (2017) based on the second derivative of the ICG signal.
 
     This algorithm extracts B-points based on the maximum of the second derivative of the ICG signal in a 50ms window,
     starting 150ms before the C-point.
 
+    For more information, see [Arb17]_.
+
     References
     ----------
-    .. [1] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
+    .. [Arb17] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
         Mathematical detection of aortic valve opening (B point) in impedance cardiography: A comparison of three
         popular algorithms. Psychophysiology, 54(3), 350-357. https://doi.org/10.1111/psyp.12799
 
@@ -322,14 +326,16 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
 
 
 class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Arbol et al. (2017) [1]_ based on the third derivative of the ICG signal.
+    """B-point extraction algorithm by Arbol et al. (2017) based on the third derivative of the ICG signal.
 
     This algorithm extracts B-points based on the maximum of the third derivative of the ICG signal within a 300ms
     window before the C-point.
 
+    For more information, see [Arb17]_.
+
     References
     ----------
-    .. [1] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
+    .. [Arb17] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
         Mathematical detection of aortic valve opening (B-point) in impedance cardiography: A comparison of three
         popular algorithms. Psychophysiology, 54(3), 350-357. https://doi.org/10.1111/psyp.12799
 

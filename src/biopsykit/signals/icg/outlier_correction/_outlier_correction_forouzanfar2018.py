@@ -17,13 +17,15 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, is_b_point_
 
 
 class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
-    """B-Point outlier correction algorithm based on Forouzanfar et al. (2018) [1]_.
+    """B-Point outlier correction algorithm based on Forouzanfar et al. (2018).
 
     This algorithm corrects outliers in B-Point data using an autoregressive model.
 
+    For more information, see [For18]_.
+
     References
     ----------
-    .. [1] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
+    .. [For18] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
         Toward a better noninvasive assessment of preejection period: A novel automatic algorithm for B-point detection
         and correction on thoracic impedance cardiogram. Psychophysiology, 55(8), e13072.
         https://doi.org/10.1111/psyp.13072

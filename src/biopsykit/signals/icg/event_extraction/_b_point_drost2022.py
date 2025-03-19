@@ -21,14 +21,16 @@ __all__ = ["BPointExtractionDrost2022"]
 
 
 class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Drost et al. (2022) [1]_.
+    """B-point extraction algorithm by Drost et al. (2022).
 
     This algorithm extracts B-points based on the maximum distance of the dZ/dt curve and a straight line fitted
     between the C-Point and the Point on the dZ/dt curve 150 ms before the C-Point.
 
+    For more information, see [Dro22]_.
+
     References
     ----------
-    .. [1] Drost, L., Finke, J. B., Port, J., & Schächinger, H. (2022). Comparison of TWA and PEP as indices of a2- and
+    .. [Dro22] Drost, L., Finke, J. B., Port, J., & Schächinger, H. (2022). Comparison of TWA and PEP as indices of a2- and
         ß-adrenergic activation. Psychopharmacology. https://doi.org/10.1007/s00213-022-06114-8
 
     """

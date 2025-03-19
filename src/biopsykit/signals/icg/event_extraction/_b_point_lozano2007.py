@@ -19,14 +19,16 @@ from biopsykit.utils.dtypes import (
 
 
 class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Lozano et al. (2007) [1]_ based on linear regression of R-C interval.
+    """B-point extraction algorithm by Lozano et al. (2007) based on linear regression of R-C interval.
 
     This algorithm extracts B-points based on the linear regression of the relationship between the R-C interval
     and the B-point.
 
+    For more information, see [Loz07]_.
+
     References
     ----------
-    .. [1] Lozano, D. L., Norman, G., Knox, D., Wood, B. L., Miller, B. D., Emery, C. F., & Berntson, G. G. (2007).
+    .. [Loz07] Lozano, D. L., Norman, G., Knox, D., Wood, B. L., Miller, B. D., Emery, C. F., & Berntson, G. G. (2007).
         Where to B in dZ/dt. Psychophysiology, 44(1), 113-119. https://doi.org/10.1111/j.1469-8986.2006.00468.x
 
     """

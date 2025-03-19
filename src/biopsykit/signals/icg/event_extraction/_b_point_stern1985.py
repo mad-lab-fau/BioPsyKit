@@ -23,13 +23,15 @@ __all__ = ["BPointExtractionStern1985"]
 
 
 class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Stern et al. (1985) [1]_.
+    """B-point extraction algorithm by Stern et al. (1985).
 
     This algorithm extracts B-points based on the last local minimum of the dZ/dt curve before the C-point.
 
+    For more information, see [Ste85]_.
+
     References
     ----------
-    .. [1] Stern, H. C., Wolf, G. K., & Belz, G. G. (1985). Comparative measurements of left ventricular ejection time
+    .. [Ste85] Stern, H. C., Wolf, G. K., & Belz, G. G. (1985). Comparative measurements of left ventricular ejection time
         by mechano-, echo- and electrical impedance cardiography. Arzneimittel-Forschung, 35(10), 1582-1586.
 
     """
