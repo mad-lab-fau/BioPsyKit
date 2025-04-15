@@ -30,6 +30,8 @@ _DATA_COL_NAMES = {
     "crp": "CRP (µg/ml)",
 }
 
+_MISSING_DATA = ["no sample", "empty", "insufficient volume"]
+
 
 def load_saliva_plate(
     file_path: path_t,
@@ -271,6 +273,8 @@ def load_biomarker_results(
     regex_str: Optional[str] = None,
     sample_times: Optional[Sequence[int]] = None,
     condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
+    check_number_samples: bool = True,
+    replace_strings_missing: bool = True,
     **kwargs,
 ) -> BiomarkerRawDataFrame:
     r"""Load biomarker results from Excel file.
@@ -279,8 +283,8 @@ def load_biomarker_results(
     ----------
     file_path: :class:`~pathlib.Path` or str
         path to file
-    dbs_type: str, optional
-        biomarker type to load from file. Example: ``crp``
+    biomarker_type: str, optional
+        biomarker type to load from file. Example: ``cortisol``
     sample_id_col: str, optional
         name of column containing sample IDs or ``None`` to use the default column name ``sample ID``.
     data_col: str, optional
@@ -297,6 +301,12 @@ def load_biomarker_results(
         list of condition names or dictionary of condition names to list of condition assignments or
         :class:`~pandas.Index` of condition names or ``None`` if no conditions are present.
         Default: ``None``
+    check_number_samples: bool, optional
+        ``True`` to check that the number of samples is equal for all subjects,
+        ``False`` to skip this check. Default: ``True``
+    replace_strings_missing : bool, optional
+        ``True`` to replace strings indicating missing  in the biomarker data with NaN values,
+        ``False`` to keep the strings. Default: ``True``
     **kwargs
         Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
 
@@ -324,7 +334,8 @@ def load_biomarker_results(
     if data_col is None:
         data_col = _DATA_COL_NAMES[biomarker_type]
 
-    df_biomarker = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col], **kwargs)
+    df_biomarker = _try_read_plate_excel(file_path, sample_id_col, data_col, **kwargs)
+
     cols = df_biomarker[sample_id_col].str.extract(regex_str)
     id_col_names = _get_id_columns(id_col_names, cols)
 
@@ -339,11 +350,16 @@ def load_biomarker_results(
 
     num_subjects = len(df_biomarker.index.get_level_values("subject").unique())
 
-    _check_num_samples(len(df_biomarker), num_subjects)
+    if check_number_samples:
+        _check_num_samples(len(df_biomarker), num_subjects)
 
     if sample_times:
         _check_sample_times(len(df_biomarker), num_subjects, sample_times)
         df_biomarker["time"] = np.array(sample_times * num_subjects)
+
+    df_biomarker[biomarker_type] = df_biomarker[biomarker_type].astype(str).str.replace("\s+", " ", regex=True)
+    if replace_strings_missing:
+        df_biomarker[biomarker_type] = df_biomarker[biomarker_type].replace(dict.fromkeys(_MISSING_DATA, "nan"))
 
     try:
         df_biomarker[biomarker_type] = df_biomarker[biomarker_type].astype(float)
@@ -369,6 +385,17 @@ def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_in
         additional_index_cols = [additional_index_cols]
 
     return index_cols + additional_index_cols
+
+
+def _try_read_plate_excel(file_path: Path, sample_id_col: str, data_col: str, **kwargs):
+
+    for skiprows in [1, 2, 3]:
+        try:
+            return pd.read_excel(file_path, skiprows=skiprows, usecols=[sample_id_col, data_col], **kwargs)
+        except ValueError as e:
+            last_exception = e
+            continue
+    raise ValueError("Could not read plate Excel file. Please check the file format.") from last_exception
 
 
 def _read_dataframe(file_path: Path, **kwargs):
