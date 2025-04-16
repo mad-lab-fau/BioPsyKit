@@ -357,7 +357,7 @@ def load_biomarker_results(
         _check_sample_times(len(df_biomarker), num_subjects, sample_times)
         df_biomarker["time"] = np.array(sample_times * num_subjects)
 
-    df_biomarker[biomarker_type] = df_biomarker[biomarker_type].astype(str).str.replace("\s+", " ", regex=True)
+    df_biomarker[biomarker_type] = df_biomarker[biomarker_type].astype(str).str.replace(r"\s+", " ", regex=True)
     if replace_strings_missing:
         df_biomarker[biomarker_type] = df_biomarker[biomarker_type].replace(dict.fromkeys(_MISSING_DATA, "nan"))
 
