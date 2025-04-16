@@ -62,7 +62,7 @@ class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
         # stationarize the B-Point time data
         stationary_data = self.stationarize_b_points(b_points, c_points, sampling_rate_hz)
         b_points_nan = b_points.loc[b_points["b_point_sample"].isna()]
-        stationary_data.loc[b_points_nan.index, "statio_data"] = np.NaN
+        stationary_data.loc[b_points_nan.index, "statio_data"] = np.nan
 
         # detect outliers
         outliers = self.detect_b_point_outlier(stationary_data)
@@ -111,7 +111,7 @@ class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
         data = statio_data["statio_data"].to_frame()
 
         # insert NaN at the heartbeat id of the outliers
-        data.loc[outliers.index, "statio_data"] = np.NaN
+        data.loc[outliers.index, "statio_data"] = np.nan
 
         # interpolate the outlier positions using linear interpolation
         data_interpol = (

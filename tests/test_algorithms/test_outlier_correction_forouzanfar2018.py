@@ -81,7 +81,7 @@ class TestOutlierCorrectionForouzanfar2018:
     def _get_b_point_outlier_middle(self):
         b_points = self.b_points
         # manually set some values to NaN to simulate outliers
-        b_points["b_point_sample"].iloc[5] -= 100
+        b_points.loc[b_points.index[5], "b_point_sample"] -= 100
         return b_points
 
     def _get_regression_reference(self):

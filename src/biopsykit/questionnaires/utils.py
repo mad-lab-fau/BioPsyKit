@@ -521,8 +521,13 @@ def bin_scale(
 
     if not inplace:
         data = data.copy()
+        data = data.astype("Int64")
+    else:
+        # shady inplace dtype conversion
+        for col in data.columns:
+            data[col] = data[col].astype("Int64")
 
-    # set "labels" argument to False, but only if is wasn't specified by the user yet
+    # set "labels" argument to False, but only if it wasn't specified by the user yet
     kwargs["labels"] = kwargs.get("labels", False)
     if isinstance(data, pd.Series):
         bins_c = _get_bins(data, bins, None, first_min, last_max)
@@ -534,15 +539,15 @@ def bin_scale(
     for col in cols:
         bins_c = _get_bins(data, bins, col, first_min, last_max)
         if isinstance(col, int):
-            c = pd.cut(data.iloc[:, col], bins=bins_c, **kwargs)
+            c = pd.cut(data.iloc[:, col], bins=bins_c, **kwargs).astype("Int64")
             data.iloc[:, col] = c
         else:
-            c = pd.cut(data.loc[:, col], bins=bins_c, **kwargs)
+            c = pd.cut(data.loc[:, col], bins=bins_c, **kwargs).astype("Int64")
             data.loc[:, col] = c
 
     if inplace:
         return None
-    return data
+    return data.astype("Int64")
 
 
 def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:

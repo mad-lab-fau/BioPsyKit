@@ -344,8 +344,8 @@ def auc(
     data = data[[saliva_type]].unstack(level="sample")
 
     auc_data = {
-        "auc_g": np.trapz(data, sample_times),
-        "auc_i": np.trapz(data.sub(data.iloc[:, 0], axis=0), sample_times),
+        "auc_g": np.trapezoid(data, sample_times),
+        "auc_i": np.trapezoid(data.sub(data.iloc[:, 0], axis=0), sample_times),
     }
 
     if compute_auc_post:
@@ -373,7 +373,7 @@ def _auc_compute_auc_post(
         )
     if idxs_post is not None:
         data_post = data.iloc[:, idxs_post]
-        auc_data["auc_i_post"] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
+        auc_data["auc_i_post"] = np.trapezoid(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
     return auc_data
 
 
@@ -546,8 +546,8 @@ def standard_features(
         .agg(
             [
                 np.argmax,
-                np.mean,
-                np.std,
+                "mean",
+                "std",
                 ss.skew,
                 ss.kurtosis,
             ],
@@ -633,7 +633,7 @@ def mean_se(
         # we would loose this column
         group_cols = [*group_cols, "time"]
 
-    data_mean_se = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
+    data_mean_se = data.groupby(group_cols).agg(["mean", se])[saliva_type]
     is_saliva_mean_se_dataframe(data_mean_se)
 
     return _SalivaMeanSeDataFrame(data_mean_se)

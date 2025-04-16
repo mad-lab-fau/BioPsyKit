@@ -235,10 +235,10 @@ def convert_time_log_datetime(
 
     if isinstance(time_log.to_numpy().flatten()[0], str):
         # convert time strings into datetime.time object
-        time_log = time_log.applymap(pd.to_datetime)
-        time_log = time_log.applymap(lambda val: val.time())
+        time_log = time_log.map(pd.to_datetime)
+        time_log = time_log.map(lambda val: val.time())
 
-    time_log = time_log.applymap(lambda x: timezone.localize(datetime.datetime.combine(date, x)))
+    time_log = time_log.map(lambda x: timezone.localize(datetime.datetime.combine(date, x)))
     return time_log
 
 

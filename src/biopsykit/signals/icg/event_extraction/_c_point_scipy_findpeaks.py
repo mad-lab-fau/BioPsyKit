@@ -97,7 +97,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
 
         # distance of R-peak to C-point, averaged over as many preceding heartbeats as window_c_correction specifies
         # R-C-distances are positive when C-point occurs after R-Peak (which is the physiologically correct order)
-        mean_prev_r_c_distance = np.NaN
+        mean_prev_r_c_distance = np.nan
 
         # saves R-C-distances of previous heartbeats
         prev_r_c_distances = []

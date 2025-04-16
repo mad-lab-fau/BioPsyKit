@@ -1448,6 +1448,8 @@ class TestQuestionnaires:
     )
     def test_meq(self, data, columns, result):
         data_out = meq(data, columns)
+        data_out = data_out.astype("Int64")
+        result = result.astype("Int64")
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
 

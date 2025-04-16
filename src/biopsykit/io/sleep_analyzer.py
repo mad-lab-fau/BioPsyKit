@@ -176,7 +176,7 @@ def load_withings_sleep_analyzer_raw_file(
         timezone = tz
 
     # convert string timestamps to datetime
-    data["start"] = pd.to_datetime(data["start"])
+    data["start"] = pd.to_datetime(data["start"], utc=True)
     # sort index
     data = data.set_index("start").sort_index()
     # drop duplicate index values
