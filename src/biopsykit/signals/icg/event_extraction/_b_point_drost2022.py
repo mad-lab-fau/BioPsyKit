@@ -108,7 +108,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixi
             # check if c_points contain NaN. If this is the case, set the b_point to NaN and continue
             # with the next iteration
             if check_c_points[idx]:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
             # Get the C-Point location at the current heartbeat id

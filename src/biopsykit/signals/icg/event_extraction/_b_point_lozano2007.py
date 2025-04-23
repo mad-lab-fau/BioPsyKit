@@ -121,7 +121,7 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample).any():
                 heartbeats_no_c_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
@@ -129,7 +129,7 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
             # get the R-C interval in ms
             r_c_interval_ms = np.mean((c_point_sample - r_peak_sample) / sampling_rate_hz * 1000)
             if pd.isna(r_c_interval_ms):
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "no_r_c_interval"
                 continue
 
@@ -244,7 +244,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample).any():
                 heartbeats_no_c_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
@@ -252,7 +252,7 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
             # get the R-C interval in ms
             r_c_interval_ms = np.mean((c_point_sample - r_peak_sample) / sampling_rate_hz * 1000)
             if pd.isna(r_c_interval_ms):
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "no_r_c_interval"
                 continue
             b_point_interval_ms = -0.0032 * r_c_interval_ms**2 + 1.233 * r_c_interval_ms - 31.59

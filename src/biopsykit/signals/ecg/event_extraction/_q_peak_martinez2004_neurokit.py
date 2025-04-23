@@ -129,7 +129,7 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
             # Q occurs after R, which is not valid
             if heartbeats["r_peak_sample"].loc[heartbeat_idx].item() < q:
                 heartbeats_q_after_r.append(heartbeat_idx)
-                q_peaks.loc[heartbeat_idx, "q_peak_sample"] = np.NaN
+                q_peaks.loc[heartbeat_idx, "q_peak_sample"] = np.nan
             # valid Q-peak found
             else:
                 q_peaks.loc[heartbeat_idx, "q_peak_sample"] = q

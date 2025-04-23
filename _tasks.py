@@ -1,7 +1,5 @@
 import platform
-import re
 import subprocess
-import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent

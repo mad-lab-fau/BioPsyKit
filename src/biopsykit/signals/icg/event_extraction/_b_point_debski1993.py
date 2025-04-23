@@ -129,11 +129,11 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
             # with the next iteration
             missing_str = None
             if check_r_peaks[idx]:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "r_peak_nan"
                 missing_str = f"The r_peak contains NaN at position {idx}! B-Point was set to NaN."
             if check_c_points[idx]:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 missing_str = f"The c_point contains NaN at position {idx}! B-Point was set to NaN."
 
@@ -188,6 +188,6 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
             b_point = b_point + start_r_c
         else:
             # If there is no minima set the B-Point to NaN
-            b_point = np.NaN
+            b_point = np.nan
 
         return b_point

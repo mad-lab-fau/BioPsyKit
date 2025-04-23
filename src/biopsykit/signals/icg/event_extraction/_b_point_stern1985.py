@@ -115,7 +115,7 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
             # check c_point is NaN. If this is the case, set the b_point to NaN and continue with the next iteration
             if check_c_points[idx]:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 missing_str = f"The c_point is NaN at position {idx}! B-Point was set to NaN."
                 if self.handle_missing_events == "warn":
@@ -133,7 +133,7 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
             # if there are no zero crossings in the interval, set B-point to NaN
             if len(zero_crossings_heartbeat) == 0:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "no_local_minimum"
                 continue
             # get the closest zero crossing *before* the C-point
@@ -180,6 +180,6 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
             b_point = b_point + start_r_c
         else:
             # If there is no minima set the B-Point to NaN
-            b_point = np.NaN
+            b_point = np.nan
 
         return b_point

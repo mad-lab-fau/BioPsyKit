@@ -123,7 +123,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample):
                 heartbeats_no_c_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
@@ -144,7 +144,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             icg_isoelectric_crossings_diff = icg_isoelectric_crossings - c_point
             icg_isoelectric_crossings_diff = icg_isoelectric_crossings_diff[icg_isoelectric_crossings_diff < 0]
             if len(icg_isoelectric_crossings_diff) == 0:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "no_iso_crossing_before_c_point"
                 continue
             icg_isoelectric_crossing_idx = np.argmax(icg_isoelectric_crossings_diff)
@@ -274,7 +274,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample):
                 heartbeats_no_c_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
@@ -285,7 +285,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
             # might happen for wrongly detected Cs (search window becomes invalid)
             if window_start < 0:
                 heartbeats_no_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "invalid_b_point_search_window"
                 continue
 
@@ -439,7 +439,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(heartbeat_c_point):
                 heartbeats_no_c_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
@@ -456,7 +456,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
             # might happen for wrongly detected Cs (search window becomes invalid)
             if window_start < 0 or window_end < 0:
                 heartbeats_no_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "invalid_b_point_search_window"
                 continue
 
