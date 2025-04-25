@@ -130,7 +130,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             # slice the signal for the current heartbeat
             heartbeat_start = data["start_sample"]
             heartbeat_end = data["end_sample"]
-            icg_heartbeat = icg.loc[heartbeat_start:heartbeat_end]
+            icg_heartbeat = icg.iloc[heartbeat_start:heartbeat_end]
             c_point = c_point_sample - heartbeat_start
 
             # compute the isoelectric line and subtract it from the signal

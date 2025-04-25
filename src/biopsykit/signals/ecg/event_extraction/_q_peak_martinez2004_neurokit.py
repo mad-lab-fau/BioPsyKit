@@ -137,17 +137,17 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtraction, CanHandleMissingEve
         # inform user about missing Q-values
         if q_peaks.isna().sum().iloc[0] > 0:
             nan_rows = q_peaks[q_peaks["q_peak_sample"].isna()]
-            nan_rows = nan_rows.drop(index=heartbeats_q_after_r)
-            nan_rows = nan_rows.drop(index=heartbeats_no_q)
+            nan_rows = nan_rows.drop(index=q_peaks.index[heartbeats_q_after_r])
+            nan_rows = nan_rows.drop(index=q_peaks.index[heartbeats_no_q])
 
             missing_str = f"No Q-peak detected in {q_peaks.isna().sum().iloc[0]} heartbeats:\n"
             if len(heartbeats_no_q) > 0:
-                q_peaks.loc[heartbeats_no_q, "nan_reason"] = "no_q_peak"
+                q_peaks.loc[q_peaks.index[heartbeats_no_q], "nan_reason"] = "no_q_peak"
                 missing_str += (
                     f"- for heartbeats {heartbeats_no_q} the neurokit algorithm was not able to detect a Q-peak\n"
                 )
             if len(heartbeats_q_after_r) > 0:
-                q_peaks.loc[heartbeats_no_q, "nan_reason"] = "q_after_r_peak"
+                q_peaks.loc[q_peaks.index[heartbeats_no_q], "nan_reason"] = "q_after_r_peak"
                 missing_str += (
                     f"- for heartbeats {heartbeats_q_after_r} the detected Q is invalid "
                     f"because it occurs after the R-peak\n"

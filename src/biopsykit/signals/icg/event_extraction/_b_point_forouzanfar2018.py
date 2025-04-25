@@ -131,25 +131,26 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         # Create the B-Point/A-Point Dataframes with the index of the heartbeat_list
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
 
-        # check whether the c_points contain NaN
-        check_c_points = pd.isna(c_points["c_point_sample"]).to_numpy()
+        # get the c_point locations from the c_points dataframe
+        c_points = c_points["c_point_sample"]
 
         # Calculate the second- and third-derivative of the ICG-signal
         second_der = np.gradient(icg)
         third_der = np.gradient(second_der)
 
         for idx, data in heartbeats.iloc[1:].iterrows():
-            # check if the current or the previous C-Point contain NaN . If this is the case, set the b_point to NaN
-            if check_c_points[idx] or check_c_points[idx - 1]:
+            # Get the C-Point location at the current heartbeat id
+            c_point = c_points[idx]
+            prev_c_point = c_points[idx - 1]
+
+            # check if the current or the previous C-Point contain NaN. If this is the case, set the b_point to NaN
+            if c_point is np.nan or prev_c_point is np.nan:
                 b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
-            # Detect the main peak in the dZ/dt signal (C-Point)
-            c_point = c_points.loc[idx, "c_point_sample"]
-
             # Compute the beat to beat interval
-            beat_to_beat = c_points.loc[idx, "c_point_sample"] - c_points.loc[idx - 1, "c_point_sample"]
+            beat_to_beat = c_point - prev_c_point
 
             # Compute the search interval for the A-Point
             search_interval = int(beat_to_beat / 3)

@@ -110,12 +110,12 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
             ecg_below = np.where(ecg_before_r_peak < threshold)[0]
 
             if len(ecg_below) == 0:
-                q_peaks.loc[q_peaks.index[idx], "q_peak_sample"] = np.nan
-                q_peaks.loc[q_peaks.index[idx], "nan_reason"] = "no_value_below_threshold"
+                q_peaks.loc[idx, "q_peak_sample"] = np.nan
+                q_peaks.loc[idx, "nan_reason"] = "no_value_below_threshold"
                 continue
 
             q_peak_sample = heartbeat_start + ecg_below[-1]
-            q_peaks.loc[q_peaks.index[idx], "q_peak_sample"] = q_peak_sample
+            q_peaks.loc[idx, "q_peak_sample"] = q_peak_sample
 
         q_peaks = q_peaks.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
         is_q_peak_dataframe(q_peaks)

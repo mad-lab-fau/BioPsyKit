@@ -100,19 +100,18 @@ class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixi
         # Create the b_point Dataframe. Use the heartbeats id as index
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
 
-        # get the c_point locations from the c_points dataframe and search for entries containing NaN
-        check_c_points = pd.isna(c_points["c_point_sample"]).to_numpy()
+        # get the c_point locations from the c_points dataframe
+        c_points = c_points["c_point_sample"]
 
         # iterate over each heartbeat
         for idx, _data in heartbeats.iterrows():
-            # check if c_points contain NaN. If this is the case, set the b_point to NaN and continue
-            # with the next iteration
-            if check_c_points[idx]:
+            # Get the C-Point location at the current heartbeat id
+            c_point = c_points[idx]
+
+            if c_point is np.nan:
                 b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
-            # Get the C-Point location at the current heartbeat id
-            c_point = c_points.loc[idx, "c_point_sample"]
 
             # Calculate the start position of the straight line (150 ms before the C-Point) and ensure that the
             # start position is not negative
