@@ -4,7 +4,7 @@ import pandas as pd
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
+from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtractionWithHeartbeats
 from biopsykit.utils.dtypes import (
     EcgRawDataFrame,
     HeartbeatSegmentationDataFrame,
@@ -14,7 +14,7 @@ from biopsykit.utils.dtypes import (
 )
 
 
-class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin):
+class QPeakExtractionVanLien2013(BaseEcgExtractionWithHeartbeats, CanHandleMissingEventsMixin):
     """Algorithm to extract Q-peaks based on the detection of the R-peak, as suggested by Van Lien et al. (2013).
 
     The Q-peak is estimated by subtracting a fixed time interval from the R-peak location. The fixed time

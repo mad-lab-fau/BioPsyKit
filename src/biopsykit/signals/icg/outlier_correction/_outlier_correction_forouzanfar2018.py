@@ -6,7 +6,7 @@ from statsmodels.tools.sm_exceptions import ValueWarning
 from statsmodels.tsa.ar_model import ar_select_order
 from statsmodels.tsa.arima.model import ARIMA
 
-from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseOutlierCorrection
+from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseBPointOutlierCorrection
 
 __all__ = ["OutlierCorrectionForouzanfar2018"]
 
@@ -16,7 +16,7 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, is_b_point_
 # TODO add verbosity option
 
 
-class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
+class OutlierCorrectionForouzanfar2018(BaseBPointOutlierCorrection):
     """B-Point outlier correction algorithm based on Forouzanfar et al. (2018).
 
     This algorithm corrects outliers in B-Point data using an autoregressive model.

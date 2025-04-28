@@ -3,7 +3,7 @@ import pandas as pd
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
+from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtractionWithHeartbeats
 from biopsykit.utils.array_handling import sanitize_input_series
 
 __all__ = ["QPeakExtractionForouzanfar2018"]
@@ -17,7 +17,7 @@ from biopsykit.utils.dtypes import (
 )
 
 
-class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMixin):
+class QPeakExtractionForouzanfar2018(BaseEcgExtractionWithHeartbeats, CanHandleMissingEventsMixin):
     r"""Q-peak extraction algorithm by Forouzanfar et al. (2018).
 
     This algorithm detects the Q-peak of an ECG signal based on the last sample before the R-peak that is below a

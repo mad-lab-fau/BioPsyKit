@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
+from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtractionWithHeartbeats
 from biopsykit.utils.array_handling import sanitize_input_series
 from biopsykit.utils.dtypes import (
     EcgRawDataFrame,
@@ -17,7 +17,7 @@ from biopsykit.utils.dtypes import (
 from biopsykit.utils.exceptions import EventExtractionError
 
 
-class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
+class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtractionWithHeartbeats, CanHandleMissingEventsMixin):
     """Algorithm for Q-peak extraction using the ``scipy.find_peaks`` method implemented in NeuroKit2.
 
     For more information, see [Mak21]_.

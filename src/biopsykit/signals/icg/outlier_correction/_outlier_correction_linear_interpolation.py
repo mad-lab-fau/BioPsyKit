@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseOutlierCorrection
+from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseBPointOutlierCorrection
 
 __all__ = ["OutlierCorrectionLinearInterpolation"]
 
@@ -11,7 +11,7 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, is_b_point_
 # TODO add verbosity option
 
 
-class OutlierCorrectionLinearInterpolation(BaseOutlierCorrection):
+class OutlierCorrectionLinearInterpolation(BaseBPointOutlierCorrection):
     """B-point outlier correction algorithm based on linear interpolation.
 
     This algorithm corrects outliers in B-Point data using linear interpolation.

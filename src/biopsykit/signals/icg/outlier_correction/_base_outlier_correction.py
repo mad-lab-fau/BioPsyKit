@@ -6,12 +6,12 @@ from scipy.signal import butter, sosfiltfilt
 from scipy.stats import median_abs_deviation
 from tpcp import Algorithm
 
-__all__ = ["BaseOutlierCorrection"]
+__all__ = ["BaseBPointOutlierCorrection"]
 
 from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame
 
 
-class BaseOutlierCorrection(Algorithm):
+class BaseBPointOutlierCorrection(Algorithm):
     """Base class for outlier correction algorithms for B-Point data.
 
     This class provides a template for outlier correction algorithms for B-Point data. It includes methods for
