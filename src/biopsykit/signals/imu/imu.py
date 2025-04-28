@@ -1,11 +1,13 @@
 """Module with functions to process IMU data."""
+
 from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from biopsykit.utils._types import arr_t
+
+from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import sliding_window
-from biopsykit.utils.datatype_helper import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame
+from biopsykit.utils.dtypes import Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame
 from biopsykit.utils.time import utc
 
 
@@ -16,15 +18,15 @@ def convert_acc_data_to_g(
 
     Parameters
     ----------
-    data : :class:`~biopsykit.utils.datatype_helper.AccDataFrame` or \
-            :class:`~biopsykit.utils.datatype_helper.ImuDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.AccDataFrame` or \
+            :class:`~biopsykit.utils.dtypes.ImuDataFrame`
         dataframe containing acceleration data.
     inplace : bool, optional
         whether to perform the operation inplace or not. Default: ``False``
 
     Returns
     -------
-    :class:`~biopsykit.utils.datatype_helper.AccDataFrame` or :class:`~biopsykit.utils.datatype_helper.ImuDataFrame`
+    :class:`~biopsykit.utils.dtypes.AccDataFrame` or :class:`~biopsykit.utils.dtypes.ImuDataFrame`
         acceleration data converted to g
 
     """

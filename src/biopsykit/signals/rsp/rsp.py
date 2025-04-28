@@ -1,10 +1,13 @@
 """Module for processing Respiration data."""
-from typing import Dict, Optional, Sequence, Union
+
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import scipy.signal as ss
+
 from biopsykit.signals._base import _BaseProcessor
 from biopsykit.utils.array_handling import sanitize_input_1d
 
@@ -16,9 +19,9 @@ class RspProcessor(_BaseProcessor):
 
     def __init__(
         self,
-        data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+        data: Union[pd.DataFrame, dict[str, pd.DataFrame]],
         sampling_rate: Optional[float] = None,
-        time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
+        time_intervals: Optional[Union[pd.Series, dict[str, Sequence[str]]]] = None,
         include_start: Optional[bool] = False,
     ):
         """Initialize an ``RspProcessor`` instance.

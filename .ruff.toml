@@ -1,6 +1,7 @@
 line-length = 120
-target-version = "py38"
+target-version = "py39"
 
+[lint]
 select = [
     # pyflakes
     "F",
@@ -61,6 +62,8 @@ select = [
 ]
 
 ignore = [
+    # stdlib-module-shadowing
+    "A005",
     # No explicit stacklevel keyword argument found in logging calls
     "B028",
     # controversial
@@ -83,9 +86,9 @@ ignore = [
     # Avoid specifying long messages outside the exception class
     "TRY003",
     # Use type-checking block
-    "TCH001",
-    "TCH002",
-    "TCH003",
+    "TC001",
+    "TC002",
+    "TC003",
     # .pivot_table is preferred to .pivot or .unstack; provides same functionality
     "PD010",
     # df as varaible name
@@ -104,12 +107,12 @@ exclude = [
     "examples"
 ]
 
-[pylint]
+[lint.pylint]
 max-args = 15
 
-[pydocstyle]
+[lint.pydocstyle]
 convention = "numpy"
 
-[pyupgrade]
+[lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true

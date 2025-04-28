@@ -1,17 +1,21 @@
 """Module implementing a base class to represent psychological protocols."""
+
 import json
+from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Optional, Union
 
-import biopsykit.protocols.plotting as plot
 import matplotlib.pyplot as plt
 import pandas as pd
+from tqdm.auto import tqdm
+
+import biopsykit.protocols.plotting as plot
 from biopsykit.io import write_pandas_dict_excel
 from biopsykit.protocols._utils import _check_sample_times_match, _get_sample_times
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_is_dtype
-from biopsykit.utils._types import T, path_t
+from biopsykit.utils._types_internal import T, path_t
 from biopsykit.utils.data_processing import (
     add_subject_conditions,
     cut_phases_to_shortest,
@@ -25,7 +29,7 @@ from biopsykit.utils.data_processing import (
     split_dict_into_subphases,
     split_subject_conditions,
 )
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     HeartRateSubjectDataDict,
     SalivaFeatureDataFrame,
     SalivaRawDataFrame,
@@ -36,7 +40,6 @@ from biopsykit.utils.datatype_helper import (
     is_subject_data_dict,
 )
 from biopsykit.utils.exceptions import ValidationError
-from tqdm.auto import tqdm
 
 
 class BaseProtocol:  # pylint:disable=too-many-public-methods
@@ -45,7 +48,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def __init__(
         self,
         name: str,
-        structure: Optional[Dict[str, Any]] = None,
+        structure: Optional[dict[str, Any]] = None,
         test_times: Optional[Sequence[int]] = None,
         **kwargs,
     ):
@@ -139,7 +142,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self.name: str = name
         """Study or protocol name"""
 
-        self.structure: Dict[str, Any] = structure
+        self.structure: dict[str, Any] = structure
         """Structure of protocol, i.e., whether protocol is divided into different parts, phases, or subphases.
 
         If protocol is not divided into different parts ``protocol_structure`` is set to ``None``.
@@ -156,7 +159,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         If no psychological test was performed in the protocol ``test_times`` is set to [0, 0].
         """
 
-        self.sample_times: Dict[str, Sequence[int]] = {}
+        self.sample_times: dict[str, Sequence[int]] = {}
         """Dictionary with sample times of saliva samples (in minutes).
 
         Sample times are either provided explicitly using the ``sample_times`` parameter in
@@ -164,62 +167,62 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         (if a ``time`` column is present).
         """
 
-        self.saliva_data: Dict[str, SalivaRawDataFrame] = {}
+        self.saliva_data: dict[str, SalivaRawDataFrame] = {}
         """Dictionary with saliva data collected during the study.
 
-        Data in :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame` format can be added using
+        Data in :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame` format can be added using
         :meth:`~biopsykit.protocols.BaseProtocol.add_saliva_data`.
         """
 
-        self.hr_data: Dict[str, HeartRateSubjectDataDict] = {}
+        self.hr_data: dict[str, HeartRateSubjectDataDict] = {}
         """Dictionary with heart rate data collected during the study.
         If the study consists of multiple study parts each part has its own ``HeartRateSubjectDataDict``.
         If the study has no individual study parts (only different phases), the name of the one and only study part
         defaults to ``Study`` (to ensure consistent dictionary structure).
 
-        Data in :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict` format can be added using
+        Data in :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict` format can be added using
         :meth:`~biopsykit.protocols.BaseProtocol.add_hr_data`.
         """
 
-        self.rpeak_data: Dict[str, SubjectDataDict] = {}
+        self.rpeak_data: dict[str, SubjectDataDict] = {}
         """Dictionary with R peak data collected during the study.
         If the study consists of multiple study parts each part has its own ``SubjectDataDict``.
         If the study has no individual study parts (only different phases), the name of the one and only study part
         defaults to ``Study`` (to ensure consistent dictionary structure).
 
-        Data in :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` format can be added using
+        Data in :obj:`~biopsykit.utils.dtypes.SubjectDataDict` format can be added using
         :meth:`~biopsykit.protocols.BaseProtocol.add_hr_data`.
         """
 
-        self.hr_results: Dict[str, pd.DataFrame] = {}
+        self.hr_results: dict[str, pd.DataFrame] = {}
         """Dictionary with heart rate results.
 
         Dict keys are the identifiers that are specified when computing results from ``hr_data`` using
         :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_results`.
         """
 
-        self.hr_above_baseline_results: Dict[str, pd.DataFrame] = {}
+        self.hr_above_baseline_results: dict[str, pd.DataFrame] = {}
         """Dictionary with heart rate above baseline results.
 
         Dict keys are the identifiers that are specified when computing results from ``hr_data`` using
         :meth:`~biopsykit.protocols.BaseProtocol.compute_hr_above_baseline`.
         """
 
-        self.hrv_results: Dict[str, pd.DataFrame] = {}
+        self.hrv_results: dict[str, pd.DataFrame] = {}
         """Dictionary with heart rate variability ensemble.
 
         Dict keys are the identifiers that are specified when computing ensemble from ``rpeak_data`` using
         :meth:`~biopsykit.protocols.BaseProtocol.compute_hrv_results`.
         """
 
-        self.hrv_above_baseline_results: Dict[str, pd.DataFrame] = {}
+        self.hrv_above_baseline_results: dict[str, pd.DataFrame] = {}
         """Dictionary with heart rate variability above baseline results.
 
         Dict keys are the identifiers that are specified when computing results from ``rpeak_data`` using
         :meth:`~biopsykit.protocols.BaseProtocol.compute_hrv_above_baseline`.
         """
 
-        self.hr_ensemble: Dict[str, Dict[str, pd.DataFrame]] = {}
+        self.hr_ensemble: dict[str, dict[str, pd.DataFrame]] = {}
         """Dictionary with merged heart rate data for heart rate ensemble plot.
 
 
@@ -232,7 +235,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             heart rate ensemble plot
         """
 
-        self.saliva_plot_params: Dict[str, Any] = kwargs.get("saliva_plot_params", {})
+        self.saliva_plot_params: dict[str, Any] = kwargs.get("saliva_plot_params", {})
         """Plot parameters for customizing the general `saliva plot` for a specific psychological protocol.
 
         See Also
@@ -241,7 +244,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             saliva plot
         """
 
-        self.hr_mean_plot_params: Dict[str, Any] = kwargs.get("hr_mean_plot_params", {})
+        self.hr_mean_plot_params: dict[str, Any] = kwargs.get("hr_mean_plot_params", {})
         """Plot parameters for customizing the general `HR mean plot` for a specific psychological protocol.
 
         See Also
@@ -250,7 +253,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             HR mean plot
         """
 
-        self.hr_ensemble_plot_params: Dict[str, Any] = kwargs.get("hr_ensemble_plot_params", {})
+        self.hr_ensemble_plot_params: dict[str, Any] = kwargs.get("hr_ensemble_plot_params", {})
         """Plot parameters for customizing the general `HR ensemble plot` for a specific psychological protocol.
 
         See Also
@@ -280,17 +283,13 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         """
         if len(self.saliva_data) > 0:
-            return """{}
-            Saliva Type(s): {}
-            Saliva Sample Times: {}
-            Structure: {}
-            """.format(
-                self.name, self.saliva_types, self.sample_times, self.structure
-            )
-        return """{}
-        Structure: {}""".format(
-            self.name, self.structure
-        )
+            return f"""{self.name}
+            Saliva Type(s): {self.saliva_types}
+            Saliva Sample Times: {self.sample_times}
+            Structure: {self.structure}
+            """
+        return f"""{self.name}
+        Structure: {self.structure}"""
 
     def to_file(self, file_path: path_t):
         """Serialize ``Protocol`` object and export as file.
@@ -314,7 +313,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             json.dump(json_dict, fp)
 
     @classmethod
-    def from_file(cls: Type[T], file_path: path_t) -> T:
+    def from_file(cls: type[T], file_path: path_t) -> T:
         """Load serialized ``Protocol`` object from file.
 
         Parameters
@@ -337,28 +336,33 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
     def add_saliva_data(
         self,
-        saliva_data: Union[SalivaRawDataFrame, Dict[str, SalivaRawDataFrame]],
+        saliva_data: Union[SalivaRawDataFrame, dict[str, SalivaRawDataFrame]],
         saliva_type: Optional[Union[str, Sequence[str]]] = None,
-        sample_times: Optional[Union[Sequence[int], Dict[str, Sequence[int]]]] = None,
+        sample_times: Optional[Union[Sequence[int], dict[str, Sequence[int]]]] = None,
         test_times: Optional[Sequence[int]] = None,
+        sample_times_absolute: Optional[bool] = False,
     ):
         """Add saliva data collected during psychological protocol to ``Protocol`` instance.
 
         Parameters
         ----------
-        saliva_data : :obj:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame` or dict
+        saliva_data : :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame` or dict
             saliva data (or dict of such) to be added to this protocol.
         saliva_type : str or list of str, optional
             saliva type (or list of such) of saliva data. Not needed if ``saliva_data`` is a dictionary, then the
             saliva types are inferred from the dictionary keys.
         sample_times : list of int or dict, optional
-            list of sample times in minutes. Sample times are expected to be provided *relative* to the psychological
-            test in the protocol (if present). Per convention, a sample collected **directly before** was collected at
-            time point :math:`t = -1`, a sample collected **directly after** the test was collected at time point
-            :math`t = 0`.
+            list of sample times in minutes. Sample times are either expected to be provided *relative* to the
+            psychological test in the protocol (if present) or as *absolute* sample times. If passed as relative sample
+            times (``sample_times_absolute'' is ``False``), a sample collected **directly before** the test should,
+            per convention, be denoted as :math:`t = -1` while a sample collected **directly after** the test was
+            collected at time point :math`t = 0`.
         test_times : list of int, optional
             list with start and end time of psychological test in minutes. Per convention, the start of the test
             should be at time point :math:`t = 0`. ``test_times`` is also used to compute the **absolute** sample times
+        sample_times_absolute : bool, optional
+            ``True`` if sample times are provided as absolute time points or ``False`` if sample times
+            are provided as relative time points to the psychological test. Default: ``False``
 
         """
         saliva_data = deepcopy(saliva_data)
@@ -372,19 +376,21 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         if saliva_data is not None:
             if not isinstance(sample_times, dict):
-                sample_times = {key: sample_times for key in saliva_type}
+                sample_times = dict.fromkeys(saliva_type, sample_times)
             if not isinstance(saliva_data, dict):
-                saliva_data = {key: saliva_data for key in saliva_type}
-            self.sample_times.update(_get_sample_times(saliva_data, sample_times, self.test_times))
+                saliva_data = dict.fromkeys(saliva_type, saliva_data)
+            self.sample_times.update(
+                _get_sample_times(saliva_data, sample_times, self.test_times, sample_times_absolute)
+            )
             self.saliva_data.update(self._add_saliva_data(saliva_data, saliva_type, self.sample_times))
             self.saliva_types = list(self.saliva_data.keys())
 
     def _add_saliva_data(
         self,
-        data: Union[SalivaRawDataFrame, Dict[str, SalivaRawDataFrame]],
+        data: Union[SalivaRawDataFrame, dict[str, SalivaRawDataFrame]],
         saliva_type: Union[str, Sequence[str]],
-        sample_times: Union[Sequence[int], Dict[str, Sequence[int]]],
-    ) -> Union[SalivaRawDataFrame, Dict[str, SalivaRawDataFrame]]:
+        sample_times: Union[Sequence[int], dict[str, Sequence[int]]],
+    ) -> Union[SalivaRawDataFrame, dict[str, SalivaRawDataFrame]]:
         saliva_data = {}
         if isinstance(data, dict):
             for key, value in data.items():
@@ -399,7 +405,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             except ValidationError as e:
                 raise ValidationError(
                     "'data' is expected to be either a SalivaRawDataFrame or a SalivaMeanSeDataFrame! "
-                    "The validation raised the following error:\n\n{}".format(str(e))
+                    f"The validation raised the following error:\n\n{e!s}"
                 ) from e
         _check_sample_times_match(data, sample_times)
         return data
@@ -414,9 +420,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         Parameters
         ----------
-        hr_data : :obj:`~biopsykit.utils.datatype_helper.HeartRateSubjectDataDict`
+        hr_data : :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`
             dictionary with heart rate data of all subjects collected during the protocol.
-        rpeak_data : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`, optional
+        rpeak_data : :obj:`~biopsykit.utils.dtypes.SubjectDataDict`, optional
             dictionary with rpeak data of all subjects collected during the protocol. Needed if heart rate
             variability should be computed.
         study_part : str, optional
@@ -444,7 +450,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         mean_per_subject: Optional[bool] = True,
         add_conditions: Optional[bool] = False,
         reindex: Optional[bool] = False,
-        params: Optional[Dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
     ):
         """Compute heart rate data results from one study part.
 
@@ -487,8 +493,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             Default: ``True``
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         reindex : bool, optional
@@ -540,7 +546,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self.hr_results[result_id] = data_dict
 
     @staticmethod
-    def _reindex_df(data: pd.DataFrame, param: Dict[str, Any]) -> pd.DataFrame:
+    def _reindex_df(data: pd.DataFrame, param: dict[str, Any]) -> pd.DataFrame:
         if not isinstance(param, dict):
             raise TypeError(
                 "If 'reindex' is 'True', a dictionary with dataframe levels as keys "
@@ -556,10 +562,10 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         study_part: Optional[str] = None,
         select_phases: Optional[bool] = False,
         split_into_subphases: Optional[bool] = False,
-        dict_levels: Sequence[str] = None,
-        hrv_params: Optional[Dict[str, Any]] = None,
+        dict_levels: Optional[Sequence[str]] = None,
+        hrv_params: Optional[dict[str, Any]] = None,
         add_conditions: Optional[bool] = False,
-        params: Optional[Dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
     ):
         """Compute heart rate variability ensemble from one study part.
 
@@ -595,8 +601,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             See :func:`~biopsykit.signals.ecg.EcgProcessor.hrv_process` for an overview on available parameters.
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         params : dict, optional
@@ -635,7 +641,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self.hrv_results[result_id] = hrv_result
 
     def _compute_hrv_dict(
-        self, rpeak_dict: Dict[str, Any], hrv_params: Dict[str, Any], dict_levels: Sequence[str]
+        self, rpeak_dict: dict[str, Any], hrv_params: dict[str, Any], dict_levels: Sequence[str]
     ) -> pd.DataFrame:
         result_dict = {}
         for key, value in tqdm(list(rpeak_dict.items()), desc=dict_levels[0]):
@@ -658,7 +664,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         cut_phases: Optional[bool] = True,
         merge_dict: Optional[bool] = True,
         add_conditions: Optional[bool] = False,
-        params: Dict[str, Any] = None,
+        params: Optional[dict[str, Any]] = None,
     ):
         """Compute heart rate ensemble data from one study part.
 
@@ -696,14 +702,14 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             ``True`` to cut time-series data to shortest duration of a subject in each phase, ``False`` otherwise.
             Default: ``True``
         merge_dict : bool, optional
-            ``True`` to convert :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into
-            :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`, i.e., merge dictionary data from
+            ``True`` to convert :obj:`~biopsykit.utils.dtypes.StudyDataDict` into
+            :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`, i.e., merge dictionary data from
             individual subjects into one dataframe for each phase.
             Default: ``True``
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         params : dict, optional
@@ -758,7 +764,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         select_phases: Optional[bool] = False,
         split_into_subphases: Optional[bool] = False,
         add_conditions: Optional[bool] = False,
-        params: Optional[Dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
     ):
         """Compute the relative amount of heart rate above a specified baseline.
 
@@ -791,8 +797,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             Default: ``False``
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         params : dict, optional
@@ -837,7 +843,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         split_into_subphases: Optional[bool] = False,
         add_conditions: Optional[bool] = False,
         hrv_columns: Optional[Sequence[str]] = None,
-        params: Optional[Dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
     ):
         """Compute the relative amount of heart rate variability above a specified baseline.
 
@@ -854,7 +860,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         baseline_phase : str
             string indicating the name of the phase that should be used as baseline for computing the relative amount
             above the baseline.
-        continuous_hrv_data : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+        continuous_hrv_data : :obj:`~biopsykit.utils.dtypes.SubjectDataDict`
             dictionary with continuous HRV of all subjects collected during the protocol.
         select_phases : bool, optional
             ``True`` to only select specific phases for further processing, ``False`` to use all data from
@@ -868,8 +874,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             Default: ``False``
         add_conditions : bool, optional
             ``True`` to add subject conditions to dataframe data. Information on which subject belongs to which
-            condition can be provided as :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
-            :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` in the ``params`` dictionary
+            condition can be provided as :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` or
+            :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` in the ``params`` dictionary
             (key: ``add_conditions``).
             Default: ``False``
         hrv_columns: list of str
@@ -907,7 +913,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self.hrv_above_baseline_results[result_id] = result_data
 
     @staticmethod
-    def _compute_hr_above_baseline(data_dict: Dict[str, Union[Dict[str, pd.DataFrame], pd.DataFrame]]):
+    def _compute_hr_above_baseline(data_dict: dict[str, Union[dict[str, pd.DataFrame], pd.DataFrame]]):
         result_dict = {}
         for subject_id, hr_data_dict in data_dict.items():
             dict_hr = {}
@@ -927,15 +933,15 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
     @staticmethod
     def _compute_hrv_above_baseline(
-        data_dict: Dict[str, Union[Dict[str, pd.DataFrame], pd.DataFrame]],
-        data_dict_baseline: Dict[str, Union[Dict[str, pd.DataFrame], pd.DataFrame]],
+        data_dict: dict[str, Union[dict[str, pd.DataFrame], pd.DataFrame]],
+        data_dict_baseline: dict[str, Union[dict[str, pd.DataFrame], pd.DataFrame]],
         hrv_columns: Optional[Sequence[str]] = None,
     ):
         result_dict = {}
         for subject_id, hrv_data_dict in data_dict.items():
             dict_hrv = {}
             hrv_baseline = data_dict_baseline[subject_id]
-            hrv_baseline = list(hrv_baseline.values())[0]
+            hrv_baseline = next(iter(hrv_baseline.values()))
             if hrv_columns is None:
                 hrv_columns = hrv_baseline.columns
             hrv_baseline = hrv_baseline[hrv_columns]
@@ -1068,7 +1074,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """
         self._export_results(base_path, prefix, self.hrv_above_baseline_results)
 
-    def _export_results(self, base_path: path_t, prefix: str, result_dict: Dict[str, pd.DataFrame]):
+    def _export_results(self, base_path: path_t, prefix: str, result_dict: dict[str, pd.DataFrame]):
         # ensure pathlib
         base_path = Path(base_path)
         if not base_path.is_dir():
@@ -1079,7 +1085,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             file_name = f"{prefix}_{key}.csv"
             data.to_csv(base_path.joinpath(file_name))
 
-    def _export_ensemble(self, base_path: path_t, prefix: str, result_dict: Dict[str, Dict[str, pd.DataFrame]]):
+    def _export_ensemble(self, base_path: path_t, prefix: str, result_dict: dict[str, dict[str, pd.DataFrame]]):
         # ensure pathlib
         base_path = Path(base_path)
         if not base_path.is_dir():
@@ -1110,14 +1116,14 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """
         return self.hrv_results.get(result_id, None)
 
-    def add_hr_ensemble(self, ensemble_id: str, ensemble: Dict[str, pd.DataFrame]):
+    def add_hr_ensemble(self, ensemble_id: str, ensemble: dict[str, pd.DataFrame]):
         """Add existing heart rate ensemble data.
 
         Parameters
         ----------
         ensemble_id : str
             identifier of ensemble parameters used to store dictionary in ``hr_ensemble`` dictionary
-        ensemble : :class:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
+        ensemble : :class:`~biopsykit.utils.dtypes.MergedStudyDataDict`
             ensemble data as ``MergedStudyDataDict``
 
         """
@@ -1146,7 +1152,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self,
         saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
         **kwargs,
-    ) -> Optional[Tuple[plt.Figure, plt.Axes]]:
+    ) -> Optional[tuple[plt.Figure, plt.Axes]]:
         """Plot saliva data during psychological protocol as mean ± standard error.
 
         Parameters
@@ -1221,9 +1227,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         x: str,
         saliva_type: str,
         feature: Optional[str] = None,
-        stats_kwargs: Optional[Dict] = None,
+        stats_kwargs: Optional[dict] = None,
         **kwargs,
-    ) -> Tuple[plt.Figure, plt.Axes]:
+    ) -> tuple[plt.Figure, plt.Axes]:
         """Draw a boxplot with significance brackets, specifically designed for saliva features.
 
         This is a wrapper of :func:`~biopsykit.protocols.plotting.saliva_feature_boxplot` that directly uses the
@@ -1268,18 +1274,18 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def saliva_multi_feature_boxplot(
         data: SalivaFeatureDataFrame,
         saliva_type: str,
-        features: Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]],
+        features: Union[Sequence[str], dict[str, Union[str, Sequence[str]]]],
         hue: Optional[str] = None,
-        stats_kwargs: Optional[Dict] = None,
+        stats_kwargs: Optional[dict] = None,
         **kwargs,
-    ) -> Tuple[plt.Figure, Iterable[plt.Axes]]:
+    ) -> tuple[plt.Figure, Iterable[plt.Axes]]:
         """Draw multiple features as boxplots with significance brackets, specifically designed for saliva features.
 
         This is a wrapper of :func:`~biopsykit.protocols.plotting.saliva_multi_feature_boxplot`.
 
         Parameters
         ----------
-        data : :class:`~biopsykit.utils.datatype_helper.SalivaFeatureDataFrame`
+        data : :class:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame`
             saliva feature dataframe
         saliva_type : str
             type of saliva data to plot
@@ -1316,8 +1322,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         return plot.saliva_multi_feature_boxplot(data, saliva_type, features, hue, stats_kwargs, **kwargs)
 
     def hr_ensemble_plot(
-        self, ensemble_id: str, subphases: Optional[Dict[str, Dict[str, int]]] = None, **kwargs
-    ) -> Tuple[plt.Figure, plt.Axes]:
+        self, ensemble_id: str, subphases: Optional[dict[str, dict[str, int]]] = None, **kwargs
+    ) -> tuple[plt.Figure, plt.Axes]:
         r"""Draw heart rate ensemble plot.
 
         Parameters
@@ -1389,7 +1395,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self,
         result_id: str,
         **kwargs,
-    ) -> Tuple[plt.Figure, plt.Axes]:
+    ) -> tuple[plt.Figure, plt.Axes]:
         r"""Plot course of heart rate as mean ± standard error over phases (and subphases) of a psychological protocol.
 
         The correct plot is automatically inferred from the provided data:

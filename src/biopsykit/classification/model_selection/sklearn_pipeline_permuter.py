@@ -1,21 +1,19 @@
 """Module for systematically evaluating different combinations of sklearn pipelines."""
+
 import functools
 import pickle
 import re
+from collections.abc import Sequence
 from copy import deepcopy
 from inspect import getmembers, signature
 from itertools import product
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
 import sklearn.metrics
-from biopsykit.classification.model_selection import nested_cv_param_search
-from biopsykit.classification.utils import _PipelineWrapper, merge_nested_dicts
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
-from biopsykit.utils._types import path_t, str_t
 from joblib import Memory
 from numpy.random import RandomState
 from sklearn.base import BaseEstimator, clone
@@ -23,6 +21,11 @@ from sklearn.model_selection import BaseCrossValidator
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
 from typing_extensions import Self
+
+from biopsykit.classification.model_selection import nested_cv_param_search
+from biopsykit.classification.utils import _PipelineWrapper, merge_nested_dicts
+from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils._types_internal import path_t, str_t
 
 __all__ = ["SklearnPipelinePermuter"]
 
@@ -47,6 +50,7 @@ clf_map = {
     "StandardScaler": "Standard",
     "SelectKBest": "SkB",
     "RFE": "RFE",
+    "SelectFromModel": "SFM",
     "GaussianNB": "NB",
     "KNeighborsClassifier": "kNN",
     "DecisionTreeClassifier": "DT",
@@ -62,9 +66,9 @@ class SklearnPipelinePermuter:
 
     def __init__(
         self,
-        model_dict: Optional[Dict[str, Dict[str, BaseEstimator]]] = None,
-        param_dict: Optional[Dict[str, Optional[Union[Sequence[Dict[str, Any]], Dict[str, Any]]]]] = None,
-        hyper_search_dict: Optional[Dict[str, Dict[str, Any]]] = None,
+        model_dict: Optional[dict[str, dict[str, BaseEstimator]]] = None,
+        param_dict: Optional[dict[str, Optional[Union[Sequence[dict[str, Any]], dict[str, Any]]]]] = None,
+        hyper_search_dict: Optional[dict[str, dict[str, Any]]] = None,
         random_state: Optional[int] = None,
     ):
         """Class for systematically evaluating different sklearn pipeline combinations.
@@ -166,20 +170,20 @@ class SklearnPipelinePermuter:
         >>> pipeline_permuter.fit(X, y, outer_cv=KFold(), inner_cv=KFold())
 
         """
-        self.models: Dict[str, Dict[str, BaseEstimator]] = {}
+        self.models: dict[str, dict[str, BaseEstimator]] = {}
         """Dictionary with pipeline steps and the different transformers/estimators per step."""
 
-        self.params: Dict[str, Optional[Union[Sequence[Dict[str, Any]], Dict[str, Any]]]] = {}
+        self.params: dict[str, Optional[Union[Sequence[dict[str, Any]], dict[str, Any]]]] = {}
         """Dictionary with parameter sets to test for the different transformers/estimators per pipeline step."""
 
-        self.model_combinations: Sequence[Tuple[Tuple[str, str], ...]] = []
+        self.model_combinations: Sequence[tuple[tuple[str, str], ...]] = []
         """List of model combinations, i.e. permutations of the different transformers/estimators for
         each pipeline step."""
 
-        self.hyper_search_dict: Dict[str, Dict[str, Any]] = {}
+        self.hyper_search_dict: dict[str, dict[str, Any]] = {}
         """Dictionary specifying the selected hyperparameter search method for each estimator."""
 
-        self.param_searches: Dict[Tuple[str, str], Dict[str, Any]] = {}
+        self.param_searches: dict[tuple[str, str], dict[str, Any]] = {}
         """Dictionary with parameter search results for each pipeline step combination."""
 
         self.results: Optional[pd.DataFrame] = None
@@ -227,7 +231,7 @@ class SklearnPipelinePermuter:
         self.params = param_dict
         self.model_combinations = model_combinations
 
-    def _initialize_models(self, model_dict: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    def _initialize_models(self, model_dict: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
         if self.random_state is None:
             return model_dict
         for _k, v in model_dict.items():
@@ -261,7 +265,7 @@ class SklearnPipelinePermuter:
 
     @classmethod
     def from_csv(cls, file_path: path_t, num_pipeline_steps: Optional[int] = 3) -> Self:
-        """Create a new ``SklearnPipelinePermute`` instance from a csv file with exported results from parameter search.
+        """Create a new ``SklearnPipelinePermuter`` instance from a csv file with results from parameter search.
 
         Parameters
         ----------
@@ -309,9 +313,9 @@ class SklearnPipelinePermuter:
             Training vector, where `n_samples` is the number of samples and `n_features` is the number of features.
         y : array-like of shape (`n_samples`, `n_output`) or (`n_samples`,)
             Target (i.e., class labels) relative to X for classification or regression.
-        outer_cv : `CV splitter`_
+        outer_cv :
             Cross-validation object determining the cross-validation splitting strategy of the outer cross-validation.
-        inner_cv : `CV splitter`_
+        inner_cv :
             Cross-validation object determining the cross-validation splitting strategy of the hyperparameter search.
         scoring : str, optional
             A str specifying the scoring metric to use for evaluation.
@@ -452,9 +456,9 @@ class SklearnPipelinePermuter:
             Training vector, where `n_samples` is the number of samples and `n_features` is the number of features.
         y : array-like of shape (`n_samples`, `n_output`) or (`n_samples`,)
             Target (i.e., class labels) relative to X for classification or regression.
-        outer_cv : `CV splitter`_
+        outer_cv :
             Cross-validation object determining the cross-validation splitting strategy of the outer cross-validation.
-        inner_cv : `CV splitter`_
+        inner_cv :
             Cross-validation object determining the cross-validation splitting strategy of the hyperparameter search.
         file_path : :class:`pathlib.Path` or str
             path to pickle file
@@ -674,8 +678,10 @@ class SklearnPipelinePermuter:
 
         """
         score_results = self.pipeline_score_results()
+        cols_scoring = [col for col in score_results.columns if any(c for c in ["test", "train"] if c in col)]
         score_summary_mean = (
-            score_results.groupby(score_results.index.names[:-1])
+            score_results[cols_scoring]
+            .groupby(score_results.index.names[:-1])
             .agg(["mean", "std"])
             .sort_values(by=(f"mean_test_{self.refit}", "mean"), ascending=False)
         )
@@ -715,18 +721,18 @@ class SklearnPipelinePermuter:
 
     @staticmethod
     def _check_missing_params(
-        model_dict: Dict[str, Dict[str, BaseEstimator]],
-        param_dict: Dict[str, Optional[Union[Sequence[Dict[str, Any]], Dict[str, Any]]]],
+        model_dict: dict[str, dict[str, BaseEstimator]],
+        param_dict: dict[str, Optional[Union[Sequence[dict[str, Any]], dict[str, Any]]]],
     ):
-        for category in model_dict:
-            if not set(model_dict[category].keys()).issubset(set(param_dict.keys())):
-                missing_params = list(set(model_dict[category].keys()) - set(param_dict.keys()))
+        for _category, estimator_dict in model_dict.items():
+            if not set(estimator_dict.keys()).issubset(set(param_dict.keys())):
+                missing_params = list(set(estimator_dict.keys()) - set(param_dict.keys()))
                 raise ValueError(f"Some estimators are missing parameters: {missing_params}")
 
     def metric_summary_to_latex(
         self,
         data: Optional[pd.DataFrame] = None,
-        metrics: Sequence[str] = None,
+        metrics: Optional[Sequence[str]] = None,
         pipeline_steps: Optional[Sequence[str]] = None,
         si_table_format: Optional[str] = None,
         highlight_best: Optional[Union[str, bool]] = None,
@@ -862,7 +868,7 @@ class SklearnPipelinePermuter:
         Returns
         -------
         :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter`
-            ``SklearnPipelinePermuter` instance
+            ``SklearnPipelinePermuter`` instance
 
         """
         file_path = Path(file_path)
@@ -872,9 +878,9 @@ class SklearnPipelinePermuter:
 
     def update_permuter(
         self,
-        model_dict: Optional[Dict[str, Dict[str, BaseEstimator]]] = None,
-        param_dict: Optional[Dict[str, Any]] = None,
-        hyper_search_dict: Optional[Dict[str, Dict[str, Any]]] = None,
+        model_dict: Optional[dict[str, dict[str, BaseEstimator]]] = None,
+        param_dict: Optional[dict[str, Any]] = None,
+        hyper_search_dict: Optional[dict[str, dict[str, Any]]] = None,
     ) -> Self:
         """Update the ``SklearnPipelinePermuter`` instance with new model and parameter dictionaries.
 

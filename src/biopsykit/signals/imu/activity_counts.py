@@ -1,15 +1,17 @@
 """Module for generating Activity Counts from raw acceleration signals."""
+
 import datetime
 from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 import pytz
-from biopsykit.utils._types import arr_t
-from biopsykit.utils.array_handling import add_datetime_index, downsample, sanitize_input_nd
-from biopsykit.utils.datatype_helper import is_acc1d_dataframe, is_acc3d_dataframe
-from biopsykit.utils.time import tz
 from scipy import signal
+
+from biopsykit.utils._types_internal import arr_t
+from biopsykit.utils.array_handling import add_datetime_index, downsample, sanitize_input_nd
+from biopsykit.utils.dtypes import is_acc1d_dataframe, is_acc3d_dataframe
+from biopsykit.utils.time import tz
 
 
 class ActivityCounts:
@@ -180,6 +182,6 @@ class ActivityCounts:
         arr = self._digitize_8bit(arr)
         arr = self._accumulate_second_bins(arr)
         if start_idx is not None:
-            arr = add_datetime_index(arr, start_idx, 1 / 60, column_name=["activity_counts"])
+            arr = add_datetime_index(arr, start_idx, 1, column_name=["activity_counts"])
 
         return arr

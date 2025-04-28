@@ -4,6 +4,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from nilspodlib import Dataset
+from pandas._testing import assert_frame_equal, assert_index_equal
+from pytz import UnknownTimeZoneError
+
 from biopsykit.io import (
     convert_time_log_datetime,
     load_questionnaire_data,
@@ -12,9 +16,6 @@ from biopsykit.io import (
 )
 from biopsykit.io.io import load_time_log
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError
-from nilspodlib import Dataset
-from pandas._testing import assert_frame_equal, assert_index_equal
-from pytz import UnknownTimeZoneError
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data")
 
@@ -26,7 +27,7 @@ def does_not_raise():
 
 def time_log_no_index():
     df = pd.DataFrame(
-        columns=["subject", "condition", "Baseline", "Intervention", "Stress", "Recovery", "End"], index=range(0, 2)
+        columns=["subject", "condition", "Baseline", "Intervention", "Stress", "Recovery", "End"], index=range(2)
     )
     return df
 
@@ -134,9 +135,9 @@ def questionnaire_data_replace_missing_remove_nan():
 
 def result_dict_correct():
     return {
-        "Vp01": pd.DataFrame(columns=["data"], index=pd.Index(range(0, 2), name="time")),
-        "Vp02": pd.DataFrame(columns=["data"], index=pd.Index(range(0, 2), name="time")),
-        "Vp03": pd.DataFrame(columns=["data"], index=pd.Index(range(0, 2), name="time")),
+        "Vp01": pd.DataFrame(columns=["data"], index=pd.Index(range(2), name="time")),
+        "Vp02": pd.DataFrame(columns=["data"], index=pd.Index(range(2), name="time")),
+        "Vp03": pd.DataFrame(columns=["data"], index=pd.Index(range(2), name="time")),
     }
 
 
@@ -417,7 +418,7 @@ class TestIoIo:
                 None,
                 does_not_raise(),
             ),
-            (time_log_correct(), None, pd.DataFrame(index=range(0, 10)), None, None, pytest.raises(ValueError)),
+            (time_log_correct(), None, pd.DataFrame(index=range(10)), None, None, pytest.raises(ValueError)),
             (
                 time_log_correct(),
                 None,
@@ -427,7 +428,6 @@ class TestIoIo:
                 does_not_raise(),
             ),
             (time_log_correct(), None, None, "hello", None, pytest.raises(ValueError)),
-            (time_log_correct(), None, None, "12.02.2021", None, does_not_raise()),
             (time_log_correct(), None, None, "12.02.2021", None, does_not_raise()),
             (time_log_correct(), None, None, "12/02/2021", "Europe/Berlin", does_not_raise()),
             (time_log_correct(), None, None, "12/02/2021", "test", pytest.raises(UnknownTimeZoneError)),

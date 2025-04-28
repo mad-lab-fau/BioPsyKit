@@ -1,25 +1,28 @@
 """Module containing utility functions for manipulating and processing questionnaire data."""
+
 import re
 import warnings
+from collections.abc import Sequence
 from inspect import getmembers, isfunction
-from typing import Any, Dict, Literal, Optional, Sequence, Tuple, Union
+from typing import Any, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_len_list, _assert_value_range
 from biopsykit.utils.dataframe_handling import wide_to_long as wide_to_long_utils
 
 __all__ = [
     "bin_scale",
     "compute_scores",
-    "crop_scale",
     "convert_scale",
+    "crop_scale",
     "find_cols",
-    "zero_pad_columns",
+    "get_supported_questionnaires",
     "invert",
     "to_idx",
     "wide_to_long",
-    "get_supported_questionnaires",
+    "zero_pad_columns",
 ]
 
 
@@ -30,7 +33,7 @@ def find_cols(
     ends_with: Optional[str] = None,
     contains: Optional[str] = None,
     zero_pad_numbers: Optional[bool] = True,
-) -> Tuple[pd.DataFrame, Sequence[str]]:
+) -> tuple[pd.DataFrame, Sequence[str]]:
     r"""Find columns in dataframe that match a specific pattern.
 
     This function is useful to find all columns that belong to a questionnaire. Column names can be filtered based on
@@ -161,7 +164,7 @@ def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Opt
     nums = [c[0] if len(c) > 0 else "" for c in nums]
     if len(nums) == 0:
         return pd.DataFrame()
-    zfill_num = max(max(list(map(len, nums))), 2)
+    zfill_num = max(*list(map(len, nums)), 2)
 
     data.columns = [re.sub(r"(\d+)$", lambda m: m.group(1).zfill(zfill_num), c) for c in data.columns]
 
@@ -300,8 +303,8 @@ def _invert_dataframe(
 
 def _invert_subscales(
     data: pd.DataFrame,
-    subscales: Dict[str, Sequence[Union[str, int]]],
-    idx_dict: Dict[str, Sequence[int]],
+    subscales: dict[str, Sequence[Union[str, int]]],
+    idx_dict: dict[str, Sequence[int]],
     score_range: Sequence[int],
 ) -> pd.DataFrame:
     """Invert questionnaire scores from a dictionary of questionnaire subscales.
@@ -518,8 +521,13 @@ def bin_scale(
 
     if not inplace:
         data = data.copy()
+        data = data.astype("Int64")
+    else:
+        # shady inplace dtype conversion
+        for col in data.columns:
+            data[col] = data[col].astype("Int64")
 
-    # set "labels" argument to False, but only if is wasn't specified by the user yet
+    # set "labels" argument to False, but only if it wasn't specified by the user yet
     kwargs["labels"] = kwargs.get("labels", False)
     if isinstance(data, pd.Series):
         bins_c = _get_bins(data, bins, None, first_min, last_max)
@@ -531,15 +539,15 @@ def bin_scale(
     for col in cols:
         bins_c = _get_bins(data, bins, col, first_min, last_max)
         if isinstance(col, int):
-            c = pd.cut(data.iloc[:, col], bins=bins_c, **kwargs)
+            c = pd.cut(data.iloc[:, col], bins=bins_c, **kwargs).astype("Int64")
             data.iloc[:, col] = c
         else:
-            c = pd.cut(data.loc[:, col], bins=bins_c, **kwargs)
+            c = pd.cut(data.loc[:, col], bins=bins_c, **kwargs).astype("Int64")
             data.loc[:, col] = c
 
     if inplace:
         return None
-    return data
+    return data.astype("Int64")
 
 
 def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
@@ -581,8 +589,8 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
 
 def compute_scores(
     data: pd.DataFrame,
-    quest_dict: Dict[str, Union[Sequence[str], pd.Index]],
-    quest_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+    quest_dict: dict[str, Union[Sequence[str], pd.Index]],
+    quest_kwargs: Optional[dict[str, dict[str, Any]]] = None,
 ) -> pd.DataFrame:
     """Compute questionnaire scores from dataframe.
 
@@ -641,17 +649,18 @@ def compute_scores(
 
         if score not in quest_funcs:
             raise ValueError(
-                "Unknown questionnaire '{}'! Call "
+                f"Unknown questionnaire '{score}'! Call "
                 "'biopsykit.questionnaires.utils.get_supported_questionnaires()' "
-                "to get a list of all supported questionnaires.".format(score)
+                "to get a list of all supported questionnaires."
             )
         kwargs = quest_kwargs.get(score_orig, {})
+
         try:
             df = quest_funcs[score](data[columns], **kwargs)
         except TypeError as e:
             raise TypeError(
-                "Error computing questionnaire '{}'. The computation failed with the following "
-                "error: \n\n{}.".format(score, str(e))
+                f"Error computing questionnaire '{score}'. The computation failed with the following "
+                f"error: \n\n{e!s}."
             ) from e
 
         if suffix is not None:
@@ -661,7 +670,7 @@ def compute_scores(
     return df_scores
 
 
-def get_supported_questionnaires() -> Dict[str, str]:
+def get_supported_questionnaires() -> dict[str, str]:
     """List all supported (i.e., implemented) questionnaires.
 
     Returns
@@ -689,9 +698,9 @@ def get_supported_questionnaires() -> Dict[str, str]:
 def _compute_questionnaire_subscales(
     data: pd.DataFrame,
     score_name: str,
-    subscales: Dict[str, Sequence[Union[str, int]]],
+    subscales: dict[str, Sequence[Union[str, int]]],
     agg_type: Optional[Literal["sum", "mean"]] = "sum",
-) -> Dict[str, pd.Series]:
+) -> dict[str, pd.Series]:
     """Compute questionnaire subscales (helper function).
 
     Parameters
@@ -764,7 +773,6 @@ def _get_bins(
     first_min: Optional[bool] = False,
     last_max: Optional[bool] = False,
 ) -> Union[int, Sequence[float]]:
-
     if isinstance(bins, (int, pd.IntervalIndex)):
         return bins
 

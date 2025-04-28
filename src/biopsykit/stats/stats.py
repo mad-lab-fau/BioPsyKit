@@ -1,13 +1,16 @@
 """Module for setting up a pipeline for statistical analysis."""
+
 import re
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Any, Literal, Optional, Union
 
 import pandas as pd
 import pingouin as pg
+
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_index_levels
-from biopsykit.utils._types import path_t, str_t
+from biopsykit.utils._types_internal import path_t, str_t
 
 MAP_STAT_TESTS = {
     "normality": pg.normality,
@@ -102,7 +105,7 @@ _eff_cols = ["np2", "ng2", "n2", "hedges", "cohen", "CLES"]
 class StatsPipeline:
     """Class to set up a pipeline for statistical analysis."""
 
-    def __init__(self, steps: Sequence[Tuple[str, str]], params: Dict[str, str], **kwargs):
+    def __init__(self, steps: Sequence[tuple[str, str]], params: dict[str, str], **kwargs):
         """Class to set up a pipeline for statistical analysis.
 
         The purpose of such a pipeline is to assemble several steps of a typical statistical analysis procedure while
@@ -188,14 +191,14 @@ class StatsPipeline:
         self.steps = steps
         self.params = params
         self.data: Optional[pd.DataFrame] = None
-        self.results: Dict[str, pd.DataFrame] = {}
+        self.results: dict[str, pd.DataFrame] = {}
         self.category_steps = {}
-        self.round = kwargs.get("round", {col: 4 for col in _sig_cols})
+        self.round = kwargs.get("round", dict.fromkeys(_sig_cols, 4))
         for step in self.steps:
             self.category_steps.setdefault(step[0], [])
             self.category_steps[step[0]].append(step[1])
 
-    def apply(self, data: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def apply(self, data: pd.DataFrame) -> dict[str, pd.DataFrame]:
         """Apply statistical analysis pipeline on input data.
 
         Parameters
@@ -251,7 +254,7 @@ class StatsPipeline:
         return pipeline_results
 
     @staticmethod
-    def _get_grouper_variable(general_params: Dict[str, str], specific_params: Dict[str, str]):
+    def _get_grouper_variable(general_params: dict[str, str], specific_params: dict[str, str]):
         grouper_tmp = []
         if "groupby" in specific_params:
             grouper_tmp = specific_params.pop("groupby")
@@ -264,7 +267,7 @@ class StatsPipeline:
         return grouper_tmp
 
     @staticmethod
-    def _get_specific_params_prep(grouper: List[str], general_params: Dict[str, str], specific_params: Dict[str, str]):
+    def _get_specific_params_prep(grouper: list[str], general_params: dict[str, str], specific_params: dict[str, str]):
         if "within" in general_params and "between" in general_params:
             grouper.append(general_params["within"])
             specific_params["group"] = general_params["between"]
@@ -273,7 +276,7 @@ class StatsPipeline:
 
         return grouper, specific_params
 
-    def results_cat(self, category: STATS_CATEGORY) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    def results_cat(self, category: STATS_CATEGORY) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
         """Return results for pipeline category.
 
         This function filters results from steps belonging to the specified category and returns them.
@@ -309,7 +312,7 @@ class StatsPipeline:
         display(self._param_df().T)
         display(self._result_df().T)
 
-    def display_results(self, sig_only: Optional[Union[str, bool, Sequence[str], Dict[str, bool]]] = None, **kwargs):
+    def display_results(self, sig_only: Optional[Union[str, bool, Sequence[str], dict[str, bool]]] = None, **kwargs):
         """Display formatted results of statistical analysis pipeline.
 
         This function displays the results of the statistical analysis pipeline. The output is Markdown-formatted and
@@ -365,19 +368,19 @@ class StatsPipeline:
         else:
             self._display_results(sig_only, **kwargs)
 
-    def _get_sig_only(self, sig_only: Optional[Union[str, bool, Sequence[str], Dict[str, bool]]] = None):
+    def _get_sig_only(self, sig_only: Optional[Union[str, bool, Sequence[str], dict[str, bool]]] = None):
         if sig_only is None:
             sig_only = {}
         if isinstance(sig_only, str):
             sig_only = True if sig_only == "all" else [sig_only]
         if isinstance(sig_only, bool):
-            sig_only = {cat: sig_only for cat in self.category_steps}
+            sig_only = dict.fromkeys(self.category_steps, sig_only)
         if isinstance(sig_only, list):
             sig_only = {cat: cat in sig_only for cat in self.category_steps}
         return sig_only
 
     def _display_results(
-        self, sig_only: Dict[str, bool], groupby: Optional[str] = None, group_key: Optional[str] = None, **kwargs
+        self, sig_only: dict[str, bool], groupby: Optional[str] = None, group_key: Optional[str] = None, **kwargs
     ):
         try:
             from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
@@ -438,7 +441,19 @@ class StatsPipeline:
             raise ValueError(f"No results for category {stats_category}!")
         if "Contrast" in results.columns:
             if stats_effect_type == "interaction":
-                key = f"{self.params['within']} * {self.params['between']}"
+                if "between" in self.params and "within" in self.params:
+                    # interaction
+                    effect1 = self.params["within"]
+                    effect2 = self.params["between"]
+                elif "between" in self.params:
+                    # two-level between
+                    effect1 = self.params["between"][0]
+                    effect2 = self.params["between"][1]
+                else:
+                    # two-level within
+                    effect1 = self.params["within"][0]
+                    effect2 = self.params["within"][1]
+                key = f"{effect1} * {effect2}"
             else:
                 key = self.params[stats_effect_type]
 
@@ -480,12 +495,12 @@ class StatsPipeline:
         stats_effect_type: STATS_EFFECT_TYPE,
         stats_type: Optional[STATS_EFFECT_TYPE] = None,
         plot_type: Optional[PLOT_TYPE] = "single",
-        features: Optional[Union[str, Sequence[str], Dict[str, Union[str, Sequence[str]]]]] = None,
+        features: Optional[Union[str, Sequence[str], dict[str, Union[str, Sequence[str]]]]] = None,
         x: Optional[str] = None,
         subplots: Optional[bool] = False,
     ) -> Union[
-        Tuple[Sequence[Tuple[str, str]], Sequence[float]],
-        Tuple[Dict[str, Sequence[Tuple[Tuple[str, str], Tuple[str, str]]]], Dict[str, Sequence[float]]],
+        tuple[Sequence[tuple[str, str]], Sequence[float]],
+        tuple[dict[str, Sequence[tuple[tuple[str, str], tuple[str, str]]]], dict[str, Sequence[float]]],
     ]:
         """Generate *significance brackets* used indicate statistical significance in boxplots.
 
@@ -561,8 +576,8 @@ class StatsPipeline:
     def _sig_brackets_dict(
         box_pairs: pd.Series,
         pvalues: pd.Series,
-        features: Union[Sequence, Dict[str, Union[str, Sequence[str]]]],
-    ) -> Tuple[Dict[str, Sequence[Tuple[Tuple[str, str], Tuple[str, str]]]], Dict[str, Sequence[float]]]:
+        features: Union[Sequence, dict[str, Union[str, Sequence[str]]]],
+    ) -> tuple[dict[str, Sequence[tuple[tuple[str, str], tuple[str, str]]]], dict[str, Sequence[float]]]:
         dict_box_pairs = {}
         dict_pvalues = {}
         if features is None:
@@ -600,7 +615,7 @@ class StatsPipeline:
     def stats_to_latex(
         self,
         stats_test: Optional[str] = None,
-        index: Optional[Union[Tuple, str]] = None,
+        index: Optional[Union[tuple, str]] = None,
         data: Optional[pd.Series] = None,
     ) -> str:
         """Generate LaTeX output from statistical results.
@@ -688,8 +703,8 @@ class StatsPipeline:
         unstack_levels: Optional[str_t] = None,
         collapse_dof: Optional[bool] = True,
         si_table_format: Optional[str] = None,
-        index_kws: Optional[Dict[str, Any]] = None,
-        column_kws: Optional[Dict[str, Any]] = None,
+        index_kws: Optional[dict[str, Any]] = None,
+        column_kws: Optional[dict[str, Any]] = None,
         show_a_b: Optional[bool] = False,
         **kwargs,
     ) -> str:
@@ -812,7 +827,7 @@ class StatsPipeline:
         if len(data.index.names) > 1:
             data.index = data.index.droplevel(-1)
         data = data.assign(**{pcol: data.loc[:, pcol].apply(self._format_pvals_stars)})
-        data = data.applymap(self._format_number)
+        data = data.map(self._format_number)
 
         if unstack_levels is not None:
             data = data.stack()
@@ -917,7 +932,7 @@ class StatsPipeline:
         return self._filter_sig(stats_data)
 
     @staticmethod
-    def _sanitize_features_input(features: Union[str, Sequence[str], Dict[str, Union[str, Sequence[str]]]]):
+    def _sanitize_features_input(features: Union[str, Sequence[str], dict[str, Union[str, Sequence[str]]]]):
         if isinstance(features, str):
             features = [features]
         if isinstance(features, dict):
@@ -932,7 +947,7 @@ class StatsPipeline:
         self,
         stats_data: pd.DataFrame,
         plot_type: Optional[PLOT_TYPE] = "single",
-        features: Optional[Union[Sequence[str], Dict[str, Union[str, Sequence[str]]]]] = None,
+        features: Optional[Union[Sequence[str], dict[str, Union[str, Sequence[str]]]]] = None,
         x: Optional[str] = None,
     ):
         if features is not None:
@@ -941,6 +956,8 @@ class StatsPipeline:
                 features = list(features.values())
                 features = [item for sublist in features for item in sublist]
             if all(isinstance(feature, str) for feature in features):
+                if isinstance(features, str):
+                    features = [features]
                 stats_data = pd.concat(stats_data.filter(like=f, axis=0) for f in features)
             else:
                 stats_data = stats_data.unstack().loc[features].stack()
@@ -956,9 +973,12 @@ class StatsPipeline:
 
     def _get_stats_data_box_pairs_interaction(self, stats_data: pd.DataFrame):
         stats_data = stats_data.reset_index()
-        stats_data = stats_data[stats_data[self.params["within"]] != "-"]
+
+        within_param = self.params["within"][0] if not isinstance(self.params["within"], str) else self.params["within"]
+
+        stats_data = stats_data[stats_data[within_param] != "-"]
         index = stats_data[self.params.get("groupby", [])]
-        stats_data = stats_data.set_index(self.params["within"])
+        stats_data = stats_data.set_index(within_param)
 
         box_pairs = stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
         if not index.empty:
@@ -988,7 +1008,7 @@ class StatsPipeline:
         return stats_data.apply(lambda row: ((row.name, row["A"]), (row.name, row["B"])), axis=1)
 
     def _display_category(  # pylint:disable=too-many-branches
-        self, category: str, steps: Sequence[str], sig_only: Dict[str, bool], groupby: str, group_key: str
+        self, category: str, steps: Sequence[str], sig_only: dict[str, bool], groupby: str, group_key: str
     ):
         try:
             from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
@@ -1125,13 +1145,13 @@ class StatsPipeline:
 
     @staticmethod
     def _format_latex_table_index(
-        data: pd.DataFrame, index_kws: Dict[str, Any], show_a_b: Optional[bool] = False
+        data: pd.DataFrame, index_kws: dict[str, Any], show_a_b: Optional[bool] = False
     ):  # pylint:disable=too-many-branches
         index_italic = index_kws.get("index_italic", True)
-        index_level_order = index_kws.get("index_level_order", None)
-        index_value_order = index_kws.get("index_value_order", None)
-        index_rename_map = index_kws.get("index_rename_map", None)
-        index_level_names_tex = index_kws.get("index_level_names_tex", None)
+        index_level_order = index_kws.get("index_level_order")
+        index_value_order = index_kws.get("index_value_order")
+        index_rename_map = index_kws.get("index_rename_map")
+        index_level_names_tex = index_kws.get("index_level_names_tex")
 
         if isinstance(data.columns, pd.MultiIndex):
             data.columns.names = [None for _ in data.columns.names]
@@ -1161,11 +1181,11 @@ class StatsPipeline:
         return data
 
     @staticmethod
-    def _format_latex_table_column(data: pd.DataFrame, column_kws: Dict[str, Any]):  # pylint:disable=too-many-branches
-        column_level_order = column_kws.get("column_level_order", None)
-        column_value_order = column_kws.get("column_value_order", None)
-        column_rename_map = column_kws.get("column_rename_map", None)
-        column_level_names_tex = column_kws.get("column_level_names_tex", None)
+    def _format_latex_table_column(data: pd.DataFrame, column_kws: dict[str, Any]):  # pylint:disable=too-many-branches
+        column_level_order = column_kws.get("column_level_order")
+        column_value_order = column_kws.get("column_value_order")
+        column_rename_map = column_kws.get("column_rename_map")
+        column_level_names_tex = column_kws.get("column_level_names_tex")
 
         if column_level_order is not None:
             data = data.reorder_levels(column_level_order, axis=1)
@@ -1185,7 +1205,7 @@ class StatsPipeline:
 
     @staticmethod
     def _apply_index_value_order(
-        data: pd.DataFrame, index_value_order: Union[Sequence[str], Dict[str, Sequence[str]]]
+        data: pd.DataFrame, index_value_order: Union[Sequence[str], dict[str, Sequence[str]]]
     ) -> pd.DataFrame:
         if isinstance(data.index, pd.MultiIndex):
             if isinstance(index_value_order, dict):
@@ -1204,7 +1224,7 @@ class StatsPipeline:
 
     @staticmethod
     def _apply_column_value_order(
-        data: pd.DataFrame, column_value_order: Union[Sequence[str], Dict[str, Sequence[str]]]
+        data: pd.DataFrame, column_value_order: Union[Sequence[str], dict[str, Sequence[str]]]
     ) -> pd.DataFrame:
         if isinstance(data.columns, pd.MultiIndex):
             if isinstance(column_value_order, dict):

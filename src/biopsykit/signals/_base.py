@@ -1,7 +1,10 @@
 """Base class for implementing signal processing pipelines."""
-from typing import Dict, Optional, Sequence, Union
+
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 from biopsykit.utils.data_processing import split_data
 
@@ -11,9 +14,9 @@ class _BaseProcessor:
 
     def __init__(
         self,
-        data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+        data: Union[pd.DataFrame, dict[str, pd.DataFrame]],
         sampling_rate: Optional[float] = None,
-        time_intervals: Optional[Union[pd.Series, Dict[str, Sequence[str]]]] = None,
+        time_intervals: Optional[Union[pd.Series, dict[str, Sequence[str]]]] = None,
         include_start: Optional[bool] = False,
     ):
         self.sampling_rate: float = sampling_rate
@@ -35,7 +38,7 @@ class _BaseProcessor:
             else:
                 data_dict = {"Data": data}
 
-        self.data: Dict[str, pd.DataFrame] = data_dict
+        self.data: dict[str, pd.DataFrame] = data_dict
         """Dictionary with raw data, split into different phases.
 
         Each dataframe is expected to be a :class:`~pandas.DataFrame`.

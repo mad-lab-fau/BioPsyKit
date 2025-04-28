@@ -1,13 +1,14 @@
 """Module with utility functions to handle sleep data."""
+
 import datetime
-from typing import Dict
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype
 
 
-def split_nights(data: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+def split_nights(data: pd.DataFrame) -> dict[str, pd.DataFrame]:
     """Split continuous data into individual nights.
 
     This function splits data into individual nights. The split is performed at 6pm because that's the time of day

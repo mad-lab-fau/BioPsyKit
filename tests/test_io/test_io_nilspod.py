@@ -4,6 +4,8 @@ from unittest import TestCase
 
 import pandas as pd
 import pytest
+from nilspodlib import Dataset
+
 from biopsykit.io.nilspod import (
     check_nilspod_dataset_corrupted,
     get_nilspod_dataset_corrupted_info,
@@ -12,7 +14,6 @@ from biopsykit.io.nilspod import (
     load_folder_nilspod,
     load_synced_session_nilspod,
 )
-from nilspodlib import Dataset
 
 TEST_FILE_PATH = Path(__file__).parent.joinpath("../test_data/nilspod")
 
@@ -80,7 +81,6 @@ class TestIoNilspod:
         [
             ("synced_sample_session", None),
             ("synced_sample_session", "acc"),
-            ("synced_sample_session", "acc"),
         ],
     )
     def test_load_synced_session_nilspod(self, folder_path, datastreams):
@@ -145,7 +145,6 @@ class TestIoNilspod:
     @pytest.mark.parametrize(
         ("file_path", "filename_regex", "time_regex", "expected"),
         [
-            ("NilsPodX-7FAD_20190430_093300.csv", None, None, does_not_raise()),
             ("NilsPodX-7FAD_20190430_093300.csv", None, None, does_not_raise()),
             ("test_dataset.csv", None, None, does_not_raise()),
             ("test_dataset_20190430_093300.csv", "test_dataset_(.*?).csv", None, does_not_raise()),

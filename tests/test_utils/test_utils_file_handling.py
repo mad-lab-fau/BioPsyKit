@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
+
 from biopsykit.utils.exceptions import FileExtensionError
 from biopsykit.utils.file_handling import get_subject_dirs, is_excel_file, mkdirs
 

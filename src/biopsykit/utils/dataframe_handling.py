@@ -1,22 +1,25 @@
 """Module providing various functions for advanced handling of pandas dataframes."""
+
 import re
-from typing import Callable, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Callable, Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.utils._datatype_validation_helper import _assert_has_columns, _assert_has_index_levels, _assert_is_dtype
-from biopsykit.utils.datatype_helper import CodebookDataFrame, is_codebook_dataframe
+from biopsykit.utils.dtypes import CodebookDataFrame, is_codebook_dataframe
 
 __all__ = [
-    "apply_codebook",
     "add_space_to_camel",
+    "apply_codebook",
     "camel_to_snake",
-    "snake_to_camel",
     "convert_nan",
-    "int_from_str_idx",
     "int_from_str_col",
+    "int_from_str_idx",
     "multi_xs",
     "replace_missing_data",
+    "snake_to_camel",
     "stack_groups_percent",
     "wide_to_long",
 ]
@@ -57,7 +60,7 @@ def int_from_str_idx(
     if len(idx_levels) != len(regex):
         raise ValueError(
             "Number of values in 'regex' must match number of index levels in 'idx_levels'! "
-            "Got idx_levels: {}, regex: {}.".format(idx_levels, regex)
+            f"Got idx_levels: {idx_levels}, regex: {regex}."
         )
 
     _assert_is_dtype(data, pd.DataFrame)
@@ -262,7 +265,8 @@ def convert_nan(
 def multi_xs(
     data: Union[pd.DataFrame, pd.Series],
     keys: Union[str, Sequence[str]],
-    level: Union[str, int, Sequence[str], Sequence[int]],
+    axis: int = 0,
+    level: Optional[Union[str, int, Sequence[str], Sequence[int]]] = None,
     drop_level: Optional[bool] = True,
 ) -> Union[pd.DataFrame, pd.Series]:
     """Return cross-section of multiple keys from the dataframe.
@@ -294,9 +298,19 @@ def multi_xs(
     _assert_is_dtype(data, (pd.DataFrame, pd.Series))
     if isinstance(keys, str):
         keys = [keys]
-    levels = data.index.names
-    data_xs = pd.concat({key: data.xs(key, level=level, drop_level=drop_level) for key in keys}, names=[level])
-    return data_xs.reorder_levels(levels).sort_index()
+
+    level_concat = level
+    if isinstance(level, (str, int)):
+        level_concat = [level_concat]
+    levels = data.columns.names if axis == 1 else data.index.names
+
+    data_xs = pd.concat(
+        {key: data.xs(key, level=level, drop_level=drop_level, axis=axis) for key in keys},
+        names=level_concat,
+        axis=axis,
+    )
+
+    return data_xs.reorder_levels(levels, axis=axis).sort_index(axis=axis)
 
 
 def stack_groups_percent(
@@ -336,7 +350,7 @@ def stack_groups_percent(
         function to create a stacked bar chart
 
     """
-    data_grouped = pd.DataFrame(data.groupby([hue] + [stacked]).size(), columns=["data"])
+    data_grouped = pd.DataFrame(data.groupby([hue, stacked]).size(), columns=["data"])
     data_grouped = data_grouped.groupby(hue).apply(lambda x: 100 * (x / x.sum())).T.stack().T
     if order is not None:
         data_grouped = data_grouped.reindex(order)
@@ -347,13 +361,13 @@ def apply_codebook(data: pd.DataFrame, codebook: CodebookDataFrame) -> pd.DataFr
     """Apply codebook to convert numerical to categorical values.
 
     The codebook is expected to be a dataframe in a standardized format
-    (see :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame` for further information).
+    (see :obj:`~biopsykit.utils.dtypes.CodebookDataFrame` for further information).
 
 
 
     Parameters
     ----------
-    codebook : :obj:`~biopsykit.utils.datatype_helper.CodebookDataFrame`
+    codebook : :obj:`~biopsykit.utils.dtypes.CodebookDataFrame`
         path to codebook or dataframe to be used as codebook
     data : :class:`~pandas.DataFrame`
         data to apply codebook on

@@ -1,13 +1,15 @@
 """Module with functions for model selection using "nested" cross-validation."""
+
 import warnings
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import numpy as np
-from biopsykit.classification.utils import split_train_test
 from sklearn.metrics import confusion_matrix, get_scorer
 from sklearn.model_selection import BaseCrossValidator, GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
+
+from biopsykit.classification.utils import split_train_test
 
 __all__ = ["nested_cv_param_search"]
 
@@ -15,12 +17,12 @@ __all__ = ["nested_cv_param_search"]
 def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-many-branches
     X: np.ndarray,  # pylint:disable=invalid-name  # noqa: N803
     y: np.ndarray,
-    param_dict: Dict[str, Any],
+    param_dict: dict[str, Any],
     pipeline: Pipeline,
     outer_cv: BaseCrossValidator,
     inner_cv: BaseCrossValidator,
     groups: Optional[np.ndarray] = None,
-    hyper_search_params: Optional[Dict[str, Any]] = None,
+    hyper_search_params: Optional[dict[str, Any]] = None,
     **kwargs,
 ):
     """Perform a cross-validated parameter search with hyperparameter optimization within a outer cross-validation.
@@ -185,10 +187,10 @@ def _fit_cv_obj_one_fold(cv_obj, x_train, y_train, groups_train):
 
 def _get_param_search_cv_object(
     pipeline: Pipeline,
-    param_dict: Dict[str, Any],
+    param_dict: dict[str, Any],
     inner_cv: BaseCrossValidator,
-    scoring_dict: Dict[str, str],
-    hyper_search_config: Dict[str, Any],
+    scoring_dict: dict[str, str],
+    hyper_search_config: dict[str, Any],
     **kwargs,
 ):
     random_state = kwargs.pop("random_state", None)

@@ -1,5 +1,7 @@
 """Module providing functions for plotting ECG data."""
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple
+
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Optional
 
 import matplotlib as mpl
 import matplotlib.dates as mdates
@@ -10,25 +12,26 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from biopsykit.signals.ecg.ecg import _assert_ecg_input
-from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.datatype_helper import EcgResultDataFrame
 from fau_colors import cmaps, colors_all
 from neurokit2.hrv.hrv_frequency import _hrv_frequency_show
 from neurokit2.hrv.hrv_utils import _hrv_get_rri
+
+from biopsykit.signals.ecg.ecg import _assert_ecg_input
+from biopsykit.utils.array_handling import sanitize_input_1d
+from biopsykit.utils.dtypes import EcgResultDataFrame
 
 if TYPE_CHECKING:
     from biopsykit.signals.ecg import EcgProcessor
 
 __all__ = [
     "ecg_plot",
-    "hr_plot",
-    "hrv_plot",
     "hr_distribution_plot",
-    "rr_distribution_plot",
+    "hr_plot",
     "hrv_frequency_plot",
+    "hrv_plot",
     "hrv_poincare_plot",
     "individual_beats_plot",
+    "rr_distribution_plot",
 ]
 
 # TODO add signal plot method for all phases
@@ -44,7 +47,7 @@ def ecg_plot(
     plot_distribution: Optional[bool] = True,
     plot_individual_beats: Optional[bool] = True,
     **kwargs,
-) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
+) -> tuple[plt.Figure, Sequence[plt.Axes]]:
     """Plot ECG processing results.
 
     By default, this plot consists of four subplots:
@@ -67,7 +70,7 @@ def ecg_plot(
         ``EcgProcessor`` object. If this argument is supplied, the ``key`` argument needs to be supplied as well.
     key : str, optional
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
-    ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+    ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
         Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     heart_rate : :class:`~pandas.DataFrame`, optional
         Dataframe with heart rate output. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
@@ -118,7 +121,7 @@ def ecg_plot(
 
     sns.set_palette(cmaps.faculties)
 
-    title = kwargs.get("title", None)
+    title = kwargs.get("title")
     _set_plt_rcparams(ecg_signal)
 
     # Prepare figure and set axes
@@ -169,7 +172,7 @@ def _ecg_plot_set_title(fig: plt.Figure, title: str):
 
 def _get_ecg_plot_specs(  # pylint:disable=too-many-branches
     fig: plt.Figure, plot_ecg_signal: bool, plot_individual_beats: bool, plot_distribution: bool
-) -> Dict[str, plt.Axes]:
+) -> dict[str, plt.Axes]:
     if plot_individual_beats or plot_distribution:
         spec = gs.GridSpec(2, 2, width_ratios=[3, 1])
         if plot_ecg_signal:
@@ -194,7 +197,7 @@ def _get_ecg_plot_specs(  # pylint:disable=too-many-branches
 
 
 def _ecg_plot(
-    axs: Dict[str, plt.Axes],
+    axs: dict[str, plt.Axes],
     ecg_signal: EcgResultDataFrame,
     peaks: np.array,
     outlier: np.array,
@@ -203,7 +206,7 @@ def _ecg_plot(
     legend_loc = kwargs.get("legend_loc", "upper right")
     legend_fontsize = kwargs.get("legend_fontsize", "small")
 
-    axs["ecg"].get_shared_x_axes().join(axs["ecg"], axs["hr"])
+    axs["ecg"].sharex(axs["hr"])
 
     # z-normalize the ecg signal for better visualization
     ecg_clean = nk.standardize(ecg_signal["ECG_Clean"])
@@ -241,7 +244,7 @@ def _ecg_plot(
     if "R_Peak_Outlier" in ecg_signal:
         axs["ecg"].scatter(
             x_axis[outlier],
-            ecg_clean[outlier],
+            ecg_clean.iloc[outlier],
             color=colors_all.phil,
             label="Outlier",
             zorder=2,
@@ -274,7 +277,7 @@ def hr_plot(
     plot_outlier: Optional[bool] = False,
     outlier: Optional[np.ndarray] = None,
     **kwargs,
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot course of heart rate over time (tachogram).
 
     This plot is also used as subplot in :func:`~biopsykit.signals.ecg.plotting.ecg_plot`.
@@ -316,7 +319,7 @@ def hr_plot(
 
     """
     ax: plt.Axes = kwargs.pop("ax", None)
-    title: str = kwargs.get("title", None)
+    title: str = kwargs.get("title")
     legend_loc = kwargs.get("legend_loc", "upper right")
     legend_fontsize = kwargs.get("legend_fontsize", "small")
     plt.rcParams["mathtext.default"] = "regular"
@@ -403,7 +406,7 @@ def hrv_plot(
     sampling_rate: Optional[int] = 256,
     plot_psd: Optional[bool] = True,
     **kwargs,
-) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
+) -> tuple[plt.Figure, Sequence[plt.Axes]]:
     """Plot Heart Rate Variability results.
 
     By default, it consists of 3 plots:
@@ -425,7 +428,7 @@ def hrv_plot(
         Dictionary key of the phase to process. Needed when ``ecg_processor`` is passed as argument.
     ecg_signal : :class:`~pandas.DataFrame`, optional
         dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
         Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Not needed if ``ecg_processor`` is supplied as parameter.
@@ -465,7 +468,7 @@ def hrv_plot(
 
     _assert_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
 
-    title = kwargs.get("title", None)
+    title = kwargs.get("title")
     plt.rcParams["mathtext.default"] = "regular"
 
     if ecg_processor is not None:
@@ -491,8 +494,8 @@ def hrv_plot(
     axs["poin"] = fig.add_subplot(spec_within[1:4, 0:3])
     axs["poin_x"] = fig.add_subplot(spec_within[0, 0:3])
     axs["poin_y"] = fig.add_subplot(spec_within[1:4, 3])
-    axs["poin"].get_shared_x_axes().join(axs["poin"], axs["poin_x"])
-    axs["poin"].get_shared_y_axes().join(axs["poin"], axs["poin_y"])
+    axs["poin"].sharex(axs["poin_x"])
+    axs["poin"].sharey(axs["poin_y"])
 
     if title:
         fig.suptitle(f"Heart Rate Variability (HRV) - {title}", fontweight="bold")
@@ -508,7 +511,7 @@ def hrv_plot(
     return fig, list(axs.values())
 
 
-def hr_distribution_plot(heart_rate: pd.DataFrame, **kwargs) -> Tuple[plt.Figure, plt.Axes]:
+def hr_distribution_plot(heart_rate: pd.DataFrame, **kwargs) -> tuple[plt.Figure, plt.Axes]:
     """Plot heart rate distribution (histogram).
 
     This plot is also used as subplot in :func:`~biopsykit.signals.ecg.plotting.ecg_plot`.
@@ -538,7 +541,7 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, **kwargs) -> Tuple[plt.Figure
         plot ECG overview
 
     """
-    ax: plt.Axes = kwargs.get("ax", None)
+    ax: plt.Axes = kwargs.get("ax")
     plt.rcParams["mathtext.default"] = "regular"
 
     if ax is None:
@@ -562,7 +565,7 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, **kwargs) -> Tuple[plt.Figure
 
 def rr_distribution_plot(
     rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, **kwargs
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot distribution of RR intervals (histogram) with boxplot and rugplot.
 
     This plot is also used as subplot in :func:`~biopsykit.signals.ecg.plotting.hrv_plot`.
@@ -593,7 +596,7 @@ def rr_distribution_plot(
         plot heart rate distribution (without boxplot and rugplot)
 
     """
-    ax: plt.Axes = kwargs.get("ax", None)
+    ax: plt.Axes = kwargs.get("ax")
     plt.rcParams["mathtext.default"] = "regular"
 
     if ax is None:
@@ -643,7 +646,7 @@ def rr_distribution_plot(
 
 def individual_beats_plot(
     ecg_signal: pd.DataFrame, rpeaks: Optional[Sequence[int]] = None, sampling_rate: Optional[int] = 256, **kwargs
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot all segmented heart beats overlaid on top of each other.
 
     This plot is also used as subplot in :func:`~biopsykit.signals.ecg.plotting.ecg_plot`.
@@ -651,9 +654,9 @@ def individual_beats_plot(
 
     Parameters
     ----------
-    ecg_signal : :class:`~biopsykit.utils.datatype_helper.EcgResultDataFrame`, optional
+    ecg_signal : :class:`~biopsykit.utils.dtypes.EcgResultDataFrame`, optional
         Dataframe with processed ECG signal. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`, optional
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`, optional
         Dataframe with detected R peaks or ``None`` to infer R peaks from ``ecg_signal``. Default: ``None``
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
@@ -678,7 +681,7 @@ def individual_beats_plot(
         plot ECG overview
 
     """
-    ax: plt.Axes = kwargs.get("ax", None)
+    ax: plt.Axes = kwargs.get("ax")
     plt.rcParams["mathtext.default"] = "regular"
 
     if ax is None:
@@ -718,7 +721,7 @@ def individual_beats_plot(
 
 def hrv_poincare_plot(
     rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, **kwargs
-) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
+) -> tuple[plt.Figure, Sequence[plt.Axes]]:
     """Plot Heart Rate Variability as Poincaré Plot.
 
     This plot is also used as subplot in :func:`~biopsykit.signals.ecg.plotting.hrv_plot`.
@@ -726,7 +729,7 @@ def hrv_poincare_plot(
 
     Parameters
     ----------
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
@@ -751,7 +754,7 @@ def hrv_poincare_plot(
         plot heart rate variability
 
     """
-    axs: List[plt.Axes] = kwargs.get("axs", None)
+    axs: list[plt.Axes] = kwargs.get("axs")
     plt.rcParams["mathtext.default"] = "regular"
 
     if axs is None:
@@ -859,10 +862,10 @@ def hrv_poincare_plot(
     axs[0].legend(
         [arr_sd1, arr_sd2, a3, a4],
         [
-            "SD1: $%.3f ms$" % sd1,
-            "SD2: $%.3f ms$" % sd2,
-            "S: $%.3f ms^2$" % area,
-            "SD1/SD2: %.3f" % (sd1 / sd2),
+            f"SD1: ${sd1:.3f} ms$",
+            f"SD2: ${sd2:.3f} ms$",
+            f"S: ${area:.3f} ms^2$",
+            f"SD1/SD2: {sd1 / sd2:.3f}",
         ],
         framealpha=1,
         fontsize="small",
@@ -885,7 +888,7 @@ def hrv_poincare_plot(
 
 def hrv_frequency_plot(
     rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, **kwargs
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot Power Spectral Density (PSD) of RR intervals.
 
     This plot is also used as subplot in :func:`~biopsykit.signals.ecg.plotting.hrv_plot`.
@@ -893,7 +896,7 @@ def hrv_frequency_plot(
 
     Parameters
     ----------
-    rpeaks : :class:`~biopsykit.utils.datatype_helper.RPeakDataFrame`
+    rpeaks : :class:`~biopsykit.utils.dtypes.RPeakDataFrame`
             Dataframe with detected R peaks. Output from :meth:`~biopsykit.signals.ecg.EcgProcessor.ecg_process()`.
     sampling_rate : float, optional
         Sampling rate of recorded data in Hz. Default: 256
@@ -918,7 +921,7 @@ def hrv_frequency_plot(
         plot heart rate variability
 
     """
-    ax: plt.Axes = kwargs.get("ax", None)
+    ax: plt.Axes = kwargs.get("ax")
     plt.rcParams["mathtext.default"] = "regular"
 
     if ax is None:

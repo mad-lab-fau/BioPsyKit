@@ -1,9 +1,13 @@
 """Module providing various functions for processing more complex structured data (e.g., collected during a study)."""
+
 import warnings
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
+from scipy import interpolate
+
 from biopsykit.utils._datatype_validation_helper import (
     _assert_dataframes_same_length,
     _assert_has_index_levels,
@@ -11,7 +15,7 @@ from biopsykit.utils._datatype_validation_helper import (
     _assert_is_dtype,
 )
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils.dtypes import (
     MeanSeDataFrame,
     MergedStudyDataDict,
     StudyDataDict,
@@ -27,10 +31,9 @@ from biopsykit.utils.datatype_helper import (
     is_subject_data_dict,
 )
 from biopsykit.utils.functions import se
-from scipy import interpolate
 
 
-def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_start: bool) -> Dict[str, pd.DataFrame]:
+def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_start: bool) -> dict[str, pd.DataFrame]:
     if time_intervals.index.nlevels > 1:
         # multi-index series => second level contains start/end times of phases
         time_intervals = time_intervals.unstack().T
@@ -48,9 +51,9 @@ def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_st
 
 def split_data(
     data: pd.DataFrame,
-    time_intervals: Union[pd.DataFrame, pd.Series, Dict[str, Sequence[str]]],
+    time_intervals: Union[pd.DataFrame, pd.Series, dict[str, Sequence[str]]],
     include_start: Optional[bool] = False,
-) -> Dict[str, pd.DataFrame]:
+) -> dict[str, pd.DataFrame]:
     """Split data into different phases based on time intervals.
 
     The start and end times of the phases are prodivded via the ``time_intervals`` parameter and can either be a
@@ -109,7 +112,7 @@ def split_data(
     elif include_start:
         time_intervals["Start"] = (
             data.index[0].to_pydatetime().time(),
-            list(time_intervals.values())[0][0],
+            next(iter(time_intervals.values())),
         )
 
     data_dict = {name: data.between_time(*start_end) for name, start_end in time_intervals.items()}
@@ -119,16 +122,16 @@ def split_data(
 
 def exclude_subjects(
     excluded_subjects: Union[Sequence[str], Sequence[int]], index_name: Optional[str] = "subject", **kwargs
-) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Exclude subjects from dataframes.
 
     This function can be used to exclude subject IDs for later analysis from different kinds of dataframes, such as:
 
     * dataframes with subject condition information
-      (:obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame`)
+      (:obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame`)
     * dataframes with time log information
-    * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.datatype_helper.SalivaRawDataFrame` or
-      :obj:`~biopsykit.utils.datatype_helper.MeanSeDataFrame`)
+    * dataframes with (processed) data (e.g., :obj:`biopsykit.utils.dtypes.SalivaRawDataFrame` or
+      :obj:`~biopsykit.utils.dtypes.MeanSeDataFrame`)
 
     All dataframes can be supplied at once via ``**kwargs``.
 
@@ -148,7 +151,7 @@ def exclude_subjects(
         or dataframe if function was only called with one single dataframe
 
     """
-    cleaned_data: Dict[str, pd.DataFrame] = {}
+    cleaned_data: dict[str, pd.DataFrame] = {}
 
     for key, data in kwargs.items():
         _assert_is_dtype(data, pd.DataFrame)
@@ -163,7 +166,7 @@ def exclude_subjects(
         else:
             raise ValueError(f"No '{index_name}' level in index!")
     if len(cleaned_data) == 1:
-        cleaned_data = list(cleaned_data.values())[0]
+        cleaned_data = next(iter(cleaned_data.values()))
     return cleaned_data
 
 
@@ -189,8 +192,8 @@ def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.
 
     Parameters
     ----------
-    subject_data_dict : :class:`~biopsykit.utils.datatype_helper.SubjectDataDict`
-        ``SubjectDataDict``, i.e., a dictionary with a :class:`~biopsykit.utils.datatype_helper.PhaseDict`
+    subject_data_dict : :class:`~biopsykit.utils.dtypes.SubjectDataDict`
+        ``SubjectDataDict``, i.e., a dictionary with a :class:`~biopsykit.utils.dtypes.PhaseDict`
         for each subject
     phase : str or :class:`~pandas.DataFrame`
         phase to normalize all other data to. If ``phase`` is a string then it is interpreted as the name of a phase
@@ -254,8 +257,8 @@ def resample_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
 
 def resample_dict_sec(
-    data_dict: Dict[str, Any],
-) -> Dict[str, Any]:
+    data_dict: dict[str, Any],
+) -> dict[str, Any]:
     """Resample all data in the dictionary to 1 Hz data.
 
     This function recursively looks for all dataframes in the dictionary and resamples data to 1 Hz using
@@ -292,18 +295,18 @@ def resample_dict_sec(
 
 
 def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Union[str, Sequence[str]]) -> SubjectDataDict:
-    """Select specific phases from :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`.
+    """Select specific phases from :obj:`~biopsykit.utils.dtypes.SubjectDataDict`.
 
     Parameters
     ----------
-    subject_data_dict : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
-        ``SubjectDataDict``, i.e. a dictionary with :obj:`~biopsykit.utils.datatype_helper.PhaseDict` for each subject
+    subject_data_dict : :obj:`~biopsykit.utils.dtypes.SubjectDataDict`
+        ``SubjectDataDict``, i.e. a dictionary with :obj:`~biopsykit.utils.dtypes.PhaseDict` for each subject
     phases : list of str
         list of phases to select
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+    :obj:`~biopsykit.utils.dtypes.SubjectDataDict`
         ``SubjectDataDict`` containing only the phases of interest
 
     """
@@ -320,11 +323,11 @@ def rearrange_subject_data_dict(
 ) -> StudyDataDict:
     """Rearrange ``SubjectDataDict`` to ``StudyDataDict``.
 
-    A :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` is constructed from a
-    :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict` by swapping outer (subject IDs) and inner
+    A :obj:`~biopsykit.utils.dtypes.StudyDataDict` is constructed from a
+    :obj:`~biopsykit.utils.dtypes.SubjectDataDict` by swapping outer (subject IDs) and inner
     (phase names) dictionary keys.
 
-    The **input** needs to be a :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`,
+    The **input** needs to be a :obj:`~biopsykit.utils.dtypes.SubjectDataDict`,
     a nested dictionary in the following format:
 
     | {
@@ -344,14 +347,14 @@ def rearrange_subject_data_dict(
 
     Parameters
     ----------
-    subject_data_dict : :obj:`~biopsykit.utils.datatype_helper.SubjectDataDict`
+    subject_data_dict : :obj:`~biopsykit.utils.dtypes.SubjectDataDict`
         ``SubjectDataDict``, i.e. a dictionary with data from multiple subjects, each containing data from
-        multiple phases (in form of a :obj:`~biopsykit.utils.datatype_helper.PhaseDict`)
+        multiple phases (in form of a :obj:`~biopsykit.utils.dtypes.PhaseDict`)
 
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+    :obj:`~biopsykit.utils.dtypes.StudyDataDict`
         rearranged ``SubjectDataDict``
 
     """
@@ -380,7 +383,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 
     Parameters
     ----------
-    study_data_dict : :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+    study_data_dict : :obj:`~biopsykit.utils.dtypes.StudyDataDict`
         ``StudyDataDict``, i.e. a dictionary with data from multiple phases, each phase containing data from
         different subjects.
     phases : list of str, optional
@@ -389,7 +392,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+    :obj:`~biopsykit.utils.dtypes.StudyDataDict`
         ``StudyDataDict`` with data cut to the shortest duration in each phase
 
     """
@@ -410,7 +413,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 def merge_study_data_dict(
     study_data_dict: StudyDataDict, dict_levels: Optional[Sequence[str]] = None
 ) -> MergedStudyDataDict:
-    """Merge inner dictionary level of :obj:`~biopsykit.utils.datatype_helper.StudyDataDict` into one dataframe.
+    """Merge inner dictionary level of :obj:`~biopsykit.utils.dtypes.StudyDataDict` into one dataframe.
 
     This function removes the inner level of the nested ``StudyDataDict`` by merging data from all subjects
     into one dataframe for each phase.
@@ -423,7 +426,7 @@ def merge_study_data_dict(
 
     Parameters
     ----------
-    study_data_dict : :obj:`~biopsykit.utils.datatype_helper.StudyDataDict`
+    study_data_dict : :obj:`~biopsykit.utils.dtypes.StudyDataDict`
         ``StudyDataDict``, i.e. a dictionary with data from multiple phases, each phase containing data from
         different subjects.
     dict_levels : list of str
@@ -432,7 +435,7 @@ def merge_study_data_dict(
 
     Returns
     -------
-    :obj:`~biopsykit.utils.datatype_helper.MergedStudyDataDict`
+    :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`
         ``MergedStudyDataDict`` with data of all subjects merged into one dataframe for each phase
 
     """
@@ -453,9 +456,9 @@ def merge_study_data_dict(
 
 
 def split_dict_into_subphases(
-    data_dict: Dict[str, Any],
-    subphases: Dict[str, int],
-) -> Union[Dict[str, Dict[str, Any]]]:
+    data_dict: dict[str, Any],
+    subphases: dict[str, int],
+) -> Union[dict[str, dict[str, Any]]]:
     """Split dataframes in a nested dictionary into subphases.
 
     By further splitting a dataframe into subphases a new dictionary level is created. The new dictionary level
@@ -492,8 +495,10 @@ def split_dict_into_subphases(
             for subphase, times in zip(subphases.keys(), subphase_times):
                 if isinstance(value.index, pd.DatetimeIndex):
                     # slice the current subphase by dropping the preceding subphases
-                    value_cpy = value.drop(value.first(f"{times[0]}s").index)
-                    value_cpy = value_cpy.first(f"{times[1] - times[0]}s")
+                    mask_drop = value.index < value.index[0] + pd.Timedelta(seconds=times[0])
+                    value_cpy = value[~mask_drop]
+                    mask_keep = value_cpy.index <= value.index[0] + pd.Timedelta(seconds=times[1])
+                    value_cpy = value_cpy[mask_keep]
                     subphase_dict[subphase] = value_cpy
                 else:
                     subphase_dict[subphase] = value.iloc[times[0] : times[1]]
@@ -502,8 +507,8 @@ def split_dict_into_subphases(
 
 
 def get_subphase_durations(
-    data: pd.DataFrame, subphases: Dict[str, Union[int, Tuple[int, int]]]
-) -> Sequence[Tuple[int, int]]:
+    data: pd.DataFrame, subphases: dict[str, Union[int, tuple[int, int]]]
+) -> Sequence[tuple[int, int]]:
     """Compute subphase durations from dataframe.
 
     The subphases can be specified in two different ways:
@@ -574,8 +579,8 @@ def add_subject_conditions(
     data : :class:`~pandas.DataFrame`
         dataframe where new index level ``condition`` with subject conditions should be added to
     condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
-        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` or
-        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` or
+        :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` with information on which subject belongs to
         which condition
 
 
@@ -592,8 +597,8 @@ def add_subject_conditions(
 
 
 def split_subject_conditions(
-    data_dict: Dict[str, Any], condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
-) -> Dict[str, Dict[str, Any]]:
+    data_dict: dict[str, Any], condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
+) -> dict[str, dict[str, Any]]:
     """Split dictionary with data based on conditions subjects were assigned to.
 
     This function adds a new outer dictionary level with the different conditions as keys and dictionaries
@@ -606,8 +611,8 @@ def split_subject_conditions(
     data_dict : dict
         (nested) dictionary with data which should be split based on the conditions subjects belong to
     condition_list : ``SubjectConditionDict`` or ``SubjectConditionDataFrame``
-        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDict` or
-        :obj:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` with information on which subject belongs to
+        :obj:`~biopsykit.utils.dtypes.SubjectConditionDict` or
+        :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame` with information on which subject belongs to
         which condition
 
 
@@ -623,14 +628,14 @@ def split_subject_conditions(
     return {cond: _splits_subject_conditions(data_dict, subjects) for cond, subjects in condition_list.items()}
 
 
-def _splits_subject_conditions(data_dict: Dict[str, Any], subject_list: Sequence[str]):
+def _splits_subject_conditions(data_dict: dict[str, Any], subject_list: Sequence[str]):
     _assert_is_dtype(data_dict, (dict, pd.DataFrame))
     if isinstance(data_dict, pd.DataFrame):
         return data_dict[subject_list]
     return {key: _splits_subject_conditions(value, subject_list) for key, value in data_dict.items()}
 
 
-def mean_per_subject_dict(data: Dict[str, Any], dict_levels: Sequence[str], param_name: str) -> pd.DataFrame:
+def mean_per_subject_dict(data: dict[str, Any], dict_levels: Sequence[str], param_name: str) -> pd.DataFrame:
     """Compute mean values of time-series data from a nested dictionary.
 
     This function computes the mean value of time-series data in a nested dictionary per subject and combines it into

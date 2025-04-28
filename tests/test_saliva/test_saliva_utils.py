@@ -4,9 +4,10 @@ from contextlib import contextmanager
 import numpy as np
 import pandas as pd
 import pytest
+from pandas._testing import assert_frame_equal, assert_series_equal
+
 from biopsykit.saliva import utils
 from biopsykit.utils.exceptions import ValidationError
-from pandas._testing import assert_frame_equal, assert_series_equal
 
 
 @contextmanager
@@ -110,7 +111,7 @@ def sample_times_series_wrong_input():
                 [0, 15, 30],
             ]
         ),
-        index=pd.MultiIndex.from_product([range(0, 4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
+        index=pd.MultiIndex.from_product([range(4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
     )
 
 
@@ -124,7 +125,7 @@ def sample_times_series_seconds_missing():
                 ["09:00", "09:15", "09:30"],
             ]
         ),
-        index=pd.MultiIndex.from_product([range(0, 4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
+        index=pd.MultiIndex.from_product([range(4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
     )
 
 
@@ -138,7 +139,7 @@ def sample_times_series_str_correct():
                 ["09:00:00", "09:15:00", "09:30:00"],
             ]
         ),
-        index=pd.MultiIndex.from_product([range(0, 4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
+        index=pd.MultiIndex.from_product([range(4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
     )
 
 
@@ -152,7 +153,7 @@ def sample_times_series_timedelta_correct():
                 [pd.Timedelta(minutes=0), pd.Timedelta(minutes=15), pd.Timedelta(minutes=30)],
             ]
         ),
-        index=pd.MultiIndex.from_product([range(0, 4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
+        index=pd.MultiIndex.from_product([range(4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
     )
 
 
@@ -182,14 +183,14 @@ def sample_times_series_datetime_correct():
                 ],
             ]
         ),
-        index=pd.MultiIndex.from_product([range(0, 4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
+        index=pd.MultiIndex.from_product([range(4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
     )
 
 
 def sample_times_series_correct_output():
     return pd.Series(
         [0.0, 15.0, 30.0] * 4,
-        index=pd.MultiIndex.from_product([range(0, 4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
+        index=pd.MultiIndex.from_product([range(4), ["T1", "T2", "T3"]], names=["subject", "sample"]),
     )
 
 

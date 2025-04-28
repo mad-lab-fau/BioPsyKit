@@ -1,11 +1,13 @@
 """Sleep/Wake detection using the *Cole/Kripke Algorithm*."""
+
 import numpy as np
 import pandas as pd
+
 from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
-from biopsykit.utils._types import arr_t
+from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.datatype_helper import SleepWakeDataFrame, _SleepWakeDataFrame
+from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
 
 
 class ColeKripkeOld(_SleepWakeBase):
@@ -68,7 +70,7 @@ class ColeKripkeOld(_SleepWakeBase):
 
         Returns
         -------
-        :obj:`~biopsykit.utils.datatype_helper.SleepWakeDataFrame`
+        :obj:`~biopsykit.utils.dtypes.SleepWakeDataFrame`
             dataframe with sleep/wake predictions
 
         """

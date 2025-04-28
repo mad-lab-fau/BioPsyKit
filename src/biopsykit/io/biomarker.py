@@ -1,13 +1,16 @@
 """Module containing different I/O functions for biomarker data (saliva, dried blood spots, IL-6)."""
+
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+
 from biopsykit.io.io import _apply_index_cols
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension, _assert_has_columns
-from biopsykit.utils._types import path_t
-from biopsykit.utils.datatype_helper import (
+from biopsykit.utils._types_internal import path_t
+from biopsykit.utils.dtypes import (
     BiomarkerRawDataFrame,
     SalivaRawDataFrame,
     SubjectConditionDataFrame,
@@ -19,13 +22,15 @@ from biopsykit.utils.datatype_helper import (
     is_subject_condition_dataframe,
 )
 
-__all__ = ["load_saliva_plate", "save_saliva", "load_saliva_wide_format", "load_biomarker_results"]
+__all__ = ["load_biomarker_results", "load_saliva_plate", "load_saliva_wide_format", "save_saliva"]
 
 _DATA_COL_NAMES = {
     "cortisol": "cortisol (nmol/l)",
     "amylase": "amylase (U/ml)",
     "crp": "CRP (µg/ml)",
 }
+
+_MISSING_DATA = ["no sample", "empty", "insufficient volume"]
 
 
 def load_saliva_plate(
@@ -36,7 +41,7 @@ def load_saliva_plate(
     id_col_names: Optional[Sequence[str]] = None,
     regex_str: Optional[str] = None,
     sample_times: Optional[Sequence[int]] = None,
-    condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
+    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
     **kwargs,
 ) -> SalivaRawDataFrame:
     r"""Read saliva from an Excel sheet in 'plate' format. Wraps load_biomarker_results() for compatibilty.
@@ -91,7 +96,7 @@ def load_saliva_plate(
 
     Returns
     -------
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
 
     Raises
@@ -134,7 +139,7 @@ def save_saliva(
     ----------
     file_path: :class:`~pathlib.Path` or str
         file path to export. Must be a csv or an Excel file
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
     saliva_type : str
         type of saliva data in the dataframe
@@ -213,7 +218,7 @@ def load_saliva_wide_format(
 
     Returns
     -------
-    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
         saliva data in `SalivaRawDataFrame` format
 
     Raises
@@ -246,7 +251,7 @@ def load_saliva_wide_format(
 
     num_subjects = len(data)
     data.columns = pd.MultiIndex.from_product([[saliva_type], data.columns], names=[None, "sample"])
-    data = data.stack()
+    data = data.stack(future_stack=True)
 
     _check_num_samples(len(data), num_subjects)
 
@@ -267,7 +272,9 @@ def load_biomarker_results(
     id_col_names: Optional[Sequence[str]] = None,
     regex_str: Optional[str] = None,
     sample_times: Optional[Sequence[int]] = None,
-    condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
+    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
+    check_number_samples: bool = True,
+    replace_strings_missing: bool = True,
     **kwargs,
 ) -> BiomarkerRawDataFrame:
     r"""Load biomarker results from Excel file.
@@ -276,8 +283,8 @@ def load_biomarker_results(
     ----------
     file_path: :class:`~pathlib.Path` or str
         path to file
-    dbs_type: str, optional
-        biomarker type to load from file. Example: ``crp``
+    biomarker_type: str, optional
+        biomarker type to load from file. Example: ``cortisol``
     sample_id_col: str, optional
         name of column containing sample IDs or ``None`` to use the default column name ``sample ID``.
     data_col: str, optional
@@ -294,12 +301,18 @@ def load_biomarker_results(
         list of condition names or dictionary of condition names to list of condition assignments or
         :class:`~pandas.Index` of condition names or ``None`` if no conditions are present.
         Default: ``None``
+    check_number_samples: bool, optional
+        ``True`` to check that the number of samples is equal for all subjects,
+        ``False`` to skip this check. Default: ``True``
+    replace_strings_missing : bool, optional
+        ``True`` to replace strings indicating missing  in the biomarker data with NaN values,
+        ``False`` to keep the strings. Default: ``True``
     **kwargs
         Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
 
     Returns
     -------
-    data : :class:`~biopsykit.utils.datatype_helper.BiomarkerRawDataFrame`
+    data : :class:`~biopsykit.utils.dtypes.BiomarkerRawDataFrame`
         biomarker data in `BiomarkerRawDataFrame` format
 
     Raises
@@ -321,7 +334,8 @@ def load_biomarker_results(
     if data_col is None:
         data_col = _DATA_COL_NAMES[biomarker_type]
 
-    df_biomarker = pd.read_excel(file_path, skiprows=2, usecols=[sample_id_col, data_col], **kwargs)
+    df_biomarker = _try_read_plate_excel(file_path, sample_id_col, data_col, **kwargs)
+
     cols = df_biomarker[sample_id_col].str.extract(regex_str)
     id_col_names = _get_id_columns(id_col_names, cols)
 
@@ -336,21 +350,24 @@ def load_biomarker_results(
 
     num_subjects = len(df_biomarker.index.get_level_values("subject").unique())
 
-    _check_num_samples(len(df_biomarker), num_subjects)
+    if check_number_samples:
+        _check_num_samples(len(df_biomarker), num_subjects)
 
     if sample_times:
         _check_sample_times(len(df_biomarker), num_subjects, sample_times)
         df_biomarker["time"] = np.array(sample_times * num_subjects)
 
+    df_biomarker[biomarker_type] = df_biomarker[biomarker_type].astype(str).str.replace(r"\s+", " ", regex=True)
+    if replace_strings_missing:
+        df_biomarker[biomarker_type] = df_biomarker[biomarker_type].replace(dict.fromkeys(_MISSING_DATA, "nan"))
+
     try:
         df_biomarker[biomarker_type] = df_biomarker[biomarker_type].astype(float)
     except ValueError as e:
         raise ValueError(
-            """Error converting all biomarker values into numbers: '{}'
-            Please check your biomarker values whether there is any text etc. in the column '{}'
-            and delete the values or replace them by NaN!""".format(
-                e, data_col
-            )
+            f"""Error converting all biomarker values into numbers: '{e}'
+            Please check your biomarker values whether there is any text etc. in the column '{data_col}'
+            and delete the values or replace them by NaN!"""
         ) from e
 
     is_biomarker_raw_dataframe(df_biomarker, biomarker_type=biomarker_type)
@@ -368,6 +385,17 @@ def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_in
         additional_index_cols = [additional_index_cols]
 
     return index_cols + additional_index_cols
+
+
+def _try_read_plate_excel(file_path: Path, sample_id_col: str, data_col: str, **kwargs):
+
+    for skiprows in [1, 2, 3]:
+        try:
+            return pd.read_excel(file_path, skiprows=skiprows, usecols=[sample_id_col, data_col], **kwargs)
+        except ValueError as e:
+            last_exception = e
+            continue
+    raise ValueError("Could not read plate Excel file. Please check the file format.") from last_exception
 
 
 def _read_dataframe(file_path: Path, **kwargs):
@@ -394,9 +422,8 @@ def _check_num_samples(num_samples: int, num_subjects: int):
     """
     if num_samples % num_subjects != 0:
         raise ValueError(
-            "Error during import: Number of samples not equal for all subjects! Got {} samples for {} subjects.".format(
-                num_samples, num_subjects
-            )
+            f"Error during import: Number of samples not equal for all subjects! "
+            f"Got {num_samples} samples for {num_subjects} subjects."
         )
 
 
@@ -423,14 +450,13 @@ def _check_sample_times(num_samples: int, num_subjects: int, sample_times: Seque
         raise ValueError("`saliva_times` must be increasing!")
     if (len(sample_times) * num_subjects) != num_samples:
         raise ValueError(
-            "Length of `saliva_times` does not match the number of saliva samples! Expected: {}, got: {}".format(
-                int(num_samples / num_subjects), len(sample_times)
-            )
+            f"Length of `saliva_times` does not match the number of saliva samples! "
+            f"Expected: {int(num_samples / num_subjects)}, got: {len(sample_times)}"
         )
 
 
 def _parse_condition_list(
-    data: pd.DataFrame, condition_list: Union[Sequence, Dict[str, Sequence], pd.Index]
+    data: pd.DataFrame, condition_list: Union[Sequence, dict[str, Sequence], pd.Index]
 ) -> SubjectConditionDataFrame:
     if isinstance(condition_list, (list, np.ndarray)):
         # Add Condition as new index level
@@ -452,7 +478,7 @@ def _parse_condition_list(
 
 def _apply_condition_list(
     data: pd.DataFrame,
-    condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
+    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
 ):
     condition_list = _parse_condition_list(data, condition_list)
 
@@ -469,15 +495,14 @@ def _get_id_columns(id_col_names: Sequence[str], extracted_cols: pd.DataFrame):
             id_col_names = ["subject", "day", "sample"]
     elif len(id_col_names) != len(extracted_cols.columns):
         raise ValueError(
-            "Number of 'id_col_names' must match length of extracted index columns! Expected {}, got {}.".format(
-                len(extracted_cols), len(id_col_names)
-            )
+            f"Number of 'id_col_names' must match length of extracted index columns! "
+            f"Expected {len(extracted_cols)}, got {len(id_col_names)}."
         )
 
     return id_col_names
 
 
-def _get_condition_col(data: pd.DataFrame, condition_col: str) -> Tuple[pd.DataFrame, str]:
+def _get_condition_col(data: pd.DataFrame, condition_col: str) -> tuple[pd.DataFrame, str]:
     if condition_col is None:
         if "condition" in data.columns:
             condition_col = "condition"
