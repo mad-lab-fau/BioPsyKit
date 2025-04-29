@@ -293,7 +293,11 @@ def load_atimelogger_file(file_path: path_t, timezone: Optional[Union[datetime.t
     timelog.index.name = "phase"
     timelog.columns.name = "start_end"
 
-    timelog = timelog.apply(pd.to_datetime, axis=1).map(lambda val: val.tz_localize(timezone))
+    probe_timelog = timelog.iloc[0, 0]
+    dayfirst = "/" in probe_timelog
+    timelog = timelog.apply(lambda ts, d=dayfirst: pd.to_datetime(ts, dayfirst=d), axis=1).map(
+        lambda val: val.tz_localize(timezone)
+    )
 
     timelog = pd.DataFrame(timelog.T.unstack(), columns=["time"])
     timelog = timelog[::-1].reindex(["start", "end"], level="start_end")
