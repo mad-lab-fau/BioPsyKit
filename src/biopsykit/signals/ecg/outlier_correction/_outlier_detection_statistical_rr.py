@@ -36,7 +36,7 @@ class RPeakOutlierDetectionRRIntervalStatistics(BaseRPeakOutlierDetection):
                 f"rr_statistics_threshold must be a float greater than 0. Got {self.rr_statistics_threshold}."
             )
 
-    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):
+    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):  # noqa: ARG002
         self._assert_params()
 
         # compute z-score of RR intervals

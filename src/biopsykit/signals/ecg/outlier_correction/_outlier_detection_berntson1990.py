@@ -18,7 +18,7 @@ class RPeakOutlierDetectionBerntson1990(BaseRPeakOutlierDetection):
         """Initialize new ``RPeakOutlierDetectionBerntson1990`` algorithm instance."""
         super().__init__()
 
-    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):
+    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):  # noqa: ARG002
 
         # QD = Quartile Deviation = IQR / 2
         qd = iqr(rpeaks["rr_interval_ms"], nan_policy="omit") / 2.0

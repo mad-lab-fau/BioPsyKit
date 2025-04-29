@@ -1,15 +1,18 @@
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, Optional
 
-from tpcp import Pipeline
+import pandas as pd
+from tpcp import Parameter, Pipeline
 from tpcp._dataset import DatasetT
 from typing_extensions import Self
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS
 from biopsykit.signals.ecg.event_extraction import BaseEcgExtraction, RPeakExtractionNeurokit
+from biopsykit.signals.ecg.hrv_extraction import HrvExtraction
 from biopsykit.signals.ecg.outlier_correction import (
     BaseRPeakOutlierDetection,
     RPeakOutlierCorrection,
+    RPeakOutlierCorrectionHrvLipponen2019,
     RPeakOutlierDetectionBerntson1990,
     RPeakOutlierDetectionCorrelation,
     RPeakOutlierDetectionPhysiological,
@@ -20,15 +23,17 @@ from biopsykit.signals.ecg.outlier_correction import (
 from biopsykit.signals.ecg.preprocessing import BaseEcgPreprocessing, EcgPreprocessingNeurokit
 from biopsykit.utils.dtypes import EcgRawDataFrame
 
-__all__ = ["EcgProcessingPipeline", "EcgProcessingPipelineBiopsykit"]
+__all__ = ["EcgProcessingPipeline"]
 
 
 class EcgProcessingPipeline(Pipeline):
 
-    preprocessing_algo: BaseEcgPreprocessing
-    r_peak_algo: BaseEcgExtraction
-    outlier_detection_algos: Sequence[BaseRPeakOutlierDetection]
-    outlier_correction_algo: RPeakOutlierCorrection
+    preprocessing_algo: Parameter[BaseEcgPreprocessing]
+    r_peak_algo: Parameter[BaseEcgExtraction]
+    outlier_detection_algos: Parameter[Sequence[BaseRPeakOutlierDetection]]
+    outlier_correction_algo: Parameter[RPeakOutlierCorrection]
+    hrv_r_peak_correction_algo: Parameter[Optional[RPeakOutlierCorrectionHrvLipponen2019]]
+    hrv_extraction_algo: Parameter[Optional[HrvExtraction]]
 
     handle_missing_events: HANDLE_MISSING_EVENTS
 
@@ -37,6 +42,7 @@ class EcgProcessingPipeline(Pipeline):
 
     rpeaks_raw_: EcgRawDataFrame
     rpeaks_: EcgRawDataFrame
+    hrv_extracted_: Optional[pd.DataFrame]
 
     def __init__(
         self,
@@ -45,14 +51,51 @@ class EcgProcessingPipeline(Pipeline):
         r_peak_algo: BaseEcgExtraction,
         outlier_detection_algos: Sequence[BaseRPeakOutlierDetection],
         outlier_correction_algo: RPeakOutlierCorrection,
+        hrv_r_peak_correction_algo: Optional[RPeakOutlierCorrectionHrvLipponen2019] = None,
+        hrv_extraction_algo: Optional[HrvExtraction] = None,
         handle_missing_events: Literal[HANDLE_MISSING_EVENTS] = "warn",
     ):
         self.preprocessing_algo = preprocessing_algo
         self.r_peak_algo = r_peak_algo
         self.outlier_detection_algos = outlier_detection_algos
         self.outlier_correction_algo = outlier_correction_algo
+        self.hrv_r_peak_correction_algo = hrv_r_peak_correction_algo
+        self.hrv_extraction_algo = hrv_extraction_algo
 
         self.handle_missing_events = handle_missing_events
+
+    @classmethod
+    def get_default_biopsykit_pipeline(
+        cls,
+        compute_hrv: bool = True,
+        r_peak_imputation_type: str = "linear_interpolation",
+        handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
+    ) -> Self:
+        preprocessing_algo = EcgPreprocessingNeurokit(method="neurokit")
+        r_peak_algo = RPeakExtractionNeurokit(handle_missing_events)
+        outlier_detection_algos = [
+            RPeakOutlierDetectionBerntson1990(),
+            RPeakOutlierDetectionPhysiological(),
+            RPeakOutlierDetectionCorrelation(),
+            RPeakOutlierDetectionQuality(),
+            RPeakOutlierDetectionRRIntervalStatistics(),
+            RPeakOutlierDetectionRRDiffIntervalStatistics(),
+        ]
+        outlier_correction_algo = RPeakOutlierCorrection(imputation_type=r_peak_imputation_type)
+        hrv_r_peak_correction_algo = None
+        hrv_extraction_algo = None
+        if compute_hrv:
+            hrv_r_peak_correction_algo = RPeakOutlierCorrectionHrvLipponen2019()
+            hrv_extraction_algo = HrvExtraction()
+
+        return cls(
+            preprocessing_algo=preprocessing_algo,
+            r_peak_algo=r_peak_algo,
+            outlier_detection_algos=outlier_detection_algos,
+            outlier_correction_algo=outlier_correction_algo,
+            hrv_r_peak_correction_algo=hrv_r_peak_correction_algo,
+            hrv_extraction_algo=hrv_extraction_algo,
+        )
 
     def run(self, datapoint: DatasetT) -> Self:
         """Run the pipeline on the given datapoint.
@@ -100,8 +143,6 @@ class EcgProcessingPipeline(Pipeline):
         # Apply outlier detection and correction
         for algo in outlier_detection_algos:
             algo.detect_outlier(ecg=self.ecg_clean_, rpeaks=self.rpeaks_raw_, sampling_rate_hz=sampling_rate)
-            # print(f"Outlier detection algorithm: {algo.__class__.__name__}")
-            # print(f"Outlier detection results: {algo.points_}")
             outlier_masks.append(algo.points_)
 
         # Correct R-peak outliers
@@ -113,34 +154,19 @@ class EcgProcessingPipeline(Pipeline):
         self.rpeaks_ = outlier_correction_algo.points_
         self.ecg_clean_ = outlier_correction_algo.ecg_processed_
 
+        r_peaks_hrv = self.rpeaks_.copy()
+        if self.hrv_r_peak_correction_algo is not None:
+            self.hrv_r_peak_correction_algo.correct_outlier(
+                rpeaks=r_peaks_hrv,
+                sampling_rate_hz=sampling_rate,
+            )
+            r_peaks_hrv = self.hrv_r_peak_correction_algo.points_.copy()
 
-class EcgProcessingPipelineBiopsykit(EcgProcessingPipeline):
+        if self.hrv_extraction_algo is not None:
+            self.hrv_extraction_algo.extract(
+                rpeaks=r_peaks_hrv,
+                sampling_rate_hz=sampling_rate,
+            )
+            self.hrv_extracted_ = self.hrv_extraction_algo.hrv_extracted_.copy()
 
-    r_peak_imputation_type: str
-
-    def __init__(
-        self,
-        *,
-        r_peak_imputation_type: str = "linear_interpolation",
-        handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
-    ):
-        self.r_peak_imputation_type = r_peak_imputation_type
-        preprocessing_algo = EcgPreprocessingNeurokit(method="neurokit")
-        r_peak_algo = RPeakExtractionNeurokit(handle_missing_events)
-        outlier_detection_algos = [
-            RPeakOutlierDetectionBerntson1990(),
-            RPeakOutlierDetectionPhysiological(),
-            RPeakOutlierDetectionCorrelation(),
-            RPeakOutlierDetectionQuality(),
-            RPeakOutlierDetectionRRIntervalStatistics(),
-            RPeakOutlierDetectionRRDiffIntervalStatistics(),
-        ]
-        outlier_correction_algo = RPeakOutlierCorrection(imputation_type=r_peak_imputation_type)
-
-        super().__init__(
-            preprocessing_algo=preprocessing_algo,
-            r_peak_algo=r_peak_algo,
-            outlier_detection_algos=outlier_detection_algos,
-            outlier_correction_algo=outlier_correction_algo,
-            handle_missing_events=handle_missing_events,
-        )
+        return self

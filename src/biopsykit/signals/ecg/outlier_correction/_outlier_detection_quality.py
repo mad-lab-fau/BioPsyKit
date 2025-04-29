@@ -31,7 +31,7 @@ class RPeakOutlierDetectionQuality(BaseRPeakOutlierDetection):
         if not 0 <= self.quality_threshold <= 1:
             raise ValueError(f"quality_threshold must be a float between 0 and 1. Got {self.quality_threshold}.")
 
-    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):
+    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):  # noqa: ARG002
         self._assert_params()
 
         # signal outlier

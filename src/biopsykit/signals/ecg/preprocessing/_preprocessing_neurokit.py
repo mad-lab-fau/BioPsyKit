@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 import neurokit2 as nk
 import pandas as pd
 from tpcp import Parameter
@@ -40,7 +42,7 @@ class EcgPreprocessingNeurokit(BaseEcgPreprocessing):
 
     _action_methods = "clean"
 
-    PRPROCESSING_METHODS = ["biosppy", "neurokit"]
+    PRPROCESSING_METHODS: ClassVar[list[str]] = ["biosppy", "neurokit"]
 
     method: Parameter[str]
 

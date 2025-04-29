@@ -10,6 +10,20 @@ __all__ = ["RPeakOutlierCorrection"]
 
 
 class RPeakOutlierCorrection(Algorithm):
+    """Outlier correction algorithm for R-peaks.
+
+    This algorithm is used to correct outliers in the R-peak data. It uses the detected outliers from the
+    :class:`~biopsykit.signals.ecg.outlier_correction.RPeakOutlierDetection` algorithms and replaces them with
+    interpolated or smoothed (moving averaged) values.
+
+    Attributes
+    ----------
+    ecg_processed_ : :class:`~pandas.DataFrame`
+        The processed ECG data with outliers corrected and interpolated instantaneous heart rate time-series.
+    points_ : :class:`~pandas.DataFrame`
+        The processed R-peak data with corrected outliers and heart rate re-calculated.
+
+    """
 
     _action_methods = "correct_outlier"
 
@@ -23,7 +37,21 @@ class RPeakOutlierCorrection(Algorithm):
     def __init__(
         self, *, imputation_type: str = "linear_interpolation", imputation_params: Optional[dict[str, Any]] = None
     ) -> None:
-        """Initialize new Outlier Correction Algorithm."""
+        """Initialize new ``RPeakOutlierCorrection`` algorithm instance.
+
+        Parameters
+        ----------
+        imputation_type : str, optional
+            The type of imputation to use. Options are:
+                * "linear_interpolation" (default): Use linear interpolation to fill in missing values.
+                * "moving_average": Use moving average to fill in missing values. The window size (centered) can be
+                specified in the ``imputation_params`` dictionary with the key "window_size".
+            Default: "linear_interpolation"
+        imputation_params : dict, optional
+            additional parameters for the imputation method. For "moving_average", the window size can be specified with
+            the key "window_size". Default: None
+
+        """
         self.imputation_type = imputation_type
         self.imputation_params = imputation_params
         super().__init__()
@@ -47,9 +75,9 @@ class RPeakOutlierCorrection(Algorithm):
 
         Parameters
         ----------
-        ecg : pd.DataFrame
+        ecg : :class:`~pandas.DataFrame`
             The ECG data.
-        rpeaks : pd.DataFrame
+        rpeaks : :class:`~pandas.DataFrame`
             The R-peak data.
         outlier_detection_results : list of :class:`~pandas.DataFrame`
             The results of the outlier detection algorithms.
@@ -58,7 +86,7 @@ class RPeakOutlierCorrection(Algorithm):
         self._check_imputation_type_valid()
         rpeaks = rpeaks.copy()
         # get the last sample because it will get lost when computing the RR interval
-        last_sample = rpeaks.iloc[-1]
+        # last_sample = rpeaks.iloc[-1]
 
         if isinstance(outlier_detection_results, Sequence):
             outlier_detection_results = pd.concat(outlier_detection_results, axis=1)
