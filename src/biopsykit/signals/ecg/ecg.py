@@ -136,6 +136,13 @@ class EcgProcessor(_BaseProcessor):
         >>> ecg_processor = EcgProcessor(data=data, sampling_rate=sampling_rate, time_intervals=time_intervals)
 
         """
+        # issue deprecation warning that EcgProcessor is deprecated
+        warnings.warn(
+            "EcgProcessor is deprecated and will be removed in a future version. "
+            "Please use the new ECG processing pipeline instead.",
+            DeprecationWarning,
+        )
+
         if sampling_rate is None:
             sampling_rate = 256.0
         super().__init__(
