@@ -197,6 +197,7 @@ def plot_conf_matrix(
     predictions: pd.DataFrame,
     labels: Sequence[str],
     label_name: Optional[str] = "label",
+    prediction_cols: Optional[Sequence[str]] = ["true_labels", "predicted_labels"],
     conf_matrix_kwargs: Optional[dict[str, Any]] = None,
     **kwargs,
 ) -> tuple[plt.Figure, plt.Axes]:
@@ -212,6 +213,8 @@ def plot_conf_matrix(
         Default: ``None`` to use the labels in the data frame in the order they appear
     label_name : str, optional
         name of the 'label' in the axis titles. Default: "label" to yield "True label" and "Predicted label"
+    prediction_cols : list, optional
+        list of column names in the input dataframe that contain the true and predicted labels.
     conf_matrix_kwargs : dict, optional
         additional keyword arguments to pass to :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions`
     **kwargs
@@ -230,9 +233,7 @@ def plot_conf_matrix(
     predictions = predictions.copy()
     if isinstance(labels, dict):
         # only replace in true_labels and predicted_labels columns
-        predictions[["true_labels", "predicted_labels"]] = predictions[["true_labels", "predicted_labels"]].replace(
-            labels
-        )
+        predictions[prediction_cols] = predictions[prediction_cols].replace(labels)
         labels = list(labels.values())
 
     if not conf_matrix_kwargs.get("cmap", None):
@@ -243,8 +244,8 @@ def plot_conf_matrix(
     conf_matrix_kwargs.setdefault("colorbar", False)
 
     ConfusionMatrixDisplay.from_predictions(
-        predictions["true_labels"],
-        predictions["predicted_labels"],
+        predictions[prediction_cols[0]],
+        predictions[prediction_cols[1]],
         labels=labels,
         ax=ax,
         **conf_matrix_kwargs,

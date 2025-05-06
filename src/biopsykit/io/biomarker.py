@@ -301,6 +301,9 @@ def load_biomarker_results(
         list of condition names or dictionary of condition names to list of condition assignments or
         :class:`~pandas.Index` of condition names or ``None`` if no conditions are present.
         Default: ``None``
+    skiprows: int, optional, default: 2, passed to :func:`pandas.read_excel`
+    check_num_samples: bool, optional, default: True
+        ``True`` to check that the number of samples is the same for all subjects, ``False`` to skip this check
     check_number_samples: bool, optional
         ``True`` to check that the number of samples is equal for all subjects,
         ``False`` to skip this check. Default: ``True``
@@ -308,7 +311,7 @@ def load_biomarker_results(
         ``True`` to replace strings indicating missing  in the biomarker data with NaN values,
         ``False`` to keep the strings. Default: ``True``
     **kwargs
-        Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
+        Additional parameters that are passed to :func:`pandas.read_excel`
 
     Returns
     -------
