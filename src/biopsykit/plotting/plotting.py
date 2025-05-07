@@ -647,7 +647,7 @@ def _get_df_lineplot(data: pd.DataFrame, x: str, y: str, hue: str, order: Sequen
         m_se = data
     else:
         group_cols = [x] if hue is None else [x, hue]
-        m_se = data[[*group_cols, y]].groupby(group_cols).agg([np.mean, se])[y]
+        m_se = data[[*group_cols, y]].groupby(group_cols).agg(["mean", se])[y]
     if order is not None:
         m_se = m_se.reindex(order, level=0)
     return m_se

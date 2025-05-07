@@ -160,7 +160,6 @@ def save_saliva(
     _assert_file_extension(file_path, [".csv", ".xls", ".xlsx"])
 
     is_saliva_raw_dataframe(data, saliva_type)
-    data = data[saliva_type]
     if as_wide_format:
         levels = list(data.index.names)
         levels.remove("subject")
