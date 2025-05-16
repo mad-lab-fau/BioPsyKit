@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Optional
+from typing import Literal
 
 import pandas as pd
 from tpcp import Parameter, Pipeline
@@ -28,13 +28,12 @@ __all__ = ["EcgProcessingPipeline"]
 
 
 class EcgProcessingPipeline(Pipeline):
-
     preprocessing_algo: Parameter[BaseEcgPreprocessing]
     r_peak_algo: Parameter[BaseEcgExtraction]
     outlier_detection_algos: Parameter[Sequence[BaseRPeakOutlierDetection]]
     outlier_correction_algo: Parameter[RPeakOutlierCorrection]
-    hrv_r_peak_correction_algo: Parameter[Optional[RPeakOutlierCorrectionHrvLipponen2019]]
-    hrv_extraction_algo: Parameter[Optional[HrvExtraction]]
+    hrv_r_peak_correction_algo: Parameter[RPeakOutlierCorrectionHrvLipponen2019 | None]
+    hrv_extraction_algo: Parameter[HrvExtraction | None]
 
     handle_missing_events: HANDLE_MISSING_EVENTS
 
@@ -43,7 +42,7 @@ class EcgProcessingPipeline(Pipeline):
 
     rpeaks_raw_: EcgRawDataFrame
     rpeaks_: EcgRawDataFrame
-    hrv_extracted_: Optional[pd.DataFrame]
+    hrv_extracted_: pd.DataFrame | None
 
     def __init__(
         self,
@@ -52,8 +51,8 @@ class EcgProcessingPipeline(Pipeline):
         r_peak_algo: BaseEcgExtraction,
         outlier_detection_algos: Sequence[BaseRPeakOutlierDetection],
         outlier_correction_algo: RPeakOutlierCorrection,
-        hrv_r_peak_correction_algo: Optional[RPeakOutlierCorrectionHrvLipponen2019] = None,
-        hrv_extraction_algo: Optional[HrvExtraction] = None,
+        hrv_r_peak_correction_algo: RPeakOutlierCorrectionHrvLipponen2019 | None = None,
+        hrv_extraction_algo: HrvExtraction | None = None,
         handle_missing_events: Literal[HANDLE_MISSING_EVENTS] = "raise",
     ):
         self.preprocessing_algo = preprocessing_algo

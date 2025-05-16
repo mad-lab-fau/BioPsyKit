@@ -5,7 +5,7 @@ import re
 import warnings
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -29,10 +29,10 @@ __all__ = [
 
 
 def load_dataset_nilspod(
-    file_path: Optional[path_t] = None,
-    dataset: Optional[Dataset] = None,
-    datastreams: Optional[Union[str, Sequence[str]]] = None,
-    handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
+    file_path: path_t | None = None,
+    dataset: Dataset | None = None,
+    datastreams: str | Sequence[str] | None = None,
+    handle_counter_inconsistency: COUNTER_INCONSISTENCY_HANDLING | None = "raise",
     **kwargs,
 ) -> tuple[pd.DataFrame, float]:
     """Load NilsPod recording and convert into dataframe.
@@ -136,8 +136,8 @@ def load_dataset_nilspod(
 
 def load_synced_session_nilspod(
     folder_path: path_t,
-    datastreams: Optional[Union[str, Sequence[str]]] = None,
-    handle_counter_inconsistency: Optional[COUNTER_INCONSISTENCY_HANDLING] = "raise",
+    datastreams: str | Sequence[str] | None = None,
+    handle_counter_inconsistency: COUNTER_INCONSISTENCY_HANDLING | None = "raise",
     **kwargs,
 ) -> tuple[pd.DataFrame, float]:
     """Load a synchronized session of NilsPod recordings and convert into dataframes.
@@ -266,10 +266,10 @@ def _handle_counter_inconsistencies_session(
 
 def load_csv_nilspod(
     file_path: path_t = None,
-    datastreams: Optional[Sequence[str]] = None,
-    timezone: Optional[Union[datetime.tzinfo, str]] = tz,
-    filename_regex: Optional[str] = None,
-    time_regex: Optional[str] = None,
+    datastreams: Sequence[str] | None = None,
+    timezone: datetime.tzinfo | str | None = tz,
+    filename_regex: str | None = None,
+    time_regex: str | None = None,
 ) -> tuple[pd.DataFrame, float]:
     r"""Convert a csv file recorded by NilsPod into a dataframe.
 
@@ -367,7 +367,7 @@ def _convert_index(df: pd.DataFrame, start_time: Sequence[str], time_regex: str)
 
 
 def load_folder_nilspod(
-    folder_path: path_t, phase_names: Optional[Sequence[str]] = None, **kwargs
+    folder_path: path_t, phase_names: Sequence[str] | None = None, **kwargs
 ) -> tuple[dict[str, pd.DataFrame], float]:
     """Load all NilsPod datasets from one folder, convert them into dataframes, and combine them into a dictionary.
 
@@ -441,7 +441,7 @@ def load_folder_nilspod(
         raise ValueError(f"Datasets in the sessions have different sampling rates! Got: {fs_list}.")
     fs = fs_list[0]
 
-    dataset_dict = {phase: df for phase, (df, fs) in zip(phase_names, dataset_list)}
+    dataset_dict = {phase: df for phase, (df, fs) in zip(phase_names, dataset_list, strict=False)}
     return dataset_dict, fs
 
 

@@ -1,6 +1,6 @@
 """Module providing various functions for low-level handling of array data."""
 
-from typing import Optional, Union
+import itertools
 
 import neurokit2 as nk
 import numpy as np
@@ -26,7 +26,7 @@ def sanitize_input_1d(data: arr_t) -> np.ndarray:
         data as 1-d :class:`~numpy.ndarray`
 
     """
-    if isinstance(data, (pd.Series, pd.DataFrame)):
+    if isinstance(data, pd.Series | pd.DataFrame):
         # only 1-d pandas DataFrame allowed
         if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
             raise ValueError("Only 1-d dataframes allowed!")
@@ -37,7 +37,7 @@ def sanitize_input_1d(data: arr_t) -> np.ndarray:
 
 def sanitize_input_nd(
     data: arr_t,
-    ncols: Optional[Union[int, tuple[int, ...]]] = None,
+    ncols: int | tuple[int, ...] | None = None,
 ) -> np.ndarray:
     """Convert n-d array-like data (:class:`~pandas.DataFrame`/:class:`~pandas.Series`) to a numpy array.
 
@@ -60,7 +60,7 @@ def sanitize_input_nd(
     if isinstance(ncols, int):
         ncols = [ncols]
 
-    if isinstance(data, (pd.Series, pd.DataFrame)):
+    if isinstance(data, pd.Series | pd.DataFrame):
         data = data.to_numpy()
 
     if ncols is not None:
@@ -73,7 +73,7 @@ def sanitize_input_nd(
     return data
 
 
-def sanitize_input_series(data: Union[np.ndarray, pd.Series, pd.DataFrame], name: str) -> pd.Series:
+def sanitize_input_series(data: np.ndarray | pd.Series | pd.DataFrame, name: str) -> pd.Series:
     """Convert input data to a pandas Series.
 
     Parameters
@@ -98,7 +98,7 @@ def sanitize_input_series(data: Union[np.ndarray, pd.Series, pd.DataFrame], name
     return pd.Series(data, name=name)
 
 
-def sanitize_input_dataframe_1d(data: Union[np.ndarray, pd.Series, pd.DataFrame], column: str) -> pd.DataFrame:
+def sanitize_input_dataframe_1d(data: np.ndarray | pd.Series | pd.DataFrame, column: str) -> pd.DataFrame:
     """Convert input data to a pandas DataFrame with one column.
 
     Parameters
@@ -125,8 +125,8 @@ def sanitize_input_dataframe_1d(data: Union[np.ndarray, pd.Series, pd.DataFrame]
 def find_extrema_in_radius(
     data: arr_t,
     indices: arr_t,
-    radius: Union[int, tuple[int, int]],
-    extrema_type: Optional[str] = "min",
+    radius: int | tuple[int, int],
+    extrema_type: str | None = "min",
 ) -> np.ndarray:
     """Find extrema values (min or max) within a given radius around array indices.
 
@@ -199,7 +199,7 @@ def find_extrema_in_radius(
     return extrema_func(windows, axis=1) + indices - lower_limit
 
 
-def _find_extrema_in_radius_get_limits(radius: Union[int, tuple[int, int]]) -> tuple[int, int]:
+def _find_extrema_in_radius_get_limits(radius: int | tuple[int, int]) -> tuple[int, int]:
     # determine upper and lower limit
     lower_limit = radius[0] if isinstance(radius, tuple) else radius
     upper_limit = radius[-1] if isinstance(radius, tuple) else radius
@@ -213,8 +213,8 @@ def _find_extrema_in_radius_get_limits(radius: Union[int, tuple[int, int]]) -> t
 def remove_outlier_and_interpolate(
     data: arr_t,
     outlier_mask: np.ndarray,
-    x_old: Optional[np.ndarray] = None,
-    desired_length: Optional[int] = None,
+    x_old: np.ndarray | None = None,
+    desired_length: int | None = None,
 ) -> np.ndarray:
     """Remove outliers, impute missing values and optionally interpolate data to desired length.
 
@@ -270,11 +270,11 @@ def remove_outlier_and_interpolate(
 
 def sliding_window(
     data: arr_t,
-    window_samples: Optional[int] = None,
-    window_sec: Optional[int] = None,
-    sampling_rate: Optional[float] = None,
-    overlap_samples: Optional[int] = None,
-    overlap_percent: Optional[float] = None,
+    window_samples: int | None = None,
+    window_sec: int | None = None,
+    sampling_rate: float | None = None,
+    overlap_samples: int | None = None,
+    overlap_percent: float | None = None,
 ) -> np.ndarray:
     """Create sliding windows from an input array.
 
@@ -333,11 +333,11 @@ def sliding_window(
 
 
 def sanitize_sliding_window_input(
-    window_samples: Optional[int] = None,
-    window_sec: Optional[int] = None,
-    sampling_rate: Optional[float] = None,
-    overlap_samples: Optional[int] = None,
-    overlap_percent: Optional[float] = None,
+    window_samples: int | None = None,
+    window_sec: int | None = None,
+    sampling_rate: float | None = None,
+    overlap_samples: int | None = None,
+    overlap_percent: float | None = None,
 ) -> tuple[int, int]:
     """Sanitize input parameters for creating sliding windows from array data.
 
@@ -389,9 +389,7 @@ def sanitize_sliding_window_input(
     return window, overlap
 
 
-def _compute_overlap_samples(
-    window: int, overlap_samples: Optional[int] = None, overlap_percent: Optional[float] = None
-):
+def _compute_overlap_samples(window: int, overlap_samples: int | None = None, overlap_percent: float | None = None):
     if overlap_samples is not None:
         overlap = int(overlap_samples)
     elif overlap_percent is not None:
@@ -603,7 +601,7 @@ def split_array_equally(data: arr_t, n_splits: int) -> list[tuple[int, int]]:
 
     """
     idx_split = np.arange(0, n_splits + 1) * ((len(data) - 1) // n_splits)
-    split_boundaries = list(zip(idx_split[:-1], idx_split[1:]))
+    split_boundaries = list(itertools.pairwise(idx_split))
     return split_boundaries
 
 
@@ -635,7 +633,7 @@ def accumulate_array(data: arr_t, fs_in: float, fs_out: float) -> arr_t:
 
 
 def add_datetime_index(
-    arr: arr_t, start_time: pd.Timestamp, sampling_rate: float, column_name: Optional[str_t] = None
+    arr: arr_t, start_time: pd.Timestamp, sampling_rate: float, column_name: str_t | None = None
 ) -> pd.DataFrame:
     """Add datetime index to dataframe.
 

@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -58,7 +57,7 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
         c_points: CPointDataFrame,
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
     ):
         """Extract B-points from given ICG derivative signal.
 

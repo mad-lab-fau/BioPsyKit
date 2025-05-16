@@ -51,7 +51,7 @@ Repository = "https://github.com/mad-lab-fau/biopsykit"
 
 [dependency-groups]
 dev = [
-    "black[jupyter, d]>=22,<23",
+    "black>=25",
     "poethepoet>=0.10.0,<0.11",
     "pytest>=6,<7",
     "pytest-cov>=2,<3",
@@ -105,23 +105,19 @@ exclude = '''
 )
 '''
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 120
-skip_gitignore = true
-
 [tool.poe.tasks]
-_format_black = "black ."
-_format_ruff = "ruff check . --fix-only"
-format = { sequence = ["_format_black", "_format_ruff"], help = "Format all files." }
+_format = "ruff format ."
+_auto_fix = "ruff check . --fix-only --show-fixes --exit-zero"
+_auto_fix_unsafe = "ruff check . --fix-only --show-fixes --exit-zero --unsafe-fixes"
+format = ["_auto_fix", "_format"]
+format_unsafe = ["_auto_fix_unsafe", "_format"]
 lint = { cmd = "ruff check src --fix", help = "Lint all files with ruff." }
 _lint_ci = "ruff check src --output-format=github"
-_check_black = "black . --check"
-ci_check = { sequence = ["_check_black", "_lint_ci"], help = "Check all potential format and linting issues." }
+_check_format = "ruff format . --check"
+ci_check = { sequence = ["_check_format", "_lint_ci"], help = "Check all potential format and linting issues." }
 test = {cmd = "pytest --cov=biopsykit -cov-report=term-missing --cov-report=xml", help = "Run Pytest with coverage." }
 docs = {"script" = "_tasks:task_docs"}
-version = { cmd = "uvx bump-my-version" }
+version = { "script" = "_tasks:task_update_version" }
 register_ipykernel = { cmd = "python -m ipykernel install --user --name biopsykit --display-name biopsykit", help = "Add a new jupyter kernel for the project." }
 remove_ipykernel = { cmd = "jupyter kernelspec uninstall biopsykit", help = "Remove the project specific jupyter kernel."}
 default = {sequence = ["format", "lint", "test"], help = "Run the default pipeline, consisting of formatting, linting, and testing."}

@@ -1,7 +1,5 @@
 """Module providing helper functions to convert old BioPsyKit export files to new export formats."""
 
-from typing import Optional
-
 from biopsykit.io.ecg import load_hr_phase_dict, write_hr_phase_dict
 from biopsykit.utils._types_internal import path_t
 
@@ -10,7 +8,7 @@ __all__ = ["legacy_convert_hr_phase_dict"]
 from biopsykit.utils.dtypes import HeartRatePhaseDict
 
 
-def legacy_convert_hr_phase_dict(file_path: path_t, export: Optional[bool] = True) -> Optional[HeartRatePhaseDict]:
+def legacy_convert_hr_phase_dict(file_path: path_t, export: bool | None = True) -> HeartRatePhaseDict | None:
     """Legacy conversion for :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`.
 
     Legacy conversion includes changing the column name from "ECG_Rate" into "Heart_Rate".

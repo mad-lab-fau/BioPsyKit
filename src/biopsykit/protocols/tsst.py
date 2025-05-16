@@ -1,16 +1,12 @@
 """Module representing the Trier Social Stress Test (TSST) protocol."""
 
-from typing import Optional, Union
-
 from biopsykit.protocols import BaseProtocol
 
 
 class TSST(BaseProtocol):
     """Class representing the Trier Social Stress Test (TSST)."""
 
-    def __init__(
-        self, name: Optional[str] = None, structure: Optional[dict[str, Union[None, dict[str, int]]]] = None, **kwargs
-    ):
+    def __init__(self, name: str | None = None, structure: dict[str, None | dict[str, int]] | None = None, **kwargs):
         """Class representing the Trier Social Stress Test (TSST).
 
         The general structure of the TSST can be specified by passing a ``structure`` dict to the constructor.

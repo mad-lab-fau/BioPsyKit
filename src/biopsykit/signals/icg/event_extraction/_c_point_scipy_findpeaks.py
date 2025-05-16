@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -62,7 +61,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
         *,
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
     ):
         """Extract C-points from given cleaned ICG derivative signal using :func:`~scipy.signal.find_peaks`.
 

@@ -4,7 +4,7 @@ import re
 import warnings
 from collections.abc import Sequence
 from inspect import getmembers, isfunction
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -28,11 +28,11 @@ __all__ = [
 
 def find_cols(
     data: pd.DataFrame,
-    regex_str: Optional[str] = None,
-    starts_with: Optional[str] = None,
-    ends_with: Optional[str] = None,
-    contains: Optional[str] = None,
-    zero_pad_numbers: Optional[bool] = True,
+    regex_str: str | None = None,
+    starts_with: str | None = None,
+    ends_with: str | None = None,
+    contains: str | None = None,
+    zero_pad_numbers: bool | None = True,
 ) -> tuple[pd.DataFrame, Sequence[str]]:
     r"""Find columns in dataframe that match a specific pattern.
 
@@ -136,7 +136,7 @@ def find_cols(
     return data_filt, cols
 
 
-def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Optional[pd.DataFrame]:
+def zero_pad_columns(data: pd.DataFrame, inplace: bool | None = False) -> pd.DataFrame | None:
     r"""Add zero-padding to numbers at the **end** of column names in a dataframe.
 
     .. warning::
@@ -173,7 +173,7 @@ def zero_pad_columns(data: pd.DataFrame, inplace: Optional[bool] = False) -> Opt
     return data
 
 
-def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.ndarray:
+def to_idx(col_idxs: np.array | Sequence[int]) -> np.ndarray:
     """Convert questionnaire item indices into array indices.
 
     In questionnaires, items indices start at 1. To avoid confusion in the implementation of questionnaires
@@ -195,11 +195,11 @@ def to_idx(col_idxs: Union[np.array, Sequence[int]]) -> np.ndarray:
 
 
 def invert(
-    data: Union[pd.DataFrame, pd.Series],
+    data: pd.DataFrame | pd.Series,
     score_range: Sequence[int],
-    cols: Optional[Union[np.array, Sequence[int], Sequence[str]]] = None,
-    inplace: Optional[bool] = False,
-) -> Optional[Union[pd.DataFrame, pd.Series]]:
+    cols: np.array | Sequence[int] | Sequence[str] | None = None,
+    inplace: bool | None = False,
+) -> pd.DataFrame | pd.Series | None:
     """Invert questionnaire scores.
 
     In many questionnaires some items need to be inverted (reversed) before sum scores can be computed. This function
@@ -285,7 +285,7 @@ def invert(
 
 
 def _invert_dataframe(
-    data: pd.DataFrame, cols: Union[Sequence[str], Sequence[int]], score_range: Sequence[int]
+    data: pd.DataFrame, cols: Sequence[str] | Sequence[int], score_range: Sequence[int]
 ) -> pd.DataFrame:
     if cols is not None:
         if isinstance(cols[0], str):
@@ -303,7 +303,7 @@ def _invert_dataframe(
 
 def _invert_subscales(
     data: pd.DataFrame,
-    subscales: dict[str, Sequence[Union[str, int]]],
+    subscales: dict[str, Sequence[str | int]],
     idx_dict: dict[str, Sequence[int]],
     score_range: Sequence[int],
 ) -> pd.DataFrame:
@@ -340,11 +340,11 @@ def _invert_subscales(
 
 
 def convert_scale(
-    data: Union[pd.DataFrame, pd.Series],
+    data: pd.DataFrame | pd.Series,
     offset: int,
-    cols: Optional[Union[pd.DataFrame, pd.Series]] = None,
-    inplace: Optional[bool] = False,
-) -> Optional[Union[pd.DataFrame, pd.Series]]:
+    cols: pd.DataFrame | pd.Series | None = None,
+    inplace: bool | None = False,
+) -> pd.DataFrame | pd.Series | None:
     """Convert the score range of questionnaire items.
 
     Parameters
@@ -407,9 +407,7 @@ def convert_scale(
     return data
 
 
-def _convert_scale_dataframe(
-    data: pd.DataFrame, cols: Union[Sequence[int], Sequence[str]], offset: int
-) -> pd.DataFrame:
+def _convert_scale_dataframe(data: pd.DataFrame, cols: Sequence[int] | Sequence[str], offset: int) -> pd.DataFrame:
     if cols is None:
         data.iloc[:, :] = data.iloc[:, :] + offset
     elif isinstance(cols[0], int):
@@ -421,11 +419,11 @@ def _convert_scale_dataframe(
 
 
 def crop_scale(
-    data: Union[pd.DataFrame, pd.Series],
+    data: pd.DataFrame | pd.Series,
     score_range: Sequence[int],
-    set_nan: Optional[bool] = False,
-    inplace: Optional[bool] = False,
-) -> Optional[Union[pd.DataFrame, pd.Series]]:
+    set_nan: bool | None = False,
+    inplace: bool | None = False,
+) -> pd.DataFrame | pd.Series | None:
     """Crop questionnaire scales, i.e., set values out of range to specific minimum and maximum values or to NaN.
 
     Parameters
@@ -463,14 +461,14 @@ def crop_scale(
 
 
 def bin_scale(
-    data: Union[pd.DataFrame, pd.Series],
-    bins: Union[int, Sequence[float], pd.IntervalIndex],
-    cols: Optional[Union[Sequence[Union[int, str]], Union[int, str]]] = None,
-    first_min: Optional[bool] = True,
-    last_max: Optional[bool] = False,
-    inplace: Optional[bool] = False,
+    data: pd.DataFrame | pd.Series,
+    bins: int | Sequence[float] | pd.IntervalIndex,
+    cols: Sequence[int | str] | int | str | None = None,
+    first_min: bool | None = True,
+    last_max: bool | None = False,
+    inplace: bool | None = False,
     **kwargs,
-) -> Optional[Union[pd.Series, pd.DataFrame]]:
+) -> pd.Series | pd.DataFrame | None:
     """Bin questionnaire scales.
 
     Questionnaire scales are binned using :func:`pandas.cut` according to the bins specified by ``bins``.
@@ -550,7 +548,7 @@ def bin_scale(
     return data.astype("Int64")
 
 
-def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequence[str]]) -> pd.DataFrame:
+def wide_to_long(data: pd.DataFrame, quest_name: str, levels: str | Sequence[str]) -> pd.DataFrame:
     """Convert a dataframe wide-format into long-format.
 
     .. warning::
@@ -589,8 +587,8 @@ def wide_to_long(data: pd.DataFrame, quest_name: str, levels: Union[str, Sequenc
 
 def compute_scores(
     data: pd.DataFrame,
-    quest_dict: dict[str, Union[Sequence[str], pd.Index]],
-    quest_kwargs: Optional[dict[str, dict[str, Any]]] = None,
+    quest_dict: dict[str, Sequence[str] | pd.Index],
+    quest_kwargs: dict[str, dict[str, Any]] | None = None,
 ) -> pd.DataFrame:
     """Compute questionnaire scores from dataframe.
 
@@ -659,8 +657,7 @@ def compute_scores(
             df = quest_funcs[score](data[columns], **kwargs)
         except TypeError as e:
             raise TypeError(
-                f"Error computing questionnaire '{score}'. The computation failed with the following "
-                f"error: \n\n{e!s}."
+                f"Error computing questionnaire '{score}'. The computation failed with the following error: \n\n{e!s}."
             ) from e
 
         if suffix is not None:
@@ -698,8 +695,8 @@ def get_supported_questionnaires() -> dict[str, str]:
 def _compute_questionnaire_subscales(
     data: pd.DataFrame,
     score_name: str,
-    subscales: dict[str, Sequence[Union[str, int]]],
-    agg_type: Optional[Literal["sum", "mean"]] = "sum",
+    subscales: dict[str, Sequence[str | int]],
+    agg_type: Literal["sum", "mean"] | None = "sum",
 ) -> dict[str, pd.Series]:
     """Compute questionnaire subscales (helper function).
 
@@ -754,9 +751,7 @@ def _compute_questionnaire_scores_str(data: pd.DataFrame, items: Sequence[str], 
     return data.loc[:, items].mean(axis=1)
 
 
-def _get_cols(
-    data: pd.DataFrame, cols: Optional[Union[Sequence[Union[int, str]], Union[int, str]]] = None
-) -> Sequence[Union[str, int]]:
+def _get_cols(data: pd.DataFrame, cols: Sequence[int | str] | int | str | None = None) -> Sequence[str | int]:
     if isinstance(cols, int):
         cols = [cols]
     if isinstance(cols, str):
@@ -767,13 +762,13 @@ def _get_cols(
 
 
 def _get_bins(
-    data: Union[pd.DataFrame, pd.Series],
-    bins: Union[int, Sequence[float]],
-    col: Optional[Union[int, str]] = None,
-    first_min: Optional[bool] = False,
-    last_max: Optional[bool] = False,
-) -> Union[int, Sequence[float]]:
-    if isinstance(bins, (int, pd.IntervalIndex)):
+    data: pd.DataFrame | pd.Series,
+    bins: int | Sequence[float],
+    col: int | str | None = None,
+    first_min: bool | None = False,
+    last_max: bool | None = False,
+) -> int | Sequence[float]:
+    if isinstance(bins, int | pd.IntervalIndex):
         return bins
 
     # ensure list
@@ -792,7 +787,7 @@ def _get_bins(
     return bins
 
 
-def _bin_scale_get_min_val(data: Union[pd.DataFrame, pd.Series], col: Union[int, str]) -> float:
+def _bin_scale_get_min_val(data: pd.DataFrame | pd.Series, col: int | str) -> float:
     if isinstance(col, int):
         return data.iloc[:, col].min()
     if isinstance(col, str):
@@ -800,7 +795,7 @@ def _bin_scale_get_min_val(data: Union[pd.DataFrame, pd.Series], col: Union[int,
     return data.min()
 
 
-def _bin_scale_get_max_val(data: Union[pd.DataFrame, pd.Series], col: Union[int, str]) -> float:
+def _bin_scale_get_max_val(data: pd.DataFrame | pd.Series, col: int | str) -> float:
     if isinstance(col, int):
         return data.iloc[:, col].max()
     if isinstance(col, str):

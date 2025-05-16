@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -70,7 +69,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
         c_points: CPointDataFrame,
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
     ):
         """Extract B-points from given ICG derivative signal.
 
@@ -184,8 +183,8 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
 
     def __init__(
         self,
-        search_window_start_ms: Optional[int] = 150,
-        window_size_ms: Optional[int] = 50,
+        search_window_start_ms: int | None = 150,
+        window_size_ms: int | None = 50,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new ``BPointExtractionArbol2017SecondDerivative`` algorithm instance.
@@ -342,12 +341,12 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
     """
 
     # input parameters
-    search_window_start_ms: Parameter[Union[str, int]]  # either 'R' or integer defining window length in ms
+    search_window_start_ms: Parameter[str | int]  # either 'R' or integer defining window length in ms
     correct_outliers: Parameter[bool]
 
     def __init__(
         self,
-        search_window_start_ms: Optional[Union[str, int]] = 300,
+        search_window_start_ms: str | int | None = 300,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new ``BPointExtractionArbol2017ThirdDerivative`` algorithm instance.

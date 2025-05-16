@@ -1,7 +1,6 @@
 """Module with utility functions for machine learning and classification applications."""
 
 from copy import deepcopy
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -46,7 +45,7 @@ def strip_df(data: pd.DataFrame) -> np.ndarray:
     return np.array(data.reset_index(drop=True).values)
 
 
-def strip_labels(data: Union[pd.DataFrame, pd.Series], label_col: Optional[str] = None) -> np.ndarray:
+def strip_labels(data: pd.DataFrame | pd.Series, label_col: str | None = None) -> np.ndarray:
     """Strip labels from dataframe index.
 
     Parameters
@@ -72,7 +71,7 @@ def strip_labels(data: Union[pd.DataFrame, pd.Series], label_col: Optional[str] 
 
 
 def factorize_subject_id(
-    data: Union[pd.Series, pd.DataFrame], subject_col: Optional[str] = None
+    data: pd.Series | pd.DataFrame, subject_col: str | None = None
 ) -> tuple[np.ndarray, np.ndarray]:
     """Factorize subject IDs, i.e., encode them as an enumerated type or categorical variable.
 
@@ -103,9 +102,9 @@ def factorize_subject_id(
 
 def prepare_df_sklearn(
     data: pd.DataFrame,
-    label_col: Optional[str] = None,
-    subject_col: Optional[str] = None,
-    print_summary: Optional[bool] = False,
+    label_col: str | None = None,
+    subject_col: str | None = None,
+    print_summary: bool | None = False,
 ) -> tuple[np.ndarray, ...]:
     """Prepare a dataframe for usage in sklearn functions and return the single components of the dataframe.
 
@@ -163,7 +162,7 @@ def split_train_test(
     y: np.ndarray,
     train: np.ndarray,
     test: np.ndarray,
-    groups: Optional[np.ndarray] = None,
+    groups: np.ndarray | None = None,
 ) -> tuple[np.ndarray, ...]:
     """Split data into train and test set.
 

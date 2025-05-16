@@ -1,7 +1,6 @@
 """Module for processing Respiration data."""
 
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import neurokit2 as nk
 import numpy as np
@@ -19,10 +18,10 @@ class RspProcessor(_BaseProcessor):
 
     def __init__(
         self,
-        data: Union[pd.DataFrame, dict[str, pd.DataFrame]],
-        sampling_rate: Optional[float] = None,
-        time_intervals: Optional[Union[pd.Series, dict[str, Sequence[str]]]] = None,
-        include_start: Optional[bool] = False,
+        data: pd.DataFrame | dict[str, pd.DataFrame],
+        sampling_rate: float | None = None,
+        time_intervals: pd.Series | dict[str, Sequence[str]] | None = None,
+        include_start: bool | None = False,
     ):
         """Initialize an ``RspProcessor`` instance.
 
@@ -53,7 +52,7 @@ class RspProcessor(_BaseProcessor):
         )
 
     @classmethod
-    def rsp_compute_rate(cls, rsp_signal: pd.DataFrame, sampling_rate: Optional[float] = 256.0) -> float:
+    def rsp_compute_rate(cls, rsp_signal: pd.DataFrame, sampling_rate: float | None = 256.0) -> float:
         """Compute respiration rate for given interval from respiration signal.
 
         Parameters

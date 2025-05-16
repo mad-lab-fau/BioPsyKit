@@ -3,7 +3,6 @@
 import datetime
 import re
 from pathlib import Path
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -46,7 +45,7 @@ def check_tz_aware(data: pd.DataFrame) -> bool:
 
 
 def extract_time_from_filename(
-    file_path: path_t, filename_pattern: str, date_pattern: Optional[str] = None
+    file_path: path_t, filename_pattern: str, date_pattern: str | None = None
 ) -> datetime.datetime:
     """Extract time information from filename.
 
@@ -80,9 +79,9 @@ def extract_time_from_filename(
 
 def get_time_from_date(
     data: pd.Series,
-    is_utc: Optional[bool] = False,
-    tz_convert: Optional[bool] = False,
-    timezone: Optional[Union[str, datetime.tzinfo]] = None,
+    is_utc: bool | None = False,
+    tz_convert: bool | None = False,
+    timezone: str | datetime.tzinfo | None = None,
 ) -> pd.Series:
     """Extract time information from series with date information.
 

@@ -1,7 +1,6 @@
 """Utility functions for the ``biopsykit.protocols`` module."""
 
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -13,11 +12,11 @@ from biopsykit.utils.exceptions import ValidationError
 
 
 def _get_sample_times(
-    saliva_data: Union[dict[str, SalivaMeanSeDataFrame], SalivaMeanSeDataFrame],
-    sample_times: Union[Sequence[int], dict[str, Sequence[int]]],
+    saliva_data: dict[str, SalivaMeanSeDataFrame] | SalivaMeanSeDataFrame,
+    sample_times: Sequence[int] | dict[str, Sequence[int]],
     test_times: Sequence[int],
-    sample_times_absolute: Optional[bool] = False,
-) -> Union[Sequence[int], dict[str, Sequence[int]]]:
+    sample_times_absolute: bool | None = False,
+) -> Sequence[int] | dict[str, Sequence[int]]:
     if isinstance(sample_times, dict):
         for key in sample_times:
             sample_times[key] = _get_sample_times(

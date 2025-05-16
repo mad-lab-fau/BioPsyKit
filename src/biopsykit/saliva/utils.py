@@ -3,7 +3,6 @@
 import re
 from collections.abc import Sequence
 from datetime import datetime, time
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -56,7 +55,7 @@ def saliva_feature_wide_to_long(
     return data.reorder_levels([*index_cols, j]).sort_index()
 
 
-def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Sequence[str]]) -> Sequence[str]:
+def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: str | Sequence[str]) -> Sequence[str]:
     """Automatically extract possible saliva data columns from a pandas dataframe.
 
     This is for example useful when one large dataframe is used to store demographic information,
@@ -124,8 +123,8 @@ def get_saliva_column_suggestions(data: pd.DataFrame, saliva_type: Union[str, Se
 
 
 def extract_saliva_columns(
-    data: pd.DataFrame, saliva_type: Union[str, Sequence[str]], col_pattern: Optional[Union[str, Sequence[str]]] = None
-) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
+    data: pd.DataFrame, saliva_type: str | Sequence[str], col_pattern: str | Sequence[str] | None = None
+) -> pd.DataFrame | dict[str, pd.DataFrame]:
     """Extract saliva sample columns from a pandas dataframe.
 
     Parameters
@@ -151,7 +150,7 @@ def extract_saliva_columns(
         dict_result = {}
         if col_pattern is None:
             col_pattern = [None] * len(saliva_type)
-        for saliva, col_p in zip(saliva_type, col_pattern):
+        for saliva, col_p in zip(saliva_type, col_pattern, strict=False):
             dict_result[saliva] = extract_saliva_columns(data=data, saliva_type=saliva, col_pattern=col_p)
         return dict_result
 
@@ -167,14 +166,14 @@ def extract_saliva_columns(
 
 
 def _sample_times_datetime_to_minute_apply(
-    sample_times: Union[pd.DataFrame, pd.Series],
-) -> Union[pd.DataFrame, pd.Series]:
-    if isinstance(sample_times.to_numpy().flatten()[0], (pd.Timedelta, np.timedelta64)):
+    sample_times: pd.DataFrame | pd.Series,
+) -> pd.DataFrame | pd.Series:
+    if isinstance(sample_times.to_numpy().flatten()[0], pd.Timedelta | np.timedelta64):
         return sample_times.apply(pd.to_timedelta)
     return sample_times.astype(str).apply(pd.to_datetime)
 
 
-def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]) -> Union[pd.Series, pd.DataFrame]:
+def sample_times_datetime_to_minute(sample_times: pd.Series | pd.DataFrame) -> pd.Series | pd.DataFrame:
     """Convert sample times from datetime or timedelta objects into minutes.
 
     In order to compute certain saliva features (such as :func:`~biopsykit.saliva.auc` or
@@ -206,7 +205,7 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
         sample_times = _get_sample_times_str(sample_times)
 
     if not isinstance(
-        sample_times.to_numpy().flatten()[0], (time, datetime, pd.Timedelta, np.timedelta64, np.datetime64)
+        sample_times.to_numpy().flatten()[0], time | datetime | pd.Timedelta | np.timedelta64 | np.datetime64
     ):
         raise TypeError(
             "Sample times must be instance of `datetime.datetime()`, `datetime.time()`,"
@@ -230,7 +229,7 @@ def sample_times_datetime_to_minute(sample_times: Union[pd.Series, pd.DataFrame]
     return sample_times
 
 
-def _get_sample_times_str(sample_times: Union[pd.Series, pd.DataFrame]) -> Union[pd.Series, pd.DataFrame]:
+def _get_sample_times_str(sample_times: pd.Series | pd.DataFrame) -> pd.Series | pd.DataFrame:
     if isinstance(sample_times, pd.DataFrame):
         return pd.to_timedelta(sample_times.stack()).unstack("sample")
     return pd.to_timedelta(sample_times)
@@ -277,8 +276,8 @@ def _check_sample_times(sample_times: np.array) -> None:
 def _get_sample_times(
     data: pd.DataFrame,
     saliva_type: str,
-    sample_times: Optional[Union[np.array, Sequence[int]]] = None,
-    remove_s0: Optional[bool] = False,
+    sample_times: np.array | Sequence[int] | None = None,
+    remove_s0: bool | None = False,
 ) -> np.array:
     if sample_times is None:
         # check if dataframe has 'time' index
@@ -342,8 +341,8 @@ def _get_sample_times_check_dims(data: pd.DataFrame, sample_times: arr_t, saliva
 
 def _get_saliva_idx_labels(
     columns: pd.Index,
-    sample_labels: Optional[Union[tuple, Sequence]] = None,
-    sample_idx: Optional[Union[tuple[int, int], Sequence[int]]] = None,
+    sample_labels: tuple | Sequence | None = None,
+    sample_idx: tuple[int, int] | Sequence[int] | None = None,
 ) -> tuple[Sequence, Sequence]:
     """Get sample labels and indices from data, if only one of both was specified.
 
@@ -399,7 +398,7 @@ def _get_saliva_idx_labels_sanitize(sample_idx: list[int], columns: Sequence[str
 
 
 def _get_group_cols(
-    data: SalivaRawDataFrame, group_cols: Union[str, Sequence[str]], group_type: str, function_name: str
+    data: SalivaRawDataFrame, group_cols: str | Sequence[str], group_type: str, function_name: str
 ) -> list[str]:
     """Get appropriate columns for grouping.
 

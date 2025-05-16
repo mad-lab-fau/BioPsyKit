@@ -1,12 +1,10 @@
 """Module with a set of functions useful for computing."""
 
-from typing import Union
-
 import numpy as np
 import pandas as pd
 
 
-def se(data: Union[np.ndarray, pd.Series]) -> Union[np.ndarray, pd.Series]:
+def se(data: np.ndarray | pd.Series) -> np.ndarray | pd.Series:
     """Compute standard error (SE).
 
     .. note::

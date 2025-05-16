@@ -2,7 +2,6 @@
 
 from collections.abc import Sequence
 from numbers import Number
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -11,7 +10,7 @@ from biopsykit.utils.dtypes import SleepEndpointDataFrame, SleepEndpointDict, _S
 
 
 def compute_sleep_endpoints(
-    sleep_wake: pd.DataFrame, bed_interval: Sequence[Union[str, int, np.datetime64]]
+    sleep_wake: pd.DataFrame, bed_interval: Sequence[str | int | np.datetime64]
 ) -> SleepEndpointDict:
     """Compute a set of sleep endpoints based on sleep/wake information and time spent in bed.
 
@@ -131,7 +130,7 @@ def compute_sleep_endpoints(
     return dict_result
 
 
-def endpoints_as_df(sleep_endpoints: SleepEndpointDict) -> Optional[SleepEndpointDataFrame]:
+def endpoints_as_df(sleep_endpoints: SleepEndpointDict) -> SleepEndpointDataFrame | None:
     """Convert ``SleepEndpointDict`` into ``SleepEndpointDataFrame``.
 
     Parameters

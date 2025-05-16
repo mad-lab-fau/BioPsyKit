@@ -14,7 +14,7 @@ def _apply_score(row: pd.Series, score_func, pos_label: str):
     predicted_labels_folds = row[1]
     scores = [
         score_func(true_labels, predicted_labels, pos_label=pos_label)
-        for true_labels, predicted_labels in zip(true_labels_folds, predicted_labels_folds)
+        for true_labels, predicted_labels in zip(true_labels_folds, predicted_labels_folds, strict=False)
     ]
     return pd.Series(scores)
 

@@ -1,7 +1,6 @@
 """Module for computing Rest Periods from raw acceleration signals."""
 
 import datetime
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -133,7 +132,7 @@ class RestPeriods:
         return index_resample
 
     def _major_rest_period(
-        self, data: pd.DataFrame, total_duration: Union[datetime.timedelta, float], grp_max: pd.DataFrame
+        self, data: pd.DataFrame, total_duration: datetime.timedelta | float, grp_max: pd.DataFrame
     ) -> pd.DataFrame:
         if isinstance(data.index, pd.DatetimeIndex):
             total_duration = total_duration.total_seconds() / 3600.0

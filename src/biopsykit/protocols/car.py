@@ -1,7 +1,5 @@
 """Module representing the Cortisol Awakening Response (CAR) protocol."""
 
-from typing import Optional
-
 import matplotlib.pyplot as plt
 
 from biopsykit.plotting import lineplot
@@ -12,7 +10,7 @@ from biopsykit.utils.dtypes import is_saliva_raw_dataframe
 class CAR(BaseProtocol):
     """Class representing psychological protocols for assessing the cortisol awakening response (CAR)."""
 
-    def __init__(self, name: Optional[str] = None, **kwargs):
+    def __init__(self, name: str | None = None, **kwargs):
         """Class representing psychological protocols for assessing the cortisol awakening response (CAR).
 
         Parameters
@@ -35,7 +33,7 @@ class CAR(BaseProtocol):
 
         super().__init__(name, **kwargs)
 
-    def car_saliva_plot(self, saliva_type: Optional[str] = "cortisol", **kwargs) -> tuple[plt.Figure, plt.Axes]:
+    def car_saliva_plot(self, saliva_type: str | None = "cortisol", **kwargs) -> tuple[plt.Figure, plt.Axes]:
         """Plot CAR saliva data as lineplot.
 
         Parameters

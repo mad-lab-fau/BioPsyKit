@@ -1,7 +1,6 @@
 """Module for generating Activity Counts from raw acceleration signals."""
 
 import datetime
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -36,7 +35,7 @@ class ActivityCounts:
     activity_counts_: np.ndarray = None
     timezone: datetime.tzinfo = tz
 
-    def __init__(self, sampling_rate: float, timezone: Optional[str] = None):
+    def __init__(self, sampling_rate: float, timezone: str | None = None):
         """Initialize a new ``ActivityCounts`` instance.
 
         Parameters
@@ -56,7 +55,7 @@ class ActivityCounts:
         return np.linalg.norm(data, axis=1)
 
     @staticmethod
-    def _aliasing_filter(data: np.ndarray, sampling_rate: Union[int, float]) -> np.ndarray:
+    def _aliasing_filter(data: np.ndarray, sampling_rate: int | float) -> np.ndarray:
         sos = signal.butter(5, [0.01, 7], "bp", fs=sampling_rate, output="sos")
         return signal.sosfiltfilt(sos, data)
 
@@ -113,8 +112,8 @@ class ActivityCounts:
     @staticmethod
     def _downsample(
         data: np.ndarray,
-        sampling_rate: Union[int, float],
-        final_sampling_rate: Union[int, float],
+        sampling_rate: int | float,
+        final_sampling_rate: int | float,
     ) -> np.ndarray:
         return downsample(data, sampling_rate, final_sampling_rate)
 

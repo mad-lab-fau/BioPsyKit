@@ -1,5 +1,5 @@
-from collections.abc import Sequence
-from typing import Callable, ClassVar, Union
+from collections.abc import Callable, Sequence
+from typing import ClassVar
 
 import neurokit2 as nk
 import pandas as pd
@@ -8,7 +8,6 @@ from typing_extensions import Self
 
 
 class HrvExtraction(Algorithm):
-
     _action_methods = "extract"
 
     HRV_TYPES: ClassVar[list[str]] = ["hrv_time", "hrv_frequency", "hrv_nonlinear"]
@@ -23,7 +22,7 @@ class HrvExtraction(Algorithm):
 
     hrv_extracted_: pd.DataFrame
 
-    def __init__(self, hrv_types: Union[str, Sequence[str]] = "default"):
+    def __init__(self, hrv_types: str | Sequence[str] = "default"):
         """Initialize new ``HrvExtraction`` algorithm instance.
 
         This algorithm extracts heart rate variability (HRV) features from the R-peak data using the NeuroKit2 library.

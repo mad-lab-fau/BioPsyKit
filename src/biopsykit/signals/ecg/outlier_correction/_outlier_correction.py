@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, ClassVar, Optional, Union
+from typing import Any, ClassVar
 
 import neurokit2 as nk
 import numpy as np
@@ -35,7 +35,7 @@ class RPeakOutlierCorrection(Algorithm):
     points_: pd.DataFrame
 
     def __init__(
-        self, *, imputation_type: str = "linear_interpolation", imputation_params: Optional[dict[str, Any]] = None
+        self, *, imputation_type: str = "linear_interpolation", imputation_params: dict[str, Any] | None = None
     ) -> None:
         """Initialize new ``RPeakOutlierCorrection`` algorithm instance.
 
@@ -69,7 +69,7 @@ class RPeakOutlierCorrection(Algorithm):
         *,
         ecg: pd.DataFrame,
         rpeaks: pd.DataFrame,
-        outlier_detection_results: Union[pd.DataFrame, Sequence[pd.DataFrame]],
+        outlier_detection_results: pd.DataFrame | Sequence[pd.DataFrame],
     ):
         """Correct outliers in the R-peak data.
 

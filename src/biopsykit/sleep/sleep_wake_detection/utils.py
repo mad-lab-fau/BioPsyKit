@@ -1,13 +1,13 @@
 """Utility functions for sleep/wake detection algorithms."""
 
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 
 EPOCH_LENGTH = Literal[30, 60]
 
 
-def rescore(predictions: np.ndarray, epoch_length: Optional[EPOCH_LENGTH] = 30) -> np.ndarray:
+def rescore(predictions: np.ndarray, epoch_length: EPOCH_LENGTH | None = 30) -> np.ndarray:
     """Apply Webster's rescoring rules to sleep/wake predictions.
 
     Parameters
@@ -77,7 +77,7 @@ def _apply_recording_rules_d_e(rescored: np.ndarray, epoch_length: EPOCH_LENGTH)
         sleep_rules = [6, 10]
         wake_rules = [10, 20]
 
-    for sleep_thres, wake_thres in zip(sleep_rules, wake_rules):
+    for sleep_thres, wake_thres in zip(sleep_rules, wake_rules, strict=False):
         sleep_bin = 0
         start_ind = 0
         for t in range(wake_thres, len(rescored) - wake_thres):

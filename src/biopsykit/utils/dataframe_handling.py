@@ -1,8 +1,7 @@
 """Module providing various functions for advanced handling of pandas dataframes."""
 
 import re
-from collections.abc import Sequence
-from typing import Callable, Optional, Union
+from collections.abc import Callable, Sequence
 
 import numpy as np
 import pandas as pd
@@ -27,9 +26,9 @@ __all__ = [
 
 def int_from_str_idx(
     data: pd.DataFrame,
-    idx_levels: Union[str, Sequence[str]],
-    regex: Union[str, Sequence[str]],
-    func: Optional[Callable] = None,
+    idx_levels: str | Sequence[str],
+    regex: str | Sequence[str],
+    func: Callable | None = None,
 ) -> pd.DataFrame:
     """Extract integers from strings in index levels and set them as new index values.
 
@@ -68,7 +67,7 @@ def int_from_str_idx(
 
     idx_names = data.index.names
     data = data.reset_index()
-    for idx, reg in zip(idx_levels, regex):
+    for idx, reg in zip(idx_levels, regex, strict=False):
         idx_col = data[idx].str.extract(reg).astype(int)[0]
         if func is not None:
             idx_col = func(idx_col)
@@ -78,9 +77,7 @@ def int_from_str_idx(
     return data
 
 
-def int_from_str_col(
-    data: pd.DataFrame, col_name: str, regex: str, func: Optional[Callable] = None
-) -> Union[pd.Series]:
+def int_from_str_col(data: pd.DataFrame, col_name: str, regex: str, func: Callable | None = None) -> pd.Series:
     """Extract integers from strings in the column of a dataframe and return it.
 
     Parameters
@@ -111,7 +108,7 @@ def int_from_str_col(
     return column
 
 
-def camel_to_snake(name: str, lower: Optional[bool] = True):
+def camel_to_snake(name: str, lower: bool | None = True):
     """Convert string in "camelCase" to "snake_case".
 
     .. note::
@@ -191,9 +188,9 @@ def replace_missing_data(
     data: pd.DataFrame,
     target_col: str,
     source_col: str,
-    dropna: Optional[bool] = False,
-    inplace: Optional[bool] = False,
-) -> Optional[pd.DataFrame]:
+    dropna: bool | None = False,
+    inplace: bool | None = False,
+) -> pd.DataFrame | None:
     """Replace missing data in one column by data from another column.
 
     Parameters
@@ -228,9 +225,7 @@ def replace_missing_data(
     return data
 
 
-def convert_nan(
-    data: Union[pd.DataFrame, pd.Series], inplace: Optional[bool] = False
-) -> Union[pd.DataFrame, pd.Series, None]:
+def convert_nan(data: pd.DataFrame | pd.Series, inplace: bool | None = False) -> pd.DataFrame | pd.Series | None:
     """Convert missing values to NaN.
 
     Data exported from programs like SPSS often uses negative integers to encode missing values because these negative
@@ -263,12 +258,12 @@ def convert_nan(
 
 
 def multi_xs(
-    data: Union[pd.DataFrame, pd.Series],
-    keys: Union[str, Sequence[str]],
+    data: pd.DataFrame | pd.Series,
+    keys: str | Sequence[str],
     axis: int = 0,
-    level: Optional[Union[str, int, Sequence[str], Sequence[int]]] = None,
-    drop_level: Optional[bool] = True,
-) -> Union[pd.DataFrame, pd.Series]:
+    level: str | int | Sequence[str] | Sequence[int] | None = None,
+    drop_level: bool | None = True,
+) -> pd.DataFrame | pd.Series:
     """Return cross-section of multiple keys from the dataframe.
 
     This function internally calls the :meth:`pandas.DataFrame.xs` method, but it can take a list of key arguments
@@ -300,7 +295,7 @@ def multi_xs(
         keys = [keys]
 
     level_concat = level
-    if isinstance(level, (str, int)):
+    if isinstance(level, str | int):
         level_concat = [level_concat]
     levels = data.columns.names if axis == 1 else data.index.names
 
@@ -314,7 +309,7 @@ def multi_xs(
 
 
 def stack_groups_percent(
-    data: pd.DataFrame, hue: str, stacked: str, order: Optional[Sequence[str]] = None
+    data: pd.DataFrame, hue: str, stacked: str, order: Sequence[str] | None = None
 ) -> pd.DataFrame:
     """Create dataframe with stacked groups.
 
@@ -413,8 +408,8 @@ def apply_codebook(data: pd.DataFrame, codebook: CodebookDataFrame) -> pd.DataFr
 def wide_to_long(
     data: pd.DataFrame,
     stubname: str,
-    levels: Union[str, Sequence[str]],
-    sep: Optional[str] = "_",
+    levels: str | Sequence[str],
+    sep: str | None = "_",
 ) -> pd.DataFrame:
     """Convert a dataframe wide-format into long-format.
 

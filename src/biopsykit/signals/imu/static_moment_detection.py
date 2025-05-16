@@ -1,7 +1,7 @@
 """A set of util functions to detect static regions in a IMU signal given certain constrains."""
 
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -31,7 +31,7 @@ def _find_static_samples(
     window_length: int,
     inactive_signal_th: float,
     metric: METRIC_FUNCTION_NAMES = "mean",
-    overlap: Optional[int] = None,
+    overlap: int | None = None,
 ) -> np.ndarray:
     """Search for static samples within given input signal, based on windowed L2-norm thresholding.
 
@@ -117,7 +117,7 @@ def _find_static_sequences(
     window_length: int,
     inactive_signal_th: float,
     metric: METRIC_FUNCTION_NAMES = "variance",
-    overlap: Optional[int] = None,
+    overlap: int | None = None,
 ) -> np.ndarray:
     """Search for static sequences within given input signal, based on windowed L2-norm thresholding.
 
@@ -167,11 +167,11 @@ def _find_static_sequences(
 def find_static_moments(
     data: arr_t,
     threshold: float,
-    window_samples: Optional[int] = None,
-    window_sec: Optional[int] = None,
-    sampling_rate: Optional[Union[int, float]] = 0,
-    overlap_samples: Optional[int] = None,
-    overlap_percent: Optional[float] = None,
+    window_samples: int | None = None,
+    window_sec: int | None = None,
+    sampling_rate: int | float | None = 0,
+    overlap_samples: int | None = None,
+    overlap_percent: float | None = None,
     metric: METRIC_FUNCTION_NAMES = "variance",
 ) -> pd.DataFrame:
     """Search for static moments within given input signal, based on windowed L2-norm thresholding.

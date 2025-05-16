@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -49,7 +48,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
     def __init__(
         self,
         scaling_factor: float = 2000,
-        correct_outliers: Optional[bool] = False,
+        correct_outliers: bool | None = False,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new ``BPointExtractionForouzanfar2018`` instance.
@@ -85,7 +84,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
         c_points: CPointDataFrame,
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
     ):
         """Extract B-points from given ICG derivative signal.
 

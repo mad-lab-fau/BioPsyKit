@@ -9,7 +9,6 @@ is passed, the required columns can be sliced by specifying them in the ``column
 """
 
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import pandas as pd
 
@@ -26,7 +25,7 @@ from biopsykit.utils.exceptions import ValidationError
 
 
 def gender_counts(
-    data: pd.DataFrame, gender_col: Optional[str] = None, split_condition: Optional[bool] = False
+    data: pd.DataFrame, gender_col: str | None = None, split_condition: bool | None = False
 ) -> pd.DataFrame:
     """Get statistics about gender distribution from a dataset.
 
@@ -74,7 +73,7 @@ def _gender_counts(data: pd.DataFrame):
     )
 
 
-def bmi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def bmi(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> pd.DataFrame:
     """Compute the **Body Mass Index**.
 
     This function assumes the required data in the following format:
@@ -123,7 +122,7 @@ def bmi(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = 
     return data.round(2)
 
 
-def whr(data: pd.DataFrame, columns: Optional[Union[Sequence[str], pd.Index]] = None) -> pd.DataFrame:
+def whr(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> pd.DataFrame:
     """Compute the **Waist to Hip Ratio**.
 
     This function assumes the required data in the following format:

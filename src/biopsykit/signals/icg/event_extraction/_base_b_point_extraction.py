@@ -1,5 +1,3 @@
-from typing import Optional
-
 from biopsykit.signals._base_extraction import BaseExtraction
 
 __all__ = ["BaseBPointExtraction", "bpoint_algo_docfiller"]
@@ -40,6 +38,6 @@ class BaseBPointExtraction(BaseExtraction):
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
         c_points: CPointDataFrame,
-        sampling_rate_hz: Optional[float],
+        sampling_rate_hz: float | None,
     ):
         raise NotImplementedError("This is an abstract method and needs to be implemented in a subclass.")

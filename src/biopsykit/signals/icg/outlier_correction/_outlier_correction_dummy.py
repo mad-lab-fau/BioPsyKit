@@ -1,5 +1,3 @@
-from typing import Optional
-
 from biopsykit.signals.icg.outlier_correction import BaseBPointOutlierCorrection
 
 __all__ = ["OutlierCorrectionDummy"]
@@ -18,8 +16,8 @@ class OutlierCorrectionDummy(BaseBPointOutlierCorrection):
         self,
         *,
         b_points: BPointDataFrame,
-        c_points: Optional[CPointDataFrame],  # noqa: ARG002
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        c_points: CPointDataFrame | None,  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
         **kwargs,  # noqa: ARG002
     ):
         """Perform outlier correction.

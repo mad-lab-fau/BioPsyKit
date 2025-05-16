@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 import pandas as pd
 from scipy.signal import butter, sosfiltfilt
@@ -39,7 +37,7 @@ class BaseBPointOutlierCorrection(Algorithm):
         self,
         *,
         b_points: BPointDataFrame,
-        c_points: Optional[CPointDataFrame],
+        c_points: CPointDataFrame | None,
         sampling_rate_hz: float,
         **kwargs,
     ):

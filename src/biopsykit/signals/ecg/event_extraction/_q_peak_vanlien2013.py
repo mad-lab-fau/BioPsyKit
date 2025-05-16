@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 from tpcp import Parameter
 
@@ -52,7 +50,7 @@ class QPeakExtractionVanLien2013(BaseEcgExtractionWithHeartbeats, CanHandleMissi
     def extract(
         self,
         *,
-        ecg: Optional[EcgRawDataFrame],
+        ecg: EcgRawDataFrame | None,
         heartbeats: HeartbeatSegmentationDataFrame,
         sampling_rate_hz: float,
     ):

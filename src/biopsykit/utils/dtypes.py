@@ -1,6 +1,6 @@
 """A couple of helper functions that ease the use of the typical biopsykit data formats."""
 
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
@@ -687,9 +687,7 @@ Each ``merged_dataframe`` is a :class:`~pandas.DataFrame` with the following for
 """
 
 
-def is_subject_condition_dataframe(
-    data: SubjectConditionDataFrame, raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+def is_subject_condition_dataframe(data: SubjectConditionDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SubjectConditionDataFrame`.
 
     Parameters
@@ -730,7 +728,7 @@ def is_subject_condition_dataframe(
     return True
 
 
-def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SubjectConditionDict`.
 
     Parameters
@@ -770,7 +768,7 @@ def is_subject_condition_dict(data: SubjectConditionDict, raise_exception: Optio
     return True
 
 
-def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.CodebookDataFrame`.
 
     Parameters
@@ -817,7 +815,7 @@ def is_codebook_dataframe(data: CodebookDataFrame, raise_exception: Optional[boo
     return True
 
 
-def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.MeanSeDataFrame`.
 
     Parameters
@@ -862,7 +860,7 @@ def is_mean_se_dataframe(data: MeanSeDataFrame, raise_exception: Optional[bool] 
     return True
 
 
-def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: bool | None = True) -> bool | None:
     """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`.
 
     Parameters
@@ -904,7 +902,7 @@ def is_hr_phase_dict(data: HeartRatePhaseDict, raise_exception: Optional[bool] =
     return True
 
 
-def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_phase_dict(data: PhaseDict, raise_exception: bool | None = True) -> bool | None:
     """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.PhaseDict`.
 
     Parameters
@@ -947,7 +945,7 @@ def is_phase_dict(data: PhaseDict, raise_exception: Optional[bool] = True) -> Op
     return True
 
 
-def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: bool | None = True) -> bool | None:
     """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.HeartRateSubjectDataDict`.
 
     Parameters
@@ -987,7 +985,7 @@ def is_hr_subject_data_dict(data: HeartRateSubjectDataDict, raise_exception: Opt
     return True
 
 
-def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_study_data_dict(data: StudyDataDict, raise_exception: bool | None = True) -> bool | None:
     """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.StudyDataDict`.
 
     Parameters
@@ -1029,7 +1027,7 @@ def is_study_data_dict(data: StudyDataDict, raise_exception: Optional[bool] = Tr
     return True
 
 
-def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_subject_data_dict(data: SubjectDataDict, raise_exception: bool | None = True) -> bool | None:
     """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.SubjectDataDict`.
 
     Parameters
@@ -1071,7 +1069,7 @@ def is_subject_data_dict(data: SubjectDataDict, raise_exception: Optional[bool] 
     return True
 
 
-def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: bool | None = True) -> bool | None:
     """Check whether a dict is a :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`.
 
     Parameters
@@ -1114,8 +1112,8 @@ def is_merged_study_data_dict(data: MergedStudyDataDict, raise_exception: Option
 
 
 def is_biomarker_raw_dataframe(
-    data: BiomarkerRawDataFrame, biomarker_type: Union[str, list[str]], raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+    data: BiomarkerRawDataFrame, biomarker_type: str | list[str], raise_exception: bool | None = True
+) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`.
 
     Parameters
@@ -1163,8 +1161,8 @@ def is_biomarker_raw_dataframe(
 
 
 def is_saliva_raw_dataframe(
-    data: SalivaRawDataFrame, saliva_type: Union[str, list[str]], raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+    data: SalivaRawDataFrame, saliva_type: str | list[str], raise_exception: bool | None = True
+) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`.
 
     Parameters
@@ -1196,8 +1194,8 @@ def is_saliva_raw_dataframe(
 
 
 def is_saliva_feature_dataframe(
-    data: SalivaFeatureDataFrame, saliva_type: str, raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+    data: SalivaFeatureDataFrame, saliva_type: str, raise_exception: bool | None = True
+) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SalivaFeatureDataFrame`.
 
     Parameters
@@ -1242,7 +1240,7 @@ def is_saliva_feature_dataframe(
     return True
 
 
-def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SalivaMeanSeDataFrame`.
 
     Parameters
@@ -1282,7 +1280,7 @@ def is_saliva_mean_se_dataframe(data: SalivaFeatureDataFrame, raise_exception: O
     return True
 
 
-def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SleepEndpointDataFrame`.
 
     Parameters
@@ -1323,7 +1321,7 @@ def is_sleep_endpoint_dataframe(data: SleepEndpointDataFrame, raise_exception: O
     return True
 
 
-def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: bool | None = True) -> bool | None:
     """Check whether dictionary is a :obj:`~biopsykit.utils.dtypes.SleepEndpointDict`.
 
     Parameters
@@ -1364,7 +1362,7 @@ def is_sleep_endpoint_dict(data: SleepEndpointDict, raise_exception: Optional[bo
     return True
 
 
-def is_icg_raw_dataframe(data: IcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_icg_raw_dataframe(data: IcgRawDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.IcgRawDataFrame`.
 
     Parameters
@@ -1403,7 +1401,7 @@ def is_icg_raw_dataframe(data: IcgRawDataFrame, raise_exception: Optional[bool] 
     return True
 
 
-def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.EcgRawDataFrame`.
 
     Parameters
@@ -1442,7 +1440,7 @@ def is_ecg_raw_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] 
     return True
 
 
-def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.EcgResultDataFrame`.
 
     Parameters
@@ -1487,7 +1485,7 @@ def is_ecg_result_dataframe(data: EcgRawDataFrame, raise_exception: Optional[boo
     return True
 
 
-def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.HeartRateDataFrame`.
 
     Parameters
@@ -1529,7 +1527,7 @@ def is_heart_rate_dataframe(data: HeartRateDataFrame, raise_exception: Optional[
     return True
 
 
-def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.RPeakDataFrame`.
 
     Parameters
@@ -1575,7 +1573,7 @@ def is_r_peak_dataframe(data: EcgRawDataFrame, raise_exception: Optional[bool] =
     return True
 
 
-def is_acc1d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_acc1d_dataframe(data: Acc3dDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.Acc1dDataFrame`.
 
     Parameters
@@ -1617,7 +1615,7 @@ def is_acc1d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
     return True
 
 
-def is_acc3d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_acc3d_dataframe(data: Acc3dDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.Acc3dDataFrame`.
 
     Parameters
@@ -1662,7 +1660,7 @@ def is_acc3d_dataframe(data: Acc3dDataFrame, raise_exception: Optional[bool] = T
     return True
 
 
-def is_gyr1d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_gyr1d_dataframe(data: Gyr3dDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.Gyr1dDataFrame`.
 
     Parameters
@@ -1704,7 +1702,7 @@ def is_gyr1d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
     return True
 
 
-def is_gyr3d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_gyr3d_dataframe(data: Gyr3dDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.Gyr3dDataFrame`.
 
     Parameters
@@ -1749,7 +1747,7 @@ def is_gyr3d_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = T
     return True
 
 
-def is_imu_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_imu_dataframe(data: Gyr3dDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.ImuDataFrame`.
 
     Parameters
@@ -1788,7 +1786,7 @@ def is_imu_dataframe(data: Gyr3dDataFrame, raise_exception: Optional[bool] = Tru
     return True
 
 
-def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.SleepWakeDataFrame`.
 
     Parameters
@@ -1819,8 +1817,7 @@ def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[
         _assert_has_columns(data, [["sleep_wake"]])
         if not all(data["sleep_wake"].between(0, 1, inclusive=True)):
             raise ValidationError(
-                "Invalid values for sleep/wake prediction! Sleep/wake scores are expected to be "
-                "in the interval [0, 1]."
+                "Invalid values for sleep/wake prediction! Sleep/wake scores are expected to be in the interval [0, 1]."
             )
     except ValidationError as e:
         if raise_exception is True:
@@ -1833,8 +1830,8 @@ def is_sleep_wake_dataframe(data: SleepWakeDataFrame, raise_exception: Optional[
 
 
 def is_heartbeat_segmentation_dataframe(
-    data: HeartbeatSegmentationDataFrame, raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+    data: HeartbeatSegmentationDataFrame, raise_exception: bool | None = True
+) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.HeartbeatSegmentationDataFrame`.
 
     Parameters
@@ -1876,7 +1873,7 @@ def is_heartbeat_segmentation_dataframe(
     return True
 
 
-def is_c_point_dataframe(data: CPointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_c_point_dataframe(data: CPointDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.CPointDataFrame`.
 
     Parameters
@@ -1918,7 +1915,7 @@ def is_c_point_dataframe(data: CPointDataFrame, raise_exception: Optional[bool] 
     return True
 
 
-def is_b_point_dataframe(data: BPointDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_b_point_dataframe(data: BPointDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.BPointDataFrame`.
 
     Parameters
@@ -1960,7 +1957,7 @@ def is_b_point_dataframe(data: BPointDataFrame, raise_exception: Optional[bool] 
     return True
 
 
-def is_q_peak_dataframe(data: QPeakDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_q_peak_dataframe(data: QPeakDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.QPeakDataFrame`.
 
     Parameters
@@ -2002,7 +1999,7 @@ def is_q_peak_dataframe(data: QPeakDataFrame, raise_exception: Optional[bool] = 
     return True
 
 
-def is_pep_result_dataframe(data: PepResultDataFrame, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_pep_result_dataframe(data: PepResultDataFrame, raise_exception: bool | None = True) -> bool | None:
     """Check whether dataframe is a :obj:`~biopsykit.utils.dtypes.PepResultDataFrame`.
 
     Parameters

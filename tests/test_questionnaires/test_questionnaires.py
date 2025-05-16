@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 from itertools import product
 from pathlib import Path
-from typing import Optional
 from unittest import TestCase
 
 import pandas as pd
@@ -32,14 +31,14 @@ def data_complete_wrong_range() -> pd.DataFrame:
     return data
 
 
-def data_filtered_correct(like: Optional[str] = None, regex: Optional[str] = None) -> pd.DataFrame:
+def data_filtered_correct(like: str | None = None, regex: str | None = None) -> pd.DataFrame:
     data = data_complete_correct()
     if like is None:
         return data.filter(regex=regex)
     return data.filter(like=like)
 
 
-def result_filtered(like: Optional[str] = None, regex: Optional[str] = None) -> pd.DataFrame:
+def result_filtered(like: str | None = None, regex: str | None = None) -> pd.DataFrame:
     data = pd.read_csv(TEST_FILE_PATH.joinpath("questionnaire_results.csv"))
     data = data.set_index(["subject", "condition"])
     if like is None:
@@ -47,7 +46,7 @@ def result_filtered(like: Optional[str] = None, regex: Optional[str] = None) -> 
     return data.filter(like=like)
 
 
-def data_filtered_wrong_range(like: Optional[str] = None, regex: Optional[str] = None) -> pd.DataFrame:
+def data_filtered_wrong_range(like: str | None = None, regex: str | None = None) -> pd.DataFrame:
     data = data_complete_wrong_range()
     if like is None:
         return data.filter(regex=regex)

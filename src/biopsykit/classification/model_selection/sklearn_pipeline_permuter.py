@@ -9,7 +9,7 @@ from inspect import getmembers, signature
 from itertools import product
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -66,10 +66,10 @@ class SklearnPipelinePermuter:
 
     def __init__(
         self,
-        model_dict: Optional[dict[str, dict[str, BaseEstimator]]] = None,
-        param_dict: Optional[dict[str, Optional[Union[Sequence[dict[str, Any]], dict[str, Any]]]]] = None,
-        hyper_search_dict: Optional[dict[str, dict[str, Any]]] = None,
-        random_state: Optional[int] = None,
+        model_dict: dict[str, dict[str, BaseEstimator]] | None = None,
+        param_dict: dict[str, Sequence[dict[str, Any]] | dict[str, Any] | None] | None = None,
+        hyper_search_dict: dict[str, dict[str, Any]] | None = None,
+        random_state: int | None = None,
     ):
         """Class for systematically evaluating different sklearn pipeline combinations.
 
@@ -173,7 +173,7 @@ class SklearnPipelinePermuter:
         self.models: dict[str, dict[str, BaseEstimator]] = {}
         """Dictionary with pipeline steps and the different transformers/estimators per step."""
 
-        self.params: dict[str, Optional[Union[Sequence[dict[str, Any]], dict[str, Any]]]] = {}
+        self.params: dict[str, Sequence[dict[str, Any]] | dict[str, Any] | None] = {}
         """Dictionary with parameter sets to test for the different transformers/estimators per pipeline step."""
 
         self.model_combinations: Sequence[tuple[tuple[str, str], ...]] = []
@@ -186,7 +186,7 @@ class SklearnPipelinePermuter:
         self.param_searches: dict[tuple[str, str], dict[str, Any]] = {}
         """Dictionary with parameter search results for each pipeline step combination."""
 
-        self.results: Optional[pd.DataFrame] = None
+        self.results: pd.DataFrame | None = None
         """Dataframe with parameter search results of each pipeline step combination."""
 
         self.scoring: str_t = ""
@@ -194,7 +194,7 @@ class SklearnPipelinePermuter:
 
         self.refit: str = ""
 
-        self.random_state: Optional[RandomState] = None
+        self.random_state: RandomState | None = None
 
         self._results_set: bool = False
 
@@ -264,7 +264,7 @@ class SklearnPipelinePermuter:
         self._results = results
 
     @classmethod
-    def from_csv(cls, file_path: path_t, num_pipeline_steps: Optional[int] = 3) -> Self:
+    def from_csv(cls, file_path: path_t, num_pipeline_steps: int | None = 3) -> Self:
         """Create a new ``SklearnPipelinePermuter`` instance from a csv file with results from parameter search.
 
         Parameters
@@ -298,8 +298,8 @@ class SklearnPipelinePermuter:
         *,
         outer_cv: BaseCrossValidator,
         inner_cv: BaseCrossValidator,
-        scoring: Optional[str_t] = None,
-        use_cache: Optional[bool] = True,
+        scoring: str_t | None = None,
+        use_cache: bool | None = True,
         **kwargs,
     ):
         """Run fit for all pipeline combinations and sets of parameters.
@@ -338,10 +338,10 @@ class SklearnPipelinePermuter:
         y: np.ndarray,
         outer_cv: BaseCrossValidator,
         inner_cv: BaseCrossValidator,
-        save_intermediate: Optional[bool] = False,
-        file_path: Optional[path_t] = None,
-        scoring: Optional[str_t] = None,
-        use_cache: Optional[bool] = True,
+        save_intermediate: bool | None = False,
+        file_path: path_t | None = None,
+        scoring: str_t | None = None,
+        use_cache: bool | None = True,
         **kwargs,
     ):
         self.results = None
@@ -374,7 +374,9 @@ class SklearnPipelinePermuter:
                 # continue if we already tried this combination
                 continue
 
-            pipeline_params = [(m, self.params[k[1]]) for m, k in zip(self.models.keys(), model_combination)]
+            pipeline_params = [
+                (m, self.params[k[1]]) for m, k in zip(self.models.keys(), model_combination, strict=False)
+            ]
             pipeline_params = list(filter(lambda p: p[1] is not None, pipeline_params))
             pipeline_params = [(m, k_new) for m, k in pipeline_params for k_new in k if k is not None]
 
@@ -440,8 +442,8 @@ class SklearnPipelinePermuter:
         outer_cv: BaseCrossValidator,
         inner_cv: BaseCrossValidator,
         file_path: path_t,
-        scoring: Optional[str_t] = None,
-        use_cache: Optional[bool] = True,
+        scoring: str_t | None = None,
+        use_cache: bool | None = True,
         **kwargs,
     ):
         """Run fit for all pipeline combinations and sets of parameters and save intermediate results to file.
@@ -533,9 +535,7 @@ class SklearnPipelinePermuter:
         self.results = df_summary.sort_index().sort_index(axis=1)
         return self.results
 
-    def metric_summary(
-        self, additional_metrics: Optional[str_t] = None, pos_label: Optional[str] = None
-    ) -> pd.DataFrame:
+    def metric_summary(self, additional_metrics: str_t | None = None, pos_label: str | None = None) -> pd.DataFrame:
         """Return summary with all performance metrics for the `best-performing estimator` of each pipeline combination.
 
         The `best-performing estimator` for each pipeline combination is the `best_estimator_` that
@@ -722,7 +722,7 @@ class SklearnPipelinePermuter:
     @staticmethod
     def _check_missing_params(
         model_dict: dict[str, dict[str, BaseEstimator]],
-        param_dict: dict[str, Optional[Union[Sequence[dict[str, Any]], dict[str, Any]]]],
+        param_dict: dict[str, Sequence[dict[str, Any]] | dict[str, Any] | None],
     ):
         for _category, estimator_dict in model_dict.items():
             if not set(estimator_dict.keys()).issubset(set(param_dict.keys())):
@@ -731,11 +731,11 @@ class SklearnPipelinePermuter:
 
     def metric_summary_to_latex(
         self,
-        data: Optional[pd.DataFrame] = None,
-        metrics: Optional[Sequence[str]] = None,
-        pipeline_steps: Optional[Sequence[str]] = None,
-        si_table_format: Optional[str] = None,
-        highlight_best: Optional[Union[str, bool]] = None,
+        data: pd.DataFrame | None = None,
+        metrics: Sequence[str] | None = None,
+        pipeline_steps: Sequence[str] | None = None,
+        si_table_format: str | None = None,
+        highlight_best: str | bool | None = None,
         **kwargs,
     ) -> str:
         """Return a latex table with the performance metrics of the pipeline combinations.
@@ -878,9 +878,9 @@ class SklearnPipelinePermuter:
 
     def update_permuter(
         self,
-        model_dict: Optional[dict[str, dict[str, BaseEstimator]]] = None,
-        param_dict: Optional[dict[str, Any]] = None,
-        hyper_search_dict: Optional[dict[str, dict[str, Any]]] = None,
+        model_dict: dict[str, dict[str, BaseEstimator]] | None = None,
+        param_dict: dict[str, Any] | None = None,
+        hyper_search_dict: dict[str, dict[str, Any]] | None = None,
     ) -> Self:
         """Update the ``SklearnPipelinePermuter`` instance with new model and parameter dictionaries.
 
@@ -920,7 +920,7 @@ class SklearnPipelinePermuter:
         return permuter_01
 
     @classmethod
-    def merge_permuter_instances(cls, permuter: Union[Sequence[Self], Sequence[path_t]]) -> Self:
+    def merge_permuter_instances(cls, permuter: Sequence[Self] | Sequence[path_t]) -> Self:
         """Merge two (or more) :class:`~biopsykit.classification.model_selection.SklearnPipelinePermuter` instances.
 
         This function expects at least two ``SklearnPipelinePermuter`` instances to merge. The function first performs
@@ -942,7 +942,7 @@ class SklearnPipelinePermuter:
         if len(permuter) < 2:
             raise ValueError("At least two SklearnPipelinePermuter instances must be passed to this function.")
 
-        if all(isinstance(p, (str, Path)) for p in permuter):
+        if all(isinstance(p, str | Path) for p in permuter):
             permuter = [cls.from_pickle(p) for p in permuter]
 
         # make deep copy of first instance
@@ -987,7 +987,7 @@ class SklearnPipelinePermuter:
 
         scores = [
             score_func(true_labels, predicted_labels, **kwargs)
-            for true_labels, predicted_labels in zip(true_labels_folds, predicted_labels_folds)
+            for true_labels, predicted_labels in zip(true_labels_folds, predicted_labels_folds, strict=False)
         ]
         return pd.Series(scores)
 

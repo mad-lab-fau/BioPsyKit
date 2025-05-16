@@ -1,7 +1,6 @@
 """Module for detection non-wear times from raw acceleration signals."""
 
 import datetime
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -61,7 +60,7 @@ class WearDetection:
         """
         index = None
         index_resample = None
-        if isinstance(data, (pd.DataFrame, pd.Series)):
+        if isinstance(data, pd.DataFrame | pd.Series):
             index = data.index
 
         data = data.filter(like="acc") if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
@@ -136,7 +135,7 @@ class WearDetection:
         blocks = list(data.groupby("block"))
 
         # iterate through blocks
-        for (_, prev), (idx_curr, curr), (_, post) in zip(blocks[0:-2], blocks[1:-1], blocks[2:]):
+        for (_, prev), (idx_curr, curr), (_, post) in zip(blocks[0:-2], blocks[1:-1], blocks[2:], strict=False):
             if curr["wear"].unique():
                 # get hour lengths of the previous, current, and next blocks
                 dur_prev, dur_curr, dur_post = (len(dur) * 0.25 for dur in [prev, curr, post])
@@ -154,7 +153,7 @@ class WearDetection:
         return data
 
     @staticmethod
-    def get_major_wear_block(data: pd.DataFrame) -> tuple[Union[datetime.datetime, int], Union[datetime.datetime, int]]:
+    def get_major_wear_block(data: pd.DataFrame) -> tuple[datetime.datetime | int, datetime.datetime | int]:
         """Return major wear block.
 
         The major wear block is the longest continuous wear block in the data.
@@ -188,7 +187,7 @@ class WearDetection:
 
     @staticmethod
     def cut_to_wear_block(
-        data: pd.DataFrame, wear_block: tuple[Union[datetime.datetime, int], Union[datetime.datetime, int]]
+        data: pd.DataFrame, wear_block: tuple[datetime.datetime | int, datetime.datetime | int]
     ) -> pd.DataFrame:
         """Cut data to wear block.
 

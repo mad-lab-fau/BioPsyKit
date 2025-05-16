@@ -3,7 +3,6 @@
 import re
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 
@@ -11,7 +10,7 @@ from biopsykit.utils._datatype_validation_helper import _assert_file_extension
 from biopsykit.utils._types_internal import path_t
 
 
-def mkdirs(dir_list: Union[path_t, Sequence[path_t]]) -> None:
+def mkdirs(dir_list: path_t | Sequence[path_t]) -> None:
     """Batch-create a list of directories.
 
     Conveniently create a list of directories, e.g. directories for storing processing
@@ -31,7 +30,7 @@ def mkdirs(dir_list: Union[path_t, Sequence[path_t]]) -> None:
     >>> mkdirs(path_list)
 
     """
-    if isinstance(dir_list, (str, Path)):
+    if isinstance(dir_list, str | Path):
         dir_list = [dir_list]
     for directory in dir_list:
         # ensure pathlib
@@ -39,7 +38,7 @@ def mkdirs(dir_list: Union[path_t, Sequence[path_t]]) -> None:
         directory_path.mkdir(exist_ok=True, parents=True)
 
 
-def get_subject_dirs(base_path: path_t, pattern: str) -> Optional[Sequence[Path]]:
+def get_subject_dirs(base_path: path_t, pattern: str) -> Sequence[Path] | None:
     """Filter for subject directories using a name pattern.
 
     Parameters
@@ -79,8 +78,8 @@ def export_figure(
     fig: plt.Figure,
     filename: path_t,
     base_dir: path_t,
-    formats: Optional[Sequence[str]] = None,
-    use_subfolder: Optional[bool] = True,
+    formats: Sequence[str] | None = None,
+    use_subfolder: bool | None = True,
     **kwargs,
 ):
     """Export matplotlib figure to file(s).
@@ -141,7 +140,7 @@ def export_figure(
         for folder in subfolders:
             folder.mkdir(exist_ok=True, parents=True)
 
-    for f, subfolder in zip(formats, subfolders):
+    for f, subfolder in zip(formats, subfolders, strict=False):
         fig.savefig(
             subfolder.joinpath(filename.name + "." + f),
             transparent=(f == "pdf"),
@@ -150,7 +149,7 @@ def export_figure(
         )
 
 
-def is_excel_file(file_name: path_t, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def is_excel_file(file_name: path_t, raise_exception: bool | None = True) -> bool | None:
     """Check whether the file name is an Excel file.
 
     Parameters

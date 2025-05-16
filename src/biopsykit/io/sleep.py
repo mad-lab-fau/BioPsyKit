@@ -1,7 +1,6 @@
 """Module containing different I/O functions to load and save sleep data."""
 
 from pathlib import Path
-from typing import Union
 
 import pandas as pd
 
@@ -12,7 +11,7 @@ from biopsykit.utils.dtypes import is_sleep_endpoint_dataframe, is_sleep_endpoin
 __all__ = ["save_sleep_endpoints"]
 
 
-def save_sleep_endpoints(file_path: path_t, df_or_dict: Union[pd.DataFrame, dict]):
+def save_sleep_endpoints(file_path: path_t, df_or_dict: pd.DataFrame | dict):
     """Save sleep endpoints as csv or json file.
 
     Parameters

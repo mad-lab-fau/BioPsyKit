@@ -339,7 +339,7 @@ class TestIoIo:
             assert_frame_equal(data_out, expected)
         else:
             assert data_out.keys() == expected.keys()
-            for k1, k2 in zip(data_out, expected):
+            for k1, k2 in zip(data_out, expected, strict=False):
                 assert np.array_equal(data_out[k1], expected[k2])
 
     @pytest.mark.parametrize(

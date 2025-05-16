@@ -4,7 +4,7 @@ import re
 import warnings
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 import pandas as pd
 import pingouin as pg
@@ -190,7 +190,7 @@ class StatsPipeline:
         """
         self.steps = steps
         self.params = params
-        self.data: Optional[pd.DataFrame] = None
+        self.data: pd.DataFrame | None = None
         self.results: dict[str, pd.DataFrame] = {}
         self.category_steps = {}
         self.round = kwargs.get("round", dict.fromkeys(_sig_cols, 4))
@@ -276,7 +276,7 @@ class StatsPipeline:
 
         return grouper, specific_params
 
-    def results_cat(self, category: STATS_CATEGORY) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
+    def results_cat(self, category: STATS_CATEGORY) -> pd.DataFrame | dict[str, pd.DataFrame]:
         """Return results for pipeline category.
 
         This function filters results from steps belonging to the specified category and returns them.
@@ -312,7 +312,7 @@ class StatsPipeline:
         display(self._param_df().T)
         display(self._result_df().T)
 
-    def display_results(self, sig_only: Optional[Union[str, bool, Sequence[str], dict[str, bool]]] = None, **kwargs):
+    def display_results(self, sig_only: str | bool | Sequence[str] | dict[str, bool] | None = None, **kwargs):
         """Display formatted results of statistical analysis pipeline.
 
         This function displays the results of the statistical analysis pipeline. The output is Markdown-formatted and
@@ -368,7 +368,7 @@ class StatsPipeline:
         else:
             self._display_results(sig_only, **kwargs)
 
-    def _get_sig_only(self, sig_only: Optional[Union[str, bool, Sequence[str], dict[str, bool]]] = None):
+    def _get_sig_only(self, sig_only: str | bool | Sequence[str] | dict[str, bool] | None = None):
         if sig_only is None:
             sig_only = {}
         if isinstance(sig_only, str):
@@ -380,7 +380,7 @@ class StatsPipeline:
         return sig_only
 
     def _display_results(
-        self, sig_only: dict[str, bool], groupby: Optional[str] = None, group_key: Optional[str] = None, **kwargs
+        self, sig_only: dict[str, bool], groupby: str | None = None, group_key: str | None = None, **kwargs
     ):
         try:
             from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
@@ -397,7 +397,7 @@ class StatsPipeline:
                 self._display_category(category, steps, sig_only, groupby, group_key)
 
     @staticmethod
-    def _filter_sig(data: pd.DataFrame) -> Optional[pd.DataFrame]:
+    def _filter_sig(data: pd.DataFrame) -> pd.DataFrame | None:
         for col in _sig_cols:
             if col in data.columns:
                 if data[col].isna().all():
@@ -409,7 +409,7 @@ class StatsPipeline:
         return None
 
     @staticmethod
-    def _filter_pcol(data: Union[pd.DataFrame, pd.Series]) -> Optional[pd.Series]:
+    def _filter_pcol(data: pd.DataFrame | pd.Series) -> pd.Series | None:
         for col in _sig_cols:
             if isinstance(data, pd.DataFrame) and col in data.columns:
                 return data[col]
@@ -418,7 +418,7 @@ class StatsPipeline:
         return None
 
     @staticmethod
-    def _filter_eff_col(data: Union[pd.DataFrame, pd.Series]) -> Optional[pd.Series]:
+    def _filter_eff_col(data: pd.DataFrame | pd.Series) -> pd.Series | None:
         for col in _eff_cols:
             if isinstance(data, pd.DataFrame) and col in data.columns:
                 return data[col]
@@ -427,7 +427,7 @@ class StatsPipeline:
         return None
 
     @staticmethod
-    def _get_effsize_name(data: Union[pd.DataFrame, pd.Series]) -> Optional[str]:
+    def _get_effsize_name(data: pd.DataFrame | pd.Series) -> str | None:
         for col in _eff_cols:
             if isinstance(data, pd.DataFrame) and col in data.columns:
                 return col
@@ -491,17 +491,17 @@ class StatsPipeline:
 
     def sig_brackets(
         self,
-        stats_category_or_data: Union[STATS_CATEGORY, pd.DataFrame],
+        stats_category_or_data: STATS_CATEGORY | pd.DataFrame,
         stats_effect_type: STATS_EFFECT_TYPE,
-        stats_type: Optional[STATS_EFFECT_TYPE] = None,
-        plot_type: Optional[PLOT_TYPE] = "single",
-        features: Optional[Union[str, Sequence[str], dict[str, Union[str, Sequence[str]]]]] = None,
-        x: Optional[str] = None,
-        subplots: Optional[bool] = False,
-    ) -> Union[
-        tuple[Sequence[tuple[str, str]], Sequence[float]],
-        tuple[dict[str, Sequence[tuple[tuple[str, str], tuple[str, str]]]], dict[str, Sequence[float]]],
-    ]:
+        stats_type: STATS_EFFECT_TYPE | None = None,
+        plot_type: PLOT_TYPE | None = "single",
+        features: str | Sequence[str] | dict[str, str | Sequence[str]] | None = None,
+        x: str | None = None,
+        subplots: bool | None = False,
+    ) -> (
+        tuple[Sequence[tuple[str, str]], Sequence[float]]
+        | tuple[dict[str, Sequence[tuple[tuple[str, str], tuple[str, str]]]], dict[str, Sequence[float]]]
+    ):
         """Generate *significance brackets* used indicate statistical significance in boxplots.
 
         Parameters
@@ -576,7 +576,7 @@ class StatsPipeline:
     def _sig_brackets_dict(
         box_pairs: pd.Series,
         pvalues: pd.Series,
-        features: Union[Sequence, dict[str, Union[str, Sequence[str]]]],
+        features: Sequence | dict[str, str | Sequence[str]],
     ) -> tuple[dict[str, Sequence[tuple[tuple[str, str], tuple[str, str]]]], dict[str, Sequence[float]]]:
         dict_box_pairs = {}
         dict_pvalues = {}
@@ -614,9 +614,9 @@ class StatsPipeline:
 
     def stats_to_latex(
         self,
-        stats_test: Optional[str] = None,
-        index: Optional[Union[tuple, str]] = None,
-        data: Optional[pd.Series] = None,
+        stats_test: str | None = None,
+        index: tuple | str | None = None,
+        data: pd.Series | None = None,
     ) -> str:
         """Generate LaTeX output from statistical results.
 
@@ -698,14 +698,14 @@ class StatsPipeline:
     def results_to_latex_table(  # pylint:disable=too-many-branches
         self,
         stats_test: str,
-        data: Optional[pd.DataFrame] = None,
-        stats_effect_type: Optional[STATS_EFFECT_TYPE] = None,
-        unstack_levels: Optional[str_t] = None,
-        collapse_dof: Optional[bool] = True,
-        si_table_format: Optional[str] = None,
-        index_kws: Optional[dict[str, Any]] = None,
-        column_kws: Optional[dict[str, Any]] = None,
-        show_a_b: Optional[bool] = False,
+        data: pd.DataFrame | None = None,
+        stats_effect_type: STATS_EFFECT_TYPE | None = None,
+        unstack_levels: str_t | None = None,
+        collapse_dof: bool | None = True,
+        si_table_format: str | None = None,
+        index_kws: dict[str, Any] | None = None,
+        column_kws: dict[str, Any] | None = None,
+        show_a_b: bool | None = False,
         **kwargs,
     ) -> str:
         r"""Convert statistical result dataframe to LaTeX table.
@@ -853,9 +853,9 @@ class StatsPipeline:
 
     def multicomp(
         self,
-        stats_category_or_data: Union[STATS_CATEGORY, pd.DataFrame],
-        levels: Optional[Union[bool, str, Sequence[str]]] = False,
-        method: Optional[str] = "bonf",
+        stats_category_or_data: STATS_CATEGORY | pd.DataFrame,
+        levels: bool | str | Sequence[str] | None = False,
+        method: str | None = "bonf",
     ) -> pd.DataFrame:
         """Apply multi-comparison correction to results from statistical analysis.
 
@@ -898,7 +898,7 @@ class StatsPipeline:
         return data.groupby(group_cols, group_keys=False).apply(lambda df: self._multicomp_lambda(df, method=method))
 
     @classmethod
-    def _multicomp_get_levels(cls, levels: Union[bool, str, Sequence[str]], data: pd.DataFrame) -> Sequence[str]:
+    def _multicomp_get_levels(cls, levels: bool | str | Sequence[str], data: pd.DataFrame) -> Sequence[str]:
         if levels is None:
             levels = []
         elif isinstance(levels, bool):
@@ -917,9 +917,9 @@ class StatsPipeline:
         return data
 
     def _extract_stats_data(
-        self, stats_category_or_data: Union[STATS_CATEGORY, pd.DataFrame], stats_effect_type: STATS_EFFECT_TYPE
+        self, stats_category_or_data: STATS_CATEGORY | pd.DataFrame, stats_effect_type: STATS_EFFECT_TYPE
     ):
-        if isinstance(stats_category_or_data, (str, pd.DataFrame)):
+        if isinstance(stats_category_or_data, str | pd.DataFrame):
             if isinstance(stats_category_or_data, str):
                 stats_data = self._filter_effect(stats_category_or_data, stats_effect_type)
             else:
@@ -932,7 +932,7 @@ class StatsPipeline:
         return self._filter_sig(stats_data)
 
     @staticmethod
-    def _sanitize_features_input(features: Union[str, Sequence[str], dict[str, Union[str, Sequence[str]]]]):
+    def _sanitize_features_input(features: str | Sequence[str] | dict[str, str | Sequence[str]]):
         if isinstance(features, str):
             features = [features]
         if isinstance(features, dict):
@@ -946,9 +946,9 @@ class StatsPipeline:
     def _get_stats_data_box_pairs(
         self,
         stats_data: pd.DataFrame,
-        plot_type: Optional[PLOT_TYPE] = "single",
-        features: Optional[Union[Sequence[str], dict[str, Union[str, Sequence[str]]]]] = None,
-        x: Optional[str] = None,
+        plot_type: PLOT_TYPE | None = "single",
+        features: Sequence[str] | dict[str, str | Sequence[str]] | None = None,
+        x: str | None = None,
     ):
         if features is not None:
             if isinstance(features, dict):
@@ -1144,9 +1144,7 @@ class StatsPipeline:
         return data.reorder_levels(names_new)
 
     @staticmethod
-    def _format_latex_table_index(
-        data: pd.DataFrame, index_kws: dict[str, Any], show_a_b: Optional[bool] = False
-    ):  # pylint:disable=too-many-branches
+    def _format_latex_table_index(data: pd.DataFrame, index_kws: dict[str, Any], show_a_b: bool | None = False):  # pylint:disable=too-many-branches
         index_italic = index_kws.get("index_italic", True)
         index_level_order = index_kws.get("index_level_order")
         index_value_order = index_kws.get("index_value_order")
@@ -1205,7 +1203,7 @@ class StatsPipeline:
 
     @staticmethod
     def _apply_index_value_order(
-        data: pd.DataFrame, index_value_order: Union[Sequence[str], dict[str, Sequence[str]]]
+        data: pd.DataFrame, index_value_order: Sequence[str] | dict[str, Sequence[str]]
     ) -> pd.DataFrame:
         if isinstance(data.index, pd.MultiIndex):
             if isinstance(index_value_order, dict):
@@ -1224,7 +1222,7 @@ class StatsPipeline:
 
     @staticmethod
     def _apply_column_value_order(
-        data: pd.DataFrame, column_value_order: Union[Sequence[str], dict[str, Sequence[str]]]
+        data: pd.DataFrame, column_value_order: Sequence[str] | dict[str, Sequence[str]]
     ) -> pd.DataFrame:
         if isinstance(data.columns, pd.MultiIndex):
             if isinstance(column_value_order, dict):

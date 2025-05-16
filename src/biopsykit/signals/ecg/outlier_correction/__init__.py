@@ -1,4 +1,5 @@
 """Outlier correction for R-peaks in ECG signals."""
+
 from biopsykit.signals.ecg.outlier_correction._base_outlier_detection import BaseRPeakOutlierDetection
 from biopsykit.signals.ecg.outlier_correction._outlier_correction import RPeakOutlierCorrection
 from biopsykit.signals.ecg.outlier_correction._outlier_correction_hrv_lipponen2019 import (

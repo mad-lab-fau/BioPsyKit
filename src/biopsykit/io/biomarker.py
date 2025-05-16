@@ -2,7 +2,6 @@
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -36,12 +35,12 @@ _MISSING_DATA = ["no sample", "empty", "insufficient volume"]
 def load_saliva_plate(
     file_path: path_t,
     saliva_type: str,
-    sample_id_col: Optional[str] = None,
-    data_col: Optional[str] = None,
-    id_col_names: Optional[Sequence[str]] = None,
-    regex_str: Optional[str] = None,
-    sample_times: Optional[Sequence[int]] = None,
-    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
+    sample_id_col: str | None = None,
+    data_col: str | None = None,
+    id_col_names: Sequence[str] | None = None,
+    regex_str: str | None = None,
+    sample_times: Sequence[int] | None = None,
+    condition_list: Sequence | dict[str, Sequence] | pd.Index | None = None,
     **kwargs,
 ) -> SalivaRawDataFrame:
     r"""Read saliva from an Excel sheet in 'plate' format. Wraps load_biomarker_results() for compatibilty.
@@ -130,8 +129,8 @@ def load_saliva_plate(
 def save_saliva(
     file_path: path_t,
     data: SalivaRawDataFrame,
-    saliva_type: Optional[str] = "cortisol",
-    as_wide_format: Optional[bool] = False,
+    saliva_type: str | None = "cortisol",
+    as_wide_format: bool | None = False,
 ):
     """Save saliva data to csv file.
 
@@ -177,10 +176,10 @@ def save_saliva(
 def load_saliva_wide_format(
     file_path: path_t,
     saliva_type: str,
-    subject_col: Optional[str] = None,
-    condition_col: Optional[str] = None,
-    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
-    sample_times: Optional[Sequence[int]] = None,
+    subject_col: str | None = None,
+    condition_col: str | None = None,
+    additional_index_cols: str | Sequence[str] | None = None,
+    sample_times: Sequence[int] | None = None,
     **kwargs,
 ) -> SalivaRawDataFrame:
     """Load saliva data that is in wide-format from csv file.
@@ -265,13 +264,13 @@ def load_saliva_wide_format(
 
 def load_biomarker_results(
     file_path: path_t,
-    biomarker_type: Optional[str] = None,
-    sample_id_col: Optional[str] = None,
-    data_col: Optional[str] = None,
-    id_col_names: Optional[Sequence[str]] = None,
-    regex_str: Optional[str] = None,
-    sample_times: Optional[Sequence[int]] = None,
-    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
+    biomarker_type: str | None = None,
+    sample_id_col: str | None = None,
+    data_col: str | None = None,
+    id_col_names: Sequence[str] | None = None,
+    regex_str: str | None = None,
+    sample_times: Sequence[int] | None = None,
+    condition_list: Sequence | dict[str, Sequence] | pd.Index | None = None,
     check_number_samples: bool = True,
     replace_strings_missing: bool = True,
     **kwargs,
@@ -390,7 +389,6 @@ def _get_index_cols(condition_col: str, index_cols: Sequence[str], additional_in
 
 
 def _try_read_plate_excel(file_path: Path, sample_id_col: str, data_col: str, **kwargs):
-
     for skiprows in [1, 2, 3]:
         try:
             return pd.read_excel(file_path, skiprows=skiprows, usecols=[sample_id_col, data_col], **kwargs)
@@ -458,9 +456,9 @@ def _check_sample_times(num_samples: int, num_subjects: int, sample_times: Seque
 
 
 def _parse_condition_list(
-    data: pd.DataFrame, condition_list: Union[Sequence, dict[str, Sequence], pd.Index]
+    data: pd.DataFrame, condition_list: Sequence | dict[str, Sequence] | pd.Index
 ) -> SubjectConditionDataFrame:
-    if isinstance(condition_list, (list, np.ndarray)):
+    if isinstance(condition_list, list | np.ndarray):
         # Add Condition as new index level
         condition_list = pd.DataFrame(
             condition_list,
@@ -480,7 +478,7 @@ def _parse_condition_list(
 
 def _apply_condition_list(
     data: pd.DataFrame,
-    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
+    condition_list: Sequence | dict[str, Sequence] | pd.Index | None = None,
 ):
     condition_list = _parse_condition_list(data, condition_list)
 

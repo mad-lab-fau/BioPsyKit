@@ -1,8 +1,8 @@
 """Module for processing ECG data."""
 
 import warnings
-from collections.abc import Sequence
-from typing import Callable, Literal, Optional, Union
+from collections.abc import Callable, Sequence
+from typing import Literal, Optional
 
 import neurokit2 as nk
 import numpy as np
@@ -35,7 +35,7 @@ ERROR_HANDLING = Literal["raise", "warn", "ignore"]
 """Available behavior types when dealing with ECG processing errors."""
 
 
-def _hrv_process_get_hrv_types(hrv_types: Union[str, Sequence[str]]) -> Sequence[str]:
+def _hrv_process_get_hrv_types(hrv_types: str | Sequence[str]) -> Sequence[str]:
     if hrv_types is None:
         # TODO: change default parameter to 'all'
         hrv_types = ["hrv_time", "hrv_nonlinear"]
@@ -56,10 +56,10 @@ class EcgProcessor(_BaseProcessor):
 
     def __init__(
         self,
-        data: Union[EcgRawDataFrame, dict[str, EcgRawDataFrame]],
-        sampling_rate: Optional[float] = None,
-        time_intervals: Optional[Union[pd.Series, dict[str, Sequence[str]]]] = None,
-        include_start: Optional[bool] = False,
+        data: EcgRawDataFrame | dict[str, EcgRawDataFrame],
+        sampling_rate: float | None = None,
+        time_intervals: pd.Series | dict[str, Sequence[str]] | None = None,
+        include_start: bool | None = False,
     ):
         """Initialize a new ``EcgProcessor`` instance.
 
@@ -210,11 +210,11 @@ class EcgProcessor(_BaseProcessor):
 
     def ecg_process(
         self,
-        outlier_correction: Optional[Union[str, Sequence[str]]] = "all",
-        outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
-        title: Optional[str] = None,
-        method: Optional[str] = None,
-        errors: Optional[ERROR_HANDLING] = "raise",
+        outlier_correction: str | Sequence[str] | None = "all",
+        outlier_params: dict[str, float | Sequence[float]] | None = None,
+        title: str | None = None,
+        method: str | None = None,
+        errors: ERROR_HANDLING | None = "raise",
     ) -> None:
         """Process ECG signal.
 
@@ -329,7 +329,7 @@ class EcgProcessor(_BaseProcessor):
             self.rpeaks[name] = rpeaks
 
     def _ecg_process(
-        self, data: EcgRawDataFrame, method: Optional[str] = None, phase: Optional[str] = None
+        self, data: EcgRawDataFrame, method: str | None = None, phase: str | None = None
     ) -> tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Private method for ECG processing.
 
@@ -438,7 +438,7 @@ class EcgProcessor(_BaseProcessor):
         return list(_outlier_correction_methods.keys())
 
     @classmethod
-    def outlier_params_default(cls) -> dict[str, Union[float, Sequence[float]]]:
+    def outlier_params_default(cls) -> dict[str, float | Sequence[float]]:
         """Return default parameter for all outlier correction methods.
 
         .. note::
@@ -464,13 +464,13 @@ class EcgProcessor(_BaseProcessor):
     def correct_outlier(
         cls,
         ecg_processor: Optional["EcgProcessor"] = None,
-        key: Optional[str] = None,
-        ecg_signal: Optional[EcgResultDataFrame] = None,
-        rpeaks: Optional[RPeakDataFrame] = None,
-        outlier_correction: Optional[Union[str, None, Sequence[str]]] = "all",
-        outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
-        imputation_type: Optional[str] = None,
-        sampling_rate: Optional[float] = 256.0,
+        key: str | None = None,
+        ecg_signal: EcgResultDataFrame | None = None,
+        rpeaks: RPeakDataFrame | None = None,
+        outlier_correction: str | None | Sequence[str] | None = "all",
+        outlier_params: dict[str, float | Sequence[float]] | None = None,
+        imputation_type: str | None = None,
+        sampling_rate: float | None = 256.0,
     ) -> tuple[EcgResultDataFrame, RPeakDataFrame]:
         """Perform outlier correction on the detected R peaks.
 
@@ -629,9 +629,9 @@ class EcgProcessor(_BaseProcessor):
     def correct_rpeaks(
         cls,
         ecg_processor: Optional["EcgProcessor"] = None,
-        key: Optional[str] = None,
-        rpeaks: Optional[RPeakDataFrame] = None,
-        sampling_rate: Optional[float] = 256.0,
+        key: str | None = None,
+        rpeaks: RPeakDataFrame | None = None,
+        sampling_rate: float | None = 256.0,
     ) -> pd.DataFrame:
         """Perform R peak correction algorithms to get less noisy HRV parameters.
 
@@ -709,13 +709,13 @@ class EcgProcessor(_BaseProcessor):
     def hrv_process(
         cls,
         ecg_processor: Optional["EcgProcessor"] = None,
-        key: Optional[str] = None,
-        rpeaks: Optional[RPeakDataFrame] = None,
-        hrv_types: Optional[Sequence[str]] = None,
-        correct_rpeaks: Optional[bool] = True,
-        index: Optional[str] = None,
-        index_name: Optional[str] = None,
-        sampling_rate: Optional[float] = 256.0,
+        key: str | None = None,
+        rpeaks: RPeakDataFrame | None = None,
+        hrv_types: Sequence[str] | None = None,
+        correct_rpeaks: bool | None = True,
+        index: str | None = None,
+        index_name: str | None = None,
+        sampling_rate: float | None = 256.0,
     ) -> pd.DataFrame:
         """Compute HRV parameters on the given data.
 
@@ -797,7 +797,7 @@ class EcgProcessor(_BaseProcessor):
             hrv.index.name = index_name
         return hrv
 
-    def hrv_batch_process(self, hrv_types: Optional[Sequence[str]] = None) -> pd.DataFrame:
+    def hrv_batch_process(self, hrv_types: Sequence[str] | None = None) -> pd.DataFrame:
         """Compute HRV parameters over all phases.
 
         This function computes HRV parameters over all phases using
@@ -822,11 +822,11 @@ class EcgProcessor(_BaseProcessor):
     def ecg_estimate_rsp(
         cls,
         ecg_processor: Optional["EcgProcessor"] = None,
-        key: Optional[str] = None,
-        ecg_signal: Optional[EcgResultDataFrame] = None,
-        rpeaks: Optional[RPeakDataFrame] = None,
-        edr_type: Optional[str] = None,
-        sampling_rate: Optional[float] = 256,
+        key: str | None = None,
+        ecg_signal: EcgResultDataFrame | None = None,
+        rpeaks: RPeakDataFrame | None = None,
+        edr_type: str | None = None,
+        sampling_rate: float | None = 256,
     ) -> pd.DataFrame:
         """Estimate respiration signal from ECG (ECG-derived respiration, EDR).
 
@@ -903,7 +903,7 @@ class EcgProcessor(_BaseProcessor):
         cls,
         ecg_signal: EcgResultDataFrame,
         rsp_signal: pd.DataFrame,
-        sampling_rate: Optional[float] = 256,
+        sampling_rate: float | None = 256,
     ) -> dict[str, float]:
         """Compute respiratory sinus arrhythmia (RSA) based on ECG and respiration signal.
 
@@ -1405,9 +1405,9 @@ def _correct_outlier_physiological(
 
 
 def _get_outlier_params(
-    outlier_correction: Optional[Union[str, None, Sequence[str]]] = "all",
-    outlier_params: Optional[dict[str, Union[float, Sequence[float]]]] = None,
-) -> tuple[Sequence[str], dict[str, Union[float, Sequence[float]]], dict[str, Callable]]:
+    outlier_correction: str | None | Sequence[str] | None = "all",
+    outlier_params: dict[str, float | Sequence[float]] | None = None,
+) -> tuple[Sequence[str], dict[str, float | Sequence[float]], dict[str, Callable]]:
     if outlier_correction == "all":
         outlier_correction = list(_outlier_correction_methods.keys())
     elif isinstance(outlier_correction, str):
@@ -1455,7 +1455,7 @@ _outlier_correction_methods: dict[str, Callable] = {
     "statistical_rr_diff": _correct_outlier_statistical_rr_diff,
 }
 
-_outlier_correction_params_default: dict[str, Union[float, Sequence[float]]] = {
+_outlier_correction_params_default: dict[str, float | Sequence[float]] = {
     "correlation": 0.3,
     "quality": 0.4,
     "artifact": 0.0,

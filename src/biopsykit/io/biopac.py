@@ -2,7 +2,7 @@
 
 import datetime
 from collections.abc import Sequence
-from typing import ClassVar, Optional, Union
+from typing import ClassVar
 
 try:
     import bioread
@@ -35,7 +35,7 @@ class BiopacDataset:
 
     _start_time_unix: pd.Timestamp
     _tz: str
-    _event_markers: Optional[Sequence[bioread.reader.EventMarker]] = None
+    _event_markers: Sequence[bioread.reader.EventMarker] | None = None
     _data: ClassVar[dict[str, pd.DataFrame]] = {}
     _sampling_rate: ClassVar[dict[str, int]] = {}
 
@@ -43,9 +43,9 @@ class BiopacDataset:
         self,
         data_dict: dict[str, pd.DataFrame],
         sampling_rate_dict: dict[str, int],
-        start_time: Optional[pd.Timestamp] = None,
-        event_markers: Optional[Sequence[bioread.reader.EventMarker]] = None,
-        tz: Optional[str] = None,
+        start_time: pd.Timestamp | None = None,
+        event_markers: Sequence[bioread.reader.EventMarker] | None = None,
+        tz: str | None = None,
     ):
         """Get new Dataset instance.
 
@@ -82,7 +82,7 @@ class BiopacDataset:
 
     @classmethod
     def from_acq_file(
-        cls, path: path_t, channel_mapping: Optional[dict[str, str]] = None, tz: Optional[str] = "Europe/Berlin"
+        cls, path: path_t, channel_mapping: dict[str, str] | None = None, tz: str | None = "Europe/Berlin"
     ):
         """Create a new Dataset from a valid .acq file.
 
@@ -124,7 +124,7 @@ class BiopacDataset:
         )
 
     @property
-    def start_time_unix(self) -> Optional[pd.Timestamp]:
+    def start_time_unix(self) -> pd.Timestamp | None:
         """Start time of the recording in UTC time."""
         return self._start_time_unix
 
@@ -140,9 +140,9 @@ class BiopacDataset:
 
     def data_as_df(
         self,
-        datastreams: Optional[str_t] = None,
-        index: Optional[str] = None,
-        start_time: Optional[Union[str, datetime.datetime, pd.Timestamp]] = None,
+        datastreams: str_t | None = None,
+        index: str | None = None,
+        start_time: str | datetime.datetime | pd.Timestamp | None = None,
     ) -> pd.DataFrame:
         """Return all data as one combined :class:`pandas.DataFrame`.
 
@@ -205,7 +205,7 @@ class BiopacDataset:
 
         return dict_channel_data, dict_sampling_rate
 
-    def _add_index(self, data: pd.DataFrame, index: str, start_time: Optional[pd.Timestamp] = None) -> pd.DataFrame:
+    def _add_index(self, data: pd.DataFrame, index: str, start_time: pd.Timestamp | None = None) -> pd.DataFrame:
         index_names = {
             None: "n_samples",
             "time": "t",

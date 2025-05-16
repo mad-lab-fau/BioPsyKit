@@ -1,6 +1,6 @@
 """Module for loading and processing Task Force Monitor (TFM) data."""
 
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 import pandas as pd
 from scipy.io import loadmat
@@ -14,9 +14,7 @@ class TFMDataset:
     CHANNEL_MAPPING: ClassVar[dict[str, str]] = {"ecg_1": "rawECG1", "ecg_2": "rawECG2", "icg_der": "rawICG"}
     _tz: str
 
-    def __init__(
-        self, data_dict: dict[str, pd.DataFrame], sampling_rate_dict: dict[str, float], tz: Optional[str] = None
-    ):
+    def __init__(self, data_dict: dict[str, pd.DataFrame], sampling_rate_dict: dict[str, float], tz: str | None = None):
         """Initialize a TFM dataset.
 
         Parameters
@@ -42,7 +40,7 @@ class TFMDataset:
         cls,
         path: path_t,
         # channel_mapping: Optional[Dict[str, str]] = None,
-        tz: Optional[str] = "Europe/Berlin",
+        tz: str | None = "Europe/Berlin",
     ):
         """Load a TFM dataset from a .mat file.
 

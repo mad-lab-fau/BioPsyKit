@@ -4,7 +4,6 @@ import time
 import warnings
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional
 
 try:
     import mne
@@ -29,8 +28,8 @@ class PSGDataset:
         self,
         data_dict: dict[str, pd.DataFrame],
         sampling_rate_dict: dict[str, int],
-        start_time: Optional[pd.Timestamp] = None,
-        tz: Optional[str] = "Europe/Berlin",
+        start_time: pd.Timestamp | None = None,
+        tz: str | None = "Europe/Berlin",
     ):
         self._data = data_dict
         for name, data in data_dict.items():
@@ -47,8 +46,8 @@ class PSGDataset:
     def from_edf_file(
         cls,
         path: path_t,
-        datastreams: Optional[Sequence] = None,
-        tz: Optional[str] = "Europe/Berlin",
+        datastreams: Sequence | None = None,
+        tz: str | None = "Europe/Berlin",
     ):
         """Create a new Dataset from a valid .edf file.
 
@@ -74,12 +73,12 @@ class PSGDataset:
         return cls(data_dict=data_dict, sampling_rate_dict={"sampling_rate": fs}, start_time=start_time, tz=tz)
 
     @property
-    def start_time_unix(self) -> Optional[pd.Timestamp]:
+    def start_time_unix(self) -> pd.Timestamp | None:
         """Start time of the recording in UTC time."""
         return self._start_time_unix
 
     @property
-    def start_time_datetime(self) -> Optional[pd.Timestamp]:
+    def start_time_datetime(self) -> pd.Timestamp | None:
         """Start time of the recording in UTC time."""
         return self._start_time_datetime
 
@@ -88,7 +87,7 @@ class PSGDataset:
         """Timezone the dataset was recorded in."""
         return self._tz
 
-    def data_as_df(self, index: Optional[str] = None) -> pd.DataFrame:
+    def data_as_df(self, index: str | None = None) -> pd.DataFrame:
         """Return data as one combined pandas.DataFrame.
 
         Parameters
@@ -144,7 +143,7 @@ class PSGDataset:
     def load_data_folder(
         cls,
         folder_path: path_t,
-        datastreams: Optional[Sequence] = None,
+        datastreams: Sequence | None = None,
     ):
         """Load data from a folder containing a single .edf file.
 
@@ -188,7 +187,7 @@ class PSGDataset:
     def load_data(
         cls,
         path: path_t,
-        datastreams: Optional[Sequence] = None,
+        datastreams: Sequence | None = None,
     ):
         """Load PSG data from a valid .edf file.
 

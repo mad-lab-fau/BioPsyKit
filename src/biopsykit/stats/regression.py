@@ -1,14 +1,12 @@
 """Functions for performing regression analysis."""
 
-from typing import Union
-
 import pandas as pd
 import pingouin as pg
 
 __all__ = ["stepwise_backwards_linear_regression"]
 
 
-def stepwise_backwards_linear_regression(predictors: pd.DataFrame, dv: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def stepwise_backwards_linear_regression(predictors: pd.DataFrame, dv: pd.DataFrame | pd.Series) -> pd.DataFrame:
     """Perform a stepwise backwards linear regression.
 
     The stepwise backwards linear regression is performed iteratively by running a linear regression on the predictors
@@ -49,5 +47,5 @@ def stepwise_backwards_linear_regression(predictors: pd.DataFrame, dv: Union[pd.
     return list_reg_models[list_adj_r2.index(max(list_adj_r2))]
 
 
-def _lin_reg(predictors: pd.DataFrame, dv: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def _lin_reg(predictors: pd.DataFrame, dv: pd.DataFrame | pd.Series) -> pd.DataFrame:
     return pg.linear_regression(predictors, dv).set_index("names").drop(index="Intercept")
