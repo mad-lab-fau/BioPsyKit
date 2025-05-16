@@ -22,6 +22,7 @@ from biopsykit.signals.ecg.outlier_correction import (
 )
 from biopsykit.signals.ecg.preprocessing import BaseEcgPreprocessing, EcgPreprocessingNeurokit
 from biopsykit.utils.dtypes import EcgRawDataFrame
+from biopsykit.utils.exceptions import EcgProcessingError
 
 __all__ = ["EcgProcessingPipeline"]
 
@@ -53,7 +54,7 @@ class EcgProcessingPipeline(Pipeline):
         outlier_correction_algo: RPeakOutlierCorrection,
         hrv_r_peak_correction_algo: Optional[RPeakOutlierCorrectionHrvLipponen2019] = None,
         hrv_extraction_algo: Optional[HrvExtraction] = None,
-        handle_missing_events: Literal[HANDLE_MISSING_EVENTS] = "warn",
+        handle_missing_events: Literal[HANDLE_MISSING_EVENTS] = "raise",
     ):
         self.preprocessing_algo = preprocessing_algo
         self.r_peak_algo = r_peak_algo
@@ -69,7 +70,7 @@ class EcgProcessingPipeline(Pipeline):
         cls,
         compute_hrv: bool = True,
         r_peak_imputation_type: str = "linear_interpolation",
-        handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
+        handle_missing_events: HANDLE_MISSING_EVENTS = "raise",
     ) -> Self:
         preprocessing_algo = EcgPreprocessingNeurokit(method="neurokit")
         r_peak_algo = RPeakExtractionNeurokit(handle_missing_events)
@@ -121,15 +122,18 @@ class EcgProcessingPipeline(Pipeline):
         sampling_rate_attrs = ["fs", "sampling_rate", "sampling_rate_hz", "sampling_rate_ecg"]
         sampling_rate = next((getattr(datapoint, att) for att in sampling_rate_attrs if hasattr(datapoint, att)), None)
         if sampling_rate is None:
-            raise ValueError(
+            raise EcgProcessingError(
                 f"No valid sampling rate attribute for the given datapoint found. Tried: {sampling_rate_attrs}."
             )
 
         # Preprocess the ECG data
         if not hasattr(datapoint, "ecg"):
-            raise ValueError("The given datapoint does not have an 'ecg' attribute.")
+            raise EcgProcessingError("The given datapoint does not have an 'ecg' attribute.")
 
         ecg = datapoint.ecg
+
+        if len(ecg) == 0:
+            raise EcgProcessingError("The given ECG data is empty.")
 
         # Preprocess the ECG data
         preprocessing_algo.clean(ecg=ecg, sampling_rate_hz=sampling_rate)

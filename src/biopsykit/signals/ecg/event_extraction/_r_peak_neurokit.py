@@ -56,7 +56,17 @@ class RPeakExtractionNeurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
         ecg = sanitize_input_series(ecg, name="ecg")
         ecg = ecg.squeeze()
 
-        ecg_processed, rpeak_idx = self._process_ecg(ecg, sampling_rate_hz=sampling_rate_hz)
+        try:
+            ecg_processed, rpeak_idx = self._process_ecg(ecg, sampling_rate_hz=sampling_rate_hz)
+        except ValueError as e:
+            error_msg = f"Error processing ECG data: {e}"
+            if self.handle_missing_events == "warn":
+                warnings.warn(
+                    f"{error_msg}. If you want to ignore this warning, set handle_missing_events to 'ignore'.",
+                    UserWarning,
+                )
+            elif self.handle_missing_events == "raise":
+                raise EcgProcessingError(error_msg) from e
 
         rpeaks = self._extract_r_peaks(ecg_processed, rpeak_idx, sampling_rate_hz=sampling_rate_hz)
 
