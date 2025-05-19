@@ -144,7 +144,7 @@ requires-dist = [
     { name = "joblib", specifier = ">=1,<2" },
     { name = "matplotlib", specifier = "~=3.9" },
     { name = "mne", marker = "extra == 'mne'", specifier = ">=1.2.1,<2" },
-    { name = "neurokit2", specifier = ">=0,<1" },
+    { name = "neurokit2", specifier = ">=0,<0.2.11" },
     { name = "nilspodlib", specifier = ">=4.0.0" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "openpyxl", specifier = ">=3,<4" },
@@ -1680,7 +1680,7 @@ wheels = [
 
 [[package]]
 name = "neurokit2"
-version = "0.2.11"
+version = "0.2.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "matplotlib", version = "3.9.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -1693,9 +1693,9 @@ dependencies = [
     { name = "scipy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/32/cc/745ec7826d1f6ceca29406d1cd9762fd23103c15546b5b85867b5111aacc/neurokit2-0.2.11.tar.gz", hash = "sha256:c05f4144168918d401b805447a1d994ed31c63912eaece8bbee25f3acf463e5d", size = 20801501, upload-time = "2025-05-13T11:17:29.346Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/15/b7ee49b8540f665d7f53f33ed6947afe5bd6d0d768081f8d688ce32c5880/neurokit2-0.2.10.tar.gz", hash = "sha256:31e4eb2a187aa0c8eb26a63d0ef9072891d6b6d4dde384d9691b82074d539aba", size = 20798338, upload-time = "2024-08-16T13:38:57.907Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f6/2e/eb14351b2d2fcdb6f9821553c36db0788ff8d9bc5b906480ab3d637f2227/neurokit2-0.2.11-py2.py3-none-any.whl", hash = "sha256:93e70203c5059faa88075d5d5b7c4cb76c42c27160f8b7d11f750e55db935ef8", size = 696458, upload-time = "2025-05-13T11:17:27.373Z" },
+    { url = "https://files.pythonhosted.org/packages/6b/5a/c74a250f656ec04e05b6f847f636b03c63d8032eeafb6865410f58a8d6f5/neurokit2-0.2.10-py2.py3-none-any.whl", hash = "sha256:43b859595100fb862c3bacc6b6b027fe4aef7aff3d35f7e23fb79fd116fbe936", size = 693108, upload-time = "2024-08-16T13:38:55.38Z" },
 ]
 
 [[package]]

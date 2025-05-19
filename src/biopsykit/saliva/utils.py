@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from datetime import datetime, time
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from biopsykit.utils._datatype_validation_helper import _assert_has_index_levels, _assert_is_dtype
@@ -255,7 +256,7 @@ def _remove_s0(data: SalivaRawDataFrame) -> SalivaRawDataFrame:
     return _SalivaRawDataFrame(data)
 
 
-def _check_sample_times(sample_times: np.array) -> None:
+def _check_sample_times(sample_times: npt.NDArray) -> None:
     """Check that all sample times are monotonously increasing.
 
     Parameters
@@ -276,7 +277,7 @@ def _check_sample_times(sample_times: np.array) -> None:
 def _get_sample_times(
     data: pd.DataFrame,
     saliva_type: str,
-    sample_times: np.array | Sequence[int] | None = None,
+    sample_times: npt.NDArray | Sequence[int] | None = None,
     remove_s0: bool | None = False,
 ) -> np.array:
     if sample_times is None:

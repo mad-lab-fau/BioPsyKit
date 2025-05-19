@@ -1,6 +1,6 @@
 """A couple of helper functions that ease the use of the typical biopsykit data formats."""
 
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -203,7 +203,7 @@ class _PepResultDataFrame(pd.DataFrame):
     pass
 
 
-SubjectConditionDataFrame = Union[_SubjectConditionDataFrame, pd.DataFrame]
+SubjectConditionDataFrame = _SubjectConditionDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing subject IDs and condition assignment in a standardized format.
 
 A ``SubjectConditionDataFrame`` has an index with subject IDs named ``subject`` and a column with the condition
@@ -217,7 +217,7 @@ A ``SubjectConditionDict`` contains conditions as dictionary keys and a collecti
 (list, numpy array, pandas Index) as dictionary values.
 """
 
-CodebookDataFrame = Union[_CodebookDataFrame, pd.DataFrame]
+CodebookDataFrame = _CodebookDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` representing a codebook which encodes numerical and categorical values
 in a standardized format.
 
@@ -225,14 +225,14 @@ A ``CodebookDataFrame`` has an index level named ``variable``. The column names 
 the dataframe entries then represent the mapping of numerical value to categorical value for the variable.
 """
 
-MeanSeDataFrame = Union[_MeanSeDataFrame, pd.DataFrame]
+MeanSeDataFrame = _MeanSeDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing mean and standard error of time-series data in a standardized format.
 
 The resulting dataframe must at least the two columns ``mean`` and ``se``. It can have additional index levels,
 such as ``phase``, ``subphase`` or ``condition``.
 """
 
-BiomarkerRawDataFrame = Union[_BiomarkerRawDataFrame, pd.DataFrame]
+BiomarkerRawDataFrame = _BiomarkerRawDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing raw biomarker data in a standardized format.
 
 Data needs to be in long-format and **must** have a :class:`pandas.MultiIndex` with index level names:
@@ -249,7 +249,7 @@ Additionally, the following index levels can be added to identify saliva values,
 
 """
 
-SalivaRawDataFrame = Union[_BiomarkerRawDataFrame, pd.DataFrame]
+SalivaRawDataFrame = _BiomarkerRawDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing raw saliva data in a standardized format.
 
 Data needs to be in long-format and **must** have a :class:`pandas.MultiIndex` with index level names:
@@ -266,7 +266,7 @@ Additionally, the following index levels can be added to identify saliva values,
 
 """
 
-SalivaFeatureDataFrame = Union[_SalivaFeatureDataFrame, pd.DataFrame]
+SalivaFeatureDataFrame = _SalivaFeatureDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing feature computed from saliva data in a standardized format.
 
 The resulting dataframe must at least have a ``subject`` index level and all column names need to begin with
@@ -274,7 +274,7 @@ the saliva marker type (e.g. "cortisol"), followed by the feature name, separate
 Additionally, the name of the column index needs to be `saliva_feature`.
 """
 
-SalivaMeanSeDataFrame = Union[_SalivaMeanSeDataFrame, pd.DataFrame]
+SalivaMeanSeDataFrame = _SalivaMeanSeDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing mean and standard error of saliva samples in a standardized format.
 
 The resulting dataframe must at least have a ``sample`` index level and the two columns ``mean`` and ``se``.
@@ -322,7 +322,7 @@ The following entries are, for instance, further possible:
 
 """
 
-SleepEndpointDataFrame = Union[_SleepEndpointDataFrame, pd.DataFrame]
+SleepEndpointDataFrame = _SleepEndpointDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing sleep endpoints in a standardized format.
 
 The resulting dataframe must at least have a ``date`` index level,
@@ -364,7 +364,7 @@ The following columns are further possible:
 
 """
 
-IcgRawDataFrame = Union[_IcgRawDataFrame, pd.DataFrame]
+IcgRawDataFrame = _IcgRawDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing raw ICG data of `one` subject.
 
 The dataframe is expected to have one of the following columns:
@@ -375,7 +375,7 @@ The dataframe is expected to have one of the following columns:
 """
 
 
-EcgRawDataFrame = Union[_EcgRawDataFrame, pd.DataFrame]
+EcgRawDataFrame = _EcgRawDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing raw ECG data of `one` subject.
 
 The dataframe is expected to have the following columns:
@@ -384,7 +384,7 @@ The dataframe is expected to have the following columns:
 
 """
 
-EcgResultDataFrame = Union[_EcgResultDataFrame, pd.DataFrame]
+EcgResultDataFrame = _EcgResultDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing processed ECG data of `one` subject.
 
 The dataframe is expected to have the following columns:
@@ -398,7 +398,7 @@ The dataframe is expected to have the following columns:
 
 """
 
-HeartRateDataFrame = Union[_HeartRateDataFrame, pd.DataFrame]
+HeartRateDataFrame = _HeartRateDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing heart rate time series data of `one` subject.
 
 The dataframe is expected to have the following columns:
@@ -407,7 +407,7 @@ The dataframe is expected to have the following columns:
 
 """
 
-RPeakDataFrame = Union[_RPeakDataFrame, pd.DataFrame]
+RPeakDataFrame = _RPeakDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing R-peak locations of `one` subject extracted from ECG data.
 
 The dataframe is expected to have the following columns:
@@ -419,7 +419,7 @@ The dataframe is expected to have the following columns:
 
 """
 
-Acc1dDataFrame = Union[_Acc1dDataFrame, pd.DataFrame]
+Acc1dDataFrame = _Acc1dDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing 1-d acceleration data.
 
 The dataframe is expected to have one of the following column sets:
@@ -429,7 +429,7 @@ The dataframe is expected to have one of the following column sets:
 
 """
 
-Acc3dDataFrame = Union[_Acc3dDataFrame, pd.DataFrame]
+Acc3dDataFrame = _Acc3dDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing 3-d acceleration data.
 
 The dataframe is expected to have one of the following column sets:
@@ -440,7 +440,7 @@ The dataframe is expected to have one of the following column sets:
 
 """
 
-Gyr1dDataFrame = Union[_Gyr1dDataFrame, pd.DataFrame]
+Gyr1dDataFrame = _Gyr1dDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing 1-d gyroscope data.
 
 The dataframe is expected to have one of the following column sets:
@@ -450,7 +450,7 @@ The dataframe is expected to have one of the following column sets:
 
 """
 
-Gyr3dDataFrame = Union[_Gyr3dDataFrame, pd.DataFrame]
+Gyr3dDataFrame = _Gyr3dDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing 3-d gyroscope data.
 
 The dataframe is expected to have one of the following column sets:
@@ -461,7 +461,7 @@ The dataframe is expected to have one of the following column sets:
 
 """
 
-ImuDataFrame = Union[_ImuDataFrame, pd.DataFrame]
+ImuDataFrame = _ImuDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing 6-d inertial measurement (IMU) (acceleration and gyroscope) data.
 
 Hence, an ``ImuDataFrame`` must both be a ``AccDataFrame`` **and** a ``GyrDataFrame``.
@@ -475,7 +475,7 @@ The dataframe is expected to have one of the following column sets:
 
 """
 
-SleepWakeDataFrame = Union[_SleepWakeDataFrame, pd.DataFrame]
+SleepWakeDataFrame = _SleepWakeDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing sleep/wake predictions.
 
 The dataframe is expected to have at least the following column(s):
@@ -484,7 +484,7 @@ The dataframe is expected to have at least the following column(s):
 
 """
 
-HeartbeatSegmentationDataFrame = Union[_HeartbeatSegmentationDataFrame, pd.DataFrame]
+HeartbeatSegmentationDataFrame = _HeartbeatSegmentationDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing results of heartbeat segmentation.
 
 The dataframe is expected to have *at least* the following columns:
@@ -495,7 +495,7 @@ The dataframe is expected to have *at least* the following columns:
 
 """
 
-QPeakDataFrame = Union[_QPeakDataFrame, pd.DataFrame]
+QPeakDataFrame = _QPeakDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing Q-peak locations extracted from ECG data.
 
 The dataframe is expected to have *at least* the following columns:
@@ -508,7 +508,7 @@ Optionally, the dataframe can contain additional columns, such as:
 
 """
 
-BPointDataFrame = Union[_BPointDataFrame, pd.DataFrame]
+BPointDataFrame = _BPointDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing B-Point locations extracted from ICG data.
 
 The dataframe is expected to have *at least* the following columns:
@@ -521,7 +521,7 @@ Optionally, the dataframe can contain additional columns, such as:
 
 """
 
-CPointDataFrame = Union[_CPointDataFrame, pd.DataFrame]
+CPointDataFrame = _CPointDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing C-Point locations extracted from ICG data.
 
 The dataframe is expected to have *at least* the following columns:
@@ -534,7 +534,7 @@ Optionally, the dataframe can contain additional columns, such as:
 
 """
 
-PepResultDataFrame = Union[_PepResultDataFrame, pd.DataFrame]
+PepResultDataFrame = _PepResultDataFrame | pd.DataFrame
 """:class:`~pandas.DataFrame` containing results of PEP extraction.
 
 The dataframe is expected to have *at least* the following columns:
@@ -602,7 +602,7 @@ This dictionary can, for instance, be rearranged to a :obj:`biopsykit.utils.dtyp
 where the level order is reversed: `phase`, `subject`.
 """
 
-HeartRateSubjectDataDict = Union[dict[str, HeartRatePhaseDict], dict[str, dict[str, HeartRatePhaseDict]]]
+HeartRateSubjectDataDict = dict[str, HeartRatePhaseDict] | dict[str, dict[str, HeartRatePhaseDict]]
 """Dictionary with time-series heart rate data from **multiple subjects** collected during a psychological protocol.
 
 A ``HeartRateSubjectDataDict`` is a nested dictionary with time-series heart rate data from multiple subjects,

@@ -7,6 +7,7 @@ from inspect import getmembers, isfunction
 from typing import Any, Literal
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from biopsykit.utils._datatype_validation_helper import _assert_is_dtype, _assert_len_list, _assert_value_range
@@ -173,7 +174,7 @@ def zero_pad_columns(data: pd.DataFrame, inplace: bool | None = False) -> pd.Dat
     return data
 
 
-def to_idx(col_idxs: np.array | Sequence[int]) -> np.ndarray:
+def to_idx(col_idxs: npt.NDArray | Sequence[int]) -> np.ndarray:
     """Convert questionnaire item indices into array indices.
 
     In questionnaires, items indices start at 1. To avoid confusion in the implementation of questionnaires
@@ -197,7 +198,7 @@ def to_idx(col_idxs: np.array | Sequence[int]) -> np.ndarray:
 def invert(
     data: pd.DataFrame | pd.Series,
     score_range: Sequence[int],
-    cols: np.array | Sequence[int] | Sequence[str] | None = None,
+    cols: npt.NDArray | Sequence[int] | Sequence[str] | None = None,
     inplace: bool | None = False,
 ) -> pd.DataFrame | pd.Series | None:
     """Invert questionnaire scores.

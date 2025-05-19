@@ -5,12 +5,12 @@ For user facing type declarations, please see :py:func:`biopsykit.utils.dtypes`.
 
 from collections.abc import Hashable, Sequence
 from pathlib import Path
-from typing import TypeVar, Union
+from typing import TypeVar
 
 import numpy as np
 import pandas as pd
 
-_Hashable = Union[Hashable, str]
+_Hashable = Hashable | str
 
 path_t = TypeVar("path_t", str, Path)  # pylint:disable=invalid-name
 arr_t = TypeVar("arr_t", pd.DataFrame, pd.Series, np.ndarray)  # pylint:disable=invalid-name
