@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from scipy.signal import find_peaks
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
@@ -36,7 +35,7 @@ class BPointExtractionPale2021(BaseBPointExtraction, CanHandleMissingEventsMixin
     ----------
     .. [Pal21] Pale, U., Muller, N., Arza, A., & Atienza, D. (2021). ReBeatICG: Real-time Low-Complexity Beat-to-beat
         Impedance Cardiogram Delineation Algorithm. 2021 43rd Annual International Conference of the IEEE Engineering
-        in Medicine & Biology Society (EMBC), 5618–5624. https://doi.org/10.1109/EMBC46164.2021.9630170
+        in Medicine & Biology Society (EMBC), 5618-5624. https://doi.org/10.1109/EMBC46164.2021.9630170
 
     """
 
@@ -133,7 +132,7 @@ class BPointExtractionPale2021(BaseBPointExtraction, CanHandleMissingEventsMixin
             # c_point_amplitude_fraction * c_point
             c_point_amplitude = icg.iloc[c_point] * self.c_point_amplitude_fraction
 
-            search_window_end = np.where((icg.iloc[search_window_start:c_point] < c_point_amplitude))[0]
+            search_window_end = np.where(icg.iloc[search_window_start:c_point] < c_point_amplitude)[0]
             # If no point is found, use the C-point as the end of the search window; otherwise, use the last point
             # before the C-point that meets the condition
             search_window_end = c_point if search_window_end.size == 0 else search_window_end[-1] + search_window_start
@@ -158,12 +157,9 @@ class BPointExtractionPale2021(BaseBPointExtraction, CanHandleMissingEventsMixin
             # concatenate and sort the candidates
             candidates = np.sort(np.concatenate((zero_crossings, slope_exceeds_threshold)))
 
-            if candidates.size == 0:
-                # if no candidates are found, use the minimum of the signal in the search window
-                b_point = b_point_min
-            else:
-                # use the candidate closest to the C-point
-                b_point = search_window_start + candidates[-1]
+            # if no candidates are found, use the minimum of the signal in the search window; otherwise, use the
+            # candidate closest to the C-point
+            b_point = b_point_min if candidates.size == 0 else search_window_start + candidates[-1]
 
             b_points.loc[idx, "b_point_sample"] = b_point
 
