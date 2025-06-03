@@ -18,6 +18,8 @@ from biopsykit.utils.dtypes import (
 )
 from biopsykit.utils.exceptions import EventExtractionError
 
+__all__ = ["BPointExtractionMiljkovic2022"]
+
 
 class BPointExtractionMiljkovic2022(BaseBPointExtraction, CanHandleMissingEventsMixin):
     """B-point extraction algorithm by Miljkovic and Sekara (2022).

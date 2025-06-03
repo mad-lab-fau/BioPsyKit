@@ -143,7 +143,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
             prev_c_point = c_points[idx - 1]
 
             # check if the current or the previous C-Point contain NaN. If this is the case, set the b_point to NaN
-            if c_point is np.nan or prev_c_point is np.nan:
+            if pd.isna(c_point) or pd.isna(prev_c_point):
                 b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue

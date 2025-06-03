@@ -108,7 +108,7 @@ class BPointExtractionDrost2022(BaseBPointExtraction, CanHandleMissingEventsMixi
             # Get the C-Point location at the current heartbeat id
             c_point = c_points[idx]
 
-            if c_point is np.nan:
+            if pd.isna(c_point):
                 b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
