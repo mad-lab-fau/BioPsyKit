@@ -1,6 +1,6 @@
 [project]
 name = "biopsykit"
-version = "0.13.0"
+version = "0.13.1"
 description = "A Python package for the analysis of biopsychological data."
 authors = [
     { name = "Robert Richer", email = "robert.richer@fau.de" },

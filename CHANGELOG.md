@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.13.1 - June 12, 2025
+## Bugfixes
+- fix IPython import paths in `biopsykit.stats`
+
 ## Version 0.13.0 - April 16, 2025
 ## Improvements
 - `biopsykit.io.biomarker`: Made importing biomarker data from the laboratory ("plate-format") more flexible and 
