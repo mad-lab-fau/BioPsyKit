@@ -1144,9 +1144,7 @@ class StatsPipeline:
         return data.reorder_levels(names_new)
 
     @staticmethod
-    def _format_latex_table_index(
-        data: pd.DataFrame, index_kws: dict[str, Any], show_a_b: bool | None = False
-    ):  # pylint:disable=too-many-branches
+    def _format_latex_table_index(data: pd.DataFrame, index_kws: dict[str, Any], show_a_b: bool | None = False):  # pylint:disable=too-many-branches
         index_italic = index_kws.get("index_italic", True)
         index_level_order = index_kws.get("index_level_order")
         index_value_order = index_kws.get("index_value_order")

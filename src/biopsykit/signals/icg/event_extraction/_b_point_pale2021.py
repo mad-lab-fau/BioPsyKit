@@ -118,12 +118,12 @@ class BPointExtractionPale2021(BaseBPointExtraction, CanHandleMissingEventsMixin
             # Get the C-Point location at the current heartbeat id
             c_point = c_points[idx]
 
-            icg_slice = icg.iloc[data["start_sample"] : c_point]
-
-            if c_point is np.nan:
+            if pd.isna(c_point):
                 b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
+
+            icg_slice = icg.iloc[data["start_sample"] : c_point]
 
             # Calculate the search window based on the C-point location and amplitude
             # start of the search window is 80 ms before the C-point
@@ -139,6 +139,11 @@ class BPointExtractionPale2021(BaseBPointExtraction, CanHandleMissingEventsMixin
 
             # B_min is the minimum of the signal in the search window
             b_point_min = data["start_sample"] + np.argmin(icg_slice)
+
+            if (search_window_end - search_window_start) <= 2:
+                # If the search window is too small, set the B-point to the minimum of the signal in the search window
+                b_points.loc[idx, "b_point_sample"] = b_point_min
+                continue
 
             # slice derivative to the search window
             icg_2nd_der_slice = icg_2nd_der[search_window_start:search_window_end]
