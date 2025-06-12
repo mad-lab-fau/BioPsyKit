@@ -302,7 +302,7 @@ class StatsPipeline:
 
     def _ipython_display_(self):
         try:
-            from IPython.core.display import display  # pylint:disable=import-outside-toplevel
+            from IPython.display import display  # pylint:disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "
@@ -347,7 +347,7 @@ class StatsPipeline:
 
         """
         try:
-            from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
+            from IPython.display import Markdown, display  # pylint:disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "
@@ -383,7 +383,7 @@ class StatsPipeline:
         self, sig_only: dict[str, bool], groupby: str | None = None, group_key: str | None = None, **kwargs
     ):
         try:
-            from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
+            from IPython.display import Markdown, display  # pylint:disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "
@@ -1011,7 +1011,7 @@ class StatsPipeline:
         self, category: str, steps: Sequence[str], sig_only: dict[str, bool], groupby: str, group_key: str
     ):
         try:
-            from IPython.core.display import Markdown, display  # pylint:disable=import-outside-toplevel
+            from IPython.display import Markdown, display  # pylint:disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "
@@ -1144,7 +1144,9 @@ class StatsPipeline:
         return data.reorder_levels(names_new)
 
     @staticmethod
-    def _format_latex_table_index(data: pd.DataFrame, index_kws: dict[str, Any], show_a_b: bool | None = False):  # pylint:disable=too-many-branches
+    def _format_latex_table_index(
+        data: pd.DataFrame, index_kws: dict[str, Any], show_a_b: bool | None = False
+    ):  # pylint:disable=too-many-branches
         index_italic = index_kws.get("index_italic", True)
         index_level_order = index_kws.get("index_level_order")
         index_value_order = index_kws.get("index_value_order")
