@@ -309,7 +309,7 @@ def load_atimelogger_file(
     )
 
     timelog = pd.DataFrame(timelog.T.unstack(), columns=["time"])
-    timelog = timelog[::-1].reindex(["start", "end"], level="start_end")
+    timelog = timelog.reindex(["start", "end"], level="start_end")
     timelog = timelog.T
     return timelog
 
