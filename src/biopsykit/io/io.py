@@ -242,7 +242,9 @@ def convert_time_log_datetime(
     return time_log
 
 
-def load_atimelogger_file(file_path: path_t, timezone: datetime.tzinfo | str | None = None) -> pd.DataFrame:
+def load_atimelogger_file(
+    file_path: path_t, timezone: datetime.tzinfo | str | None = None, handle_multiple: str = "raise"
+) -> pd.DataFrame:
     """Load time log file exported from the aTimeLogger app.
 
     The resulting dataframe will have one row and start and end times of the single phases as columns.
@@ -293,6 +295,13 @@ def load_atimelogger_file(file_path: path_t, timezone: datetime.tzinfo | str | N
     timelog.index.name = "phase"
     timelog.columns.name = "start_end"
 
+    if timelog.index.duplicated().any():
+        if handle_multiple == "raise":
+            raise ValueError("Duplicate indices found in the time log file.")
+        if handle_multiple == "fix":
+            duplicate_counter = timelog.groupby(timelog.index).cumcount()
+            timelog.index = pd.MultiIndex.from_arrays([timelog.index, duplicate_counter], names=["phase", "trial"])
+
     probe_timelog = timelog.iloc[0, 0]
     dayfirst = "/" in probe_timelog
     timelog = timelog.apply(lambda ts, d=dayfirst: pd.to_datetime(ts, dayfirst=d), axis=1).map(
@@ -300,7 +309,7 @@ def load_atimelogger_file(file_path: path_t, timezone: datetime.tzinfo | str | N
     )
 
     timelog = pd.DataFrame(timelog.T.unstack(), columns=["time"])
-    timelog = timelog[::-1].reindex(["start", "end"], level="start_end")
+    timelog = timelog.reindex(["start", "end"], level="start_end")
     timelog = timelog.T
     return timelog
 
