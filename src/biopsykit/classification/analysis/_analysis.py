@@ -3,11 +3,11 @@
 from collections.abc import Sequence
 from typing import Any
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from fau_colors import cmaps
-import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn.metrics import ConfusionMatrixDisplay

@@ -400,7 +400,7 @@ def apply_codebook(data: pd.DataFrame, codebook: CodebookDataFrame) -> pd.DataFr
 
     for col in data.columns:
         if col in codebook.index:
-            data[col] = data[col].replace(codebook.loc[col])  # noqa: PD002
+            data[col] = data[col].replace(codebook.loc[col])
 
     return data
 
