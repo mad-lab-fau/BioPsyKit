@@ -948,7 +948,7 @@ class SklearnPipelinePermuter:
         # make deep copy of first instance
         base_permuter = deepcopy(permuter[0])
 
-        for p in permuter[1:]:
+        for p in tqdm(permuter[1:]):
             if base_permuter.scoring != p.scoring:
                 raise ValueError(
                     f"Cannot merge permuter instances with different scoring functions: "
@@ -975,8 +975,8 @@ class SklearnPipelinePermuter:
 
     @staticmethod
     def _apply_score(row: pd.Series, score_func, pos_label: str):
-        true_labels_folds = row[0]
-        predicted_labels_folds = row[1]
+        true_labels_folds = row.iloc[0]
+        predicted_labels_folds = row.iloc[1]
 
         kwargs = {}
         params = signature(score_func).parameters
@@ -1031,7 +1031,7 @@ class SklearnPipelinePermuter:
             metric_out[metric] = metric_slice.apply(self._apply_score, args=(score_func, pos_label), axis=1)
         metric_out = pd.concat(metric_out, names=["score", "folds"], axis=1)
 
-        metric_out = metric_out.stack(["score", "folds"])
+        metric_out = metric_out.stack(["score", "folds"], future_stack=True)
         metric_out = metric_out.groupby(metric_out.index.names[:-1]).agg(
             [("mean", lambda x: np.mean(x)), ("std", lambda x: np.std(x))]
         )
