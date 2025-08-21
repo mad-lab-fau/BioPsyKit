@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from fau_colors import cmaps
+import matplotlib as mpl
 from matplotlib import pyplot as plt
-from matplotlib.cm import ColormapRegistry
 from matplotlib.colors import ListedColormap
 from sklearn.metrics import ConfusionMatrixDisplay
 
@@ -79,8 +79,12 @@ def predictions_as_df(
     """
     metric_summary = pipeline_permuter.metric_summary()
     label_cols = ["true_labels", "predicted_labels"]
-    predictions = metric_summary[label_cols].explode(label_cols).loc[pipeline]
-
+    predictions = (
+        metric_summary[label_cols]
+        .explode(label_cols)
+        .sort_index()  # ensure lexsorted index to avoid PerformanceWarning
+        .loc[pipeline]
+    )
     if isinstance(data.index, pd.MultiIndex):
         if index_col is None:
             index_col = data.index.names[0]
@@ -189,8 +193,7 @@ def _register_fau_r():
     fau_r.reverse()
     fau_r = ListedColormap(fau_r, "fau_r")
     if "fau_r" not in plt.colormaps():
-        colormap_registry = ColormapRegistry()
-        colormap_registry.register(cmap=fau_r, name="fau_r")
+        mpl.colormaps.register(cmap=fau_r, name="fau_r")
 
 
 def plot_conf_matrix(
