@@ -11,13 +11,13 @@ authors = [
     { name = "Martin Ullrich", email = "martin.ullrich@fau.de" },
     { name = "Janis Zenkner", email = "janis.zenkner@fau.de" },
 ]
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 readme = "README.md"
 license = "MIT"
 dependencies = [
     "numpy>=1,<2",
     "pandas>=2,<3",
-    "matplotlib~=3.9",
+    "matplotlib<3.9",
     "seaborn>=0,<1",
     "neurokit2>=0,<1",
     "pingouin>=0.5.2,<0.6",
