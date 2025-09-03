@@ -1,6 +1,6 @@
 """Module providing input/output functions."""
 
-from biopsykit.io import carwatch_logs, ecg, eeg, nilspod, saliva, sleep, sleep_analyzer
+from biopsykit.io import carwatch_logs, ecg, eeg, fibion, nilspod, saliva, sleep, sleep_analyzer
 from biopsykit.io.io import (
     convert_time_log_datetime,
     convert_time_log_dict,
@@ -21,6 +21,7 @@ __all__ = [
     "convert_time_log_dict",
     "ecg",
     "eeg",
+    "fibion",
     "load_atimelogger_file",
     "load_codebook",
     "load_long_format_csv",
