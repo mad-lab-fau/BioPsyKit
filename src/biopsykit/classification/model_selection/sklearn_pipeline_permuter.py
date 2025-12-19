@@ -785,7 +785,8 @@ class SklearnPipelinePermuter:
         if metrics is None:
             metrics = metric_summary.filter(like="mean_test").columns
             # extract metric names
-            metrics = [m.split("_")[-1] for m in metrics]
+            metrics = [m.split("_")[2:] for m in metrics]
+            metrics = ["_".join(m) for m in metrics]
 
         levels_to_drop = [step for step in metric_summary.index.names if step not in pipeline_steps]
         metric_summary = metric_summary.droplevel(levels_to_drop)
@@ -793,19 +794,21 @@ class SklearnPipelinePermuter:
 
         list_metric_summary = []
         for metric in metrics:
+            print(metric)
             list_metric_summary.append(metric_summary.filter(regex=f"(mean|std)_test_{metric}"))
 
         metric_summary = pd.concat(list_metric_summary, axis=1)
 
-        # convert to percent
-        metric_summary = metric_summary * 100
+        if type == "classification":
+            # convert to percent
+            metric_summary = metric_summary * 100
         metric_summary_export = metric_summary.copy()
 
         for metric in metrics:
             mean_test = f"mean_test_{metric}"
             std_test = f"std_test_{metric}"
             m_sd = metric_summary_export.apply(
-                lambda x, m_t=mean_test, std_t=std_test: rf"{x[m_t]:.1f}({x[std_t]:.1f})", axis=1
+                lambda x, m_t=mean_test, std_t=std_test: rf"{x[m_t]:.2f}({x[std_t]:.2f})", axis=1
             )
             metric_summary_export = metric_summary_export.assign(**{metric: m_sd})
         metric_summary_export = metric_summary_export[metrics].copy()
