@@ -1,7 +1,5 @@
 """Extract features from static moments of IMU data."""
 
-from typing import Optional, Union
-
 import numpy as np
 import pandas as pd
 from scipy.stats import skew
@@ -13,11 +11,11 @@ from biopsykit.utils.time import tz
 def compute_features(
     data: pd.DataFrame,
     static_moments: pd.DataFrame,
-    start: Optional[Union[str, pd.Timestamp]] = None,
-    end: Optional[Union[str, pd.Timestamp]] = None,
-    index: Optional[Union[int, str]] = None,
-    timezone: Optional[str] = None,
-) -> Optional[pd.DataFrame]:
+    start: str | pd.Timestamp | None = None,
+    end: str | pd.Timestamp | None = None,
+    index: int | str | None = None,
+    timezone: str | None = None,
+) -> pd.DataFrame | None:
     """Compute features based on frequency and duration of static moments in given input signal.
 
     This function computes the following features:
@@ -83,7 +81,7 @@ def compute_features(
     #             ['x', 'y', 'z']}
     # feature_dict.update(dict_ori)
 
-    for dur, suffix in zip([durations, durations_60], ["", "_60"]):
+    for dur, suffix in zip([durations, durations_60], ["", "_60"], strict=False):
         feature_dict[f"sm_number{suffix}"] = len(dur)
         feature_dict[f"sm_max{suffix}"] = np.max(dur)
         feature_dict[f"sm_median{suffix}"] = np.median(dur)
@@ -98,10 +96,10 @@ def compute_features(
 
 def _get_start_end(
     data: pd.DataFrame,
-    start: Union[str, pd.Timestamp],
-    end: Union[str, pd.Timestamp],
+    start: str | pd.Timestamp,
+    end: str | pd.Timestamp,
     timezone: str,
-) -> tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]:
+) -> tuple[str | pd.Timestamp, str | pd.Timestamp]:
     if timezone is None:
         timezone = tz
 
@@ -115,7 +113,7 @@ def _get_start_end(
     return start, end
 
 
-def _to_timestamp(date: Union[str, pd.Timestamp], timezone: str) -> pd.Timestamp:
+def _to_timestamp(date: str | pd.Timestamp, timezone: str) -> pd.Timestamp:
     if isinstance(date, str):
         date = pd.Timestamp(date, tz=timezone)
     return date

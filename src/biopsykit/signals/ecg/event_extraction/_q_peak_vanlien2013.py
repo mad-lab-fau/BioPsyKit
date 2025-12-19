@@ -1,10 +1,8 @@
-from typing import Optional
-
 import pandas as pd
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
+from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtractionWithHeartbeats
 from biopsykit.utils.dtypes import (
     EcgRawDataFrame,
     HeartbeatSegmentationDataFrame,
@@ -14,19 +12,20 @@ from biopsykit.utils.dtypes import (
 )
 
 
-class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Algorithm to extract Q-peaks based on the detection of the R-peak, as suggested by Van Lien et al. (2013) [1]_.
+class QPeakExtractionVanLien2013(BaseEcgExtractionWithHeartbeats, CanHandleMissingEventsMixin):
+    """Algorithm to extract Q-peaks based on the detection of the R-peak, as suggested by Van Lien et al. (2013).
 
     The Q-peak is estimated by subtracting a fixed time interval from the R-peak location. The fixed time
     interval is defined by the parameter ``time_interval``.
 
+    For more information on the algorithm, see [Van13]_.
 
     References
     ----------
-    .. [1] Van Lien, R., Schutte, N. M., Meijer, J. H., & De Geus, E. J. C. (2013). Estimated preejection period (PEP)
-        based on the detection of the R-peak and dZ/dt-min peaks does not adequately reflect the actual PEP across a
-        wide range of laboratory and ambulatory conditions. International Journal of Psychophysiology, 87(1), 60-69.
-        https://doi.org/10.1016/j.ijpsycho.2012.11.001
+    .. [Van13] Van Lien, R., Schutte, N. M., Meijer, J. H., & De Geus, E. J. C. (2013). Estimated preejection period
+        (PEP) based on the detection of the R-peak and dZ/dt-min peaks does not adequately reflect the actual PEP
+        across a wide range of laboratory and ambulatory conditions. International Journal of Psychophysiology, 87(1),
+        60-69. https://doi.org/10.1016/j.ijpsycho.2012.11.001
 
     """
 
@@ -51,7 +50,7 @@ class QPeakExtractionVanLien2013(BaseEcgExtraction, CanHandleMissingEventsMixin)
     def extract(
         self,
         *,
-        ecg: Optional[EcgRawDataFrame],
+        ecg: EcgRawDataFrame | None,
         heartbeats: HeartbeatSegmentationDataFrame,
         sampling_rate_hz: float,
     ):

@@ -1,7 +1,6 @@
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import pytest
@@ -76,7 +75,7 @@ class TestCPointExtractionSciPyFindpeaks:
 class TestCPointExtractionSciPyFindpeaksParameters:
     def setup(
         self,
-        window_c_correction: Optional[int] = 3,
+        window_c_correction: int | None = 3,
     ):
         # Sample ECG data
         self.ecg_data = pd.read_csv(TEST_FILE_PATH.joinpath("pep_test_ecg.csv"), index_col=0)

@@ -1,19 +1,6 @@
 """A Python package for the analysis of biopsychological data."""
 
-from biopsykit import (
-    classification,
-    example_data,
-    io,
-    metadata,
-    plotting,
-    protocols,
-    questionnaires,
-    saliva,
-    signals,
-    sleep,
-    stats,
-    utils,
-)
+from biopsykit import example_data
 
 __all__ = [
     "classification",
@@ -30,7 +17,15 @@ __all__ = [
     "utils",
 ]
 
-__version__ = "0.12.2"
+__version__ = "0.13.1"
+
+
+def __getattr__(name):
+    if name in __all__:
+        import importlib
+
+        return importlib.import_module(f"{__name__}.{name}")
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def version() -> None:

@@ -4,7 +4,6 @@ import re
 import warnings
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 
@@ -23,7 +22,7 @@ __all__ = [
 ]
 
 
-def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) -> HeartRatePhaseDict:
+def load_hr_phase_dict(file_path: path_t, assert_format: bool | None = True) -> HeartRatePhaseDict:
     """Load Excel file containing time series heart rate data of one subject.
 
     The returned dictionary will be a :obj:`~biopsykit.utils.dtypes.HeartRatePhaseDict`,
@@ -74,7 +73,7 @@ def load_hr_phase_dict(file_path: path_t, assert_format: Optional[bool] = True) 
 
 
 def load_hr_phase_dict_folder(
-    base_path: path_t, filename_pattern: str, subfolder_pattern: Optional[str] = None
+    base_path: path_t, filename_pattern: str, subfolder_pattern: str | None = None
 ) -> HeartRateSubjectDataDict:
     r"""Load a folder with multiple ``HeartRatePhaseDict`` and concatenate them  into a ``HeartRateSubjectDataDict``.
 
@@ -176,7 +175,7 @@ def load_hr_phase_dict_folder(
     return dict_hr_subjects
 
 
-def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str) -> Optional[HeartRatePhaseDict]:
+def _load_hr_phase_dict_single_subject(subject_dir: Path, filename_pattern: str) -> HeartRatePhaseDict | None:
     subject_id = subject_dir.name
     # first try to search for files with glob (assuming that a regex string without capture group was passed),
     # then try to search via regex search (assuming that a regex string with capture group was passed,
@@ -292,8 +291,8 @@ def write_hr_phase_dict_csv(hr_phase_dict: HeartRatePhaseDict, folder_path: path
 def load_hr_phase_dict_csv(
     folder_path: path_t,
     file_pattern: path_t,
-    phase_order: Optional[Sequence[str]] = None,
-    assert_format: Optional[bool] = True,
+    phase_order: Sequence[str] | None = None,
+    assert_format: bool | None = True,
 ) -> HeartRatePhaseDict:
     """Load csv file with time series HR data of one subject from folder and combine it into a ``HeartRatePhaseDict``.
 

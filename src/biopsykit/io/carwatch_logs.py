@@ -6,7 +6,7 @@ import warnings
 import zipfile
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -23,10 +23,10 @@ LOG_FILENAME_PATTERN = "logs_(.*?)"
 
 def load_logs_all_subjects(
     base_folder: path_t,
-    has_subject_folders: Optional[bool] = True,
-    log_filename_pattern: Optional[str] = None,
-    return_df: Optional[bool] = True,
-) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
+    has_subject_folders: bool | None = True,
+    log_filename_pattern: str | None = None,
+    return_df: bool | None = True,
+) -> pd.DataFrame | dict[str, pd.DataFrame]:
     """Load log files from all subjects in a folder.
 
     This function iterates through the base folder and looks for subfolders
@@ -114,8 +114,8 @@ def _load_log_file_zip(file_list: Sequence[Path], log_filename_pattern: str) -> 
 
 def load_log_one_subject(
     path: path_t,
-    log_filename_pattern: Optional[str] = None,
-    overwrite_unzipped_logs: Optional[bool] = False,
+    log_filename_pattern: str | None = None,
+    overwrite_unzipped_logs: bool | None = False,
 ) -> pd.DataFrame:
     """Load log files from one subject.
 
@@ -197,9 +197,9 @@ def _load_log_file_csv(file_path: path_t) -> pd.DataFrame:
 def save_log_data(
     log_data: Union[pd.DataFrame, "LogData"],
     path: path_t,
-    subject_id: Optional[str] = None,
-    overwrite: Optional[bool] = False,
-    show_skipped: Optional[bool] = False,
+    subject_id: str | None = None,
+    overwrite: bool | None = False,
+    show_skipped: bool | None = False,
 ):
     """Save log data for a single subject or for all subjects at once.
 

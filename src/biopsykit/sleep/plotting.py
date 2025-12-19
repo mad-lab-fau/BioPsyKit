@@ -2,7 +2,6 @@
 
 import datetime
 from collections.abc import Iterable, Sequence
-from typing import Optional, Union
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -26,10 +25,10 @@ _bbox_default = {
 
 
 def sleep_imu_plot(
-    data: Union[Acc3dDataFrame, Gyr3dDataFrame, ImuDataFrame],
-    datastreams: Optional[Union[str, Sequence[str]]] = None,
-    sleep_endpoints: Optional[SleepEndpointDict] = None,
-    downsample_factor: Optional[int] = None,
+    data: Acc3dDataFrame | Gyr3dDataFrame | ImuDataFrame,
+    datastreams: str | Sequence[str] | None = None,
+    sleep_endpoints: SleepEndpointDict | None = None,
+    downsample_factor: int | None = None,
     **kwargs,
 ) -> tuple[plt.Figure, Iterable[plt.Axes]]:
     """Draw plot to visualize IMU data during sleep, and, optionally, add sleep endpoints information.
@@ -106,7 +105,7 @@ def sleep_imu_plot(
             f"Expected {len(datastreams)}, got {len(axs)}."
         )
 
-    for ax, ds in zip(axs, datastreams):
+    for ax, ds in zip(axs, datastreams, strict=False):
         _sleep_imu_plot(
             data=data,
             datastream=ds,
@@ -411,6 +410,7 @@ def _sleep_imu_plot_add_sleep_wake_bouts(
         {"sleep": sleep_bouts, "wake": wake_bouts}.items(),
         kwargs.get("background_color", _sleep_imu_plot_params["background_color"]),
         kwargs.get("background_alpha", _sleep_imu_plot_params["background_alpha"]),
+        strict=False,
     ):
         handle = None
         for _, bout in bouts.iterrows():

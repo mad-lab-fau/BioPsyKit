@@ -2,7 +2,6 @@ import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -82,7 +81,6 @@ class TestQPeakExtractionVanLien2013:
             ecg=self.ecg_data, sampling_rate_hz=self.sampling_rate_hz
         ).heartbeat_list_
         self.extract_algo = QPeakExtractionVanLien2013(time_interval_ms=time_interval_ms)
-        self.test_case = unittest.TestCase()
 
     @pytest.mark.parametrize(
         ("time_interval_ms"),
@@ -133,11 +131,14 @@ class TestQPeakExtractionVanLien2013:
             TEST_FILE_PATH.joinpath("pep_test_heartbeat_reference_variable_length.csv"), index_col=0, parse_dates=True
         )
         data = data[["r_peak_sample"]] - int((time_interval_ms / self.sampling_rate_hz) * 1000)
-        data = data.assign(nan_reason=np.NAN)
+        data = data.assign(nan_reason=pd.NA)
         data.columns = ["q_peak_sample", "nan_reason"]
         data = data.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
         return data
 
     @staticmethod
     def _check_q_peaks_equal(reference_heartbeats, extracted_heartbeats):
+        print("HELLO 2")
+        print(reference_heartbeats)
+        print(extracted_heartbeats)
         pd.testing.assert_frame_equal(reference_heartbeats, extracted_heartbeats)

@@ -1,7 +1,5 @@
 """Module with functions to process IMU data."""
 
-from typing import Optional, Union
-
 import numpy as np
 import pandas as pd
 
@@ -12,8 +10,8 @@ from biopsykit.utils.time import utc
 
 
 def convert_acc_data_to_g(
-    data: Union[Acc3dDataFrame, ImuDataFrame], inplace: Optional[bool] = False
-) -> Optional[Union[Acc3dDataFrame, ImuDataFrame]]:
+    data: Acc3dDataFrame | ImuDataFrame, inplace: bool | None = False
+) -> Acc3dDataFrame | ImuDataFrame | None:
     """Convert acceleration data from :math:`m/s^2` to g.
 
     Parameters
@@ -42,11 +40,11 @@ def convert_acc_data_to_g(
 
 def sliding_windows_imu(
     data: arr_t,
-    window_samples: Optional[int] = None,
-    window_sec: Optional[int] = None,
-    sampling_rate: Optional[float] = 0,
-    overlap_samples: Optional[int] = None,
-    overlap_percent: Optional[float] = None,
+    window_samples: int | None = None,
+    window_sec: int | None = None,
+    sampling_rate: float | None = 0,
+    overlap_samples: int | None = None,
+    overlap_percent: float | None = None,
 ) -> pd.DataFrame:
     """Create sliding windows from IMU data.
 
@@ -99,7 +97,7 @@ def sliding_windows_imu(
     """
     index = None
     index_resample = None
-    if isinstance(data, (pd.DataFrame, pd.Series)):
+    if isinstance(data, pd.DataFrame | pd.Series):
         index = data.index
 
     data_window = sliding_window(
@@ -128,7 +126,8 @@ def sliding_windows_imu(
 
     data_window = np.transpose(data_window)
     data_window = {
-        axis: pd.DataFrame(np.transpose(data), index=index_resample) for axis, data in zip(data.columns, data_window)
+        axis: pd.DataFrame(np.transpose(data), index=index_resample)
+        for axis, data in zip(data.columns, data_window, strict=False)
     }
     data_window = pd.concat(data_window, axis=1)
     if data_window.columns.nlevels == 2:
@@ -138,7 +137,7 @@ def sliding_windows_imu(
     return data_window
 
 
-def var_norm_windows(data: Union[Acc3dDataFrame, Gyr3dDataFrame]) -> pd.DataFrame:
+def var_norm_windows(data: Acc3dDataFrame | Gyr3dDataFrame) -> pd.DataFrame:
     r"""Compute the norm of the variance of each axis for a windowed signal.
 
     This function computes the norm of variance according to:

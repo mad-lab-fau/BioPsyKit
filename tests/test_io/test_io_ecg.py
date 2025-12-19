@@ -19,7 +19,7 @@ def does_not_raise():
 def hr_phase_dict_correct():
     phases = ["phase1", "phase2", "phase3"]
     df = pd.DataFrame(columns=["Heart_Rate"], index=pd.Index(range(5), name="time"))
-    hr_phase_dict = {key: df for key in phases}
+    hr_phase_dict = dict.fromkeys(phases, df)
     return hr_phase_dict
 
 
@@ -32,7 +32,7 @@ def hr_phase_dict_datetimeindex_correct():
             name="time",
         ),
     )
-    hr_phase_dict = {key: df for key in phases}
+    hr_phase_dict = dict.fromkeys(phases, df)
     return hr_phase_dict
 
 
@@ -43,14 +43,14 @@ def hr_phase_dict_none():
 def hr_phase_dict_wrong_col_name():
     phases = ["phase1", "phase2", "phase3"]
     df = pd.DataFrame(columns=["hr"], index=range(5))
-    hr_phase_dict = {key: df for key in phases}
+    hr_phase_dict = dict.fromkeys(phases, df)
     return hr_phase_dict
 
 
 def hr_phase_dict_too_many_columns():
     phases = ["phase1", "phase2", "phase3"]
     df = pd.DataFrame(columns=["Heart_Rate", "test"], index=range(5))
-    hr_phase_dict = {key: df for key in phases}
+    hr_phase_dict = dict.fromkeys(phases, df)
     return hr_phase_dict
 
 
@@ -59,7 +59,7 @@ def hr_phase_dict_wrong_col_index():
     df = pd.DataFrame(
         columns=pd.MultiIndex.from_product([["hr"], [1, 2, 3]], names=["Heart_Rate", "number"]), index=range(5)
     )
-    hr_phase_dict = {key: df for key in phases}
+    hr_phase_dict = dict.fromkeys(phases, df)
     return hr_phase_dict
 
 
@@ -67,7 +67,7 @@ def hr_phase_dict_wrong_index_name():
     phases = ["phase1", "phase2", "phase3"]
     index = pd.Index(range(5), name="Time")
     df = pd.DataFrame(columns=["Heart_Rate"], index=index)
-    hr_phase_dict = {key: df for key in phases}
+    hr_phase_dict = dict.fromkeys(phases, df)
     return hr_phase_dict
 
 
@@ -75,7 +75,7 @@ def hr_phase_dict_wrong_index_levels():
     phases = ["phase1", "phase2", "phase3"]
     index = pd.MultiIndex.from_product([["phase1"], range(5)], names=["Phase", "Time"])
     df = pd.DataFrame(columns=["Heart_Rate"], index=index)
-    hr_phase_dict = {key: df for key in phases}
+    hr_phase_dict = dict.fromkeys(phases, df)
     return hr_phase_dict
 
 

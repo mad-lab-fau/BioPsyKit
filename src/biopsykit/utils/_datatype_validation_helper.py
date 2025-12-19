@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,7 @@ from biopsykit.utils._types_internal import _Hashable, path_t
 from biopsykit.utils.exceptions import FileExtensionError, ValidationError, ValueRangeError
 
 
-def _assert_is_dir(path: path_t, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def _assert_is_dir(path: path_t, raise_exception: bool | None = True) -> bool | None:
     """Check if a path is a directory.
 
     Parameters
@@ -42,8 +42,8 @@ def _assert_is_dir(path: path_t, raise_exception: Optional[bool] = True) -> Opti
 
 
 def _assert_file_extension(
-    file_name: path_t, expected_extension: Union[str, Sequence[str]], raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+    file_name: path_t, expected_extension: str | Sequence[str], raise_exception: bool | None = True
+) -> bool | None:
     """Check if a file has the correct file extension.
 
     Parameters
@@ -81,9 +81,7 @@ def _assert_file_extension(
     return True
 
 
-def _assert_is_dtype(
-    obj, dtype: Union[type, tuple[type, ...]], raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+def _assert_is_dtype(obj, dtype: type | tuple[type, ...], raise_exception: bool | None = True) -> bool | None:
     """Check if an object has a specific data type.
 
     Parameters
@@ -114,11 +112,11 @@ def _assert_is_dtype(
 
 def _assert_has_multiindex(
     df: pd.DataFrame,
-    expected: Optional[bool] = True,
-    nlevels: Optional[int] = 2,
-    nlevels_atleast: Optional[int] = False,
-    raise_exception: Optional[bool] = True,
-) -> Optional[bool]:
+    expected: bool | None = True,
+    nlevels: int | None = 2,
+    nlevels_atleast: int | None = False,
+    raise_exception: bool | None = True,
+) -> bool | None:
     """Check if a :any:`pandas.DataFrame` has a :any:`pandas.MultiIndex` as index.
 
     Parameters
@@ -158,10 +156,10 @@ def _assert_has_multiindex(
 def _assert_has_index_levels(
     df: pd.DataFrame,
     index_levels: Iterable[_Hashable],
-    match_atleast: Optional[bool] = False,
-    match_order: Optional[bool] = False,
-    raise_exception: Optional[bool] = True,
-) -> Optional[bool]:
+    match_atleast: bool | None = False,
+    match_order: bool | None = False,
+    raise_exception: bool | None = True,
+) -> bool | None:
     """Check if the dataframe has all index level names.
 
     Parameters
@@ -200,9 +198,9 @@ def _assert_has_index_levels(
 
 def _assert_has_columns(
     df: pd.DataFrame,
-    column_sets: Sequence[Union[list[_Hashable], list[str], pd.Index]],
-    raise_exception: Optional[bool] = True,
-) -> Optional[bool]:
+    column_sets: Sequence[list[_Hashable] | list[str] | pd.Index],
+    raise_exception: bool | None = True,
+) -> bool | None:
     """Check if the dataframe has at least all columns sets.
 
     Parameters
@@ -251,11 +249,11 @@ def _assert_has_columns(
 
 def _assert_has_column_multiindex(
     df: pd.DataFrame,
-    expected: Optional[bool] = True,
-    nlevels: Optional[int] = 2,
-    nlevels_atleast: Optional[int] = False,
-    raise_exception: Optional[bool] = True,
-) -> Optional[bool]:
+    expected: bool | None = True,
+    nlevels: int | None = 2,
+    nlevels_atleast: int | None = False,
+    raise_exception: bool | None = True,
+) -> bool | None:
     """Check if a :any:`pandas.DataFrame` has a :any:`pandas.MultiIndex` as columns.
 
     Parameters
@@ -294,9 +292,9 @@ def _assert_has_column_multiindex(
 
 def _assert_has_columns_any_level(
     df: pd.DataFrame,
-    columns_sets: Sequence[Union[list[_Hashable], list[str], pd.Index]],
-    raise_exception: Optional[bool] = True,
-) -> Optional[bool]:
+    columns_sets: Sequence[list[_Hashable] | list[str] | pd.Index],
+    raise_exception: bool | None = True,
+) -> bool | None:
     """Check if the dataframe has the expected set of column names at any level of a :any:`pandas.MultiIndex`.
 
     Parameters
@@ -349,10 +347,10 @@ def _assert_has_columns_any_level(
 def _assert_has_column_levels(
     df: pd.DataFrame,
     column_levels: Iterable[_Hashable],
-    match_atleast: Optional[bool] = False,
-    match_order: Optional[bool] = False,
-    raise_exception: Optional[bool] = True,
-) -> Optional[bool]:
+    match_atleast: bool | None = False,
+    match_order: bool | None = False,
+    raise_exception: bool | None = True,
+) -> bool | None:
     """Check if the dataframe has all column level names of a MultiIndex column.
 
     Parameters
@@ -390,10 +388,10 @@ def _assert_has_column_levels(
 
 
 def _assert_value_range(
-    data: Union[pd.DataFrame, pd.Series],
-    value_range: Sequence[Union[int, float]],
-    raise_exception: Optional[bool] = True,
-) -> Optional[bool]:
+    data: pd.DataFrame | pd.Series,
+    value_range: Sequence[int | float],
+    raise_exception: bool | None = True,
+) -> bool | None:
     """Check if all values are within the specified range.
 
     Parameters
@@ -432,8 +430,8 @@ def _assert_value_range(
 
 
 def _assert_num_columns(
-    data: pd.DataFrame, num_cols: Union[int, Sequence[int]], raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+    data: pd.DataFrame, num_cols: int | Sequence[int], raise_exception: bool | None = True
+) -> bool | None:
     """Check if dataframe has (any of) the required number of columns.
 
     Parameters
@@ -468,7 +466,7 @@ def _assert_num_columns(
     return True
 
 
-def _assert_len_list(data: Sequence, length: int, raise_exception: Optional[bool] = True) -> Optional[bool]:
+def _assert_len_list(data: Sequence, length: int, raise_exception: bool | None = True) -> bool | None:
     """Check if a list has the required length.
 
     Parameters
@@ -501,9 +499,7 @@ def _assert_len_list(data: Sequence, length: int, raise_exception: Optional[bool
     return True
 
 
-def _assert_dataframes_same_length(
-    df_list: Sequence[pd.DataFrame], raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+def _assert_dataframes_same_length(df_list: Sequence[pd.DataFrame], raise_exception: bool | None = True) -> bool | None:
     """Check if all dataframes have same length.
 
     Parameters
@@ -543,8 +539,8 @@ def _assert_sample_columns_int(data: pd.DataFrame) -> None:
 def _multiindex_level_names_helper_get_expected_levels(
     ac_levels: Sequence[str],
     ex_levels: Sequence[str],
-    match_atleast: Optional[bool] = False,
-    match_order: Optional[bool] = False,
+    match_atleast: bool | None = False,
+    match_order: bool | None = False,
 ) -> bool:
     if match_order:
         if match_atleast:
@@ -564,10 +560,10 @@ def _multiindex_level_names_helper(
     df: pd.DataFrame,
     level_names: Iterable[_Hashable],
     idx_or_col: str,
-    match_atleast: Optional[bool] = False,
-    match_order: Optional[bool] = False,
-    raise_exception: Optional[bool] = True,
-) -> Optional[bool]:
+    match_atleast: bool | None = False,
+    match_order: bool | None = False,
+    raise_exception: bool | None = True,
+) -> bool | None:
     if isinstance(level_names, str):
         level_names = [level_names]
 
@@ -589,11 +585,11 @@ def _multiindex_level_names_helper(
 def _multiindex_check_helper(
     df: pd.DataFrame,
     idx_or_col: str,
-    expected: Optional[bool] = True,
-    nlevels: Optional[int] = 2,
-    nlevels_atleast: Optional[int] = False,
-    raise_exception: Optional[bool] = True,
-) -> Optional[bool]:
+    expected: bool | None = True,
+    nlevels: int | None = 2,
+    nlevels_atleast: int | None = False,
+    raise_exception: bool | None = True,
+) -> bool | None:
     has_multiindex, nlevels_act = _multiindex_check_helper_get_levels(df, idx_or_col)
 
     if has_multiindex is not expected:
@@ -624,7 +620,7 @@ def _multiindex_check_helper_get_levels(df: pd.DataFrame, idx_or_col: str) -> tu
 
 def _multiindex_check_helper_not_expected(
     idx_or_col: str, nlevels: int, nlevels_act: int, expected: bool, raise_exception: bool
-) -> Optional[bool]:
+) -> bool | None:
     if not expected:
         if raise_exception:
             raise ValidationError(
@@ -640,9 +636,7 @@ def _multiindex_check_helper_not_expected(
     return False
 
 
-def _assert_has_column_prefix(
-    columns: Sequence[str], prefix: str, raise_exception: Optional[bool] = True
-) -> Optional[bool]:
+def _assert_has_column_prefix(columns: Sequence[str], prefix: str, raise_exception: bool | None = True) -> bool | None:
     """Check whether all columns start with the same prefix.
 
     Parameters
@@ -677,7 +671,7 @@ def _assert_has_column_prefix(
 
 def _check_has_column_prefix_single_col(
     columns: Sequence[str], col: Any, prefix: str, raise_exception: bool
-) -> Optional[bool]:
+) -> bool | None:
     if not _assert_is_dtype(col, str, raise_exception=False):
         if raise_exception:
             raise ValidationError(f"Column '{col}' from {columns} is not a string!")

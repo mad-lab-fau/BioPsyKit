@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -23,14 +22,16 @@ __all__ = ["BPointExtractionStern1985"]
 
 
 class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Stern et al. (1985) [1]_.
+    """B-point extraction algorithm by Stern et al. (1985).
 
     This algorithm extracts B-points based on the last local minimum of the dZ/dt curve before the C-point.
 
+    For more information, see [Ste85]_.
+
     References
     ----------
-    .. [1] Stern, H. C., Wolf, G. K., & Belz, G. G. (1985). Comparative measurements of left ventricular ejection time
-        by mechano-, echo- and electrical impedance cardiography. Arzneimittel-Forschung, 35(10), 1582-1586.
+    .. [Ste85] Stern, H. C., Wolf, G. K., & Belz, G. G. (1985). Comparative measurements of left ventricular ejection
+        time by mechano-, echo- and electrical impedance cardiography. Arzneimittel-Forschung, 35(10), 1582-1586.
 
     """
 
@@ -56,7 +57,7 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
         c_points: CPointDataFrame,
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
     ):
         """Extract B-points from given ICG derivative signal.
 
@@ -113,7 +114,7 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
             # check c_point is NaN. If this is the case, set the b_point to NaN and continue with the next iteration
             if check_c_points[idx]:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 missing_str = f"The c_point is NaN at position {idx}! B-Point was set to NaN."
                 if self.handle_missing_events == "warn":
@@ -131,7 +132,7 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
 
             # if there are no zero crossings in the interval, set B-point to NaN
             if len(zero_crossings_heartbeat) == 0:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "no_local_minimum"
                 continue
             # get the closest zero crossing *before* the C-point
@@ -178,6 +179,6 @@ class BPointExtractionStern1985(BaseBPointExtraction, CanHandleMissingEventsMixi
             b_point = b_point + start_r_c
         else:
             # If there is no minima set the B-Point to NaN
-            b_point = np.NaN
+            b_point = np.nan
 
         return b_point

@@ -1,28 +1,43 @@
-from typing import Optional
-
 import numpy as np
 import pandas as pd
 from scipy.signal import butter, sosfiltfilt
 from scipy.stats import median_abs_deviation
 from tpcp import Algorithm
 
-__all__ = ["BaseOutlierCorrection"]
+__all__ = ["BaseBPointOutlierCorrection"]
 
 from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame
 
 
-class BaseOutlierCorrection(Algorithm):
-    """Base class for outlier correction algorithms for B-Point data."""
+class BaseBPointOutlierCorrection(Algorithm):
+    """Base class for outlier correction algorithms for B-Point data.
+
+    This class provides a template for outlier correction algorithms for B-Point data. It includes methods for
+    detecting outliers and stationarizing B-Point data. The actual outlier correction algorithm must be implemented in
+    a subclass.
+
+    Attributes
+    ----------
+    points_ : :class:`~pandas.DataFrame`
+        DataFrame containing the B-Point data with the outliers corrected. Each row contains the B-point location (in
+        samples from beginning of signal) for each heartbeat, index functions as id of heartbeat. B-point locations can
+        be NaN if no B-points were detected for certain heartbeats.
+
+    """
 
     _action_methods = "correct_outlier"
 
     points_: BPointDataFrame
 
+    def __init__(self) -> None:
+        """Initialize new Outlier Correction Algorithm."""
+        super().__init__()
+
     def correct_outlier(
         self,
         *,
         b_points: BPointDataFrame,
-        c_points: Optional[CPointDataFrame],
+        c_points: CPointDataFrame | None,
         sampling_rate_hz: float,
         **kwargs,
     ):

@@ -982,9 +982,11 @@ class TestQuestionnairesUtils:
     )
     def test_bin_scale(self, data, bins, cols, first_min, last_max, inplace, expected_in, expected_out):
         out = bin_scale(data=data, bins=bins, cols=cols, first_min=first_min, last_max=last_max, inplace=inplace)
-
+        data = data.astype("Int64")
+        expected_in = expected_in.astype("Int64")
         assert_frame_equal(data, expected_in)
         if expected_out is not None:
+            expected_out = expected_out.astype("Int64")
             assert_frame_equal(out, expected_out)
 
     @pytest.mark.parametrize(
@@ -1047,6 +1049,7 @@ class TestQuestionnairesUtils:
 
         assert_series_equal(data, expected_in)
         if expected_out is not None:
+            expected_out = expected_out.astype("Int64")
             assert_series_equal(out, expected_out)
 
     def test_wide_to_long_warning(self):

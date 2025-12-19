@@ -1,6 +1,6 @@
 [project]
 name = "biopsykit"
-version = "0.12.2"
+version = "0.13.1"
 description = "A Python package for the analysis of biopsychological data."
 authors = [
     { name = "Robert Richer", email = "robert.richer@fau.de" },
@@ -15,17 +15,17 @@ requires-python = ">=3.10,<4.0"
 readme = "README.md"
 license = "MIT"
 dependencies = [
-    "numpy>=1,<2",
+    "numpy>=1.26",
     "pandas>=2,<3",
     "matplotlib<3.9",
     "seaborn>=0,<1",
-    "neurokit2>=0,<1",
+    "neurokit2>=0,<0.2.11",
     "pingouin>=0.5.2,<0.6",
     "scipy>=1,<2",
     "tqdm>=4,<5",
     "joblib>=1,<2",
     "scikit-learn~=1.0",
-    "nilspodlib>=3.4.1",
+    "nilspodlib>=4.0.0",
     "openpyxl>=3,<4",
     "XlsxWriter>=1,<2",
     "xlrd>=2,<3",
@@ -51,7 +51,7 @@ Repository = "https://github.com/mad-lab-fau/biopsykit"
 
 [dependency-groups]
 dev = [
-    "black[jupyter, d]>=22,<23",
+    "black>=25",
     "poethepoet>=0.10.0,<0.11",
     "pytest>=6,<7",
     "pytest-cov>=2,<3",
@@ -105,23 +105,19 @@ exclude = '''
 )
 '''
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 120
-skip_gitignore = true
-
 [tool.poe.tasks]
-_format_black = "black ."
-_format_ruff = "ruff check . --fix-only"
-format = { sequence = ["_format_black", "_format_ruff"], help = "Format all files." }
+_format = "ruff format ."
+_auto_fix = "ruff check . --fix-only --show-fixes --exit-zero"
+_auto_fix_unsafe = "ruff check . --fix-only --show-fixes --exit-zero --unsafe-fixes"
+format = ["_auto_fix", "_format"]
+format_unsafe = ["_auto_fix_unsafe", "_format"]
 lint = { cmd = "ruff check src --fix", help = "Lint all files with ruff." }
 _lint_ci = "ruff check src --output-format=github"
-_check_black = "black . --check"
-ci_check = { sequence = ["_check_black", "_lint_ci"], help = "Check all potential format and linting issues." }
+_check_format = "ruff format . --check"
+ci_check = { sequence = ["_check_format", "_lint_ci"], help = "Check all potential format and linting issues." }
 test = {cmd = "pytest --cov=biopsykit -cov-report=term-missing --cov-report=xml", help = "Run Pytest with coverage." }
 docs = {"script" = "_tasks:task_docs"}
-update_version = {"script" = "_tasks:task_update_version"}
+version = { "script" = "_tasks:task_update_version" }
 register_ipykernel = { cmd = "python -m ipykernel install --user --name biopsykit --display-name biopsykit", help = "Add a new jupyter kernel for the project." }
 remove_ipykernel = { cmd = "jupyter kernelspec uninstall biopsykit", help = "Remove the project specific jupyter kernel."}
 default = {sequence = ["format", "lint", "test"], help = "Run the default pipeline, consisting of formatting, linting, and testing."}

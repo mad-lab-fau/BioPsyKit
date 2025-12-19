@@ -1,7 +1,5 @@
 """General class for sleep/wake detection."""
 
-from typing import Optional
-
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke import ColeKripke
 from biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke_old import ColeKripkeOld
 from biopsykit.sleep.sleep_wake_detection.algorithms.sadeh import Sadeh
@@ -17,7 +15,7 @@ class SleepWakeDetection:
 
     sleep_wake_algo = None
 
-    def __init__(self, algorithm_type: Optional[str] = None, **kwargs):
+    def __init__(self, algorithm_type: str | None = None, **kwargs):
         """General class for sleep/wake detection.
 
         This class provides a generalized interface for sleep/wake detection independent of the used algorithm.

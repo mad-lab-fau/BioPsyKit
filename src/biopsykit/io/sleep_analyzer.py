@@ -7,7 +7,6 @@ import re
 from ast import literal_eval
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -36,9 +35,9 @@ WITHINGS_RAW_DATA_SOURCES = {
 
 def load_withings_sleep_analyzer_raw_folder(
     folder_path: path_t,
-    timezone: Optional[Union[datetime.tzinfo, str]] = None,
-    split_into_nights: Optional[bool] = True,
-) -> Union[pd.DataFrame, Sequence[pd.DataFrame]]:
+    timezone: datetime.tzinfo | str | None = None,
+    split_into_nights: bool | None = True,
+) -> pd.DataFrame | Sequence[pd.DataFrame]:
     """Load folder with raw data from a Withings Sleep Analyzer recording session and convert into time-series data.
 
     The function will return a list of dataframes (one dataframe per night, if ``split_into_nights`` is ``True``)
@@ -102,7 +101,7 @@ def load_withings_sleep_analyzer_raw_folder(
             timezone=timezone,
             split_into_nights=split_into_nights,
         )
-        for file_path, data_source in zip(raw_files, data_sources)
+        for file_path, data_source in zip(raw_files, data_sources, strict=False)
         if data_source in WITHINGS_RAW_DATA_SOURCES
     ]
     if split_into_nights:
@@ -125,9 +124,9 @@ def load_withings_sleep_analyzer_raw_folder(
 def load_withings_sleep_analyzer_raw_file(
     file_path: path_t,
     data_source: str,
-    timezone: Optional[Union[datetime.tzinfo, str]] = None,
-    split_into_nights: Optional[bool] = True,
-) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
+    timezone: datetime.tzinfo | str | None = None,
+    split_into_nights: bool | None = True,
+) -> pd.DataFrame | dict[str, pd.DataFrame]:
     """Load single Withings Sleep Analyzer raw data file and convert into time-series data.
 
     Parameters
@@ -176,7 +175,7 @@ def load_withings_sleep_analyzer_raw_file(
         timezone = tz
 
     # convert string timestamps to datetime
-    data["start"] = pd.to_datetime(data["start"])
+    data["start"] = pd.to_datetime(data["start"], utc=True)
     # sort index
     data = data.set_index("start").sort_index()
     # drop duplicate index values
@@ -208,7 +207,7 @@ def load_withings_sleep_analyzer_raw_file(
     return data_explode
 
 
-def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: Optional[str] = None) -> SleepEndpointDataFrame:
+def load_withings_sleep_analyzer_summary(file_path: path_t, timezone: str | None = None) -> SleepEndpointDataFrame:
     """Load Sleep Analyzer summary file.
 
     This function additionally computes several other sleep endpoints from the Sleep Analyzer summary data to be

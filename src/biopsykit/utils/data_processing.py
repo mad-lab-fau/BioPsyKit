@@ -2,7 +2,7 @@
 
 import warnings
 from collections.abc import Sequence
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -44,15 +44,15 @@ def _split_data_series(data: pd.DataFrame, time_intervals: pd.Series, include_st
         # time_intervals.sort_values(inplace=True)
         time_intervals = {
             name: (start, end)
-            for name, start, end in zip(time_intervals.index, time_intervals[:-1], time_intervals[1:])
+            for name, start, end in zip(time_intervals.index, time_intervals[:-1], time_intervals[1:], strict=False)
         }
     return time_intervals
 
 
 def split_data(
     data: pd.DataFrame,
-    time_intervals: Union[pd.DataFrame, pd.Series, dict[str, Sequence[str]]],
-    include_start: Optional[bool] = False,
+    time_intervals: pd.DataFrame | pd.Series | dict[str, Sequence[str]],
+    include_start: bool | None = False,
 ) -> dict[str, pd.DataFrame]:
     """Split data into different phases based on time intervals.
 
@@ -121,8 +121,8 @@ def split_data(
 
 
 def exclude_subjects(
-    excluded_subjects: Union[Sequence[str], Sequence[int]], index_name: Optional[str] = "subject", **kwargs
-) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
+    excluded_subjects: Sequence[str] | Sequence[int], index_name: str | None = "subject", **kwargs
+) -> pd.DataFrame | dict[str, pd.DataFrame]:
     """Exclude subjects from dataframes.
 
     This function can be used to exclude subject IDs for later analysis from different kinds of dataframes, such as:
@@ -171,7 +171,7 @@ def exclude_subjects(
 
 
 def _exclude_single_subject(
-    data: pd.DataFrame, excluded_subjects: Union[Sequence[str], Sequence[int]], index_name: str, dataset_name: str
+    data: pd.DataFrame, excluded_subjects: Sequence[str] | Sequence[int], index_name: str, dataset_name: str
 ) -> pd.DataFrame:
     # dataframe index and subjects are both strings or both integers
     try:
@@ -185,7 +185,7 @@ def _exclude_single_subject(
         return data
 
 
-def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.DataFrame]) -> SubjectDataDict:
+def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: str | pd.DataFrame) -> SubjectDataDict:
     """Normalize time series data per subject to the phase specified by ``normalize_to``.
 
     The result is the relative change (of, for example, heart rate) compared to the mean value in ``phase``.
@@ -215,7 +215,7 @@ def normalize_to_phase(subject_data_dict: SubjectDataDict, phase: Union[str, pd.
     return dict_subjects_norm
 
 
-def resample_sec(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def resample_sec(data: pd.DataFrame | pd.Series) -> pd.DataFrame:
     """Resample input data to a frequency of 1 Hz.
 
     .. note::
@@ -285,7 +285,7 @@ def resample_dict_sec(
     """
     result_dict = {}
     for key, value in data_dict.items():
-        if isinstance(value, (pd.DataFrame, pd.Series)):
+        if isinstance(value, pd.DataFrame | pd.Series):
             result_dict[key] = resample_sec(value)
         elif isinstance(value, dict):
             result_dict[key] = resample_dict_sec(value)
@@ -294,7 +294,7 @@ def resample_dict_sec(
     return result_dict
 
 
-def select_dict_phases(subject_data_dict: SubjectDataDict, phases: Union[str, Sequence[str]]) -> SubjectDataDict:
+def select_dict_phases(subject_data_dict: SubjectDataDict, phases: str | Sequence[str]) -> SubjectDataDict:
     """Select specific phases from :obj:`~biopsykit.utils.dtypes.SubjectDataDict`.
 
     Parameters
@@ -375,7 +375,7 @@ def rearrange_subject_data_dict(
     return dict_flipped
 
 
-def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequence[str]] = None) -> StudyDataDict:
+def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Sequence[str] | None = None) -> StudyDataDict:
     """Cut time-series data to shortest duration of a subject in each phase.
 
     To overlay time-series data from multiple subjects in an `ensemble plot` it is beneficial if all data have
@@ -411,7 +411,7 @@ def cut_phases_to_shortest(study_data_dict: StudyDataDict, phases: Optional[Sequ
 
 
 def merge_study_data_dict(
-    study_data_dict: StudyDataDict, dict_levels: Optional[Sequence[str]] = None
+    study_data_dict: StudyDataDict, dict_levels: Sequence[str] | None = None
 ) -> MergedStudyDataDict:
     """Merge inner dictionary level of :obj:`~biopsykit.utils.dtypes.StudyDataDict` into one dataframe.
 
@@ -458,7 +458,7 @@ def merge_study_data_dict(
 def split_dict_into_subphases(
     data_dict: dict[str, Any],
     subphases: dict[str, int],
-) -> Union[dict[str, dict[str, Any]]]:
+) -> dict[str, dict[str, Any]]:
     """Split dataframes in a nested dictionary into subphases.
 
     By further splitting a dataframe into subphases a new dictionary level is created. The new dictionary level
@@ -492,7 +492,7 @@ def split_dict_into_subphases(
         else:
             subphase_times = get_subphase_durations(value, subphases)
             subphase_dict = {}
-            for subphase, times in zip(subphases.keys(), subphase_times):
+            for subphase, times in zip(subphases.keys(), subphase_times, strict=False):
                 if isinstance(value.index, pd.DatetimeIndex):
                     # slice the current subphase by dropping the preceding subphases
                     mask_drop = value.index < value.index[0] + pd.Timedelta(seconds=times[0])
@@ -507,7 +507,7 @@ def split_dict_into_subphases(
 
 
 def get_subphase_durations(
-    data: pd.DataFrame, subphases: dict[str, Union[int, tuple[int, int]]]
+    data: pd.DataFrame, subphases: dict[str, int | tuple[int, int]]
 ) -> Sequence[tuple[int, int]]:
     """Compute subphase durations from dataframe.
 
@@ -557,7 +557,7 @@ def get_subphase_durations(
         if subphase_durations[-1] == 0:
             # last subphase has duration 0 => end of last subphase is length of dataframe
             times_cum[-1] = len(data)
-        subphase_times = list(zip([0, *list(times_cum)], times_cum))
+        subphase_times = list(zip([0, *list(times_cum)], times_cum, strict=False))
     else:
         # 2d array => subphase values are tuples => start end end time of each subphase are already provided and do
         # not need to be computed
@@ -566,7 +566,7 @@ def get_subphase_durations(
 
 
 def add_subject_conditions(
-    data: pd.DataFrame, condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
+    data: pd.DataFrame, condition_list: SubjectConditionDict | SubjectConditionDataFrame
 ) -> pd.DataFrame:
     """Add subject conditions to dataframe.
 
@@ -597,7 +597,7 @@ def add_subject_conditions(
 
 
 def split_subject_conditions(
-    data_dict: dict[str, Any], condition_list: Union[SubjectConditionDict, SubjectConditionDataFrame]
+    data_dict: dict[str, Any], condition_list: SubjectConditionDict | SubjectConditionDataFrame
 ) -> dict[str, dict[str, Any]]:
     """Split dictionary with data based on conditions subjects were assigned to.
 
@@ -671,7 +671,7 @@ def mean_per_subject_dict(data: dict[str, Any], dict_levels: Sequence[str], para
             if len(dict_levels) <= 1:
                 raise ValueError("Invalid number of 'dict_levels' specified!")
             # nested dictionary
-            key_len = 1 if isinstance(key, (str, int)) else len(key)
+            key_len = 1 if isinstance(key, str | int) else len(key)
             result_data[key] = mean_per_subject_dict(value, dict_levels[key_len:], param_name)
         else:
             value.columns.name = "subject"
@@ -680,7 +680,7 @@ def mean_per_subject_dict(data: dict[str, Any], dict_levels: Sequence[str], para
             df = pd.DataFrame(value.mean(axis=0), columns=[param_name])
             result_data[key] = df
 
-    key_lengths = list({1 if isinstance(k, (str, int)) else len(k) for k in result_data})
+    key_lengths = list({1 if isinstance(k, str | int) else len(k) for k in result_data})
     if len(key_lengths) != 1:
         raise ValueError("Inconsistent dictionary key lengths!")
     key_lengths = key_lengths[0]

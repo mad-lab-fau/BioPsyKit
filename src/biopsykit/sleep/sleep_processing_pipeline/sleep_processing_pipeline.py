@@ -1,7 +1,7 @@
 """Functions to process sleep data from raw IMU data or Actigraph data."""
 
 from collections.abc import Sequence
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 
@@ -16,7 +16,7 @@ from biopsykit.utils.array_handling import accumulate_array
 
 
 def predict_pipeline_acceleration(
-    data: arr_t, sampling_rate: float, convert_to_g: Optional[bool] = True, **kwargs
+    data: arr_t, sampling_rate: float, convert_to_g: bool | None = True, **kwargs
 ) -> dict[str, Any]:
     """Apply sleep processing pipeline on raw acceleration data.
 
@@ -102,7 +102,7 @@ def predict_pipeline_acceleration(
 
 
 def predict_pipeline_actigraph(
-    data: arr_t, algorithm_type: str, bed_interval: Sequence[Union[str, int, np.datetime64]], **kwargs
+    data: arr_t, algorithm_type: str, bed_interval: Sequence[str | int | np.datetime64], **kwargs
 ) -> dict[str, Any]:
     """Apply sleep processing pipeline on actigraph data.
 

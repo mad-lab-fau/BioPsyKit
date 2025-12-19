@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -62,7 +61,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
         *,
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
     ):
         """Extract C-points from given cleaned ICG derivative signal using :func:`~scipy.signal.find_peaks`.
 
@@ -97,7 +96,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
 
         # distance of R-peak to C-point, averaged over as many preceding heartbeats as window_c_correction specifies
         # R-C-distances are positive when C-point occurs after R-Peak (which is the physiologically correct order)
-        mean_prev_r_c_distance = np.NaN
+        mean_prev_r_c_distance = np.nan
 
         # saves R-C-distances of previous heartbeats
         prev_r_c_distances = []
@@ -123,7 +122,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
 
             if len(heartbeat_c_candidates) < 1:
                 heartbeats_no_c.append(idx)
-                c_points.loc[idx, "c_point_sample"] = np.NaN
+                c_points.loc[idx, "c_point_sample"] = np.nan
                 continue
 
             # calculates distance of R-peak to all C-candidates in samples, positive when C occurs after R
@@ -136,7 +135,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
                 # C-point before R-peak is invalid
                 if r_c_distance < 0:
                     heartbeats_no_c.append(idx)
-                    c_points.loc[idx, "c_point_sample"] = np.NaN
+                    c_points.loc[idx, "c_point_sample"] = np.nan
                     continue
             else:
                 # take averaged R-C-distance over the 'window_c_correction' (default: 3) preceding heartbeats

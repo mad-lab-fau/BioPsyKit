@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -24,14 +23,16 @@ __all__ = ["BPointExtractionDebski1993SecondDerivative"]
 
 
 class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Debski et al. (1993) [1]_ based on the reversal of dZ^2/dt^2 before the C-point.
+    """B-point extraction algorithm by Debski et al. (1993) based on the reversal of dZ^2/dt^2 before the C-point.
 
     This algorithm extracts B-points based on the last reversal (local minimum) of the second derivative
     of the ICG signal before the C-point.
 
+    For more information, see [Deb93]_.
+
     References
     ----------
-    .. [1] Debski, T. T., Zhang, Y., Jennings, J. R., & Kamarck, T. W. (1993). Stability of cardiac impedance
+    .. [Deb93] Debski, T. T., Zhang, Y., Jennings, J. R., & Kamarck, T. W. (1993). Stability of cardiac impedance
         measures: Aortic opening (B-point) detection and scoring. Biological Psychology, 36(1-2), 63-74.
         https://doi.org/10.1016/0301-0511(93)90081-I
 
@@ -66,7 +67,7 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
         c_points: CPointDataFrame,
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
     ):
         """Extract B-points from given ICG derivative signal.
 
@@ -127,11 +128,11 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
             # with the next iteration
             missing_str = None
             if check_r_peaks[idx]:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "r_peak_nan"
                 missing_str = f"The r_peak contains NaN at position {idx}! B-Point was set to NaN."
             if check_c_points[idx]:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 missing_str = f"The c_point contains NaN at position {idx}! B-Point was set to NaN."
 
@@ -186,6 +187,6 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
             b_point = b_point + start_r_c
         else:
             # If there is no minima set the B-Point to NaN
-            b_point = np.NaN
+            b_point = np.nan
 
         return b_point

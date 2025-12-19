@@ -12,6 +12,8 @@ from biopsykit.signals.icg.event_extraction._b_point_lozano2007 import (
     BPointExtractionLozano2007LinearRegression,
     BPointExtractionLozano2007QuadraticRegression,
 )
+from biopsykit.signals.icg.event_extraction._b_point_miljkovic2022 import BPointExtractionMiljkovic2022
+from biopsykit.signals.icg.event_extraction._b_point_pale2021 import BPointExtractionPale2021
 from biopsykit.signals.icg.event_extraction._b_point_sherwood1990 import BPointExtractionSherwood1990
 from biopsykit.signals.icg.event_extraction._b_point_stern1985 import BPointExtractionStern1985
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
@@ -27,6 +29,8 @@ __all__ = [
     "BPointExtractionForouzanfar2018",
     "BPointExtractionLozano2007LinearRegression",
     "BPointExtractionLozano2007QuadraticRegression",
+    "BPointExtractionMiljkovic2022",
+    "BPointExtractionPale2021",
     "BPointExtractionSherwood1990",
     "BPointExtractionStern1985",
     "BaseBPointExtraction",

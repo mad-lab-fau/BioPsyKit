@@ -6,7 +6,6 @@ downloaded into the local user folder.
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Union
 from urllib.request import urlretrieve
 
 import pandas as pd
@@ -148,12 +147,12 @@ def get_condition_list_example() -> SubjectConditionDataFrame:
 
 
 def get_saliva_example_plate_format(
-    sample_id_col: Optional[str] = None,
-    data_col: Optional[str] = None,
-    id_col_names: Optional[Sequence[str]] = None,
-    regex_str: Optional[str] = None,
-    sample_times: Optional[Sequence[int]] = None,
-    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
+    sample_id_col: str | None = None,
+    data_col: str | None = None,
+    id_col_names: Sequence[str] | None = None,
+    regex_str: str | None = None,
+    sample_times: Sequence[int] | None = None,
+    condition_list: Sequence | dict[str, Sequence] | pd.Index | None = None,
 ) -> pd.DataFrame:
     r"""Return example saliva data from "plate" format.
 
@@ -197,7 +196,7 @@ def get_saliva_example_plate_format(
     )
 
 
-def get_saliva_example(sample_times: Optional[Sequence[int]] = None) -> SalivaRawDataFrame:
+def get_saliva_example(sample_times: Sequence[int] | None = None) -> SalivaRawDataFrame:
     """Return saliva example data.
 
     Parameters
@@ -264,7 +263,7 @@ def get_hr_subject_data_dict_tuple_example() -> HeartRateSubjectDataDict:
     study_data_dict_hr = {}
     subject_ids = ["Vp01", "Vp02"]
     keys = [("Vp01", "Control"), ("Vp01", "Intervention")]
-    for subject_id, key in zip(subject_ids, keys):
+    for subject_id, key in zip(subject_ids, keys, strict=False):
         file_path = _get_data(f"ecg_results/hr_result_{subject_id}.xlsx")
         study_data_dict_hr[key] = pd.read_excel(file_path, sheet_name=None, index_col="time")
     return study_data_dict_hr
@@ -400,8 +399,8 @@ def get_sleep_analyzer_raw_file_unformatted(data_source: str) -> pd.DataFrame:
 
 def get_sleep_analyzer_raw_file(
     data_source: str,
-    split_into_nights: Optional[bool] = True,
-) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
+    split_into_nights: bool | None = True,
+) -> pd.DataFrame | dict[str, pd.DataFrame]:
     """Return Withings Sleep Analyzer raw data example file.
 
     Parameters
@@ -434,8 +433,8 @@ def get_sleep_analyzer_raw_file(
 
 
 def get_sleep_analyzer_raw_example(
-    split_into_nights: Optional[bool] = True,
-) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
+    split_into_nights: bool | None = True,
+) -> pd.DataFrame | dict[str, pd.DataFrame]:
     """Return Withings Sleep Analyzer example raw data.
 
     Parameters

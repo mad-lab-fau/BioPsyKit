@@ -1,12 +1,10 @@
 """Functions to handle multicollinearity in data."""
 
-from typing import Optional
-
 import numpy as np
 import pandas as pd
 
 
-def remove_multicollinearity_correlation(data: pd.DataFrame, threshold: Optional[float] = 0.8) -> pd.DataFrame:
+def remove_multicollinearity_correlation(data: pd.DataFrame, threshold: float | None = 0.8) -> pd.DataFrame:
     """Remove features with multicollinearity based on cross-correlation coefficient.
 
     Parameters

@@ -3,7 +3,7 @@ import pandas as pd
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
+from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtractionWithHeartbeats
 from biopsykit.utils.array_handling import sanitize_input_series
 
 __all__ = ["QPeakExtractionForouzanfar2018"]
@@ -17,8 +17,8 @@ from biopsykit.utils.dtypes import (
 )
 
 
-class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    r"""Q-peak extraction algorithm by Forouzanfar et al. (2018) [1]_.
+class QPeakExtractionForouzanfar2018(BaseEcgExtractionWithHeartbeats, CanHandleMissingEventsMixin):
+    r"""Q-peak extraction algorithm by Forouzanfar et al. (2018).
 
     This algorithm detects the Q-peak of an ECG signal based on the last sample before the R-peak that is below a
     certain threshold (:math:`-1.2 \cdot R_peak/f_s`), where R_peak is the amplitude of the R-peak and f_s is the
@@ -28,10 +28,12 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
     can differ from the original publication (2000 Hz). Thus, the scaling_factor is set to the sampling rate of the
     original publication (2000 Hz) by default.
 
+    For more information on the algorithm, see [For18]_.
+
 
     References
     ----------
-    .. [1] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
+    .. [For18] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
         Toward a better noninvasive assessment of preejection period: A novel automatic algorithm for B-point detection
         and correction on thoracic impedance cardiogram. Psychophysiology, 55(8), e13072.
         https://doi.org/10.1111/psyp.13072
@@ -108,12 +110,12 @@ class QPeakExtractionForouzanfar2018(BaseEcgExtraction, CanHandleMissingEventsMi
             ecg_below = np.where(ecg_before_r_peak < threshold)[0]
 
             if len(ecg_below) == 0:
-                q_peaks.loc[q_peaks.index[idx], "q_peak_sample"] = np.nan
-                q_peaks.loc[q_peaks.index[idx], "nan_reason"] = "no_value_below_threshold"
+                q_peaks.loc[idx, "q_peak_sample"] = np.nan
+                q_peaks.loc[idx, "nan_reason"] = "no_value_below_threshold"
                 continue
 
             q_peak_sample = heartbeat_start + ecg_below[-1]
-            q_peaks.loc[q_peaks.index[idx], "q_peak_sample"] = q_peak_sample
+            q_peaks.loc[idx, "q_peak_sample"] = q_peak_sample
 
         q_peaks = q_peaks.astype({"q_peak_sample": "Int64", "nan_reason": "object"})
         is_q_peak_dataframe(q_peaks)

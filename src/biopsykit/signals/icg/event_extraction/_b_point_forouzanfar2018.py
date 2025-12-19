@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -24,16 +23,18 @@ __all__ = ["BPointExtractionForouzanfar2018"]
 
 
 class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Forouzanfar et al. (2018) [1]_.
+    """B-point extraction algorithm by Forouzanfar et al. (2018).
 
     This algorithm extracts B-points based on the detection of the most prominent monotonic increasing segment
     between the A-Point (the local minimum within one third of the beat-to-beat interval prior to the C-Point)
     and the C-Point. The B-Point is then detected as the last zero crossing or local maximum of the third derivative
     of the ICG signal within the segment.
 
+    For more information, see [For18]_.
+
     References
     ----------
-    .. [1] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
+    .. [For18] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
         Toward a better noninvasive assessment of preejection period: A novel automatic algorithm for B-point detection
         and correction on thoracic impedance cardiogram. Psychophysiology, 55(8), e13072.
         https://doi.org/10.1111/psyp.13072
@@ -47,7 +48,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
     def __init__(
         self,
         scaling_factor: float = 2000,
-        correct_outliers: Optional[bool] = False,
+        correct_outliers: bool | None = False,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new ``BPointExtractionForouzanfar2018`` instance.
@@ -83,7 +84,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
         c_points: CPointDataFrame,
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
     ):
         """Extract B-points from given ICG derivative signal.
 
@@ -129,25 +130,26 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         # Create the B-Point/A-Point Dataframes with the index of the heartbeat_list
         b_points = pd.DataFrame(index=heartbeats.index, columns=["b_point_sample", "nan_reason"])
 
-        # check whether the c_points contain NaN
-        check_c_points = pd.isna(c_points["c_point_sample"]).to_numpy()
+        # get the c_point locations from the c_points dataframe
+        c_points = c_points["c_point_sample"]
 
         # Calculate the second- and third-derivative of the ICG-signal
         second_der = np.gradient(icg)
         third_der = np.gradient(second_der)
 
         for idx, data in heartbeats.iloc[1:].iterrows():
-            # check if the current or the previous C-Point contain NaN . If this is the case, set the b_point to NaN
-            if check_c_points[idx] or check_c_points[idx - 1]:
+            # Get the C-Point location at the current heartbeat id
+            c_point = c_points[idx]
+            prev_c_point = c_points[idx - 1]
+
+            # check if the current or the previous C-Point contain NaN. If this is the case, set the b_point to NaN
+            if pd.isna(c_point) or pd.isna(prev_c_point):
                 b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
-            # Detect the main peak in the dZ/dt signal (C-Point)
-            c_point = c_points.loc[idx, "c_point_sample"]
-
             # Compute the beat to beat interval
-            beat_to_beat = c_points.loc[idx, "c_point_sample"] - c_points.loc[idx - 1, "c_point_sample"]
+            beat_to_beat = c_point - prev_c_point
 
             # Compute the search interval for the A-Point
             search_interval = int(beat_to_beat / 3)

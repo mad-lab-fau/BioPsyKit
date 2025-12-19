@@ -39,13 +39,13 @@ __all__ = [
 
 def ecg_plot(
     ecg_processor: Optional["EcgProcessor"] = None,
-    key: Optional[str] = None,
-    ecg_signal: Optional[pd.DataFrame] = None,
-    heart_rate: Optional[pd.DataFrame] = None,
-    sampling_rate: Optional[int] = 256,
-    plot_ecg_signal: Optional[bool] = True,
-    plot_distribution: Optional[bool] = True,
-    plot_individual_beats: Optional[bool] = True,
+    key: str | None = None,
+    ecg_signal: pd.DataFrame | None = None,
+    heart_rate: pd.DataFrame | None = None,
+    sampling_rate: int | None = 256,
+    plot_ecg_signal: bool | None = True,
+    plot_distribution: bool | None = True,
+    plot_individual_beats: bool | None = True,
     **kwargs,
 ) -> tuple[plt.Figure, Sequence[plt.Axes]]:
     """Plot ECG processing results.
@@ -273,9 +273,9 @@ def _ecg_plot(
 
 def hr_plot(
     heart_rate: pd.DataFrame,
-    plot_mean: Optional[bool] = True,
-    plot_outlier: Optional[bool] = False,
-    outlier: Optional[np.ndarray] = None,
+    plot_mean: bool | None = True,
+    plot_outlier: bool | None = False,
+    outlier: np.ndarray | None = None,
     **kwargs,
 ) -> tuple[plt.Figure, plt.Axes]:
     """Plot course of heart rate over time (tachogram).
@@ -400,11 +400,11 @@ def _hr_plot_style_axis(heart_rate: pd.DataFrame, ax: plt.Axes):
 
 def hrv_plot(
     ecg_processor: Optional["EcgProcessor"] = None,
-    key: Optional[str] = None,
-    ecg_signal: Optional[pd.DataFrame] = None,
-    rpeaks: Optional[pd.DataFrame] = None,
-    sampling_rate: Optional[int] = 256,
-    plot_psd: Optional[bool] = True,
+    key: str | None = None,
+    ecg_signal: pd.DataFrame | None = None,
+    rpeaks: pd.DataFrame | None = None,
+    sampling_rate: int | None = 256,
+    plot_psd: bool | None = True,
     **kwargs,
 ) -> tuple[plt.Figure, Sequence[plt.Axes]]:
     """Plot Heart Rate Variability results.
@@ -564,7 +564,7 @@ def hr_distribution_plot(heart_rate: pd.DataFrame, **kwargs) -> tuple[plt.Figure
 
 
 def rr_distribution_plot(
-    rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, **kwargs
+    rpeaks: pd.DataFrame, sampling_rate: int | None = 256, **kwargs
 ) -> tuple[plt.Figure, plt.Axes]:
     """Plot distribution of RR intervals (histogram) with boxplot and rugplot.
 
@@ -645,7 +645,7 @@ def rr_distribution_plot(
 
 
 def individual_beats_plot(
-    ecg_signal: pd.DataFrame, rpeaks: Optional[Sequence[int]] = None, sampling_rate: Optional[int] = 256, **kwargs
+    ecg_signal: pd.DataFrame, rpeaks: Sequence[int] | None = None, sampling_rate: int | None = 256, **kwargs
 ) -> tuple[plt.Figure, plt.Axes]:
     """Plot all segmented heart beats overlaid on top of each other.
 
@@ -702,7 +702,7 @@ def individual_beats_plot(
     # Aesthetics of heart beats
     cmap = iter(plt.cm.YlOrRd(np.linspace(0, 1, num=int(heartbeats["Label"].nunique()))))
 
-    for x, color in zip(heartbeats_pivoted, cmap):
+    for x, color in zip(heartbeats_pivoted, cmap, strict=False):
         ax.plot(heartbeats_pivoted[x], color=color)
 
     ax.set_yticks([])
@@ -720,7 +720,7 @@ def individual_beats_plot(
 
 
 def hrv_poincare_plot(
-    rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, **kwargs
+    rpeaks: pd.DataFrame, sampling_rate: int | None = 256, **kwargs
 ) -> tuple[plt.Figure, Sequence[plt.Axes]]:
     """Plot Heart Rate Variability as Poincaré Plot.
 
@@ -886,9 +886,7 @@ def hrv_poincare_plot(
     return fig, axs
 
 
-def hrv_frequency_plot(
-    rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256, **kwargs
-) -> tuple[plt.Figure, plt.Axes]:
+def hrv_frequency_plot(rpeaks: pd.DataFrame, sampling_rate: int | None = 256, **kwargs) -> tuple[plt.Figure, plt.Axes]:
     """Plot Power Spectral Density (PSD) of RR intervals.
 
     This plot is also used as subplot in :func:`~biopsykit.signals.ecg.plotting.hrv_plot`.
@@ -952,7 +950,7 @@ def hrv_frequency_plot(
     return fig, ax
 
 
-def _get_rr_intervals(rpeaks: pd.DataFrame, sampling_rate: Optional[int] = 256) -> np.array:
+def _get_rr_intervals(rpeaks: pd.DataFrame, sampling_rate: int | None = 256) -> np.array:
     rri = (np.ediff1d(rpeaks["R_Peak_Idx"], to_begin=0) / sampling_rate) * 1000
     rri = rri[1:]
     return rri

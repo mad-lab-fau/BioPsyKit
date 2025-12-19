@@ -2,7 +2,6 @@
 
 import warnings
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -31,9 +30,9 @@ from biopsykit.utils.functions import se
 
 def max_value(
     data: SalivaRawDataFrame,
-    saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    remove_s0: Optional[bool] = False,
-) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
+    saliva_type: str | Sequence[str] | None = "cortisol",
+    remove_s0: bool | None = False,
+) -> SalivaFeatureDataFrame | dict[str, SalivaFeatureDataFrame]:
     """Compute maximum value.
 
     The output feature name will be ``max_val``, preceded by the name of the saliva type to allow better
@@ -99,9 +98,9 @@ def max_value(
 
 def initial_value(
     data: SalivaRawDataFrame,
-    saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    remove_s0: Optional[bool] = False,
-) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
+    saliva_type: str | Sequence[str] | None = "cortisol",
+    remove_s0: bool | None = False,
+) -> SalivaFeatureDataFrame | dict[str, SalivaFeatureDataFrame]:
     """Compute initial saliva sample.
 
     The output feature name will be ``ini_val``, preceded by the name of the saliva type to allow better
@@ -165,10 +164,10 @@ def initial_value(
 
 def max_increase(
     data: SalivaRawDataFrame,
-    saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    remove_s0: Optional[bool] = False,
-    percent: Optional[bool] = False,
-) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
+    saliva_type: str | Sequence[str] | None = "cortisol",
+    remove_s0: bool | None = False,
+    percent: bool | None = False,
+) -> SalivaFeatureDataFrame | dict[str, SalivaFeatureDataFrame]:
     """Compute maximum increase between first saliva sample and all others.
 
     The maximum increase (`max_inc`) is defined as the difference between the `first` sample and the maximum of
@@ -246,11 +245,11 @@ def max_increase(
 
 def auc(
     data: SalivaRawDataFrame,
-    saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    remove_s0: Optional[bool] = False,
-    compute_auc_post: Optional[bool] = False,
-    sample_times: Optional[Union[np.ndarray, Sequence[int], str]] = None,
-) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
+    saliva_type: str | Sequence[str] | None = "cortisol",
+    remove_s0: bool | None = False,
+    compute_auc_post: bool | None = False,
+    sample_times: np.ndarray | Sequence[int] | str | None = None,
+) -> SalivaFeatureDataFrame | dict[str, SalivaFeatureDataFrame]:
     r"""Compute area-under-the-curve (AUC) for saliva samples.
 
     The area-under-the-curve is computed according to Pruessner et al. (2003) using the trapezoidal rule
@@ -344,8 +343,8 @@ def auc(
     data = data[[saliva_type]].unstack(level="sample")
 
     auc_data = {
-        "auc_g": np.trapz(data, sample_times),
-        "auc_i": np.trapz(data.sub(data.iloc[:, 0], axis=0), sample_times),
+        "auc_g": np.trapezoid(data, sample_times),
+        "auc_i": np.trapezoid(data.sub(data.iloc[:, 0], axis=0), sample_times),
     }
 
     if compute_auc_post:
@@ -373,17 +372,17 @@ def _auc_compute_auc_post(
         )
     if idxs_post is not None:
         data_post = data.iloc[:, idxs_post]
-        auc_data["auc_i_post"] = np.trapz(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
+        auc_data["auc_i_post"] = np.trapezoid(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
     return auc_data
 
 
 def slope(
     data: SalivaRawDataFrame,
-    sample_labels: Optional[Union[tuple, Sequence]] = None,
-    sample_idx: Optional[Union[tuple[int, int], Sequence[int]]] = None,
-    saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    sample_times: Optional[Sequence[int]] = None,
-) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
+    sample_labels: tuple | Sequence | None = None,
+    sample_idx: tuple[int, int] | Sequence[int] | None = None,
+    saliva_type: str | Sequence[str] | None = "cortisol",
+    sample_times: Sequence[int] | None = None,
+) -> SalivaFeatureDataFrame | dict[str, SalivaFeatureDataFrame]:
     """Compute the slope between two saliva samples.
 
     The samples to compute the slope can either be specified by `index` (parameter `sample_idx`) [0, num_of_samples-1]
@@ -476,10 +475,10 @@ def slope(
 
 def standard_features(
     data: pd.DataFrame,
-    saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    group_cols: Optional[Union[str, Sequence[str]]] = None,
-    keep_index: Optional[bool] = True,
-) -> Union[SalivaFeatureDataFrame, dict[str, SalivaFeatureDataFrame]]:
+    saliva_type: str | Sequence[str] | None = "cortisol",
+    group_cols: str | Sequence[str] | None = None,
+    keep_index: bool | None = True,
+) -> SalivaFeatureDataFrame | dict[str, SalivaFeatureDataFrame]:
     """Compute a set of `standard features` on saliva data.
 
     The following list of features is computed:
@@ -546,8 +545,8 @@ def standard_features(
         .agg(
             [
                 np.argmax,
-                np.mean,
-                np.std,
+                "mean",
+                "std",
                 ss.skew,
                 ss.kurtosis,
             ],
@@ -578,10 +577,10 @@ def standard_features(
 
 def mean_se(
     data: SalivaRawDataFrame,
-    saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
-    group_cols: Optional[Union[str, list[str]]] = None,
-    remove_s0: Optional[bool] = False,
-) -> Union[SalivaMeanSeDataFrame, dict[str, SalivaMeanSeDataFrame]]:
+    saliva_type: str | Sequence[str] | None = "cortisol",
+    group_cols: str | list[str] | None = None,
+    remove_s0: bool | None = False,
+) -> SalivaMeanSeDataFrame | dict[str, SalivaMeanSeDataFrame]:
     """Compute mean and standard error per saliva sample.
 
     Parameters
@@ -633,7 +632,7 @@ def mean_se(
         # we would loose this column
         group_cols = [*group_cols, "time"]
 
-    data_mean_se = data.groupby(group_cols).agg([np.mean, se])[saliva_type]
+    data_mean_se = data.groupby(group_cols).agg(["mean", se])[saliva_type]
     is_saliva_mean_se_dataframe(data_mean_se)
 
     return _SalivaMeanSeDataFrame(data_mean_se)

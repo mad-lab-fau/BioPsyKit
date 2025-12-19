@@ -1,7 +1,6 @@
 """Base class for implementing signal processing pipelines."""
 
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import pandas as pd
 
@@ -14,10 +13,10 @@ class _BaseProcessor:
 
     def __init__(
         self,
-        data: Union[pd.DataFrame, dict[str, pd.DataFrame]],
-        sampling_rate: Optional[float] = None,
-        time_intervals: Optional[Union[pd.Series, dict[str, Sequence[str]]]] = None,
-        include_start: Optional[bool] = False,
+        data: pd.DataFrame | dict[str, pd.DataFrame],
+        sampling_rate: float | None = None,
+        time_intervals: pd.Series | dict[str, Sequence[str]] | None = None,
+        include_start: bool | None = False,
     ):
         self.sampling_rate: float = sampling_rate
         """Sampling rate of recorded data."""

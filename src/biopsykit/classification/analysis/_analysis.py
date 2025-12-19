@@ -1,14 +1,14 @@
 """Functions to analyze classification results."""
 
 from collections.abc import Sequence
-from typing import Any, Optional, Union
+from typing import Any
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from fau_colors import cmaps
 from matplotlib import pyplot as plt
-from matplotlib.cm import ColormapRegistry
 from matplotlib.colors import ListedColormap
 from sklearn.metrics import ConfusionMatrixDisplay
 
@@ -50,8 +50,8 @@ def predictions_as_df(
     pipeline_permuter: SklearnPipelinePermuter,
     data: pd.DataFrame,
     pipeline: tuple[str],
-    label_mapping: Optional[dict[str, str]] = None,
-    index_col: Optional[str] = None,
+    label_mapping: dict[str, str] | None = None,
+    index_col: str | None = None,
 ) -> pd.DataFrame:
     """Get predictions from a specified pipeline and merge them with the index of the input dataframe.
 
@@ -79,8 +79,12 @@ def predictions_as_df(
     """
     metric_summary = pipeline_permuter.metric_summary()
     label_cols = ["true_labels", "predicted_labels"]
-    predictions = metric_summary[label_cols].explode(label_cols).loc[pipeline]
-
+    predictions = (
+        metric_summary[label_cols]
+        .explode(label_cols)
+        .sort_index()  # ensure lexsorted index to avoid PerformanceWarning
+        .loc[pipeline]
+    )
     if isinstance(data.index, pd.MultiIndex):
         if index_col is None:
             index_col = data.index.names[0]
@@ -98,8 +102,8 @@ def predict_proba_from_estimator(
     pipeline_permuter: SklearnPipelinePermuter,
     data: pd.DataFrame,
     pipeline: tuple[str],
-    label_col: Optional[str] = "label",
-    column_names: Optional[dict[str, str]] = None,
+    label_col: str | None = "label",
+    column_names: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Get predictions as probabilities from a specified pipeline and merge them with the index of the input dataframe.
 
@@ -157,7 +161,7 @@ def predict_proba_from_estimator(
 
 
 def _conf_matrix_from_proba_df(
-    data: pd.DataFrame, label_col: Optional[str] = "label", label_order: Optional[Sequence[str]] = None
+    data: pd.DataFrame, label_col: str | None = "label", label_order: Sequence[str] | None = None
 ) -> pd.DataFrame:
     """Get confusion matrix from a dataframe with predictions as probabilities.
 
@@ -189,16 +193,15 @@ def _register_fau_r():
     fau_r.reverse()
     fau_r = ListedColormap(fau_r, "fau_r")
     if "fau_r" not in plt.colormaps():
-        colormap_registry = ColormapRegistry()
-        colormap_registry.register(cmap=fau_r, name="fau_r")
+        mpl.colormaps.register(cmap=fau_r, name="fau_r")
 
 
 def plot_conf_matrix(
     predictions: pd.DataFrame,
     labels: Sequence[str],
-    label_name: Optional[str] = "label",
-    prediction_cols: Optional[Sequence[str]] = ["true_labels", "predicted_labels"],
-    conf_matrix_kwargs: Optional[Dict[str, Any]] = None,
+    label_name: str | None = "label",
+    prediction_cols: Sequence[str] | None = ["true_labels", "predicted_labels"],
+    conf_matrix_kwargs: dict[str, Any] | None = None,
     **kwargs,
 ) -> tuple[plt.Figure, plt.Axes]:
     """Plot confusion matrix from predictions.
@@ -263,8 +266,8 @@ def plot_conf_matrix(
 def plot_conf_matrix_proba(
     predictions: pd.DataFrame,
     labels: Sequence[str],
-    label_col: Optional[str] = "label",
-    label_name: Optional[str] = "label",
+    label_col: str | None = "label",
+    label_name: str | None = "label",
     **kwargs,
 ) -> tuple[plt.Figure, plt.Axes]:
     """Plot confusion matrix from prediction probabilities.
@@ -304,11 +307,11 @@ def plot_conf_matrix_proba(
 
 
 def metric_summary_to_latex(
-    permuter_or_df: Union[SklearnPipelinePermuter, pd.DataFrame],
-    metrics: Optional[Sequence[str]] = None,
-    pipeline_steps: Optional[Sequence[str]] = None,
-    si_table_format: Optional[str] = None,
-    highlight_best: Optional[str] = None,
+    permuter_or_df: SklearnPipelinePermuter | pd.DataFrame,
+    metrics: Sequence[str] | None = None,
+    pipeline_steps: Sequence[str] | None = None,
+    si_table_format: str | None = None,
+    highlight_best: str | None = None,
     **kwargs,
 ) -> str:
     """Return a latex table with the performance metrics of the pipeline combinations.

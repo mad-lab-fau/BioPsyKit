@@ -1,7 +1,7 @@
 """Module with functions for model selection using "nested" cross-validation."""
 
 import warnings
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from sklearn.metrics import confusion_matrix, get_scorer
@@ -21,8 +21,8 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
     pipeline: Pipeline,
     outer_cv: BaseCrossValidator,
     inner_cv: BaseCrossValidator,
-    groups: Optional[np.ndarray] = None,
-    hyper_search_params: Optional[dict[str, Any]] = None,
+    groups: np.ndarray | None = None,
+    hyper_search_params: dict[str, Any] | None = None,
     **kwargs,
 ):
     """Perform a cross-validated parameter search with hyperparameter optimization within a outer cross-validation.

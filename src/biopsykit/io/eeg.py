@@ -1,7 +1,6 @@
 """I/O functions for files related to EEG processing."""
 
 import warnings
-from typing import Optional
 
 import pandas as pd
 
@@ -20,7 +19,7 @@ class MuseDataset:
     _data: pd.DataFrame
     _sampling_rate: int
 
-    def __init__(self, data: pd.DataFrame, tz: Optional[str] = None):
+    def __init__(self, data: pd.DataFrame, tz: str | None = None):
         """Get new Dataset instance.
 
         .. note::
@@ -39,7 +38,7 @@ class MuseDataset:
         self._tz = tz
 
     @classmethod
-    def from_csv_file(cls, file_path: path_t, tz: Optional[str] = None):
+    def from_csv_file(cls, file_path: path_t, tz: str | None = None):
         """Load Muse data from a CSV file.
 
         Parameters
@@ -71,7 +70,7 @@ class MuseDataset:
         """Return the timezone of the recording."""
         return self._tz
 
-    def data_as_df(self, index: Optional[str] = None) -> pd.DataFrame:
+    def data_as_df(self, index: str | None = None) -> pd.DataFrame:
         """Return all data as one combined :class:`pandas.DataFrame`.
 
         Parameters
@@ -127,7 +126,7 @@ class MuseDataset:
         return data
 
 
-def load_eeg_raw_muse(file_path: path_t, tz: Optional[str] = "Europe/Berlin") -> tuple[pd.DataFrame, float]:
+def load_eeg_raw_muse(file_path: path_t, tz: str | None = "Europe/Berlin") -> tuple[pd.DataFrame, float]:
     """Load a csv file with raw EEG data recorded by the Muse headband.
 
     Parameters

@@ -1,12 +1,11 @@
 import warnings
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 from tpcp import Parameter
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
+from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction, bpoint_algo_docfiller
 from biopsykit.utils.array_handling import sanitize_input_dataframe_1d
 from biopsykit.utils.dtypes import (
     CPointDataFrame,
@@ -26,15 +25,24 @@ __all__ = [
 ]
 
 
+@bpoint_algo_docfiller
 class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Arbol et al. (2017) [1]_ based on isoelectric crossings.
+    """B-point extraction algorithm by Arbol et al. (2017) based on isoelectric crossings.
 
     This algorithm extracts B-points based on the last crossing of the dZ/dt signal through the isoelectric line (i.e.,
     the mean of the dZ/dt signal in the cardiac cycle) before the C-point.
 
+    For more information, see [Arb17]_.
+
+    Parameters
+    ----------
+    %(base_parameters)s
+
+    %(base_attributes)s
+
     References
     ----------
-    .. [1] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
+    .. [Arb17] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
         Mathematical detection of aortic valve opening (B point) in impedance cardiography: A comparison of three
         popular algorithms. Psychophysiology, 54(3), 350-357. https://doi.org/10.1111/psyp.12799
 
@@ -52,7 +60,6 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
                 * "ignore": ignore the error and continue with the next event
             Default: "warn"
 
-
         """
         super().__init__(handle_missing_events=handle_missing_events)
 
@@ -62,7 +69,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
         icg: IcgRawDataFrame,
         heartbeats: HeartbeatSegmentationDataFrame,
         c_points: CPointDataFrame,
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
     ):
         """Extract B-points from given ICG derivative signal.
 
@@ -115,14 +122,14 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample):
                 heartbeats_no_c_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
             # slice the signal for the current heartbeat
             heartbeat_start = data["start_sample"]
             heartbeat_end = data["end_sample"]
-            icg_heartbeat = icg.loc[heartbeat_start:heartbeat_end]
+            icg_heartbeat = icg.iloc[heartbeat_start:heartbeat_end]
             c_point = c_point_sample - heartbeat_start
 
             # compute the isoelectric line and subtract it from the signal
@@ -136,7 +143,7 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
             icg_isoelectric_crossings_diff = icg_isoelectric_crossings - c_point
             icg_isoelectric_crossings_diff = icg_isoelectric_crossings_diff[icg_isoelectric_crossings_diff < 0]
             if len(icg_isoelectric_crossings_diff) == 0:
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "no_iso_crossing_before_c_point"
                 continue
             icg_isoelectric_crossing_idx = np.argmax(icg_isoelectric_crossings_diff)
@@ -154,14 +161,16 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
 
 
 class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Arbol et al. (2017) [1]_ based on the second derivative of the ICG signal.
+    """B-point extraction algorithm by Arbol et al. (2017) based on the second derivative of the ICG signal.
 
     This algorithm extracts B-points based on the maximum of the second derivative of the ICG signal in a 50ms window,
     starting 150ms before the C-point.
 
+    For more information, see [Arb17]_.
+
     References
     ----------
-    .. [1] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
+    .. [Arb17] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
         Mathematical detection of aortic valve opening (B point) in impedance cardiography: A comparison of three
         popular algorithms. Psychophysiology, 54(3), 350-357. https://doi.org/10.1111/psyp.12799
 
@@ -174,8 +183,8 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
 
     def __init__(
         self,
-        search_window_start_ms: Optional[int] = 150,
-        window_size_ms: Optional[int] = 50,
+        search_window_start_ms: int | None = 150,
+        window_size_ms: int | None = 50,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new ``BPointExtractionArbol2017SecondDerivative`` algorithm instance.
@@ -264,7 +273,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(c_point_sample):
                 heartbeats_no_c_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
@@ -275,7 +284,7 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
             # might happen for wrongly detected Cs (search window becomes invalid)
             if window_start < 0:
                 heartbeats_no_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "invalid_b_point_search_window"
                 continue
 
@@ -316,26 +325,28 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
 
 
 class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMissingEventsMixin):
-    """B-point extraction algorithm by Arbol et al. (2017) [1]_ based on the third derivative of the ICG signal.
+    """B-point extraction algorithm by Arbol et al. (2017) based on the third derivative of the ICG signal.
 
     This algorithm extracts B-points based on the maximum of the third derivative of the ICG signal within a 300ms
     window before the C-point.
 
+    For more information, see [Arb17]_.
+
     References
     ----------
-    .. [1] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
+    .. [Arb17] Árbol, J. R., Perakakis, P., Garrido, A., Mata, J. L., Fernández-Santaella, M. C., & Vila, J. (2017).
         Mathematical detection of aortic valve opening (B-point) in impedance cardiography: A comparison of three
         popular algorithms. Psychophysiology, 54(3), 350-357. https://doi.org/10.1111/psyp.12799
 
     """
 
     # input parameters
-    search_window_start_ms: Parameter[Union[str, int]]  # either 'R' or integer defining window length in ms
+    search_window_start_ms: Parameter[str | int]  # either 'R' or integer defining window length in ms
     correct_outliers: Parameter[bool]
 
     def __init__(
         self,
-        search_window_start_ms: Optional[Union[str, int]] = 300,
+        search_window_start_ms: str | int | None = 300,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new ``BPointExtractionArbol2017ThirdDerivative`` algorithm instance.
@@ -427,7 +438,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
             # C-point can be NaN, then, extraction of B is not possible, so B is set to NaN
             if pd.isna(heartbeat_c_point):
                 heartbeats_no_c_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "c_point_nan"
                 continue
 
@@ -444,7 +455,7 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
             # might happen for wrongly detected Cs (search window becomes invalid)
             if window_start < 0 or window_end < 0:
                 heartbeats_no_b.append(idx)
-                b_points.loc[idx, "b_point_sample"] = np.NaN
+                b_points.loc[idx, "b_point_sample"] = np.nan
                 b_points.loc[idx, "nan_reason"] = "invalid_b_point_search_window"
                 continue
 

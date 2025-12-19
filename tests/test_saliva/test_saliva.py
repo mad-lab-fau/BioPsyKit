@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -31,7 +30,7 @@ def saliva_no_multiindex():
     return pd.DataFrame(index=range(5), columns=["cortisol", "time"])
 
 
-def saliva_no_time(saliva_type: Optional[str] = "cortisol"):
+def saliva_no_time(saliva_type: str | None = "cortisol"):
     data = pd.DataFrame(
         index=pd.MultiIndex.from_product([range(1, 9), range(5)], names=["subject", "sample"]),
         columns=[saliva_type],
@@ -95,7 +94,7 @@ def saliva_wrong_time_02():
     return data
 
 
-def saliva_time(saliva_type: Optional[str] = "cortisol"):
+def saliva_time(saliva_type: str | None = "cortisol"):
     data = pd.DataFrame(
         index=pd.MultiIndex.from_product([range(1, 9), range(5)], names=["subject", "sample"]),
         columns=[saliva_type, "time"],
@@ -116,7 +115,7 @@ def saliva_time(saliva_type: Optional[str] = "cortisol"):
     return data
 
 
-def saliva_time_individual(saliva_type: Optional[str] = "cortisol"):
+def saliva_time_individual(saliva_type: str | None = "cortisol"):
     data = pd.DataFrame(
         index=pd.MultiIndex.from_product([range(1, 9), range(5)], names=["subject", "sample"]),
         columns=[saliva_type, "time"],
@@ -148,7 +147,7 @@ def saliva_time_individual(saliva_type: Optional[str] = "cortisol"):
     return data
 
 
-def saliva_idx(saliva_type: Optional[str] = "cortisol"):
+def saliva_idx(saliva_type: str | None = "cortisol"):
     data = pd.DataFrame(
         index=pd.MultiIndex.from_product([range(1, 9), [f"S{i}" for i in range(1, 6)]], names=["subject", "sample"]),
         columns=[saliva_type, "time"],
@@ -201,7 +200,7 @@ def saliva_idx_multi_types():
     return data
 
 
-def saliva_multi_types(include_time: Optional[bool] = False):
+def saliva_multi_types(include_time: bool | None = False):
     data = pd.DataFrame(
         index=pd.MultiIndex.from_product([range(1, 9), range(5)], names=["subject", "sample"]),
     )
@@ -234,7 +233,7 @@ def saliva_multi_types(include_time: Optional[bool] = False):
     return data
 
 
-def saliva_group_col(include_condition: Optional[bool] = False, include_day: Optional[bool] = False):
+def saliva_group_col(include_condition: bool | None = False, include_day: bool | None = False):
     data = pd.DataFrame(
         index=pd.MultiIndex.from_product([range(1, 9), range(5)], names=["subject", "sample"]),
     )
@@ -637,7 +636,7 @@ params_mean_se = [
                 "se": [1.1153688264639723, 0.86085506, 0.55901699, 0.94017476],
             },
             index=pd.MultiIndex.from_tuples(
-                [(i, k) for i, k in zip(range(1, 5), [0, 10, 20, 30])], names=["sample", "time"]
+                [(i, k) for i, k in zip(range(1, 5), [0, 10, 20, 30], strict=False)], names=["sample", "time"]
             ),
         ),
     ),
@@ -1435,19 +1434,19 @@ class TestSaliva:
                 saliva_idx,
                 "cortisol",
                 ["mean", "se"],
-                [(f"S{i}", k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
+                [(f"S{i}", k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30], strict=False)],
             ),
             (
                 saliva_idx,
                 "amylase",
                 ["mean", "se"],
-                [(f"S{i}", k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
+                [(f"S{i}", k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30], strict=False)],
             ),
             (
                 saliva_idx,
                 "il6",
                 ["mean", "se"],
-                [(f"S{i}", k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30])],
+                [(f"S{i}", k) for i, k in zip(range(1, 6), [-10, 0, 10, 20, 30], strict=False)],
             ),
         ],
     )

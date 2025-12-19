@@ -21,14 +21,48 @@ from biopsykit.utils.exceptions import EventExtractionError
 
 
 class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingEventsMixin):
-    """Segment ECG signal into individual heartbeats based on NeuroKit2 [1]_.
+    """Segment ECG signal into individual heartbeats based on NeuroKit2.
 
     This algorithm segments the ECG signal into individual heartbeats based on the R-peaks detected by Neurokit's
     ``ecg_peaks`` function. The start of each heartbeat is determined based on the R-peak and the current RR-interval.
 
+    For more information on NeuroKit2, see [Mak21]_.
+
+    Parameters
+    ----------
+    variable_length : bool, optional
+        ``True`` if extracted heartbeats should have variable length (depending on the current RR-interval) or
+        ``False`` if extracted heartbeats should have fixed length (same length for all heartbeats, depending
+        on the mean heartrate of the complete signal, 35% of mean heartrate in seconds before R-peak and 50%
+        after r_peak, see :func:`neurokit2.ecg_segment` for details).
+        For variable length heartbeats, the start of the next heartbeat follows directly after end of last
+        (ends exclusive); For fixed length heartbeats, there might be spaces between heartbeat borders, or they
+        might overlap. Default: ``True``
+    start_factor : float, optional
+        only needed if ``variable_length=True``. This parameter defines where the start border between heartbeats
+        is set depending on the RR-interval to previous heartbeat. For example, ``start_factor=0.35`` means that
+        the beat start is set at 35% of current RR-distance before the R-peak of the beat
+    r_peak_detection_method : str, optional
+        Method to detect R-peaks that is passed to :func:`neurokit2.ecg_peaks`. Default: "neurokit"
+    handle_missing_events : one of {"warn", "raise", "ignore"}, optional
+        How to handle missing data in the input dataframes. Default: "warn"
+
+
+    Attributes
+    ----------
+    heartbeat_list_ : :class:`~biopsykit.utils.dtypes.HeartbeatSegmentationDataFrame`
+        DataFrame containing the segmented heartbeats with the following columns:
+            - ``start_time``: Start time of the heartbeat
+            - ``start_sample``: Start sample of the heartbeat
+            - ``end_sample``: End sample of the heartbeat
+            - ``r_peak_sample``: Sample of the R-peak of the heartbeat
+            - ``rr_interval_sample``: RR-interval to the next heartbeat in samples
+            - ``rr_interval_ms``: RR-interval to the next heartbeat in milliseconds
+
+
     References
     ----------
-    .. [1] Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S.H. Chen
+    .. [Mak21] Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S.H. Chen
         (2021). NeuroKit2: A Python Toolbox for Neurophysiological Signal Processing. Behavior Research Methods.
         https://doi.org/10.3758/s13428-020-01516-y
 

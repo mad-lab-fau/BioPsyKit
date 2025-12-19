@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 0.13.1 - June 12, 2025
+## Bugfixes
+- fix IPython import paths in `biopsykit.stats`
+
+## Version 0.13.0 - April 16, 2025
+## Improvements
+- `biopsykit.io.biomarker`: Made importing biomarker data from the laboratory ("plate-format") more flexible and 
+  error-safe.
+
+## Internal Changes
+- Updated code to fix deprecation and future warnings in `pandas` and `numpy`.
+
+## Version 0.12.3 - March 15, 2025
+### Internal Changes
+- Migrated from `poetry` to `uv` as the main build tool. This change is due to the fact that `uv` is more flexible and 
+  allows for more customization. The `pyproject.toml` file was updated accordingly.
+
 ## Version 0.12.2 - January 14, 2025
 ### Bugfix
 - small bugfixes in PEP Algorithms and Biopac importer (improved error handling)

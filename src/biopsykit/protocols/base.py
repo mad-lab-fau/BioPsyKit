@@ -4,7 +4,7 @@ import json
 from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -48,8 +48,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def __init__(
         self,
         name: str,
-        structure: Optional[dict[str, Any]] = None,
-        test_times: Optional[Sequence[int]] = None,
+        structure: dict[str, Any] | None = None,
+        test_times: Sequence[int] | None = None,
         **kwargs,
     ):
         """Class representing a base class for psychological protocols and data collected within a study.
@@ -336,11 +336,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
     def add_saliva_data(
         self,
-        saliva_data: Union[SalivaRawDataFrame, dict[str, SalivaRawDataFrame]],
-        saliva_type: Optional[Union[str, Sequence[str]]] = None,
-        sample_times: Optional[Union[Sequence[int], dict[str, Sequence[int]]]] = None,
-        test_times: Optional[Sequence[int]] = None,
-        sample_times_absolute: Optional[bool] = False,
+        saliva_data: SalivaRawDataFrame | dict[str, SalivaRawDataFrame],
+        saliva_type: str | Sequence[str] | None = None,
+        sample_times: Sequence[int] | dict[str, Sequence[int]] | None = None,
+        test_times: Sequence[int] | None = None,
+        sample_times_absolute: bool | None = False,
     ):
         """Add saliva data collected during psychological protocol to ``Protocol`` instance.
 
@@ -376,9 +376,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
         if saliva_data is not None:
             if not isinstance(sample_times, dict):
-                sample_times = {key: sample_times for key in saliva_type}
+                sample_times = dict.fromkeys(saliva_type, sample_times)
             if not isinstance(saliva_data, dict):
-                saliva_data = {key: saliva_data for key in saliva_type}
+                saliva_data = dict.fromkeys(saliva_type, saliva_data)
             self.sample_times.update(
                 _get_sample_times(saliva_data, sample_times, self.test_times, sample_times_absolute)
             )
@@ -387,10 +387,10 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
     def _add_saliva_data(
         self,
-        data: Union[SalivaRawDataFrame, dict[str, SalivaRawDataFrame]],
-        saliva_type: Union[str, Sequence[str]],
-        sample_times: Union[Sequence[int], dict[str, Sequence[int]]],
-    ) -> Union[SalivaRawDataFrame, dict[str, SalivaRawDataFrame]]:
+        data: SalivaRawDataFrame | dict[str, SalivaRawDataFrame],
+        saliva_type: str | Sequence[str],
+        sample_times: Sequence[int] | dict[str, Sequence[int]],
+    ) -> SalivaRawDataFrame | dict[str, SalivaRawDataFrame]:
         saliva_data = {}
         if isinstance(data, dict):
             for key, value in data.items():
@@ -413,8 +413,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def add_hr_data(
         self,
         hr_data: HeartRateSubjectDataDict,
-        rpeak_data: Optional[SubjectDataDict] = None,
-        study_part: Optional[str] = None,
+        rpeak_data: SubjectDataDict | None = None,
+        study_part: str | None = None,
     ):
         """Add time-series heart rate data collected during psychological protocol to ``Protocol`` instance.
 
@@ -442,15 +442,15 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def compute_hr_results(  # pylint:disable=too-many-branches # noqa: C901
         self,
         result_id: str,
-        study_part: Optional[str] = None,
-        resample_sec: Optional[bool] = True,
-        normalize_to: Optional[bool] = False,
-        select_phases: Optional[bool] = False,
-        split_into_subphases: Optional[bool] = False,
-        mean_per_subject: Optional[bool] = True,
-        add_conditions: Optional[bool] = False,
-        reindex: Optional[bool] = False,
-        params: Optional[dict[str, Any]] = None,
+        study_part: str | None = None,
+        resample_sec: bool | None = True,
+        normalize_to: bool | None = False,
+        select_phases: bool | None = False,
+        split_into_subphases: bool | None = False,
+        mean_per_subject: bool | None = True,
+        add_conditions: bool | None = False,
+        reindex: bool | None = False,
+        params: dict[str, Any] | None = None,
     ):
         """Compute heart rate data results from one study part.
 
@@ -559,13 +559,13 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def compute_hrv_results(  # pylint:disable=too-many-branches
         self,
         result_id: str,
-        study_part: Optional[str] = None,
-        select_phases: Optional[bool] = False,
-        split_into_subphases: Optional[bool] = False,
-        dict_levels: Optional[Sequence[str]] = None,
-        hrv_params: Optional[dict[str, Any]] = None,
-        add_conditions: Optional[bool] = False,
-        params: Optional[dict[str, Any]] = None,
+        study_part: str | None = None,
+        select_phases: bool | None = False,
+        split_into_subphases: bool | None = False,
+        dict_levels: Sequence[str] | None = None,
+        hrv_params: dict[str, Any] | None = None,
+        add_conditions: bool | None = False,
+        params: dict[str, Any] | None = None,
     ):
         """Compute heart rate variability ensemble from one study part.
 
@@ -657,14 +657,14 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def compute_hr_ensemble(  # pylint:disable=too-many-branches
         self,
         ensemble_id: str,
-        study_part: Optional[str] = None,
-        resample_sec: Optional[bool] = True,
-        normalize_to: Optional[bool] = True,
-        select_phases: Optional[bool] = False,
-        cut_phases: Optional[bool] = True,
-        merge_dict: Optional[bool] = True,
-        add_conditions: Optional[bool] = False,
-        params: Optional[dict[str, Any]] = None,
+        study_part: str | None = None,
+        resample_sec: bool | None = True,
+        normalize_to: bool | None = True,
+        select_phases: bool | None = False,
+        cut_phases: bool | None = True,
+        merge_dict: bool | None = True,
+        add_conditions: bool | None = False,
+        params: dict[str, Any] | None = None,
     ):
         """Compute heart rate ensemble data from one study part.
 
@@ -760,11 +760,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self,
         result_id: str,
         baseline_phase: str,
-        study_part: Optional[str] = None,
-        select_phases: Optional[bool] = False,
-        split_into_subphases: Optional[bool] = False,
-        add_conditions: Optional[bool] = False,
-        params: Optional[dict[str, Any]] = None,
+        study_part: str | None = None,
+        select_phases: bool | None = False,
+        split_into_subphases: bool | None = False,
+        add_conditions: bool | None = False,
+        params: dict[str, Any] | None = None,
     ):
         """Compute the relative amount of heart rate above a specified baseline.
 
@@ -839,11 +839,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         result_id: str,
         baseline_phase: str,
         continuous_hrv_data: SubjectDataDict,
-        select_phases: Optional[bool] = False,
-        split_into_subphases: Optional[bool] = False,
-        add_conditions: Optional[bool] = False,
-        hrv_columns: Optional[Sequence[str]] = None,
-        params: Optional[dict[str, Any]] = None,
+        select_phases: bool | None = False,
+        split_into_subphases: bool | None = False,
+        add_conditions: bool | None = False,
+        hrv_columns: Sequence[str] | None = None,
+        params: dict[str, Any] | None = None,
     ):
         """Compute the relative amount of heart rate variability above a specified baseline.
 
@@ -913,7 +913,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self.hrv_above_baseline_results[result_id] = result_data
 
     @staticmethod
-    def _compute_hr_above_baseline(data_dict: dict[str, Union[dict[str, pd.DataFrame], pd.DataFrame]]):
+    def _compute_hr_above_baseline(data_dict: dict[str, dict[str, pd.DataFrame] | pd.DataFrame]):
         result_dict = {}
         for subject_id, hr_data_dict in data_dict.items():
             dict_hr = {}
@@ -933,9 +933,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
     @staticmethod
     def _compute_hrv_above_baseline(
-        data_dict: dict[str, Union[dict[str, pd.DataFrame], pd.DataFrame]],
-        data_dict_baseline: dict[str, Union[dict[str, pd.DataFrame], pd.DataFrame]],
-        hrv_columns: Optional[Sequence[str]] = None,
+        data_dict: dict[str, dict[str, pd.DataFrame] | pd.DataFrame],
+        data_dict_baseline: dict[str, dict[str, pd.DataFrame] | pd.DataFrame],
+        hrv_columns: Sequence[str] | None = None,
     ):
         result_dict = {}
         for subject_id, hrv_data_dict in data_dict.items():
@@ -1009,7 +1009,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         results = deepcopy(results)
         self.hrv_results[result_id] = results
 
-    def export_hr_results(self, base_path: path_t, prefix: Optional[str] = None):
+    def export_hr_results(self, base_path: path_t, prefix: str | None = None):
         """Export all heart rate results to csv files.
 
         Parameters
@@ -1022,7 +1022,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """
         self._export_results(base_path, prefix, self.hr_results)
 
-    def export_hr_above_baseline_results(self, base_path: path_t, prefix: Optional[str] = None):
+    def export_hr_above_baseline_results(self, base_path: path_t, prefix: str | None = None):
         """Export all heart rate above baseline results to csv files.
 
         Parameters
@@ -1035,7 +1035,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """
         self._export_results(base_path, prefix, self.hr_above_baseline_results)
 
-    def export_hr_ensemble(self, base_path: path_t, prefix: Optional[str] = None):
+    def export_hr_ensemble(self, base_path: path_t, prefix: str | None = None):
         """Export all heart rate ensemble data to Excel files.
 
         Parameters
@@ -1048,7 +1048,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """
         self._export_ensemble(base_path, prefix, self.hr_ensemble)
 
-    def export_hrv_results(self, base_path: path_t, prefix: Optional[str] = None):
+    def export_hrv_results(self, base_path: path_t, prefix: str | None = None):
         """Export all heart rate variability results to csv files.
 
         Parameters
@@ -1061,7 +1061,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         """
         self._export_results(base_path, prefix, self.hrv_results)
 
-    def export_hrv_above_baseline_results(self, base_path: path_t, prefix: Optional[str] = None):
+    def export_hrv_above_baseline_results(self, base_path: path_t, prefix: str | None = None):
         """Export all heart rate variability above baseline results to csv files.
 
         Parameters
@@ -1150,9 +1150,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
 
     def saliva_plot(
         self,
-        saliva_type: Optional[Union[str, Sequence[str]]] = "cortisol",
+        saliva_type: str | Sequence[str] | None = "cortisol",
         **kwargs,
-    ) -> Optional[tuple[plt.Figure, plt.Axes]]:
+    ) -> tuple[plt.Figure, plt.Axes] | None:
         """Plot saliva data during psychological protocol as mean ± standard error.
 
         Parameters
@@ -1226,8 +1226,8 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         self,
         x: str,
         saliva_type: str,
-        feature: Optional[str] = None,
-        stats_kwargs: Optional[dict] = None,
+        feature: str | None = None,
+        stats_kwargs: dict | None = None,
         **kwargs,
     ) -> tuple[plt.Figure, plt.Axes]:
         """Draw a boxplot with significance brackets, specifically designed for saliva features.
@@ -1274,9 +1274,9 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
     def saliva_multi_feature_boxplot(
         data: SalivaFeatureDataFrame,
         saliva_type: str,
-        features: Union[Sequence[str], dict[str, Union[str, Sequence[str]]]],
-        hue: Optional[str] = None,
-        stats_kwargs: Optional[dict] = None,
+        features: Sequence[str] | dict[str, str | Sequence[str]],
+        hue: str | None = None,
+        stats_kwargs: dict | None = None,
         **kwargs,
     ) -> tuple[plt.Figure, Iterable[plt.Axes]]:
         """Draw multiple features as boxplots with significance brackets, specifically designed for saliva features.
@@ -1322,7 +1322,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         return plot.saliva_multi_feature_boxplot(data, saliva_type, features, hue, stats_kwargs, **kwargs)
 
     def hr_ensemble_plot(
-        self, ensemble_id: str, subphases: Optional[dict[str, dict[str, int]]] = None, **kwargs
+        self, ensemble_id: str, subphases: dict[str, dict[str, int]] | None = None, **kwargs
     ) -> tuple[plt.Figure, plt.Axes]:
         r"""Draw heart rate ensemble plot.
 

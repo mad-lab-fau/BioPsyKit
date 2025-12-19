@@ -337,7 +337,7 @@ class TestSalivaUtils:
             data=saliva_cols_all(), saliva_type=saliva_type, col_pattern=col_pattern
         )
 
-        for saliva, col in zip(saliva_type, col_pattern):
+        for saliva, col in zip(saliva_type, col_pattern, strict=False):
             assert_frame_equal(
                 data_out[saliva],
                 utils.extract_saliva_columns(data=saliva_cols_all(), saliva_type=saliva, col_pattern=col),

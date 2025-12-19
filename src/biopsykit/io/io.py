@@ -3,7 +3,7 @@
 import datetime
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -40,7 +40,7 @@ __all__ = [
 ]
 
 
-def load_long_format_csv(file_path: path_t, index_cols: Optional[Union[str, Sequence[str]]] = None) -> pd.DataFrame:
+def load_long_format_csv(file_path: path_t, index_cols: str | Sequence[str] | None = None) -> pd.DataFrame:
     """Load dataframe stored as long-format from file.
 
     Parameters
@@ -73,11 +73,11 @@ def load_long_format_csv(file_path: path_t, index_cols: Optional[Union[str, Sequ
 
 def load_time_log(
     file_path: path_t,
-    subject_col: Optional[str] = None,
-    condition_col: Optional[str] = None,
-    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
-    phase_cols: Optional[Union[Sequence[str], dict[str, str]]] = None,
-    continuous_time: Optional[bool] = True,
+    subject_col: str | None = None,
+    condition_col: str | None = None,
+    additional_index_cols: str | Sequence[str] | None = None,
+    phase_cols: Sequence[str] | dict[str, str] | None = None,
+    continuous_time: bool | None = True,
     **kwargs,
 ) -> pd.DataFrame:
     """Load time log information from file.
@@ -183,10 +183,10 @@ def load_time_log(
 
 def convert_time_log_datetime(
     time_log: pd.DataFrame,
-    dataset: Optional[Dataset] = None,
-    df: Optional[pd.DataFrame] = None,
-    date: Optional[Union[str, datetime.datetime]] = None,
-    timezone: Optional[Union[str, datetime.tzinfo]] = None,
+    dataset: Dataset | None = None,
+    df: pd.DataFrame | None = None,
+    date: str | datetime.datetime | None = None,
+    timezone: str | datetime.tzinfo | None = None,
 ) -> pd.DataFrame:
     """Convert the time log information into datetime objects.
 
@@ -235,14 +235,16 @@ def convert_time_log_datetime(
 
     if isinstance(time_log.to_numpy().flatten()[0], str):
         # convert time strings into datetime.time object
-        time_log = time_log.applymap(pd.to_datetime)
-        time_log = time_log.applymap(lambda val: val.time())
+        time_log = time_log.map(pd.to_datetime)
+        time_log = time_log.map(lambda val: val.time())
 
-    time_log = time_log.applymap(lambda x: timezone.localize(datetime.datetime.combine(date, x)))
+    time_log = time_log.map(lambda x: timezone.localize(datetime.datetime.combine(date, x)))
     return time_log
 
 
-def load_atimelogger_file(file_path: path_t, timezone: Optional[Union[datetime.tzinfo, str]] = None) -> pd.DataFrame:
+def load_atimelogger_file(
+    file_path: path_t, timezone: datetime.tzinfo | str | None = None, handle_multiple: str = "raise"
+) -> pd.DataFrame:
     """Load time log file exported from the aTimeLogger app.
 
     The resulting dataframe will have one row and start and end times of the single phases as columns.
@@ -293,17 +295,28 @@ def load_atimelogger_file(file_path: path_t, timezone: Optional[Union[datetime.t
     timelog.index.name = "phase"
     timelog.columns.name = "start_end"
 
-    timelog = timelog.apply(pd.to_datetime, axis=1).map(lambda val: val.tz_localize(timezone))
+    if timelog.index.duplicated().any():
+        if handle_multiple == "raise":
+            raise ValueError("Duplicate indices found in the time log file.")
+        if handle_multiple == "fix":
+            duplicate_counter = timelog.groupby(timelog.index).cumcount()
+            timelog.index = pd.MultiIndex.from_arrays([timelog.index, duplicate_counter], names=["phase", "trial"])
+
+    probe_timelog = timelog.iloc[0, 0]
+    dayfirst = "/" in probe_timelog
+    timelog = timelog.apply(lambda ts, d=dayfirst: pd.to_datetime(ts, dayfirst=d), axis=1).map(
+        lambda val: val.tz_localize(timezone)
+    )
 
     timelog = pd.DataFrame(timelog.T.unstack(), columns=["time"])
-    timelog = timelog[::-1].reindex(["start", "end"], level="start_end")
+    timelog = timelog.reindex(["start", "end"], level="start_end")
     timelog = timelog.T
     return timelog
 
 
 def convert_time_log_dict(
-    timelog: Union[pd.DataFrame, pd.Series], time_format: Optional[Literal["str", "time"]] = "time"
-) -> dict[str, tuple[Union[str, datetime.time]]]:
+    timelog: pd.DataFrame | pd.Series, time_format: Literal["str", "time"] | None = "time"
+) -> dict[str, tuple[str | datetime.time]]:
     """Convert time log into dictionary.
 
     The resulting dictionary will have the phase names as keys and a tuple with start and end times as values.
@@ -339,11 +352,11 @@ def convert_time_log_dict(
 
 def load_subject_condition_list(
     file_path: path_t,
-    subject_col: Optional[str] = None,
-    condition_col: Optional[str] = None,
-    return_dict: Optional[bool] = False,
+    subject_col: str | None = None,
+    condition_col: str | None = None,
+    return_dict: bool | None = False,
     **kwargs,
-) -> Union[SubjectConditionDataFrame, SubjectConditionDict]:
+) -> SubjectConditionDataFrame | SubjectConditionDict:
     """Load subject condition assignment from file.
 
     This function can be used to load a file that contains the assignment of subject IDs to study conditions.
@@ -423,12 +436,12 @@ def load_subject_condition_list(
 
 def load_questionnaire_data(
     file_path: path_t,
-    subject_col: Optional[str] = None,
-    condition_col: Optional[str] = None,
-    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
-    replace_missing_vals: Optional[bool] = True,
-    remove_nan_rows: Optional[bool] = True,
-    sheet_name: Optional[Union[str, int]] = 0,
+    subject_col: str | None = None,
+    condition_col: str | None = None,
+    additional_index_cols: str | Sequence[str] | None = None,
+    replace_missing_vals: bool | None = True,
+    remove_nan_rows: bool | None = True,
+    sheet_name: str | int | None = 0,
     **kwargs,
 ) -> pd.DataFrame:
     """Load questionnaire data from file.
@@ -582,7 +595,7 @@ def load_codebook(file_path: path_t, **kwargs) -> CodebookDataFrame:
 
 
 def load_pandas_dict_excel(
-    file_path: path_t, index_col: Optional[str] = "time", timezone: Optional[Union[str, datetime.tzinfo]] = None
+    file_path: path_t, index_col: str | None = "time", timezone: str | datetime.tzinfo | None = None
 ) -> dict[str, pd.DataFrame]:
     """Load Excel file containing pandas dataframes with time series data of one subject.
 
@@ -631,7 +644,7 @@ def load_pandas_dict_excel(
 def write_pandas_dict_excel(
     data_dict: dict[str, pd.DataFrame],
     file_path: path_t,
-    index_col: Optional[bool] = True,
+    index_col: bool | None = True,
 ):
     """Write a dictionary with pandas dataframes to an Excel file.
 
@@ -667,7 +680,7 @@ def write_pandas_dict_excel(
 def write_result_dict(
     result_dict: dict[str, pd.DataFrame],
     file_path: path_t,
-    index_name: Optional[str] = "subject",
+    index_name: str | None = "subject",
 ):
     """Write dictionary with processing results (e.g. HR, HRV, RSA) to csv file.
 
@@ -720,7 +733,7 @@ def write_result_dict(
         writer.close()
 
 
-def _extract_date(dataset: Dataset, df: pd.DataFrame, date: Union[str, datetime.datetime]) -> datetime.datetime:
+def _extract_date(dataset: Dataset, df: pd.DataFrame, date: str | datetime.datetime) -> datetime.datetime:
     if dataset is not None:
         date = dataset.info.utc_datetime_start.date()
     if df is not None:
@@ -748,8 +761,8 @@ def _get_subject_col(data: pd.DataFrame, subject_col: str):
 def _sanitize_index_cols(
     data: pd.DataFrame,
     subject_col: str,
-    condition_col: Optional[str],
-    additional_index_cols: Optional[Union[str, Sequence[str]]],
+    condition_col: str | None,
+    additional_index_cols: str | Sequence[str] | None,
 ) -> tuple[pd.DataFrame, Sequence[str]]:
     subject_col = _get_subject_col(data, subject_col)
     data = data.rename(columns={subject_col: "subject"})
@@ -781,7 +794,7 @@ def _load_dataframe(file_path, **kwargs):
 
 
 def _apply_index_cols(
-    data: pd.DataFrame, index_cols: Optional[Union[str, Sequence[str], dict[str, str]]] = None
+    data: pd.DataFrame, index_cols: str | Sequence[str] | dict[str, str] | None = None
 ) -> pd.DataFrame:
     new_index_cols = None
     if isinstance(index_cols, str):
@@ -800,7 +813,7 @@ def _apply_index_cols(
     return data
 
 
-def _apply_phase_cols(data: pd.DataFrame, phase_cols: Union[dict[str, Sequence[str]], Sequence[str]]) -> pd.DataFrame:
+def _apply_phase_cols(data: pd.DataFrame, phase_cols: dict[str, Sequence[str]] | Sequence[str]) -> pd.DataFrame:
     new_phase_cols = None
     if isinstance(phase_cols, dict):
         new_phase_cols = phase_cols
@@ -816,7 +829,7 @@ def _apply_phase_cols(data: pd.DataFrame, phase_cols: Union[dict[str, Sequence[s
 
 
 def _parse_time_log_not_continuous(
-    data: pd.DataFrame, index_cols: Union[str, Sequence[str], dict[str, str]]
+    data: pd.DataFrame, index_cols: str | Sequence[str] | dict[str, str]
 ) -> pd.DataFrame:
     start_cols = np.squeeze(data.columns.str.extract(r"(\w+)_start").dropna().values)
     end_cols = np.squeeze(data.columns.str.extract(r"(\w+)_end").dropna().values)

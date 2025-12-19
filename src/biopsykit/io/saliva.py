@@ -2,7 +2,6 @@
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Union
 
 import pandas as pd
 
@@ -17,12 +16,12 @@ from biopsykit.utils.dtypes import SalivaRawDataFrame, SubjectConditionDataFrame
 def load_saliva_plate(
     file_path: path_t,
     saliva_type: str,
-    sample_id_col: Optional[str] = None,
-    data_col: Optional[str] = None,
-    id_col_names: Optional[Sequence[str]] = None,
-    regex_str: Optional[str] = None,
-    sample_times: Optional[Sequence[int]] = None,
-    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
+    sample_id_col: str | None = None,
+    data_col: str | None = None,
+    id_col_names: Sequence[str] | None = None,
+    regex_str: str | None = None,
+    sample_times: Sequence[int] | None = None,
+    condition_list: Sequence | dict[str, Sequence] | pd.Index | None = None,
     **kwargs,
 ) -> SalivaRawDataFrame:
     r"""Read saliva from an Excel sheet in 'plate' format.
@@ -98,8 +97,8 @@ def load_saliva_plate(
 def save_saliva(
     file_path: path_t,
     data: SalivaRawDataFrame,
-    saliva_type: Optional[str] = "cortisol",
-    as_wide_format: Optional[bool] = False,
+    saliva_type: str | None = "cortisol",
+    as_wide_format: bool | None = False,
 ):
     """Save saliva data to csv file.
 
@@ -129,10 +128,10 @@ def save_saliva(
 def load_saliva_wide_format(
     file_path: path_t,
     saliva_type: str,
-    subject_col: Optional[str] = None,
-    condition_col: Optional[str] = None,
-    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
-    sample_times: Optional[Sequence[int]] = None,
+    subject_col: str | None = None,
+    condition_col: str | None = None,
+    additional_index_cols: str | Sequence[str] | None = None,
+    sample_times: Sequence[int] | None = None,
     **kwargs,
 ) -> SalivaRawDataFrame:
     """Load saliva data that is in wide-format from csv file.
@@ -233,14 +232,14 @@ def _check_sample_times(num_samples: int, num_subjects: int, sample_times: Seque
 
 
 def _parse_condition_list(
-    data: pd.DataFrame, condition_list: Union[Sequence, dict[str, Sequence], pd.Index]
+    data: pd.DataFrame, condition_list: Sequence | dict[str, Sequence] | pd.Index
 ) -> SubjectConditionDataFrame:
     return biomarker._parse_condition_list(data, condition_list)
 
 
 def _apply_condition_list(
     data: pd.DataFrame,
-    condition_list: Optional[Union[Sequence, dict[str, Sequence], pd.Index]] = None,
+    condition_list: Sequence | dict[str, Sequence] | pd.Index | None = None,
 ):
     return biomarker._apply_condition_list(data, condition_list)
 

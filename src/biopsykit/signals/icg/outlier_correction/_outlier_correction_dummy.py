@@ -1,13 +1,11 @@
-from typing import Optional
-
-from biopsykit.signals.icg.outlier_correction import BaseOutlierCorrection
+from biopsykit.signals.icg.outlier_correction import BaseBPointOutlierCorrection
 
 __all__ = ["OutlierCorrectionDummy"]
 
 from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, is_b_point_dataframe
 
 
-class OutlierCorrectionDummy(BaseOutlierCorrection):
+class OutlierCorrectionDummy(BaseBPointOutlierCorrection):
     """B-point outlier correction algorithm that does nothing and passes through the input data unchanged.
 
     This class is used as a placeholder for the outlier correction in the ICG pipeline.
@@ -18,8 +16,8 @@ class OutlierCorrectionDummy(BaseOutlierCorrection):
         self,
         *,
         b_points: BPointDataFrame,
-        c_points: Optional[CPointDataFrame],  # noqa: ARG002
-        sampling_rate_hz: Optional[float],  # noqa: ARG002
+        c_points: CPointDataFrame | None,  # noqa: ARG002
+        sampling_rate_hz: float | None,  # noqa: ARG002
         **kwargs,  # noqa: ARG002
     ):
         """Perform outlier correction.

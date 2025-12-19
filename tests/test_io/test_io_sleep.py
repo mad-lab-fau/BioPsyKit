@@ -36,11 +36,11 @@ def sleep_endpoints_dataframe_correct():
 def sleep_endpoints_dataframe_additional_cols():
     return pd.DataFrame(
         {
-            "sleep_onset": pd.to_datetime("01.01.2021 00:00"),
-            "wake_onset": pd.to_datetime("01.01.2021 08:00"),
+            "sleep_onset": pd.to_datetime("01.01.2021 00:00", dayfirst=True),
+            "wake_onset": pd.to_datetime("01.01.2021 08:00", dayfirst=True),
             "total_sleep_duration": 8 * 60,
-            "major_rest_period_start": pd.to_datetime("31.12.2020 23:00"),
-            "major_rest_period_end": pd.to_datetime("01.01.2021 08:30"),
+            "major_rest_period_start": pd.to_datetime("31.12.2020 23:00", dayfirst=True),
+            "major_rest_period_end": pd.to_datetime("01.01.2021 08:30", dayfirst=True),
         },
         index=pd.DatetimeIndex(pd.to_datetime(["31.12.2020"], format="%d.%m.%Y"), name="date"),
     )

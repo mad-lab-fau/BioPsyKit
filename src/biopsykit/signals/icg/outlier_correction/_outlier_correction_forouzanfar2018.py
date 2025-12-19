@@ -6,7 +6,7 @@ from statsmodels.tools.sm_exceptions import ValueWarning
 from statsmodels.tsa.ar_model import ar_select_order
 from statsmodels.tsa.arima.model import ARIMA
 
-from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseOutlierCorrection
+from biopsykit.signals.icg.outlier_correction._base_outlier_correction import BaseBPointOutlierCorrection
 
 __all__ = ["OutlierCorrectionForouzanfar2018"]
 
@@ -16,14 +16,16 @@ from biopsykit.utils.dtypes import BPointDataFrame, CPointDataFrame, is_b_point_
 # TODO add verbosity option
 
 
-class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
-    """B-Point outlier correction algorithm based on Forouzanfar et al. (2018) [1]_.
+class OutlierCorrectionForouzanfar2018(BaseBPointOutlierCorrection):
+    """B-Point outlier correction algorithm based on Forouzanfar et al. (2018).
 
     This algorithm corrects outliers in B-Point data using an autoregressive model.
 
+    For more information, see [For18]_.
+
     References
     ----------
-    .. [1] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
+    .. [For18] Forouzanfar, M., Baker, F. C., De Zambotti, M., McCall, C., Giovangrandi, L., & Kovacs, G. T. A. (2018).
         Toward a better noninvasive assessment of preejection period: A novel automatic algorithm for B-point detection
         and correction on thoracic impedance cardiogram. Psychophysiology, 55(8), e13072.
         https://doi.org/10.1111/psyp.13072
@@ -76,7 +78,7 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
         # stationarize the B-Point time data
         stationary_data = self.stationarize_b_points(b_points, c_points, sampling_rate_hz)
         b_points_nan = b_points.loc[b_points["b_point_sample"].isna()]
-        stationary_data.loc[b_points_nan.index, "statio_data"] = np.NaN
+        stationary_data.loc[b_points_nan.index, "statio_data"] = np.nan
 
         # detect outliers
         outliers = self.detect_b_point_outlier(stationary_data)
@@ -153,7 +155,7 @@ class OutlierCorrectionForouzanfar2018(BaseOutlierCorrection):
             warnings.simplefilter("ignore", category=FutureWarning)
 
             data = statio_data["statio_data"].to_frame()
-            data.loc[outliers.index, "statio_data"] = np.NaN
+            data.loc[outliers.index, "statio_data"] = np.nan
             input_endog = (
                 data["statio_data"]
                 .astype(float)

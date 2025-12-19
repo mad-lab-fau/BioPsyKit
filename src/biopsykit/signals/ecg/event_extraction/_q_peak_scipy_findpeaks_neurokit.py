@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
-from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtraction
+from biopsykit.signals.ecg.event_extraction._base_ecg_extraction import BaseEcgExtractionWithHeartbeats
 from biopsykit.utils.array_handling import sanitize_input_series
 from biopsykit.utils.dtypes import (
     EcgRawDataFrame,
@@ -17,12 +17,14 @@ from biopsykit.utils.dtypes import (
 from biopsykit.utils.exceptions import EventExtractionError
 
 
-class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
-    """Algorithm for Q-peak extraction using the ``scipy.find_peaks`` method implemented in NeuroKit2 [1]_.
+class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtractionWithHeartbeats, CanHandleMissingEventsMixin):
+    """Algorithm for Q-peak extraction using the ``scipy.find_peaks`` method implemented in NeuroKit2.
+
+    For more information, see [Mak21]_.
 
     References
     ----------
-    .. [1] Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S.H. Chen
+    .. [Mak21] Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S.H. Chen
         (2021). NeuroKit2: A Python Toolbox for Neurophysiological Signal Processing. Behavior Research Methods.
         https://doi.org/10.3758/s13428-020-01516-y
 
@@ -106,7 +108,7 @@ class QPeakExtractionSciPyFindPeaksNeurokit(BaseEcgExtraction, CanHandleMissingE
                 # Q occurs after R, which is not valid
                 if heartbeats["r_peak_sample"].loc[heartbeat_idx].item() < q:
                     heartbeats_q_after_r.append(heartbeat_idx)
-                    q_peaks.loc[heartbeat_idx, "q_peak"] = np.NaN
+                    q_peaks.loc[heartbeat_idx, "q_peak"] = np.nan
                 # valid Q-peak found
                 else:
                     q_peaks.loc[heartbeat_idx, "q_peak"] = q
