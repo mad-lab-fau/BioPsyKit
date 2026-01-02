@@ -173,6 +173,10 @@ class PSGDataset:
 
         # look for all PSG .edf files in the folder
         dataset_list = sorted(folder_path.glob("*.edf"))
+
+        # ignore all files with starting _ in the filename
+        dataset_list = [f for f in dataset_list if not f.stem.startswith("._")]
+
         if len(dataset_list) == 0:
             raise FileNotFoundError(f"No PSG files found in folder {folder_path}!")
         if len(dataset_list) > 1:
