@@ -2,6 +2,7 @@
 
 import datetime
 import warnings
+from collections.abc import Sequence
 from typing import Any
 
 import matplotlib.patches as mpatch
@@ -10,10 +11,272 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from fau_colors import colors_all
+from tpcp import Algorithm, Parameter
+from typing_extensions import Self
 
 from biopsykit.protocols import BaseProtocol
 from biopsykit.signals.ecg.plotting import hr_plot
+from biopsykit.utils._types_internal import str_t
 from biopsykit.utils.exceptions import FeatureComputationError
+
+__all__ = ["CFT", "CftFeatureExtraction"]
+
+
+class CftFeatureExtraction(Algorithm):
+    _action_methods = ("extract",)
+
+    start_baseline_sec: Parameter[int]
+    duration_baseline_sec: Parameter[int]
+    duration_cft_sec: Parameter[int]
+    duration_recovery_sec: Parameter[int]
+
+    group_level: Parameter[str_t]
+
+    error_handling: Parameter[str]
+
+    cft_parameter: Sequence[str] = ["cft_onset", "peak_bradycardia", "mean_bradycardia", "poly_fit"]
+
+    output_: pd.DataFrame
+
+    def __init__(
+        self,
+        *,
+        start_baseline_sec: int = 0,
+        duration_baseline_sec: int = 0,
+        duration_cft_sec: int = 120,
+        duration_recovery_sec: int = 0,
+        group_level: str_t,
+        error_handling: str = "warn",
+    ):
+        self.start_baseline_sec = start_baseline_sec
+        self.duration_baseline_sec = duration_baseline_sec
+        self.duration_cft_sec = duration_cft_sec
+        self.duration_recovery_sec = duration_recovery_sec
+        self.group_level = group_level
+        self.error_handling = error_handling
+
+    def extract(self, data: pd.DataFrame) -> Self:
+        if isinstance(self.group_level, str):
+            group_level = [self.group_level]
+        else:
+            group_level = list(self.group_level)
+        out_dict = {}
+        for key, df in data.groupby(group_level):
+            out_dict[key] = self._compute_cft_parameter(df)
+
+        out_dict = {key: df.dropna(axis=1, how="all") for key, df in out_dict.items()}
+        out = pd.concat(out_dict, names=group_level)
+        out = out.droplevel(-1)
+
+        self.output_ = out
+        return self
+
+    def _compute_cft_parameter(self, data: pd.DataFrame) -> pd.DataFrame:
+        out_dict = {}
+        data_cft = self._extract_cft_interval(data)
+        hr_baseline = self._baseline_hr(data_cft)
+
+        out_dict["baseline_hr"] = hr_baseline
+        out_dict["cft_start_idx"] = data.index.get_level_values("heartbeat_id")[0]
+
+        for parameter in self.cft_parameter:
+            out_dict.update(getattr(self, f"_{parameter}")(data=data_cft, hr_baseline=hr_baseline))
+        return pd.DataFrame([out_dict])
+
+    def _extract_cft_interval(self, data: pd.DataFrame):
+        cft_start = data["r_peak_time"].iloc[0] + pd.Timedelta(
+            seconds=self.start_baseline_sec + self.duration_baseline_sec
+        )
+        cft_end = cft_start + pd.Timedelta(seconds=self.duration_cft_sec)
+        return data.loc[((data["r_peak_time"] >= cft_start) & (data["r_peak_time"] <= cft_end))]
+
+    def _baseline_hr(self, data: pd.DataFrame) -> float:
+        if self.duration_baseline_sec == 0:
+            warning_msg = (
+                "Baseline is 0, no baseline can be extracted! "
+                "Using the first heart rate value in the dataframe as baseline."
+            )
+            if self.error_handling == "warn":
+                warnings.warn(warning_msg)
+            elif self.error_handling == "raise":
+                raise FeatureComputationError(warning_msg)
+
+        bl_start = self.start_baseline_sec
+        bl_end = self.start_baseline_sec + self.duration_baseline_sec
+        data = data.assign(time_relative=data["r_peak_time"] - data["r_peak_time"].iloc[0])
+        duration = data["time_relative"].iloc[-1].total_seconds()
+        if bl_end > duration:
+            raise FeatureComputationError(
+                "Error computing Baseline heart rate! The provided data is shorter than the expected Baseline interval."
+            )
+
+        hr_baseline = data.loc[
+            (
+                (data["time_relative"] >= pd.Timedelta(seconds=bl_start))
+                & (data["time_relative"] <= pd.Timedelta(seconds=bl_end))
+            )
+        ]
+        return hr_baseline["heart_rate_bpm"].mean().squeeze()
+
+    def _cft_onset(self, data: pd.DataFrame, hr_baseline: float) -> dict[str, Any]:
+        # bradycardia mask (True where heart rate is below baseline, False otherwise)
+        df_hr = data["heart_rate_bpm"]
+        hr_brady = df_hr < hr_baseline
+
+        # bradycardia borders (1 where we have a change between lower and higher heart rate)
+        brady_border = np.abs(np.ediff1d(hr_brady.astype(int), to_begin=0))
+        # filter out the phases where we have at least 3 heart rate values lower than baseline
+        brady_phases = hr_brady.groupby([np.cumsum(brady_border)]).filter(lambda df: df.sum() >= 3)
+
+        if brady_phases.empty:
+            return {
+                "onset_time": np.nan,
+                "onset_latency": np.nan,
+                "onset_idx": np.nan,
+                "onset_hr": np.nan,
+                "onset_hr_percent": np.nan,
+                "onset_slope": np.nan,
+            }
+        # CFT onset is the third beat
+        onset = brady_phases.index[2]
+
+        onset_time = data["r_peak_time"].loc[onset]
+        start_time = data["r_peak_time"].iloc[0]
+
+        onset_latency = (onset_time - start_time).total_seconds()
+        onset_idx = data.index.get_loc(onset)
+
+        # heart rate at onset point
+        hr_onset = np.squeeze(df_hr.loc[onset])
+        return {
+            "onset_time": onset_time,
+            "onset_latency": onset_latency,
+            "onset_idx": onset_idx,
+            "onset_hr": hr_onset,
+            "onset_hr_percent": (1 - hr_onset / hr_baseline) * 100,
+            "onset_slope": (hr_onset - hr_baseline) / onset_latency,
+        }
+
+    def _peak_bradycardia(self, data: pd.DataFrame, hr_baseline: float) -> dict[str, Any]:
+        """Compute **CFT peak bradycardia**.
+
+        The CFT peak bradycardia is defined as the maximum bradycardia (i.e., the minimum heart rate)
+        during the CFT Interval.
+
+        This function computes the following CFT peak bradycardia parameter:
+
+        * ``peak_brady``: location of CFT peak bradycardia. This value is the same datatype as the index of ``data``
+          (i.e., either a absolute datetime timestamp or a relative timestamp in time since recording).
+        * ``peak_brady_latency``: CFT peak bradycardia latency, i.e., the duration between beginning of the
+          CFT Interval and CFT peak bradycardia in seconds.
+        * ``peak_brady_idx``: location of CFT peak bradycardia as array index
+        * ``peak_brady_bpm``: CFT peak bradycardia in bpm
+        * ``peak_brady_percent``: Relative change of CFT peak bradycardia heart rate compared to Baseline
+          heart rate in percent.
+        * ``peak_brady_slope``: Slope between Baseline heart rate and CFT peak bradycardia heart rate, computed as:
+          ``peak_brady_slope = (peak_brady_bpm - baseline_hr) / peak_brady_latency``
+
+
+        Parameters
+        ----------
+        data : :class:`~pandas.DataFrame`
+            input data
+        hr_baseline : float, optional
+            mean heart rate during Baseline Interval.
+
+
+        Returns
+        -------
+        dict
+            dictionary with CFT peak bradycardia parameter
+
+        """
+        df_hr = data["heart_rate_bpm"]
+        peak_brady = df_hr.idxmin()
+        peak_brady_time = data["r_peak_time"].loc[peak_brady]
+
+        peak_brady_latency = (peak_brady_time - data["r_peak_time"].iloc[0]).total_seconds()
+        peak_brady_idx = df_hr.index.get_loc(peak_brady)
+        hr_brady = np.squeeze(df_hr.loc[peak_brady])
+
+        return {
+            "peak_brady_time": peak_brady_time,
+            "peak_brady_latency": peak_brady_latency,
+            "peak_brady_idx": peak_brady_idx,
+            "peak_brady_bpm": hr_brady - hr_baseline,
+            "peak_brady_percent": (hr_brady / hr_baseline - 1) * 100,
+            "peak_brady_slope": (hr_brady - hr_baseline) / peak_brady_latency if peak_brady_latency != 0 else np.nan,
+        }
+
+    def _mean_bradycardia(self, data: pd.DataFrame, hr_baseline: float) -> dict[str, Any]:
+        """Compute **CFT mean bradycardia**.
+
+        The CFT mean bradycardia is defined as the mean bradycardia (i.e., the mean decrease of heart rate)
+        during the CFT Interval.
+
+        This function computes the following CFT mean bradycardia parameter:
+
+        * ``mean_hr_bpm``: average heart rate during CFT Interval in bpm
+        * ``mean_brady_bpm``: average bradycardia during CFT Interval, computed as:
+          ``mean_brady_bpm = mean_hr_bpm - hr_baseline``
+        * ``mean_brady_percent``: relative change of CFT mean bradycardia heart rate compared to Baseline
+          heart rate in percent
+
+
+        Parameters
+        ----------
+        data : :class:`~pandas.DataFrame`
+            input data
+        hr_baseline : float, optional
+            mean heart rate during Baseline Interval. Default: ``None``
+
+
+        Returns
+        -------
+        dict
+            dictionary with CFT mean bradycardia parameter
+
+        """
+        df_hr = data["heart_rate_bpm"]
+        hr_mean = np.squeeze(df_hr.mean())
+
+        return {
+            "mean_hr_bpm": hr_mean,
+            "mean_brady_bpm": hr_mean - hr_baseline,
+            "mean_brady_percent": (hr_mean / hr_baseline - 1) * 100,
+        }
+
+    def _poly_fit(self, data: pd.DataFrame, hr_baseline: float) -> dict[str, Any]:
+        """Compute **CFT polynomial fit**.
+
+        The CFT polynomial fit is computed by applying a 2nd order least-squares polynomial fit to the heart rate
+        during the CFT Interval because the CFT-induced bradycardia and the following recovery is assumed to follow
+        a polynomial function.
+
+        This function computes the following CFT polynomial fit parameter:
+
+        * ``poly_fit_a{0-2}``: constants of the polynomial ``p(x) = p[2] * x**deg + p[1]* x + p[0]``
+
+
+        Parameters
+        ----------
+        data : :class:`~pandas.DataFrame`
+            input data
+        hr_baseline : float, optional
+            mean heart rate during Baseline Interval. Default: ``None``
+
+
+        Returns
+        -------
+        dict
+            dictionary with CFT polynomial fit parameter
+
+        """
+        data = data.assign(time_relative=data["r_peak_time"] - data["r_peak_time"].iloc[0])
+        idx_s = data["time_relative"].dt.total_seconds()
+        # apply a 2nd degree polynomial fit
+        poly = np.polyfit(idx_s, np.squeeze(data["heart_rate_bpm"]), deg=2)
+        return {f"poly_fit_a{i}": p for i, p in enumerate(reversed(poly))}
 
 
 class CFT(BaseProtocol):

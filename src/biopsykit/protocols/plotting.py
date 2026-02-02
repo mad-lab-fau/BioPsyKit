@@ -16,6 +16,7 @@ from matplotlib.legend_handler import HandlerTuple
 from biopsykit.plotting import feature_boxplot, lineplot, multi_feature_boxplot
 from biopsykit.protocols._utils import _get_sample_times
 from biopsykit.saliva.utils import _remove_s0
+from biopsykit.utils._types_internal import str_t
 from biopsykit.utils.data_processing import get_subphase_durations
 from biopsykit.utils.dtypes import (
     MeanSeDataFrame,
@@ -280,6 +281,152 @@ def hr_ensemble_plot(
     return fig, ax
 
 
+def hr_ensemble_plot_df(
+    data: pd.DataFrame,
+    group_level: str_t,
+    **kwargs,
+) -> tuple[plt.Figure, plt.Axes] | None:
+    r"""Draw a heart rate ensemble plot.
+
+    This function plots time-series heart rate continuously as ensemble plot (mean ± standard error).
+    If the data consist of multiple phases, data from each phase are overlaid in the same plot.
+    If each phase additionally consists of subphases, the single subphases are highlighted in the plot.
+
+    The input data is expected to be a :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`, i.e.,
+    a dictionary with merged time-series heart rate data, of multiple subjects, split into individual phases.
+    Per phase, the data of each subjects have same length and are combined into one common dataframe.
+
+
+    Parameters
+    ----------
+    data : :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`
+        dict with heart rate data to plot
+    subphases : dict, optional
+        dictionary with phases (keys) and subphases (values - dict with subphase names and subphase durations) or
+        ``None`` if no subphases are present. Default: ``None``
+    **kwargs : dict, optional
+        optional arguments for plot configuration.
+
+        To style general plot appearance:
+
+        * ``ax``: pre-existing axes for the plot. Otherwise, a new figure and axes object is created and returned.
+        * ``palette``: color palette to plot data from different phases
+        * ``ensemble_alpha``: transparency value for ensemble plot errorband (around mean). Default: 0.3
+        * ``background_alpha``: transparency value for background spans (if subphases are present). Default: 0.2
+        * ``linestyle``: list of line styles for ensemble plots. Must match the number of phases to plot
+        * ``phase_text``: string pattern to customize phase name shown in legend with placeholder for subphase name.
+          Default: "{}"
+
+        To style axes:
+
+        * ``is_relative``: boolean indicating whether heart rate data is relative (in % relative to baseline)
+          or absolute (in bpm). Default: ``True``
+        * ``xlabel``: label of x axis. Default: ":math:`Time [s]`"
+        * ``xaxis_minor_tick_locator``: locator object to style x axis minor ticks. Default: 60 sec
+        * ``ylabel``: label of y axis. Default: ":math:`\Delta HR [\%]`"
+        * ``ylims``: y axis limits. Default: ``None`` to automatically infer limits
+
+        To style the annotations at the end of each phase:
+
+        * ``end_phase_text``: string pattern to customize text at the end of phase with placeholder for phase name.
+          Default: "{}"
+        * ``end_phase_line_color``: line color of vertical lines used to indicate end of phase. Default: "#e0e0e0"
+        * ``end_phase_line_width``: line width of vertical lines used  to indicate end of phase. Default: 2.0
+
+        To style legend:
+
+        * ``legend_loc``: location of legend. Default: "lower right"
+        * ``legend_bbox_to_anchor``: box that is used to position the legend in conjunction with ``legend_loc``
+
+
+    Returns
+    -------
+    fig : :class:`~matplotlib.figure.Figure`
+        figure object
+    ax : :class:`~matplotlib.axes.Axes`
+        axes object
+
+
+    See Also
+    --------
+    :obj:`~biopsykit.utils.dtypes.MergedStudyDataDict`
+        dictionary format
+    :func:`~biopsykit.utils.data_processing.merge_study_data_dict`
+        function to build ``MergedStudyDataDict``
+
+
+    Examples
+    --------
+    >>> from biopsykit.protocols.plotting import hr_ensemble_plot
+    >>> # Example with subphases
+    >>> subphase_dict = {
+    >>>     "Phase1": {"Baseline": 60, "Stress": 120, "Recovery": 60},
+    >>>     "Phase2": {"Baseline": 60, "Stress": 120, "Recovery": 60},
+    >>>     "Phase3": {"Baseline": 60, "Stress": 120, "Recovery": 60}
+    >>> }
+    >>> fig, ax = hr_ensemble_plot(data=data, subphases=subphase_dict)
+
+    """
+    ax: plt.Axes = kwargs.pop("ax", None)
+    if ax is None:
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize"))
+    else:
+        fig = ax.get_figure()
+
+    palette = kwargs.get("palette")
+    palette = _get_palette(palette, len(data))
+    sns.set_palette(palette)
+
+    linestyle = kwargs.get("linestyle", _hr_ensemble_plot_params.get("linestyle"))
+
+    xlabel = kwargs.get("xlabel", _hr_ensemble_plot_params.get("xlabel"))
+    ylabel_default = _hr_ensemble_plot_params.get("ylabel")
+    if kwargs.get("is_relative", True):
+        ylabel_default = r"$\Delta$ HR [%]"
+    ylabel = kwargs.get("ylabel", ylabel_default)
+    ylims = kwargs.get("ylims", _hr_ensemble_plot_params.get("ylims"))
+    xaxis_minor_tick_locator = kwargs.get(
+        "xaxis_minor_tick_locator", _hr_ensemble_plot_params.get("xaxis_minor_tick_locator")
+    )
+
+    ensemble_alpha = kwargs.get("ensemble_alpha", _hr_ensemble_plot_params.get("ensemble_alpha"))
+    phase_text = kwargs.get("phase_text", _hr_ensemble_plot_params.get("phase_text"))
+
+    legend_loc = kwargs.get("legend_loc", _hr_ensemble_plot_params.get("legend_loc"))
+    legend_bbox_to_anchor = kwargs.get("legend_bbox_to_anchor", _hr_ensemble_plot_params.get("legend_bbox_to_anchor"))
+
+    participant_level = data.index.names[0]
+    for i, (key, df) in enumerate(data.groupby(group_level)):
+        df = df.xs(key, level=group_level).unstack(participant_level)
+        x = df.index
+        hr_mean = df.mean(axis=1)
+        hr_stderr = df.std(axis=1) / np.sqrt(df.shape[1])
+        ax.plot(x, hr_mean, zorder=2, label=phase_text.format(key), linestyle=linestyle[i])
+        ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
+        _hr_ensemble_plot_end_phase_annotation(ax, df, key, i, **kwargs)
+
+    # if subphases is not None:
+    #     _hr_ensemble_plot_subphase_vspans(ax, data, subphases, **kwargs)
+
+    ax.set_xlabel(xlabel)
+    ax.xaxis.set_minor_locator(xaxis_minor_tick_locator)
+    ax.tick_params(axis="x", which="both", bottom=True)
+
+    ax.set_ylabel(ylabel)
+    ax.tick_params(axis="y", which="major", left=True)
+
+    if ylims is not None:
+        ax.margins(x=0)
+        ax.set_ylim(ylims)
+    else:
+        ax.margins(0, 0.1)
+
+    ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox_to_anchor)
+
+    fig.tight_layout()
+    return fig, ax
+
+
 def _hr_ensemble_plot_end_phase_annotation(ax: plt.Axes, data: pd.DataFrame, phase: str, i: int, **kwargs):
     """Add End Phase annotations to heart rate ensemble plot.
 
@@ -449,7 +596,6 @@ def hr_mean_plot(  # pylint:disable=too-many-branches
     # get all plot parameter
     palette = kwargs.get("palette", cmaps.faculties)
     palette = _get_palette(palette, num_conditions)
-    sns.set_palette(palette)
 
     ylabel_default = _hr_mean_plot_params.get("ylabel")
     if kwargs.get("is_relative", False):
@@ -473,9 +619,9 @@ def hr_mean_plot(  # pylint:disable=too-many-branches
         data_grp = {key: data_grp[key] for key in order}
 
         for i, (key, df) in enumerate(data_grp.items()):
-            _hr_mean_plot(df, x_vals, key, index=i, **kwargs)
+            _hr_mean_plot(df, x_vals, key, index=i, palette=palette, **kwargs)
     else:
-        _hr_mean_plot(data, x_vals, "Data", index=0, **kwargs)
+        _hr_mean_plot(data, x_vals, "Data", index=0, palette=palette, **kwargs)
 
     # add decorators to phases if subphases are present
     if sum(num_subphases) > 0:
@@ -518,6 +664,7 @@ def _hr_mean_plot(data: MeanSeDataFrame, x_vals: np.array, key: str, index: int,
     x_offset = kwargs.get("x_offset", _hr_mean_plot_params.get("x_offset"))
     marker = kwargs.get("marker", _hr_mean_plot_params.get("marker"))
     linestyle = kwargs.get("linestyle", _hr_mean_plot_params.get("linestyle"))
+    palette = kwargs.get("palette", cmaps.faculties)
 
     if isinstance(marker, list):
         marker = marker[index]
@@ -539,6 +686,7 @@ def _hr_mean_plot(data: MeanSeDataFrame, x_vals: np.array, key: str, index: int,
         capsize=3,
         marker=marker,
         linestyle=linestyle,
+        color=palette[index],
     )
 
 

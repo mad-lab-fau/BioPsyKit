@@ -3,6 +3,7 @@ import warnings
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from biopsykit.signals._base_extraction import HANDLE_MISSING_EVENTS, CanHandleMissingEventsMixin
 from biopsykit.signals.ecg.event_extraction import BaseEcgExtraction
@@ -50,7 +51,7 @@ class RPeakExtractionNeurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
         *,
         ecg: EcgRawDataFrame,
         sampling_rate_hz: float,
-    ):
+    ) -> Self:
         self._check_valid_missing_handling()
         is_ecg_raw_dataframe(ecg)
         ecg = sanitize_input_series(ecg, name="ecg")
@@ -82,6 +83,8 @@ class RPeakExtractionNeurokit(BaseEcgExtraction, CanHandleMissingEventsMixin):
         # is_r_peak_dataframe(rpeaks)
         self.ecg_processed_ = ecg_processed
         self.points_ = rpeaks
+
+        return self
 
     def _process_ecg(self, ecg: pd.DataFrame, sampling_rate_hz: float) -> tuple[pd.DataFrame, pd.DataFrame]:
         # find peaks using the specified method
