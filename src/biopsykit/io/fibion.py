@@ -1,7 +1,10 @@
 """Module for importing data recorded by the Fibion sensor system."""
 
 import datetime
+from io import StringIO
+import re
 from collections.abc import Sequence
+from pathlib import Path
 from typing import ClassVar
 
 try:
@@ -29,12 +32,41 @@ class FibionDataset:
         "Accelerometer_X": "acc_x",
         "Accelerometer_Y": "acc_y",
         "Accelerometer_Z": "acc_z",
+        "Sample": "ecg",
+        "AccX": "acc_x",
+        "AccY": "acc_y",
+        "AccZ": "acc_z",
     }
 
     _start_time_unix: pd.Timestamp
     _tz: str
     _data: ClassVar[dict[str, pd.DataFrame]] = {}
     _sampling_rate: ClassVar[dict[str, float]] = {}
+
+    @staticmethod
+    def _read_csv_footer(path: path_t, n_lines: int = 4, chunk_size: int = 1024) -> list[str]:
+        path = Path(path)
+        with path.open("rb") as file:
+            file.seek(0, 2)
+            file_size = file.tell()
+            buffer = b""
+            position = file_size
+
+            while position > 0 and buffer.count(b"\n") < n_lines + 1:
+                read_size = min(chunk_size, position)
+                position -= read_size
+                file.seek(position)
+                buffer = file.read(read_size) + buffer
+
+        return [line.strip() for line in buffer.decode("utf-8", errors="replace").splitlines() if line.strip()][-n_lines:]
+
+    @classmethod
+    def _get_start_time_from_csv_footer(cls, path: path_t) -> pd.Timestamp | None:
+        for line in cls._read_csv_footer(path):
+            match = re.search(r"UTC Timestamp at start\s*:\s*(\d+)\s*ms", line)
+            if match:
+                return pd.to_datetime(int(match.group(1)), unit="ms", utc=True)
+        return None
 
     def __init__(
         self,
@@ -106,36 +138,94 @@ class FibionDataset:
             tz=tz,
         )
 
-    # @classmethod
-    # def from_csv_file(cls, path: path_t, tz: str | None = "Europe/Berlin"):
-    #     """Create a new Dataset from a valid .csv file.
-    #
-    #     Parameters
-    #     ----------
-    #     path : :class:`pathlib.Path` or str
-    #         Path to the file
-    #     tz : str, optional
-    #         Timezone str of the recording. This can be used to localize the start and end time.
-    #         Note, this should not be the timezone of your current PC, but the timezone relevant for the specific
-    #         recording.
-    #
-    #     """
-    #     # assert that file is an edf file
-    #     _assert_file_extension(path, ".csv")
-    #     channel_type = path.stem.split("-")[0].lower()
-    #     data = pd.read_csv(path)
-    #
-    #     print(data)
-    #
-    #     data = data.set_index("time")
-    #     data = data.rename(columns=cls._CHANNEL_NAME_MAPPING)
-    #
-    #     return cls(
-    #         data_dict={channel_type: data},
-    #         sampling_rate_dict={channel_type: fibion_data.info["sfreq"]},
-    #         start_time=start_time,
-    #         tz=tz,
-    #     )
+    @classmethod
+    def from_csv_file(cls, path: path_t, tz: str | None = "Europe/Berlin"):
+        """Create a new Dataset from a valid .csv file.
+
+        Parameters
+        ----------
+        path : :class:`pathlib.Path` or str
+            Path to the file
+        tz : str, optional
+            Timezone str of the recording. This can be used to localize the start and end time.
+            Note, this should not be the timezone of your current PC, but the timezone relevant for the specific
+            recording.
+
+        """
+        _assert_file_extension(path, ".csv")
+
+        channel_type = path.stem.split("-")[0].lower()
+        with open(path, encoding="utf-8", errors="replace") as f:
+            lines = [line.strip() for line in f if line.strip()]
+
+        footer_lines = lines[-4:]
+        body_lines = lines[:-4]
+        header_idx = None
+        for i, line in enumerate(body_lines):
+            if "," in line:
+                header_idx = i
+                break
+
+        if header_idx is None:
+            raise ValueError(f"Could not find CSV header in file {path}.")
+
+        header = body_lines[header_idx]
+        data_lines = body_lines[header_idx + 1 :]
+
+        if not data_lines:
+            raise ValueError(f"No data rows found in CSV file {path}.")
+
+        csv_body = "\n".join([header, *data_lines])
+        data = pd.read_csv(StringIO(csv_body))
+
+        # Prefer measurement start time from footer metadata if available.
+        start_time = cls._get_start_time_from_csv_footer(path)
+
+        if start_time is None and "Timestamp" in data.columns:
+            start_time = pd.to_datetime(data["Timestamp"].iloc[0], unit="s", utc=True)
+
+        if "Timestamp" in data.columns and start_time is not None:
+            data["time"] = data["Timestamp"].astype(float) - start_time.timestamp()
+            data = data.drop(columns=["Timestamp"])
+        elif "Timestamp" in data.columns:
+            first_timestamp = float(data["Timestamp"].iloc[0])
+            data["time"] = data["Timestamp"].astype(float) - first_timestamp
+            data = data.drop(columns=["Timestamp"])
+        else:
+            # Fallback if there is no timestamp column (e.g., HR exports).
+            data["time"] = data.index.astype(float)
+
+        data = data.set_index("time")
+        data = data.rename(columns=cls._CHANNEL_NAME_MAPPING)
+
+        sampling_rate_hz = float("nan")
+        for line in reversed(body_lines[:header_idx]):
+            match = re.search(r"\d{2}\.\d{2}\.\d{2}\d{2}\.\d{2}\.\d{2}(\d+)\s*$", line)
+            if match:
+                sampling_rate_hz = float(match.group(1))
+                break
+
+            match = re.search(r"(\d+)\s*$", line)
+            if match:
+                candidate = float(match.group(1))
+                if 0 < candidate < 5000:
+                    sampling_rate_hz = candidate
+                    break
+
+        if pd.isna(sampling_rate_hz) and len(data) > 1:
+            diffs = pd.Series(data.index).diff()
+            positive_diffs = diffs[diffs > 0]
+            if not positive_diffs.empty:
+                sample_interval = positive_diffs.median()
+                if sample_interval > 0:
+                    sampling_rate_hz = 1 / sample_interval
+
+        return cls(
+            data_dict={channel_type: data},
+            sampling_rate_dict={channel_type: float(sampling_rate_hz)},
+            start_time=start_time,
+            tz=tz,
+        )
 
     @classmethod
     def from_folder(cls, path: path_t, tz: str | None = "Europe/Berlin"):
@@ -151,18 +241,32 @@ class FibionDataset:
             recording.
 
         """
-        files = sorted(path.glob("*.edf"))
-        if len(files) == 0:
-            raise ValueError(f"No .edf files found in folder {path}!")
+        csv_files = sorted(path.glob("*.csv"))
+        edf_files = sorted(path.glob("*.edf"))
+
+        if edf_files:
+            files = edf_files
+            load_fn = cls.from_edf_file
+        elif csv_files:
+            files = csv_files
+            load_fn = cls.from_csv_file
+        else:
+            raise ValueError(f"No .csv or .edf files found in folder {path}!")
 
         data_dict = {}
         sampling_rate_dict = {}
         start_time = None
         for file in files:
-            dataset = cls.from_edf_file(file, tz=tz)
+            dataset = load_fn(file, tz=tz)
             data_dict.update(dataset._data)
             sampling_rate_dict.update(dataset._sampling_rate)
-            start_time = dataset.start_time_unix
+            if start_time is None:
+                start_time = dataset.start_time_unix
+
+        if edf_files and csv_files:
+            csv_start_time = cls._get_start_time_from_csv_footer(csv_files[0])
+            if csv_start_time is not None:
+                start_time = csv_start_time
 
         return cls(data_dict=data_dict, sampling_rate_dict=sampling_rate_dict, start_time=start_time, tz=tz)
 
@@ -245,7 +349,6 @@ class FibionDataset:
             )
 
         if index == "utc":
-            print(start_time.timestamp())
             # convert counter to utc timestamps
             data.index += start_time.timestamp()
             return data
