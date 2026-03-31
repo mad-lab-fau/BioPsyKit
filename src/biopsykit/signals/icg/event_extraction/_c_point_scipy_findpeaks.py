@@ -42,14 +42,15 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
         ----------
         window_c_correction : int, optional
             Number of preceding heartbeats taken into account for C-point correction (using mean R-C-distance).
-            Default: 3
+            Default: 3.
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle failing event extraction. Can be one of:
-                * "warn": issue a warning and set the event to NaN
-                * "raise": raise an ``EventExtractionError``
-                * "ignore": ignore the error and continue with the next event
-            Default: "warn"
+            How to handle failing event extraction. Must be one of:
 
+            - ``"warn"``: issue a warning and set the event to NaN,
+            - ``"raise"``: raise an ``EventExtractionError``, or
+            - ``"ignore"``: continue silently.
+
+            Default: ``"warn"``.
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
@@ -68,7 +69,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
         The C-point is detected as the maximum of the most prominent peak in the ICG derivative signal within each
         segmented heartbeat.
 
-        The resulting C-points are saved in the 'points_' attribute of the class instance.
+        The resulting C-points are saved in the ``points_`` attribute of the class instance.
 
         Parameters
         ----------
@@ -76,7 +77,7 @@ class CPointExtractionScipyFindPeaks(BaseCPointExtraction, CanHandleMissingEvent
             cleaned ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
             Dataframe containing one row per segmented heartbeat, each row contains start, end, and R-peak.
-            Result from :class:`~biopsykit.signals.ecg.segmentation.HeartbeatSegmentation`.
+            Result from :class:`~biopsykit.signals.ecg.segmentation.HeartbeatSegmentationNeurokit`.
         sampling_rate_hz : int
             Sampling rate of ICG derivative signal in Hz. Not used in this function.
 

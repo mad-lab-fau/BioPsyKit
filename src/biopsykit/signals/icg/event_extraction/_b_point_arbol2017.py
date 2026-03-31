@@ -54,11 +54,13 @@ class BPointExtractionArbol2017IsoelectricCrossings(BaseBPointExtraction, CanHan
         Parameters
         ----------
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle failing event extraction. Can be one of:
-                * "warn": issue a warning and set the event to NaN
-                * "raise": raise an ``EventExtractionError``
-                * "ignore": ignore the error and continue with the next event
-            Default: "warn"
+            How to handle failing event extraction. Must be one of:
+
+            - ``"warn"``: issue a warning and set the event to NaN,
+            - ``"raise"``: raise an ``EventExtractionError``, or
+            - ``"ignore"``: continue silently.
+
+            Default: ``"warn"``.
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
@@ -193,15 +195,17 @@ class BPointExtractionArbol2017SecondDerivative(BaseBPointExtraction, CanHandleM
         ----------
         search_window_start_ms : int, optional
             Start of the search window in which the algorithm searches for the B-point, relative to the C-point.
-            Default: 150 ms (see Arbol 2017)
+            Default: 150 ms (see Arbol 2017).
         window_size_ms : str, int
-            Size of the search window in which the algorithm searches for the B-point. Default: 50 ms (see Arbol 2017)
+            Size of the search window in which the algorithm searches for the B-point. Default: 50 ms (see Arbol 2017).
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle failing event extraction. Can be one of:
-                * "warn": issue a warning and set the event to NaN
-                * "raise": raise an ``EventExtractionError``
-                * "ignore": ignore the error and continue with the next event
-            Default: "warn"
+            How to handle failing event extraction. Must be one of:
+
+            - ``"warn"``: issue a warning and set the event to NaN,
+            - ``"raise"``: raise an ``EventExtractionError``, or
+            - ``"ignore"``: continue silently.
+
+            Default: ``"warn"``.
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
@@ -354,16 +358,17 @@ class BPointExtractionArbol2017ThirdDerivative(BaseBPointExtraction, CanHandleMi
         Parameters
         ----------
         search_window_start_ms : int or str, optional
-           Start of the window in which the algorithm searches for the B-point, relative to the C-point. Can be one of:
-                * 'R' -> search B-point in the region between R-peak and C-point
-                * int -> search B-point in the region between xx ms before C-point and C-point
-                    (300 ms -> see Arbol 2017, 3rd derivative-based algorithm)
+            Start of the window in which the algorithm searches for the B-point, relative to the C-point.
+            Use ``"R"`` to search between the R-peak and the C-point, or pass an integer offset in milliseconds
+            (for example ``300``; see Arbol 2017, third-derivative-based algorithm).
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle failing event extraction. Can be one of:
-                * "warn": issue a warning and set the event to NaN
-                * "raise": raise an ``EventExtractionError``
-                * "ignore": ignore the error and continue with the next event
-            Default: "warn"
+            How to handle failing event extraction. Must be one of:
+
+            - ``"warn"``: issue a warning and set the event to NaN,
+            - ``"raise"``: raise an ``EventExtractionError``, or
+            - ``"ignore"``: continue silently.
+
+            Default: ``"warn"``.
 
 
         """

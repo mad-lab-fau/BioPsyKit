@@ -47,14 +47,15 @@ class BPointExtractionDebski1993SecondDerivative(BaseBPointExtraction, CanHandle
         Parameters
         ----------
         correct_outliers : bool, optional
-            Indicates whether to perform outlier correction (True) or not (False). Default: False
+            Indicates whether to perform outlier correction (True) or not (False). Default: False.
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle failing event extraction. Can be one of:
-                * "warn": issue a warning and set the event to NaN
-                * "raise": raise an ``EventExtractionError``
-                * "ignore": ignore the error and continue with the next event
-            Default: "warn"
+            How to handle failing event extraction. Must be one of:
 
+            - ``"warn"``: issue a warning and set the event to NaN,
+            - ``"raise"``: raise an ``EventExtractionError``, or
+            - ``"ignore"``: continue silently.
+
+            Default: ``"warn"``.
 
         """
         super().__init__(handle_missing_events=handle_missing_events)

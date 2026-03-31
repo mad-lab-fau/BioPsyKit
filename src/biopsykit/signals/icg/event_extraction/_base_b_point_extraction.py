@@ -9,11 +9,13 @@ bpoint_algo_docfiller = make_filldoc(
     {
         "base_parameters": """
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle failing event extraction. Can be one of:
-                * "warn": issue a warning and set the event to NaN
-                * "raise": raise an ``EventExtractionError``
-                * "ignore": ignore the error and continue with the next event
-            Default: "warn"
+            How to handle failing event extraction. Must be one of:
+
+            - ``"warn"``: issue a warning and set the event to NaN,
+            - ``"raise"``: raise an ``EventExtractionError``, or
+            - ``"ignore"``: continue silently.
+
+            Default: ``"warn"``.
         """,
         "base_attributes": """
         Attributes

@@ -43,13 +43,15 @@ class BPointExtractionLozano2007LinearRegression(BaseBPointExtraction, CanHandle
         ----------
         moving_average_window : int, optional
             Window size for moving average filter (in heartbeats, centered around the current heartbeat)
-            to compute the R-C interval. Default: 1 (no moving average)
+            to compute the R-C interval. Default: 1 (no moving average).
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle failing event extraction. Can be one of:
-                * "warn": issue a warning and set the event to NaN
-                * "raise": raise an ``EventExtractionError``
-                * "ignore": ignore the error and continue with the next event
-            Default: "warn"
+            How to handle failing event extraction. Must be one of:
+
+            - ``"warn"``: issue a warning and set the event to NaN,
+            - ``"raise"``: raise an ``EventExtractionError``, or
+            - ``"ignore"``: continue silently.
+
+            Default: ``"warn"``.
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
@@ -166,13 +168,15 @@ class BPointExtractionLozano2007QuadraticRegression(BaseBPointExtraction, CanHan
         ----------
         moving_average_window : int, optional
             Window size for moving average filter (in heartbeats, centered around the current heartbeat)
-            to compute the R-C interval. Default: 1 (no moving average)
+            to compute the R-C interval. Default: 1 (no moving average).
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle failing event extraction. Can be one of:
-                * "warn": issue a warning and set the event to NaN
-                * "raise": raise an ``EventExtractionError``
-                * "ignore": ignore the error and continue with the next event
-            Default: "warn"
+            How to handle failing event extraction. Must be one of:
+
+            - ``"warn"``: issue a warning and set the event to NaN,
+            - ``"raise"``: raise an ``EventExtractionError``, or
+            - ``"ignore"``: continue silently.
+
+            Default: ``"warn"``.
 
         """
         super().__init__(handle_missing_events=handle_missing_events)

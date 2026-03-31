@@ -53,24 +53,27 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
     ):
         """Initialize new ``BPointExtractionForouzanfar2018`` instance.
 
-        .. note:: In the original paper, the authors report the *sampling frequency* of the ICG signal as the scaling
-        factor. Since this would change the algorithm behavior depending on the sampling rate of the ICG signal,
-        this implementation introduces a scaling factor that can be set by the user. By default, the scaling factor is
+        In the original paper, the authors report the *sampling frequency* of the ICG signal as the scaling factor.
+        Since this would change the algorithm behavior depending on the sampling rate of the ICG signal, this
+        implementation introduces a scaling factor that can be set by the user. By default, the scaling factor is
         set to 2000 (corresponding to a sampling rate of the original data of 2000 Hz) instead of using the
         sampling rate of the ICG signal.
 
         Parameters
         ----------
         scaling_factor : float, optional
-            Scaling factor for the B-point extraction algorithm. Default: 2000
+            Scaling factor for the B-point extraction algorithm. Default: 2000.
         correct_outliers : bool, optional
-            True to correct outliers, False to set B-Point to NaN if no monotonic segment is found. Default: False
+            True to correct outliers, False to set the B-point to NaN if no monotonic segment is found.
+            Default: False.
         handle_missing_events : one of {"warn", "raise", "ignore"}, optional
-            How to handle failing event extraction. Can be one of:
-                * "warn": issue a warning and set the event to NaN
-                * "raise": raise an ``EventExtractionError``
-                * "ignore": ignore the error and continue with the next event
-            Default: "warn"
+            How to handle failing event extraction. Must be one of:
+
+            - ``"warn"``: issue a warning and set the event to NaN,
+            - ``"raise"``: raise an ``EventExtractionError``, or
+            - ``"ignore"``: continue silently.
+
+            Default: ``"warn"``.
 
         """
         super().__init__(handle_missing_events=handle_missing_events)
