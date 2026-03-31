@@ -1,3 +1,5 @@
+"""Utilities for aggregating ECG-derived heart-rate signals."""
+
 from biopsykit.signals.ecg.aggregation._aggregation import HeartRateAggregation
 from biopsykit.signals.ecg.aggregation._resampling import HeartRateResampling
 

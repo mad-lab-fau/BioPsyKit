@@ -22,11 +22,8 @@ class HeartRateResampling(Algorithm):
         self.resample_rate_hz = resample_rate_hz
         self.cut_to_shortest = cut_to_shortest
 
-    def apply(self, data: pd.DataFrame):
-        if isinstance(self.group_level, str):
-            group_levels = [self.group_level]
-        else:
-            group_levels = list(self.group_level)
+    def apply(self, data: pd.DataFrame) -> "HeartRateResampling":
+        group_levels = [self.group_level] if isinstance(self.group_level, str) else list(self.group_level)
         last_level = group_levels[-1]
 
         data_resample = data.groupby(group_levels, sort=False).apply(lambda df: self._resample_df(df))
@@ -46,7 +43,7 @@ class HeartRateResampling(Algorithm):
             self.output_ = cut_data
         else:
             self.output_ = data_resample
-            return self
+        return self
 
     @staticmethod
     def _resample_df(data: pd.DataFrame) -> pd.DataFrame:
