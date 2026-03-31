@@ -23,6 +23,8 @@ __all__ = ["CFT", "CftFeatureExtraction"]
 
 
 class CftFeatureExtraction(Algorithm):
+    """Extract Cold Face Test features from heartbeat-level heart-rate data."""
+
     _action_methods = ("extract",)
 
     start_baseline_sec: Parameter[int]
@@ -56,10 +58,8 @@ class CftFeatureExtraction(Algorithm):
         self.error_handling = error_handling
 
     def extract(self, data: pd.DataFrame) -> Self:
-        if isinstance(self.group_level, str):
-            group_level = [self.group_level]
-        else:
-            group_level = list(self.group_level)
+        """Compute CFT features for each group in the input dataframe."""
+        group_level = [self.group_level] if isinstance(self.group_level, str) else list(self.group_level)
         out_dict = {}
         for key, df in data.groupby(group_level):
             out_dict[key] = self._compute_cft_parameter(df)
@@ -246,7 +246,7 @@ class CftFeatureExtraction(Algorithm):
             "mean_brady_percent": (hr_mean / hr_baseline - 1) * 100,
         }
 
-    def _poly_fit(self, data: pd.DataFrame, hr_baseline: float) -> dict[str, Any]:
+    def _poly_fit(self, data: pd.DataFrame, hr_baseline: float) -> dict[str, Any]:  # noqa: ARG002
         """Compute **CFT polynomial fit**.
 
         The CFT polynomial fit is computed by applying a 2nd order least-squares polynomial fit to the heart rate

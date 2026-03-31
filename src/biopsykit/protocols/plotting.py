@@ -396,14 +396,14 @@ def hr_ensemble_plot_df(
     legend_bbox_to_anchor = kwargs.get("legend_bbox_to_anchor", _hr_ensemble_plot_params.get("legend_bbox_to_anchor"))
 
     participant_level = data.index.names[0]
-    for i, (key, df) in enumerate(data.groupby(group_level)):
-        df = df.xs(key, level=group_level).unstack(participant_level)
-        x = df.index
-        hr_mean = df.mean(axis=1)
-        hr_stderr = df.std(axis=1) / np.sqrt(df.shape[1])
+    for i, (key, group_df) in enumerate(data.groupby(group_level)):
+        phase_df = group_df.xs(key, level=group_level).unstack(participant_level)
+        x = phase_df.index
+        hr_mean = phase_df.mean(axis=1)
+        hr_stderr = phase_df.std(axis=1) / np.sqrt(phase_df.shape[1])
         ax.plot(x, hr_mean, zorder=2, label=phase_text.format(key), linestyle=linestyle[i])
         ax.fill_between(x, hr_mean - hr_stderr, hr_mean + hr_stderr, zorder=1, alpha=ensemble_alpha)
-        _hr_ensemble_plot_end_phase_annotation(ax, df, key, i, **kwargs)
+        _hr_ensemble_plot_end_phase_annotation(ax, phase_df, key, i, **kwargs)
 
     # if subphases is not None:
     #     _hr_ensemble_plot_subphase_vspans(ax, data, subphases, **kwargs)

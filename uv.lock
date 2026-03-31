@@ -74,7 +74,7 @@ wheels = [
 
 [[package]]
 name = "biopsykit"
-version = "0.13.0"
+version = "0.13.1"
 source = { editable = "." }
 dependencies = [
     { name = "bioread" },
@@ -159,7 +159,7 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4,<5" },
     { name = "ts2vg", specifier = ">=1.2.4,<2" },
     { name = "xlrd", specifier = ">=2,<3" },
-    { name = "xlsxwriter", specifier = ">=1,<2" },
+    { name = "xlsxwriter", specifier = ">=3" },
 ]
 provides-extras = ["mne", "jupyter"]
 
@@ -3173,6 +3173,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/ce/a2ac5fbb55cc761e97fa1ab9de37391174f8001630edd4df6f37d34305b1/ts2vg-1.2.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:3de3580d84326af229b783676601e044b6c1d3d8f8b5611c1880423f81b242af", size = 4304969, upload-time = "2025-02-15T22:24:11.893Z" },
     { url = "https://files.pythonhosted.org/packages/a4/a2/fae78d8d8b34651d99bf3296c4911e62bc008b3123936ab6fe5e752c39dd/ts2vg-1.2.4-cp313-cp313-win32.whl", hash = "sha256:472803c3797049946d12aa6e7b9fd26cf11fc1a16557020e1b390a06451ab8ae", size = 1100267, upload-time = "2025-02-15T22:24:13.48Z" },
     { url = "https://files.pythonhosted.org/packages/62/5b/b4e557e3225495ad202b9a0fb925351c72c76b2412b4fe5c5a039e3d3d4b/ts2vg-1.2.4-cp313-cp313-win_amd64.whl", hash = "sha256:5eb8cdec5dc2631fc285a3264cbc1ff81fec640f41d5dc37044dc1e444afd857", size = 1157008, upload-time = "2025-02-15T22:24:15.022Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/db/f4b12aaa3f7ba85cd2121ea15b8cd6a60394ece1a0ae10302599c4975bc8/ts2vg-1.2.4-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:7e22df94a4478ee1b266ae1766525d9fdcfb64cefb32b9fecede99340a44d006", size = 1207769, upload-time = "2025-10-19T11:15:41.109Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/cb/b99e60c55cb4cfa7bb59a10597369b243cc01d3522c2dc96be5c855c59d2/ts2vg-1.2.4-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:57f8a391beccf86a493e173cff2e08ad4abd2cfd3e5a9e8e66b55f593880580f", size = 1181231, upload-time = "2025-10-19T11:15:42.897Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/1d/067c04c375f8d0e7fd2c8415a6b9b2b183a8aa14e36d202dcffd41cb65b0/ts2vg-1.2.4-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:78b5bbe0f4a27baa3da08a9cf5b44052eb9e5cc5eadc2a73cffe80f9e092f5a3", size = 3374677, upload-time = "2025-10-19T11:15:44.178Z" },
+    { url = "https://files.pythonhosted.org/packages/67/b4/58b59227edea311184aa77fe325abb9a12a60e67eba15587396184af911b/ts2vg-1.2.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:439fda254daafad20c309d07593deaf16395c6763a70809a67b43ae2dc93c24b", size = 4400608, upload-time = "2025-10-19T11:15:45.728Z" },
+    { url = "https://files.pythonhosted.org/packages/53/9c/a59d77fa17b5035a2c437064d51e5cf83a8f7559fcbc70b712a57d0e0482/ts2vg-1.2.4-cp314-cp314-win32.whl", hash = "sha256:653e6eeebca58e8c1688c92653a2182d91348802d528ec7c43f0d8e2868a709e", size = 1106620, upload-time = "2025-10-19T11:15:47.306Z" },
+    { url = "https://files.pythonhosted.org/packages/06/fe/3e7826a906f90c0a364658f6eb19db8a5fe3b59c84dc8ccc309525adf5b1/ts2vg-1.2.4-cp314-cp314-win_amd64.whl", hash = "sha256:7dfa49a3e87f79da8009cbafcfd75c1958dcae950f71f9a270b52d7081fbacce", size = 1166535, upload-time = "2025-10-19T11:15:48.416Z" },
     { url = "https://files.pythonhosted.org/packages/d9/df/df4202cf41ac4945bae873662c0747243de89a75e7073d4b260a9f949d95/ts2vg-1.2.4-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:b56d82fb8d44759e9a1807177dc576048ce536a380cd36cd914bcf447f1389aa", size = 1218598, upload-time = "2024-07-13T14:39:53.034Z" },
     { url = "https://files.pythonhosted.org/packages/3f/8e/7326cf07d085ea33c090803f4ab011a8a8470d9b027cd0917df981235fd2/ts2vg-1.2.4-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:5ef5836726065c2a3c39b682cc87d9861dcb32bacc8308dd3898fa81d3ced970", size = 1190518, upload-time = "2024-07-13T14:39:54.237Z" },
     { url = "https://files.pythonhosted.org/packages/52/d8/e8e31fbde4e023402e0da88712449b1168c9343800c2328861f40392331b/ts2vg-1.2.4-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6a01ce7a214578fca102405fa7a0cd86f0eb8b32fcd26ef2228c793117c86ca4", size = 3125691, upload-time = "2024-07-13T14:39:55.547Z" },
@@ -3284,11 +3290,11 @@ wheels = [
 
 [[package]]
 name = "xlsxwriter"
-version = "1.4.5"
+version = "3.2.9"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/15/72/75b6c904ebabb3fc22965dd78e080252d5950af652a34cd3e0ed538ab1ff/XlsxWriter-1.4.5.tar.gz", hash = "sha256:0956747859567ec01907e561a7d8413de18a7aae36860f979f9da52b9d58bc19", size = 270337, upload-time = "2021-07-30T13:24:44.942Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/2c/c06ef49dc36e7954e55b802a8b231770d286a9758b3d936bd1e04ce5ba88/xlsxwriter-3.2.9.tar.gz", hash = "sha256:254b1c37a368c444eac6e2f867405cc9e461b0ed97a3233b2ac1e574efb4140c", size = 215940, upload-time = "2025-09-16T00:16:21.63Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/34/c0f14cd35304bd1ffeaf9bdb88d1a8b3d7153714dd2540a5f6341acf25ff/XlsxWriter-1.4.5-py2.py3-none-any.whl", hash = "sha256:f9335f1736e2c4fd80e940fe1b6d92d967bf454a1e5d639b0b7a4459ade790cc", size = 149747, upload-time = "2021-07-30T13:24:42.6Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/0c/3662f4a66880196a590b202f0db82d919dd2f89e99a27fadef91c4a33d41/xlsxwriter-3.2.9-py3-none-any.whl", hash = "sha256:9a5db42bc5dff014806c58a20b9eae7322a134abb6fce3c92c181bfb275ec5b3", size = 175315, upload-time = "2025-09-16T00:16:20.108Z" },
 ]
 
 [[package]]

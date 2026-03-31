@@ -585,7 +585,6 @@ def bool_array_to_start_end_array(bool_array: np.ndarray) -> np.ndarray:
     if start_end.size == 0:
         return np.array([[0, 0]])
     return start_end
-    return
 
 
 def split_array_equally(data: arr_t, n_splits: int) -> list[tuple[int, int]]:
