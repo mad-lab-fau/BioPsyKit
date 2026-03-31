@@ -1,9 +1,9 @@
 """Module for importing data recorded by the Fibion sensor system."""
 
 import datetime
-from io import StringIO
 import re
 from collections.abc import Sequence
+from io import StringIO
 from pathlib import Path
 from typing import ClassVar
 
@@ -38,35 +38,10 @@ class FibionDataset:
         "AccZ": "acc_z",
     }
 
-    _start_time_unix: pd.Timestamp
-    _tz: str
-    _data: ClassVar[dict[str, pd.DataFrame]] = {}
-    _sampling_rate: ClassVar[dict[str, float]] = {}
-
-    @staticmethod
-    def _read_csv_footer(path: path_t, n_lines: int = 4, chunk_size: int = 1024) -> list[str]:
-        path = Path(path)
-        with path.open("rb") as file:
-            file.seek(0, 2)
-            file_size = file.tell()
-            buffer = b""
-            position = file_size
-
-            while position > 0 and buffer.count(b"\n") < n_lines + 1:
-                read_size = min(chunk_size, position)
-                position -= read_size
-                file.seek(position)
-                buffer = file.read(read_size) + buffer
-
-        return [line.strip() for line in buffer.decode("utf-8", errors="replace").splitlines() if line.strip()][-n_lines:]
-
-    @classmethod
-    def _get_start_time_from_csv_footer(cls, path: path_t) -> pd.Timestamp | None:
-        for line in cls._read_csv_footer(path):
-            match = re.search(r"UTC Timestamp at start\s*:\s*(\d+)\s*ms", line)
-            if match:
-                return pd.to_datetime(int(match.group(1)), unit="ms", utc=True)
-        return None
+    _start_time_unix: pd.Timestamp | None
+    _tz: str | None
+    _data: dict[str, pd.DataFrame]
+    _sampling_rate: dict[str, float]
 
     def __init__(
         self,
@@ -153,72 +128,15 @@ class FibionDataset:
 
         """
         _assert_file_extension(path, ".csv")
+        path = Path(path)
 
         channel_type = path.stem.split("-")[0].lower()
-        with open(path, encoding="utf-8", errors="replace") as f:
-            lines = [line.strip() for line in f if line.strip()]
-
-        footer_lines = lines[-4:]
-        body_lines = lines[:-4]
-        header_idx = None
-        for i, line in enumerate(body_lines):
-            if "," in line:
-                header_idx = i
-                break
-
-        if header_idx is None:
-            raise ValueError(f"Could not find CSV header in file {path}.")
-
-        header = body_lines[header_idx]
-        data_lines = body_lines[header_idx + 1 :]
-
-        if not data_lines:
-            raise ValueError(f"No data rows found in CSV file {path}.")
-
-        csv_body = "\n".join([header, *data_lines])
-        data = pd.read_csv(StringIO(csv_body))
-
-        # Prefer measurement start time from footer metadata if available.
-        start_time = cls._get_start_time_from_csv_footer(path)
-
-        if start_time is None and "Timestamp" in data.columns:
-            start_time = pd.to_datetime(data["Timestamp"].iloc[0], unit="s", utc=True)
-
-        if "Timestamp" in data.columns and start_time is not None:
-            data["time"] = data["Timestamp"].astype(float) - start_time.timestamp()
-            data = data.drop(columns=["Timestamp"])
-        elif "Timestamp" in data.columns:
-            first_timestamp = float(data["Timestamp"].iloc[0])
-            data["time"] = data["Timestamp"].astype(float) - first_timestamp
-            data = data.drop(columns=["Timestamp"])
-        else:
-            # Fallback if there is no timestamp column (e.g., HR exports).
-            data["time"] = data.index.astype(float)
+        data, start_time, metadata_lines = cls._load_csv_data(path)
+        data, start_time = cls._add_time_index(data, start_time)
 
         data = data.set_index("time")
         data = data.rename(columns=cls._CHANNEL_NAME_MAPPING)
-
-        sampling_rate_hz = float("nan")
-        for line in reversed(body_lines[:header_idx]):
-            match = re.search(r"\d{2}\.\d{2}\.\d{2}\d{2}\.\d{2}\.\d{2}(\d+)\s*$", line)
-            if match:
-                sampling_rate_hz = float(match.group(1))
-                break
-
-            match = re.search(r"(\d+)\s*$", line)
-            if match:
-                candidate = float(match.group(1))
-                if 0 < candidate < 5000:
-                    sampling_rate_hz = candidate
-                    break
-
-        if pd.isna(sampling_rate_hz) and len(data) > 1:
-            diffs = pd.Series(data.index).diff()
-            positive_diffs = diffs[diffs > 0]
-            if not positive_diffs.empty:
-                sample_interval = positive_diffs.median()
-                if sample_interval > 0:
-                    sampling_rate_hz = 1 / sample_interval
+        sampling_rate_hz = cls._infer_sampling_rate(data, metadata_lines)
 
         return cls(
             data_dict={channel_type: data},
@@ -374,3 +292,97 @@ class FibionDataset:
                 raise ValueError(f"Datastream '{datastream}' is not available in Dataset!")
 
         return datastreams
+
+    @staticmethod
+    def _read_csv_footer(path: path_t, n_lines: int = 4, chunk_size: int = 1024) -> list[str]:
+        path = Path(path)
+        with path.open("rb") as file:
+            file.seek(0, 2)
+            file_size = file.tell()
+            buffer = b""
+            position = file_size
+
+            while position > 0 and buffer.count(b"\n") < n_lines + 1:
+                read_size = min(chunk_size, position)
+                position -= read_size
+                file.seek(position)
+                buffer = file.read(read_size) + buffer
+
+        return [line.strip() for line in buffer.decode("utf-8", errors="replace").splitlines() if line.strip()][
+            -n_lines:
+        ]
+
+    @classmethod
+    def _get_start_time_from_csv_footer(cls, path: path_t) -> pd.Timestamp | None:
+        for line in cls._read_csv_footer(path):
+            match = re.search(r"UTC Timestamp at start\s*:\s*(\d+)\s*ms", line)
+            if match:
+                return pd.to_datetime(int(match.group(1)), unit="ms", utc=True)
+        return None
+
+    @staticmethod
+    def _read_csv_lines(path: Path) -> list[str]:
+        with path.open(encoding="utf-8", errors="replace") as file:
+            return [line.strip() for line in file if line.strip()]
+
+    @staticmethod
+    def _split_csv_sections(lines: list[str], path: Path) -> tuple[str, list[str], list[str]]:
+        body_lines = lines[:-4]
+        header_idx = next((i for i, line in enumerate(body_lines) if "," in line), None)
+        if header_idx is None:
+            raise ValueError(f"Could not find CSV header in file {path}.")
+
+        data_lines = body_lines[header_idx + 1 :]
+        if not data_lines:
+            raise ValueError(f"No data rows found in CSV file {path}.")
+        return body_lines[header_idx], data_lines, body_lines[:header_idx]
+
+    @classmethod
+    def _load_csv_data(cls, path: Path) -> tuple[pd.DataFrame, pd.Timestamp | None, list[str]]:
+        lines = cls._read_csv_lines(path)
+        header, data_lines, metadata_lines = cls._split_csv_sections(lines, path)
+        csv_body = "\n".join([header, *data_lines])
+        data = pd.read_csv(StringIO(csv_body))
+        start_time = cls._get_start_time_from_csv_footer(path)
+        return data, start_time, metadata_lines
+
+    @staticmethod
+    def _add_time_index(
+        data: pd.DataFrame, start_time: pd.Timestamp | None
+    ) -> tuple[pd.DataFrame, pd.Timestamp | None]:
+        if start_time is None and "Timestamp" in data.columns:
+            start_time = pd.to_datetime(data["Timestamp"].iloc[0], unit="s", utc=True)
+
+        if "Timestamp" in data.columns and start_time is not None:
+            data["time"] = data["Timestamp"].astype(float) - start_time.timestamp()
+            data = data.drop(columns=["Timestamp"])
+        elif "Timestamp" in data.columns:
+            first_timestamp = float(data["Timestamp"].iloc[0])
+            data["time"] = data["Timestamp"].astype(float) - first_timestamp
+            data = data.drop(columns=["Timestamp"])
+        else:
+            # Fallback if there is no timestamp column (e.g., HR exports).
+            data["time"] = data.index.astype(float)
+        return data, start_time
+
+    @staticmethod
+    def _infer_sampling_rate(data: pd.DataFrame, metadata_lines: list[str]) -> float:
+        for line in reversed(metadata_lines):
+            match = re.search(r"\d{2}\.\d{2}\.\d{2}\d{2}\.\d{2}\.\d{2}(\d+)\s*$", line)
+            if match:
+                return float(match.group(1))
+
+            match = re.search(r"(\d+)\s*$", line)
+            if match:
+                candidate = float(match.group(1))
+                if 0 < candidate < 5000:
+                    return candidate
+
+        if len(data) > 1:
+            diffs = pd.Series(data.index).diff()
+            positive_diffs = diffs[diffs > 0]
+            if not positive_diffs.empty:
+                sample_interval = positive_diffs.median()
+                if sample_interval > 0:
+                    return 1 / sample_interval
+        return float("nan")
