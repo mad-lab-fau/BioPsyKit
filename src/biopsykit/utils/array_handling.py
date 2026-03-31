@@ -581,7 +581,11 @@ def bool_array_to_start_end_array(bool_array: np.ndarray) -> np.ndarray:
         raise ValueError("Input must be boolean array!")
 
     slices = np.ma.flatnotmasked_contiguous(np.ma.masked_equal(bool_array, 0))
-    return np.array([[s.start, s.stop] for s in slices])
+    start_end = np.array([[s.start, s.stop] for s in slices])
+    if start_end.size == 0:
+        return np.array([[0, 0]])
+    return start_end
+    return
 
 
 def split_array_equally(data: arr_t, n_splits: int) -> list[tuple[int, int]]:
