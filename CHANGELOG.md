@@ -1,5 +1,27 @@
 # Changelog
 
+## Version 0.13.2 - March 31, 2026
+### New Features
+- `biopsykit.io`: Added a new `fibion` importer with `FibionDataset` support for loading Fibion recordings from EDF,
+  CSV, or complete recording folders, including metadata-aware CSV parsing.
+- `biopsykit.signals.ecg`: Added new tpcp-based heart-rate processing helpers, including normalization,
+  aggregation, and resampling utilities.
+- `biopsykit.protocols.cft`: Added `CftFeatureExtraction` to compute Cold Face Test features from heartbeat-level
+  ECG-derived heart-rate data.
+
+### Bugfixes
+- `biopsykit.io`: Fixed time log import handling.
+- `biopsykit.utils.array_handling`: Fixed handling of empty masked slices.
+- Improved compatibility with newer `pandas` versions by removing inplace column replacement patterns and updating
+  DataFrame indexing code that triggered `FutureWarning`s.
+- `biopsykit.io.fibion`: Corrected `FibionDataset` attribute annotations so dataset state is stored as instance data
+  rather than class variables.
+
+### Improvements
+- `biopsykit.protocols.plotting`: Extended protocol plotting support for the new CFT feature extraction workflow.
+- `biopsykit.signals.icg.event_extraction`: Improved parameter documentation across B-point and C-point extraction
+  algorithms.
+
 ## Version 0.13.1 - June 12, 2025
 ## Bugfixes
 - fix IPython import paths in `biopsykit.stats`
