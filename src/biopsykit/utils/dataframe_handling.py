@@ -251,7 +251,7 @@ def convert_nan(data: pd.DataFrame | pd.Series, inplace: bool | None = False) ->
 
     if not inplace:
         data = data.copy()
-    data = data.replace([-99.0, -77.0, -66.0, "-99", "-77", "-66"], np.nan)
+    data = data.replace([999.0, 888.0, -99.0, -77.0, -66.0, "-99", "-77", "-66", "999.0", "888.0"], np.nan)
     if inplace:
         return None
     return data
@@ -410,6 +410,7 @@ def wide_to_long(
     stubname: str,
     levels: str | Sequence[str],
     sep: str | None = "_",
+    suffix: str | None = r"\w+",
 ) -> pd.DataFrame:
     """Convert a dataframe wide-format into long-format.
 
@@ -479,6 +480,7 @@ def wide_to_long(
     # iteratively build up long-format dataframe
     for i, level in enumerate(levels):
         stubnames = list(data.columns)
+        # print(data)
         # stubnames are everything except the last part separated by underscore
         stubnames = sorted({"_".join(s.split("_")[:-1]) for s in stubnames})
         data = pd.wide_to_long(
@@ -487,7 +489,7 @@ def wide_to_long(
             i=index_cols + levels[0:i],
             j=level,
             sep=sep,
-            suffix=r"\w+",
+            suffix=suffix,
         )
 
     # reorder levels and sort

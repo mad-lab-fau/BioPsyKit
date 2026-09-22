@@ -22,6 +22,7 @@ class HrvExtraction(Algorithm):
 
     hrv_extracted_: pd.DataFrame
 
+    # TODO Outlier Correction Algorithm Injection (Lipponen2019)
     def __init__(self, hrv_types: str | Sequence[str] = "default"):
         """Initialize new ``HrvExtraction`` algorithm instance.
 
@@ -80,6 +81,14 @@ class HrvExtraction(Algorithm):
         # compute HRV parameters
         hrv_data = [hrv_methods[key](rpeaks["r_peak_sample"], sampling_rate=sampling_rate_hz) for key in hrv_methods]
         hrv_data = pd.concat(hrv_data, axis=1)
+
+        if "HRV_MeanNN" in hrv_data.columns:
+            # compute HRV_MeanHR from HRV_MeanNN (in ms)
+            hrv_data = hrv_data.assign(HRV_MeanHR=60_000 / hrv_data["HRV_MeanNN"])
+            # reorder columns to have HRV_MeanHR as the first column
+            cols = hrv_data.columns.tolist()
+            cols.insert(0, cols.pop(cols.index("HRV_MeanHR")))
+            hrv_data = hrv_data[cols]
 
         self.hrv_extracted_ = hrv_data
         return self

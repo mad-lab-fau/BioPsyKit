@@ -1,6 +1,6 @@
 [project]
 name = "biopsykit"
-version = "0.13.1"
+version = "0.13.2"
 description = "A Python package for the analysis of biopsychological data."
 authors = [
     { name = "Robert Richer", email = "robert.richer@fau.de" },
@@ -27,7 +27,7 @@ dependencies = [
     "scikit-learn~=1.0",
     "nilspodlib>=4.0.0",
     "openpyxl>=3,<4",
-    "XlsxWriter>=1,<2",
+    "XlsxWriter>=3",
     "xlrd>=2,<3",
     "statsmodels>=0,<1",
     "fau-colors~=1.1",
