@@ -29,8 +29,8 @@ import warnings
 from pathlib import Path
 
 import pooch
-import skops.io as sio
 import sklearn
+import skops.io as sio
 from packaging.version import InvalidVersion, Version
 
 __all__ = ["get_b_point_abelstuehler2026_model"]
@@ -59,7 +59,7 @@ _POOCH = pooch.create(
     # OS-cache location, so all BioPsyKit-managed downloads live in one place.
     path=_MODEL_DATA_PATH_HOME,
     base_url=_B_POINT_ABELSTUEHLER2026_RELEASE_URL,
-    registry={file_name: file_hash for file_name, file_hash in _B_POINT_ABELSTUEHLER2026_REGISTRY.values()},
+    registry=dict(_B_POINT_ABELSTUEHLER2026_REGISTRY.values()),
     # Allows overriding the cache location, e.g. on shared machines or in CI.
     env="BIOPSYKIT_DATA_DIR",
 )
@@ -146,12 +146,14 @@ def _load_skops_artifact(model_path: str | Path, trusted: list[str] | None = Non
     return sio.load(model_path, trusted=trusted)
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def get_b_point_abelstuehler2026_model(rater: str = "rater_01", feature_set: str = "full") -> object:
-    """Load the pretrained B-point regressor for :class:`~biopsykit.signals.icg.event_extraction.\
-BPointExtractionAbelStuehler2026`.
+    """Load the pretrained B-point regressor for ``BPointExtractionAbelStuehler2026``.
 
-    The model is downloaded from the corresponding BioPsyKit GitHub Release on first use (via
+    The returned model is meant to be used with
+    :class:`~biopsykit.signals.icg.event_extraction.BPointExtractionAbelStuehler2026`.
+
+    The model is downloaded from the pepbench-experiments GitHub Release on first use (via
     `pooch <https://www.fatiando.org/pooch/>`_, which verifies the download against a known SHA256 hash) and
     cached under ``~/.biopsykit_data/pretrained_models`` for subsequent calls. It is stored using skops'
     persistence format rather than :mod:`pickle`, so loading it does not execute arbitrary code

@@ -1,4 +1,5 @@
 import warnings
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
@@ -93,7 +94,7 @@ class BPointExtractionAbelStuehler2026(BaseBPointExtraction, CanHandleMissingEve
 
     #: Base algorithms used to compute the per-heartbeat candidate features (in addition to the RR-interval).
     #: Maps the feature name (as used during model training) to the algorithm class used to compute it.
-    _BASE_ALGORITHM_CLASSES: dict[str, type[BaseBPointExtraction]] = {
+    _BASE_ALGORITHM_CLASSES: ClassVar[dict[str, type[BaseBPointExtraction]]] = {
         "arbol2017-isoelectric-crossings": BPointExtractionArbol2017IsoelectricCrossings,
         "arbol2017-second-derivative": BPointExtractionArbol2017SecondDerivative,
         "arbol2017-third-derivative": BPointExtractionArbol2017ThirdDerivative,
@@ -186,8 +187,7 @@ class BPointExtractionAbelStuehler2026(BaseBPointExtraction, CanHandleMissingEve
             idx_nan = list(b_points.index[idx_nan])
 
             missing_str = (
-                f"The heartbeat start sample contains NaN at heartbeats {idx_nan}! The B-points were also set to "
-                f"NaN."
+                f"The heartbeat start sample contains NaN at heartbeats {idx_nan}! The B-points were also set to NaN."
             )
             if self.handle_missing_events == "warn":
                 warnings.warn(missing_str)
