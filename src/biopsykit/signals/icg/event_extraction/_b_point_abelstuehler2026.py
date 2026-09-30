@@ -64,10 +64,13 @@ class BPointExtractionAbelStuehler2026(BaseBPointExtraction, CanHandleMissingEve
     - :class:`~biopsykit.signals.icg.event_extraction.BPointExtractionSherwood1990`, and
     - :class:`~biopsykit.signals.icg.event_extraction.BPointExtractionStern1985`.
 
-    This class does **not** train a model. It expects an already-fitted, scikit-learn-compatible regressor that
-    implements ``predict`` (e.g., a :class:`~sklearn.pipeline.Pipeline` of a
-    :class:`~sklearn.preprocessing.MinMaxScaler` and a :class:`~sklearn.ensemble.RandomForestRegressor`, as used in
-    the original experiments) to be passed via the ``model`` parameter. The classmethod
+    This class does **not** train a model. By default (``model=None``), the pretrained model from the original
+    experiments is used: it is downloaded on the first call to :meth:`extract` (and cached locally afterwards) via
+    :func:`~biopsykit.signals.icg.event_extraction.get_b_point_abelstuehler2026_model`.
+    Alternatively, any already-fitted, scikit-learn-compatible regressor that implements ``predict`` (e.g., a
+    :class:`~sklearn.pipeline.Pipeline` of a :class:`~sklearn.preprocessing.MinMaxScaler` and a
+    :class:`~sklearn.ensemble.RandomForestRegressor`, as used in the original experiments) can be passed via the
+    ``model`` parameter. The classmethod
     :meth:`extract_training_features` can be used to build a matching feature matrix and target vector from
     labeled B-point annotations in order to train such a model, e.g. via
     ``RandomForestRegressor().fit(x, y)``.
@@ -86,7 +89,7 @@ class BPointExtractionAbelStuehler2026(BaseBPointExtraction, CanHandleMissingEve
 
     """
 
-    model: object
+    model: object | None
 
     #: Base algorithms used to compute the per-heartbeat candidate features (in addition to the RR-interval).
     #: Maps the feature name (as used during model training) to the algorithm class used to compute it.
@@ -111,7 +114,7 @@ class BPointExtractionAbelStuehler2026(BaseBPointExtraction, CanHandleMissingEve
 
     def __init__(
         self,
-        model: object = get_b_point_abelstuehler2026_model(),
+        model: object | None = None,
         handle_missing_events: HANDLE_MISSING_EVENTS = "warn",
     ):
         """Initialize new ``BPointExtractionAbelStuehler2026`` instance.
@@ -150,12 +153,11 @@ class BPointExtractionAbelStuehler2026(BaseBPointExtraction, CanHandleMissingEve
 
         """
         self._check_valid_missing_handling()
-        self._assert_valid_model()
+        model = self._get_model()
         is_icg_raw_dataframe(icg)
         is_heartbeat_segmentation_dataframe(heartbeats)
         is_c_point_dataframe(c_points)
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
-        icg = icg.squeeze()
 
         start_samples = heartbeats["start_sample"].astype(float)
 
@@ -172,7 +174,7 @@ class BPointExtractionAbelStuehler2026(BaseBPointExtraction, CanHandleMissingEve
 
         if len(predictable_idx) > 0:
             x_pred = features.loc[predictable_idx, list(self.FEATURE_NAMES)].to_numpy(dtype=float)
-            predicted_ms = np.asarray(self.model.predict(x_pred)).ravel()
+            predicted_ms = np.asarray(model.predict(x_pred)).ravel()
             predicted_samples = start_samples.loc[predictable_idx].to_numpy() + (predicted_ms / 1000 * sampling_rate_hz)
             b_points.loc[predictable_idx, "b_point_sample"] = np.round(predicted_samples)
 
@@ -198,12 +200,16 @@ class BPointExtractionAbelStuehler2026(BaseBPointExtraction, CanHandleMissingEve
         self.points_ = b_points
         return self
 
-    def _assert_valid_model(self):
-        if not hasattr(self.model, "predict"):
+    def _get_model(self) -> object:
+        # Loaded lazily (instead of as a default argument) so that importing this module never triggers a download
+        # and so that instances don't share a mutable default (which tpcp rejects on clone()).
+        model = get_b_point_abelstuehler2026_model() if self.model is None else self.model
+        if not hasattr(model, "predict"):
             raise AttributeError(
                 "The provided 'model' must be a fitted, scikit-learn-compatible regressor that implements "
                 "'predict' (e.g., a fitted `sklearn.pipeline.Pipeline` combining a scaler and a regressor)."
             )
+        return model
 
     @classmethod
     def _build_feature_matrix(
@@ -297,7 +303,6 @@ class BPointExtractionAbelStuehler2026(BaseBPointExtraction, CanHandleMissingEve
         is_c_point_dataframe(c_points)
         is_b_point_dataframe(b_points)
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
-        icg = icg.squeeze()
 
         start_samples = heartbeats["start_sample"].astype(float)
         reference_b_point = b_points["b_point_sample"].astype(float)

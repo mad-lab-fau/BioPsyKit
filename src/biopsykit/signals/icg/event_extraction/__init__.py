@@ -20,6 +20,7 @@ from biopsykit.signals.icg.event_extraction._b_point_stern1985 import BPointExtr
 from biopsykit.signals.icg.event_extraction._base_b_point_extraction import BaseBPointExtraction
 from biopsykit.signals.icg.event_extraction._base_c_point_extraction import BaseCPointExtraction
 from biopsykit.signals.icg.event_extraction._c_point_scipy_findpeaks import CPointExtractionScipyFindPeaks
+from biopsykit.signals.icg.event_extraction._pretrained_models import get_b_point_abelstuehler2026_model
 
 __all__ = [
     "BPointExtractionAbelStuehler2026",
@@ -38,4 +39,5 @@ __all__ = [
     "BaseBPointExtraction",
     "BaseCPointExtraction",
     "CPointExtractionScipyFindPeaks",
+    "get_b_point_abelstuehler2026_model",
 ]

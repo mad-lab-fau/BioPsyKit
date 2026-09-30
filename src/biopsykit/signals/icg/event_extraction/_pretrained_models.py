@@ -1,11 +1,13 @@
 """Module providing functions to load pretrained models for ICG event extraction algorithms.
 
 Pretrained models are typically too large to ship inside the Python package or the git repository itself.
-Instead, they are hosted as assets attached to a GitHub Release of BioPsyKit and downloaded into the local user
-folder (``~/.biopsykit_data``) the first time they are requested, using `pooch <https://www.fatiando.org/pooch/>`_
-for the actual fetch-and-cache logic (the same approach already used for larger example datasets in
-:mod:`pepbench.example_data`). Pooch verifies each downloaded file against a known SHA256 hash before handing back
-its path, so a corrupted or tampered download is caught immediately instead of being silently loaded.
+Instead, they are hosted as assets attached to a GitHub Release of the
+`pepbench-experiments <https://github.com/empkins/pepbench-experiments>`_ repository (where they were trained) and
+downloaded into the local user folder (``~/.biopsykit_data``) the first time they are requested, using
+`pooch <https://www.fatiando.org/pooch/>`_ for the actual fetch-and-cache logic (the same approach already used
+for larger example datasets in :mod:`pepbench.example_data`). Pooch verifies each downloaded file against a known
+SHA256 hash before handing back its path, so a corrupted or tampered download is caught immediately instead of being
+silently loaded.
 
 Models themselves are stored using `skops <https://skops.readthedocs.io/>`_'s persistence format (``.skops``)
 rather than :mod:`pickle`. Unlike a raw pickle file, loading a ``.skops`` file does not execute arbitrary code:
@@ -22,6 +24,7 @@ it was trained with, and :func:`get_b_point_abelstuehler2026_model` warns (but d
 installed version differs.
 """
 
+import functools
 import warnings
 from pathlib import Path
 
@@ -34,10 +37,12 @@ __all__ = ["get_b_point_abelstuehler2026_model"]
 
 _MODEL_DATA_PATH_HOME = Path.home().joinpath(".biopsykit_data", "pretrained_models")
 
-# GitHub Release tag under which pretrained model assets are attached.
-# See: https://github.com/mad-lab-fau/BioPsyKit/releases/tag/b-point-abelstuehler2026-v1
+# GitHub Release tag under which pretrained model assets are attached. Hosted on pepbench-experiments (the repo
+# that trained this model, under b_point_ml_experiments/) rather than on BioPsyKit itself, to keep large trained
+# artifacts out of the library repo's releases.
+# See: https://github.com/empkins/pepbench-experiments/releases/tag/b-point-abelstuehler2026-v1
 _B_POINT_ABELSTUEHLER2026_RELEASE_URL = (
-    "https://github.com/mad-lab-fau/BioPsyKit/releases/download/b-point-abelstuehler2026-v1/"
+    "https://github.com/empkins/pepbench-experiments/releases/download/b-point-abelstuehler2026-v1/"
 )
 
 #: Known model artifacts, keyed by ``(feature_set, rater)``, mapping to (file name, SHA256 hash). The hash is
@@ -141,6 +146,7 @@ def _load_skops_artifact(model_path: str | Path, trusted: list[str] | None = Non
     return sio.load(model_path, trusted=trusted)
 
 
+@functools.lru_cache(maxsize=None)
 def get_b_point_abelstuehler2026_model(rater: str = "rater_01", feature_set: str = "full") -> object:
     """Load the pretrained B-point regressor for :class:`~biopsykit.signals.icg.event_extraction.\
 BPointExtractionAbelStuehler2026`.
