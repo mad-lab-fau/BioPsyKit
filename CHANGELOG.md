@@ -1,5 +1,17 @@
 # Changelog
 
+## Version 0.14.0 - September 30, 2026>
+### New Features
+- `biopsykit.signals.icg.event_extraction`: Added `BPointExtractionAbelStuehler2026`, a machine-learning-based
+  B-point extraction algorithm that combines the RR interval and the estimates of all 12 classical B-point
+  algorithms using a pretrained Random Forest regressor (Abel et al., 2026, Frontiers in Digital Health).
+- `biopsykit.signals.icg.event_extraction`: Added `get_b_point_abelstuehler2026_model` to download (on first use)
+  and load the pretrained model. The model is hash-verified, stored in the safe `skops` format, and warns if the
+  installed scikit-learn version differs from the one it was trained with.
+
+### Internal Changes
+- Added `skops`, `pooch`, and `packaging` as dependencies.
+
 ## Version 0.13.2 - March 31, 2026
 ### New Features
 - `biopsykit.io`: Added a new `fibion` importer with `FibionDataset` support for loading Fibion recordings from EDF,

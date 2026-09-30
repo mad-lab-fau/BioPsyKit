@@ -1,6 +1,6 @@
 [project]
 name = "biopsykit"
-version = "0.13.2"
+version = "0.14.0"
 description = "A Python package for the analysis of biopsychological data."
 authors = [
     { name = "Robert Richer", email = "robert.richer@fau.de" },
@@ -10,6 +10,7 @@ authors = [
     { name = "Victoria Müller", email = "victoria.m.mueller@fau.de" },
     { name = "Martin Ullrich", email = "martin.ullrich@fau.de" },
     { name = "Janis Zenkner", email = "janis.zenkner@fau.de" },
+    { name = "Luca Abel", email = "luca.abel@fau.de" },
 ]
 requires-python = ">=3.10,<4.0"
 readme = "README.md"
