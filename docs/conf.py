@@ -11,6 +11,7 @@ import inspect
 import os
 import shutil
 import sys
+from importlib.metadata import version as distribution_version
 
 # from sphinx.ext.autosummary import Autosummary
 # from sphinx.ext.autosummary import get_documenter
@@ -284,9 +285,7 @@ html_theme_options = {"show_toc_level": 3}
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-from pkg_resources import get_distribution
-
-release = get_distribution("biopsykit").version
+release = distribution_version("biopsykit")
 # for example take major/minor
 version = ".".join(release.split(".")[:3])
 
