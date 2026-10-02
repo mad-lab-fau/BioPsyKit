@@ -103,6 +103,7 @@ def predict_proba_from_estimator(
     data: pd.DataFrame,
     pipeline: tuple[str],
     label_col: str | None = "label",
+    subject_col: str | None = "subject",
     column_names: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Get predictions as probabilities from a specified pipeline and merge them with the index of the input dataframe.
@@ -134,7 +135,7 @@ def predict_proba_from_estimator(
     test_indices = metric_summary.loc[pipeline]["test_indices_folds"]
     test_indices_flat = list(metric_summary.loc[pipeline]["test_indices"])
 
-    x, y, _, _ = prepare_df_sklearn(data, label_col=label_col, print_summary=False)
+    x, y, _, _ = prepare_df_sklearn(data, label_col=label_col, subject_col=subject_col, print_summary=False)
 
     label_order = best_pipeline[0].classes_
 
