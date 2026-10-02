@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.14.0 - September 30, 2026>
+## Version 0.14.0 - September 30, 2026
 ### New Features
 - `biopsykit.signals.icg.event_extraction`: Added `BPointExtractionAbelStuehler2026`, a machine-learning-based
   B-point extraction algorithm that combines the RR interval and the estimates of all 12 classical B-point
@@ -8,6 +8,9 @@
 - `biopsykit.signals.icg.event_extraction`: Added `get_b_point_abelstuehler2026_model` to download (on first use)
   and load the pretrained model. The model is hash-verified, stored in the safe `skops` format, and warns if the
   installed scikit-learn version differs from the one it was trained with.
+
+### Changes
+- Support for Python 3.9 was dropped. The minimum required Python version is now 3.10.
 
 ### Internal Changes
 - Added `skops`, `pooch`, and `packaging` as dependencies.
