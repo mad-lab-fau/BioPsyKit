@@ -29,6 +29,26 @@ from biopsykit.utils._types_internal import path_t, str_t
 
 __all__ = ["SklearnPipelinePermuter"]
 
+
+def _is_regression_scoring(scoring: str_t) -> bool:
+    """Return ``True`` if all scoring metrics are scikit-learn regression metrics (e.g. MAE, R²).
+
+    The scorer names are resolved via :func:`sklearn.metrics.get_scorer`, and a metric counts as a regression metric
+    if scikit-learn implements it in its regression metrics module. Unknown or custom scorers are treated as
+    non-regression metrics.
+    """
+    if not scoring:
+        return False
+    if isinstance(scoring, str):
+        scoring = [scoring]
+    try:
+        return all(
+            sklearn.metrics.get_scorer(s)._score_func.__module__ == "sklearn.metrics._regression" for s in scoring
+        )
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+
 pipeline_step_map = {
     "pipeline_scaler": "Scaler",
     "pipeline_reduce_dim": r"\makecell[lc]{Feature\\ Selection}",
@@ -743,6 +763,9 @@ class SklearnPipelinePermuter:
         By default, this function uses the attribute of the ``SklearnPipelinePermuter`` instance.
         If the ``data`` parameter is set, the function uses the dataframe passed as argument.
 
+        Metrics are converted to percent, unless the permuter was fitted with a regression scoring metric
+        (e.g., ``"neg_mean_absolute_error"``), in which case they are reported in their original units.
+
         Parameters
         ----------
         data : :class:`~pandas.DataFrame`, optional
@@ -785,7 +808,8 @@ class SklearnPipelinePermuter:
         if metrics is None:
             metrics = metric_summary.filter(like="mean_test").columns
             # extract metric names
-            metrics = [m.split("_")[-1] for m in metrics]
+            metrics = [m.split("_")[2:] for m in metrics]
+            metrics = ["_".join(m) for m in metrics]
 
         levels_to_drop = [step for step in metric_summary.index.names if step not in pipeline_steps]
         metric_summary = metric_summary.droplevel(levels_to_drop)
@@ -797,15 +821,16 @@ class SklearnPipelinePermuter:
 
         metric_summary = pd.concat(list_metric_summary, axis=1)
 
-        # convert to percent
-        metric_summary = metric_summary * 100
+        if not _is_regression_scoring(self.scoring):
+            # convert to percent (regression metrics, such as errors in ms, are kept in their original units)
+            metric_summary = metric_summary * 100
         metric_summary_export = metric_summary.copy()
 
         for metric in metrics:
             mean_test = f"mean_test_{metric}"
             std_test = f"std_test_{metric}"
             m_sd = metric_summary_export.apply(
-                lambda x, m_t=mean_test, std_t=std_test: rf"{x[m_t]:.1f}({x[std_t]:.1f})", axis=1
+                lambda x, m_t=mean_test, std_t=std_test: rf"{x[m_t]:.2f}({x[std_t]:.2f})", axis=1
             )
             metric_summary_export = metric_summary_export.assign(**{metric: m_sd})
         metric_summary_export = metric_summary_export[metrics].copy()

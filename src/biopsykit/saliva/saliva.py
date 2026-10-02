@@ -27,6 +27,10 @@ from biopsykit.utils.dtypes import (
 from biopsykit.utils.exceptions import DataFrameTransformationError
 from biopsykit.utils.functions import se
 
+# ``np.trapezoid`` was introduced in NumPy 2.0 as the replacement for ``np.trapz``. biopsykit still supports NumPy 1.x
+# (see the numpy constraint in pyproject.toml), so fall back to ``np.trapz`` there.
+_trapezoid = getattr(np, "trapezoid", None) or np.trapz
+
 
 def max_value(
     data: SalivaRawDataFrame,
@@ -253,9 +257,9 @@ def auc(
     r"""Compute area-under-the-curve (AUC) for saliva samples.
 
     The area-under-the-curve is computed according to Pruessner et al. (2003) using the trapezoidal rule
-    (:func:`numpy.trapz`). To compute an AUC the saliva time points are required in minutes. They can either be part of
-    the :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame` (`time` column) or can be supplied as extra
-    parameter (``sample_times``).
+    (:func:`numpy.trapezoid`, or :func:`numpy.trapz` for NumPy < 2). To compute an AUC the saliva time points are
+    required in minutes. They can either be part of the :obj:`~biopsykit.utils.dtypes.SalivaRawDataFrame`
+    (`time` column) or can be supplied as extra parameter (``sample_times``).
 
     Pruessner defined two types of AUC, which are computed by default:
 
@@ -343,8 +347,8 @@ def auc(
     data = data[[saliva_type]].unstack(level="sample")
 
     auc_data = {
-        "auc_g": np.trapezoid(data, sample_times),
-        "auc_i": np.trapezoid(data.sub(data.iloc[:, 0], axis=0), sample_times),
+        "auc_g": _trapezoid(data, sample_times),
+        "auc_i": _trapezoid(data.sub(data.iloc[:, 0], axis=0), sample_times),
     }
 
     if compute_auc_post:
@@ -372,7 +376,7 @@ def _auc_compute_auc_post(
         )
     if idxs_post is not None:
         data_post = data.iloc[:, idxs_post]
-        auc_data["auc_i_post"] = np.trapezoid(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
+        auc_data["auc_i_post"] = _trapezoid(data_post.sub(data_post.iloc[:, 0], axis=0), sample_times[idxs_post])
     return auc_data
 
 

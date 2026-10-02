@@ -276,7 +276,7 @@ def plot_conf_matrix_proba(
     ----------
     predictions : :class:`~pandas.DataFrame`
         dataframe with predictions as probabilities
-    labels : list
+    labels : :list:
         list of labels
     label_col : str, optional
         name of the label column in the input dataframe. Default: ``"label"``
