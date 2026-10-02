@@ -517,15 +517,15 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             data_dict = resample_dict_sec(data_dict)
 
         if normalize_to:
-            param = params.get("normalize_to", None)
+            param = params.get("normalize_to")
             data_dict = normalize_to_phase(data_dict, param)
 
         if select_phases:
-            param = params.get("select_phases", None)
+            param = params.get("select_phases")
             data_dict = select_dict_phases(data_dict, param)
 
         if split_into_subphases:
-            param = params.get("split_into_subphases", None)
+            param = params.get("split_into_subphases")
             data_dict = split_dict_into_subphases(data_dict, param)
 
         if mean_per_subject:
@@ -536,11 +536,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             data_dict = mean_per_subject_dict(data_dict, param, "Heart_Rate")
 
         if add_conditions:
-            param = params.get("add_conditions", None)
+            param = params.get("add_conditions")
             data_dict = add_subject_conditions(data_dict, param)
 
         if reindex:
-            param = params.get("reindex", None)
+            param = params.get("reindex")
             data_dict = BaseProtocol._reindex_df(data_dict, param)
 
         self.hr_results[result_id] = data_dict
@@ -624,11 +624,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             params = {}
 
         if select_phases:
-            param = params.get("select_phases", None)
+            param = params.get("select_phases")
             data_dict = select_dict_phases(data_dict, param)
 
         if split_into_subphases:
-            param = params.get("split_into_subphases", None)
+            param = params.get("split_into_subphases")
             data_dict = split_dict_into_subphases(data_dict, param)
 
         hrv_result = self._compute_hrv_dict(data_dict, hrv_params, dict_levels)
@@ -636,7 +636,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         hrv_result = hrv_result.droplevel(level=-1)
 
         if add_conditions:
-            param = params.get("add_conditions", None)
+            param = params.get("add_conditions")
             hrv_result = add_subject_conditions(hrv_result, param)
         self.hrv_results[result_id] = hrv_result
 
@@ -732,7 +732,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             data_dict = resample_dict_sec(data_dict)
 
         if normalize_to:
-            param = params.get("normalize_to", None)
+            param = params.get("normalize_to")
             if param is None:
                 raise ValueError("When 'normalize_to' is 'True' a phase name must be specified!")
             data_dict = normalize_to_phase(data_dict, param)
@@ -747,11 +747,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             data_dict = cut_phases_to_shortest(data_dict)
 
         if merge_dict:
-            param = params.get("merge_dict", None)
+            param = params.get("merge_dict")
             data_dict = merge_study_data_dict(data_dict, param)
 
         if add_conditions:
-            param = params.get("add_conditions", None)
+            param = params.get("add_conditions")
             data_dict = split_subject_conditions(data_dict, param)
 
         self.hr_ensemble[ensemble_id] = data_dict
@@ -815,11 +815,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         data_dict = normalize_to_phase(data_dict, baseline_phase)
 
         if select_phases:
-            param = params.get("select_phases", None)
+            param = params.get("select_phases")
             data_dict = select_dict_phases(data_dict, param)
 
         if split_into_subphases:
-            param = params.get("split_into_subphases", None)
+            param = params.get("split_into_subphases")
             data_dict = split_dict_into_subphases(data_dict, param)
 
         data_dict = BaseProtocol._compute_hr_above_baseline(data_dict)
@@ -830,7 +830,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             param = params.get("add_conditions")
             result_data = result_data.join(param.set_index("condition", append=True))
             index_levels = result_data.index.names
-            result_data = result_data.reorder_levels([index_levels[-1]] + index_levels[:-1])
+            result_data = result_data.reorder_levels([index_levels[-1], *index_levels[:-1]])
 
         self.hr_above_baseline_results[result_id] = result_data
 
@@ -893,11 +893,11 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
         data_dict_baseline = select_dict_phases(data_dict, baseline_phase)
 
         if select_phases:
-            param = params.get("select_phases", None)
+            param = params.get("select_phases")
             data_dict = select_dict_phases(data_dict, param)
 
         if split_into_subphases:
-            param = params.get("split_into_subphases", None)
+            param = params.get("split_into_subphases")
             data_dict = split_dict_into_subphases(data_dict, param)
 
         data_dict = BaseProtocol._compute_hrv_above_baseline(data_dict, data_dict_baseline, hrv_columns)
@@ -908,7 +908,7 @@ class BaseProtocol:  # pylint:disable=too-many-public-methods
             param = params.get("add_conditions")
             result_data = result_data.join(param.set_index("condition", append=True))
             index_levels = result_data.index.names
-            result_data = result_data.reorder_levels([index_levels[-1]] + index_levels[:-1])
+            result_data = result_data.reorder_levels([index_levels[-1], *index_levels[:-1]])
 
         self.hrv_above_baseline_results[result_id] = result_data
 

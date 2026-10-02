@@ -302,7 +302,7 @@ class StatsPipeline:
 
     def _ipython_display_(self):
         try:
-            from IPython.display import display  # pylint:disable=import-outside-toplevel
+            from IPython.display import display  # noqa: PLC0415
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "
@@ -347,7 +347,7 @@ class StatsPipeline:
 
         """
         try:
-            from IPython.display import Markdown, display  # pylint:disable=import-outside-toplevel
+            from IPython.display import Markdown, display  # noqa: PLC0415
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "
@@ -383,7 +383,7 @@ class StatsPipeline:
         self, sig_only: dict[str, bool], groupby: str | None = None, group_key: str | None = None, **kwargs
     ):
         try:
-            from IPython.display import Markdown, display  # pylint:disable=import-outside-toplevel
+            from IPython.display import Markdown, display  # noqa: PLC0415
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "
@@ -1011,7 +1011,7 @@ class StatsPipeline:
         self, category: str, steps: Sequence[str], sig_only: dict[str, bool], groupby: str, group_key: str
     ):
         try:
-            from IPython.display import Markdown, display  # pylint:disable=import-outside-toplevel
+            from IPython.display import Markdown, display  # noqa: PLC0415
         except ImportError as e:
             raise ImportError(
                 "Displaying statistics results failed because "

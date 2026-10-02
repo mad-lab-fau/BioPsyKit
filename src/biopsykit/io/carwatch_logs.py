@@ -231,7 +231,7 @@ def save_log_data(
         Default: ``False``
 
     """
-    from biopsykit.carwatch_logs import LogData  # pylint: disable=import-outside-toplevel
+    from biopsykit.carwatch_logs import LogData  # noqa: PLC0415
 
     if isinstance(log_data, pd.DataFrame):
         if isinstance(log_data.index, pd.MultiIndex):

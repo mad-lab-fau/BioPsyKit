@@ -222,7 +222,7 @@ def sample_times_datetime_to_minute(sample_times: pd.Series | pd.DataFrame) -> p
 
     sample_times = _sample_times_datetime_to_minute_apply(sample_times)
 
-    sample_times = sample_times.diff(axis=1).apply(lambda s: (s.dt.total_seconds() / 60))
+    sample_times = sample_times.diff(axis=1).apply(lambda s: s.dt.total_seconds() / 60)
     sample_times = sample_times.cumsum(axis=1)
     sample_times.iloc[:, 0] = sample_times.iloc[:, 0].fillna(0)
     if is_series:

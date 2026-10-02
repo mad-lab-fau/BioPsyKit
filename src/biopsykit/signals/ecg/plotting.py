@@ -464,7 +464,7 @@ def hrv_plot(
         plot Power Spectral Density (PSD) of RR intervals
 
     """
-    from biopsykit.signals.ecg import EcgProcessor  # pylint:disable=import-outside-toplevel
+    from biopsykit.signals.ecg import EcgProcessor  # noqa: PLC0415
 
     _assert_ecg_input(ecg_processor, key, ecg_signal, rpeaks)
 

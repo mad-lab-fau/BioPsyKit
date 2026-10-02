@@ -628,7 +628,7 @@ def compute_scores(
     >>> compute_scores(data, quest_dict)
 
     """
-    from biopsykit.questionnaires import questionnaires  # pylint:disable=import-outside-toplevel
+    from biopsykit.questionnaires import questionnaires  # noqa: PLC0415
 
     _assert_is_dtype(data, pd.DataFrame)
 
@@ -677,7 +677,7 @@ def get_supported_questionnaires() -> dict[str, str]:
         dictionary with questionnaire names (keys) and description (values)
 
     """
-    from biopsykit.questionnaires import questionnaires  # pylint:disable=import-outside-toplevel
+    from biopsykit.questionnaires import questionnaires  # noqa: PLC0415
 
     funcs = dict(getmembers(questionnaires, isfunction))
     quests = {}

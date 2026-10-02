@@ -8,7 +8,7 @@ from biopsykit.protocols import BaseProtocol
 class MIST(BaseProtocol):
     """Class representing the Montreal Imaging Stress Task (MIST) protocol and data collected within a MIST study."""
 
-    def __init__(self, name: str | None = None, structure: dict[str, None | dict[str, int]] | None = None, **kwargs):
+    def __init__(self, name: str | None = None, structure: dict[str, dict[str, int] | None] | None = None, **kwargs):
         """Class representing the Montreal Imaging Stress Task (MIST) protocol and data collected within a MIST study.
 
         The general structure of the MIST can be specified by passing a ``structure`` dict to the constructor.

@@ -1,5 +1,6 @@
 """Metrics for classification tasks."""
 
+from functools import partial
 from inspect import getmembers
 
 import numpy as np
@@ -53,7 +54,7 @@ def compute_additional_metrics(metric_summary: pd.DataFrame, metrics: str_t, pos
 
     metric_out = metric_out.stack(["score", "folds"])
     metric_out = metric_out.groupby(metric_out.index.names[:-1]).agg(
-        [("mean", lambda x: np.mean), ("std", lambda x: np.std(x))]  # noqa: ARG005
+        [("mean", partial(np.mean)), ("std", partial(np.std))]
     )
 
     metric_out = metric_out.unstack("score").sort_index(axis=1, level="score")

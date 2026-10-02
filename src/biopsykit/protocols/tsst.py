@@ -6,7 +6,7 @@ from biopsykit.protocols import BaseProtocol
 class TSST(BaseProtocol):
     """Class representing the Trier Social Stress Test (TSST)."""
 
-    def __init__(self, name: str | None = None, structure: dict[str, None | dict[str, int]] | None = None, **kwargs):
+    def __init__(self, name: str | None = None, structure: dict[str, dict[str, int] | None] | None = None, **kwargs):
         """Class representing the Trier Social Stress Test (TSST).
 
         The general structure of the TSST can be specified by passing a ``structure`` dict to the constructor.

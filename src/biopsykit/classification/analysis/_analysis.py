@@ -240,7 +240,7 @@ def plot_conf_matrix(
         predictions[prediction_cols] = predictions[prediction_cols].replace(labels)
         labels = list(labels.values())
 
-    if not conf_matrix_kwargs.get("cmap", None):
+    if not conf_matrix_kwargs.get("cmap"):
         # check if fau_r is registered as colormap
         if "fau_r" not in plt.colormaps():
             _register_fau_r()

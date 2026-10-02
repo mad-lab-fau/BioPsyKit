@@ -174,7 +174,7 @@ def load_time_log(
         data = _parse_time_log_not_continuous(data, index_cols)
 
     for val in data.to_numpy().flatten():
-        if val is np.nan:
+        if pd.isna(val):
             continue
         _assert_is_dtype(val, str)
 

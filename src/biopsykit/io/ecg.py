@@ -225,7 +225,7 @@ def write_hr_phase_dict(hr_phase_dict: HeartRatePhaseDict, file_path: path_t):
     ~biopsykit.io.write_pandas_dict_excel : Write dictionary with pandas dataframes to Excel file
 
     """
-    from biopsykit.io import write_pandas_dict_excel  # pylint:disable=import-outside-toplevel
+    from biopsykit.io import write_pandas_dict_excel  # noqa: PLC0415
 
     # assert that file path is an Excel file
     is_excel_file(file_path)

@@ -22,7 +22,7 @@ __version__ = "0.14.0"
 
 def __getattr__(name):
     if name in __all__:
-        import importlib
+        import importlib  # noqa: PLC0415
 
         return importlib.import_module(f"{__name__}.{name}")
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -38,14 +38,14 @@ def version() -> None:
     >>> bp.version()
 
     """
-    import platform
+    import platform  # noqa: PLC0415
 
-    import matplotlib
-    import neurokit2
-    import numpy as np
-    import pandas as pd
-    import pingouin
-    import scipy
+    import matplotlib  # noqa: PLC0415
+    import neurokit2  # noqa: PLC0415
+    import numpy as np  # noqa: PLC0415
+    import pandas as pd  # noqa: PLC0415
+    import pingouin  # noqa: PLC0415
+    import scipy  # noqa: PLC0415
 
     print(
         f"Operating System: {platform.system()} ({platform.architecture()[1]} {platform.architecture()[0]})\n",

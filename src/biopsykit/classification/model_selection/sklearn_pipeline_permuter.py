@@ -550,7 +550,7 @@ class SklearnPipelinePermuter:
         df_summary = df_summary.infer_objects()
 
         df_summary = df_summary.reorder_levels(
-            df_summary.index.names[2:] + [df_summary.index.names[1]] + [df_summary.index.names[0]]
+            [*df_summary.index.names[2:], df_summary.index.names[1], df_summary.index.names[0]]
         )
         self.results = df_summary.sort_index().sort_index(axis=1)
         return self.results
@@ -1058,7 +1058,7 @@ class SklearnPipelinePermuter:
 
         metric_out = metric_out.stack(["score", "folds"], future_stack=True)
         metric_out = metric_out.groupby(metric_out.index.names[:-1]).agg(
-            [("mean", lambda x: np.mean(x)), ("std", lambda x: np.std(x))]
+            [("mean", functools.partial(np.mean)), ("std", functools.partial(np.std))]
         )
 
         metric_out = metric_out.unstack("score").sort_index(axis=1, level="score")
