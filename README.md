@@ -147,16 +147,9 @@ protocols, such as:
 from biopsykit.protocols import TSST
 from biopsykit.example_data import get_saliva_example
 from biopsykit.example_data import get_hr_subject_data_dict_example
+
 # specify TSST structure and the durations of the single phases
-structure = {
-   "Pre": None,
-   "TSST": {
-       "Preparation": 300,
-       "Talk": 300,
-       "Math": 300
-   },
-   "Post": None
-}
+structure = {"Pre": None, "TSST": {"Preparation": 300, "Talk": 300, "Math": 300}, "Post": None}
 tsst = TSST(name="TSST", structure=structure)
 
 saliva_data = get_saliva_example(sample_times=[-20, 0, 10, 20, 30, 40, 50])
@@ -165,7 +158,7 @@ hr_subject_data_dict = get_hr_subject_data_dict_example()
 tsst.add_saliva_data(saliva_data, saliva_type="cortisol")
 # add heart rate data collected during the "TSST" study part
 tsst.add_hr_data(hr_subject_data_dict, study_part="TSST")
-# compute heart rate results: normalize ECG data relative to "Preparation" phase; afterwards, use data from the 
+# compute heart rate results: normalize ECG data relative to "Preparation" phase; afterwards, use data from the
 # "Talk" and "Math" phases and compute the average heart rate for each subject and study phase, respectively
 tsst.compute_hr_results(
     result_id="hr_mean",
@@ -173,10 +166,7 @@ tsst.compute_hr_results(
     normalize_to=True,
     select_phases=True,
     mean_per_subject=True,
-    params={
-        "normalize_to": "Preparation",
-        "select_phases": ["Talk", "Math"]
-    }
+    params={"normalize_to": "Preparation", "select_phases": ["Talk", "Math"]},
 )
 ```
 
@@ -195,11 +185,11 @@ from biopsykit.example_data import get_stats_example
 
 data = get_stats_example()
 
-# configure statistical analysis pipeline which consists of checking for normal distribution and performing paired 
+# configure statistical analysis pipeline which consists of checking for normal distribution and performing paired
 # t-tests (within-variable: time) on each questionnaire subscale separately (grouping data by subscale).
 pipeline = StatsPipeline(
     steps=[("prep", "normality"), ("test", "pairwise_ttests")],
-    params={"dv": "PANAS", "groupby": "subscale", "subject": "subject", "within": "time"}
+    params={"dv": "PANAS", "groupby": "subscale", "subject": "subject", "within": "time"},
 )
 
 # apply statistics pipeline on data
@@ -214,8 +204,14 @@ box_pairs, pvalues = pipeline.sig_brackets(
 )
 # plot data
 multi_feature_boxplot(
-    data=data, x="time", y="PANAS", features=features, group="subscale", order=["pre", "post"],
-    stats_kwargs={"box_pairs": box_pairs, "pvalues": pvalues}, ax=axs
+    data=data,
+    x="time",
+    y="PANAS",
+    features=features,
+    group="subscale",
+    order=["pre", "post"],
+    stats_kwargs={"box_pairs": box_pairs, "pvalues": pvalues},
+    ax=axs,
 )
 ```
 
@@ -228,12 +224,15 @@ multi_feature_boxplot(
 ```python
 # Utils
 from sklearn.datasets import load_breast_cancer
+
 # Preprocessing & Feature Selection
 from sklearn.feature_selection import SelectKBest
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
 # Classification
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+
 # Cross-Validation
 from sklearn.model_selection import KFold
 
@@ -246,25 +245,22 @@ y = breast_cancer.target
 
 # specify estimator combinations
 model_dict = {
-  "scaler": {
-    "StandardScaler": StandardScaler(),
-    "MinMaxScaler": MinMaxScaler()
-  },
-  "reduce_dim": {
-    "SelectKBest": SelectKBest(),
-  },
-  "clf": {
-    "KNeighborsClassifier": KNeighborsClassifier(),
-    "DecisionTreeClassifier": DecisionTreeClassifier(),
-  }
+    "scaler": {"StandardScaler": StandardScaler(), "MinMaxScaler": MinMaxScaler()},
+    "reduce_dim": {
+        "SelectKBest": SelectKBest(),
+    },
+    "clf": {
+        "KNeighborsClassifier": KNeighborsClassifier(),
+        "DecisionTreeClassifier": DecisionTreeClassifier(),
+    },
 }
 # specify hyperparameter for grid search
 params_dict = {
-  "StandardScaler": None,
-  "MinMaxScaler": None,
-  "SelectKBest": {"k": [2, 4, "all"]},
-  "KNeighborsClassifier": {"n_neighbors": [2, 4], "weights": ["uniform", "distance"]},
-  "DecisionTreeClassifier": {"criterion": ['gini', 'entropy'], "max_depth": [2, 4]},
+    "StandardScaler": None,
+    "MinMaxScaler": None,
+    "SelectKBest": {"k": [2, 4, "all"]},
+    "KNeighborsClassifier": {"n_neighbors": [2, 4], "weights": ["uniform", "distance"]},
+    "DecisionTreeClassifier": {"criterion": ["gini", "entropy"], "max_depth": [2, 4]},
 }
 
 pipeline_permuter = SklearnPipelinePermuter(model_dict, params_dict)

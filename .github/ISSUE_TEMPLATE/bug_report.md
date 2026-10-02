@@ -32,6 +32,7 @@ The easiest way to provide us these information is by running this code in a Pyt
 
 ```python
 import biopsykit as bp
+
 bp.version()
 ```
 
