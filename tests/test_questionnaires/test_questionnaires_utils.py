@@ -1153,3 +1153,15 @@ class TestQuestionnairesUtils:
     def test_get_compute_scores(self, data, quest_dict, quest_kwargs, expected):
         out = compute_scores(data=data, quest_dict=quest_dict, quest_kwargs=quest_kwargs)
         assert_frame_equal(expected, out)
+
+    def test_get_compute_scores_nan_row(self):
+        # rows that only contain NaN values must result in NaN scores, not 0.0
+        columns = [f"PSS_{i}" for i in range(1, 11)]
+        data = pd.DataFrame(
+            [np.full(10, 2.0), np.full(10, np.nan)],
+            index=["valid", "nan"],
+            columns=columns,
+        )
+        out = compute_scores(data=data, quest_dict={"pss": columns})
+        assert out.loc["nan"].isna().all(), "All-missing PSS scores must be NaN"
+        assert out.loc["valid"].notna().all()

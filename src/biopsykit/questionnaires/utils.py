@@ -742,13 +742,15 @@ def _compute_questionnaire_subscales(
 
 def _compute_questionnaire_scores_int(data: pd.DataFrame, items: Sequence[int], agg_type: str):
     if agg_type == "sum":
-        return data.iloc[:, to_idx(items)].sum(axis=1)
+        # min_count=1: rows that only contain NaN values result in NaN instead of 0.0
+        return data.iloc[:, to_idx(items)].sum(axis=1, min_count=1)
     return data.iloc[:, to_idx(items)].mean(axis=1)
 
 
 def _compute_questionnaire_scores_str(data: pd.DataFrame, items: Sequence[str], agg_type: str):
     if agg_type == "sum":
-        return data.loc[:, items].sum(axis=1)
+        # min_count=1: rows that only contain NaN values result in NaN instead of 0.0
+        return data.loc[:, items].sum(axis=1, min_count=1)
     return data.loc[:, items].mean(axis=1)
 
 
@@ -777,12 +779,12 @@ def _get_bins(
 
     if first_min:
         min_val = _bin_scale_get_min_val(data, col)
-        if min_val < min(bins):
+        if pd.notna(min_val) and min_val < min(bins):
             bins = [min_val - 0.01, *bins]
 
     if last_max:
         max_val = _bin_scale_get_max_val(data, col)
-        if max_val > max(bins):
+        if pd.notna(max_val) and max_val > max(bins):
             bins = [*bins, max_val + 0.01]
 
     return bins

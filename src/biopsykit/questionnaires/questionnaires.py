@@ -113,7 +113,7 @@ def psqi(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) ->
     # Sleep Disturbances: Use all questions from 5, except 05a and 05j_text
     sdist = data.filter(regex="05").iloc[:, :]
     # 05j_text does not need to be dropped since it was already excluded previously
-    sdist = sdist.drop(columns=sdist.filter(regex="05a")).sum(axis=1)
+    sdist = sdist.drop(columns=sdist.filter(regex="05a")).sum(axis=1, min_count=1)
     # Bin scale: 0 = 0, 1-9 = 1, 10-18 = 2, 19-27 = 3
     sdist = bin_scale(sdist, bins=[-1, 0, 9, 18, 27])
 
@@ -121,7 +121,7 @@ def psqi(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) ->
     sm = data.filter(regex="07").iloc[:, 0]
 
     # Daytime Dysfunction: Sum questions 8 and 9
-    dd = data.filter(regex="0[89]").sum(axis=1)
+    dd = data.filter(regex="0[89]").sum(axis=1, min_count=1)
     # Bin scale: 0 = 0, 1-2 = 1, 3-4 = 2, 5-6 = 3
     dd = bin_scale(dd, bins=[-1, 0, 2, 4], inplace=False, last_max=True)
 
@@ -149,7 +149,7 @@ def psqi(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) ->
     }
 
     data = pd.DataFrame(psqi_data, index=data.index)
-    data[score_name + "_TotalIndex"] = data.sum(axis=1)
+    data[score_name + "_TotalIndex"] = data.sum(axis=1, min_count=1)
     return data
 
 
@@ -213,7 +213,7 @@ def mves(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) ->
 
     # Reverse scores 9, 14
     data = invert(data, cols=to_idx([9, 14]), score_range=score_range)
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def tics_l(
@@ -324,7 +324,7 @@ def tics_l(
 
     if len(data.columns) == 57:
         # compute total score if all columns are present
-        tics_data[score_name] = data.sum(axis=1)
+        tics_data[score_name] = data.sum(axis=1, min_count=1)
 
     return pd.DataFrame(tics_data, index=data.index)
 
@@ -439,7 +439,7 @@ def tics_s(
 
     if len(data.columns) == 30:
         # compute total score if all columns are present
-        tics_data[score_name] = data.sum(axis=1)
+        tics_data[score_name] = data.sum(axis=1, min_count=1)
 
     return pd.DataFrame(tics_data, index=data.index)
 
@@ -522,7 +522,7 @@ def pss(
     data = invert(data, cols=to_idx([4, 5, 7, 8]), score_range=score_range)
 
     pss_data = _compute_questionnaire_subscales(data, score_name, subscales)
-    pss_data[f"{score_name}_Total"] = data.sum(axis=1)
+    pss_data[f"{score_name}_Total"] = data.sum(axis=1, min_count=1)
 
     return pd.DataFrame(pss_data, index=data.index)
 
@@ -586,7 +586,7 @@ def cesd(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) ->
 
     # Reverse scores 4, 8, 12, 16
     data = invert(data, cols=to_idx([4, 8, 12, 16]), score_range=score_range)
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def ads_l(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> pd.DataFrame:
@@ -649,7 +649,7 @@ def ads_l(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -
 
     # Reverse scores 4, 8, 12, 16
     data = invert(data, cols=to_idx([4, 8, 12, 16]), score_range=score_range)
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def ghq(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> pd.DataFrame:
@@ -710,7 +710,7 @@ def ghq(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> 
 
     # Reverse scores 1, 3, 4, 7, 8, 12
     data = invert(data, cols=to_idx([1, 3, 4, 7, 8, 12]), score_range=score_range)
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def hads(
@@ -800,7 +800,7 @@ def hads(
 
     if len(data.columns) == 14:
         # compute total score if all columns are present
-        hads_data[score_name] = data.sum(axis=1)
+        hads_data[score_name] = data.sum(axis=1, min_count=1)
     return pd.DataFrame(hads_data, index=data.index)
 
 
@@ -894,7 +894,7 @@ def type_d(
 
     if len(data.columns) == 14:
         # compute total score if all columns are present
-        ds_data[score_name] = data.sum(axis=1)
+        ds_data[score_name] = data.sum(axis=1, min_count=1)
 
     return pd.DataFrame(ds_data, index=data.index)
 
@@ -957,7 +957,7 @@ def rse(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> 
 
     # Reverse scores 2, 5, 6, 8, 9
     data = invert(data, cols=to_idx([2, 5, 6, 8, 9]), score_range=score_range)
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def scs(
@@ -1402,7 +1402,9 @@ def lsq(
 
     _assert_value_range(data, score_range)
 
-    lsq_data = {f"{score_name}_{subscale}": data.filter(like=subscale).sum(axis=1) for subscale in subscales}
+    lsq_data = {
+        f"{score_name}_{subscale}": data.filter(like=subscale).sum(axis=1, min_count=1) for subscale in subscales
+    }
 
     return pd.DataFrame(lsq_data, index=data.index)
 
@@ -1572,7 +1574,7 @@ def peat(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) ->
     _assert_num_columns(data, 10)
     _assert_value_range(data, score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def purpose_life(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> pd.DataFrame:
@@ -1679,7 +1681,7 @@ def trait_rumination(data: pd.DataFrame, columns: Sequence[str] | pd.Index | Non
     _assert_num_columns(data, 14)
     _assert_value_range(data, score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def besaa(
@@ -2235,7 +2237,7 @@ def state_rumination(data: pd.DataFrame, columns: Sequence[str] | pd.Index | Non
     # reverse scores 1, 6, 9, 12, 15, 17, 18, 20, 27
     data = invert(data, cols=to_idx([1, 6, 9, 12, 15, 17, 18, 20, 27]), score_range=score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name], index=data.index)
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name], index=data.index)
 
 
 # HABIT DATASET
@@ -2318,12 +2320,12 @@ def abi(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> 
     )
 
     abi_data = {
-        score_name + "_KOV_T": abi_kov.sum(axis=1),
-        score_name + "_VIG_T": abi_vig.sum(axis=1),
-        score_name + "_KOV_P": abi_kov.loc[:, ["2", "4", "6", "8"]].sum(axis=1),
-        score_name + "_VIG_P": abi_vig.loc[:, ["2", "4", "6", "8"]].sum(axis=1),
-        score_name + "_KOV_E": abi_kov.loc[:, ["1", "3", "5", "7"]].sum(axis=1),
-        score_name + "_VIG_E": abi_vig.loc[:, ["1", "3", "5", "7"]].sum(axis=1),
+        score_name + "_KOV_T": abi_kov.sum(axis=1, min_count=1),
+        score_name + "_VIG_T": abi_vig.sum(axis=1, min_count=1),
+        score_name + "_KOV_P": abi_kov.loc[:, ["2", "4", "6", "8"]].sum(axis=1, min_count=1),
+        score_name + "_VIG_P": abi_vig.loc[:, ["2", "4", "6", "8"]].sum(axis=1, min_count=1),
+        score_name + "_KOV_E": abi_kov.loc[:, ["1", "3", "5", "7"]].sum(axis=1, min_count=1),
+        score_name + "_VIG_E": abi_vig.loc[:, ["1", "3", "5", "7"]].sum(axis=1, min_count=1),
     }
 
     return pd.DataFrame(abi_data, index=data.index)
@@ -3913,7 +3915,7 @@ def mlq(
 #         data.filter(like="Q3_16").iloc[:, to_idx([5, 6])],
 #     ]
 #
-#     ceca_data = pd.concat(ceca_data, axis=1).sum(axis=1)
+#     ceca_data = pd.concat(ceca_data, axis=1).sum(axis=1, min_count=1)
 #     return pd.DataFrame(ceca_data, index=data.index, columns=[score_name])
 
 
@@ -3997,7 +3999,7 @@ def pfb(
     pfb_data = _compute_questionnaire_subscales(data, score_name, subscales)
 
     if len(data.columns) == 31:
-        pfb_data[score_name] = data.iloc[:, 0:30].sum(axis=1)
+        pfb_data[score_name] = data.iloc[:, 0:30].sum(axis=1, min_count=1)
     return pd.DataFrame(pfb_data, index=data.index)
 
 
@@ -4227,7 +4229,7 @@ def mdbf(
 
     if len(data.columns) == 24:
         # compute total score if all columns are present
-        mdbf_data[score_name] = data.sum(axis=1)
+        mdbf_data[score_name] = data.sum(axis=1, min_count=1)
 
     return pd.DataFrame(mdbf_data, index=data.index)
 
@@ -4326,7 +4328,7 @@ def meq(
     data.iloc[:, to_idx(12)] = data.iloc[:, to_idx(12)].replace({1: 0, 2: 2, 3: 3, 4: 5})
     data.iloc[:, to_idx(19)] = data.iloc[:, to_idx(19)].replace({1: 0, 2: 2, 3: 4, 4: 6})
 
-    meq_data = pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    meq_data = pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
     meq_data["Chronotype_Fine"] = bin_scale(meq_data[score_name], bins=[0, 30, 41, 58, 69, 86])
     meq_data["Chronotype_Coarse"] = bin_scale(meq_data[score_name], bins=[0, 41, 58, 86])
@@ -4518,7 +4520,7 @@ def idq_pre_scan(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = 
     _assert_num_columns(data, 5)
     _assert_value_range(data, score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def idq_post_scan(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> pd.DataFrame:
@@ -4577,7 +4579,7 @@ def idq_post_scan(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None =
     # column 7 is expected to be in the range [1, 2]
     _assert_value_range(data.iloc[:, [6]], score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 # def strategies_questionnaire(
@@ -4732,7 +4734,7 @@ def clq(
 
     if len(data.columns) == 26:
         # compute total score if all columns are present
-        clq_data[score_name] = data.sum(axis=1)
+        clq_data[score_name] = data.sum(axis=1, min_count=1)
 
     return pd.DataFrame(clq_data, index=data.index)
 
@@ -4797,7 +4799,7 @@ def mkhai(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -
     _assert_num_columns(data, 14)
     _assert_value_range(data, score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def abi_ms(
@@ -4901,8 +4903,8 @@ def abi_ms(
         kov_cols = [f"{score_name}_{ele}" for ele in ["KOV1", "KOV2", "KOV3", "KOV4"]]
         vig_cols = [f"{score_name}_{ele}" for ele in ["VIG1", "VIG2", "VIG3", "VIG4"]]
         # compute total score if all columns are present
-        abims_data[score_name + "_KOV"] = pd.DataFrame(abims_data)[kov_cols].sum(axis=1)
-        abims_data[score_name + "_VIG"] = pd.DataFrame(abims_data)[vig_cols].sum(axis=1)
+        abims_data[score_name + "_KOV"] = pd.DataFrame(abims_data)[kov_cols].sum(axis=1, min_count=1)
+        abims_data[score_name + "_VIG"] = pd.DataFrame(abims_data)[vig_cols].sum(axis=1, min_count=1)
 
     return pd.DataFrame(abims_data, index=data.index)
 
@@ -4994,7 +4996,7 @@ def asi(
 
     if len(subscales.keys()) == 3:
         # compute total score if all columns are present
-        asi_data[score_name] = asi_data.sum(axis=1)
+        asi_data[score_name] = asi_data.sum(axis=1, min_count=1)
 
     return asi_data
 
@@ -5136,7 +5138,7 @@ def phq(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> 
     _assert_num_columns(data, 9)
     _assert_value_range(data, score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def resilience(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> pd.DataFrame:
@@ -5192,7 +5194,7 @@ def resilience(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = No
     _assert_num_columns(data, 11)
     _assert_value_range(data, score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def sci(
@@ -5310,7 +5312,9 @@ def sci(
 
     if {"Stress1", "Stress2", "Stress3"}.issubset(subscales.keys()):
         # compute total score if all columns are present
-        sci_data[score_name + "_StressTotal"] = sci_data[[score_name + f"_Stress{i}" for i in range(1, 4)]].sum(axis=1)
+        sci_data[score_name + "_StressTotal"] = sci_data[[score_name + f"_Stress{i}" for i in range(1, 4)]].sum(
+            axis=1, min_count=1
+        )
 
     return sci_data
 
@@ -5458,7 +5462,7 @@ def swls(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) ->
     _assert_num_columns(data, 5)
     _assert_value_range(data, score_range)
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def swb(
@@ -5766,7 +5770,7 @@ def sds(data: pd.DataFrame, columns: Sequence[str] | pd.Index | None = None) -> 
     # Invert scores
     data = invert(data, score_range=score_range, cols=to_idx([2, 4]))
 
-    return pd.DataFrame(data.sum(axis=1), columns=[score_name])
+    return pd.DataFrame(data.sum(axis=1, min_count=1), columns=[score_name])
 
 
 def tb(
@@ -5855,7 +5859,7 @@ def tb(
 
     if len(data.columns) == 12:
         # compute total score if all columns are present
-        tb_data[score_name] = tb_data.sum(axis=1)
+        tb_data[score_name] = tb_data.sum(axis=1, min_count=1)
 
     return tb_data
 

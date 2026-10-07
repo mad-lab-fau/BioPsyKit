@@ -3,6 +3,7 @@ from itertools import product
 from pathlib import Path
 from unittest import TestCase
 
+import numpy as np
 import pandas as pd
 import pytest
 from pandas._testing import assert_frame_equal
@@ -74,6 +75,22 @@ def fee_wrong():
 def panas_results_german():
     data = pd.read_csv(TEST_FILE_PATH.joinpath("panas_results_german.csv"))
     data = data.set_index(["subject", "condition"])
+    return data
+
+
+def data_with_nan_row(n_items: int, score_range: list[int], columns=None) -> pd.DataFrame:
+    """Questionnaire data with one valid row (score maximum), one row that only contains NaN values, and one row
+    at the score minimum."""
+    data = pd.DataFrame(
+        [
+            np.full(n_items, score_range[1], dtype=float),
+            np.full(n_items, np.nan),
+            np.full(n_items, score_range[0], dtype=float),
+        ],
+        index=["valid", "nan", "min"],
+    )
+    if columns is not None:
+        data.columns = columns
     return data
 
 
@@ -4413,3 +4430,77 @@ class TestQuestionnaires:
         data_out = idq_post_scan(data, columns)
         TestCase().assertListEqual(list(data_out.columns), list(result.columns))
         assert_frame_equal(data_out, result)
+
+    @pytest.mark.parametrize(
+        ("func", "data"),
+        [
+            (pss, data_with_nan_row(10, [0, 4])),
+            (cesd, data_with_nan_row(20, [0, 3])),
+            (mves, data_with_nan_row(23, [0, 2])),
+            (hads, data_with_nan_row(14, [0, 3])),
+            (tics_l, data_with_nan_row(57, [0, 4])),
+            (asi, data_with_nan_row(12, [0, 4])),
+            (abi, data_with_nan_row(80, [1, 2])),
+            (
+                lsq,
+                data_with_nan_row(
+                    30,
+                    [0, 1],
+                    [f"LSQ_{i}_{s}" for s in ["Partner", "Parent", "Child"] for i in range(1, 11)],
+                ),
+            ),
+        ],
+    )
+    def test_sum_scores_nan_row(self, func, data):
+        data_out = func(data)
+        # rows that only contain NaN values must result in NaN scores, not 0.0
+        assert data_out.loc["nan"].isna().all(), f"All-missing {func.__name__} scores must be NaN"
+        # real scores (including the score minimum) are preserved
+        assert data_out.loc["valid"].notna().all()
+        assert data_out.loc["min"].notna().all()
+
+    @pytest.mark.parametrize(
+        "subscales",
+        [
+            # positional (item indices) and named (column names) subscale specification
+            {"Custom": [1, 2, 3]},
+            {"Custom": [f"PSS_{i:02d}" for i in range(1, 4)]},
+        ],
+    )
+    def test_pss_subscales_nan_row(self, subscales):
+        data = data_with_nan_row(10, [0, 4], columns=[f"PSS_{i:02d}" for i in range(1, 11)])
+        data_out = pss(data, subscales=subscales)
+        assert data_out.loc["nan"].isna().all()
+        assert data_out.loc["valid"].notna().all()
+        assert data_out.loc["min"].notna().all()
+
+    def test_pss_partial_nan_row(self):
+        # a row where only some items are missing keeps summing the available items
+        values = np.full(10, 2.0)
+        values[0] = np.nan
+        data = pd.DataFrame([np.full(10, 2.0), values], index=["valid", "partial"])
+        data_out = pss(data)
+        # PSS_Helpless: items [1, 2, 3, 6, 9, 10], item 1 missing -> 5 * 2 = 10
+        assert data_out.loc["partial", "PSS_Helpless"] == 10.0
+        assert data_out.loc["partial", "PSS_SelfEff"] == 8.0
+        assert data_out.loc["partial", "PSS_Total"] == 18.0
+
+    @pytest.mark.parametrize(
+        ("missing_items", "score"),
+        [("05[b-j]", "SleepDisturbances"), ("0[89]", "DaytimeDysfunction")],
+    )
+    def test_psqi_missing_sum_items(self, missing_items, score):
+        data = pd.DataFrame({f"PSQI_05{item}": [0.0] for item in "abcdefghij"})
+        data = data.assign(
+            PSQI_01="23:00:00",
+            PSQI_02=10.0,
+            PSQI_03="07:00:00",
+            PSQI_04=8.0,
+            PSQI_06=0.0,
+            PSQI_07=0.0,
+            PSQI_08=0.0,
+            PSQI_09=0.0,
+        )
+        data.loc[:, data.filter(regex=missing_items).columns] = np.nan
+        data_out = psqi(data)
+        assert pd.isna(data_out.loc[0, f"PSQI_{score}"]), f"All-missing PSQI {score} must be NaN"
