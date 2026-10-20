@@ -6,6 +6,7 @@ from biopsykit.signals.ecg.outlier_correction._outlier_correction_hrv_lipponen20
     RPeakOutlierCorrectionHrvLipponen2019,
 )
 from biopsykit.signals.ecg.outlier_correction._outlier_detection_berntson1990 import RPeakOutlierDetectionBerntson1990
+from biopsykit.signals.ecg.outlier_correction._outlier_detection_chain import RPeakOutlierDetectionChain
 from biopsykit.signals.ecg.outlier_correction._outlier_detection_correlation import RPeakOutlierDetectionCorrelation
 from biopsykit.signals.ecg.outlier_correction._outlier_detection_physiological import RPeakOutlierDetectionPhysiological
 from biopsykit.signals.ecg.outlier_correction._outlier_detection_quality import RPeakOutlierDetectionQuality
@@ -21,6 +22,7 @@ __all__ = [
     "RPeakOutlierCorrection",
     "RPeakOutlierCorrectionHrvLipponen2019",
     "RPeakOutlierDetectionBerntson1990",
+    "RPeakOutlierDetectionChain",
     "RPeakOutlierDetectionCorrelation",
     "RPeakOutlierDetectionPhysiological",
     "RPeakOutlierDetectionQuality",
