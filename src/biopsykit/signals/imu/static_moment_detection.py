@@ -215,8 +215,9 @@ def find_static_moments(
     -------
     :class:`~pandas.DataFrame`
         Dataframe with integer ["start", "end"] columns indicating beginning and end of static regions within
-        the input signal. Both start and end sample positions are inclusive. If no static samples are detected,
-        returns an empty dataframe with the same integer columns.
+        the input signal as [start, end). The end is exclusive and may equal the number of input samples.
+        Slice a region with ``data.iloc[start:end]``. If no static samples are detected, returns an empty
+        dataframe with the same integer columns.
 
 
     Examples
@@ -245,8 +246,6 @@ def find_static_moments(
         start_end = _find_static_sequences(
             data, window_length=window, overlap=overlap, inactive_signal_th=threshold, metric=metric
         )
-        # end indices are *inclusive*!
-        start_end[:, 1] -= 1
     return pd.DataFrame(start_end, columns=["start", "end"])
 
 
@@ -273,7 +272,7 @@ def find_first_static_window_multi_sensor(
     Returns
     -------
     (start, end)
-        Start and end index of the first static window.
+        Start and exclusive end position of the first static window. Slice it with ``data[start:end]``.
 
     Examples
     --------

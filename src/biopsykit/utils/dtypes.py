@@ -489,9 +489,13 @@ HeartbeatSegmentationDataFrame = _HeartbeatSegmentationDataFrame | pd.DataFrame
 
 The dataframe is expected to have *at least* the following columns:
 
-* ``start_sample``: Start sample of segmented heartbeat
-* ``end_sample``: End sample of segmented heartbeat
+* ``start_sample``: Inclusive start position of segmented heartbeat
+* ``end_sample``: Exclusive end position of segmented heartbeat (may equal the signal length)
 * ``r_peak_sample``: R-peak sample of segmented heartbeat
+
+Positions are zero-based relative to the input signal, independent of its index labels. Nonempty intervals satisfy
+``0 <= start_sample <= r_peak_sample < end_sample <= len(signal)`` and are sliced with
+``signal.iloc[start_sample:end_sample]``. Fixed-length heartbeats may overlap.
 
 """
 
@@ -540,7 +544,7 @@ PepResultDataFrame = _PepResultDataFrame | pd.DataFrame
 The dataframe is expected to have *at least* the following columns:
 
 * ``heartbeat_start_sample``: Start sample of segmented heartbeat
-* ``heartbeat_end_sample``: End sample of segmented heartbeat
+* ``heartbeat_end_sample``: Exclusive end position of segmented heartbeat
 * ``r_peak_sample``: R-peak sample of segmented heartbeat
 * ``q_peak_sample``: Q-peak sample of segmented heartbeat
 * ``b_point_sample``: B-point sample of segmented heartbeat

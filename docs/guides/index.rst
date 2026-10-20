@@ -3,4 +3,7 @@
 User Guide
 ==========
 
-coming soon...
+.. toctree::
+   :maxdepth: 1
+
+   sample_intervals

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Breaking changes
+
+- IMU static-moment and ECG heartbeat sample intervals consistently use inclusive starts and exclusive ends.
+  Fixed-length heartbeat segmentation discards padded, incomplete segments. Complete terminal variable-length
+  heartbeats are retained. See the
+  [sample interval migration guide](https://biopsykit.readthedocs.io/en/latest/guides/sample_intervals.html)
+  before reusing saved inclusive interval tables.
+- Static-moment duration and feature extraction require `sampling_rate_hz` and measure sample coverage. Feature
+  extraction clips intervals to its requested time window. Empty results use zero counts and NaN statistics.
+  Orientation outputs preserve interval identity instead of using interval length as the index.
+
 ## Version 0.14.0 - September 30, 2026
 ### New Features
 - `biopsykit.signals.icg.event_extraction`: Added `BPointExtractionAbelStuehler2026`, a machine-learning-based
