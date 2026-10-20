@@ -5,6 +5,7 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 from tpcp import Algorithm
+from typing_extensions import Self
 
 __all__ = ["RPeakOutlierCorrection"]
 
@@ -29,7 +30,7 @@ class RPeakOutlierCorrection(Algorithm):
 
     IMPUTATION_TYPES: ClassVar[Sequence[str]] = ["linear_interpolation", "moving_average"]
     imputation_type: str
-    imputation_params: dict[str, Any]
+    imputation_params: dict[str, Any] | None
 
     ecg_processed_: pd.DataFrame
     points_: pd.DataFrame
@@ -57,8 +58,6 @@ class RPeakOutlierCorrection(Algorithm):
         super().__init__()
 
     def _check_imputation_type_valid(self):
-        if self.imputation_params is None:
-            self.imputation_params = {}
         if self.imputation_type not in self.IMPUTATION_TYPES:
             raise ValueError(
                 f"Invalid imputation type '{self.imputation_type}'. Valid options are: {self.IMPUTATION_TYPES}."
@@ -70,7 +69,7 @@ class RPeakOutlierCorrection(Algorithm):
         ecg: pd.DataFrame,
         rpeaks: pd.DataFrame,
         outlier_detection_results: pd.DataFrame | Sequence[pd.DataFrame],
-    ):
+    ) -> Self:
         """Correct outliers in the R-peak data.
 
         Parameters
@@ -84,6 +83,7 @@ class RPeakOutlierCorrection(Algorithm):
 
         """
         self._check_imputation_type_valid()
+        imputation_params = self.imputation_params if self.imputation_params is not None else {}
         rpeaks = rpeaks.copy()
         # get the last sample because it will get lost when computing the RR interval
         # last_sample = rpeaks.iloc[-1]
@@ -116,7 +116,7 @@ class RPeakOutlierCorrection(Algorithm):
         if self.imputation_type == "moving_average":
             rpeaks["rr_interval_ms"] = rpeaks["rr_interval_ms"].fillna(
                 rpeaks["rr_interval_ms"]
-                .rolling(self.imputation_params.get("window_size", 21), center=True, min_periods=0)
+                .rolling(imputation_params.get("window_size", 21), center=True, min_periods=0)
                 .mean()
             )
 
@@ -165,3 +165,4 @@ class RPeakOutlierCorrection(Algorithm):
 
         self.ecg_processed_ = ecg
         self.points_ = rpeaks
+        return self

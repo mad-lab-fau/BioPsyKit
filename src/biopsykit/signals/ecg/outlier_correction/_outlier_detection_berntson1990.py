@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import iqr
+from typing_extensions import Self
 
 from biopsykit.signals.ecg.outlier_correction._base_outlier_detection import BaseRPeakOutlierDetection
 
@@ -18,7 +19,7 @@ class RPeakOutlierDetectionBerntson1990(BaseRPeakOutlierDetection):
         """Initialize new ``RPeakOutlierDetectionBerntson1990`` algorithm instance."""
         super().__init__()
 
-    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):  # noqa: ARG002
+    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float) -> Self:  # noqa: ARG002
         # QD = Quartile Deviation = IQR / 2
         qd = iqr(rpeaks["rr_interval_ms"], nan_policy="omit") / 2.0
         # MAD = Minimal Artifact Difference
@@ -31,3 +32,4 @@ class RPeakOutlierDetectionBerntson1990(BaseRPeakOutlierDetection):
         outlier = outlier.to_frame(name="is_outlier")
 
         self.points_ = outlier
+        return self

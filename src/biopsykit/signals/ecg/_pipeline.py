@@ -188,17 +188,19 @@ class EcgProcessingPipeline(Pipeline):
 
         r_peaks_hrv = self.rpeaks_.copy()
         if self.hrv_r_peak_correction_algo is not None:
-            self.hrv_r_peak_correction_algo.correct_outlier(
+            hrv_r_peak_correction_algo = self.hrv_r_peak_correction_algo.clone()
+            hrv_r_peak_correction_algo.correct_outlier(
                 rpeaks=r_peaks_hrv,
                 sampling_rate_hz=sampling_rate,
             )
-            r_peaks_hrv = self.hrv_r_peak_correction_algo.points_.copy()
+            r_peaks_hrv = hrv_r_peak_correction_algo.points_.copy()
 
         if self.hrv_extraction_algo is not None:
-            self.hrv_extraction_algo.extract(
+            hrv_extraction_algo = self.hrv_extraction_algo.clone()
+            hrv_extraction_algo.extract(
                 rpeaks=r_peaks_hrv,
                 sampling_rate_hz=sampling_rate,
             )
-            self.hrv_extracted_ = self.hrv_extraction_algo.hrv_extracted_.copy()
+            self.hrv_extracted_ = hrv_extraction_algo.hrv_extracted_.copy()
 
         return self

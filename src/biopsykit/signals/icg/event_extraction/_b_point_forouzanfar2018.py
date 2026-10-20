@@ -17,7 +17,7 @@ from biopsykit.utils.dtypes import (
     is_heartbeat_segmentation_dataframe,
     is_icg_raw_dataframe,
 )
-from biopsykit.utils.exceptions import EventExtractionError
+from biopsykit.utils.exceptions import EventExtractionError, ValidationError
 
 __all__ = ["BPointExtractionForouzanfar2018"]
 
@@ -104,11 +104,12 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
             ICG derivative signal
         heartbeats : :class:`~pandas.DataFrame`
             Segmented heartbeats. Each row contains start, end, and R-peak location (in samples
-            from beginning of signal) of that heartbeat, index functions as id of heartbeat
+            from beginning of signal) of that heartbeat, index functions as unique id of heartbeat.
+            Rows must be in chronological heartbeat order.
         c_points : :class:`~pandas.DataFrame`
             Extracted C-points. Each row contains the C-point location (in samples from beginning of signal) for each
             heartbeat, index functions as id of heartbeat. C-point locations can be NaN if no C-points were detected
-            for certain heartbeats
+            for certain heartbeats. Must contain the same unique heartbeat IDs as ``heartbeats``; row order may differ.
         sampling_rate_hz : int
             sampling rate of ICG derivative signal in hz
 
@@ -120,6 +121,8 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         ------
         :exc:`~biopsykit.utils.exceptions.EventExtractionError`
             If the event extraction fails and ``handle_missing`` is set to "raise"
+        :exc:`~biopsykit.utils.exceptions.ValidationError`
+            If heartbeat IDs are duplicated or the two event tables contain different heartbeat IDs.
 
         """
         # sanitize input signal
@@ -127,6 +130,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
         is_icg_raw_dataframe(icg)
         is_heartbeat_segmentation_dataframe(heartbeats)
         is_c_point_dataframe(c_points)
+        c_points = self._align_c_points(heartbeats, c_points)
         icg = sanitize_input_dataframe_1d(icg, column="icg_der")
         icg = icg.squeeze()
 
@@ -135,6 +139,7 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
         # get the c_point locations from the c_points dataframe
         c_points = c_points["c_point_sample"]
+        previous_c_point = c_points.shift(1)
 
         # Calculate the second- and third-derivative of the ICG-signal
         second_der = np.gradient(icg)
@@ -142,8 +147,8 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
         for idx, data in heartbeats.iloc[1:].iterrows():
             # Get the C-Point location at the current heartbeat id
-            c_point = c_points[idx]
-            prev_c_point = c_points[idx - 1]
+            c_point = c_points.loc[idx]
+            prev_c_point = previous_c_point.loc[idx]
 
             # check if the current or the previous C-Point contain NaN. If this is the case, set the b_point to NaN
             if pd.isna(c_point) or pd.isna(prev_c_point):
@@ -231,6 +236,15 @@ class BPointExtractionForouzanfar2018(BaseBPointExtraction, CanHandleMissingEven
 
         self.points_ = b_points
         return self
+
+    @staticmethod
+    def _align_c_points(heartbeats: HeartbeatSegmentationDataFrame, c_points: CPointDataFrame) -> CPointDataFrame:
+        """Validate beat identity and align C-points to chronological heartbeat order."""
+        if not heartbeats.index.is_unique or not c_points.index.is_unique:
+            raise ValidationError("heartbeats and c_points must have unique heartbeat IDs.")
+        if not (heartbeats.index.isin(c_points.index).all() and c_points.index.isin(heartbeats.index).all()):
+            raise ValidationError("heartbeats and c_points must contain the same heartbeat IDs.")
+        return c_points.reindex(heartbeats.index)
 
     @staticmethod
     def _get_a_point(icg: pd.Series, search_interval: int, c_point: int):

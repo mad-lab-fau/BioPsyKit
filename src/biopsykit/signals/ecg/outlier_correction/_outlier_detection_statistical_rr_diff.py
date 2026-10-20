@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from biopsykit.signals.ecg.outlier_correction._base_outlier_detection import BaseRPeakOutlierDetection
+from biopsykit.utils.exceptions import ValidationError
 
 __all__ = ["RPeakOutlierDetectionRRDiffIntervalStatistics"]
 
@@ -36,15 +38,18 @@ class RPeakOutlierDetectionRRDiffIntervalStatistics(BaseRPeakOutlierDetection):
                 f"rr_diff_statistics_threshold must be a float greater than 0. Got {self.rr_diff_statistics_threshold}."
             )
 
-    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):  # noqa: ARG002
+    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float) -> Self:  # noqa: ARG002
         self._assert_params()
+        if not rpeaks.index.is_unique:
+            raise ValidationError("R-peak heartbeat IDs must be unique.")
 
         # compute z-score of RR intervals
         rri_diff = np.ediff1d(rpeaks["rr_interval_ms"], to_end=0)
-        rri_diff = pd.Series(rri_diff, name="rri_diff_ms")
+        rri_diff = pd.Series(rri_diff, index=rpeaks.index, name="rri_diff_ms")
         z_score = np.abs((rri_diff - np.nanmean(rri_diff)) / np.nanstd(rri_diff, ddof=1))
 
         outlier = z_score > self.rr_diff_statistics_threshold
         outlier = outlier.to_frame(name="is_outlier")
 
         self.points_ = outlier
+        return self

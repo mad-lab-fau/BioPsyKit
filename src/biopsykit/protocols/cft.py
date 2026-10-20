@@ -3,7 +3,7 @@
 import datetime
 import warnings
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, ClassVar
 
 import matplotlib.patches as mpatch
 import matplotlib.pyplot as plt
@@ -23,7 +23,43 @@ __all__ = ["CFT", "CftFeatureExtraction"]
 
 
 class CftFeatureExtraction(Algorithm):
-    """Extract Cold Face Test features from heartbeat-level heart-rate data."""
+    """Extract Cold Face Test features from heartbeat-level heart-rate data.
+
+    All phase offsets are relative to the first ``r_peak_time`` in each group. The baseline is
+    ``[start_baseline_sec, start_baseline_sec + duration_baseline_sec)``. Exposure starts immediately after
+    baseline and lasts ``duration_cft_sec``. Both intervals include their start and exclude their end, so an
+    exposure beat never contributes to baseline. Baseline is the arithmetic mean of the baseline beats.
+
+    Bradycardia features use exposure beats only. The polynomial fit additionally uses the following
+    ``duration_recovery_sec`` seconds of recovery, with time zero at the configured exposure start. Onset and
+    peak latencies are in seconds from that same start, including when it falls between heartbeats.
+
+    Parameters
+    ----------
+    start_baseline_sec : int, optional
+        Offset of baseline from the first heartbeat in each group. Default: 0.
+    duration_baseline_sec : int, optional
+        Baseline duration. If zero, use the first exposure beat as baseline, subject to ``error_handling``.
+        Default: 0.
+    duration_cft_sec : int, optional
+        Positive exposure duration. Default: 120.
+    duration_recovery_sec : int, optional
+        Recovery duration to include in the polynomial fit only. Default: 0.
+    group_level : str or sequence of str
+        Index levels defining independently processed recordings. Heartbeat rows must be in chronological order.
+    error_handling : {"warn", "raise", "ignore"}, optional
+        Handling of a zero-length baseline. Unusable baseline/exposure data always raise
+        :class:`~biopsykit.utils.exceptions.FeatureComputationError`. Default: "warn".
+    cft_parameter : sequence of str, optional
+        Features to compute: ``"cft_onset"``, ``"peak_bradycardia"``, ``"mean_bradycardia"``, and ``"poly_fit"``.
+        All are selected by default. Polynomial fitting requires at least three distinct valid beat times.
+
+    Attributes
+    ----------
+    output_ : pandas.DataFrame
+        One row per group. ``cft_start_idx`` is the positional index of the first exposure beat within that group.
+        Missing onsets retain their result columns with NaN values.
+    """
 
     _action_methods = ("extract",)
 
@@ -36,7 +72,9 @@ class CftFeatureExtraction(Algorithm):
 
     error_handling: Parameter[str]
 
-    cft_parameter: Sequence[str] = ["cft_onset", "peak_bradycardia", "mean_bradycardia", "poly_fit"]
+    CFT_PARAMETERS: ClassVar[tuple[str, ...]] = ("cft_onset", "peak_bradycardia", "mean_bradycardia", "poly_fit")
+
+    cft_parameter: Parameter[Sequence[str]]
 
     output_: pd.DataFrame
 
@@ -49,6 +87,7 @@ class CftFeatureExtraction(Algorithm):
         duration_recovery_sec: int = 0,
         group_level: str_t,
         error_handling: str = "warn",
+        cft_parameter: Sequence[str] = CFT_PARAMETERS,
     ):
         self.start_baseline_sec = start_baseline_sec
         self.duration_baseline_sec = duration_baseline_sec
@@ -56,67 +95,87 @@ class CftFeatureExtraction(Algorithm):
         self.duration_recovery_sec = duration_recovery_sec
         self.group_level = group_level
         self.error_handling = error_handling
+        self.cft_parameter = cft_parameter
 
     def extract(self, data: pd.DataFrame) -> Self:
         """Compute CFT features for each group in the input dataframe."""
+        self._validate_parameters()
+        if data.empty:
+            raise FeatureComputationError("No heartbeat data were provided.")
         group_level = [self.group_level] if isinstance(self.group_level, str) else list(self.group_level)
         out_dict = {}
         for key, df in data.groupby(group_level):
             out_dict[key] = self._compute_cft_parameter(df)
 
-        out_dict = {key: df.dropna(axis=1, how="all") for key, df in out_dict.items()}
         out = pd.concat(out_dict, names=group_level)
         out = out.droplevel(-1)
 
         self.output_ = out
         return self
 
+    def _validate_parameters(self) -> None:
+        for name in ("start_baseline_sec", "duration_baseline_sec", "duration_cft_sec", "duration_recovery_sec"):
+            value = getattr(self, name)
+            if not np.isfinite(value) or value < 0 or (name == "duration_cft_sec" and value == 0):
+                raise ValueError(
+                    f"Invalid {name}: {value}. Durations/offsets must be nonnegative and CFT duration positive."
+                )
+        if self.error_handling not in ("warn", "raise", "ignore"):
+            raise ValueError("error_handling must be 'warn', 'raise', or 'ignore'.")
+        if isinstance(self.cft_parameter, str) or any(name not in self.CFT_PARAMETERS for name in self.cft_parameter):
+            raise ValueError(f"cft_parameter must be a sequence of feature names from {self.CFT_PARAMETERS}.")
+
     def _compute_cft_parameter(self, data: pd.DataFrame) -> pd.DataFrame:
         out_dict = {}
+        hr_baseline = self._baseline_hr(data)
         data_cft = self._extract_cft_interval(data)
-        hr_baseline = self._baseline_hr(data_cft)
+        if data_cft.empty:
+            raise FeatureComputationError("No heartbeats found in the configured CFT interval.")
 
         out_dict["baseline_hr"] = hr_baseline
-        out_dict["cft_start_idx"] = data.index.get_level_values("heartbeat_id")[0]
+        out_dict["cft_start_idx"] = data.index.get_loc(data_cft.index[0])
 
         for parameter in self.cft_parameter:
-            out_dict.update(getattr(self, f"_{parameter}")(data=data_cft, hr_baseline=hr_baseline))
+            feature_data = data_cft
+            if parameter == "poly_fit" and self.duration_recovery_sec > 0:
+                feature_data = self._extract_cft_interval(data, include_recovery=True)
+            out_dict.update(getattr(self, f"_{parameter}")(data=feature_data, hr_baseline=hr_baseline))
         return pd.DataFrame([out_dict])
 
-    def _extract_cft_interval(self, data: pd.DataFrame):
+    def _extract_cft_interval(self, data: pd.DataFrame, *, include_recovery: bool = False) -> pd.DataFrame:
         cft_start = data["r_peak_time"].iloc[0] + pd.Timedelta(
             seconds=self.start_baseline_sec + self.duration_baseline_sec
         )
-        cft_end = cft_start + pd.Timedelta(seconds=self.duration_cft_sec)
-        return data.loc[((data["r_peak_time"] >= cft_start) & (data["r_peak_time"] <= cft_end))]
+        duration = self.duration_cft_sec + (self.duration_recovery_sec if include_recovery else 0)
+        cft_end = cft_start + pd.Timedelta(seconds=duration)
+        interval = data.loc[(data["r_peak_time"] >= cft_start) & (data["r_peak_time"] < cft_end)]
+        return interval.assign(time_relative=interval["r_peak_time"] - cft_start)
 
     def _baseline_hr(self, data: pd.DataFrame) -> float:
+        bl_start = data["r_peak_time"].iloc[0] + pd.Timedelta(seconds=self.start_baseline_sec)
+        bl_end = bl_start + pd.Timedelta(seconds=self.duration_baseline_sec)
         if self.duration_baseline_sec == 0:
             warning_msg = (
-                "Baseline is 0, no baseline can be extracted! "
-                "Using the first heart rate value in the dataframe as baseline."
+                "Baseline is 0, no baseline can be extracted! Using the first exposure heart rate value as baseline."
             )
             if self.error_handling == "warn":
                 warnings.warn(warning_msg)
             elif self.error_handling == "raise":
                 raise FeatureComputationError(warning_msg)
-
-        bl_start = self.start_baseline_sec
-        bl_end = self.start_baseline_sec + self.duration_baseline_sec
-        data = data.assign(time_relative=data["r_peak_time"] - data["r_peak_time"].iloc[0])
-        duration = data["time_relative"].iloc[-1].total_seconds()
-        if bl_end > duration:
+            baseline = data.loc[data["r_peak_time"] >= bl_start, "heart_rate_bpm"].iloc[:1]
+        elif bl_end > data["r_peak_time"].iloc[-1]:
             raise FeatureComputationError(
                 "Error computing Baseline heart rate! The provided data is shorter than the expected Baseline interval."
             )
+        else:
+            baseline = data.loc[(data["r_peak_time"] >= bl_start) & (data["r_peak_time"] < bl_end), "heart_rate_bpm"]
 
-        hr_baseline = data.loc[
-            (
-                (data["time_relative"] >= pd.Timedelta(seconds=bl_start))
-                & (data["time_relative"] <= pd.Timedelta(seconds=bl_end))
-            )
-        ]
-        return hr_baseline["heart_rate_bpm"].mean().squeeze()
+        if baseline.empty:
+            raise FeatureComputationError("No heartbeats found in the configured Baseline interval.")
+        hr_baseline = float(baseline.mean())
+        if not np.isfinite(hr_baseline) or hr_baseline <= 0:
+            raise FeatureComputationError("Baseline heart rate must be finite and positive.")
+        return hr_baseline
 
     def _cft_onset(self, data: pd.DataFrame, hr_baseline: float) -> dict[str, Any]:
         # bradycardia mask (True where heart rate is below baseline, False otherwise)
@@ -141,9 +200,7 @@ class CftFeatureExtraction(Algorithm):
         onset = brady_phases.index[2]
 
         onset_time = data["r_peak_time"].loc[onset]
-        start_time = data["r_peak_time"].iloc[0]
-
-        onset_latency = (onset_time - start_time).total_seconds()
+        onset_latency = data["time_relative"].loc[onset].total_seconds()
         onset_idx = data.index.get_loc(onset)
 
         # heart rate at onset point
@@ -195,7 +252,7 @@ class CftFeatureExtraction(Algorithm):
         peak_brady = df_hr.idxmin()
         peak_brady_time = data["r_peak_time"].loc[peak_brady]
 
-        peak_brady_latency = (peak_brady_time - data["r_peak_time"].iloc[0]).total_seconds()
+        peak_brady_latency = data["time_relative"].loc[peak_brady].total_seconds()
         peak_brady_idx = df_hr.index.get_loc(peak_brady)
         hr_brady = np.squeeze(df_hr.loc[peak_brady])
 
@@ -250,8 +307,7 @@ class CftFeatureExtraction(Algorithm):
         """Compute **CFT polynomial fit**.
 
         The CFT polynomial fit is computed by applying a 2nd order least-squares polynomial fit to the heart rate
-        during the CFT Interval because the CFT-induced bradycardia and the following recovery is assumed to follow
-        a polynomial function.
+        during exposure and the configured recovery interval. Time zero is the configured exposure start.
 
         This function computes the following CFT polynomial fit parameter:
 
@@ -272,8 +328,10 @@ class CftFeatureExtraction(Algorithm):
             dictionary with CFT polynomial fit parameter
 
         """
-        data = data.assign(time_relative=data["r_peak_time"] - data["r_peak_time"].iloc[0])
+        data = data.loc[np.isfinite(data["heart_rate_bpm"]) & data["time_relative"].notna()]
         idx_s = data["time_relative"].dt.total_seconds()
+        if idx_s.nunique() < 3:
+            raise FeatureComputationError("Polynomial fitting requires at least three distinct valid heartbeat times.")
         # apply a 2nd degree polynomial fit
         poly = np.polyfit(idx_s, np.squeeze(data["heart_rate_bpm"]), deg=2)
         return {f"poly_fit_a{i}": p for i, p in enumerate(reversed(poly))}

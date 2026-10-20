@@ -146,7 +146,8 @@ def _find_static_sequences(
 
     Returns
     -------
-    Array of [start, end] labels indication static regions within the input signal
+    Array of start-inclusive, end-exclusive sample positions indicating static regions within the input signal.
+    No static samples yield an empty integer array with shape (0, 2).
 
     Examples
     --------
@@ -213,7 +214,9 @@ def find_static_moments(
     Returns
     -------
     :class:`~pandas.DataFrame`
-        dataframe with ["start", "end"] columns indicating beginning and end of static regions within the input signal
+        Dataframe with integer ["start", "end"] columns indicating beginning and end of static regions within
+        the input signal. Both start and end sample positions are inclusive. If no static samples are detected,
+        returns an empty dataframe with the same integer columns.
 
 
     Examples
@@ -236,14 +239,12 @@ def find_static_moments(
         overlap_percent=overlap_percent,
     )
     if data.empty:
-        start_end = np.zeros(shape=(0, 2))
+        start_end = np.empty(shape=(0, 2), dtype=int)
     else:
         data = sanitize_input_nd(data)
         start_end = _find_static_sequences(
             data, window_length=window, overlap=overlap, inactive_signal_th=threshold, metric=metric
         )
-        if len(start_end) == 0:
-            return pd.DataFrame(columns=["start", "end"])
         # end indices are *inclusive*!
         start_end[:, 1] -= 1
     return pd.DataFrame(start_end, columns=["start", "end"])
