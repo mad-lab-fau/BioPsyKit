@@ -1,10 +1,11 @@
 """Module with functions for model selection using "nested" cross-validation."""
 
 import warnings
+from copy import deepcopy
 from typing import Any
 
 import numpy as np
-from sklearn.metrics import confusion_matrix, get_scorer
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import BaseCrossValidator, GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from tqdm.auto import tqdm
@@ -69,7 +70,8 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
         - "param_search": list with hyperparameter search class instances
           (e.g., :class:`~sklearn.model_selection.GridSearchCV`) used for hyperparameter search for each outer fold
           (determined by ``outer_cv``).
-        - "test_score":  list with test scores of the best estimator on the respective test set for each outer fold.
+        - "test_<name>": list with outer-fold scores for each named scorer. With ``scoring=None`` or a callable
+          returning a single score, the key is "test_score". A callable returning a dictionary supplies its names.
         - "cv_results": list of ``cv_results_`` attributes of hyperparameter search class
           (e.g., :class:`~sklearn.model_selection.GridSearchCV`).
           Each entry of "cv_results" is a results dictionary of the respective fold with keys as column headers and
@@ -79,6 +81,19 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
           was chosen by the hyperparameter in the respective fold, i.e. the estimator which gave the highest
           average score (or smallest loss if specified) on the test data.
         - "conf_matrix": list of confusion matrices from test scores for each outer fold
+
+    Notes
+    -----
+    ``scoring`` follows the scikit-learn search API: a scorer name, a list/tuple of names, a dictionary of names to
+    scorer names/callables, a callable, or ``None`` to use the estimator's default score. Scorers are evaluated on
+    each fitted best estimator, preserving loss signs, configured arguments, and response methods.
+
+    Refitting is required to evaluate the best estimator on each outer test fold. For a single scorer name,
+    ``refit`` defaults to that name; for multiple scores, specify a scorer name or a callable refit strategy.
+    Explicit scorer-name and callable refit strategies are preserved; ``refit=False`` is unsupported.
+
+    Cross-validation splitters are copied before use. Their configured random states are preserved unless a
+    non-None ``random_state`` keyword overrides them. That keyword also seeds randomized parameter search.
 
     See Also
     --------
@@ -92,7 +107,7 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
         hyper_search_params = {"search_method": "grid"}
 
     scoring = kwargs.pop("scoring", None)
-    kwargs, scoring_dict = _setup_scoring_dict(scoring, **kwargs)
+    kwargs, scoring = _setup_scoring(scoring, **kwargs)
 
     cols = [
         "param_search",
@@ -104,20 +119,18 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
         "train_indices",
         "test_indices",
     ]
-    for scorer in scoring_dict:
-        cols.append(f"test_{scorer}")
     results_dict = {key: [] for key in cols}
 
-    # fix random states of cv objects for reproducibility
-    if hasattr(outer_cv, "random_state"):
-        outer_cv.random_state = kwargs.get("random_state", None)
-    if hasattr(inner_cv, "random_state"):
-        inner_cv.random_state = kwargs.get("random_state", None)
+    # Preserve caller-owned splitters, including the state of RandomState instances.
+    outer_cv, inner_cv = deepcopy(outer_cv), deepcopy(inner_cv)
+    random_state = kwargs.get("random_state")
+    if random_state is not None:
+        for splitter in (outer_cv, inner_cv):
+            if hasattr(splitter, "random_state"):
+                splitter.random_state = deepcopy(random_state)
 
     for train, test in tqdm(list(outer_cv.split(X, y, groups)), desc="Outer CV"):
-        cv_obj = _get_param_search_cv_object(
-            pipeline, param_dict, inner_cv, scoring_dict, hyper_search_params, **kwargs
-        )
+        cv_obj = _get_param_search_cv_object(pipeline, param_dict, inner_cv, scoring, hyper_search_params, **kwargs)
 
         if groups is None:
             x_train, x_test, y_train, y_test = split_train_test(X, y, train, test)
@@ -135,8 +148,8 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
         cv_obj = _fit_cv_obj_one_fold(cv_obj, x_train, y_train, groups_train)
 
         results_dict["param_search"].append(cv_obj)
-        for scorer in scoring_dict:
-            results_dict[f"test_{scorer}"].append(get_scorer(scorer)._score_func(y_test, cv_obj.predict(x_test)))
+        for name, score in _score_outer_fold(cv_obj, x_test, y_test).items():
+            results_dict.setdefault(f"test_{name}", []).append(score)
         results_dict["train_indices"].append(train)
         results_dict["test_indices"].append(test)
         results_dict["predicted_labels"].append(cv_obj.predict(x_test))
@@ -153,16 +166,24 @@ def nested_cv_param_search(  # pylint:disable=invalid-name # pylint:disable=too-
     return results_dict
 
 
-def _setup_scoring_dict(scoring, **kwargs):
-    scoring_dict = {}
-    if scoring is not None:
-        if isinstance(scoring, str):
+def _setup_scoring(scoring, **kwargs):
+    if kwargs.get("refit", True) is False:
+        raise ValueError("nested_cv_param_search requires refit to evaluate the best estimator on each outer fold.")
+    if isinstance(scoring, str):
+        # Retain named result columns for the existing single-string API.
+        if kwargs.get("refit", True) is True:
             kwargs["refit"] = scoring
-            scoring = [scoring]
+        scoring = {scoring: scoring}
+    return kwargs, scoring
 
-        for score in scoring:
-            scoring_dict.setdefault(score, score)
-    return kwargs, scoring_dict
+
+def _score_outer_fold(cv_obj, x_test, y_test):
+    scorers = cv_obj.scorer_
+    estimator = cv_obj.best_estimator_
+    if isinstance(scorers, dict):
+        return {name: scorer(estimator, x_test, y_test) for name, scorer in scorers.items()}
+    scores = scorers(estimator, x_test, y_test)
+    return scores if isinstance(scores, dict) else {"score": scores}
 
 
 def _fit_cv_obj_one_fold(cv_obj, x_train, y_train, groups_train):
@@ -189,7 +210,7 @@ def _get_param_search_cv_object(
     pipeline: Pipeline,
     param_dict: dict[str, Any],
     inner_cv: BaseCrossValidator,
-    scoring_dict: dict[str, str],
+    scoring: Any,
     hyper_search_config: dict[str, Any],
     **kwargs,
 ):
@@ -199,11 +220,11 @@ def _get_param_search_cv_object(
             pipeline,
             param_distributions=param_dict,
             cv=inner_cv,
-            scoring=scoring_dict,
+            scoring=scoring,
             n_iter=hyper_search_config["n_iter"],
             random_state=random_state,
             **kwargs,
         )
     if hyper_search_config["search_method"] == "grid":
-        return GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring_dict, **kwargs)
+        return GridSearchCV(pipeline, param_grid=param_dict, cv=inner_cv, scoring=scoring, **kwargs)
     raise ValueError("Unknown search method {}".format(hyper_search_config["search_method"]))
