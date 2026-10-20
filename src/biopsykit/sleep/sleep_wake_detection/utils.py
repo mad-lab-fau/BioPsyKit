@@ -23,6 +23,8 @@ def rescore(predictions: np.ndarray, epoch_length: EPOCH_LENGTH | None = 30) -> 
         rescored sleep/wake predictions
 
     """
+    if epoch_length not in (30, 60):
+        raise ValueError("Webster rescoring supports 30 or 60 second epochs; use rescore_data=False for other lengths.")
     rescored = predictions.copy()
     # rules a through c
     rescored = _apply_recording_rules_a_c(rescored, epoch_length)

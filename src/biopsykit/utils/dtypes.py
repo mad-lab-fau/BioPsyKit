@@ -299,7 +299,9 @@ The following entries are common, but not required:
 * ``net_sleep_duration``: Net duration spent sleeping, in minutes
 * ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
 * ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
-* ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
+* ``time_in_bed``: Covered bed interval duration in minutes
+* ``epoch_length_s``: Prediction epoch duration in seconds, when computed from sleep/wake epochs
+* ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and time in bed
   in percent
 * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
 * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes
@@ -343,7 +345,9 @@ The following columns are common, but not required:
 * ``net_sleep_duration``: Net duration spent sleeping, in minutes
 * ``bed_interval_start``: Bed Interval Start, i.e, time when participant went to bed, in absolute time
 * ``bed_interval_end``: Bed Interval End, i.e, time when participant left bed, in absolute time
-* ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and sleep duration
+* ``time_in_bed``: Covered bed interval duration in minutes
+* ``epoch_length_s``: Prediction epoch duration in seconds, when computed from sleep/wake epochs
+* ``sleep_efficiency``: Sleep Efficiency, defined as the ratio between net sleep duration and time in bed
   in percent
 * ``sleep_onset_latency``: Sleep Onset Latency, i.e., time in bed needed to fall asleep, in minutes
 * ``getup_latency``: Get Up Latency, i.e., time in bed after awakening until getting up, in minutes

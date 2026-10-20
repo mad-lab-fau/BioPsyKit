@@ -7,7 +7,7 @@ from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
 from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
+from biopsykit.utils.dtypes import SleepWakeDataFrame
 
 
 class ColeKripkeOld(_SleepWakeBase):
@@ -60,7 +60,7 @@ class ColeKripkeOld(_SleepWakeBase):
         """
         return
 
-    def predict(self, data: arr_t, **kwargs) -> SleepWakeDataFrame:  # noqa: ARG002
+    def predict(self, data: arr_t, **kwargs) -> SleepWakeDataFrame:
         """Apply sleep/wake prediction on activity index values.
 
         Parameters
@@ -88,8 +88,7 @@ class ColeKripkeOld(_SleepWakeBase):
         scores[scores < 1] = 1  # sleep = 1
         scores[scores == 99] = 0  # wake = 0
 
-        # rescore the original predictions
-        scores = rescore(scores)
-
-        scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
-        return _SleepWakeDataFrame(scores)
+        epoch_length = kwargs.get("epoch_length", self.epoch_length)
+        if kwargs.get("rescore_data", True):
+            scores = rescore(scores, epoch_length=epoch_length)
+        return self._prediction_frame(scores, index, epoch_length)

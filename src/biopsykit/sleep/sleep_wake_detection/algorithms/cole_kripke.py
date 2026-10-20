@@ -7,7 +7,7 @@ from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
 from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
+from biopsykit.utils.dtypes import SleepWakeDataFrame
 
 
 class ColeKripke(_SleepWakeBase):
@@ -79,6 +79,7 @@ class ColeKripke(_SleepWakeBase):
         """
         index = None
         rescore_data: bool = kwargs.get("rescore_data", True)
+        epoch_length = kwargs.get("epoch_length", self.epoch_length)
 
         if isinstance(data, pd.DataFrame):
             index = data.index
@@ -88,22 +89,20 @@ class ColeKripke(_SleepWakeBase):
         # problem in my view: with np.convolve and "same" we don't make the "unsymmetrical" convolution...
         # ( formula is with A-4 and A+2)
         # possible solution: np.valid and append 4 zeros in front and 2 zeros at the back or like implemented
-        scores = np.convolve(data, self._get_kernel(), "same")
+        scores = np.convolve(data, self._get_kernel(epoch_length), "same")
 
         scores[scores >= 1] = 99  # wake = 0
         scores[scores < 1] = 1  # sleep = 1
         scores[scores == 99] = 0  # wake = 0       #changed to 1 according to paper
 
         if rescore_data:
-            scores = rescore(scores, epoch_length=self.epoch_length)
+            scores = rescore(scores, epoch_length=epoch_length)
 
-        if index is not None:
-            scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
+        return self._prediction_frame(scores, index, epoch_length)
 
-        return _SleepWakeDataFrame(scores)
-
-    def _get_kernel(self):
+    def _get_kernel(self, epoch_length=None):
         """Get convolution kernel for a given epoch length."""
+        epoch_length = self.epoch_length if epoch_length is None else epoch_length
         scale_map = {
             10: 0.00001,
             30: 0.0001,
@@ -114,5 +113,7 @@ class ColeKripke(_SleepWakeBase):
             30: [50, 30, 14, 28, 121, 8, 50, 0, 0],
             60: [106, 54, 58, 76, 230, 74, 67, 0, 0],
         }
-        sf = np.array(scale_map[self.epoch_length])
-        return sf * np.array(coeff_map[self.epoch_length])
+        if epoch_length not in scale_map:
+            raise ValueError("Cole/Kripke supports 10, 30, or 60 second epochs.")
+        sf = np.array(scale_map[epoch_length])
+        return sf * np.array(coeff_map[epoch_length])

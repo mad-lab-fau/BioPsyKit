@@ -7,11 +7,13 @@ from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
 from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
+from biopsykit.utils.dtypes import SleepWakeDataFrame
 
 
 class ScrippsClinic(_SleepWakeBase):
     """Class representing the *Scripps Clinic Algorithm* for sleep/wake detection based on activity counts."""
+
+    default_epoch_length = 30
 
     def __init__(self, **kwargs):
         """Class representing the *Scripps Clinic Algorithm* for sleep/wake detection based on activity counts.
@@ -71,7 +73,7 @@ class ScrippsClinic(_SleepWakeBase):
               Default: ``True``
             * ``epoch_length`` (``int``):
               activity data epoch lengths in seconds, i.e. Epoch lengths are usually 30 or 60 seconds.
-              Default: 60
+              Default: 30
 
         Returns
         -------
@@ -81,7 +83,7 @@ class ScrippsClinic(_SleepWakeBase):
         """
         index = None
         rescore_data: bool = kwargs.get("rescore_data", True)
-        epoch_length: int = kwargs.get("epoch_length", 30)
+        epoch_length = kwargs.get("epoch_length", self.epoch_length)
 
         if isinstance(data, pd.DataFrame):
             index = data.index
@@ -126,7 +128,4 @@ class ScrippsClinic(_SleepWakeBase):
         if rescore_data:
             scores = rescore(scores, epoch_length=epoch_length)
 
-        if index is not None:
-            scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
-
-        return _SleepWakeDataFrame(scores)
+        return self._prediction_frame(scores, index, epoch_length)

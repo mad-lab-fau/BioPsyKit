@@ -4,15 +4,16 @@ from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
+import pandas as pd
 
 from biopsykit.signals.imu import convert_acc_data_to_g
 from biopsykit.signals.imu.activity_counts import ActivityCounts
 from biopsykit.signals.imu.rest_periods import RestPeriods
 from biopsykit.signals.imu.wear_detection import WearDetection
+from biopsykit.sleep._epoch import EPOCH_LENGTH_ATTR, resolve_epoch_length
 from biopsykit.sleep.sleep_endpoints import compute_sleep_endpoints
 from biopsykit.sleep.sleep_wake_detection.sleep_wake_detection import SleepWakeDetection
 from biopsykit.utils._types_internal import arr_t
-from biopsykit.utils.array_handling import accumulate_array
 
 
 def predict_pipeline_acceleration(
@@ -49,6 +50,10 @@ def predict_pipeline_acceleration(
           Default: "Cole/Kripke"
         * *epoch_length*: epoch length in seconds. Default: 60
 
+        Epoch length is propagated into prediction metadata and endpoint extraction. Only complete epochs
+        are aggregated; trailing activity counts are discarded. The detected bed interval is clipped to
+        observed complete-epoch coverage. Raw activity-count aggregation requires whole-second epochs.
+
 
     Returns
     -------
@@ -77,13 +82,39 @@ def predict_pipeline_acceleration(
         return {}
 
     df_ac = ac.calculate(data)
-    df_ac = accumulate_array(df_ac, 1, 1 / kwargs.get("epoch_length"))
+    # Activity counts are one-second bins. Discard padding and incomplete trailing epochs.
+    if not float(sw.epoch_length).is_integer():
+        raise ValueError("Raw-acceleration epochs must span a whole number of one-second activity-count bins.")
+    epoch_samples = int(sw.epoch_length)
+    df_ac = pd.DataFrame(df_ac).iloc[: int(len(data) / sampling_rate)]
+    n_epochs = len(df_ac) // epoch_samples
+    if not n_epochs:
+        return {}
+    values = df_ac.iloc[: n_epochs * epoch_samples].to_numpy().reshape(n_epochs, epoch_samples, -1).sum(axis=1)
+    epoch_index = (
+        pd.date_range(data.index[0], periods=n_epochs, freq=pd.Timedelta(seconds=sw.epoch_length))
+        if isinstance(getattr(data, "index", None), pd.DatetimeIndex)
+        else None
+    )
+    df_ac = pd.DataFrame(values, columns=df_ac.columns, index=epoch_index)
+    df_ac.attrs[EPOCH_LENGTH_ATTR] = sw.epoch_length
 
     df_sw = sw.predict(df_ac)
     df_rp = rp.predict(data)
-    bed_interval = [df_rp["start"][0], df_rp["end"][0]]
-    print(df_sw.value_counts())
-    sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval)
+    bed_interval = [df_rp["start"].iloc[0], df_rp["end"].iloc[0]]
+    if isinstance(df_sw.index, pd.DatetimeIndex):
+        bed_interval = [
+            max(bed_interval[0], df_sw.index[0]),
+            min(bed_interval[1], df_sw.index[-1] + pd.Timedelta(seconds=sw.epoch_length)),
+        ]
+    else:
+        bed_interval = [
+            max(bed_interval[0] * 60 / sw.epoch_length, 0),
+            min(bed_interval[1] * 60 / sw.epoch_length, len(df_sw)),
+        ]
+    if bed_interval[0] >= bed_interval[1]:
+        return {}
+    sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval, epoch_length=sw.epoch_length)
     if not sleep_endpoints:
         return {}
 
@@ -115,12 +146,16 @@ def predict_pipeline_actigraph(
     algorithm_type : str
         name of sleep/wake detection algorithm to internally use for sleep/wake detection
     bed_interval : array_like
-        beginning and end of bed interval, i.e., the time spent in bed
+        inclusive start and exclusive end of the bed interval, within observed epoch coverage
 
     **kwargs :
         additional parameters to configure sleep/wake detection. The possible parameters depend on the selected
         sleep/wake detection algorithm and are passed to
         :class:`~biopsykit.sleep.sleep_wake_detection.SleepWakeDetection`.
+
+        ``epoch_length`` is in seconds. If omitted, infer it from prediction metadata or a regular datetime
+        index. Integer epoch indices require an explicit duration or metadata. The input activity values
+        must already represent epochs at that resolution; this pipeline does not resample them.
 
 
     Returns
@@ -130,10 +165,12 @@ def predict_pipeline_actigraph(
 
     """
     # TODO: add entries of result dictionary to docstring and add possibility to specify sleep/wake prediction algorithm
+    # Resolve actual input coverage instead of relying on a classifier's default epoch length.
+    kwargs["epoch_length"] = resolve_epoch_length(data, kwargs.get("epoch_length"))
     sw = SleepWakeDetection(algorithm_type=algorithm_type, **kwargs)
     df_sw = sw.predict(data[["activity"]])
 
-    sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval)
+    sleep_endpoints = compute_sleep_endpoints(df_sw, bed_interval, epoch_length=sw.epoch_length)
 
     dict_result = {"sleep_wake_prediction": df_sw, "sleep_endpoints": sleep_endpoints}
     return dict_result

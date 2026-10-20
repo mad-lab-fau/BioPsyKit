@@ -7,7 +7,7 @@ from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
 from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import sanitize_input_1d, sliding_window
-from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
+from biopsykit.utils.dtypes import SleepWakeDataFrame
 
 
 class Sadeh(_SleepWakeBase):
@@ -67,7 +67,7 @@ class Sadeh(_SleepWakeBase):
         """
         index = None
         rescore_data: bool = kwargs.get("rescore_data", True)
-        epoch_length: bool = kwargs.get("epoch_length", 60)
+        epoch_length = kwargs.get("epoch_length", self.epoch_length)
 
         if isinstance(data, pd.DataFrame):
             index = data.index
@@ -91,7 +91,4 @@ class Sadeh(_SleepWakeBase):
         if rescore_data:
             score = rescore(score, epoch_length=epoch_length)
 
-        if index is not None:
-            score = pd.DataFrame(score, index=index, columns=["sleep_wake"])
-
-        return _SleepWakeDataFrame(score)
+        return self._prediction_frame(score, index, epoch_length)
