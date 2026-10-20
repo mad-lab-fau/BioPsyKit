@@ -1,4 +1,4 @@
-"""Regression tests for empty static intervals and existing endpoint conventions."""
+"""Regression tests for empty static intervals and exclusive endpoint conventions."""
 
 import numpy as np
 import pandas as pd
@@ -64,9 +64,9 @@ def test_internal_static_detection_without_static_samples_returns_no_intervals()
     assert np.issubdtype(result.dtype, np.integer)
 
 
-def test_nonempty_static_detection_retains_existing_inclusive_ends():
-    """The empty-result fix must not migrate the public detector's endpoint convention."""
+def test_nonempty_static_detection_returns_exclusive_ends():
+    """A fully static recording includes every sample and ends at len(data)."""
     result = find_static_moments(pd.DataFrame(np.zeros((100, 3))), threshold=0.0, window_samples=10, metric="mean")
 
-    expected = pd.DataFrame({"start": [0], "end": [99]})
+    expected = pd.DataFrame({"start": [0], "end": [100]})
     pd.testing.assert_frame_equal(result, expected)

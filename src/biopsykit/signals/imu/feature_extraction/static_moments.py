@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import skew
 
-from biopsykit.utils.array_handling import sanitize_input_nd
 from biopsykit.utils.time import tz
 
 
@@ -15,7 +14,9 @@ def compute_features(
     end: str | pd.Timestamp | None = None,
     index: int | str | None = None,
     timezone: str | None = None,
-) -> pd.DataFrame | None:
+    *,
+    sampling_rate_hz: float,
+) -> pd.DataFrame:
     """Compute features based on frequency and duration of static moments in given input signal.
 
     This function computes the following features:
@@ -29,8 +30,10 @@ def compute_features(
     * ``sm_std``: standard deviation of static moment durations
     * ``sm_skewness``: skewness of static moment durations
 
-    The features are both computed on all detected static moments and on static moments that are longer than
-    60 seconds (suffix ``_60``).
+    The features are computed on all detected static moments and on static moments lasting at least
+    60 seconds (suffix ``_60``). Intervals use integer sample positions [start, end), including their start
+    and excluding their end. Duration is sample coverage: ``(end - start) / sampling_rate_hz``.
+    Intervals are clipped to the requested time window; intervals outside it are omitted.
 
 
     Parameters
@@ -38,56 +41,59 @@ def compute_features(
     data : :class:`~pandas.DataFrame`
         input data
     static_moments : :class:`~pandas.DataFrame`
-        dataframe with beginning and end of static moments
+        dataframe with integer ``start`` and exclusive ``end`` positions relative to ``data``
     start : :class:`~pandas.Timestamp` or str, optional
         start timestamp in input data for feature extraction or ``None`` to set start index to the first index in
         ``data``. All samples *before* ``start`` will not be used for feature extraction.
     end : :class:`~pandas.Timestamp` or str, optional
-        end timestamp in input data for feature extraction or ``None`` to set end index to the last index in
-        ``data``. All samples *after* ``end`` will not be used for feature extraction.
+        exclusive end timestamp for feature extraction or ``None`` for one sample period after the last
+        timestamp in ``data``. Samples at or after ``end`` are excluded.
     index : int or str, optional
         index label of the resulting dataframe or ``None`` to assign a default label (0)
     timezone : str, optional
         timezone of the recorded data or ``None`` to use default timezone ("Europe/Berlin")
+    sampling_rate_hz : float
+        Positive sampling rate of regularly sampled data. The datetime index must agree with this rate.
+        Irregular recordings must be split or resampled before feature extraction.
 
     Returns
     -------
     :class:`~pandas.DataFrame`
-        dataframe with extracted static moment features
+        dataframe with extracted static moment features. Empty intervals/data produce zero counts and
+        NaN statistics; the same applies to an empty subset of moments lasting at least 60 seconds.
 
     """
-    if data.empty:
-        return None
+    _validate_sampling_rate(data, sampling_rate_hz)
+    static_moments = _validate_intervals(static_moments, len(data))
+    loc_max_moment_relative = np.nan
+    if not data.empty:
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Feature extraction requires a DatetimeIndex.")
+        start, end = _get_start_end(data, start, end, timezone, sampling_rate_hz)
+        if end <= start:
+            raise ValueError("The feature extraction end must be after its start.")
+        lower, upper = data.index.searchsorted([start, end], side="left")
+        static_moments = np.column_stack(
+            (np.maximum(static_moments[:, 0], lower), np.minimum(static_moments[:, 1], upper))
+        )
+        static_moments = static_moments[static_moments[:, 0] < static_moments[:, 1]]
 
-    start, end = _get_start_end(data, start, end, timezone)
-    total_time = end - start
-
-    static_moments = sanitize_input_nd(static_moments, ncols=2)
-
-    durations = np.array([static_moment_duration(data, sequence) for sequence in static_moments])
+    durations = (static_moments[:, 1] - static_moments[:, 0]) / sampling_rate_hz
     durations_60 = durations[durations >= 60]
 
-    loc_max_moment = data.index[static_moments[np.argmax(durations)][0]]
-    loc_max_moment_relative = (loc_max_moment - start) / total_time
+    if len(durations):
+        loc_max_moment = data.index[static_moments[np.argmax(durations), 0]]
+        loc_max_moment_relative = (loc_max_moment - start) / (end - start)
 
     feature_dict = {"sm_max_position": loc_max_moment_relative}
-    # feature_dict['sleep_bouts_number'.format(index)] = len(sleep_bouts)
-    # feature_dict['wake_bouts_number'] = len(wake_bouts)
-
-    # mean_orientations = mean_orientation(data, static_sequences)
-    # dominant_orientation = mean_orientations.iloc[mean_orientations.index.argmax()]
-    # dict_ori = {'sm_dominant_orientation_{}'.format(x): dominant_orientation.loc['acc_{}'.format(x)] for x
-    #             in
-    #             ['x', 'y', 'z']}
-    # feature_dict.update(dict_ori)
 
     for dur, suffix in zip([durations, durations_60], ["", "_60"], strict=False):
         feature_dict[f"sm_number{suffix}"] = len(dur)
-        feature_dict[f"sm_max{suffix}"] = np.max(dur)
-        feature_dict[f"sm_median{suffix}"] = np.median(dur)
-        feature_dict[f"sm_mean{suffix}"] = np.mean(dur)
-        feature_dict[f"sm_std{suffix}"] = np.std(dur, ddof=1)
-        feature_dict[f"sm_skewness{suffix}"] = skew(dur)
+        feature_dict[f"sm_max{suffix}"] = np.max(dur) if len(dur) else np.nan
+        feature_dict[f"sm_median{suffix}"] = np.median(dur) if len(dur) else np.nan
+        feature_dict[f"sm_mean{suffix}"] = np.mean(dur) if len(dur) else np.nan
+        feature_dict[f"sm_std{suffix}"] = np.std(dur, ddof=1) if len(dur) > 1 else np.nan
+        feature_dict[f"sm_skewness{suffix}"] = skew(dur) if len(dur) > 1 and np.ptp(dur) > 0 else np.nan
 
     if index is None:
         index = 0
@@ -96,17 +102,18 @@ def compute_features(
 
 def _get_start_end(
     data: pd.DataFrame,
-    start: str | pd.Timestamp,
-    end: str | pd.Timestamp,
-    timezone: str,
-) -> tuple[str | pd.Timestamp, str | pd.Timestamp]:
+    start: str | pd.Timestamp | None,
+    end: str | pd.Timestamp | None,
+    timezone: str | None,
+    sampling_rate_hz: float,
+) -> tuple[pd.Timestamp, pd.Timestamp]:
     if timezone is None:
         timezone = tz
 
     if start is None:
         start = data.index[0]
     if end is None:
-        end = data.index[-1]
+        end = data.index[-1] + pd.Timedelta(seconds=1 / sampling_rate_hz)
 
     start = _to_timestamp(start, timezone)
     end = _to_timestamp(end, timezone)
@@ -119,15 +126,17 @@ def _to_timestamp(date: str | pd.Timestamp, timezone: str) -> pd.Timestamp:
     return date
 
 
-def static_moment_duration(data: pd.DataFrame, start_end: np.array) -> float:
-    """Compute duration of static moment.
+def static_moment_duration(data: pd.DataFrame, start_end: np.ndarray, *, sampling_rate_hz: float) -> float:
+    """Compute sample coverage of a static moment in seconds.
 
     Parameters
     ----------
     data : :class:`~pandas.DataFrame`
-        input data
+        regularly sampled input data
     start_end : array
-        start and end index of static moment to compute duration
+        inclusive start and exclusive end positions, satisfying ``0 <= start < end <= len(data)``
+    sampling_rate_hz : float
+        Positive sampling rate. A datetime index must agree with this rate; irregular recordings are unsupported.
 
     Returns
     -------
@@ -135,7 +144,9 @@ def static_moment_duration(data: pd.DataFrame, start_end: np.array) -> float:
         duration in seconds
 
     """
-    return (data.index[start_end[1]] - data.index[start_end[0]]).total_seconds()
+    _validate_sampling_rate(data, sampling_rate_hz)
+    start, end = _validate_intervals(np.asarray([start_end]), len(data))[0]
+    return float((end - start) / sampling_rate_hz)
 
 
 def mean_orientation(data: pd.DataFrame, static_moments: pd.DataFrame) -> pd.DataFrame:
@@ -146,17 +157,51 @@ def mean_orientation(data: pd.DataFrame, static_moments: pd.DataFrame) -> pd.Dat
     data : :class:`~pandas.DataFrame`
         input data
     static_moments : :class:`~pandas.DataFrame`
-        dataframe with start and end indices of static moments
+        dataframe with integer ``start`` and exclusive ``end`` positions of static moments
 
     Returns
     -------
     :class:`~pandas.DataFrame`
-        mean orientation (x, y, z) of acceleration signal for each static moment window
+        mean orientation (x, y, z) of acceleration signal for each static moment window, preserving the input
+        interval index. Array inputs use an ``interval_id`` index. Equal-length moments remain separate rows.
 
     """
-    static_moments = sanitize_input_nd(static_moments, 2)
-    mean_orientations = [data.iloc[start_end[0] : start_end[1]] for start_end in static_moments]
-    mean_orientations = {len(data): data.mean() for data in mean_orientations}
-    mean_orientations = pd.DataFrame(mean_orientations).T
-    # mean_orientations.rename(columns={'index': 'length'}, inplace=True)
-    return mean_orientations
+    intervals = _validate_intervals(static_moments, len(data))
+    index = (
+        static_moments.index.copy()
+        if isinstance(static_moments, pd.DataFrame)
+        else pd.RangeIndex(len(intervals), name="interval_id")
+    )
+    means = [data.iloc[start:end].mean() for start, end in intervals]
+    return pd.DataFrame(means, index=index, columns=data.columns, dtype=float)
+
+
+def _validate_intervals(intervals: pd.DataFrame | np.ndarray, n_samples: int) -> np.ndarray:
+    if isinstance(intervals, pd.DataFrame):
+        intervals = intervals[["start", "end"]].to_numpy()
+    intervals = np.asarray(intervals)
+    if intervals.ndim != 2 or intervals.shape[1] != 2:
+        raise ValueError("Intervals must have shape (n, 2), with start and exclusive end positions.")
+    # Accept pandas nullable-integer columns, whose numpy representation can have object dtype.
+    if not all(
+        isinstance(value, (int, np.integer)) and not isinstance(value, (bool, np.bool_)) for value in intervals.flat
+    ):
+        raise ValueError("Interval positions must be integers.")
+    intervals = intervals.astype(int)
+    if np.any(intervals[:, 0] < 0) or np.any(intervals[:, 0] >= intervals[:, 1]) or np.any(intervals[:, 1] > n_samples):
+        raise ValueError("Intervals must satisfy 0 <= start < end <= len(data).")
+    return intervals
+
+
+def _validate_sampling_rate(data: pd.DataFrame, sampling_rate_hz: float) -> None:
+    if (
+        isinstance(sampling_rate_hz, (bool, np.bool_))
+        or not isinstance(sampling_rate_hz, (int, float, np.integer, np.floating))
+        or not np.isfinite(sampling_rate_hz)
+        or sampling_rate_hz <= 0
+    ):
+        raise ValueError("sampling_rate_hz must be finite and positive.")
+    if isinstance(data.index, pd.DatetimeIndex):
+        deltas_ns = np.diff(data.index.as_unit("ns").asi8)
+        if data.index.hasnans or not np.allclose(deltas_ns, 1e9 / sampling_rate_hz, rtol=0, atol=1):
+            raise ValueError("DatetimeIndex must be regularly sampled at sampling_rate_hz; split or resample the data.")

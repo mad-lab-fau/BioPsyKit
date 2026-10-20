@@ -25,6 +25,8 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
 
     This algorithm segments the ECG signal into individual heartbeats based on the R-peaks detected by Neurokit's
     ``ecg_peaks`` function. The start of each heartbeat is determined based on the R-peak and the current RR-interval.
+    All boundaries use zero-based positions [start_sample, end_sample), independent of signal index labels.
+    In both length modes, incomplete heartbeats extending outside the signal are discarded.
 
     For more information on NeuroKit2, see [Mak21]_.
 
@@ -54,7 +56,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
         DataFrame containing the segmented heartbeats with the following columns:
             - ``start_time``: Start time of the heartbeat
             - ``start_sample``: Start sample of the heartbeat
-            - ``end_sample``: End sample of the heartbeat
+            - ``end_sample``: Exclusive end position of the heartbeat (may equal the signal length)
             - ``r_peak_sample``: Sample of the R-peak of the heartbeat
             - ``rr_interval_sample``: RR-interval to the next heartbeat in samples
             - ``rr_interval_ms``: RR-interval to the next heartbeat in milliseconds
@@ -203,7 +205,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
                 heartbeats = heartbeats.iloc[1:].reset_index(drop=True)
             beat_starts = round(beat_starts).astype(int)
 
-            # calculate beat ends (last beat ends 1 sample before next starts, end is exclusive)
+            # Each exclusive end is the start of the next beat.
             beat_ends = beat_starts.shift(-1)  # end is exclusive
 
             # extrapolate last beats end based on RR-interval of previous beat
@@ -211,7 +213,7 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
                 heartbeats["r_peak_sample"].iloc[-1] + (1 - self.start_factor) * rr_interval_samples.iloc[-1]
             )
 
-            if last_beat_end < len(ecg):
+            if last_beat_end <= len(ecg):
                 beat_ends.iloc[-1] = last_beat_end
             else:
                 # drop the last beat if it is incomplete
@@ -234,18 +236,30 @@ class HeartbeatSegmentationNeurokit(BaseHeartbeatSegmentation, CanHandleMissingE
             heartbeat_segments_new = heartbeat_segments_new.groupby("heartbeat_id").agg(
                 start_sample=("Index", "first"),
                 end_sample=("Index", "last"),
-                start_time=("Index", lambda s: ecg.index[s.iloc[0]]),
             )
+            # NeuroKit's Index column contains included samples, including padding outside the signal.
+            heartbeat_segments_new["end_sample"] += 1
+            complete = (heartbeat_segments_new["start_sample"] >= 0) & (
+                heartbeat_segments_new["end_sample"] <= len(ecg)
+            )
+            heartbeat_segments_new = heartbeat_segments_new.loc[complete]
+            heartbeat_segments_new["start_time"] = ecg.index[heartbeat_segments_new["start_sample"]]
+            heartbeats = heartbeats.loc[heartbeat_segments_new.index]
             # fill the empty columns of heartbeats with the start_sample, end_sample, and start_time of
             # heartbeat_segments_new
             heartbeats.update(heartbeat_segments_new)
             heartbeats = heartbeats.assign(start_time=heartbeat_segments_new["start_time"])
 
-        # check if R-peak occurs between corresponding start and end
-        check = heartbeats.apply(lambda x: x["start_sample"] < x["r_peak_sample"] < x["end_sample"], axis=1)
-        if len(check.loc[~check]) > 0:
+        # Positions are start-inclusive, end-exclusive and bounded by the input signal.
+        check = (
+            (heartbeats["start_sample"] >= 0)
+            & (heartbeats["start_sample"] <= heartbeats["r_peak_sample"])
+            & (heartbeats["r_peak_sample"] < heartbeats["end_sample"])
+            & (heartbeats["end_sample"] <= len(ecg))
+        )
+        if not check.all():
             raise ValueError(
-                f"Start/end/R-peak position of heartbeat {list(check.loc[check is False].index)} could be incorrect!"
+                f"Start/end/R-peak position of heartbeat {list(check.loc[~check].index)} could be incorrect!"
             )
 
         # ensure that index is Int64Index (not RangeIndex) because some neurokit functions won't work  with RangeIndex

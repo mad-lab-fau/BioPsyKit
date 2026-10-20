@@ -119,7 +119,7 @@ class QPeakExtractionMartinez2004Neurokit(BaseEcgExtractionWithHeartbeats, CanHa
                 heartbeats_no_q.append(idx)
                 continue
 
-            q_idx = (heartbeats["start_sample"] < q) & (q < heartbeats["end_sample"])
+            q_idx = (heartbeats["start_sample"] <= q) & (q < heartbeats["end_sample"])
             if np.sum(q_idx) == 0:
                 heartbeats_no_q.append(idx)
                 continue

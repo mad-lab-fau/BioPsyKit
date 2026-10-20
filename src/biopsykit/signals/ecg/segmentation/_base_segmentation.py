@@ -15,7 +15,9 @@ class BaseHeartbeatSegmentation(Algorithm):
     Attributes
     ----------
     heartbeat_list_ : :class:`~pandas.DataFrame`
-        DataFrame containing the segmented heartbeats. Each row represents one heartbeat.
+        DataFrame containing the segmented heartbeats. Each row represents one heartbeat with positional
+        boundaries [start_sample, end_sample). The end is exclusive and may equal the input signal length.
+        Slice a heartbeat with ``ecg.iloc[start_sample:end_sample]``.
 
 
     """
