@@ -7,7 +7,7 @@ from biopsykit.sleep.sleep_wake_detection.algorithms._base import _SleepWakeBase
 from biopsykit.sleep.sleep_wake_detection.utils import rescore
 from biopsykit.utils._types_internal import arr_t
 from biopsykit.utils.array_handling import sanitize_input_1d
-from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
+from biopsykit.utils.dtypes import SleepWakeDataFrame
 
 
 class Webster(_SleepWakeBase):
@@ -81,7 +81,7 @@ class Webster(_SleepWakeBase):
         """
         index = None
         rescore_data: bool = kwargs.get("rescore_data", True)
-        epoch_length: int = kwargs.get("epoch_length", 60)
+        epoch_length = kwargs.get("epoch_length", self.epoch_length)
 
         if isinstance(data, pd.DataFrame):
             index = data.index
@@ -102,7 +102,4 @@ class Webster(_SleepWakeBase):
         if rescore_data:
             scores = rescore(scores, epoch_length=epoch_length)
 
-        if index is not None:
-            scores = pd.DataFrame(scores, index=index, columns=["sleep_wake"])
-
-        return _SleepWakeDataFrame(scores)
+        return self._prediction_frame(scores, index, epoch_length)

@@ -7,7 +7,7 @@ from biopsykit.sleep.sleep_wake_detection.algorithms.sazonov import Sazonov
 from biopsykit.sleep.sleep_wake_detection.algorithms.scripps_clinic import ScrippsClinic
 from biopsykit.sleep.sleep_wake_detection.algorithms.webster import Webster
 from biopsykit.utils._types_internal import arr_t
-from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
+from biopsykit.utils.dtypes import SleepWakeDataFrame
 
 
 class SleepWakeDetection:
@@ -29,7 +29,8 @@ class SleepWakeDetection:
             :class:`~biopsykit.sleep.sleep_wake_detection.algorithms.cole_kripke.ColeKripke` for further information)
         kwargs
             optional parameters to be passed to the sleep/wake detection algorithm. The possible parameters depend on
-            the selected sleep/wake detection algorithm and are passed to the respective class.
+            the selected sleep/wake detection algorithm and are passed to the respective class and prediction call.
+            ``epoch_length`` is in seconds. Classifier-specific epoch/kernel restrictions still apply.
 
         """
         available_sleep_wake_algorithms = {
@@ -52,16 +53,13 @@ class SleepWakeDetection:
 
         sleep_wake_cls = available_sleep_wake_algorithms[algorithm_type]
 
-        if (
-            sleep_wake_cls is ColeKripke
-            or sleep_wake_cls is ColeKripkeOld
-            or sleep_wake_cls is Webster
-            or sleep_wake_cls is ScrippsClinic
-        ):
-            self.sleep_wake_algo = sleep_wake_cls(**kwargs)
+        self.sleep_wake_algo = sleep_wake_cls(**kwargs)
+        self._prediction_kwargs = dict(kwargs)
 
-        else:
-            self.sleep_wake_algo = sleep_wake_cls()
+    @property
+    def epoch_length(self) -> float:
+        """Configured epoch duration in seconds, also stored in prediction attrs['epoch_length_s']."""
+        return self.sleep_wake_algo.epoch_length
 
     def predict(self, data: arr_t, **kwargs) -> SleepWakeDataFrame:
         """Apply sleep/wake prediction on input data.
@@ -77,7 +75,9 @@ class SleepWakeDetection:
         Returns
         -------
         :obj:`~biopsykit.utils.dtypes.SleepWakeDataFrame`
-            dataframe with sleep/wake predictions
+            dataframe with sleep/wake predictions. Each timestamp is the start of an epoch; duration in seconds
+            is stored in ``attrs['epoch_length_s']``. Integer indices count epochs. Keyword overrides apply only
+            to this prediction and do not modify the configured epoch length.
 
         """
-        return _SleepWakeDataFrame(self.sleep_wake_algo.predict(data, **kwargs))
+        return self.sleep_wake_algo.predict(data, **(self._prediction_kwargs | kwargs))

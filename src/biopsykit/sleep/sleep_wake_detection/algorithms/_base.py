@@ -1,17 +1,25 @@
 """Module for sleep/wake detection base class."""
 
+from biopsykit.sleep._epoch import EPOCH_LENGTH_ATTR, resolve_epoch_length, validate_epoch_length
 from biopsykit.utils._types_internal import arr_t
-from biopsykit.utils.dtypes import SleepWakeDataFrame
+from biopsykit.utils.dtypes import SleepWakeDataFrame, _SleepWakeDataFrame
 
 
 class _SleepWakeBase:
     """Base class for sleep/wake detection algorithms."""
 
-    epoch_length: int = None
+    epoch_length: float | None = None
     """Epoch length in seconds."""
 
+    default_epoch_length = 60
+
     def __init__(self, **kwargs):
-        self.epoch_length: int = kwargs.get("epoch_length", 60)
+        self.epoch_length = validate_epoch_length(kwargs.get("epoch_length", self.default_epoch_length))
+
+    def _prediction_frame(self, scores, index, epoch_length):
+        result = _SleepWakeDataFrame(scores, index=index, columns=["sleep_wake"])
+        result.attrs[EPOCH_LENGTH_ATTR] = resolve_epoch_length(result, epoch_length)
+        return result
 
     def fit(self, data: arr_t, **kwargs):
         """Fit sleep/wake detection algorithm to input data.
