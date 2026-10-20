@@ -4,14 +4,25 @@
 
 ### Breaking changes
 
-- IMU static-moment and ECG heartbeat sample intervals consistently use inclusive starts and exclusive ends.
-  Fixed-length heartbeat segmentation discards padded, incomplete segments. Complete terminal variable-length
-  heartbeats are retained. See the
-  [sample interval migration guide](https://biopsykit.readthedocs.io/en/latest/guides/sample_intervals.html)
-  before reusing saved inclusive interval tables.
-- Static-moment duration and feature extraction require `sampling_rate_hz` and measure sample coverage. Feature
-  extraction clips intervals to its requested time window. Empty results use zero counts and NaN statistics.
-  Orientation outputs preserve interval identity instead of using interval length as the index.
+- `biopsykit.signals.imu.static_moment_detection.find_static_moments`: Interval ends are now exclusive, matching slices
+  `[start:end]`. Convert saved outputs from earlier versions by adding one to their `end` column.
+- `HeartbeatSegmentationNeurokit`: Fixed-length heartbeat ends are now exclusive, and padded, incomplete segments
+  are discarded. Convert saved fixed-length outputs by adding one to `end_sample` and removing intervals outside
+  the recording. Existing variable-length heartbeat ends and boolean-mask interval outputs are already exclusive;
+  do not increment those ends or newly generated outputs. Remove compensating `end + 1` operations in consumers.
+- `biopsykit.signals.imu.feature_extraction.static_moments`: `static_moment_duration` and `compute_features` now
+  require the keyword argument `sampling_rate_hz`. Durations measure sample coverage `(end - start) / sampling_rate_hz`;
+  datetime spacing must agree with that sampling rate. This changes duration statistics and the 60-second subset.
+- `mean_orientation`: Output rows retain the input interval index, or use `interval_id` for array inputs,
+  instead of using interval length as the index.
+
+### Bugfixes
+
+- Retain complete terminal variable-length heartbeats ending at the recording length. Q-peak assignment includes
+  heartbeat starts and excludes ends; the SciPy Q-peak extractor returns the expected result column and handles
+  candidates outside all heartbeats.
+- Static-moment feature extraction clips intervals to its requested time window and returns zero counts and NaN
+  statistics for empty inputs or subsets. Orientation means include every sample in each half-open interval.
 
 ## Version 0.14.0 - September 30, 2026
 ### New Features
