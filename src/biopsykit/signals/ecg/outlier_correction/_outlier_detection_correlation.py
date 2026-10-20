@@ -1,5 +1,6 @@
 import neurokit2 as nk
 import pandas as pd
+from typing_extensions import Self
 
 from biopsykit.signals.ecg.outlier_correction._base_outlier_detection import BaseRPeakOutlierDetection
 
@@ -37,7 +38,7 @@ class RPeakOutlierDetectionCorrelation(BaseRPeakOutlierDetection):
                 f"correlation_threshold must be a float between 0 and 1. Got {self.correlation_threshold}."
             )
 
-    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):
+    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float) -> Self:
         self._assert_params()
 
         # signal outlier
@@ -63,3 +64,4 @@ class RPeakOutlierDetectionCorrelation(BaseRPeakOutlierDetection):
         outlier = rpeaks["r_peak_sample"].isin(outlier_beats.index)
         outlier = outlier.to_frame(name="is_outlier")
         self.points_ = outlier
+        return self

@@ -1,4 +1,5 @@
 import pandas as pd
+from typing_extensions import Self
 
 from biopsykit.signals.ecg.outlier_correction._base_outlier_detection import BaseRPeakOutlierDetection
 
@@ -37,7 +38,7 @@ class RPeakOutlierDetectionPhysiological(BaseRPeakOutlierDetection):
         if self.hr_thresholds[0] <= 0 or self.hr_thresholds[1] <= 0:
             raise ValueError(f"The elements of hr_thresholds must be positive integers. Got {self.hr_thresholds}.")
 
-    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):  # noqa: ARG002
+    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float) -> Self:  # noqa: ARG002
         self._assert_params()
 
         outlier = (rpeaks["rr_interval_ms"] / 1000 > (60 / self.hr_thresholds[0])) | (
@@ -46,3 +47,4 @@ class RPeakOutlierDetectionPhysiological(BaseRPeakOutlierDetection):
         outlier = outlier.to_frame(name="is_outlier")
 
         self.points_ = outlier
+        return self
