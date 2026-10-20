@@ -553,7 +553,7 @@ def bool_array_to_start_end_array(bool_array: np.ndarray) -> np.ndarray:
     """Find regions in bool array and convert those to start-end indices.
 
     .. note::
-        The end index is inclusive!
+        The start index is inclusive and the end index is exclusive, matching NumPy slicing.
 
     Parameters
     ----------
@@ -563,7 +563,8 @@ def bool_array_to_start_end_array(bool_array: np.ndarray) -> np.ndarray:
     Returns
     -------
     :class:`~numpy.ndarray`
-        array of [start, end] indices with shape (n,2)
+        Integer array of [start, end) sample positions with shape (n_intervals, 2).
+        If no samples are true, returns an empty integer array with shape (0, 2).
 
     Examples
     --------
@@ -580,11 +581,11 @@ def bool_array_to_start_end_array(bool_array: np.ndarray) -> np.ndarray:
     if not np.array_equal(bool_array, bool_array.astype(bool)):
         raise ValueError("Input must be boolean array!")
 
+    if not np.any(bool_array):
+        return np.empty((0, 2), dtype=int)
+
     slices = np.ma.flatnotmasked_contiguous(np.ma.masked_equal(bool_array, 0))
-    start_end = np.array([[s.start, s.stop] for s in slices])
-    if start_end.size == 0:
-        return np.array([[0, 0]])
-    return start_end
+    return np.array([[s.start, s.stop] for s in slices], dtype=int).reshape(-1, 2)
 
 
 def split_array_equally(data: arr_t, n_splits: int) -> list[tuple[int, int]]:
