@@ -18,7 +18,7 @@ class HrvExtraction(Algorithm):
         "hrv_frequency": nk.hrv_frequency,
     }
 
-    hrv_types: Sequence[str]
+    hrv_types: str | Sequence[str]
 
     hrv_extracted_: pd.DataFrame
 
@@ -43,24 +43,24 @@ class HrvExtraction(Algorithm):
         self.hrv_types = hrv_types
         super().__init__()
 
-    def _sanitize_hrv_types(self):
-        """Sanitize the hrv_types parameter to ensure it is a list of valid types."""
-        if isinstance(self.hrv_types, str):
-            if self.hrv_types == "default":
-                self.hrv_types = ["hrv_time", "hrv_frequency"]
-            elif self.hrv_types == "all":
-                self.hrv_types = self.HRV_TYPES
+    def _sanitize_hrv_types(self) -> list[str]:
+        """Resolve HRV aliases locally without modifying the constructor parameter."""
+        hrv_types = self.hrv_types
+        if isinstance(hrv_types, str):
+            if hrv_types == "default":
+                hrv_types = ["hrv_time", "hrv_frequency"]
+            elif hrv_types == "all":
+                hrv_types = self.HRV_TYPES
             else:
-                self.hrv_types = [self.hrv_types]
-        elif not isinstance(self.hrv_types, Sequence):
+                hrv_types = [hrv_types]
+        elif not isinstance(hrv_types, Sequence):
             raise TypeError("hrv_types must be a string or a sequence of strings.")
 
-        self.hrv_types = [
-            f"hrv_{hrv_type}" if not hrv_type.startswith("hrv_") else hrv_type for hrv_type in self.hrv_types
-        ]
-        for hrv_type in self.hrv_types:
+        hrv_types = [f"hrv_{hrv_type}" if not hrv_type.startswith("hrv_") else hrv_type for hrv_type in hrv_types]
+        for hrv_type in hrv_types:
             if hrv_type not in self.HRV_TYPES:
                 raise TypeError(f"Invalid hrv_type: {hrv_type}. Must be one of {self.HRV_TYPES}.")
+        return hrv_types
 
     def extract(self, *, rpeaks: pd.DataFrame, sampling_rate_hz: float) -> Self:
         """Extract heart rate variability (HRV) features from the R-peak data.
@@ -74,9 +74,9 @@ class HrvExtraction(Algorithm):
             The sampling rate of the ECG signal in Hz.
 
         """
-        self._sanitize_hrv_types()
+        hrv_types = self._sanitize_hrv_types()
 
-        hrv_methods = {key: self.HRV_METHODS[key] for key in self.hrv_types if key in self.HRV_METHODS}
+        hrv_methods = {key: self.HRV_METHODS[key] for key in hrv_types if key in self.HRV_METHODS}
 
         # compute HRV parameters
         hrv_data = [hrv_methods[key](rpeaks["r_peak_sample"], sampling_rate=sampling_rate_hz) for key in hrv_methods]
