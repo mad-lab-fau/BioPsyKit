@@ -5,6 +5,7 @@ import neurokit2 as nk
 import numpy as np
 import pandas as pd
 from tpcp import Algorithm
+from typing_extensions import Self
 
 __all__ = ["RPeakOutlierCorrection"]
 
@@ -70,7 +71,7 @@ class RPeakOutlierCorrection(Algorithm):
         ecg: pd.DataFrame,
         rpeaks: pd.DataFrame,
         outlier_detection_results: pd.DataFrame | Sequence[pd.DataFrame],
-    ):
+    ) -> Self:
         """Correct outliers in the R-peak data.
 
         Parameters
@@ -165,3 +166,4 @@ class RPeakOutlierCorrection(Algorithm):
 
         self.ecg_processed_ = ecg
         self.points_ = rpeaks
+        return self

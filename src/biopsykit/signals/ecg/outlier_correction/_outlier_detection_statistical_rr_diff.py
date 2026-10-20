@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from biopsykit.signals.ecg.outlier_correction._base_outlier_detection import BaseRPeakOutlierDetection
 
@@ -36,7 +37,7 @@ class RPeakOutlierDetectionRRDiffIntervalStatistics(BaseRPeakOutlierDetection):
                 f"rr_diff_statistics_threshold must be a float greater than 0. Got {self.rr_diff_statistics_threshold}."
             )
 
-    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float):  # noqa: ARG002
+    def detect_outlier(self, *, ecg: pd.DataFrame, rpeaks: pd.DataFrame, sampling_rate_hz: float) -> Self:  # noqa: ARG002
         self._assert_params()
 
         # compute z-score of RR intervals
@@ -48,3 +49,4 @@ class RPeakOutlierDetectionRRDiffIntervalStatistics(BaseRPeakOutlierDetection):
         outlier = outlier.to_frame(name="is_outlier")
 
         self.points_ = outlier
+        return self
